@@ -7,10 +7,10 @@ import unittest
 import modmesh
 
 
-class ModMeshTC(unittest.TestCase):
+class GridD1TC(unittest.TestCase):
 
-    def test_dummy(self):
+    def test_ndim(self):
 
-        self.assertEqual('dummy', modmesh._modmesh.dummy)
+        self.assertEqual(1, modmesh.GridD1.NDIM);
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

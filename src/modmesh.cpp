@@ -11,7 +11,19 @@
 
 PYBIND11_MODULE(_modmesh, mod)
 {
-    mod.attr("dummy") = "dummy";
+
+    using namespace pybind11;
+    using namespace modmesh;
+
+    class_< GridD1 >
+    (mod, "GridD1")
+        .def_property_readonly_static
+        (
+            "NDIM"
+          , [](object const &) { return GridD1::NDIM; }
+        )
+    ;
+
 }
 
 // vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
