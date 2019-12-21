@@ -19,9 +19,9 @@ namespace python
 void initialize(pybind11::module & mod)
 {
 
-    WrapGridD1::commit(mod);
-    WrapGridD2::commit(mod);
-    WrapGridD3::commit(mod);
+    WrapGrid1d::commit(mod);
+    WrapGrid2d::commit(mod);
+    WrapGrid3d::commit(mod);
 
 }
 

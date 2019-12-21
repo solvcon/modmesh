@@ -151,65 +151,65 @@ protected:
 
 }; /* end class WrapGridBase */
 
-class WrapGridD1
-  : public WrapGridBase< WrapGridD1, modmesh::GridD1 >
+class WrapGrid1d
+  : public WrapGridBase< WrapGrid1d, modmesh::Grid1d >
 {
 
 public:
 
-    static constexpr char PYNAME[] = "GridD1";
-    static constexpr char PYDOC[] = "GridD1";
+    static constexpr char PYNAME[] = "Grid1d";
+    static constexpr char PYDOC[] = "Grid1d";
 
     friend root_base_type;
 
-    using base_type = WrapGridBase< WrapGridD1, GridD1 >;
+    using base_type = WrapGridBase< WrapGrid1d, Grid1d >;
 
 protected:
 
-    WrapGridD1(pybind11::module & mod) : base_type(mod)
+    WrapGrid1d(pybind11::module & mod) : base_type(mod)
     {}
 
-}; /* end class WrapGridD1 */
+}; /* end class WrapGrid1d */
 
-class WrapGridD2
-  : public WrapGridBase< WrapGridD2, modmesh::GridD2 >
+class WrapGrid2d
+  : public WrapGridBase< WrapGrid2d, modmesh::Grid2d >
 {
 
 public:
 
-    static constexpr char PYNAME[] = "GridD2";
-    static constexpr char PYDOC[] = "GridD2";
+    static constexpr char PYNAME[] = "Grid2d";
+    static constexpr char PYDOC[] = "Grid2d";
 
     friend root_base_type;
 
-    using base_type = WrapGridBase< WrapGridD2, GridD2 >;
+    using base_type = WrapGridBase< WrapGrid2d, Grid2d >;
 
 protected:
 
-    WrapGridD2(pybind11::module & mod) : base_type(mod)
+    WrapGrid2d(pybind11::module & mod) : base_type(mod)
     {}
 
-}; /* end class WrapGridD2 */
+}; /* end class WrapGrid2d */
 
-class WrapGridD3
-  : public WrapGridBase< WrapGridD3, modmesh::GridD3 >
+class WrapGrid3d
+  : public WrapGridBase< WrapGrid3d, modmesh::Grid3d >
 {
 
 public:
 
-    static constexpr char PYNAME[] = "GridD3";
-    static constexpr char PYDOC[] = "GridD3";
+    static constexpr char PYNAME[] = "Grid3d";
+    static constexpr char PYDOC[] = "Grid3d";
 
     friend root_base_type;
 
-    using base_type = WrapGridBase< WrapGridD3, GridD3 >;
+    using base_type = WrapGridBase< WrapGrid3d, Grid3d >;
 
 protected:
 
-    WrapGridD3(pybind11::module & mod) : base_type(mod)
+    WrapGrid3d(pybind11::module & mod) : base_type(mod)
     {}
 
-}; /* end class WrapGridD3 */
+}; /* end class WrapGrid3d */
 
 } /* end namespace python */
 

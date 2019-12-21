@@ -5,6 +5,8 @@
  * BSD 3-Clause License, see COPYING
  */
 
+#include <cstdint>
+
 namespace modmesh
 {
 
@@ -20,6 +22,9 @@ public:
 
     static constexpr const size_t NDIM = ND;
 
+    using serial_type = uint32_t;
+    using real_type = double;
+
 }; /* end class SpaceBase */
 
 /**
@@ -34,20 +39,20 @@ class GridBase
 /**
  * 1D grid.
  */
-class GridD1
+class Grid1d
   : public GridBase<1>
 {
-}; /* end class GridD1 */
+}; /* end class Grid1d */
 
-class GridD2
+class Grid2d
   : public GridBase<2>
 {
-}; /* end class GridD2 */
+}; /* end class Grid2d */
 
-class GridD3
+class Grid3d
   : public GridBase<3>
 {
-}; /* end class GridD3 */
+}; /* end class Grid3d */
 
 } /* end namespace modmesh */
 
