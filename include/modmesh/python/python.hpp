@@ -86,6 +86,7 @@ public:
     }
 
     DECL_MM_PYBIND_CLASS_METHOD(def)
+    DECL_MM_PYBIND_CLASS_METHOD(def_buffer)
     DECL_MM_PYBIND_CLASS_METHOD(def_readwrite)
     DECL_MM_PYBIND_CLASS_METHOD(def_property)
     DECL_MM_PYBIND_CLASS_METHOD(def_property_readonly)
@@ -130,6 +131,9 @@ public:
     using base_type = WrapBase< Wrapper, GT >;
     using wrapped_type = typename base_type::wrapped_type;
 
+    using serial_type = typename wrapped_type::serial_type;
+    using real_type = typename wrapped_type::real_type;
+
     friend typename base_type::root_base_type;
 
 protected:
@@ -167,7 +171,70 @@ public:
 protected:
 
     WrapGrid1d(pybind11::module & mod) : base_type(mod)
-    {}
+    {
+
+        namespace py = pybind11;
+
+        (*this)
+            .def
+            (
+                py::init
+                (
+                    [](serial_type nx)
+                    {
+                        return new Grid1d(nx);
+                    }
+                )
+              , py::arg("nx")
+            )
+            .def
+            (
+                "__len__"
+              , [](wrapped_type const & self) { return self.size(); }
+            )
+            .def
+            (
+                "__getitem__"
+              , [](wrapped_type const & self, size_t it) { return self.at(it); }
+            )
+            .def
+            (
+                "__setitem__"
+              , [](wrapped_type & self, size_t it, wrapped_type::real_type val)
+                {
+                    self.at(it) = val;
+                }
+            )
+            .def_property_readonly
+            (
+                "nx"
+              , [](wrapped_type const & self) { return self.nx(); }
+            )
+            .def_property
+            (
+                "coord"
+              , [](wrapped_type & self)
+                {
+                    return py::array
+                    (
+                        py::detail::npy_format_descriptor<real_type>::dtype()
+                      , { self.nx() }
+                      , { sizeof(real_type) }
+                      , self.coord()
+                      , py::cast(self)
+                    );
+                }
+              , [](wrapped_type & self, py::array_t<real_type> arr)
+                {
+                    for (size_t it=0 ; it < self.nx() ; ++it)
+                    {
+                        self.at(it) = arr.at(it);
+                    }
+                }
+            )
+        ;
+
+    }
 
 }; /* end class WrapGrid1d */
 

@@ -7,7 +7,7 @@ import unittest
 import modmesh
 
 
-class Grid1dTC(unittest.TestCase):
+class GridTC(unittest.TestCase):
 
     def test_ndim(self):
 
