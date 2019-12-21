@@ -1,3 +1,6 @@
+# Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+# BSD-style license; see COPYING
+
 """
 General mesh data definition and manipulation in one, two, and
 three-dimensional space.

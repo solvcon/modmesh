@@ -1,5 +1,5 @@
 # Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
-# BSD 3-Clause License, see COPYING
+# BSD-style license; see COPYING
 
 cmake_minimum_required(VERSION 3.9)
 project(modmesh)
@@ -31,6 +31,8 @@ include_directories("include")
 
 set(MODMESH_HEADERS
     include/modmesh/modmesh.hpp
+    include/modmesh/base.hpp
+    include/modmesh/grid.hpp
 )
 string(REPLACE "include/" "${CMAKE_CURRENT_SOURCE_DIR}/include/"
        MODMESH_HEADERS "${MODMESH_HEADERS}")

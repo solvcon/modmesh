@@ -1,5 +1,5 @@
 # Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
-# BSD 3-Clause License, see COPYING
+# BSD-style license; see COPYING
 
 
 import unittest

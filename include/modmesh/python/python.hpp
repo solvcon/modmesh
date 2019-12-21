@@ -2,15 +2,13 @@
 
 /*
  * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
- * BSD 3-Clause License, see COPYING
+ * BSD-style license; see COPYING
  */
 
-#include <pybind11/pybind11.h>
+#include <pybind11/pybind11.h> // Must be the first include.
 #include <pybind11/numpy.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
-
-PYBIND11_DECLARE_HOLDER_TYPE(T, std::shared_ptr<T>);
 
 #include "modmesh/modmesh.hpp"
 

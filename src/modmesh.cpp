@@ -1,14 +1,10 @@
 /*
  * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
- * BSD 3-Clause License, see COPYING
+ * BSD-style license; see COPYING
  */
 
-#include <pybind11/pybind11.h>
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
-
+#include "modmesh/python/python.hpp" // Must be the first include.
 #include "modmesh/modmesh.hpp"
-#include "modmesh/python/python.hpp"
 
 namespace modmesh
 {
