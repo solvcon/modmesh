@@ -30,13 +30,13 @@ include_directories(${NUMPY_INCLUDE_DIR})
 include_directories("include")
 
 set(MODMESH_HEADERS
-    # Overall.
     include/modmesh/modmesh.hpp
 )
 string(REPLACE "include/" "${CMAKE_CURRENT_SOURCE_DIR}/include/"
        MODMESH_HEADERS "${MODMESH_HEADERS}")
 
 set(MODMESH_PY_HEADERS
+    include/modmesh/python/python.hpp
 )
 string(REPLACE "include/" "${CMAKE_CURRENT_SOURCE_DIR}/include/"
        MODMESH_PY_HEADERS "${MODMESH_PY_HEADERS}")

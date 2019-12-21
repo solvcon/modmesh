@@ -8,22 +8,30 @@
 #include <numpy/arrayobject.h>
 
 #include "modmesh/modmesh.hpp"
+#include "modmesh/python/python.hpp"
+
+namespace modmesh
+{
+
+namespace python
+{
+
+void initialize(pybind11::module & mod)
+{
+
+    WrapGridD1::commit(mod);
+    WrapGridD2::commit(mod);
+    WrapGridD3::commit(mod);
+
+}
+
+} /* end namespace python */
+
+} /* end namespace modmesh */
 
 PYBIND11_MODULE(_modmesh, mod)
 {
-
-    using namespace pybind11;
-    using namespace modmesh;
-
-    class_< GridD1 >
-    (mod, "GridD1")
-        .def_property_readonly_static
-        (
-            "NDIM"
-          , [](object const &) { return GridD1::NDIM; }
-        )
-    ;
-
+    modmesh::python::initialize(mod);
 }
 
 // vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
