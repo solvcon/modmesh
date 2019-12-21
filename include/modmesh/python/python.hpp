@@ -78,7 +78,8 @@ public:
 #define DECL_MM_PYBIND_CLASS_METHOD(METHOD) \
     template< class... Args > \
     /* NOLINTNEXTLINE(bugprone-macro-parentheses) */ \
-    wrapper_type & METHOD(Args&&... args) { \
+    wrapper_type & METHOD(Args&&... args) \
+    { \
         m_cls.METHOD(std::forward<Args>(args)...); \
         return *static_cast<wrapper_type*>(this); \
     }
@@ -229,6 +230,12 @@ protected:
                         self.at(it) = arr.at(it);
                     }
                 }
+            )
+            .def
+            (
+                "fill"
+              , &wrapped_type::fill
+              , py::arg("value")
             )
         ;
 

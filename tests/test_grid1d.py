@@ -39,4 +39,9 @@ class StaticGrid1dTC(unittest.TestCase):
         coord = check_life_cycle()
         self.assertEqual([0, 1, 2, 3, 4], coord.tolist())
 
+    def test_fill(self):
+
+        gd = modmesh.StaticGrid1d(11)
+        gd.fill(102)
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

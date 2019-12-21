@@ -10,6 +10,7 @@
  */
 
 #include "modmesh/base.hpp"
+#include "modmesh/profile.hpp"
 
 namespace modmesh
 {
@@ -86,6 +87,12 @@ public:
     real_type & operator[] (size_t it)       noexcept { return m_coord[it]; }
     real_type   at (size_t it) const { ensure_range(it); return (*this)[it]; }
     real_type & at (size_t it)       { ensure_range(it); return (*this)[it]; }
+
+    void fill(real_type val)
+    {
+        MODMESH_TIME("StaticGrid1d::fill");
+        std::fill(m_coord.get(), m_coord.get()+m_nx, val);
+    }
 
 private:
 
