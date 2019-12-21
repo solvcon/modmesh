@@ -35,28 +35,28 @@ public:
  * Base class template for structured grid.
  */
 template <size_t ND>
-class GridBase
+class StaticGridBase
   : public SpaceBase<ND>
 {
-}; /* end class GridBase */
+}; /* end class StaticGridBase */
 
 /**
  * 1D grid.
  */
-class Grid1d
-  : public GridBase<1>
+class StaticGrid1d
+  : public StaticGridBase<1>
 {
 
 public:
 
-    Grid1d() : m_nx(0), m_coord(nullptr) {}
+    StaticGrid1d() : m_nx(0), m_coord(nullptr) {}
 
-    Grid1d(serial_type nx)
+    StaticGrid1d(serial_type nx)
       : m_nx(nx)
       , m_coord(allocate(nx))
     {}
 
-    Grid1d(Grid1d const & other)
+    StaticGrid1d(StaticGrid1d const & other)
       : m_nx(other.m_nx)
       , m_coord(allocate(other.m_nx))
     {
@@ -66,7 +66,7 @@ public:
         }
     }
 
-    Grid1d & operator=(Grid1d const & other)
+    StaticGrid1d & operator=(StaticGrid1d const & other)
     {
         if (this != &other)
         {
@@ -77,12 +77,12 @@ public:
         return *this;
     }
 
-    Grid1d(Grid1d && other) noexcept
+    StaticGrid1d(StaticGrid1d && other) noexcept
       : m_nx(other.m_nx)
       , m_coord(std::move(other.m_coord))
     {}
 
-    Grid1d & operator=(Grid1d && other) noexcept
+    StaticGrid1d & operator=(StaticGrid1d && other) noexcept
     {
         if (this != &other)
         {
@@ -92,7 +92,7 @@ public:
         return *this;
     }
 
-    ~Grid1d() = default;
+    ~StaticGrid1d() = default;
 
     size_t nx() const { return m_nx; }
     real_type * const coord() const { return m_coord.get(); }
@@ -122,24 +122,24 @@ private:
     {
         if (it >= m_nx)
         {
-            MODMESH_EXCEPT(Grid1d, std::out_of_range, "index out of range");
+            MODMESH_EXCEPT(StaticGrid1d, std::out_of_range, "index out of range");
         }
     }
 
     serial_type m_nx;
     std::unique_ptr<real_type[]> m_coord;
 
-}; /* end class Grid1d */
+}; /* end class StaticGrid1d */
 
-class Grid2d
-  : public GridBase<2>
+class StaticGrid2d
+  : public StaticGridBase<2>
 {
-}; /* end class Grid2d */
+}; /* end class StaticGrid2d */
 
-class Grid3d
-  : public GridBase<3>
+class StaticGrid3d
+  : public StaticGridBase<3>
 {
-}; /* end class Grid3d */
+}; /* end class StaticGrid3d */
 
 } /* end namespace modmesh */
 

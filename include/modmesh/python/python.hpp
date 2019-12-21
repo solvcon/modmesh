@@ -122,7 +122,7 @@ private:
 template< typename Wrapper, typename GT >
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
-WrapGridBase
+WrapStaticGridBase
   : public WrapBase< Wrapper, GT >
 {
 
@@ -138,7 +138,7 @@ public:
 
 protected:
 
-    WrapGridBase(pybind11::module & mod) : base_type(mod)
+    WrapStaticGridBase(pybind11::module & mod) : base_type(mod)
     {
 
         namespace py = pybind11;
@@ -153,24 +153,24 @@ protected:
 
     }
 
-}; /* end class WrapGridBase */
+}; /* end class WrapStaticGridBase */
 
-class WrapGrid1d
-  : public WrapGridBase< WrapGrid1d, modmesh::Grid1d >
+class WrapStaticGrid1d
+  : public WrapStaticGridBase< WrapStaticGrid1d, modmesh::StaticGrid1d >
 {
 
 public:
 
-    static constexpr char PYNAME[] = "Grid1d";
-    static constexpr char PYDOC[] = "Grid1d";
+    static constexpr char PYNAME[] = "StaticGrid1d";
+    static constexpr char PYDOC[] = "StaticGrid1d";
 
     friend root_base_type;
 
-    using base_type = WrapGridBase< WrapGrid1d, Grid1d >;
+    using base_type = WrapStaticGridBase< WrapStaticGrid1d, StaticGrid1d >;
 
 protected:
 
-    WrapGrid1d(pybind11::module & mod) : base_type(mod)
+    WrapStaticGrid1d(pybind11::module & mod) : base_type(mod)
     {
 
         namespace py = pybind11;
@@ -182,7 +182,7 @@ protected:
                 (
                     [](serial_type nx)
                     {
-                        return new Grid1d(nx);
+                        return new StaticGrid1d(nx);
                     }
                 )
               , py::arg("nx")
@@ -236,47 +236,47 @@ protected:
 
     }
 
-}; /* end class WrapGrid1d */
+}; /* end class WrapStaticGrid1d */
 
-class WrapGrid2d
-  : public WrapGridBase< WrapGrid2d, modmesh::Grid2d >
+class WrapStaticGrid2d
+  : public WrapStaticGridBase< WrapStaticGrid2d, modmesh::StaticGrid2d >
 {
 
 public:
 
-    static constexpr char PYNAME[] = "Grid2d";
-    static constexpr char PYDOC[] = "Grid2d";
+    static constexpr char PYNAME[] = "StaticGrid2d";
+    static constexpr char PYDOC[] = "StaticGrid2d";
 
     friend root_base_type;
 
-    using base_type = WrapGridBase< WrapGrid2d, Grid2d >;
+    using base_type = WrapStaticGridBase< WrapStaticGrid2d, StaticGrid2d >;
 
 protected:
 
-    WrapGrid2d(pybind11::module & mod) : base_type(mod)
+    WrapStaticGrid2d(pybind11::module & mod) : base_type(mod)
     {}
 
-}; /* end class WrapGrid2d */
+}; /* end class WrapStaticGrid2d */
 
-class WrapGrid3d
-  : public WrapGridBase< WrapGrid3d, modmesh::Grid3d >
+class WrapStaticGrid3d
+  : public WrapStaticGridBase< WrapStaticGrid3d, modmesh::StaticGrid3d >
 {
 
 public:
 
-    static constexpr char PYNAME[] = "Grid3d";
-    static constexpr char PYDOC[] = "Grid3d";
+    static constexpr char PYNAME[] = "StaticGrid3d";
+    static constexpr char PYDOC[] = "StaticGrid3d";
 
     friend root_base_type;
 
-    using base_type = WrapGridBase< WrapGrid3d, Grid3d >;
+    using base_type = WrapStaticGridBase< WrapStaticGrid3d, StaticGrid3d >;
 
 protected:
 
-    WrapGrid3d(pybind11::module & mod) : base_type(mod)
+    WrapStaticGrid3d(pybind11::module & mod) : base_type(mod)
     {}
 
-}; /* end class WrapGrid3d */
+}; /* end class WrapStaticGrid3d */
 
 } /* end namespace python */
 

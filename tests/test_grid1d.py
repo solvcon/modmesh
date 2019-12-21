@@ -9,11 +9,11 @@ import numpy as np
 import modmesh
 
 
-class Grid1dTC(unittest.TestCase):
+class StaticGrid1dTC(unittest.TestCase):
 
     def test_getset(self):
 
-        gd = modmesh.Grid1d(11)
+        gd = modmesh.StaticGrid1d(11)
 
         self.assertEqual(11, gd.nx)
         self.assertEqual(11, len(gd))
@@ -24,7 +24,7 @@ class Grid1dTC(unittest.TestCase):
 
     def test_ndarray(self):
 
-        gd = modmesh.Grid1d(11)
+        gd = modmesh.StaticGrid1d(11)
 
         self.assertEqual(np.float64, gd.coord.dtype)
         gd.coord = np.arange(10, -1, -1, dtype='float64')
@@ -32,7 +32,7 @@ class Grid1dTC(unittest.TestCase):
 
         def check_life_cycle():
 
-            gd2 = modmesh.Grid1d(5)
+            gd2 = modmesh.StaticGrid1d(5)
             gd2.coord = np.arange(5, dtype='float64')
             return gd2.coord
 

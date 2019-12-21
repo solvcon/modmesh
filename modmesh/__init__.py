@@ -7,14 +7,14 @@ from . import _modmesh
 
 
 __all__ = [
-    'Grid1d',
-    'Grid2d',
-    'Grid3d',
+    'StaticGrid1d',
+    'StaticGrid2d',
+    'StaticGrid3d',
 ]
 
 
-Grid1d = _modmesh.Grid1d
-Grid2d = _modmesh.Grid2d
-Grid3d = _modmesh.Grid3d
+StaticGrid1d = _modmesh.StaticGrid1d
+StaticGrid2d = _modmesh.StaticGrid2d
+StaticGrid3d = _modmesh.StaticGrid3d
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
