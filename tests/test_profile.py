@@ -13,7 +13,7 @@ class TimeRegistryTC(unittest.TestCase):
 
     def test_singleton(self):
 
-        tr = modmesh.TimeRegistry.me
-        self.assertTrue(hasattr(tr, 'report'))
+        ret = modmesh.time_registry.report()
+        self.assertEqual("", ret)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

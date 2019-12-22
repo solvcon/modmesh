@@ -19,6 +19,7 @@ void initialize(pybind11::module & mod)
     WrapStaticGrid2d::commit(mod);
     WrapStaticGrid3d::commit(mod);
     WrapTimeRegistry::commit(mod);
+    mod.attr("time_registry") = mod.attr("TimeRegistry").attr("me");
 
 }
 

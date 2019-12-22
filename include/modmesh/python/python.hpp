@@ -302,7 +302,7 @@ protected:
         namespace py = pybind11;
 
         (*this)
-            .def_property_readonly_static("me", [](py::object const &) { return wrapped_type::me(); })
+            .def_property_readonly_static("me", [](py::object const &) -> wrapped_type& { return wrapped_type::me(); })
             .def("report", &wrapped_type::report)
         ;
 

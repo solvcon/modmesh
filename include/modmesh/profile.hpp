@@ -135,36 +135,46 @@ public:
         return inst;
     }
 
-    void add(const char * name, double time)
+    std::string report() const
     {
-        auto it = m_time.find(name);
-        if (it == m_time.end())
+        std::ostringstream ostm;
+        for (auto it = m_entry.begin() ; it != m_entry.end() ; ++it)
         {
-            it = std::get<0>(m_time.insert({name, {0, 0.0}}));
-        }
-        ++(it->second.m_count);
-        it->second.m_time += time;
-    }
-
-    ~TimeRegistry() { report(); }
-
-    void report() const
-    {
-        for (auto it = m_time.begin() ; it != m_time.end() ; ++it)
-        {
-            std::cout
+            ostm
                 << it->first << " : "
                 << "count = " << it->second.m_count << " , "
                 << "time = " << it->second.m_time << " (second)"
                 << std::endl;
         }
+        return ostm.str();
+    }
+
+    void add(const char * name, double time)
+    {
+        auto it = m_entry.find(name);
+        if (it == m_entry.end())
+        {
+            it = std::get<0>(m_entry.insert({name, {0, 0.0}}));
+        }
+        ++(it->second.m_count);
+        it->second.m_time += time;
+    }
+
+    ~TimeRegistry()
+    {
+        // Uncomment for debugging.
+        //std::cout << report();
     }
 
 private:
 
-    TimeRegistry() {}
+    TimeRegistry() = default;
+    TimeRegistry(TimeRegistry const & ) = delete;
+    TimeRegistry(TimeRegistry       &&) = delete;
+    TimeRegistry & operator=(TimeRegistry const & ) = delete;
+    TimeRegistry & operator=(TimeRegistry       &&) = delete;
 
-    std::map<const char *, TimedEntry> m_time;
+    std::map<const char *, TimedEntry> m_entry;
 
 }; /* end struct TimeRegistry */
 

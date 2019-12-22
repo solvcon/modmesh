@@ -11,6 +11,7 @@ from . import _modmesh
 
 __all__ = [
     'TimeRegistry',
+    'time_registry',
     'StaticGrid1d',
     'StaticGrid2d',
     'StaticGrid3d',
@@ -18,6 +19,7 @@ __all__ = [
 
 
 TimeRegistry = _modmesh.TimeRegistry
+time_registry = _modmesh.time_registry
 
 StaticGrid1d = _modmesh.StaticGrid1d
 StaticGrid2d = _modmesh.StaticGrid2d

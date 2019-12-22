@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <memory>
 #include <iostream>
+#include <sstream>
 #include <map>
 
 #define MODMESH_EXCEPT(CLS, EXC, MSG) throw EXC(#CLS ": " MSG);
