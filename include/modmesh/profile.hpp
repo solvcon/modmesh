@@ -146,7 +146,9 @@ public:
         it->second.m_time += time;
     }
 
-    ~TimeRegistry()
+    ~TimeRegistry() { report(); }
+
+    void report() const
     {
         for (auto it = m_time.begin() ; it != m_time.end() ; ++it)
         {
@@ -160,9 +162,7 @@ public:
 
 private:
 
-    TimeRegistry()
-    {
-    }
+    TimeRegistry() {}
 
     std::map<const char *, TimedEntry> m_time;
 

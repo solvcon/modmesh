@@ -283,6 +283,33 @@ protected:
 
 }; /* end class WrapStaticGrid3d */
 
+class WrapTimeRegistry
+  : public WrapBase< WrapTimeRegistry, TimeRegistry >
+{
+
+public:
+
+    static constexpr char PYNAME[] = "TimeRegistry";
+    static constexpr char PYDOC[] = "TimeRegistry";
+
+    friend root_base_type;
+
+protected:
+
+    WrapTimeRegistry(pybind11::module & mod) : root_base_type(mod)
+    {
+
+        namespace py = pybind11;
+
+        (*this)
+            .def_property_readonly_static("me", [](py::object const &) { return wrapped_type::me(); })
+            .def("report", &wrapped_type::report)
+        ;
+
+    }
+
+}; /* end class WrapTimeRegistry */
+
 } /* end namespace python */
 
 } /* end namespace modmesh */

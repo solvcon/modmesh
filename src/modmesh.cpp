@@ -18,6 +18,7 @@ void initialize(pybind11::module & mod)
     WrapStaticGrid1d::commit(mod);
     WrapStaticGrid2d::commit(mod);
     WrapStaticGrid3d::commit(mod);
+    WrapTimeRegistry::commit(mod);
 
 }
 
