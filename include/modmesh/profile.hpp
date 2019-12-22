@@ -118,6 +118,12 @@ struct StopWatch
 
 #endif
 
+struct TimedEntry
+{
+    size_t m_count = 0;
+    double m_time = 0.0;
+}; /* end struct TimedEntry */
+
 class TimeRegistry
 {
 
@@ -134,16 +140,21 @@ public:
         auto it = m_time.find(name);
         if (it == m_time.end())
         {
-            it = std::get<0>(m_time.insert({name, 0.0}));
+            it = std::get<0>(m_time.insert({name, {0, 0.0}}));
         }
-        it->second += time;
+        ++(it->second.m_count);
+        it->second.m_time += time;
     }
 
     ~TimeRegistry()
     {
         for (auto it = m_time.begin() ; it != m_time.end() ; ++it)
         {
-            std::cout << it->first << ": " << it->second << " second" << std::endl;
+            std::cout
+                << it->first << " : "
+                << "count = " << it->second.m_count << " , "
+                << "time = " << it->second.m_time << " (second)"
+                << std::endl;
         }
     }
 
@@ -153,7 +164,7 @@ private:
     {
     }
 
-    std::map<const char *, double> m_time;
+    std::map<const char *, TimedEntry> m_time;
 
 }; /* end struct TimeRegistry */
 
