@@ -155,7 +155,7 @@ protected:
 }; /* end class WrapStaticGridBase */
 
 class WrapStaticGrid1d
-  : public WrapStaticGridBase< WrapStaticGrid1d, modmesh::StaticGrid1d >
+  : public WrapStaticGridBase< WrapStaticGrid1d, StaticGrid1d >
 {
 
 public:
@@ -244,7 +244,7 @@ protected:
 }; /* end class WrapStaticGrid1d */
 
 class WrapStaticGrid2d
-  : public WrapStaticGridBase< WrapStaticGrid2d, modmesh::StaticGrid2d >
+  : public WrapStaticGridBase< WrapStaticGrid2d, StaticGrid2d >
 {
 
 public:
@@ -264,7 +264,7 @@ protected:
 }; /* end class WrapStaticGrid2d */
 
 class WrapStaticGrid3d
-  : public WrapStaticGridBase< WrapStaticGrid3d, modmesh::StaticGrid3d >
+  : public WrapStaticGridBase< WrapStaticGrid3d, StaticGrid3d >
 {
 
 public:
