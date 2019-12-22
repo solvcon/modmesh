@@ -14,8 +14,16 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "Export compile commands")
 option(HIDE_SYMBOL "hide the symbols of python wrapper" OFF)
 message(STATUS "HIDE_SYMBOL: ${HIDE_SYMBOL}")
 
+option(DEBUG_SYMBOL "add debug information" ON)
+message(STATUS "DEBUG_SYMBOL: ${DEBUG_SYMBOL}")
 if(DEBUG_SYMBOL)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+endif()
+
+option(MODMESH_PROFILE "enable profiler" OFF)
+message(STATUS "MODMESH_PROFILE: ${MODMESH_PROFILE}")
+if(MODMESH_PROFILE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMODMESH_PROFILE")
 endif()
 
 option(pybind11_path "pybind11 path")
@@ -32,6 +40,7 @@ include_directories("include")
 set(MODMESH_HEADERS
     include/modmesh/modmesh.hpp
     include/modmesh/base.hpp
+    include/modmesh/profile.hpp
     include/modmesh/grid.hpp
 )
 string(REPLACE "include/" "${CMAKE_CURRENT_SOURCE_DIR}/include/"
