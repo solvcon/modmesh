@@ -42,6 +42,9 @@ set(MODMESH_HEADERS
     include/modmesh/base.hpp
     include/modmesh/profile.hpp
     include/modmesh/grid.hpp
+    include/modmesh/small_vector.hpp
+    include/modmesh/ConcreteBuffer.hpp
+    include/modmesh/SimpleArray.hpp
 )
 string(REPLACE "include/" "${CMAKE_CURRENT_SOURCE_DIR}/include/"
        MODMESH_HEADERS "${MODMESH_HEADERS}")

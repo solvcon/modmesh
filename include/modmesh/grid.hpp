@@ -11,6 +11,7 @@
 
 #include "modmesh/base.hpp"
 #include "modmesh/profile.hpp"
+#include "modmesh/SimpleArray.hpp"
 
 namespace modmesh
 {
@@ -23,6 +24,54 @@ class StaticGridBase
   : public SpaceBase<ND>
 {
 }; /* end class StaticGridBase */
+
+/**
+ * 1D grid whose coordnate ascends with index.
+ */
+class AscendantGrid1d
+  : public StaticGridBase<1>
+{
+
+public:
+
+    using value_type = double;
+    using array_type = SimpleArray<value_type>;
+
+    explicit AscendantGrid1d(size_t ncoord)
+      : m_coord(ncoord)
+      , m_idmax(ncoord-1)
+    {}
+
+    AscendantGrid1d() = default;
+    AscendantGrid1d(AscendantGrid1d const & ) = default;
+    AscendantGrid1d(AscendantGrid1d       &&) = default;
+    AscendantGrid1d & operator=(AscendantGrid1d const & ) = default;
+    AscendantGrid1d & operator=(AscendantGrid1d       &&) = default;
+    ~AscendantGrid1d() = default;
+
+    explicit operator bool () const { return bool(m_coord); }
+
+    size_t ncoord() const { return m_idmax - m_idmin + 1; }
+
+    size_t size() const { return m_coord.size(); }
+    value_type const & operator[] (size_t it) const { return m_coord[it]; }
+    value_type       & operator[] (size_t it)       { return m_coord[it]; }
+    value_type const & at(size_t it) const { return m_coord.at(it); }
+    value_type       & at(size_t it)       { return m_coord.at(it); }
+
+    array_type const & coord() const { return m_coord; }
+    array_type       & coord()       { return m_coord; }
+
+    value_type const * data() const { return m_coord.data(); }
+    value_type       * data()       { return m_coord.data(); }
+
+private:
+
+    array_type m_coord;
+    size_t m_idmin = 0; // left internal boundary.
+    size_t m_idmax = 0; // right internal boundary.
+
+}; /* end class AscendantGrid1d */
 
 /**
  * 1D grid.
