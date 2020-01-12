@@ -1,0 +1,46 @@
+name: main_build
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+        matrix:
+          os: [ubuntu-18.04, macos-latest]
+          cmake_build_type: [Release, Debug]
+
+        fail-fast: false
+
+    steps:
+
+    - uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+
+    - name: dependency (ubuntu)
+      if: matrix.os != 'macos-latest'
+      run: |
+        sudo apt-get -qy install \
+            sudo curl git build-essential make cmake libc6-dev gcc-7 g++-7 \
+            python3.7 python3.7-dev python3.7-venv
+        sudo rm /usr/bin/python3
+        sudo ln -s python3.7 /usr/bin/python3
+        sudo pip3 install numpy pytest
+
+    - name: dependency (macos)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install python3 numpy
+        pip3 install -U pytest
+
+    - name: dependency (manual)
+      run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
+
+    - name: buildext
+      run: make buildext VERBOSE=1 CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
+
+    - name: pytest
+      run: make pytest VERBOSE=1 CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
