@@ -1,5 +1,5 @@
 # Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
-# BSD 3-Clause License, see COPYING
+# BSD-style license; see COPYING
 
 # Build modmesh Python extension (even when the timestamp is clean):
 #   make
@@ -10,6 +10,7 @@
 
 HIDE_SYMBOL ?= OFF
 DEBUG_SYMBOL ?= ON
+MODMESH_PROFILE ?= OFF
 USE_CLANG_TIDY ?= OFF
 CMAKE_BUILD_TYPE ?= Release
 MODMESH_ROOT ?= $(shell pwd)
@@ -62,7 +63,7 @@ $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix): $(BUILD_PATH)/_modmesh$(pyextsuf
 .PHONY: buildext
 buildext: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
 
-$(BUILD_PATH)/Makefile: CMakelists.txt Makefile
+$(BUILD_PATH)/Makefile: CMakeLists.txt Makefile
 	mkdir -p $(BUILD_PATH) ; \
 	cd $(BUILD_PATH) ; \
 	cmake $(MODMESH_ROOT) \
@@ -70,6 +71,5 @@ $(BUILD_PATH)/Makefile: CMakelists.txt Makefile
 		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
 		-DHIDE_SYMBOL=$(HIDE_SYMBOL) \
 		-DDEBUG_SYMBOL=$(DEBUG_SYMBOL) \
-		-DUSE_CLANG_TIDY=$(USE_CLANG_TIDY) \
-		-DLINT_AS_ERRORS=ON \
+		-DMODMESH_PROFILE=$(MODMESH_PROFILE) \
 		$(CMAKE_ARGS)

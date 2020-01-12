@@ -1,17 +1,36 @@
 /*
  * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
- * BSD 3-Clause License, see COPYING
+ * BSD-style license; see COPYING
  */
 
-#include <pybind11/pybind11.h>
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
-
+#include "modmesh/python/python.hpp" // Must be the first include.
 #include "modmesh/modmesh.hpp"
+
+namespace modmesh
+{
+
+namespace python
+{
+
+void initialize(pybind11::module & mod)
+{
+
+    WrapConcreteBuffer::commit(mod, "ConcreteBuffer", "ConcreteBuffer");
+    WrapStaticGrid1d::commit(mod);
+    WrapStaticGrid2d::commit(mod);
+    WrapStaticGrid3d::commit(mod);
+    WrapTimeRegistry::commit(mod);
+    mod.attr("time_registry") = mod.attr("TimeRegistry").attr("me");
+
+}
+
+} /* end namespace python */
+
+} /* end namespace modmesh */
 
 PYBIND11_MODULE(_modmesh, mod)
 {
-    mod.attr("dummy") = "dummy";
+    modmesh::python::initialize(mod);
 }
 
 // vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
