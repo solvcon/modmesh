@@ -68,6 +68,12 @@ public:
         return derived;
     }
 
+    static wrapper_type & commit(pybind11::module & mod, char const * pyname, char const * pydoc)
+    {
+        static wrapper_type derived(mod, pyname, pydoc);
+        return derived;
+    }
+
     WrapBase() = delete;
     WrapBase(WrapBase const & ) = default;
     WrapBase(WrapBase       &&) = delete;
@@ -112,11 +118,48 @@ protected:
         );
     }
 
+    WrapBase(pybind11::module & mod, char const * pyname, char const * pydoc)
+      : m_cls(mod, pyname, pydoc)
+    {}
+
 private:
 
     class_ m_cls;
 
 }; /* end class WrapBase */
+
+class
+MODMESH_PYTHON_WRAPPER_VISIBILITY
+WrapConcreteBuffer
+  : public WrapBase< WrapConcreteBuffer, ConcreteBuffer, std::shared_ptr<ConcreteBuffer> >
+{
+
+    friend root_base_type;
+
+    WrapConcreteBuffer(pybind11::module & mod, char const * pyname, char const * pydoc)
+      : root_base_type(mod, pyname, pydoc)
+    {
+
+        namespace py = pybind11;
+
+        (*this)
+            .def
+            (
+                py::init
+                (
+                    [](size_t nbytes)
+                    {
+                        return ConcreteBuffer::construct(nbytes);
+                    }
+                )
+              , py::arg("nbytes")
+            )
+            .def_property_readonly("nbytes", &wrapped_type::nbytes)
+        ;
+        std::cout << "YDEBUG pyname: " << pyname << std::endl;
+    }
+
+}; /* end class WrapConcreteBuffer */
 
 template< typename Wrapper, typename GT >
 class
@@ -154,7 +197,9 @@ protected:
 
 }; /* end class WrapStaticGridBase */
 
-class WrapStaticGrid1d
+class
+MODMESH_PYTHON_WRAPPER_VISIBILITY
+WrapStaticGrid1d
   : public WrapStaticGridBase< WrapStaticGrid1d, StaticGrid1d >
 {
 
@@ -243,7 +288,9 @@ protected:
 
 }; /* end class WrapStaticGrid1d */
 
-class WrapStaticGrid2d
+class
+MODMESH_PYTHON_WRAPPER_VISIBILITY
+WrapStaticGrid2d
   : public WrapStaticGridBase< WrapStaticGrid2d, StaticGrid2d >
 {
 
@@ -263,7 +310,9 @@ protected:
 
 }; /* end class WrapStaticGrid2d */
 
-class WrapStaticGrid3d
+class
+MODMESH_PYTHON_WRAPPER_VISIBILITY
+WrapStaticGrid3d
   : public WrapStaticGridBase< WrapStaticGrid3d, StaticGrid3d >
 {
 
@@ -283,7 +332,9 @@ protected:
 
 }; /* end class WrapStaticGrid3d */
 
-class WrapTimeRegistry
+class
+MODMESH_PYTHON_WRAPPER_VISIBILITY
+WrapTimeRegistry
   : public WrapBase< WrapTimeRegistry, TimeRegistry >
 {
 

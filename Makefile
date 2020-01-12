@@ -63,7 +63,7 @@ $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix): $(BUILD_PATH)/_modmesh$(pyextsuf
 .PHONY: buildext
 buildext: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
 
-$(BUILD_PATH)/Makefile: CMakelists.txt Makefile
+$(BUILD_PATH)/Makefile: CMakeLists.txt Makefile
 	mkdir -p $(BUILD_PATH) ; \
 	cd $(BUILD_PATH) ; \
 	cmake $(MODMESH_ROOT) \

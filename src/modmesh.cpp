@@ -15,6 +15,7 @@ namespace python
 void initialize(pybind11::module & mod)
 {
 
+    WrapConcreteBuffer::commit(mod, "ConcreteBuffer", "ConcreteBuffer");
     WrapStaticGrid1d::commit(mod);
     WrapStaticGrid2d::commit(mod);
     WrapStaticGrid3d::commit(mod);
