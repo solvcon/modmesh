@@ -35,7 +35,9 @@ find_package(NumPy REQUIRED)
 message(STATUS "NUMPY_INCLUDE_DIR: ${NUMPY_INCLUDE_DIR}")
 include_directories(${NUMPY_INCLUDE_DIR})
 
-include_directories("include")
+set(MODMESH_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/include" CACHE INTERNAL "")
+
+include_directories(${MODMESH_INCLUDE_DIR})
 
 set(MODMESH_HEADERS
     include/modmesh/modmesh.hpp
@@ -54,6 +56,8 @@ set(MODMESH_PY_HEADERS
 )
 string(REPLACE "include/" "${CMAKE_CURRENT_SOURCE_DIR}/include/"
        MODMESH_PY_HEADERS "${MODMESH_PY_HEADERS}")
+
+include(GNUInstallDirs)
 
 set(MODMESH_SOURCES
     src/modmesh.cpp
@@ -75,5 +79,8 @@ set(MODMESH_PY_PATH "${PROJECT_SOURCE_DIR}/modmesh")
 add_custom_target(_modmesh_py
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:_modmesh> ${MODMESH_PY_PATH}
     DEPENDS _modmesh)
+
+message(STATUS "CMAKE_INSTALL_INCLUDEDIR: ${CMAKE_INSTALL_INCLUDEDIR}")
+install(DIRECTORY ${MODMESH_INCLUDE_DIR}/modmesh DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
