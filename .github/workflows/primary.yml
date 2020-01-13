@@ -1,4 +1,4 @@
-name: main_build
+name: primary
 
 on: [push]
 
