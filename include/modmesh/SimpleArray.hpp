@@ -48,8 +48,6 @@ public:
 
     using value_type = T;
     using shape_type = small_vector<size_t>;
-    using iterator = T *;
-    using const_iterator = T const *;
 
     static constexpr size_t ITEMSIZE = sizeof(value_type);
 
@@ -180,6 +178,9 @@ public:
     size_t nbytes() const noexcept { return m_buffer ? m_buffer->nbytes() : 0; }
     size_t size() const noexcept { return nbytes() / ITEMSIZE; }
 
+    using iterator = T *;
+    using const_iterator = T const *;
+
     iterator begin() noexcept { return data(); }
     iterator end() noexcept { return data() + size(); }
     const_iterator begin() const noexcept { return data(); }
@@ -224,10 +225,10 @@ public:
     value_type       & operator()(Args ... args)       { return data(buffer_offset(m_stride, args...)); }
 
     /* Backdoor */
-    value_type const * data() const { return buffer().template data<value_type>(); }
-    value_type       * data()       { return buffer().template data<value_type>(); }
     value_type const & data(size_t it) const { return data()[it]; }
     value_type       & data(size_t it)       { return data()[it]; }
+    value_type const * data() const { return buffer().template data<value_type>(); }
+    value_type       * data()       { return buffer().template data<value_type>(); }
 
     ConcreteBuffer const & buffer() const { return *m_buffer; }
     ConcreteBuffer       & buffer()       { return *m_buffer; }
@@ -238,7 +239,8 @@ private:
     {
         if (it >= size())
         {
-            throw std::out_of_range("SimpleArray: index out of range");
+            std::ostringstream msgstream;
+            msgstream << "SimpleArray: index " << it << " is out of bounds with size " << size();
         }
     }
 

@@ -5,6 +5,11 @@
  * BSD-style license; see COPYING
  */
 
+/**
+ * \file This is a template library for the meshes for numerical calculations
+ * of partial differential equations.
+ */
+
 #include "modmesh/base.hpp"
 #include "modmesh/profile.hpp"
 #include "modmesh/grid.hpp"

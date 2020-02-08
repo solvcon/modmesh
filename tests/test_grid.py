@@ -7,18 +7,6 @@ import unittest
 import modmesh
 
 
-class ConcreteBufferTC(unittest.TestCase):
-
-    def test_ConcreteBuffer(self):
-
-        self.assertTrue(modmesh.ConcreteBuffer)
-
-    def test_construct(self):
-
-        buf = modmesh.ConcreteBuffer(10)
-        self.assertEqual(10, buf.nbytes)
-
-
 class StaticGridTC(unittest.TestCase):
 
     def test_ndim(self):

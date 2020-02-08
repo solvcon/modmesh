@@ -118,8 +118,9 @@ protected:
         );
     }
 
-    WrapBase(pybind11::module & mod, char const * pyname, char const * pydoc)
-      : m_cls(mod, pyname, pydoc)
+    template <typename... Extra>
+    WrapBase(pybind11::module & mod, char const * pyname, char const * pydoc, const Extra & ... extra)
+      : m_cls(mod, pyname, pydoc, extra ...)
     {}
 
 private:
@@ -137,7 +138,7 @@ WrapConcreteBuffer
     friend root_base_type;
 
     WrapConcreteBuffer(pybind11::module & mod, char const * pyname, char const * pydoc)
-      : root_base_type(mod, pyname, pydoc)
+      : root_base_type(mod, pyname, pydoc, pybind11::buffer_protocol())
     {
 
         namespace py = pybind11;
@@ -154,9 +155,36 @@ WrapConcreteBuffer
                 )
               , py::arg("nbytes")
             )
+            .def("clone", &wrapped_type::clone)
             .def_property_readonly("nbytes", &wrapped_type::nbytes)
+            .def("__len__", &wrapped_type::size)
+            .def(
+                "__getitem__"
+              , [](wrapped_type const & self, size_t it) { return self.at(it); }
+            )
+            .def(
+                "__setitem__"
+              , [](wrapped_type & self, size_t it, int8_t val)
+                {
+                    self.at(it) = val;
+                }
+            )
+            .def_buffer
+            (
+                [](wrapped_type & self)
+                {
+                    return py::buffer_info
+                    (
+                        self.data() /* Pointer to buffer */
+                      , sizeof(int8_t) /* Size of one scalar */
+                      , py::format_descriptor<char>::format() /* Python struct-style format descriptor */
+                      , 1 /* Number of dimensions */
+                      , { self.size() } /* Buffer dimensions */
+                      , { 1 } /* Strides (in bytes) for each index */
+                    );
+                }
+            )
         ;
-        std::cout << "YDEBUG pyname: " << pyname << std::endl;
     }
 
 }; /* end class WrapConcreteBuffer */
