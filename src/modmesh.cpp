@@ -6,28 +6,6 @@
 #include "modmesh/python/python.hpp" // Must be the first include.
 #include "modmesh/modmesh.hpp"
 
-namespace modmesh
-{
-
-namespace python
-{
-
-void initialize(pybind11::module & mod)
-{
-
-    WrapConcreteBuffer::commit(mod, "ConcreteBuffer", "ConcreteBuffer");
-    WrapStaticGrid1d::commit(mod);
-    WrapStaticGrid2d::commit(mod);
-    WrapStaticGrid3d::commit(mod);
-    WrapTimeRegistry::commit(mod);
-    mod.attr("time_registry") = mod.attr("TimeRegistry").attr("me");
-
-}
-
-} /* end namespace python */
-
-} /* end namespace modmesh */
-
 PYBIND11_MODULE(_modmesh, mod)
 {
     modmesh::python::initialize(mod);

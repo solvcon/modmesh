@@ -53,6 +53,7 @@ string(REPLACE "include/" "${CMAKE_CURRENT_SOURCE_DIR}/include/"
 
 set(MODMESH_PY_HEADERS
     include/modmesh/python/python.hpp
+    include/modmesh/python/common.hpp
 )
 string(REPLACE "include/" "${CMAKE_CURRENT_SOURCE_DIR}/include/"
        MODMESH_PY_HEADERS "${MODMESH_PY_HEADERS}")

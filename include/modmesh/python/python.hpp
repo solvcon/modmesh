@@ -6,11 +6,13 @@
  */
 
 #include <pybind11/pybind11.h> // Must be the first include.
+#include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
 #include "modmesh/modmesh.hpp"
+#include "modmesh/python/common.hpp"
 
 #ifdef __GNUG__
 #  define MODMESH_PYTHON_WRAPPER_VISIBILITY __attribute__((visibility("hidden")))
@@ -24,110 +26,36 @@ namespace modmesh
 namespace python
 {
 
-/**
- * Helper template for pybind11 class wrappers.
- */
-template
-<
-    class Wrapper
-  , class Wrapped
-  , class Holder = std::unique_ptr<Wrapped>
-  , class WrappedBase = Wrapped
->
-/*
- * Use CRTP to detect type error during compile time.
- */
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
-WrapBase
+WrapTimeRegistry
+  : public WrapBase< WrapTimeRegistry, TimeRegistry >
 {
 
 public:
 
-    using wrapper_type = Wrapper;
-    using wrapped_type = Wrapped;
-    using wrapped_base_type = WrappedBase;
-    using holder_type = Holder;
-    using root_base_type = WrapBase
-    <
-        wrapper_type
-      , wrapped_type
-      , holder_type
-      , wrapped_base_type
-    >;
-    using class_ = typename std::conditional_t
-    <
-        std::is_same< Wrapped, WrappedBase >::value
-      , pybind11::class_< wrapped_type, holder_type >
-      , pybind11::class_< wrapped_type, wrapped_base_type, holder_type >
-    >;
+    static constexpr char PYNAME[] = "TimeRegistry";
+    static constexpr char PYDOC[] = "TimeRegistry";
 
-    static wrapper_type & commit(pybind11::module & mod)
-    {
-        static wrapper_type derived(mod);
-        return derived;
-    }
-
-    static wrapper_type & commit(pybind11::module & mod, char const * pyname, char const * pydoc)
-    {
-        static wrapper_type derived(mod, pyname, pydoc);
-        return derived;
-    }
-
-    WrapBase() = delete;
-    WrapBase(WrapBase const & ) = default;
-    WrapBase(WrapBase       &&) = delete;
-    WrapBase & operator=(WrapBase const & ) = default;
-    WrapBase & operator=(WrapBase       &&) = delete;
-    ~WrapBase() = default;
-
-#define DECL_MM_PYBIND_CLASS_METHOD(METHOD) \
-    template< class... Args > \
-    /* NOLINTNEXTLINE(bugprone-macro-parentheses) */ \
-    wrapper_type & METHOD(Args&&... args) \
-    { \
-        m_cls.METHOD(std::forward<Args>(args)...); \
-        return *static_cast<wrapper_type*>(this); \
-    }
-
-    DECL_MM_PYBIND_CLASS_METHOD(def)
-    DECL_MM_PYBIND_CLASS_METHOD(def_buffer)
-    DECL_MM_PYBIND_CLASS_METHOD(def_readwrite)
-    DECL_MM_PYBIND_CLASS_METHOD(def_property)
-    DECL_MM_PYBIND_CLASS_METHOD(def_property_readonly)
-    DECL_MM_PYBIND_CLASS_METHOD(def_property_readonly_static)
-
-#undef DECL_MM_PYBIND_CLASS_METHOD
-
-    class_ & cls() { return m_cls; }
+    friend root_base_type;
 
 protected:
 
-    WrapBase(pybind11::module & mod)
-      : m_cls(mod, wrapper_type::PYNAME, wrapper_type::PYDOC)
+    WrapTimeRegistry(pybind11::module & mod) : root_base_type(mod)
     {
-        static_assert
-        (
-            std::is_convertible<decltype(wrapper_type::PYNAME), const char *>::value
-          , "wrapper_type::PYNAME is not char *"
-        );
-        static_assert
-        (
-            std::is_convertible<decltype(wrapper_type::PYDOC), const char *>::value
-          , "wrapper_type::PYDOC is not char *"
-        );
+
+        namespace py = pybind11;
+
+        (*this)
+            .def_property_readonly_static("me", [](py::object const &) -> wrapped_type& { return wrapped_type::me(); })
+            .def("report", &wrapped_type::report)
+        ;
+
+        mod.attr("time_registry") = mod.attr("TimeRegistry").attr("me");
+
     }
 
-    template <typename... Extra>
-    WrapBase(pybind11::module & mod, char const * pyname, char const * pydoc, const Extra & ... extra)
-      : m_cls(mod, pyname, pydoc, extra ...)
-    {}
-
-private:
-
-    class_ m_cls;
-
-}; /* end class WrapBase */
+}; /* end class WrapTimeRegistry */
 
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
@@ -188,6 +116,97 @@ WrapConcreteBuffer
     }
 
 }; /* end class WrapConcreteBuffer */
+
+template <typename T>
+class
+MODMESH_PYTHON_WRAPPER_VISIBILITY
+WrapSimpleArray
+  : public WrapBase< WrapSimpleArray<T>, SimpleArray<T> >
+{
+
+    using root_base_type = WrapBase< WrapSimpleArray<T>, SimpleArray<T> >;
+    using wrapped_type = typename root_base_type::wrapped_type;
+    using shape_type = typename wrapped_type::shape_type;
+
+    friend root_base_type;
+
+    WrapSimpleArray(pybind11::module & mod, char const * pyname, char const * pydoc)
+      : root_base_type(mod, pyname, pydoc, pybind11::buffer_protocol())
+    {
+
+        namespace py = pybind11;
+
+        (*this)
+            .def
+            (
+                py::init
+                (
+                    [](py::object const & shape)
+                    {
+                        return wrapped_type(get_shape(shape));
+                    }
+                )
+              , py::arg("shape")
+            )
+            .def_buffer
+            (
+                [](wrapped_type & self)
+                {
+                    std::vector<size_t> stride;
+                    for (size_t i : self.stride())
+                    {
+                        stride.push_back(i*sizeof(T));
+                    }
+                    return py::buffer_info
+                    (
+                        self.data() /* Pointer to buffer */
+                      , sizeof(T) /* Size of one scalar */
+                      , py::format_descriptor<T>::format() /* Python struct-style format descriptor */
+                      , self.ndim() /* Number of dimensions */
+                      , std::vector<size_t>(self.shape().begin(), self.shape().end()) /* Buffer dimensions */
+                      , stride /* Strides (in bytes) for each index */
+                    );
+                }
+            )
+            .def_property_readonly("nbytes", &wrapped_type::nbytes)
+            .def_property_readonly("size", &wrapped_type::size)
+            .def_property_readonly("itemsize", &wrapped_type::itemsize)
+            .def
+            (
+                "__getitem__"
+              , [](wrapped_type const & self, py::object const & shape)
+                {
+                    return self.at(get_shape(shape));
+                }
+            )
+            .def
+            (
+                "reshape"
+              , [](wrapped_type const & self, py::object const & shape)
+                {
+                    return self.reshape(get_shape(shape));
+                }
+            )
+        ;
+
+    }
+
+    static shape_type get_shape(pybind11::object const & shape_in)
+    {
+        namespace py = pybind11;
+        shape_type shape;
+        try
+        {
+            shape.push_back(shape_in.cast<size_t>());
+        }
+        catch (const py::cast_error &)
+        {
+            shape = shape_in.cast<std::vector<size_t>>();
+        }
+        return shape;
+    }
+
+}; /* end class WrapSimpleArray */
 
 template< typename Wrapper, typename GT >
 class
@@ -360,34 +379,28 @@ protected:
 
 }; /* end class WrapStaticGrid3d */
 
-class
-MODMESH_PYTHON_WRAPPER_VISIBILITY
-WrapTimeRegistry
-  : public WrapBase< WrapTimeRegistry, TimeRegistry >
+inline void initialize(pybind11::module & mod)
 {
 
-public:
+    WrapTimeRegistry::commit(mod);
 
-    static constexpr char PYNAME[] = "TimeRegistry";
-    static constexpr char PYDOC[] = "TimeRegistry";
+    WrapConcreteBuffer::commit(mod, "ConcreteBuffer", "ConcreteBuffer");
+    WrapSimpleArray<int8_t>::commit(mod, "SimpleArrayInt8", "SimpleArrayInt8");
+    WrapSimpleArray<int16_t>::commit(mod, "SimpleArrayInt16", "SimpleArrayInt16");
+    WrapSimpleArray<int32_t>::commit(mod, "SimpleArrayInt32", "SimpleArrayInt32");
+    WrapSimpleArray<int64_t>::commit(mod, "SimpleArrayInt64", "SimpleArrayInt64");
+    WrapSimpleArray<uint8_t>::commit(mod, "SimpleArrayUint8", "SimpleArrayUint8");
+    WrapSimpleArray<uint16_t>::commit(mod, "SimpleArrayUint16", "SimpleArrayUint16");
+    WrapSimpleArray<uint32_t>::commit(mod, "SimpleArrayUint32", "SimpleArrayUint32");
+    WrapSimpleArray<uint64_t>::commit(mod, "SimpleArrayUint64", "SimpleArrayUint64");
+    WrapSimpleArray<float>::commit(mod, "SimpleArrayFloat32", "SimpleArrayFloat32");
+    WrapSimpleArray<double>::commit(mod, "SimpleArrayFloat64", "SimpleArrayFloat64");
 
-    friend root_base_type;
+    WrapStaticGrid1d::commit(mod);
+    WrapStaticGrid2d::commit(mod);
+    WrapStaticGrid3d::commit(mod);
 
-protected:
-
-    WrapTimeRegistry(pybind11::module & mod) : root_base_type(mod)
-    {
-
-        namespace py = pybind11;
-
-        (*this)
-            .def_property_readonly_static("me", [](py::object const &) -> wrapped_type& { return wrapped_type::me(); })
-            .def("report", &wrapped_type::report)
-        ;
-
-    }
-
-}; /* end class WrapTimeRegistry */
+}
 
 } /* end namespace python */
 

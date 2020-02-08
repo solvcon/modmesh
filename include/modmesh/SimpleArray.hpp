@@ -35,6 +35,24 @@ size_t buffer_offset(S const & strides, Args ... args)
     return detail::buffer_offset_impl<0>(strides, args...);
 }
 
+inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<size_t> const & idx)
+{
+    if (stride.size() != idx.size())
+    {
+        std::ostringstream msgstream;
+        msgstream
+            << "stride size " << stride.size() << " != "
+            << "index size " << idx.size();
+        throw std::out_of_range(msgstream.str());
+    }
+    size_t offset = 0;
+    for (size_t it = 0 ; it < stride.size() ; ++it)
+    {
+        offset += stride[it] * idx[it];
+    }
+    return offset;
+}
+
 
 /**
  * Simple array type for contiguous memory storage. The copy semantics performs
@@ -106,7 +124,11 @@ public:
             const size_t nbytes = m_shape[0] * m_stride[0] * ITEMSIZE;
             if (nbytes != buffer->nbytes())
             {
-                std::runtime_error("SimpleArray: input buffer size differs from shape");
+                std::ostringstream msgstream;
+                msgstream
+                    << "SimpleArray: shape byte count " << nbytes
+                    << " differs from buffer " << buffer->nbytes();
+                throw std::runtime_error(msgstream.str());
             }
         }
     }
@@ -193,6 +215,22 @@ public:
 
     value_type const & at(size_t it) const { validate_range(it); return data(it); }
     value_type       & at(size_t it)       { validate_range(it); return data(it); }
+
+    value_type const & at(std::vector<size_t> const & idx) const { return at(shape_type(idx)); }
+    value_type       & at(std::vector<size_t> const & idx)       { return at(shape_type(idx)); }
+
+    value_type const & at(shape_type const & idx) const
+    {
+        const size_t offset = buffer_offset(idx);
+        validate_range(offset);
+        return data(offset);
+    }
+    value_type & at(shape_type const & idx)
+    {
+        const size_t offset = buffer_offset(idx);
+        validate_range(offset);
+        return data(offset);
+    }
 
     size_t ndim() const noexcept { return m_shape.size(); }
     shape_type const & shape() const { return m_shape; }

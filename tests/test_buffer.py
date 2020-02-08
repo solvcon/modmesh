@@ -42,4 +42,43 @@ class BasicTC(unittest.TestCase):
         self.assertEqual(list(range(100, 110)), ndarr.tolist())
         self.assertEqual(list(range(10)), list(buf2))
 
+    def test_SimpleArray(self):
+
+        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        ndarr = np.array(sarr, copy=False)
+
+        ndarr.fill(7)
+
+        self.assertEqual(2*3*4*8, sarr.nbytes)
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(7, sarr[i, j, k])
+
+        sarr2 = sarr.reshape(24)
+        self.assertEqual([7]*24, [sarr2[i] for i in range(24)])
+
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "SimpleArray: shape byte count 184 differs from buffer 192"
+        ):
+            sarr.reshape(23)
+
+    def test_SimpleArray_types(self):
+
+        self.assertEqual(6, modmesh.SimpleArrayInt8((2,3)).nbytes)
+        self.assertEqual(24, modmesh.SimpleArrayInt16((3,4)).nbytes)
+        self.assertEqual(28, modmesh.SimpleArrayInt32(7).nbytes)
+        self.assertEqual(2*3*4*8, modmesh.SimpleArrayInt64((2,3,4)).nbytes)
+
+        self.assertEqual(6, modmesh.SimpleArrayUint8((2,3)).nbytes)
+        self.assertEqual(24, modmesh.SimpleArrayUint16((3,4)).nbytes)
+        self.assertEqual(28, modmesh.SimpleArrayUint32(7).nbytes)
+        self.assertEqual(2*3*4*8, modmesh.SimpleArrayUint64((2,3,4)).nbytes)
+
+        self.assertEqual(2*3*4*5*4,
+                         modmesh.SimpleArrayFloat32((2,3,4,5)).nbytes)
+        self.assertEqual(13*8,
+                         modmesh.SimpleArrayFloat64(13).nbytes)
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
