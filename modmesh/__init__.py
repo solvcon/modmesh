@@ -8,9 +8,19 @@ three-dimensional space.
 
 
 __all__ = [
-    'ConcreteBuffer',
     'TimeRegistry',
     'time_registry',
+    'ConcreteBuffer',
+    'SimpleArrayInt8',
+    'SimpleArrayInt16',
+    'SimpleArrayInt32',
+    'SimpleArrayInt64',
+    'SimpleArrayUint8',
+    'SimpleArrayUint16',
+    'SimpleArrayUint32',
+    'SimpleArrayUint64',
+    'SimpleArrayFloat32',
+    'SimpleArrayFloat64',
     'StaticGrid1d',
     'StaticGrid2d',
     'StaticGrid3d',
@@ -18,9 +28,19 @@ __all__ = [
 
 
 from ._modmesh import (
-    ConcreteBuffer,
     TimeRegistry,
     time_registry,
+    ConcreteBuffer,
+    SimpleArrayInt8,
+    SimpleArrayInt16,
+    SimpleArrayInt32,
+    SimpleArrayInt64,
+    SimpleArrayUint8,
+    SimpleArrayUint16,
+    SimpleArrayUint32,
+    SimpleArrayUint64,
+    SimpleArrayFloat32,
+    SimpleArrayFloat64,
     StaticGrid1d,
     StaticGrid2d,
     StaticGrid3d,

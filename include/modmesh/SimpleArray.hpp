@@ -35,10 +35,27 @@ size_t buffer_offset(S const & strides, Args ... args)
     return detail::buffer_offset_impl<0>(strides, args...);
 }
 
+inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<size_t> const & idx)
+{
+    if (stride.size() != idx.size())
+    {
+        std::ostringstream ms;
+        ms << "stride size " << stride.size() << " != " << "index size " << idx.size();
+        throw std::out_of_range(ms.str());
+    }
+    size_t offset = 0;
+    for (size_t it = 0 ; it < stride.size() ; ++it)
+    {
+        offset += stride[it] * idx[it];
+    }
+    return offset;
+}
+
 
 /**
- * Simple array type for contiguous memory storage. The copy semantics performs
- * data copy. The move semantics invalidates the existing memory buffer.
+ * Simple array type for contiguous memory storage. Size does not change. The
+ * copy semantics performs data copy. The move semantics invalidates the
+ * existing memory buffer.
  */
 template < typename T >
 class SimpleArray
@@ -48,8 +65,6 @@ public:
 
     using value_type = T;
     using shape_type = small_vector<size_t>;
-    using iterator = T *;
-    using const_iterator = T const *;
 
     static constexpr size_t ITEMSIZE = sizeof(value_type);
 
@@ -108,7 +123,9 @@ public:
             const size_t nbytes = m_shape[0] * m_stride[0] * ITEMSIZE;
             if (nbytes != buffer->nbytes())
             {
-                std::runtime_error("SimpleArray: input buffer size differs from shape");
+                std::ostringstream ms;
+                ms << "SimpleArray: shape byte count " << nbytes << " differs from buffer " << buffer->nbytes();
+                throw std::runtime_error(ms.str());
             }
         }
     }
@@ -180,6 +197,9 @@ public:
     size_t nbytes() const noexcept { return m_buffer ? m_buffer->nbytes() : 0; }
     size_t size() const noexcept { return nbytes() / ITEMSIZE; }
 
+    using iterator = T *;
+    using const_iterator = T const *;
+
     iterator begin() noexcept { return data(); }
     iterator end() noexcept { return data() + size(); }
     const_iterator begin() const noexcept { return data(); }
@@ -192,6 +212,22 @@ public:
 
     value_type const & at(size_t it) const { validate_range(it); return data(it); }
     value_type       & at(size_t it)       { validate_range(it); return data(it); }
+
+    value_type const & at(std::vector<size_t> const & idx) const { return at(shape_type(idx)); }
+    value_type       & at(std::vector<size_t> const & idx)       { return at(shape_type(idx)); }
+
+    value_type const & at(shape_type const & idx) const
+    {
+        const size_t offset = buffer_offset(m_stride, idx);
+        validate_range(offset);
+        return data(offset);
+    }
+    value_type & at(shape_type const & idx)
+    {
+        const size_t offset = buffer_offset(m_stride, idx);
+        validate_range(offset);
+        return data(offset);
+    }
 
     size_t ndim() const noexcept { return m_shape.size(); }
     shape_type const & shape() const { return m_shape; }
@@ -224,10 +260,10 @@ public:
     value_type       & operator()(Args ... args)       { return data(buffer_offset(m_stride, args...)); }
 
     /* Backdoor */
-    value_type const * data() const { return buffer().template data<value_type>(); }
-    value_type       * data()       { return buffer().template data<value_type>(); }
     value_type const & data(size_t it) const { return data()[it]; }
     value_type       & data(size_t it)       { return data()[it]; }
+    value_type const * data() const { return buffer().template data<value_type>(); }
+    value_type       * data()       { return buffer().template data<value_type>(); }
 
     ConcreteBuffer const & buffer() const { return *m_buffer; }
     ConcreteBuffer       & buffer()       { return *m_buffer; }
@@ -238,12 +274,19 @@ private:
     {
         if (it >= size())
         {
-            throw std::out_of_range("SimpleArray: index out of range");
+            std::ostringstream ms;
+            ms << "SimpleArray: index " << it << " is out of bounds with size " << size();
+            throw std::out_of_range(ms.str());
         }
     }
 
+    /// Contiguous data buffer for the array.
     std::shared_ptr<ConcreteBuffer> m_buffer;
+    /// Each element in this vector is the number of element in the
+    /// corresponding dimension.
     shape_type m_shape;
+    /// Each element in this vector is the number of elements (not number of
+    /// bytes) to skip for advancing an index in the corresponding dimension.
     shape_type m_stride;
 
 }; /* end class SimpleArray */

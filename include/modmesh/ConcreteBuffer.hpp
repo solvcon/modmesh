@@ -51,30 +51,59 @@ public:
     ~ConcreteBuffer() = default;
 
     ConcreteBuffer() = delete;
-    ConcreteBuffer(ConcreteBuffer const & ) = delete;
-    ConcreteBuffer(ConcreteBuffer       &&) = delete;
+    ConcreteBuffer(ConcreteBuffer &&) = delete;
+    ConcreteBuffer & operator=(ConcreteBuffer &&) = delete;
+
+    ConcreteBuffer(ConcreteBuffer const & other)
+      : m_nbytes(other.m_nbytes)
+      , m_data(allocate(other.m_nbytes))
+    {
+        if (size() != other.size())
+        {
+            throw std::out_of_range("Buffer size mismatch");
+        }
+        std::copy_n(other.data(), size(), data());
+    }
 
     ConcreteBuffer & operator=(ConcreteBuffer const & other)
     {
         if (this != &other)
         {
             if (size() != other.size())
-            { throw std::out_of_range("Buffer size mismatch"); }
+            {
+                throw std::out_of_range("Buffer size mismatch");
+            }
             std::copy_n(other.data(), size(), data());
         }
         return *this;
     }
-
-    ConcreteBuffer & operator=(ConcreteBuffer &&) = delete;
 
     explicit operator bool() const noexcept { return bool(m_data); }
 
     size_t nbytes() const noexcept { return m_nbytes; }
     size_t size() const noexcept { return nbytes(); }
 
+    using iterator = int8_t *;
+    using const_iterator = int8_t const *;
+
+    iterator begin() noexcept { return data(); }
+    iterator end() noexcept { return data() + size(); }
+    const_iterator begin() const noexcept { return data(); }
+    const_iterator end() const noexcept { return data() + size(); }
+    const_iterator cbegin() const noexcept { return begin(); }
+    const_iterator cend() const noexcept { return end(); }
+
+    int8_t   operator[](size_t it) const { return data(it); }
+    int8_t & operator[](size_t it)       { return data(it); }
+
+    int8_t   at(size_t it) const { validate_range(it); return data(it); }
+    int8_t & at(size_t it)       { validate_range(it); return data(it); }
+
     /* Backdoor */
-    char const * data() const noexcept { return data<char>(); }
-    char       * data()       noexcept { return data<char>(); }
+    int8_t   data(size_t it) const { return data()[it]; }
+    int8_t & data(size_t it)       { return data()[it]; }
+    int8_t const * data() const noexcept { return data<int8_t>(); }
+    int8_t       * data()       noexcept { return data<int8_t>(); }
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     template<typename T> T const * data() const noexcept { return reinterpret_cast<T*>(m_data.get()); }
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -83,15 +112,25 @@ public:
 private:
 
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    using unique_ptr_type = std::unique_ptr<char, std::default_delete<char[]>>;
+    using unique_ptr_type = std::unique_ptr<int8_t, std::default_delete<int8_t[]>>;
     static_assert(sizeof(size_t) == sizeof(unique_ptr_type), "sizeof(Buffer::m_data) must be a word");
+
+    void validate_range(size_t it) const
+    {
+        if (it >= size())
+        {
+            std::ostringstream ms;
+            ms << "ConcreteBuffer: index " << it << " is out of bounds with size " << size();
+            throw std::out_of_range(ms.str());
+        }
+    }
 
     static unique_ptr_type allocate(size_t nbytes)
     {
         unique_ptr_type ret;
         if (0 != nbytes)
         {
-            ret = unique_ptr_type(new char[nbytes]);
+            ret = unique_ptr_type(new int8_t[nbytes]);
         }
         else
         {

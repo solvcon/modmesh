@@ -155,6 +155,24 @@ public:
         return *this;
     }
 
+    small_vector & operator=(std::vector<T> const & other)
+    {
+        if (size() < other.size())
+        {
+            std::copy(other.begin(), other.begin()+size(), begin());
+            for (size_t it = size() ; it < other.size() ; ++it)
+            {
+                push_back(other[it]);
+            }
+        }
+        else
+        {
+            std::copy(other.begin(), other.end(), begin());
+            m_size = other.size();
+        }
+        return *this;
+    }
+
     ~small_vector()
     {
         if (m_head != m_data.data() && m_head != nullptr)
@@ -195,7 +213,7 @@ public:
         m_capacity = N;
     }
 
-    void push_back(T && value)
+    void push_back(T const & value)
     {
         if (m_size == m_capacity)
         {
