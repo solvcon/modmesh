@@ -183,7 +183,7 @@ WrapSimpleArray
                       , stride /* Strides (in bytes) for each index */
                     );
                 }
-            )`
+            )
             .def_property_readonly
             (
                 "ndarray"
