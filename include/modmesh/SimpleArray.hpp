@@ -55,8 +55,9 @@ inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<si
 
 
 /**
- * Simple array type for contiguous memory storage. The copy semantics performs
- * data copy. The move semantics invalidates the existing memory buffer.
+ * Simple array type for contiguous memory storage. Size does not change. The
+ * copy semantics performs data copy. The move semantics invalidates the
+ * existing memory buffer.
  */
 template < typename T >
 class SimpleArray
@@ -221,13 +222,13 @@ public:
 
     value_type const & at(shape_type const & idx) const
     {
-        const size_t offset = buffer_offset(idx);
+        const size_t offset = buffer_offset(m_stride, idx);
         validate_range(offset);
         return data(offset);
     }
     value_type & at(shape_type const & idx)
     {
-        const size_t offset = buffer_offset(idx);
+        const size_t offset = buffer_offset(m_stride, idx);
         validate_range(offset);
         return data(offset);
     }

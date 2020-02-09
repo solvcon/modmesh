@@ -42,27 +42,41 @@ class BasicTC(unittest.TestCase):
         self.assertEqual(list(range(100, 110)), ndarr.tolist())
         self.assertEqual(list(range(10)), list(buf2))
 
+        ndarr2 = buf2.ndarray
+        buf2[5] = 19
+        self.assertEqual(19, ndarr2[5])
+
     def test_SimpleArray(self):
 
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
         ndarr = np.array(sarr, copy=False)
 
-        ndarr.fill(7)
+        self.assertEqual([2,3,4], sarr.shape)
+        self.assertEqual([12,4,1], sarr.stride)
+
+        np.ravel(ndarr)[:] = np.arange(24)
 
         self.assertEqual(2*3*4*8, sarr.nbytes)
+        v = 0
         for i in range(2):
             for j in range(3):
                 for k in range(4):
-                    self.assertEqual(7, sarr[i, j, k])
+                    self.assertEqual(v, sarr[i, j, k])
+                    v += 1
 
         sarr2 = sarr.reshape(24)
-        self.assertEqual([7]*24, [sarr2[i] for i in range(24)])
+        ndarr.fill(8)
+        self.assertEqual([8]*24, [sarr2[i] for i in range(24)])
 
         with self.assertRaisesRegex(
             RuntimeError,
             "SimpleArray: shape byte count 184 differs from buffer 192"
         ):
             sarr.reshape(23)
+
+        ndarr2 = sarr2.ndarray
+        sarr2[5] = 23
+        self.assertEqual(23, ndarr2[5])
 
     def test_SimpleArray_types(self):
 

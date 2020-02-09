@@ -112,6 +112,22 @@ WrapConcreteBuffer
                     );
                 }
             )
+            .def_property_readonly
+            (
+                "ndarray"
+              , [](wrapped_type & self)
+                {
+                    namespace py = pybind11;
+                    return py::array
+                    (
+                        py::detail::npy_format_descriptor<int8_t>::dtype()
+                      , { self.size() }
+                      , { 1 }
+                      , self.data()
+                      , py::cast(self.shared_from_this())
+                    );
+                }
+            )
         ;
     }
 
@@ -168,15 +184,58 @@ WrapSimpleArray
                     );
                 }
             )
+            .def_property_readonly
+            (
+                "ndarray"
+              , [](wrapped_type & self)
+                {
+                    namespace py = pybind11;
+                    std::vector<size_t> shape(self.shape().begin(), self.shape().end());
+                    std::vector<size_t> stride(self.stride().begin(), self.stride().end());
+                    for(size_t & v: stride) { v *= self.itemsize(); }
+                    return py::array
+                    (
+                        py::detail::npy_format_descriptor<T>::dtype()
+                      , shape
+                      , stride
+                      , self.data()
+                      , py::cast(self.buffer().shared_from_this())
+                    );
+                }
+            )
             .def_property_readonly("nbytes", &wrapped_type::nbytes)
             .def_property_readonly("size", &wrapped_type::size)
             .def_property_readonly("itemsize", &wrapped_type::itemsize)
+            .def_property_readonly
+            (
+                "shape"
+              , [](wrapped_type const & self)
+                {
+                    return std::vector<size_t>(self.shape().begin(), self.shape().end());
+                }
+            )
+            .def_property_readonly
+            (
+                "stride"
+              , [](wrapped_type const & self)
+                {
+                    return std::vector<size_t>(self.stride().begin(), self.stride().end());
+                }
+            )
             .def
             (
                 "__getitem__"
               , [](wrapped_type const & self, py::object const & shape)
                 {
                     return self.at(get_shape(shape));
+                }
+            )
+            .def
+            (
+                "__setitem__"
+              , [](wrapped_type & self, py::object const & shape, T val)
+                {
+                    self.at(get_shape(shape)) = val;
                 }
             )
             .def
@@ -385,6 +444,7 @@ inline void initialize(pybind11::module & mod)
     WrapTimeRegistry::commit(mod);
 
     WrapConcreteBuffer::commit(mod, "ConcreteBuffer", "ConcreteBuffer");
+
     WrapSimpleArray<int8_t>::commit(mod, "SimpleArrayInt8", "SimpleArrayInt8");
     WrapSimpleArray<int16_t>::commit(mod, "SimpleArrayInt16", "SimpleArrayInt16");
     WrapSimpleArray<int32_t>::commit(mod, "SimpleArrayInt32", "SimpleArrayInt32");
