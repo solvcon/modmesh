@@ -39,11 +39,9 @@ inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<si
 {
     if (stride.size() != idx.size())
     {
-        std::ostringstream msgstream;
-        msgstream
-            << "stride size " << stride.size() << " != "
-            << "index size " << idx.size();
-        throw std::out_of_range(msgstream.str());
+        std::ostringstream ms;
+        ms << "stride size " << stride.size() << " != " << "index size " << idx.size();
+        throw std::out_of_range(ms.str());
     }
     size_t offset = 0;
     for (size_t it = 0 ; it < stride.size() ; ++it)
@@ -125,11 +123,9 @@ public:
             const size_t nbytes = m_shape[0] * m_stride[0] * ITEMSIZE;
             if (nbytes != buffer->nbytes())
             {
-                std::ostringstream msgstream;
-                msgstream
-                    << "SimpleArray: shape byte count " << nbytes
-                    << " differs from buffer " << buffer->nbytes();
-                throw std::runtime_error(msgstream.str());
+                std::ostringstream ms;
+                ms << "SimpleArray: shape byte count " << nbytes << " differs from buffer " << buffer->nbytes();
+                throw std::runtime_error(ms.str());
             }
         }
     }
@@ -278,13 +274,19 @@ private:
     {
         if (it >= size())
         {
-            std::ostringstream msgstream;
-            msgstream << "SimpleArray: index " << it << " is out of bounds with size " << size();
+            std::ostringstream ms;
+            ms << "SimpleArray: index " << it << " is out of bounds with size " << size();
+            throw std::out_of_range(ms.str());
         }
     }
 
+    /// Contiguous data buffer for the array.
     std::shared_ptr<ConcreteBuffer> m_buffer;
+    /// Each element in this vector is the number of element in the
+    /// corresponding dimension.
     shape_type m_shape;
+    /// Each element in this vector is the number of elements (not number of
+    /// bytes) to skip for advancing an index in the corresponding dimension.
     shape_type m_stride;
 
 }; /* end class SimpleArray */

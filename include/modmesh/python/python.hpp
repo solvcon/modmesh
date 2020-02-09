@@ -120,11 +120,11 @@ WrapConcreteBuffer
                     namespace py = pybind11;
                     return py::array
                     (
-                        py::detail::npy_format_descriptor<int8_t>::dtype()
-                      , { self.size() }
-                      , { 1 }
-                      , self.data()
-                      , py::cast(self.shared_from_this())
+                        py::detail::npy_format_descriptor<int8_t>::dtype() /* Numpy dtype */
+                      , { self.size() } /* Buffer dimensions */
+                      , { 1 } /* Strides (in bytes) for each index */
+                      , self.data() /* Pointer to buffer */
+                      , py::cast(self.shared_from_this()) /* Owning Python object */
                     );
                 }
             )
@@ -159,7 +159,7 @@ WrapSimpleArray
                 (
                     [](py::object const & shape)
                     {
-                        return wrapped_type(get_shape(shape));
+                        return wrapped_type(make_shape(shape));
                     }
                 )
               , py::arg("shape")
@@ -183,11 +183,11 @@ WrapSimpleArray
                       , stride /* Strides (in bytes) for each index */
                     );
                 }
-            )
+            )`
             .def_property_readonly
             (
                 "ndarray"
-              , [](wrapped_type & self)
+              , [](wrapped_type const & self)
                 {
                     namespace py = pybind11;
                     std::vector<size_t> shape(self.shape().begin(), self.shape().end());
@@ -195,11 +195,11 @@ WrapSimpleArray
                     for(size_t & v: stride) { v *= self.itemsize(); }
                     return py::array
                     (
-                        py::detail::npy_format_descriptor<T>::dtype()
-                      , shape
-                      , stride
-                      , self.data()
-                      , py::cast(self.buffer().shared_from_this())
+                        py::detail::npy_format_descriptor<T>::dtype() /* Numpy dtype */
+                      , shape /* Buffer dimensions */
+                      , stride /* Strides (in bytes) for each index */
+                      , self.data() /* Pointer to buffer */
+                      , py::cast(self.buffer().shared_from_this()) /* Owning Python object */
                     );
                 }
             )
@@ -211,7 +211,12 @@ WrapSimpleArray
                 "shape"
               , [](wrapped_type const & self)
                 {
-                    return std::vector<size_t>(self.shape().begin(), self.shape().end());
+                    py::tuple ret(self.shape().size());
+                    for (size_t i=0; i<self.shape().size(); ++i)
+                    {
+                        ret[i] = self.shape()[i];
+                    }
+                    return ret;
                 }
             )
             .def_property_readonly
@@ -219,23 +224,47 @@ WrapSimpleArray
                 "stride"
               , [](wrapped_type const & self)
                 {
-                    return std::vector<size_t>(self.stride().begin(), self.stride().end());
+                    py::tuple ret(self.stride().size());
+                    for (size_t i=0; i<self.stride().size(); ++i)
+                    {
+                        ret[i] = self.stride()[i];
+                    }
+                    return ret;
                 }
             )
+            .def("__len__", &wrapped_type::size)
             .def
             (
                 "__getitem__"
-              , [](wrapped_type const & self, py::object const & shape)
+              , [](wrapped_type const & self, py::object const & key)
                 {
-                    return self.at(get_shape(shape));
+                    try
+                    {
+                        size_t const it = key.cast<size_t>();
+                        return self.at(it);
+                    }
+                    catch (const py::cast_error &)
+                    {
+                        shape_type const idx(key.cast<std::vector<size_t>>());
+                        return self.at(idx);
+                    }
                 }
             )
             .def
             (
                 "__setitem__"
-              , [](wrapped_type & self, py::object const & shape, T val)
+              , [](wrapped_type & self, py::object const & key, T val)
                 {
-                    self.at(get_shape(shape)) = val;
+                    try
+                    {
+                        size_t const it = key.cast<size_t>();
+                        self.at(it) = val;
+                    }
+                    catch (const py::cast_error &)
+                    {
+                        shape_type const idx(key.cast<std::vector<size_t>>());
+                        self.at(idx) = val;
+                    }
                 }
             )
             .def
@@ -243,14 +272,14 @@ WrapSimpleArray
                 "reshape"
               , [](wrapped_type const & self, py::object const & shape)
                 {
-                    return self.reshape(get_shape(shape));
+                    return self.reshape(make_shape(shape));
                 }
             )
         ;
 
     }
 
-    static shape_type get_shape(pybind11::object const & shape_in)
+    static shape_type make_shape(pybind11::object const & shape_in)
     {
         namespace py = pybind11;
         shape_type shape;

@@ -51,22 +51,29 @@ class BasicTC(unittest.TestCase):
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
         ndarr = np.array(sarr, copy=False)
 
-        self.assertEqual([2,3,4], sarr.shape)
-        self.assertEqual([12,4,1], sarr.stride)
-
-        np.ravel(ndarr)[:] = np.arange(24)
-
         self.assertEqual(2*3*4*8, sarr.nbytes)
+        self.assertEqual((2,3,4), sarr.shape)
+        self.assertEqual((12,4,1), sarr.stride) # number of skip elements
+
+        np.ravel(ndarr)[:] = np.arange(24) # initialize contents
+
+        # Flat indexing interface.
+        self.assertEqual(24, len(sarr)) # number of elements
+        self.assertEqual(list(range(24)), [sarr[i] for i in range(24)])
+        self.assertEqual(list(range(24)), list(sarr))
+        # Multi-dimensional interface.
         v = 0
         for i in range(2):
             for j in range(3):
                 for k in range(4):
                     self.assertEqual(v, sarr[i, j, k])
                     v += 1
-
-        sarr2 = sarr.reshape(24)
-        ndarr.fill(8)
-        self.assertEqual([8]*24, [sarr2[i] for i in range(24)])
+        v = 100
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    sarr[i, j, k] = v
+                    v += 1
 
         with self.assertRaisesRegex(
             RuntimeError,
@@ -74,9 +81,18 @@ class BasicTC(unittest.TestCase):
         ):
             sarr.reshape(23)
 
+        sarr2 = sarr.reshape(24)
+        self.assertEqual((24,), sarr2.shape)
+        self.assertEqual(np.arange(100,124).tolist(), [sarr2[i] for i in range(24)])
+        self.assertEqual(np.arange(100,124).tolist(), list(sarr2))
+
         ndarr2 = sarr2.ndarray
-        sarr2[5] = 23
-        self.assertEqual(23, ndarr2[5])
+        for i in range(24):
+            sarr2[i] = 200 + i
+        self.assertEqual(np.arange(200,224).tolist(), ndarr2.tolist())
+
+        self.assertEqual((1, 24), sarr.reshape((1, 24)).shape)
+        self.assertEqual((12, 2), sarr.reshape((12, 2)).shape)
 
     def test_SimpleArray_types(self):
 

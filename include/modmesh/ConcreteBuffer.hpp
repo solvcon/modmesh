@@ -119,9 +119,9 @@ private:
     {
         if (it >= size())
         {
-            std::ostringstream msgstream;
-            msgstream << "ConcreteBuffer: index " << it << " is out of bounds with size " << size();
-            throw std::out_of_range(msgstream.str());
+            std::ostringstream ms;
+            ms << "ConcreteBuffer: index " << it << " is out of bounds with size " << size();
+            throw std::out_of_range(ms.str());
         }
     }
 
