@@ -1,6 +1,10 @@
-name: primary
+name: modmesh_pytest
 
-on: [push]
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '34 17 * * *'
 
 jobs:
   build:
