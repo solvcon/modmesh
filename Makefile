@@ -50,6 +50,10 @@ cmakeclean:
 pytest: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
 	env PYTHONPATH=$(MODMESH_ROOT) $(PYTEST) $(PYTEST_OPTS) tests/
 
+.PHONY: flake8
+flake8:
+	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) flake8
+
 .PHONY: cmake
 cmake: $(BUILD_PATH)/Makefile
 
