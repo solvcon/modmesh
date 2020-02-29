@@ -12,101 +12,18 @@
 namespace modmesh
 {
 
-#if __APPLE__
-
-#include <assert.h>
-#include <CoreServices/CoreServices.h>
-#include <mach/mach.h>
-#include <mach/mach_time.h>
-
-struct StopWatchMac
-{
-
-    StopWatchMac()
-    {
-        mach_timebase_info(&m_tbinfo);
-        lap();
-    }
-
-    double lap()
-    {
-        m_start = m_end;
-        m_end = mach_absolute_time();
-        uint64_t elapsed = m_end - m_start;
-        return elapsed * m_tbinfo.numer / m_tbinfo.denom * 1.e-9;
-    }
-
-    /// A global singleton.
-    static StopWatchMac & me()
-    {
-        static StopWatchMac instance;
-        return instance;
-    }
-
-    mach_timebase_info_data_t m_tbinfo;
-    uint64_t m_start = 0;
-    uint64_t m_end = 0;
-
-}; /* end struct StopWatchMac */
-
-#elif __linux__
-
-#include <time.h>
-
-struct StopWatchLinux
-{
-    StopWatchLinux()
-    {
-        clock_getres(CLOCK_MONOTONIC, &m_res);
-        lap();
-    }
-
-    double lap()
-    {
-        m_start = m_end;
-        clock_gettime(CLOCK_MONOTONIC, &m_end);
-        return diff(m_start, m_end) * 1.e-9;
-    }
-
-    int64_t diff(timespec const & t1, timespec const & t2)
-    {
-        timespec temp;
-        int64_t nsec;
-        if ((t2.tv_nsec - t1.tv_nsec)<0)
-        {
-            nsec = 1000000000 + t2.tv_nsec - t1.tv_nsec;
-            nsec += 1000000000 * (t2.tv_sec - t1.tv_sec - 1);
-        }
-        else
-        {
-            nsec = t2.tv_nsec - t1.tv_nsec;
-            nsec += 1000000000 * (t2.tv_sec - t1.tv_sec);
-        }
-        return nsec;
-    }
-
-    /// A global singleton.
-    static StopWatchLinux & me()
-    {
-        static StopWatchLinux instance;
-        return instance;
-    }
-
-    timespec m_res;
-    timespec m_start;
-    timespec m_end;
-
-}; /* end struct StopWatchLinux */
-
-#endif
-
+/**
+ * Simple timer for wall time using high-resolution clock.
+ */
 class StopWatch
 {
 
-public:
+private:
 
     using clock_type = std::chrono::high_resolution_clock;
     using time_type = std::chrono::time_point<clock_type>;
+
+public:
 
     /// A global singleton.
     static StopWatch & me()
@@ -115,10 +32,7 @@ public:
         return instance;
     }
 
-    StopWatch()
-    {
-        lap();
-    }
+    StopWatch() { lap(); }
 
     StopWatch(StopWatch const & ) = default;
     StopWatch(StopWatch       &&) = default;
@@ -136,6 +50,9 @@ public:
         return std::chrono::duration<double>(m_end - m_start).count();
     }
 
+    /**
+     * Return resolution in second.
+     */
     static constexpr double resolution()
     {
         return double(clock_type::period::num) / double(clock_type::period::den);
@@ -143,7 +60,6 @@ public:
 
 private:
 
-    double m_res;
     time_type m_start;
     time_type m_end;
 
