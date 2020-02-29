@@ -86,8 +86,7 @@ add_custom_target(_modmesh_py
 message(STATUS "CMAKE_INSTALL_INCLUDEDIR: ${CMAKE_INSTALL_INCLUDEDIR}")
 install(DIRECTORY ${MODMESH_INCLUDE_DIR}/modmesh DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-add_custom_target(flake8 DEPENDS _modmesh_py)
-
+add_custom_target(flake8)
 flake8("flake8")
 
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
