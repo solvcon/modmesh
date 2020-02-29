@@ -21,20 +21,19 @@ class StopWatchTC(unittest.TestCase):
         sw = modmesh.stop_watch
         self.assertGreater(1.e-6, sw.resolution)
 
-    def test_lap_10millisecond_with_sleep(self):
+    def test_lap_with_sleep(self):
 
         sw = modmesh.stop_watch
 
         # Mark start
         sw.lap()
 
-        time.sleep(0.1)
+        time.sleep(0.01)
 
         elapsed = sw.lap()
-        self.assertGreater(elapsed, 0.1)
+        self.assertGreater(elapsed, 0.01)
         # Don't test for the upper bound. CI doesn't like it (to be specific,
         # mac runner of github action).
-        #self.assertLess(elapsed, 0.11)
 
 
 class TimeRegistryTC(unittest.TestCase):
