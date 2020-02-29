@@ -7,7 +7,12 @@ three-dimensional space.
 """
 
 
+# Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
+
+
 __all__ = [
+    'StopWatch',
+    'stop_watch',
     'TimeRegistry',
     'time_registry',
     'ConcreteBuffer',
@@ -27,7 +32,14 @@ __all__ = [
 ]
 
 
+# A hidden loophole to impolementation; it should only be used for testing
+# during development.
+from . import _modmesh as _impl  # noqa: F401
+
+
 from ._modmesh import (
+    StopWatch,
+    stop_watch,
     TimeRegistry,
     time_registry,
     ConcreteBuffer,

@@ -7,52 +7,23 @@
 
 #include "modmesh/base.hpp"
 
-/*
- * MODMESH_PROFILE defined: Enable profiling API.
- */
-#ifdef MODMESH_PROFILE
-
-#define MODMESH_TIME(NAME) \
-    ScopedTimer local_scoped_timer_ ## __LINE__(NAME);
-
-/*
- * No MODMESH_PROFILE defined: Disable profiling API.
- */
-#else // MODMESH_PROFILE
-
-#define MODMESH_TIME(NAME)
-
-#endif // MODMESH_PROFILE
-/*
- * End MODMESH_PROFILE.
- */
+#include <chrono>
 
 namespace modmesh
 {
 
-#if __APPLE__
-
-#include <assert.h>
-#include <CoreServices/CoreServices.h>
-#include <mach/mach.h>
-#include <mach/mach_time.h>
-
-struct StopWatch
+/**
+ * Simple timer for wall time using high-resolution clock.
+ */
+class StopWatch
 {
 
-    StopWatch()
-    {
-        mach_timebase_info(&m_tbinfo);
-        lap();
-    }
+private:
 
-    double lap()
-    {
-        m_start = m_end;
-        m_end = mach_absolute_time();
-        uint64_t elapsed = m_end - m_start;
-        return elapsed * m_tbinfo.numer / m_tbinfo.denom * 1.e-9;
-    }
+    using clock_type = std::chrono::high_resolution_clock;
+    using time_type = std::chrono::time_point<clock_type>;
+
+public:
 
     /// A global singleton.
     static StopWatch & me()
@@ -61,62 +32,38 @@ struct StopWatch
         return instance;
     }
 
-    mach_timebase_info_data_t m_tbinfo;
-    uint64_t m_start = 0;
-    uint64_t m_end = 0;
+    StopWatch() { lap(); }
 
-}; /* end struct StopWatch */
+    StopWatch(StopWatch const & ) = default;
+    StopWatch(StopWatch       &&) = default;
+    StopWatch & operator=(StopWatch const & ) = default;
+    StopWatch & operator=(StopWatch       &&) = default;
+    ~StopWatch() = default;
 
-#elif __linux__
-
-#include <time.h>
-
-struct StopWatch
-{
-    StopWatch()
-    {
-        clock_getres(CLOCK_PROCESS_CPUTIME_ID, &m_res);
-        lap();
-    }
-
+    /**
+     * Return seconds between laps.
+     */
     double lap()
     {
         m_start = m_end;
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &m_end);
-        return diff(m_start, m_end) * 1.e-9;
+        m_end = clock_type::now();
+        return std::chrono::duration<double>(m_end - m_start).count();
     }
 
-    int64_t diff(timespec const & t1, timespec const & t2)
+    /**
+     * Return resolution in second.
+     */
+    static constexpr double resolution()
     {
-        timespec temp;
-        int64_t nsec;
-        if ((t2.tv_nsec - t1.tv_nsec)<0)
-        {
-            nsec = 1000000000 + t2.tv_nsec - t1.tv_nsec;
-            nsec += 1000000000 * (t2.tv_sec - t1.tv_sec - 1);
-        }
-        else
-        {
-            nsec = t2.tv_nsec - t1.tv_nsec;
-            nsec += 1000000000 * (t2.tv_sec - t1.tv_sec);
-        }
-        return nsec;
+        return double(clock_type::period::num) / double(clock_type::period::den);
     }
 
-    /// A global singleton.
-    static StopWatch & me()
-    {
-        static StopWatch instance;
-        return instance;
-    }
+private:
 
-    timespec m_res;
-    timespec m_start;
-    timespec m_end;
+    time_type m_start;
+    time_type m_end;
 
 }; /* end struct StopWatch */
-
-#endif
 
 struct TimedEntry
 {
@@ -196,5 +143,25 @@ struct ScopedTimer
 }; /* end struct ScopedTimer */
 
 } /* end namespace modmesh */
+
+/*
+ * MODMESH_PROFILE defined: Enable profiling API.
+ */
+#ifdef MODMESH_PROFILE
+
+#define MODMESH_TIME(NAME) \
+    ScopedTimer _local_scoped_timer_ ## __LINE__(NAME);
+
+/*
+ * No MODMESH_PROFILE defined: Disable profiling API.
+ */
+#else // MODMESH_PROFILE
+
+#define MODMESH_TIME(NAME)
+
+#endif // MODMESH_PROFILE
+/*
+ * End MODMESH_PROFILE.
+ */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

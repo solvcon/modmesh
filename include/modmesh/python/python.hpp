@@ -28,6 +28,46 @@ namespace python
 
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
+WrapStopWatch
+  : public WrapBase< WrapStopWatch, StopWatch >
+{
+
+public:
+
+    static constexpr char PYNAME[] = "StopWatch";
+    static constexpr char PYDOC[] = "StopWatch";
+
+    friend root_base_type;
+
+protected:
+
+    WrapStopWatch(pybind11::module & mod) : root_base_type(mod)
+    {
+
+        namespace py = pybind11;
+
+        (*this)
+            .def_property_readonly_static
+            (
+                "me"
+              , [](py::object const &) -> wrapped_type& { return wrapped_type::me(); }
+            )
+            .def("lap", &wrapped_type::lap)
+            .def_property_readonly_static
+            (
+                "resolution"
+              , [](py::object const &) -> double { return wrapped_type::resolution(); }
+            )
+        ;
+
+        mod.attr("stop_watch") = mod.attr("StopWatch").attr("me");
+
+    }
+
+}; /* end class WrapStopWatch */
+
+class
+MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapTimeRegistry
   : public WrapBase< WrapTimeRegistry, TimeRegistry >
 {
@@ -47,7 +87,11 @@ protected:
         namespace py = pybind11;
 
         (*this)
-            .def_property_readonly_static("me", [](py::object const &) -> wrapped_type& { return wrapped_type::me(); })
+            .def_property_readonly_static
+            (
+                "me"
+              , [](py::object const &) -> wrapped_type& { return wrapped_type::me(); }
+            )
             .def("report", &wrapped_type::report)
         ;
 
@@ -470,6 +514,7 @@ protected:
 inline void initialize(pybind11::module & mod)
 {
 
+    WrapStopWatch::commit(mod);
     WrapTimeRegistry::commit(mod);
 
     WrapConcreteBuffer::commit(mod, "ConcreteBuffer", "ConcreteBuffer");
