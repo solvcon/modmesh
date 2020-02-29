@@ -43,6 +43,15 @@ jobs:
     - name: dependency (manual)
       run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
 
+    - name: show dependency
+      run: |
+        gcc --version
+        cmake --version
+        python3 --version
+        python3 -c 'import numpy ; print(numpy.__version__)'
+        pytest --version
+        flake8 --version
+
     - name: buildext
       run: make buildext VERBOSE=1 CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
 
