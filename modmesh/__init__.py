@@ -8,6 +8,8 @@ three-dimensional space.
 
 
 __all__ = [
+    'StopWatch',
+    'stop_watch',
     'TimeRegistry',
     'time_registry',
     'ConcreteBuffer',
@@ -27,7 +29,13 @@ __all__ = [
 ]
 
 
+# A hidden loophole to impolementation; it should only be used for testing
+# during development.
+from . import _modmesh as _impl
+
 from ._modmesh import (
+    StopWatch,
+    stop_watch,
     TimeRegistry,
     time_registry,
     ConcreteBuffer,
