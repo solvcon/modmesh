@@ -32,13 +32,13 @@ jobs:
             python3.7 python3.7-dev python3.7-venv
         sudo rm /usr/bin/python3
         sudo ln -s python3.7 /usr/bin/python3
-        sudo pip3 install numpy pytest
+        sudo pip3 install numpy pytest flake8
 
     - name: dependency (macos)
       if: matrix.os == 'macos-latest'
       run: |
         brew install python3 numpy
-        pip3 install -U pytest
+        pip3 install -U pytest flake8
 
     - name: dependency (manual)
       run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
@@ -48,3 +48,6 @@ jobs:
 
     - name: pytest
       run: make pytest VERBOSE=1 CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
+
+    - name: flake8
+      run: make flake8 VERBOSE=1 CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}

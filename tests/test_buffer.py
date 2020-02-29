@@ -52,13 +52,13 @@ class BasicTC(unittest.TestCase):
         ndarr = np.array(sarr, copy=False)
 
         self.assertEqual(2*3*4*8, sarr.nbytes)
-        self.assertEqual((2,3,4), sarr.shape)
-        self.assertEqual((12,4,1), sarr.stride) # number of skip elements
+        self.assertEqual((2, 3, 4), sarr.shape)
+        self.assertEqual((12, 4, 1), sarr.stride)  # number of skip elements
 
-        np.ravel(ndarr)[:] = np.arange(24) # initialize contents
+        np.ravel(ndarr)[:] = np.arange(24)  # initialize contents
 
         # Flat indexing interface.
-        self.assertEqual(24, len(sarr)) # number of elements
+        self.assertEqual(24, len(sarr))  # number of elements
         self.assertEqual(list(range(24)), [sarr[i] for i in range(24)])
         self.assertEqual(list(range(24)), list(sarr))
         # Multi-dimensional interface.
@@ -83,31 +83,32 @@ class BasicTC(unittest.TestCase):
 
         sarr2 = sarr.reshape(24)
         self.assertEqual((24,), sarr2.shape)
-        self.assertEqual(np.arange(100,124).tolist(), [sarr2[i] for i in range(24)])
-        self.assertEqual(np.arange(100,124).tolist(), list(sarr2))
+        self.assertEqual(np.arange(100, 124).tolist(),
+                         [sarr2[i] for i in range(24)])
+        self.assertEqual(np.arange(100, 124).tolist(), list(sarr2))
 
         ndarr2 = sarr2.ndarray
         for i in range(24):
             sarr2[i] = 200 + i
-        self.assertEqual(np.arange(200,224).tolist(), ndarr2.tolist())
+        self.assertEqual(np.arange(200, 224).tolist(), ndarr2.tolist())
 
         self.assertEqual((1, 24), sarr.reshape((1, 24)).shape)
         self.assertEqual((12, 2), sarr.reshape((12, 2)).shape)
 
     def test_SimpleArray_types(self):
 
-        self.assertEqual(6, modmesh.SimpleArrayInt8((2,3)).nbytes)
-        self.assertEqual(24, modmesh.SimpleArrayInt16((3,4)).nbytes)
+        self.assertEqual(6, modmesh.SimpleArrayInt8((2, 3)).nbytes)
+        self.assertEqual(24, modmesh.SimpleArrayInt16((3, 4)).nbytes)
         self.assertEqual(28, modmesh.SimpleArrayInt32(7).nbytes)
-        self.assertEqual(2*3*4*8, modmesh.SimpleArrayInt64((2,3,4)).nbytes)
+        self.assertEqual(2*3*4*8, modmesh.SimpleArrayInt64((2, 3, 4)).nbytes)
 
-        self.assertEqual(6, modmesh.SimpleArrayUint8((2,3)).nbytes)
-        self.assertEqual(24, modmesh.SimpleArrayUint16((3,4)).nbytes)
+        self.assertEqual(6, modmesh.SimpleArrayUint8((2, 3)).nbytes)
+        self.assertEqual(24, modmesh.SimpleArrayUint16((3, 4)).nbytes)
         self.assertEqual(28, modmesh.SimpleArrayUint32(7).nbytes)
-        self.assertEqual(2*3*4*8, modmesh.SimpleArrayUint64((2,3,4)).nbytes)
+        self.assertEqual(2*3*4*8, modmesh.SimpleArrayUint64((2, 3, 4)).nbytes)
 
         self.assertEqual(2*3*4*5*4,
-                         modmesh.SimpleArrayFloat32((2,3,4,5)).nbytes)
+                         modmesh.SimpleArrayFloat32((2, 3, 4, 5)).nbytes)
         self.assertEqual(13*8,
                          modmesh.SimpleArrayFloat64(13).nbytes)
 

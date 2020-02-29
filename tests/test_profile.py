@@ -5,8 +5,6 @@
 import unittest
 import time
 
-import numpy as np
-
 import modmesh
 
 
