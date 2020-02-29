@@ -48,7 +48,7 @@ jobs:
         gcc --version
         cmake --version
         python3 --version
-        python3 -c 'import numpy ; print(numpy.__version__)'
+        python3 -c 'import numpy ; print("numpy.__version__:", numpy.__version__)'
         pytest --version
         flake8 --version
 
