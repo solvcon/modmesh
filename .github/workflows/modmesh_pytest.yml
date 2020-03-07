@@ -70,4 +70,4 @@ jobs:
       run: make pytest VERBOSE=1 USE_CLANG_TIDY=ON CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
 
     - name: flake8
-      run: make flake8 VERBOSE=1
+      run: make flake8 VERBOSE=1 CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}

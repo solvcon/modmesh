@@ -208,21 +208,6 @@ public:
 
 protected:
 
-    explicit WrapBase(pybind11::module & mod)
-      : m_cls(mod, wrapper_type::PYNAME, wrapper_type::PYDOC)
-    {
-        static_assert
-        (
-            std::is_convertible<decltype(wrapper_type::PYNAME), const char *>::value
-          , "wrapper_type::PYNAME is not char *"
-        );
-        static_assert
-        (
-            std::is_convertible<decltype(wrapper_type::PYDOC), const char *>::value
-          , "wrapper_type::PYDOC is not char *"
-        );
-    }
-
     template <typename... Extra>
     WrapBase(pybind11::module & mod, char const * pyname, char const * pydoc, const Extra & ... extra)
       : m_cls(mod, pyname, pydoc, extra ...)

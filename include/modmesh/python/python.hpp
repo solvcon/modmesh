@@ -34,16 +34,12 @@ WrapWrapperProfilerStatus
 
 public:
 
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static constexpr char PYNAME[] = "WrapperProfilerStatus";
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static constexpr char PYDOC[] = "WrapperProfilerStatus";
-
     friend root_base_type;
 
 protected:
 
-    explicit WrapWrapperProfilerStatus(pybind11::module & mod) : root_base_type(mod)
+    WrapWrapperProfilerStatus(pybind11::module & mod, char const * pyname, char const * pydoc)
+      : root_base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
@@ -73,16 +69,12 @@ WrapStopWatch
 
 public:
 
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static constexpr char PYNAME[] = "StopWatch";
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static constexpr char PYDOC[] = "StopWatch";
-
     friend root_base_type;
 
 protected:
 
-    explicit WrapStopWatch(pybind11::module & mod) : root_base_type(mod)
+    WrapStopWatch(pybind11::module & mod, char const * pyname, char const * pydoc)
+      : root_base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
@@ -116,16 +108,12 @@ WrapTimedEntry
 
 public:
 
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static constexpr char PYNAME[] = "TimedEntry";
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static constexpr char PYDOC[] = "TimedEntry";
-
     friend root_base_type;
 
 protected:
 
-    explicit WrapTimedEntry(pybind11::module & mod) : root_base_type(mod)
+    WrapTimedEntry(pybind11::module & mod, char const * pyname, char const * pydoc)
+      : root_base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
@@ -150,16 +138,12 @@ WrapTimeRegistry
 
 public:
 
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static constexpr char PYNAME[] = "TimeRegistry";
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static constexpr char PYDOC[] = "TimeRegistry";
-
     friend root_base_type;
 
 protected:
 
-    explicit WrapTimeRegistry(pybind11::module & mod) : root_base_type(mod)
+    WrapTimeRegistry(pybind11::module & mod, char const * pyname, char const * pydoc)
+      : root_base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
@@ -447,7 +431,8 @@ public:
 
 protected:
 
-    explicit WrapStaticGridBase(pybind11::module & mod) : base_type(mod)
+    WrapStaticGridBase(pybind11::module & mod, char const * pyname, char const * pydoc)
+      : base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
@@ -472,18 +457,14 @@ WrapStaticGrid1d
 
 public:
 
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static constexpr char PYNAME[] = "StaticGrid1d";
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static constexpr char PYDOC[] = "StaticGrid1d";
-
     friend root_base_type;
 
     using base_type = WrapStaticGridBase< WrapStaticGrid1d, StaticGrid1d >;
 
 protected:
 
-    explicit WrapStaticGrid1d(pybind11::module & mod) : base_type(mod)
+    WrapStaticGrid1d(pybind11::module & mod, char const * pyname, char const * pydoc)
+      : base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
@@ -566,18 +547,14 @@ WrapStaticGrid2d
 
 public:
 
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static constexpr char PYNAME[] = "StaticGrid2d";
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static constexpr char PYDOC[] = "StaticGrid2d";
-
     friend root_base_type;
 
     using base_type = WrapStaticGridBase< WrapStaticGrid2d, StaticGrid2d >;
 
 protected:
 
-    explicit WrapStaticGrid2d(pybind11::module & mod) : base_type(mod)
+    explicit WrapStaticGrid2d(pybind11::module & mod, char const * pyname, char const * pydoc)
+      : base_type(mod, pyname, pydoc)
     {}
 
 }; /* end class WrapStaticGrid2d */
@@ -590,18 +567,14 @@ WrapStaticGrid3d
 
 public:
 
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static constexpr char PYNAME[] = "StaticGrid3d";
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static constexpr char PYDOC[] = "StaticGrid3d";
-
     friend root_base_type;
 
     using base_type = WrapStaticGridBase< WrapStaticGrid3d, StaticGrid3d >;
 
 protected:
 
-    explicit WrapStaticGrid3d(pybind11::module & mod) : base_type(mod)
+    WrapStaticGrid3d(pybind11::module & mod, char const * pyname, char const * pydoc)
+      : base_type(mod, pyname, pydoc)
     {}
 
 }; /* end class WrapStaticGrid3d */
@@ -609,10 +582,10 @@ protected:
 inline void initialize(pybind11::module & mod)
 {
 
-    WrapWrapperProfilerStatus::commit(mod);
-    WrapStopWatch::commit(mod);
-    WrapTimedEntry::commit(mod);
-    WrapTimeRegistry::commit(mod);
+    WrapWrapperProfilerStatus::commit(mod, "WrapperProfilerStatus", "WrapperProfilerStatus");
+    WrapStopWatch::commit(mod, "StopWatch", "StopWatch");
+    WrapTimedEntry::commit(mod, "TimedEntry", "TimeEntry");
+    WrapTimeRegistry::commit(mod, "TimeRegistry", "TimeRegistry");
 
     WrapConcreteBuffer::commit(mod, "ConcreteBuffer", "ConcreteBuffer");
 
@@ -627,9 +600,9 @@ inline void initialize(pybind11::module & mod)
     WrapSimpleArray<float>::commit(mod, "SimpleArrayFloat32", "SimpleArrayFloat32");
     WrapSimpleArray<double>::commit(mod, "SimpleArrayFloat64", "SimpleArrayFloat64");
 
-    WrapStaticGrid1d::commit(mod);
-    WrapStaticGrid2d::commit(mod);
-    WrapStaticGrid3d::commit(mod);
+    WrapStaticGrid1d::commit(mod, "StaticGrid1d", "StaticGrid1d");
+    WrapStaticGrid2d::commit(mod, "StaticGrid2d", "StaticGrid2d");
+    WrapStaticGrid3d::commit(mod, "StaticGrid3d", "StaticGrid3d");
 
 }
 
