@@ -7,6 +7,7 @@
 
 #include "modmesh/base.hpp"
 
+#include <string>
 #include <chrono>
 
 namespace modmesh
@@ -25,14 +26,14 @@ private:
 
 public:
 
-    /// A global singleton.
+    /// A singleton.
     static StopWatch & me()
     {
         static StopWatch instance;
         return instance;
     }
 
-    StopWatch() { lap(); }
+    StopWatch() : m_start(clock_type::now()), m_stop(m_start) {}
 
     StopWatch(StopWatch const & ) = default;
     StopWatch(StopWatch       &&) = default;
@@ -45,10 +46,15 @@ public:
      */
     double lap()
     {
-        m_start = m_end;
-        m_end = clock_type::now();
-        return std::chrono::duration<double>(m_end - m_start).count();
+        m_start = m_stop;
+        m_stop = clock_type::now();
+        return std::chrono::duration<double>(m_stop - m_start).count();
     }
+
+    /**
+     * Return seconds between end and start.
+     */
+    double duration() const { return std::chrono::duration<double>(m_stop - m_start).count(); }
 
     /**
      * Return resolution in second.
@@ -61,21 +67,47 @@ public:
 private:
 
     time_type m_start;
-    time_type m_end;
+    time_type m_stop;
 
 }; /* end struct StopWatch */
 
-struct TimedEntry
+class TimedEntry
 {
+
+public:
+
+    size_t count() const { return m_count; }
+    double time() const { return m_time; }
+
+    double start() { return m_sw.lap(); }
+    double stop()
+    {
+        double const time = m_sw.lap();
+        add_time(time);
+        return time;
+    }
+
+    TimedEntry & add_time(double time)
+    {
+        ++m_count;
+        m_time += time;
+        return *this;
+    }
+
+private:
+
     size_t m_count = 0;
     double m_time = 0.0;
-}; /* end struct TimedEntry */
+    StopWatch m_sw;
+
+}; /* end class TimedEntry */
 
 class TimeRegistry
 {
 
 public:
 
+    /// The singleton.
     static TimeRegistry & me()
     {
         static TimeRegistry inst;
@@ -89,23 +121,44 @@ public:
         {
             ostm
                 << it->first << " : "
-                << "count = " << it->second.m_count << " , "
-                << "time = " << it->second.m_time << " (second)"
+                << "count = " << it->second.count() << " , "
+                << "time = " << it->second.time() << " (second)"
                 << std::endl;
         }
         return ostm.str();
     }
 
+    void add(std::string const & name, double time)
+    {
+        entry(name).add_time(time);
+    }
+
     void add(const char * name, double time)
+    {
+        add(std::string(name), time);
+    }
+
+    std::vector<std::string> names() const
+    {
+        std::vector<std::string> ret;
+        for (auto const & item : m_entry)
+        {
+            ret.push_back(item.first);
+        }
+        return ret;
+    }
+
+    TimedEntry & entry(std::string const & name)
     {
         auto it = m_entry.find(name);
         if (it == m_entry.end())
         {
-            it = std::get<0>(m_entry.insert({name, {0, 0.0}}));
+            it = std::get<0>(m_entry.insert({name, {}}));
         }
-        ++(it->second.m_count);
-        it->second.m_time += time;
+        return it->second;
     }
+
+    void clear() { m_entry.clear(); }
 
     ~TimeRegistry()
     {
@@ -121,7 +174,7 @@ private:
     TimeRegistry & operator=(TimeRegistry const & ) = delete;
     TimeRegistry & operator=(TimeRegistry       &&) = delete;
 
-    std::map<const char *, TimedEntry> m_entry;
+    std::map<std::string, TimedEntry> m_entry;
 
 }; /* end struct TimeRegistry */
 
