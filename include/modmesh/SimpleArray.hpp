@@ -108,7 +108,6 @@ public:
         }
     }
 
-    // NOLINTNEXTLINE(modernize-pass-by-value)
     explicit SimpleArray
     (
         small_vector<size_t> const & shape

@@ -160,7 +160,12 @@ public:
 
     void clear() { m_entry.clear(); }
 
-    ~TimeRegistry()
+    TimeRegistry(TimeRegistry const & ) = delete;
+    TimeRegistry(TimeRegistry       &&) = delete;
+    TimeRegistry & operator=(TimeRegistry const & ) = delete;
+    TimeRegistry & operator=(TimeRegistry       &&) = delete;
+
+    ~TimeRegistry() // NOLINT(modernize-use-equals-default)
     {
         // Uncomment for debugging.
         //std::cout << report();
@@ -169,31 +174,35 @@ public:
 private:
 
     TimeRegistry() = default;
-    TimeRegistry(TimeRegistry const & ) = delete;
-    TimeRegistry(TimeRegistry       &&) = delete;
-    TimeRegistry & operator=(TimeRegistry const & ) = delete;
-    TimeRegistry & operator=(TimeRegistry       &&) = delete;
 
     std::map<std::string, TimedEntry> m_entry;
 
 }; /* end struct TimeRegistry */
 
-struct ScopedTimer
+class ScopedTimer
 {
 
-    ScopedTimer() = delete;
+public:
 
-    ScopedTimer(const char * name) : m_name(name) {}
+    ScopedTimer() = delete;
+    ScopedTimer(ScopedTimer const & ) = delete;
+    ScopedTimer(ScopedTimer       &&) = delete;
+    ScopedTimer & operator=(ScopedTimer const & ) = delete;
+    ScopedTimer & operator=(ScopedTimer       &&) = delete;
+
+    explicit ScopedTimer(const char * name) : m_name(name) {}
 
     ~ScopedTimer()
     {
         TimeRegistry::me().add(m_name, m_sw.lap());
     }
 
+private:
+
     StopWatch m_sw;
     char const * m_name;
 
-}; /* end struct ScopedTimer */
+}; /* end class ScopedTimer */
 
 } /* end namespace modmesh */
 

@@ -1,0 +1,28 @@
+Checks: >
+    *,-clang-analyzer-alpha.*,-hicpp-*,
+    -modernize-use-trailing-return-type,
+    -modernize-loop-convert,
+    -modernize-use-nodiscard,
+    -cppcoreguidelines-avoid-magic-numbers,
+    -cppcoreguidelines-non-private-member-variables-in-classes,
+    -cppcoreguidelines-macro-usage,
+    -fuchsia-overloaded-operator,-fuchsia-default-arguments*,
+    hicpp-avoid-goto,hicpp-exception-baseclass,hicpp-multiway-paths-covered,
+    hicpp-no-assembler,hicpp-signed-bitwise,
+    -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+    -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+    -google-readability-todo,
+    -google-runtime-references,
+    -hicpp-signed-bitwise,
+    -llvm-header-guard,
+    -llvm-include-order,
+    -performance-noexcept-move-constructor,
+    -readability-named-parameter,
+    -readability-magic-numbers
+WarningsAsErrors: ''
+HeaderFilterRegex: 'modmesh.*'
+AnalyzeTemporaryDtors: false
+FormatStyle: google
+CheckOptions:
+  - key: cppcoreguidelines-macro-usage.AllowedRegexp
+    value: 'DECL_ST_*|SPACETIME_*|NPY_NO_DEPRECATED_API'
