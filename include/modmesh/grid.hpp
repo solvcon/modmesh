@@ -82,9 +82,9 @@ class StaticGrid1d
 
 public:
 
-    StaticGrid1d() : m_nx(0), m_coord(nullptr) {}
+    StaticGrid1d() : m_coord(nullptr) {}
 
-    StaticGrid1d(serial_type nx)
+    explicit StaticGrid1d(serial_type nx)
       : m_nx(nx)
       , m_coord(allocate(nx))
     {}
@@ -128,6 +128,7 @@ public:
     ~StaticGrid1d() = default;
 
     size_t nx() const { return m_nx; }
+    //NOLINTNEXTLINE(readability-const-return-type)
     real_type * const coord() const { return m_coord.get(); }
     real_type *       coord()       { return m_coord.get(); }
 
@@ -145,14 +146,17 @@ public:
 
 private:
 
-    std::unique_ptr<real_type[]> allocate(serial_type nx)
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+    static std::unique_ptr<real_type[]> allocate(serial_type nx)
     {
-        if (nx)
+        if (0 != nx)
         {
+            // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
             return std::unique_ptr<real_type[]>(new real_type[nx]);
         }
-        else
+        else // NOLINT(readability-else-after-return)
         {
+            // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
             return std::unique_ptr<real_type[]>();
         }
     }
@@ -165,7 +169,8 @@ private:
         }
     }
 
-    serial_type m_nx;
+    serial_type m_nx = 0;
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
     std::unique_ptr<real_type[]> m_coord;
 
 }; /* end class StaticGrid1d */

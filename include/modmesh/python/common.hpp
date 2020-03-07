@@ -208,7 +208,7 @@ public:
 
 protected:
 
-    WrapBase(pybind11::module & mod)
+    explicit WrapBase(pybind11::module & mod)
       : m_cls(mod, wrapper_type::PYNAME, wrapper_type::PYDOC)
     {
         static_assert
