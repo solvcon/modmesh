@@ -579,14 +579,79 @@ protected:
 
 }; /* end class WrapStaticGrid3d */
 
-inline void initialize(pybind11::module & mod)
+/**
+ * Take a pybind11 module and an initializing function and only run the
+ * initializing function once.
+ */
+template <typename T>
+class OneTimeInitializer
 {
-    auto import_numpy = []()
+
+public:
+
+    OneTimeInitializer(OneTimeInitializer const & ) = delete;
+    OneTimeInitializer(OneTimeInitializer       &&) = delete;
+    OneTimeInitializer & operator=(OneTimeInitializer const & ) = delete;
+    OneTimeInitializer & operator=(OneTimeInitializer       &&) = delete;
+    ~OneTimeInitializer() = default;
+
+    static OneTimeInitializer<T> & me()
     {
-        import_array2("cannot import numpy", false); // or numpy c api segfault.
-        return true;
-    };
-    if (!import_numpy()) { throw pybind11::error_already_set(); }
+        static OneTimeInitializer<T> instance;
+        return instance;
+    }
+
+    OneTimeInitializer<T> & operator()(
+        pybind11::module & mod
+      , bool import_numpy
+      , std::function<void(pybind11::module &)> const & initializer)
+    {
+        if (!initialized())
+        {
+            m_mod = &mod;
+            m_import_numpy = import_numpy;
+            m_initializer = initializer;
+            if (m_import_numpy)
+            {
+                numpy();
+            }
+            m_initializer(*m_mod);
+        }
+        m_initialized = true;
+        return *this;
+    }
+
+    pybind11::module const & mod() const { return *m_mod; }
+    pybind11::module       & mod()       { return *m_mod; }
+
+    bool initialized() const { return m_initialized && nullptr != m_mod; }
+
+private:
+
+    void numpy()
+    {
+        auto import_numpy = []()
+        {
+            import_array2("cannot import numpy", false); // or numpy c api segfault.
+            return true;
+        };
+        if (!import_numpy()) { throw pybind11::error_already_set(); }
+    }
+
+    OneTimeInitializer() = default;
+
+    bool m_initialized = false;
+    bool m_import_numpy = false;
+    pybind11::module * m_mod = nullptr;
+    std::function<void(pybind11::module &)> m_initializer;
+
+}; /* end class OneTimeInitializer */
+
+namespace detail
+{
+
+inline void initialize_impl(pybind11::module & mod)
+{
 
     WrapWrapperProfilerStatus::commit(mod, "WrapperProfilerStatus", "WrapperProfilerStatus");
     WrapStopWatch::commit(mod, "StopWatch", "StopWatch");
@@ -610,6 +675,15 @@ inline void initialize(pybind11::module & mod)
     WrapStaticGrid2d::commit(mod, "StaticGrid2d", "StaticGrid2d");
     WrapStaticGrid3d::commit(mod, "StaticGrid3d", "StaticGrid3d");
 
+}
+
+} /* end namespace detail */
+
+struct init_tag;
+
+inline void initialize(pybind11::module & mod)
+{
+    OneTimeInitializer<init_tag>::me()(mod, true, detail::initialize_impl);
 }
 
 } /* end namespace python */
