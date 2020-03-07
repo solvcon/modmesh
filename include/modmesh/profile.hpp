@@ -158,7 +158,7 @@ public:
         return it->second;
     }
 
-    void unset() { m_entry.clear(); }
+    void clear() { m_entry.clear(); }
 
     ~TimeRegistry()
     {

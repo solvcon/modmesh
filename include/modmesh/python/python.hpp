@@ -106,6 +106,38 @@ protected:
 
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
+WrapTimedEntry
+  : public WrapBase< WrapTimedEntry, TimedEntry >
+{
+
+public:
+
+    static constexpr char PYNAME[] = "TimedEntry";
+    static constexpr char PYDOC[] = "TimedEntry";
+
+    friend root_base_type;
+
+protected:
+
+    WrapTimedEntry(pybind11::module & mod) : root_base_type(mod)
+    {
+
+        namespace py = pybind11;
+
+        (*this)
+            .def_property_readonly("count", &wrapped_type::count)
+            .def_property_readonly("time", &wrapped_type::time)
+            .def("start", &wrapped_type::start)
+            .def("stop", &wrapped_type::stop)
+            .def("add_time", &wrapped_type::add_time, py::arg("time"))
+        ;
+
+    }
+
+}; /* end class WrapTimedEntry */
+
+class
+MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapTimeRegistry
   : public WrapBase< WrapTimeRegistry, TimeRegistry >
 {
@@ -130,7 +162,15 @@ protected:
                 "me"
               , [](py::object const &) -> wrapped_type& { return wrapped_type::me(); }
             )
-            .def("unset", &wrapped_type::unset)
+            .def("clear", &wrapped_type::clear)
+            .def("entry", &wrapped_type::entry, py::arg("name"))
+            .def
+            (
+                "add_time"
+              , static_cast<void (wrapped_type::*)(std::string const &, double)>
+                (&wrapped_type::add)
+              , py::arg("name"), py::arg("time")
+            )
             .def_property_readonly("names", &wrapped_type::names)
             .def("report", &wrapped_type::report)
         ;
@@ -556,6 +596,7 @@ inline void initialize(pybind11::module & mod)
 
     WrapWrapperProfilerStatus::commit(mod);
     WrapStopWatch::commit(mod);
+    WrapTimedEntry::commit(mod);
     WrapTimeRegistry::commit(mod);
 
     WrapConcreteBuffer::commit(mod, "ConcreteBuffer", "ConcreteBuffer");
