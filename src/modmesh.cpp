@@ -6,7 +6,7 @@
 #include "modmesh/python/python.hpp" // Must be the first include.
 #include "modmesh/modmesh.hpp"
 
-PYBIND11_MODULE(_modmesh, mod)
+PYBIND11_MODULE(_modmesh, mod) // NOLINT
 {
     modmesh::python::initialize(mod);
 }

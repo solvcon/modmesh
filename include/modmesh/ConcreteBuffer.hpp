@@ -54,6 +54,8 @@ public:
     ConcreteBuffer(ConcreteBuffer &&) = delete;
     ConcreteBuffer & operator=(ConcreteBuffer &&) = delete;
 
+    // Avoid enabled_shared_from_this copy constructor
+    // NOLINTNEXTLINE(bugprone-copy-constructor-init)
     ConcreteBuffer(ConcreteBuffer const & other)
       : m_nbytes(other.m_nbytes)
       , m_data(allocate(other.m_nbytes))

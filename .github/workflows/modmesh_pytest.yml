@@ -29,7 +29,9 @@ jobs:
       run: |
         sudo apt-get -qy install \
             sudo curl git build-essential make cmake libc6-dev gcc-7 g++-7 \
+            clang-tidy-9 \
             python3.7 python3.7-dev python3.7-venv
+        sudo ln -s "$(which clang-tidy-9)" "$(dirname $(which clang-tidy-9))/clang-tidy"
         sudo rm /usr/bin/python3
         sudo ln -s python3.7 /usr/bin/python3
         sudo pip3 install numpy pytest flake8
@@ -37,7 +39,9 @@ jobs:
     - name: dependency (macos)
       if: matrix.os == 'macos-latest'
       run: |
-        brew install python3 numpy
+        brew install python3 numpy llvm
+        ln -s "$(brew --prefix llvm)/bin/clang-format" "/usr/local/bin/clang-format"
+        ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
         pip3 install -U pytest flake8
 
     - name: dependency (manual)
@@ -45,18 +49,25 @@ jobs:
 
     - name: show dependency
       run: |
+        which gcc
         gcc --version
+        which cmake
         cmake --version
+        which python3
         python3 --version
         python3 -c 'import numpy ; print("numpy.__version__:", numpy.__version__)'
+        which pytest
         pytest --version
+        which clang-tidy
+        clang-tidy -version
+        which flake8
         flake8 --version
 
     - name: buildext
-      run: make buildext VERBOSE=1 CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
+      run: make buildext VERBOSE=1 USE_CLANG_TIDY=ON CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
 
     - name: pytest
-      run: make pytest VERBOSE=1 CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
+      run: make pytest VERBOSE=1 USE_CLANG_TIDY=ON CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
 
     - name: flake8
       run: make flake8 VERBOSE=1 CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}

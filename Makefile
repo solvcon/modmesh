@@ -40,10 +40,12 @@ default: buildext
 
 .PHONY: clean
 clean:
+	rm -f $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
 	make -C $(BUILD_PATH) clean
 
 .PHONY: cmakeclean
 cmakeclean:
+	rm -f $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
 	rm -rf $(BUILD_PATH)
 
 .PHONY: pytest
@@ -80,5 +82,7 @@ $(BUILD_PATH)/Makefile: CMakeLists.txt Makefile
 		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
 		-DHIDE_SYMBOL=$(HIDE_SYMBOL) \
 		-DDEBUG_SYMBOL=$(DEBUG_SYMBOL) \
+		-DUSE_CLANG_TIDY=$(USE_CLANG_TIDY) \
+		-DLINT_AS_ERRORS=ON \
 		-DMODMESH_PROFILE=$(MODMESH_PROFILE) \
 		$(CMAKE_ARGS)
