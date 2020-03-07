@@ -581,6 +581,12 @@ protected:
 
 inline void initialize(pybind11::module & mod)
 {
+    auto import_numpy = []()
+    {
+        import_array2("cannot import numpy", false); // or numpy c api segfault.
+        return true;
+    };
+    if (!import_numpy()) { throw pybind11::error_already_set(); }
 
     WrapWrapperProfilerStatus::commit(mod, "WrapperProfilerStatus", "WrapperProfilerStatus");
     WrapStopWatch::commit(mod, "StopWatch", "StopWatch");
