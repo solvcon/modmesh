@@ -11,6 +11,8 @@ three-dimensional space.
 
 
 __all__ = [
+    'WrapperProfilerStatus',
+    'wrapper_profiler_status',
     'StopWatch',
     'stop_watch',
     'TimeRegistry',
@@ -38,6 +40,8 @@ from . import _modmesh as _impl  # noqa: F401
 
 
 from ._modmesh import (
+    WrapperProfilerStatus,
+    wrapper_profiler_status,
     StopWatch,
     stop_watch,
     TimeRegistry,

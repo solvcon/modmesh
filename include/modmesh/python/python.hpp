@@ -28,6 +28,43 @@ namespace python
 
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
+WrapWrapperProfilerStatus
+  : public WrapBase< WrapWrapperProfilerStatus, WrapperProfilerStatus >
+{
+
+public:
+
+    static constexpr char PYNAME[] = "WrapperProfilerStatus";
+    static constexpr char PYDOC[] = "WrapperProfilerStatus";
+
+    friend root_base_type;
+
+protected:
+
+    WrapWrapperProfilerStatus(pybind11::module & mod) : root_base_type(mod)
+    {
+
+        namespace py = pybind11;
+
+        (*this)
+            .def_property_readonly_static
+            (
+                "me"
+              , [](py::object const &) -> wrapped_type& { return wrapped_type::me(); }
+            )
+            .def_property_readonly("enabled", &wrapped_type::enabled)
+            .def("enable", &wrapped_type::enable)
+            .def("disable", &wrapped_type::disable)
+        ;
+
+        mod.attr("wrapper_profiler_status") = mod.attr("WrapperProfilerStatus").attr("me");
+
+    }
+
+}; /* end class WrapWrapperTimerStatus */
+
+class
+MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapStopWatch
   : public WrapBase< WrapStopWatch, StopWatch >
 {
@@ -53,6 +90,7 @@ protected:
               , [](py::object const &) -> wrapped_type& { return wrapped_type::me(); }
             )
             .def("lap", &wrapped_type::lap)
+            .def_property_readonly("duration", &wrapped_type::duration)
             .def_property_readonly_static
             (
                 "resolution"
@@ -65,6 +103,38 @@ protected:
     }
 
 }; /* end class WrapStopWatch */
+
+class
+MODMESH_PYTHON_WRAPPER_VISIBILITY
+WrapTimedEntry
+  : public WrapBase< WrapTimedEntry, TimedEntry >
+{
+
+public:
+
+    static constexpr char PYNAME[] = "TimedEntry";
+    static constexpr char PYDOC[] = "TimedEntry";
+
+    friend root_base_type;
+
+protected:
+
+    WrapTimedEntry(pybind11::module & mod) : root_base_type(mod)
+    {
+
+        namespace py = pybind11;
+
+        (*this)
+            .def_property_readonly("count", &wrapped_type::count)
+            .def_property_readonly("time", &wrapped_type::time)
+            .def("start", &wrapped_type::start)
+            .def("stop", &wrapped_type::stop)
+            .def("add_time", &wrapped_type::add_time, py::arg("time"))
+        ;
+
+    }
+
+}; /* end class WrapTimedEntry */
 
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
@@ -92,6 +162,16 @@ protected:
                 "me"
               , [](py::object const &) -> wrapped_type& { return wrapped_type::me(); }
             )
+            .def("clear", &wrapped_type::clear)
+            .def("entry", &wrapped_type::entry, py::arg("name"))
+            .def
+            (
+                "add_time"
+              , static_cast<void (wrapped_type::*)(std::string const &, double)>
+                (&wrapped_type::add)
+              , py::arg("name"), py::arg("time")
+            )
+            .def_property_readonly("names", &wrapped_type::names)
             .def("report", &wrapped_type::report)
         ;
 
@@ -116,7 +196,7 @@ WrapConcreteBuffer
         namespace py = pybind11;
 
         (*this)
-            .def
+            .def_timed
             (
                 py::init
                 (
@@ -127,14 +207,14 @@ WrapConcreteBuffer
                 )
               , py::arg("nbytes")
             )
-            .def("clone", &wrapped_type::clone)
+            .def_timed("clone", &wrapped_type::clone)
             .def_property_readonly("nbytes", &wrapped_type::nbytes)
             .def("__len__", &wrapped_type::size)
-            .def(
+            .def_timed(
                 "__getitem__"
               , [](wrapped_type const & self, size_t it) { return self.at(it); }
             )
-            .def(
+            .def_timed(
                 "__setitem__"
               , [](wrapped_type & self, size_t it, int8_t val)
                 {
@@ -156,7 +236,7 @@ WrapConcreteBuffer
                     );
                 }
             )
-            .def_property_readonly
+            .def_property_readonly_timed
             (
                 "ndarray"
               , [](wrapped_type & self)
@@ -197,7 +277,7 @@ WrapSimpleArray
         namespace py = pybind11;
 
         (*this)
-            .def
+            .def_timed
             (
                 py::init
                 (
@@ -228,7 +308,7 @@ WrapSimpleArray
                     );
                 }
             )
-            .def_property_readonly
+            .def_property_readonly_timed
             (
                 "ndarray"
               , [](wrapped_type const & self)
@@ -277,7 +357,7 @@ WrapSimpleArray
                 }
             )
             .def("__len__", &wrapped_type::size)
-            .def
+            .def_timed
             (
                 "__getitem__"
               , [](wrapped_type const & self, py::object const & key)
@@ -294,7 +374,7 @@ WrapSimpleArray
                     }
                 }
             )
-            .def
+            .def_timed
             (
                 "__setitem__"
               , [](wrapped_type & self, py::object const & key, T val)
@@ -311,7 +391,7 @@ WrapSimpleArray
                     }
                 }
             )
-            .def
+            .def_timed
             (
                 "reshape"
               , [](wrapped_type const & self, py::object const & shape)
@@ -399,7 +479,7 @@ protected:
         namespace py = pybind11;
 
         (*this)
-            .def
+            .def_timed
             (
                 py::init
                 (
@@ -415,12 +495,12 @@ protected:
                 "__len__"
               , [](wrapped_type const & self) { return self.size(); }
             )
-            .def
+            .def_timed
             (
                 "__getitem__"
               , [](wrapped_type const & self, size_t it) { return self.at(it); }
             )
-            .def
+            .def_timed
             (
                 "__setitem__"
               , [](wrapped_type & self, size_t it, wrapped_type::real_type val)
@@ -433,7 +513,7 @@ protected:
                 "nx"
               , [](wrapped_type const & self) { return self.nx(); }
             )
-            .def_property
+            .def_property_timed
             (
                 "coord"
               , [](wrapped_type & self)
@@ -455,7 +535,7 @@ protected:
                     }
                 }
             )
-            .def
+            .def_timed
             (
                 "fill"
               , &wrapped_type::fill
@@ -514,7 +594,9 @@ protected:
 inline void initialize(pybind11::module & mod)
 {
 
+    WrapWrapperProfilerStatus::commit(mod);
     WrapStopWatch::commit(mod);
+    WrapTimedEntry::commit(mod);
     WrapTimeRegistry::commit(mod);
 
     WrapConcreteBuffer::commit(mod, "ConcreteBuffer", "ConcreteBuffer");
