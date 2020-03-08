@@ -14,7 +14,8 @@ MODMESH_PROFILE ?= OFF
 USE_CLANG_TIDY ?= OFF
 CMAKE_BUILD_TYPE ?= Release
 MODMESH_ROOT ?= $(shell pwd)
-CMAKE_INSTALL_PREFIX ?= $(MODMESH_ROOT)
+CMAKE_INSTALL_PREFIX ?= $(MODMESH_ROOT)/build/fakeinstall
+CMAKE_LIBRARY_OUTPUT_DIRECTORY ?= $(MODMESH_ROOT)/modmesh
 CMAKE_ARGS ?=
 VERBOSE ?=
 ifeq ($(CMAKE_BUILD_TYPE), Debug)
@@ -59,14 +60,6 @@ flake8:
 .PHONY: cmake
 cmake: $(BUILD_PATH)/Makefile
 
-$(BUILD_PATH)/_modmesh$(pyextsuffix): $(BUILD_PATH)/Makefile
-	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) _modmesh
-	touch $@
-
-$(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix): $(BUILD_PATH)/_modmesh$(pyextsuffix)
-	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) _modmesh_py
-	touch $@
-
 .PHONY: buildext
 buildext: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
 
@@ -74,11 +67,16 @@ buildext: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
 install: cmake
 	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) install
 
+$(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix): $(BUILD_PATH)/Makefile
+	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) _modmesh
+	touch $@
+
 $(BUILD_PATH)/Makefile: CMakeLists.txt Makefile
 	mkdir -p $(BUILD_PATH) ; \
 	cd $(BUILD_PATH) ; \
 	cmake $(MODMESH_ROOT) \
 		-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX) \
+		-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$(CMAKE_LIBRARY_OUTPUT_DIRECTORY) \
 		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
 		-DHIDE_SYMBOL=$(HIDE_SYMBOL) \
 		-DDEBUG_SYMBOL=$(DEBUG_SYMBOL) \

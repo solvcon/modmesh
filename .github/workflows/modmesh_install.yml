@@ -1,0 +1,84 @@
+name: modmesh_install
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '34 17 * * *'
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+        matrix:
+          os: [ubuntu-18.04, macos-latest]
+
+        fail-fast: false
+
+    steps:
+
+    - uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+
+    - name: dependency (ubuntu)
+      if: matrix.os != 'macos-latest'
+      run: |
+        sudo apt-get -qy install \
+            sudo curl git build-essential make cmake libc6-dev gcc-7 g++-7 \
+            clang-tidy-9 \
+            python3.7 python3.7-dev python3.7-venv
+        sudo ln -s "$(which clang-tidy-9)" "$(dirname $(which clang-tidy-9))/clang-tidy"
+        sudo rm /usr/bin/python3
+        sudo ln -s python3.7 /usr/bin/python3
+        sudo pip3 install numpy setuptools pytest flake8
+
+    - name: dependency (macos)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install python3 numpy llvm
+        ln -s "$(brew --prefix llvm)/bin/clang-format" "/usr/local/bin/clang-format"
+        ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+        pip3 install -U setuptools pytest flake8
+
+    - name: dependency (manual)
+      run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
+
+    - name: show dependency
+      run: |
+        which gcc
+        gcc --version
+        which cmake
+        cmake --version
+        which python3
+        python3 --version
+        python3 -c 'import numpy ; print("numpy.__version__:", numpy.__version__)'
+        which pytest
+        pytest --version
+        which clang-tidy
+        clang-tidy -version
+        which flake8
+        flake8 --version
+
+    - name: build_ext
+      run: python3 setup.py build_ext --cmake-args="-DCMAKE_BUILD_TYPE=Release" --make-args="VERBOSE=1"
+
+    - name: install
+      run: |
+        case "$(uname -s)" in
+            Linux*) cmdprefix=sudo;;
+            *) cmdprefix=
+        esac
+        ${cmdprefix} python3 setup.py install
+
+    - name: pytest
+      run: |
+        rm -rf tmp/
+        mkdir -p tmp/
+        cp -a tests tmp/
+        cd tmp/
+        python3 -c "import modmesh; print(modmesh._modmesh.__file__)"
+        pytest -v
+        cd ..
