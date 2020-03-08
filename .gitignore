@@ -1,6 +1,8 @@
 .vscode
 __pycache__/
 build/
+dist/
+*.egg-info/
 *.pyc
 *.pyo
 *.so

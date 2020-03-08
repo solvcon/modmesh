@@ -579,6 +579,9 @@ protected:
 
 }; /* end class WrapStaticGrid3d */
 
+#pragma GCC diagnostic push
+// Suppress the warning "greater visibility than the type of its field"
+#pragma GCC diagnostic ignored "-Wattributes"
 /**
  * Take a pybind11 module and an initializing function and only run the
  * initializing function once.
@@ -646,6 +649,7 @@ private:
     std::function<void(pybind11::module &)> m_initializer;
 
 }; /* end class OneTimeInitializer */
+#pragma GCC diagnostic pop
 
 namespace detail
 {
