@@ -38,10 +38,10 @@ jobs:
     - name: dependency (macos)
       if: matrix.os == 'macos-latest'
       run: |
-        brew install python3 numpy llvm
+        brew install python3 llvm
         ln -s "$(brew --prefix llvm)/bin/clang-format" "/usr/local/bin/clang-format"
         ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
-        pip3 install -U setuptools pytest flake8
+        pip3 install -U numpy setuptools pytest flake8
 
     - name: dependency (manual)
       run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
