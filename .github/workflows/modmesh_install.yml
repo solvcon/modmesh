@@ -48,19 +48,19 @@ jobs:
 
     - name: show dependency
       run: |
-        which gcc
-        gcc --version
-        which cmake
-        cmake --version
-        which python3
-        python3 --version
+        echo "gcc path: $(which gcc)"
+        echo "gcc version: $(gcc --version)"
+        echo "cmake path: $(which cmake)"
+        echo "cmake version: $(cmake --version)"
+        echo "python3 path: $(which python3)"
+        echo "python3 version: $(python3 --version)"
         python3 -c 'import numpy ; print("numpy.__version__:", numpy.__version__)'
-        which pytest
-        pytest --version
-        which clang-tidy
-        clang-tidy -version
-        which flake8
-        flake8 --version
+        echo "pytest path: $(which pytest)"
+        echo "pytest version: $(pytest --version)"
+        echo "clang-tidy path: $(which clang-tidy)"
+        echo "clang-tidy version: $(clang-tidy -version)"
+        echo "flake8 path: $(which flake8)"
+        echo "flake8 version: $(flake8 --version)"
 
     - name: build_ext
       run: python3 setup.py build_ext --cmake-args="-DCMAKE_BUILD_TYPE=Release" --make-args="VERBOSE=1"
