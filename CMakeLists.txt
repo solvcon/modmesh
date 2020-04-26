@@ -103,6 +103,7 @@ target_compile_options(
     _modmesh PRIVATE
     -Werror -Wall -Wextra
     -Wno-unused-value # for PYBIND11_EXPAND_SIDE_EFFECTS in pybind11.h
+    -Wno-noexcept-type # GCC
 )
 
 if(CLANG_TIDY_EXE AND USE_CLANG_TIDY)

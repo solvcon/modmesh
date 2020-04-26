@@ -77,6 +77,8 @@ public:
     ConcreteBuffer(ConcreteBuffer &&) = delete;
     ConcreteBuffer & operator=(ConcreteBuffer &&) = delete;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wextra"
     // Avoid enabled_shared_from_this copy constructor
     // NOLINTNEXTLINE(bugprone-copy-constructor-init)
     ConcreteBuffer(ConcreteBuffer const & other)
@@ -89,6 +91,7 @@ public:
         }
         std::copy_n(other.data(), size(), data());
     }
+#pragma GCC diagnostic pop
 
     ConcreteBuffer & operator=(ConcreteBuffer const & other)
     {
