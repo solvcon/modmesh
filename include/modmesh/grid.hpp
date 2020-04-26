@@ -152,8 +152,8 @@ public:
 
     size_t nx() const { return m_nx; }
     //NOLINTNEXTLINE(readability-const-return-type)
-    real_type * const coord() const { return m_coord.get(); }
-    real_type *       coord()       { return m_coord.get(); }
+    real_type * coord() const { return m_coord.get(); }
+    real_type * coord()       { return m_coord.get(); }
 
     size_t size() const { return m_nx; }
     real_type   operator[] (size_t it) const noexcept { return m_coord[it]; }

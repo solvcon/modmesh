@@ -99,6 +99,12 @@ else()
     set_target_properties(_modmesh PROPERTIES CXX_VISIBILITY_PRESET "default")
 endif()
 
+target_compile_options(
+    _modmesh PRIVATE
+    -Werror -Wall -Wextra
+    -Wno-unused-value # for PYBIND11_EXPAND_SIDE_EFFECTS in pybind11.h
+)
+
 if(CLANG_TIDY_EXE AND USE_CLANG_TIDY)
     set_target_properties(
         _modmesh PROPERTIES
