@@ -65,10 +65,22 @@ jobs:
         echo "flake8 version: $(flake8 --version)"
 
     - name: buildext
-      run: make buildext VERBOSE=1 USE_CLANG_TIDY=ON CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
+      run: |
+        make buildext \
+          VERBOSE=1 USE_CLANG_TIDY=ON \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
 
     - name: pytest
-      run: make pytest VERBOSE=1 USE_CLANG_TIDY=ON CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
+      run: |
+        make pytest \
+          VERBOSE=1 USE_CLANG_TIDY=ON \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
 
     - name: flake8
-      run: make flake8 VERBOSE=1 CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }}
+      run: |
+        make flake8 \
+          VERBOSE=1 \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
