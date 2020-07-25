@@ -64,7 +64,10 @@ jobs:
         echo "flake8 version: $(flake8 --version)"
 
     - name: build_ext
-      run: python3 setup.py build_ext --cmake-args="-DCMAKE_BUILD_TYPE=Release" --make-args="VERBOSE=1"
+      run: |
+        python3 setup.py build_ext \
+          --cmake-args="-DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=$(which python3)" \
+          --make-args="VERBOSE=1"
 
     - name: install
       run: |
