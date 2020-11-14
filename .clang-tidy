@@ -1,5 +1,6 @@
 Checks: >
     *,-clang-analyzer-alpha.*,-hicpp-*,
+    -llvmlibc-*,
     -modernize-use-trailing-return-type,
     -modernize-loop-convert,
     -modernize-use-nodiscard,
