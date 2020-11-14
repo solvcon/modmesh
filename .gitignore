@@ -2,6 +2,7 @@
 __pycache__/
 build/
 dist/
+tmp/
 *.egg-info/
 *.pyc
 *.pyo
