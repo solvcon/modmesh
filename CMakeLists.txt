@@ -6,6 +6,11 @@ project(modmesh)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
 
+if(NOT SKIP_PYTHON_EXECUTABLE)
+    find_program(PYTHON_EXECUTABLE python3)
+    message(STATUS "use PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
+endif()
+
 option(USE_CLANG_TIDY "use clang-tidy" OFF)
 option(LINT_AS_ERRORS "clang-tidy warnings as errors" OFF)
 

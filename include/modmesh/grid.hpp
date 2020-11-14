@@ -177,7 +177,7 @@ private:
             // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
             return std::unique_ptr<real_type[]>(new real_type[nx]);
         }
-        else // NOLINT(readability-else-after-return)
+        else // NOLINT(readability-else-after-return,llvm-else-after-return)
         {
             // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
             return std::unique_ptr<real_type[]>();
