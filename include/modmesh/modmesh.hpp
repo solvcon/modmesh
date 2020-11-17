@@ -39,5 +39,6 @@
 #include <modmesh/ConcreteBuffer.hpp>
 #include <modmesh/SimpleArray.hpp>
 #include <modmesh/grid.hpp>
+#include <modmesh/mesh.hpp>
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
