@@ -69,6 +69,18 @@ class BasicTC(unittest.TestCase):
         buf2[5] = 19
         self.assertEqual(19, ndarr2[5])
 
+    def test_ConcreteBuffer_from_ndarray(self):
+
+        ndarr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+
+        buf = modmesh.ConcreteBuffer(array=ndarr)
+        self.assertEqual(ndarr.nbytes, buf.nbytes)
+
+        # The data buffer is shared.
+        self.assertFalse((ndarr == 0).all())
+        buf.ndarray.fill(0)
+        self.assertTrue((ndarr == 0).all())
+
     def test_SimpleArray(self):
 
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))

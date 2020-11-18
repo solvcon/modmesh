@@ -196,10 +196,15 @@ protected:
 
 }; /* end class WrapTimeRegistry */
 
-struct ConcreteBufferNdarrayDeleterImpl : ConcreteBufferDeleterImpl
+struct ConcreteBufferNdarrayRemover : ConcreteBuffer::remover_type
 {
 
-    explicit ConcreteBufferNdarrayDeleterImpl(pybind11::array arr_in)
+    static bool is_same_type(ConcreteBuffer::remover_type const & other)
+    {
+        return typeid(other) == typeid(ConcreteBufferNdarrayRemover);
+    }
+
+    explicit ConcreteBufferNdarrayRemover(pybind11::array arr_in)
       : ndarray(std::move(arr_in))
     {}
 
@@ -208,12 +213,12 @@ struct ConcreteBufferNdarrayDeleterImpl : ConcreteBufferDeleterImpl
 
     pybind11::array ndarray;
 
-}; /* end struct ConcreteBufferNdarrayDeleterImpl */
+}; /* end struct ConcreteBufferNdarrayRemover */
 
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapConcreteBuffer
-  : public WrapBase< WrapConcreteBuffer, ConcreteBuffer<>, std::shared_ptr<ConcreteBuffer<>> >
+  : public WrapBase< WrapConcreteBuffer, ConcreteBuffer, std::shared_ptr<ConcreteBuffer> >
 {
 
     friend root_base_type;
@@ -235,6 +240,22 @@ WrapConcreteBuffer
                     }
                 )
               , py::arg("nbytes")
+            )
+            .def
+            (
+                py::init
+                (
+                    [](py::array & arr_in)
+                    {
+                        return wrapped_type::construct
+                        (
+                            arr_in.nbytes()
+                          , arr_in.mutable_data()
+                          , std::make_unique<ConcreteBufferNdarrayRemover>(arr_in)
+                        );
+                    }
+                )
+              , py::arg("array")
             )
             .def_timed("clone", &wrapped_type::clone)
             .def_property_readonly("nbytes", &wrapped_type::nbytes)
@@ -288,15 +309,14 @@ WrapConcreteBuffer
                 "is_from_python"
               , [](wrapped_type const & self)
                 {
-                    ConcreteBufferDeleterImpl * impl = self.get_deleter().impl.get();
-                    if (nullptr == impl)
+                    if (self.has_remover())
                     {
-                        return false;
+                        return ConcreteBufferNdarrayRemover::is_same_type(self.get_remover());
                     }
                     // NOLINTNEXTLINE(llvm-else-after-return,readability-else-after-return)
                     else
                     {
-                        return typeid(*impl) == typeid(ConcreteBufferNdarrayDeleterImpl);
+                        return false;
                     }
                 }
             )
@@ -342,7 +362,7 @@ WrapSimpleArray
                 (
                     [](py::array & arr_in)
                     {
-                        if (!py::detail::npy_format_descriptor<T>::dtype().is(arr_in.dtype()))
+                        if (!dtype_is_type<T>(arr_in))
                         {
                             throw std::runtime_error("dtype mismatch");
                         }
@@ -351,11 +371,11 @@ WrapSimpleArray
                         {
                             shape.push_back(arr_in.shape(i));
                         }
-                        auto buffer = ConcreteBuffer<>::construct
+                        std::shared_ptr<ConcreteBuffer> buffer = ConcreteBuffer::construct
                         (
                             arr_in.nbytes()
                           , arr_in.mutable_data()
-                          , std::make_unique<ConcreteBufferNdarrayDeleterImpl>(arr_in)
+                          , std::make_unique<ConcreteBufferNdarrayRemover>(arr_in)
                         );
                         return wrapped_type(shape, buffer);
                     }
@@ -406,15 +426,14 @@ WrapSimpleArray
                 "is_from_python"
               , [](wrapped_type const & self)
                 {
-                    ConcreteBufferDeleterImpl * impl = self.buffer().get_deleter().impl.get();
-                    if (nullptr == impl)
+                    if (self.buffer().has_remover())
                     {
-                        return false;
+                        return ConcreteBufferNdarrayRemover::is_same_type(self.buffer().get_remover());
                     }
                     // NOLINTNEXTLINE(llvm-else-after-return,readability-else-after-return)
                     else
                     {
-                        return typeid(*impl) == typeid(ConcreteBufferNdarrayDeleterImpl);
+                        return false;
                     }
                 }
             )

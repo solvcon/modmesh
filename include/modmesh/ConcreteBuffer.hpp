@@ -36,52 +36,11 @@
 namespace modmesh
 {
 
-struct ConcreteBufferDeleterImpl
-{
-
-    ConcreteBufferDeleterImpl() = default;
-    ConcreteBufferDeleterImpl(ConcreteBufferDeleterImpl const & ) = default;
-    ConcreteBufferDeleterImpl(ConcreteBufferDeleterImpl       &&) = default;
-    ConcreteBufferDeleterImpl & operator=(ConcreteBufferDeleterImpl const & ) = default;
-    ConcreteBufferDeleterImpl & operator=(ConcreteBufferDeleterImpl       &&) = default;
-    virtual ~ConcreteBufferDeleterImpl() = default;
-
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
-    virtual void operator()(int8_t * p) const
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
-        delete[] p;
-    }
-
-}; /* end struct ConcreteBufferDeleteImpl */
-
-struct ConcreteBufferDeleter
-{
-
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
-    void operator()(int8_t * p) const
-    {
-        if (!impl)
-        {
-            // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
-            delete[] p;
-        }
-        else
-        {
-            (*impl)(p);
-        }
-    }
-
-    std::unique_ptr<ConcreteBufferDeleterImpl> impl = nullptr;
-
-}; /* end struct ConcreteBufferDeleter */
-
 /**
  * Untyped and unresizeable memory buffer for contiguous data storage.
  */
-template < typename D = ConcreteBufferDeleter >
 class ConcreteBuffer
-  : public std::enable_shared_from_this<ConcreteBuffer<D>>
+  : public std::enable_shared_from_this<ConcreteBuffer>
 {
 
 private:
@@ -90,23 +49,50 @@ private:
 
 public:
 
+    /**
+     * The base class of memory deallocator for ConcreteBuffer.  When the
+     * object exists in the unique_ptr deleter, the deleter calls it to release
+     * the ConcreteBuffer memory.
+     */
+    struct remover_type
+    {
+
+        remover_type() = default;
+        remover_type(remover_type const & ) = default;
+        remover_type(remover_type       &&) = default;
+        remover_type & operator=(remover_type const & ) = default;
+        remover_type & operator=(remover_type       &&) = default;
+        virtual ~remover_type() = default;
+
+        // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
+        virtual void operator()(int8_t * p) const
+        {
+            // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+            delete[] p;
+        }
+
+    }; /* end struct remover_type */
+
     static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes)
     {
         return std::make_shared<ConcreteBuffer>(nbytes, ctor_passkey());
     }
 
     /*
-     * This constructor is dangerous and needs to be used with a custom
-     * deleter.
+     * This factory method is dangerous since the data pointer passed in will
+     * not be owned by the ConcreteBuffer created.  It is an error if the
+     * number of bytes of the externally owned buffer doesn't match the value
+     * passed in (but we cannot know here).
      */
-    static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, int8_t * data, std::unique_ptr<ConcreteBufferDeleterImpl> && deleter)
+    static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover)
     {
-        return std::make_shared<ConcreteBuffer>(nbytes, data, std::move(deleter), ctor_passkey());
+        return std::make_shared<ConcreteBuffer>(nbytes, data, std::move(remover), ctor_passkey());
     }
 
-    static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, void * data, std::unique_ptr<ConcreteBufferDeleterImpl> && deleter)
+    static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, void * data, std::unique_ptr<remover_type> && remover)
     {
-        return std::make_shared<ConcreteBuffer>(nbytes, static_cast<int8_t*>(data), std::move(deleter), ctor_passkey());
+        return construct(nbytes, static_cast<int8_t*>(data), std::move(remover));
+        //return std::make_shared<ConcreteBuffer>(nbytes, static_cast<int8_t*>(data), std::move(remover), ctor_passkey());
     }
 
     static std::shared_ptr<ConcreteBuffer> construct() { return construct(0); }
@@ -129,15 +115,17 @@ public:
     /**
      * \param[in] nbytes Size of the memory buffer in bytes.
      * \param[in] data
-     *      Pointer to the memory buffer.  Note that if the buffer is not owned
-     *      by this object, a custom deleter implementation is needed.
+     *      Pointer to the memory buffer that is not supposed to be owned by
+     *      this ConcreteBuffer.
+     * \param[in] remover
+     *      The memory deallocator for the unowned data buffer passed in.
      */
     // NOLINTNEXTLINE(readability-non-const-parameter)
-    ConcreteBuffer(size_t nbytes, int8_t * data, std::unique_ptr<ConcreteBufferDeleterImpl> && deleter, const ctor_passkey &)
+    ConcreteBuffer(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover, const ctor_passkey &)
       : m_nbytes(nbytes)
       , m_data(data)
     {
-        get_deleter().impl = std::move(deleter);
+        set_remover(std::move(remover));
     }
 
     ~ConcreteBuffer() = default;
@@ -206,13 +194,36 @@ public:
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     template<typename T> T       * data()       noexcept { return reinterpret_cast<T*>(m_data.get()); }
 
-    D const & get_deleter() const noexcept { return m_data.get_deleter(); }
-    D       & get_deleter()       noexcept { return m_data.get_deleter(); }
+    bool has_remover() const noexcept { return bool(m_data.get_deleter().remover); }
+    remover_type const & get_remover() const { return *m_data.get_deleter().remover; }
+    remover_type       & get_remover()       { return *m_data.get_deleter().remover; }
+    void set_remover(std::unique_ptr<remover_type> && remover) { m_data.get_deleter().remover = std::move(remover); }
 
 private:
 
+    struct data_deleter
+    {
+
+        // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
+        void operator()(int8_t * p) const
+        {
+            if (!remover)
+            {
+                // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+                delete[] p;
+            }
+            else
+            {
+                (*remover)(p);
+            }
+        }
+
+        std::unique_ptr<remover_type> remover = nullptr;
+
+    }; /* end struct data_deleter */
+
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    using unique_ptr_type = std::unique_ptr<int8_t, D>;
+    using unique_ptr_type = std::unique_ptr<int8_t, data_deleter>;
 
     void validate_range(size_t it) const
     {
