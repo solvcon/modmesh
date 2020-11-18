@@ -80,7 +80,7 @@ inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<si
  * copy semantics performs data copy. The move semantics invalidates the
  * existing memory buffer.
  */
-template < typename T, typename D = ConcreteBufferDefaultDelete >
+template < typename T, typename D = ConcreteBufferDeleter >
 class SimpleArray
 {
 

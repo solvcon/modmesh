@@ -36,13 +36,50 @@
 namespace modmesh
 {
 
-// NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-using ConcreteBufferDefaultDelete = std::default_delete<int8_t[]>;
+struct ConcreteBufferDeleterImpl
+{
+
+    ConcreteBufferDeleterImpl() = default;
+    ConcreteBufferDeleterImpl(ConcreteBufferDeleterImpl const & ) = default;
+    ConcreteBufferDeleterImpl(ConcreteBufferDeleterImpl       &&) = default;
+    ConcreteBufferDeleterImpl & operator=(ConcreteBufferDeleterImpl const & ) = default;
+    ConcreteBufferDeleterImpl & operator=(ConcreteBufferDeleterImpl       &&) = default;
+    virtual ~ConcreteBufferDeleterImpl() = default;
+
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
+    virtual void operator()(int8_t * p) const
+    {
+        // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+        delete[] p;
+    }
+
+}; /* end struct ConcreteBufferDeleteImpl */
+
+struct ConcreteBufferDeleter
+{
+
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
+    void operator()(int8_t * p) const
+    {
+        if (!impl)
+        {
+            // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+            delete[] p;
+        }
+        else
+        {
+            (*impl)(p);
+        }
+    }
+
+    std::unique_ptr<ConcreteBufferDeleterImpl> impl = nullptr;
+
+}; /* end struct ConcreteBufferDeleter */
 
 /**
  * Untyped and unresizeable memory buffer for contiguous data storage.
  */
-template < typename D = ConcreteBufferDefaultDelete >
+template < typename D = ConcreteBufferDeleter >
 class ConcreteBuffer
   : public std::enable_shared_from_this<ConcreteBuffer<D>>
 {
@@ -58,6 +95,20 @@ public:
         return std::make_shared<ConcreteBuffer>(nbytes, ctor_passkey());
     }
 
+    /*
+     * This constructor is dangerous and needs to be used with a custom
+     * deleter.
+     */
+    static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, int8_t * data, std::unique_ptr<ConcreteBufferDeleterImpl> && deleter)
+    {
+        return std::make_shared<ConcreteBuffer>(nbytes, data, std::move(deleter), ctor_passkey());
+    }
+
+    static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, void * data, std::unique_ptr<ConcreteBufferDeleterImpl> && deleter)
+    {
+        return std::make_shared<ConcreteBuffer>(nbytes, static_cast<int8_t*>(data), std::move(deleter), ctor_passkey());
+    }
+
     static std::shared_ptr<ConcreteBuffer> construct() { return construct(0); }
 
     std::shared_ptr<ConcreteBuffer> clone() const
@@ -68,12 +119,26 @@ public:
     }
 
     /**
-     * \param[in] length Memory buffer length.
+     * \param[in] nbytes Size of the memory buffer in bytes.
      */
     ConcreteBuffer(size_t nbytes, const ctor_passkey &)
       : m_nbytes(nbytes)
       , m_data(allocate(nbytes))
     {}
+
+    /**
+     * \param[in] nbytes Size of the memory buffer in bytes.
+     * \param[in] data
+     *      Pointer to the memory buffer.  Note that if the buffer is not owned
+     *      by this object, a custom deleter implementation is needed.
+     */
+    // NOLINTNEXTLINE(readability-non-const-parameter)
+    ConcreteBuffer(size_t nbytes, int8_t * data, std::unique_ptr<ConcreteBufferDeleterImpl> && deleter, const ctor_passkey &)
+      : m_nbytes(nbytes)
+      , m_data(data)
+    {
+        get_deleter().impl = std::move(deleter);
+    }
 
     ~ConcreteBuffer() = default;
 
@@ -141,11 +206,13 @@ public:
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     template<typename T> T       * data()       noexcept { return reinterpret_cast<T*>(m_data.get()); }
 
+    D const & get_deleter() const noexcept { return m_data.get_deleter(); }
+    D       & get_deleter()       noexcept { return m_data.get_deleter(); }
+
 private:
 
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
     using unique_ptr_type = std::unique_ptr<int8_t, D>;
-    static_assert(sizeof(size_t) == sizeof(unique_ptr_type), "sizeof(Buffer::m_data) must be a word");
 
     void validate_range(size_t it) const
     {

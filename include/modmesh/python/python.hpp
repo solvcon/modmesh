@@ -196,6 +196,20 @@ protected:
 
 }; /* end class WrapTimeRegistry */
 
+struct ConcreteBufferNdarrayDeleterImpl : ConcreteBufferDeleterImpl
+{
+
+    explicit ConcreteBufferNdarrayDeleterImpl(pybind11::array arr_in)
+      : ndarray(std::move(arr_in))
+    {}
+
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
+    void operator()(int8_t *) const override {}
+
+    pybind11::array ndarray;
+
+}; /* end struct ConcreteBufferNdarrayDeleterImpl */
+
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapConcreteBuffer
@@ -269,6 +283,23 @@ WrapConcreteBuffer
                     );
                 }
             )
+            .def_property_readonly
+            (
+                "is_from_python"
+              , [](wrapped_type const & self)
+                {
+                    ConcreteBufferDeleterImpl * impl = self.get_deleter().impl.get();
+                    if (nullptr == impl)
+                    {
+                        return false;
+                    }
+                    // NOLINTNEXTLINE(llvm-else-after-return,readability-else-after-return)
+                    else
+                    {
+                        return typeid(*impl) == typeid(ConcreteBufferNdarrayDeleterImpl);
+                    }
+                }
+            )
         ;
     }
 
@@ -320,7 +351,13 @@ WrapSimpleArray
                         {
                             shape.push_back(arr_in.shape(i));
                         }
-                        return wrapped_type(shape);
+                        auto buffer = ConcreteBuffer<>::construct
+                        (
+                            arr_in.nbytes()
+                          , arr_in.mutable_data()
+                          , std::make_unique<ConcreteBufferNdarrayDeleterImpl>(arr_in)
+                        );
+                        return wrapped_type(shape, buffer);
                     }
                 )
               , py::arg("array")
@@ -362,6 +399,23 @@ WrapSimpleArray
                       , self.data() /* Pointer to buffer */
                       , py::cast(self.buffer().shared_from_this()) /* Owning Python object */
                     );
+                }
+            )
+            .def_property_readonly
+            (
+                "is_from_python"
+              , [](wrapped_type const & self)
+                {
+                    ConcreteBufferDeleterImpl * impl = self.buffer().get_deleter().impl.get();
+                    if (nullptr == impl)
+                    {
+                        return false;
+                    }
+                    // NOLINTNEXTLINE(llvm-else-after-return,readability-else-after-return)
+                    else
+                    {
+                        return typeid(*impl) == typeid(ConcreteBufferNdarrayDeleterImpl);
+                    }
                 }
             )
             .def_property_readonly("nbytes", &wrapped_type::nbytes)

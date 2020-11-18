@@ -146,9 +146,12 @@ class BasicTC(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
             modmesh.SimpleArrayFloat32(array=ndarr)
 
-        modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr_from_py = modmesh.SimpleArrayFloat64(array=ndarr)
+        self.assertTrue(sarr_from_py.is_from_python)
 
-    @unittest.expectedFailure
+        sarr_from_cpp = modmesh.SimpleArrayFloat64(shape=(2, 3, 4))
+        self.assertFalse(sarr_from_cpp.is_from_python)
+
     def test_SimpleArray_from_ndarray_content(self):
 
         ndarr = np.arange(24, dtype='float64').reshape((2, 3, 4))
