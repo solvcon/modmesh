@@ -36,11 +36,15 @@
 namespace modmesh
 {
 
+// NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+using ConcreteBufferDefaultDelete = std::default_delete<int8_t[]>;
+
 /**
  * Untyped and unresizeable memory buffer for contiguous data storage.
  */
+template < typename D = ConcreteBufferDefaultDelete >
 class ConcreteBuffer
-  : public std::enable_shared_from_this<ConcreteBuffer>
+  : public std::enable_shared_from_this<ConcreteBuffer<D>>
 {
 
 private:
@@ -140,7 +144,7 @@ public:
 private:
 
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    using unique_ptr_type = std::unique_ptr<int8_t, std::default_delete<int8_t[]>>;
+    using unique_ptr_type = std::unique_ptr<int8_t, D>;
     static_assert(sizeof(size_t) == sizeof(unique_ptr_type), "sizeof(Buffer::m_data) must be a word");
 
     void validate_range(size_t it) const

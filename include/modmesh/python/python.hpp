@@ -199,7 +199,7 @@ protected:
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapConcreteBuffer
-  : public WrapBase< WrapConcreteBuffer, ConcreteBuffer, std::shared_ptr<ConcreteBuffer> >
+  : public WrapBase< WrapConcreteBuffer, ConcreteBuffer<>, std::shared_ptr<ConcreteBuffer<>> >
 {
 
     friend root_base_type;
@@ -217,7 +217,7 @@ WrapConcreteBuffer
                 (
                     [](size_t nbytes)
                     {
-                        return ConcreteBuffer::construct(nbytes);
+                        return wrapped_type::construct(nbytes);
                     }
                 )
               , py::arg("nbytes")
@@ -225,11 +225,13 @@ WrapConcreteBuffer
             .def_timed("clone", &wrapped_type::clone)
             .def_property_readonly("nbytes", &wrapped_type::nbytes)
             .def("__len__", &wrapped_type::size)
-            .def_timed(
+            .def_timed
+            (
                 "__getitem__"
               , [](wrapped_type const & self, size_t it) { return self.at(it); }
             )
-            .def_timed(
+            .def_timed
+            (
                 "__setitem__"
               , [](wrapped_type & self, size_t it, int8_t val)
                 {

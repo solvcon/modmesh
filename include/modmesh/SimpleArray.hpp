@@ -80,7 +80,7 @@ inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<si
  * copy semantics performs data copy. The move semantics invalidates the
  * existing memory buffer.
  */
-template < typename T >
+template < typename T, typename D = ConcreteBufferDefaultDelete >
 class SimpleArray
 {
 
@@ -88,13 +88,14 @@ public:
 
     using value_type = T;
     using shape_type = small_vector<size_t>;
+    using buffer_type = ConcreteBuffer<D>;
 
     static constexpr size_t ITEMSIZE = sizeof(value_type);
 
     static constexpr size_t itemsize() { return ITEMSIZE; }
 
     explicit SimpleArray(size_t length)
-      : m_buffer(ConcreteBuffer::construct(length * ITEMSIZE))
+      : m_buffer(buffer_type::construct(length * ITEMSIZE))
       , m_shape{length}
       , m_stride{1}
     {}
@@ -109,10 +110,10 @@ public:
     explicit SimpleArray(small_vector<size_t> const & shape)
       : m_shape(shape), m_stride(calc_stride(m_shape))
     {
-        if (!m_shape.empty()) { m_buffer = ConcreteBuffer::construct(m_shape[0] * m_stride[0] * ITEMSIZE); }
+        if (!m_shape.empty()) { m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE); }
     }
 
-    explicit SimpleArray(std::shared_ptr<ConcreteBuffer> const & buffer)
+    explicit SimpleArray(std::shared_ptr<buffer_type> const & buffer)
     {
         if (buffer)
         {
@@ -134,7 +135,7 @@ public:
     explicit SimpleArray
     (
         small_vector<size_t> const & shape
-      , std::shared_ptr<ConcreteBuffer> const & buffer
+      , std::shared_ptr<buffer_type> const & buffer
     )
       : SimpleArray(buffer)
     {
@@ -155,7 +156,7 @@ public:
     explicit SimpleArray(std::vector<size_t> const & shape)
       : m_shape(shape), m_stride(calc_stride(m_shape))
     {
-        if (!m_shape.empty()) { m_buffer = ConcreteBuffer::construct(m_shape[0] * m_stride[0] * ITEMSIZE); }
+        if (!m_shape.empty()) { m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE); }
     }
 
     static shape_type calc_stride(shape_type const & shape)
@@ -287,8 +288,8 @@ public:
     value_type const * data() const { return buffer().template data<value_type>(); }
     value_type       * data()       { return buffer().template data<value_type>(); }
 
-    ConcreteBuffer const & buffer() const { return *m_buffer; }
-    ConcreteBuffer       & buffer()       { return *m_buffer; }
+    buffer_type const & buffer() const { return *m_buffer; }
+    buffer_type       & buffer()       { return *m_buffer; }
 
 private:
 
@@ -303,7 +304,7 @@ private:
     }
 
     /// Contiguous data buffer for the array.
-    std::shared_ptr<ConcreteBuffer> m_buffer;
+    std::shared_ptr<buffer_type> m_buffer;
     /// Each element in this vector is the number of element in the
     /// corresponding dimension.
     shape_type m_shape;
