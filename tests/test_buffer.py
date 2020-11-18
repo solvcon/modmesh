@@ -135,4 +135,25 @@ class BasicTC(unittest.TestCase):
         self.assertEqual(13*8,
                          modmesh.SimpleArrayFloat64(13).nbytes)
 
+    def test_SimpleArray_from_ndarray(self):
+
+        ndarr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+
+        with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
+            modmesh.SimpleArrayInt8(array=ndarr)
+        with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
+            modmesh.SimpleArrayUint64(array=ndarr)
+        with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
+            modmesh.SimpleArrayFloat32(array=ndarr)
+
+        modmesh.SimpleArrayFloat64(array=ndarr)
+
+    @unittest.expectedFailure
+    def test_SimpleArray_from_ndarray_content(self):
+
+        ndarr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr.ndarray.fill(100)
+        self.assertTrue((ndarr == 100).all())
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

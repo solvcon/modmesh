@@ -305,6 +305,26 @@ WrapSimpleArray
                 )
               , py::arg("shape")
             )
+            .def
+            (
+                py::init
+                (
+                    [](py::array & arr_in)
+                    {
+                        if (!py::detail::npy_format_descriptor<T>::dtype().is(arr_in.dtype()))
+                        {
+                            throw std::runtime_error("dtype mismatch");
+                        }
+                        shape_type shape;
+                        for (ssize_t i = 0 ; i < arr_in.ndim() ; ++i)
+                        {
+                            shape.push_back(arr_in.shape(i));
+                        }
+                        return wrapped_type(shape);
+                    }
+                )
+              , py::arg("array")
+            )
             .def_buffer
             (
                 [](wrapped_type & self)
