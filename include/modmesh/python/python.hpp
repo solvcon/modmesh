@@ -196,13 +196,17 @@ protected:
 
 }; /* end class WrapTimeRegistry */
 
-struct ConcreteBufferNdarrayRemover : ConcreteBuffer::remover_type
+struct
+MODMESH_PYTHON_WRAPPER_VISIBILITY
+ConcreteBufferNdarrayRemover : ConcreteBuffer::remover_type
 {
 
     static bool is_same_type(ConcreteBuffer::remover_type const & other)
     {
         return typeid(other) == typeid(ConcreteBufferNdarrayRemover);
     }
+
+    ConcreteBufferNdarrayRemover() = delete;
 
     explicit ConcreteBufferNdarrayRemover(pybind11::array arr_in)
       : ndarray(std::move(arr_in))
