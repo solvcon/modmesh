@@ -36,6 +36,70 @@
 namespace modmesh
 {
 
+namespace detail
+{
+
+// Take the remover and deleter classes outside ConcreteBuffer to work around
+// https://bugzilla.redhat.com/show_bug.cgi?id=1569374
+
+/**
+ * The base class of memory deallocator for ConcreteBuffer.  When the object
+ * exists in ConcreteBufferDataDeleter (the unique_ptr deleter), the deleter
+ * calls it to release the memory of the ConcreteBuffer data buffer.
+ */
+struct ConcreteBufferRemover
+{
+
+    ConcreteBufferRemover() = default;
+    ConcreteBufferRemover(ConcreteBufferRemover const & ) = default;
+    ConcreteBufferRemover(ConcreteBufferRemover       &&) = default;
+    ConcreteBufferRemover & operator=(ConcreteBufferRemover const & ) = default;
+    ConcreteBufferRemover & operator=(ConcreteBufferRemover       &&) = default;
+    virtual ~ConcreteBufferRemover() = default;
+
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
+    virtual void operator()(int8_t * p) const
+    {
+        // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+        delete[] p;
+    }
+
+}; /* end struct ConcreteBufferRemover */
+
+struct ConcreteBufferDataDeleter
+{
+
+    using remover_type = ConcreteBufferRemover;
+
+    ConcreteBufferDataDeleter(ConcreteBufferDataDeleter const & ) = delete;
+    ConcreteBufferDataDeleter & operator=(ConcreteBufferDataDeleter const & ) = delete;
+
+    ConcreteBufferDataDeleter() = default;
+    ConcreteBufferDataDeleter(ConcreteBufferDataDeleter &&) = default;
+    ConcreteBufferDataDeleter & operator=(ConcreteBufferDataDeleter &&) = default;
+    ~ConcreteBufferDataDeleter() = default;
+    explicit ConcreteBufferDataDeleter(std::unique_ptr<remover_type> && remover_in) : remover(std::move(remover_in)) {}
+
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
+    void operator()(int8_t * p) const
+    {
+        if (!remover)
+        {
+            // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+            delete[] p;
+        }
+        else
+        {
+            (*remover)(p);
+        }
+    }
+
+    std::unique_ptr<remover_type> remover {nullptr};
+
+}; /* end struct ConcreteBufferDataDeleter */
+
+} /* end namespace detail */
+
 /**
  * Untyped and unresizeable memory buffer for contiguous data storage.
  */
@@ -47,11 +111,31 @@ private:
 
     struct ctor_passkey {};
 
+    using data_deleter_type = detail::ConcreteBufferDataDeleter;
+
 public:
+
+    using remover_type = detail::ConcreteBufferRemover;
 
     static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes)
     {
         return std::make_shared<ConcreteBuffer>(nbytes, ctor_passkey());
+    }
+
+    /*
+     * This factory method is dangerous since the data pointer passed in will
+     * not be owned by the ConcreteBuffer created.  It is an error if the
+     * number of bytes of the externally owned buffer doesn't match the value
+     * passed in (but we cannot know here).
+     */
+    static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover)
+    {
+        return std::make_shared<ConcreteBuffer>(nbytes, data, std::move(remover), ctor_passkey());
+    }
+
+    static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, void * data, std::unique_ptr<remover_type> && remover)
+    {
+        return construct(nbytes, static_cast<int8_t*>(data), std::move(remover));
     }
 
     static std::shared_ptr<ConcreteBuffer> construct() { return construct(0); }
@@ -64,11 +148,27 @@ public:
     }
 
     /**
-     * \param[in] length Memory buffer length.
+     * \param[in] nbytes
+     *      Size of the memory buffer in bytes.
      */
     ConcreteBuffer(size_t nbytes, const ctor_passkey &)
       : m_nbytes(nbytes)
       , m_data(allocate(nbytes))
+    {}
+
+    /**
+     * \param[in] nbytes
+     *      Size of the memory buffer in bytes.
+     * \param[in] data
+     *      Pointer to the memory buffer that is not supposed to be owned by
+     *      this ConcreteBuffer.
+     * \param[in] remover
+     *      The memory deallocator for the unowned data buffer passed in.
+     */
+    // NOLINTNEXTLINE(readability-non-const-parameter)
+    ConcreteBuffer(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover, const ctor_passkey &)
+      : m_nbytes(nbytes)
+      , m_data(data, data_deleter_type(std::move(remover)))
     {}
 
     ~ConcreteBuffer() = default;
@@ -137,11 +237,12 @@ public:
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     template<typename T> T       * data()       noexcept { return reinterpret_cast<T*>(m_data.get()); }
 
-private:
+    bool has_remover() const noexcept { return bool(m_data.get_deleter().remover); }
+    remover_type const & get_remover() const { return *m_data.get_deleter().remover; }
+    remover_type       & get_remover()       { return *m_data.get_deleter().remover; }
 
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    using unique_ptr_type = std::unique_ptr<int8_t, std::default_delete<int8_t[]>>;
-    static_assert(sizeof(size_t) == sizeof(unique_ptr_type), "sizeof(Buffer::m_data) must be a word");
+    using unique_ptr_type = std::unique_ptr<int8_t, data_deleter_type>;
 
     void validate_range(size_t it) const
     {
@@ -155,14 +256,10 @@ private:
 
     static unique_ptr_type allocate(size_t nbytes)
     {
-        unique_ptr_type ret;
+        unique_ptr_type ret(nullptr, data_deleter_type());
         if (0 != nbytes)
         {
-            ret = unique_ptr_type(new int8_t[nbytes]);
-        }
-        else
-        {
-            ret = unique_ptr_type();
+            ret = unique_ptr_type(new int8_t[nbytes], data_deleter_type());
         }
         return ret;
     }

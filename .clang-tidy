@@ -19,7 +19,8 @@ Checks: >
     -llvm-include-order,
     -performance-noexcept-move-constructor,
     -readability-named-parameter,
-    -readability-magic-numbers
+    -readability-magic-numbers,
+    -misc-non-private-member-variables-in-classes
 WarningsAsErrors: ''
 HeaderFilterRegex: 'modmesh.*'
 AnalyzeTemporaryDtors: false

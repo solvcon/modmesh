@@ -69,6 +69,18 @@ class BasicTC(unittest.TestCase):
         buf2[5] = 19
         self.assertEqual(19, ndarr2[5])
 
+    def test_ConcreteBuffer_from_ndarray(self):
+
+        ndarr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+
+        buf = modmesh.ConcreteBuffer(array=ndarr)
+        self.assertEqual(ndarr.nbytes, buf.nbytes)
+
+        # The data buffer is shared.
+        self.assertFalse((ndarr == 0).all())
+        buf.ndarray.fill(0)
+        self.assertTrue((ndarr == 0).all())
+
     def test_SimpleArray(self):
 
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
@@ -134,5 +146,29 @@ class BasicTC(unittest.TestCase):
                          modmesh.SimpleArrayFloat32((2, 3, 4, 5)).nbytes)
         self.assertEqual(13*8,
                          modmesh.SimpleArrayFloat64(13).nbytes)
+
+    def test_SimpleArray_from_ndarray(self):
+
+        ndarr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+
+        with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
+            modmesh.SimpleArrayInt8(array=ndarr)
+        with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
+            modmesh.SimpleArrayUint64(array=ndarr)
+        with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
+            modmesh.SimpleArrayFloat32(array=ndarr)
+
+        sarr_from_py = modmesh.SimpleArrayFloat64(array=ndarr)
+        self.assertTrue(sarr_from_py.is_from_python)
+
+        sarr_from_cpp = modmesh.SimpleArrayFloat64(shape=(2, 3, 4))
+        self.assertFalse(sarr_from_cpp.is_from_python)
+
+    def test_SimpleArray_from_ndarray_content(self):
+
+        ndarr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr.ndarray.fill(100)
+        self.assertTrue((ndarr == 100).all())
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

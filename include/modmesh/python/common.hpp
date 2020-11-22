@@ -49,6 +49,12 @@ namespace modmesh
 namespace python
 {
 
+template < typename T >
+bool dtype_is_type(pybind11::array const & arr)
+{
+    return pybind11::detail::npy_format_descriptor<T>::dtype().is(arr.dtype());
+}
+
 class WrapperProfilerStatus
 {
 

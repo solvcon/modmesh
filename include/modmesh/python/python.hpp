@@ -196,6 +196,29 @@ protected:
 
 }; /* end class WrapTimeRegistry */
 
+struct
+MODMESH_PYTHON_WRAPPER_VISIBILITY
+ConcreteBufferNdarrayRemover : ConcreteBuffer::remover_type
+{
+
+    static bool is_same_type(ConcreteBuffer::remover_type const & other)
+    {
+        return typeid(other) == typeid(ConcreteBufferNdarrayRemover);
+    }
+
+    ConcreteBufferNdarrayRemover() = delete;
+
+    explicit ConcreteBufferNdarrayRemover(pybind11::array arr_in)
+      : ndarray(std::move(arr_in))
+    {}
+
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
+    void operator()(int8_t *) const override {}
+
+    pybind11::array ndarray;
+
+}; /* end struct ConcreteBufferNdarrayRemover */
+
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapConcreteBuffer
@@ -217,19 +240,37 @@ WrapConcreteBuffer
                 (
                     [](size_t nbytes)
                     {
-                        return ConcreteBuffer::construct(nbytes);
+                        return wrapped_type::construct(nbytes);
                     }
                 )
               , py::arg("nbytes")
             )
+            .def
+            (
+                py::init
+                (
+                    [](py::array & arr_in)
+                    {
+                        return wrapped_type::construct
+                        (
+                            arr_in.nbytes()
+                          , arr_in.mutable_data()
+                          , std::make_unique<ConcreteBufferNdarrayRemover>(arr_in)
+                        );
+                    }
+                )
+              , py::arg("array")
+            )
             .def_timed("clone", &wrapped_type::clone)
             .def_property_readonly("nbytes", &wrapped_type::nbytes)
             .def("__len__", &wrapped_type::size)
-            .def_timed(
+            .def_timed
+            (
                 "__getitem__"
               , [](wrapped_type const & self, size_t it) { return self.at(it); }
             )
-            .def_timed(
+            .def_timed
+            (
                 "__setitem__"
               , [](wrapped_type & self, size_t it, int8_t val)
                 {
@@ -265,6 +306,22 @@ WrapConcreteBuffer
                       , self.data() /* Pointer to buffer */
                       , py::cast(self.shared_from_this()) /* Owning Python object */
                     );
+                }
+            )
+            .def_property_readonly
+            (
+                "is_from_python"
+              , [](wrapped_type const & self)
+                {
+                    if (self.has_remover())
+                    {
+                        return ConcreteBufferNdarrayRemover::is_same_type(self.get_remover());
+                    }
+                    // NOLINTNEXTLINE(llvm-else-after-return,readability-else-after-return)
+                    else
+                    {
+                        return false;
+                    }
                 }
             )
         ;
@@ -303,6 +360,32 @@ WrapSimpleArray
                 )
               , py::arg("shape")
             )
+            .def
+            (
+                py::init
+                (
+                    [](py::array & arr_in)
+                    {
+                        if (!dtype_is_type<T>(arr_in))
+                        {
+                            throw std::runtime_error("dtype mismatch");
+                        }
+                        shape_type shape;
+                        for (ssize_t i = 0 ; i < arr_in.ndim() ; ++i)
+                        {
+                            shape.push_back(arr_in.shape(i));
+                        }
+                        std::shared_ptr<ConcreteBuffer> buffer = ConcreteBuffer::construct
+                        (
+                            arr_in.nbytes()
+                          , arr_in.mutable_data()
+                          , std::make_unique<ConcreteBufferNdarrayRemover>(arr_in)
+                        );
+                        return wrapped_type(shape, buffer);
+                    }
+                )
+              , py::arg("array")
+            )
             .def_buffer
             (
                 [](wrapped_type & self)
@@ -340,6 +423,22 @@ WrapSimpleArray
                       , self.data() /* Pointer to buffer */
                       , py::cast(self.buffer().shared_from_this()) /* Owning Python object */
                     );
+                }
+            )
+            .def_property_readonly
+            (
+                "is_from_python"
+              , [](wrapped_type const & self)
+                {
+                    if (self.buffer().has_remover())
+                    {
+                        return ConcreteBufferNdarrayRemover::is_same_type(self.buffer().get_remover());
+                    }
+                    // NOLINTNEXTLINE(llvm-else-after-return,readability-else-after-return)
+                    else
+                    {
+                        return false;
+                    }
                 }
             )
             .def_property_readonly("nbytes", &wrapped_type::nbytes)
