@@ -43,9 +43,9 @@ namespace detail
 // https://bugzilla.redhat.com/show_bug.cgi?id=1569374
 
 /**
- * The base class of memory deallocator for ConcreteBuffer.  When the
- * object exists in the unique_ptr deleter, the deleter calls it to release
- * the ConcreteBuffer memory.
+ * The base class of memory deallocator for ConcreteBuffer.  When the object
+ * exists in ConcreteBufferDataDeleter (the unique_ptr deleter), the deleter
+ * calls it to release the memory of the ConcreteBuffer data buffer.
  */
 struct ConcreteBufferRemover
 {
@@ -71,11 +71,12 @@ struct ConcreteBufferDataDeleter
 
     using remover_type = ConcreteBufferRemover;
 
-    ConcreteBufferDataDeleter() = default;
     ConcreteBufferDataDeleter(ConcreteBufferDataDeleter const & ) = delete;
-    ConcreteBufferDataDeleter(ConcreteBufferDataDeleter       &&) = default;
     ConcreteBufferDataDeleter & operator=(ConcreteBufferDataDeleter const & ) = delete;
-    ConcreteBufferDataDeleter & operator=(ConcreteBufferDataDeleter       &&) = default;
+
+    ConcreteBufferDataDeleter() = default;
+    ConcreteBufferDataDeleter(ConcreteBufferDataDeleter &&) = default;
+    ConcreteBufferDataDeleter & operator=(ConcreteBufferDataDeleter &&) = default;
     ~ConcreteBufferDataDeleter() = default;
     explicit ConcreteBufferDataDeleter(std::unique_ptr<remover_type> && remover_in) : remover(std::move(remover_in)) {}
 
@@ -108,9 +109,9 @@ class ConcreteBuffer
 
 private:
 
-    using data_deleter_type = detail::ConcreteBufferDataDeleter;
-
     struct ctor_passkey {};
+
+    using data_deleter_type = detail::ConcreteBufferDataDeleter;
 
 public:
 
@@ -147,7 +148,8 @@ public:
     }
 
     /**
-     * \param[in] nbytes Size of the memory buffer in bytes.
+     * \param[in] nbytes
+     *      Size of the memory buffer in bytes.
      */
     ConcreteBuffer(size_t nbytes, const ctor_passkey &)
       : m_nbytes(nbytes)
@@ -155,7 +157,8 @@ public:
     {}
 
     /**
-     * \param[in] nbytes Size of the memory buffer in bytes.
+     * \param[in] nbytes
+     *      Size of the memory buffer in bytes.
      * \param[in] data
      *      Pointer to the memory buffer that is not supposed to be owned by
      *      this ConcreteBuffer.
