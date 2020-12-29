@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "modmesh/small_vector.hpp"
+#include <modmesh/small_vector.hpp>
 
 #include <stdexcept>
 #include <memory>

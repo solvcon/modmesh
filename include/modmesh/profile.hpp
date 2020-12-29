@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "modmesh/base.hpp"
+#include <modmesh/base.hpp>
 
 #include <string>
 #include <chrono>
