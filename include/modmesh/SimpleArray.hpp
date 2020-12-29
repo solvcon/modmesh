@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "modmesh/ConcreteBuffer.hpp"
+#include <modmesh/ConcreteBuffer.hpp>
 
 #include <stdexcept>
 

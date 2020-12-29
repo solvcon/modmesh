@@ -32,9 +32,9 @@
  * Structured grid.
  */
 
-#include "modmesh/base.hpp"
-#include "modmesh/profile.hpp"
-#include "modmesh/SimpleArray.hpp"
+#include <modmesh/base.hpp>
+#include <modmesh/profile.hpp>
+#include <modmesh/SimpleArray.hpp>
 
 namespace modmesh
 {

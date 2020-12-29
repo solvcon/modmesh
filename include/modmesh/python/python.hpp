@@ -34,8 +34,8 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-#include "modmesh/modmesh.hpp"
-#include "modmesh/python/common.hpp"
+#include <modmesh/modmesh.hpp>
+#include <modmesh/python/common.hpp>
 
 #ifdef __GNUG__
 #  define MODMESH_PYTHON_WRAPPER_VISIBILITY __attribute__((visibility("hidden")))
