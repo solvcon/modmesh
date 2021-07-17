@@ -120,6 +120,14 @@ endif()
 
 set(MODMESH_PY_PATH "${PROJECT_SOURCE_DIR}/modmesh")
 
+execute_process(
+    COMMAND python3-config --extension-suffix
+    OUTPUT_VARIABLE PYEXTSUFFIX)
+
+add_custom_target(_modmesh_py
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:_modmesh> ${MODMESH_PY_PATH}/_modmesh${PYEXTSUFFIX}
+    DEPENDS _modmesh)
+
 message(STATUS "CMAKE_INSTALL_INCLUDEDIR: ${CMAKE_INSTALL_INCLUDEDIR}")
 install(DIRECTORY ${MODMESH_INCLUDE_DIR}/modmesh DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 

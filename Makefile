@@ -19,10 +19,14 @@ CMAKE_INSTALL_PREFIX ?= $(MODMESH_ROOT)/build/fakeinstall
 CMAKE_LIBRARY_OUTPUT_DIRECTORY ?= $(MODMESH_ROOT)/modmesh
 CMAKE_ARGS ?=
 VERBOSE ?=
+
+pyextsuffix := $(shell python3-config --extension-suffix)
+pyvminor := $(shell python3 -c 'import sys; print("%d%d" % sys.version_info[0:2])')
+
 ifeq ($(CMAKE_BUILD_TYPE), Debug)
-	BUILD_PATH ?= build/dbg37
+	BUILD_PATH ?= build/dbg$(pyvminor)
 else
-	BUILD_PATH ?= build/dev37
+	BUILD_PATH ?= build/dev$(pyvminor)
 endif
 
 PYTEST ?= $(shell which py.test-3)
@@ -34,8 +38,6 @@ ifneq ($(VERBOSE),)
 else
 	PYTEST_OPTS ?=
 endif
-
-pyextsuffix := $(shell python3-config --extension-suffix)
 
 .PHONY: default
 default: buildext
@@ -69,7 +71,7 @@ install: cmake
 	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) install
 
 $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix): $(BUILD_PATH)/Makefile
-	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) _modmesh
+	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) _modmesh_py
 	touch $@
 
 $(BUILD_PATH)/Makefile: CMakeLists.txt Makefile
