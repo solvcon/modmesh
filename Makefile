@@ -8,6 +8,12 @@
 # Build with clang-tidy
 #   make USE_CLANG_TIDY=ON
 
+SETUP_FILE ?= ./setup.mk
+
+ifneq (,$(wildcard $(SETUP_FILE)))
+	include $(SETUP_FILE)
+endif
+
 SKIP_PYTHON_EXECUTABLE ?= OFF
 HIDE_SYMBOL ?= OFF
 DEBUG_SYMBOL ?= ON
@@ -19,6 +25,7 @@ CMAKE_INSTALL_PREFIX ?= $(MODMESH_ROOT)/build/fakeinstall
 CMAKE_LIBRARY_OUTPUT_DIRECTORY ?= $(MODMESH_ROOT)/modmesh
 CMAKE_ARGS ?=
 VERBOSE ?=
+RUNENV += PYTHONPATH=$(MODMESH_ROOT)
 
 pyextsuffix := $(shell python3-config --extension-suffix)
 pyvminor := $(shell python3 -c 'import sys; print("%d%d" % sys.version_info[0:2])')
@@ -54,7 +61,8 @@ cmakeclean:
 
 .PHONY: pytest
 pytest: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
-	env PYTHONPATH=$(MODMESH_ROOT) $(PYTEST) $(PYTEST_OPTS) tests/
+	env $(RUNENV) \
+		$(PYTEST) $(PYTEST_OPTS) tests/
 
 .PHONY: flake8
 flake8:
@@ -77,7 +85,8 @@ $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix): $(BUILD_PATH)/Makefile
 $(BUILD_PATH)/Makefile: CMakeLists.txt Makefile
 	mkdir -p $(BUILD_PATH) ; \
 	cd $(BUILD_PATH) ; \
-	cmake $(MODMESH_ROOT) \
+	env $(RUNENV) \
+		cmake $(MODMESH_ROOT) \
 		-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX) \
 		-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$(CMAKE_LIBRARY_OUTPUT_DIRECTORY) \
 		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
