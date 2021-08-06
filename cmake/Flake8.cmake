@@ -9,6 +9,6 @@ macro(flake8 target_name)
     add_custom_command(TARGET ${target_name}
         PRE_BUILD
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMAND ${flake8_BIN} .
+        COMMAND ${flake8_BIN} . --exclude tmp
         COMMENT "Running flake8 on ${CMAKE_CURRENT_SOURCE_DIR} ...")
 endmacro()
