@@ -32,7 +32,7 @@ import numpy as np
 import modmesh
 
 
-class BasicTC(unittest.TestCase):
+class ConcreteBufferBasicTC(unittest.TestCase):
 
     def test_ConcreteBuffer(self):
 
@@ -71,15 +71,22 @@ class BasicTC(unittest.TestCase):
 
     def test_ConcreteBuffer_from_ndarray(self):
 
+        buf = modmesh.ConcreteBuffer(24)
+        self.assertFalse(buf.is_from_python)
+
         ndarr = np.arange(24, dtype='float64').reshape((2, 3, 4))
 
         buf = modmesh.ConcreteBuffer(array=ndarr)
         self.assertEqual(ndarr.nbytes, buf.nbytes)
+        self.assertTrue(buf.is_from_python)
 
         # The data buffer is shared.
         self.assertFalse((ndarr == 0).all())
         buf.ndarray.fill(0)
         self.assertTrue((ndarr == 0).all())
+
+
+class SimpleArrayBasicTC(unittest.TestCase):
 
     def test_SimpleArray(self):
 
@@ -132,20 +139,26 @@ class BasicTC(unittest.TestCase):
 
     def test_SimpleArray_types(self):
 
-        self.assertEqual(6, modmesh.SimpleArrayInt8((2, 3)).nbytes)
-        self.assertEqual(24, modmesh.SimpleArrayInt16((3, 4)).nbytes)
-        self.assertEqual(28, modmesh.SimpleArrayInt32(7).nbytes)
-        self.assertEqual(2*3*4*8, modmesh.SimpleArrayInt64((2, 3, 4)).nbytes)
+        def _check(sarr, nbytes, dtype):
+            self.assertEqual(nbytes, sarr.nbytes)
+            self.assertEqual(dtype, sarr.ndarray.dtype)
 
-        self.assertEqual(6, modmesh.SimpleArrayUint8((2, 3)).nbytes)
-        self.assertEqual(24, modmesh.SimpleArrayUint16((3, 4)).nbytes)
-        self.assertEqual(28, modmesh.SimpleArrayUint32(7).nbytes)
-        self.assertEqual(2*3*4*8, modmesh.SimpleArrayUint64((2, 3, 4)).nbytes)
+        # Boolean.
+        _check(modmesh.SimpleArrayBool((2, 3, 4)), 24, np.bool_)
 
-        self.assertEqual(2*3*4*5*4,
-                         modmesh.SimpleArrayFloat32((2, 3, 4, 5)).nbytes)
-        self.assertEqual(13*8,
-                         modmesh.SimpleArrayFloat64(13).nbytes)
+        # Integer types.
+        _check(modmesh.SimpleArrayInt8((2, 3)), 6, np.int8)
+        _check(modmesh.SimpleArrayUint8((2, 3)), 6, np.uint8)
+        _check(modmesh.SimpleArrayInt16((3, 5)), 30, np.int16)
+        _check(modmesh.SimpleArrayUint16((3, 5)), 30, np.uint16)
+        _check(modmesh.SimpleArrayInt32(7), 28, np.int32)
+        _check(modmesh.SimpleArrayUint32(7), 28, np.uint32)
+        _check(modmesh.SimpleArrayInt64((2, 3, 4)), 2*3*4*8, np.int64)
+        _check(modmesh.SimpleArrayUint64((2, 3, 4)), 2*3*4*8, np.uint64)
+
+        # Real-number types.
+        _check(modmesh.SimpleArrayFloat32((2, 3, 4, 5)), 2*3*4*5*4, 'float32')
+        _check(modmesh.SimpleArrayFloat64((2, 3, 4, 5)), 2*3*4*5*8, 'float64')
 
     def test_SimpleArray_from_ndarray(self):
 

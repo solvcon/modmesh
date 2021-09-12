@@ -313,15 +313,10 @@ WrapConcreteBuffer
                 "is_from_python"
               , [](wrapped_type const & self)
                 {
-                    if (self.has_remover())
-                    {
-                        return ConcreteBufferNdarrayRemover::is_same_type(self.get_remover());
-                    }
-                    // NOLINTNEXTLINE(llvm-else-after-return,readability-else-after-return)
-                    else
-                    {
-                        return false;
-                    }
+                    return
+                        self.has_remover()
+                     && ConcreteBufferNdarrayRemover::is_same_type(self.get_remover())
+                    ;
                 }
             )
         ;
@@ -430,15 +425,10 @@ WrapSimpleArray
                 "is_from_python"
               , [](wrapped_type const & self)
                 {
-                    if (self.buffer().has_remover())
-                    {
-                        return ConcreteBufferNdarrayRemover::is_same_type(self.buffer().get_remover());
-                    }
-                    // NOLINTNEXTLINE(llvm-else-after-return,readability-else-after-return)
-                    else
-                    {
-                        return false;
-                    }
+                    return
+                        self.buffer().has_remover()
+                     && ConcreteBufferNdarrayRemover::is_same_type(self.buffer().get_remover())
+                    ;
                 }
             )
             .def_property_readonly("nbytes", &wrapped_type::nbytes)
@@ -786,6 +776,7 @@ inline void initialize_impl(pybind11::module & mod)
 
     WrapConcreteBuffer::commit(mod, "ConcreteBuffer", "ConcreteBuffer");
 
+    WrapSimpleArray<bool>::commit(mod, "SimpleArrayBool", "SimpleArrayBool");
     WrapSimpleArray<int8_t>::commit(mod, "SimpleArrayInt8", "SimpleArrayInt8");
     WrapSimpleArray<int16_t>::commit(mod, "SimpleArrayInt16", "SimpleArrayInt16");
     WrapSimpleArray<int32_t>::commit(mod, "SimpleArrayInt32", "SimpleArrayInt32");
