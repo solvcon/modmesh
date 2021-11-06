@@ -60,6 +60,12 @@ public:
         }
     }
 
+    explicit small_vector(size_t size, T const & v)
+      : small_vector(size)
+    {
+        std::fill(begin(), end(), v);
+    }
+
     explicit small_vector(std::vector<T> const & vector)
       : small_vector(vector.size())
     {

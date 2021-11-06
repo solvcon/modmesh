@@ -461,40 +461,10 @@ WrapSimpleArray
                 }
             )
             .def("__len__", &wrapped_type::size)
-            .def_timed
-            (
-                "__getitem__"
-              , [](wrapped_type const & self, py::object const & key)
-                {
-                    try
-                    {
-                        auto const it = key.cast<size_t>();
-                        return self.at(it);
-                    }
-                    catch (const py::cast_error &)
-                    {
-                        shape_type const idx(key.cast<std::vector<size_t>>());
-                        return self.at(idx);
-                    }
-                }
-            )
-            .def_timed
-            (
-                "__setitem__"
-              , [](wrapped_type & self, py::object const & key, T val)
-                {
-                    try
-                    {
-                        auto const it = key.cast<size_t>();
-                        self.at(it) = val;
-                    }
-                    catch (const py::cast_error &)
-                    {
-                        shape_type const idx(key.cast<std::vector<size_t>>());
-                        self.at(idx) = val;
-                    }
-                }
-            )
+            .def("__getitem__", [](wrapped_type const & self, ssize_t key) { return self.at(key); })
+            .def("__getitem__", [](wrapped_type const & self, std::vector<ssize_t> const & key) { return self.at(key); })
+            .def("__setitem__", [](wrapped_type & self, ssize_t key, T val) { self.at(key) = val; })
+            .def("__setitem__", [](wrapped_type & self, std::vector<ssize_t> const & key, T val) { self.at(key) = val; })
             .def_timed
             (
                 "reshape"
@@ -503,6 +473,9 @@ WrapSimpleArray
                     return self.reshape(make_shape(shape));
                 }
             )
+            .def_property_readonly("has_ghost", &wrapped_type::has_ghost)
+            .def_property("nghost", &wrapped_type::nghost, &wrapped_type::set_nghost)
+            .def_property_readonly("nbody", &wrapped_type::nbody)
         ;
 
     }

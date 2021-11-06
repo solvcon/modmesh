@@ -55,7 +55,9 @@ public:
 
     static constexpr const size_t NDIM = ND;
 
-    using serial_type = uint32_t;
+    using int_type = int32_t;
+    using uint_type = uint32_t;
+    using serial_type = uint_type;
     using real_type = double;
 
 }; /* end class SpaceBase */
