@@ -181,6 +181,13 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         ndarr = np.arange(24, dtype='float64').reshape((2, 3, 4))
         sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        # Populate using ndarray interface.
+        sarr.ndarray.fill(1)
+        self.assertTrue((ndarr == 1).all())
+        # Set value using setitem interface.
+        sarr[0, 0, 0] = 10
+        self.assertFalse((ndarr == 1).all())
+        # Repopulate using ndarray interface.
         sarr.ndarray.fill(100)
         self.assertTrue((ndarr == 100).all())
 
