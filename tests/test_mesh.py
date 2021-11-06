@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+# Copyright (c) 2021, Yung-Yu Chen <yyc@solvcon.net>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,71 +25,45 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-"""
-General mesh data definition and manipulation in one, two, and
-three-dimensional space.
-"""
+import unittest
+
+import modmesh
 
 
-# Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
+class StaticMeshTC(unittest.TestCase):
 
+    def test_construct(self):
+        def _test(cls, ndim):
 
-__all__ = [
-    'WrapperProfilerStatus',
-    'wrapper_profiler_status',
-    'StopWatch',
-    'stop_watch',
-    'TimeRegistry',
-    'time_registry',
-    'ConcreteBuffer',
-    'SimpleArrayBool',
-    'SimpleArrayInt8',
-    'SimpleArrayInt16',
-    'SimpleArrayInt32',
-    'SimpleArrayInt64',
-    'SimpleArrayUint8',
-    'SimpleArrayUint16',
-    'SimpleArrayUint32',
-    'SimpleArrayUint64',
-    'SimpleArrayFloat32',
-    'SimpleArrayFloat64',
-    'StaticGrid1d',
-    'StaticGrid2d',
-    'StaticGrid3d',
-    'StaticMesh2d',
-    'StaticMesh3d',
-]
+            mh = cls(nnode=0)
 
+            self.assertEqual(ndim, cls.NDIM)
 
-# A hidden loophole to impolementation; it should only be used for testing
-# during development.
-from . import _modmesh as _impl  # noqa: F401
+            self.assertEqual(0, mh.nnode)
+            self.assertEqual(0, mh.nface)
+            self.assertEqual(0, mh.ncell)
+            self.assertEqual(0, mh.nbound)
+            self.assertEqual(0, mh.ngstnode)
+            self.assertEqual(0, mh.ngstface)
+            self.assertEqual(0, mh.ngstcell)
 
+            self.assertEqual((mh.nnode, ndim), mh.ndcrd.shape)
+            self.assertEqual((mh.nface, ndim), mh.fccnd.shape)
+            self.assertEqual((mh.nface, ndim), mh.fcnml.shape)
+            self.assertEqual((mh.nface,), mh.fcara.shape)
+            self.assertEqual((mh.ncell, ndim), mh.clcnd.shape)
+            self.assertEqual((mh.ncell,), mh.clvol.shape)
 
-from ._modmesh import (
-    WrapperProfilerStatus,
-    wrapper_profiler_status,
-    StopWatch,
-    stop_watch,
-    TimeRegistry,
-    time_registry,
-    ConcreteBuffer,
-    SimpleArrayBool,
-    SimpleArrayInt8,
-    SimpleArrayInt16,
-    SimpleArrayInt32,
-    SimpleArrayInt64,
-    SimpleArrayUint8,
-    SimpleArrayUint16,
-    SimpleArrayUint32,
-    SimpleArrayUint64,
-    SimpleArrayFloat32,
-    SimpleArrayFloat64,
-    StaticGrid1d,
-    StaticGrid2d,
-    StaticGrid3d,
-    StaticMesh2d,
-    StaticMesh3d,
-)
+            self.assertEqual((mh.ncell,), mh.fctpn.shape)
+            self.assertEqual((mh.ncell,), mh.cltpn.shape)
+            self.assertEqual((mh.ncell,), mh.clgrp.shape)
+
+            self.assertEqual((mh.nface, cls.FCMND), mh.fcnds.shape)
+            self.assertEqual((mh.nface, cls.FCMCL), mh.fccls.shape)
+            self.assertEqual((mh.ncell, cls.CLMND), mh.clnds.shape)
+            self.assertEqual((mh.ncell, cls.CLMFC), mh.clfcs.shape)
+
+        _test(modmesh.StaticMesh2d, 2)
+        _test(modmesh.StaticMesh3d, 3)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
