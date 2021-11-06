@@ -47,13 +47,13 @@ namespace modmesh
  * Spatial table basic information.  Any table-based data store for spatial
  * data should inherit this class template.
  */
-template <size_t ND>
+template <uint8_t ND>
 class SpaceBase
 {
 
 public:
 
-    static constexpr const size_t NDIM = ND;
+    static constexpr const uint8_t NDIM = ND;
 
     using int_type = int32_t;
     using uint_type = uint32_t;
