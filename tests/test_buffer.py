@@ -137,6 +137,145 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual((1, 24), sarr.reshape((1, 24)).shape)
         self.assertEqual((12, 2), sarr.reshape((12, 2)).shape)
 
+    def test_SimpleArray_ghost_1d(self):
+
+        sarr = modmesh.SimpleArrayFloat64(4 * 3 * 2)
+        ndarr = np.array(sarr, copy=False)
+        ndarr[:] = np.arange(24)  # initialize contents
+
+        self.assertFalse(sarr.has_ghost)
+        self.assertEqual(0, sarr.nghost)
+        self.assertEqual(24, sarr.nbody)
+
+        v = 0
+        for i in range(24):
+            self.assertEqual(v, sarr[i])
+            v += 1
+
+        sarr.nghost = 10
+
+        self.assertTrue(sarr.has_ghost)
+        self.assertEqual(10, sarr.nghost)
+        self.assertEqual(14, sarr.nbody)
+
+        v = 0
+        for i in range(-10, 14):
+            self.assertEqual(v, sarr[i])
+            v += 1
+
+        # Test out-of-bound index for getitem.
+        with self.assertRaisesRegex(
+            IndexError, r"SimpleArray: index -11 < -nghost: -10"
+        ):
+            sarr[-11]
+
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray: index 14 >= 14 \(size: 24 - nghost: 10\)"
+        ):
+            sarr[14]
+
+        # Test out-of-bound index for setitem.
+        with self.assertRaisesRegex(
+            IndexError, r"SimpleArray: index -11 < -nghost: -10"
+        ):
+            sarr[-11] = 1
+
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray: index 14 >= 14 \(size: 24 - nghost: 10\)"
+        ):
+            sarr[14] = 1
+
+    def test_SimpleArray_ghost_md(self):
+
+        sarr = modmesh.SimpleArrayFloat64((4, 3, 2))
+        ndarr = np.array(sarr, copy=False)
+        np.ravel(ndarr)[:] = np.arange(24)  # initialize contents
+
+        self.assertFalse(sarr.has_ghost)
+        self.assertEqual(0, sarr.nghost)
+        self.assertEqual(4, sarr.nbody)
+
+        v = 0
+        for i in range(4):
+            for j in range(3):
+                for k in range(2):
+                    self.assertEqual(v, sarr[i, j, k])
+                    v += 1
+
+        sarr.nghost = 1
+
+        self.assertTrue(sarr.has_ghost)
+        self.assertEqual(1, sarr.nghost)
+        self.assertEqual(3, sarr.nbody)
+
+        v = 0
+        for i in range(-1, 3):
+            for j in range(3):
+                for k in range(2):
+                    self.assertEqual(v, sarr[i, j, k])
+                    v += 1
+
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::validate_range\(\): cannot handle 3-dimensional "
+            r"\(more than 1\) array with non-zero nghost: 1"
+        ):
+            sarr[-1]
+
+        # Test out-of-bound index for getitem.
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray: dim 0 in \[-2, 0, 0\] < -nghost: -1"
+        ):
+            sarr[-2, 0, 0]
+
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray: dim 0 in \[3, 0, 0\] >= nbody: 3 "
+            r"\(shape\[0\]: 4 - nghost: 1\)"
+        ):
+            sarr[3, 0, 0]
+
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray: dim 1 in \[0, -1, 0\] < 0"
+        ):
+            sarr[0, -1, 0]
+
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray: dim 2 in \[0, 2, 2\] >= shape\[2\]: 2"
+        ):
+            sarr[0, 2, 2]
+
+        # Test out-of-bound index for setitem.
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray: dim 0 in \[-2, 0, 0\] < -nghost: -1"
+        ):
+            sarr[-2, 0, 0] = 1
+
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray: dim 0 in \[3, 0, 0\] >= nbody: 3 "
+            r"\(shape\[0\]: 4 - nghost: 1\)"
+        ):
+            sarr[3, 0, 0] = 1
+
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray: dim 1 in \[0, -1, 0\] < 0"
+        ):
+            sarr[0, -1, 0] = 1
+
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray: dim 2 in \[0, 2, 2\] >= shape\[2\]: 2"
+        ):
+            sarr[0, 2, 2] = 1
+
     def test_SimpleArray_types(self):
 
         def _check(sarr, nbytes, dtype):

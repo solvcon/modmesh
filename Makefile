@@ -41,7 +41,7 @@ ifeq ($(PYTEST),)
 	PYTEST := $(shell which pytest)
 endif
 ifneq ($(VERBOSE),)
-	PYTEST_OPTS ?= -v
+	PYTEST_OPTS ?= -v -s
 else
 	PYTEST_OPTS ?=
 endif
