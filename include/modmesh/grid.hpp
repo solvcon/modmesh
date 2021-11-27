@@ -105,30 +105,27 @@ class StaticGrid1d
 
 public:
 
+    using value_type = double;
+    using array_type = SimpleArray<value_type>;
+
     StaticGrid1d() : m_coord(nullptr) {}
 
     explicit StaticGrid1d(serial_type nx)
       : m_nx(nx)
-      , m_coord(allocate(nx))
+      , m_coord(nx)
     {}
 
     StaticGrid1d(StaticGrid1d const & other)
       : m_nx(other.m_nx)
-      , m_coord(allocate(other.m_nx))
-    {
-        if (m_coord)
-        {
-            std::copy(other.m_coord.get(), m_coord.get(), m_coord.get()+m_nx);
-        }
-    }
+      , m_coord(other.m_coord)
+    {}
 
     StaticGrid1d & operator=(StaticGrid1d const & other)
     {
         if (this != &other)
         {
             m_nx = other.m_nx;
-            m_coord = allocate(m_nx);
-            std::copy(other.m_coord.get(), m_coord.get(), m_coord.get()+m_nx);
+            m_coord = other.m_coord;
         }
         return *this;
     }
@@ -151,50 +148,25 @@ public:
     ~StaticGrid1d() = default;
 
     size_t nx() const { return m_nx; }
-    //NOLINTNEXTLINE(readability-const-return-type)
-    real_type * coord() const { return m_coord.get(); }
-    real_type * coord()       { return m_coord.get(); }
+    array_type const & coord() const { return m_coord; }
+    array_type       & coord()       { return m_coord; }
 
     size_t size() const { return m_nx; }
     real_type   operator[] (size_t it) const noexcept { return m_coord[it]; }
     real_type & operator[] (size_t it)       noexcept { return m_coord[it]; }
-    real_type   at (size_t it) const { ensure_range(it); return (*this)[it]; }
-    real_type & at (size_t it)       { ensure_range(it); return (*this)[it]; }
+    real_type   at (size_t it) const { return m_coord.at(it); }
+    real_type & at (size_t it)       { return m_coord.at(it); }
 
     void fill(real_type val)
     {
         MODMESH_TIME("StaticGrid1d::fill");
-        std::fill(m_coord.get(), m_coord.get()+m_nx, val);
+        std::fill(m_coord.begin(), m_coord.end(), val);
     }
 
 private:
 
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    static std::unique_ptr<real_type[]> allocate(serial_type nx)
-    {
-        if (0 != nx)
-        {
-            // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-            return std::unique_ptr<real_type[]>(new real_type[nx]);
-        }
-        else // NOLINT(readability-else-after-return,llvm-else-after-return)
-        {
-            // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-            return std::unique_ptr<real_type[]>{};
-        }
-    }
-
-    void ensure_range(size_t it) const
-    {
-        if (it >= m_nx)
-        {
-            MODMESH_EXCEPT(StaticGrid1d, std::out_of_range, "index out of range");
-        }
-    }
-
     serial_type m_nx = 0;
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    std::unique_ptr<real_type[]> m_coord;
+    array_type m_coord;
 
 }; /* end class StaticGrid1d */
 

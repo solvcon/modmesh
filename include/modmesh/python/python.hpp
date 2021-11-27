@@ -557,67 +557,39 @@ protected:
         (*this)
             .def_timed
             (
-                py::init
-                (
-                    [](serial_type nx)
-                    {
-                        // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
-                        return new StaticGrid1d(nx);
-                    }
-                )
+                py::init([](serial_type nx) { return std::make_unique<StaticGrid1d>(nx); })
               , py::arg("nx")
             )
-            .def
-            (
-                "__len__"
-              , [](wrapped_type const & self) { return self.size(); }
-            )
-            .def_timed
-            (
-                "__getitem__"
-              , [](wrapped_type const & self, size_t it) { return self.at(it); }
-            )
-            .def_timed
-            (
-                "__setitem__"
-              , [](wrapped_type & self, size_t it, wrapped_type::real_type val)
-                {
-                    self.at(it) = val;
-                }
-            )
-            .def_property_readonly
-            (
-                "nx"
-              , [](wrapped_type const & self) { return self.nx(); }
-            )
-            .def_property_timed
+            .def("__len__", [](wrapped_type const & self) { return self.size(); })
+            .def("__getitem__", [](wrapped_type const & self, size_t it) { return self.at(it); })
+            .def("__setitem__", [](wrapped_type & self, size_t it, wrapped_type::real_type val) { self.at(it) = val; })
+            .def_property_readonly("nx", [](wrapped_type const & self) { return self.nx(); })
+            .def_property
             (
                 "coord"
-              , [](wrapped_type & self)
+              , [](wrapped_type & self) -> wrapped_type::array_type & { return self.coord(); }
+              , [](wrapped_type & self, py::array_t<wrapped_type::value_type> & ndarr)
                 {
-                    return py::array
-                    (
-                        py::detail::npy_format_descriptor<real_type>::dtype()
-                      , { self.nx() }
-                      , { sizeof(real_type) }
-                      , self.coord()
-                      , py::cast(self)
-                    );
-                }
-              , [](wrapped_type & self, py::array_t<real_type> const & arr)
-                {
-                    for (size_t it=0 ; it < self.nx() ; ++it)
+                    if (self.nx() != static_cast<size_t>(ndarr.size()))
                     {
-                        self.at(it) = arr.at(it);
+                        MODMESH_EXCEPT(StaticGrid1d, std::length_error, "input array size differs from internal");
                     }
+                    wrapped_type::array_type::shape_type shape;
+                    for (ssize_t i = 0 ; i < ndarr.ndim() ; ++i)
+                    {
+                        shape.push_back(ndarr.shape(i));
+                    }
+                    std::shared_ptr<ConcreteBuffer> buffer = ConcreteBuffer::construct
+                    (
+                        ndarr.nbytes()
+                      , ndarr.mutable_data()
+                      , std::make_unique<ConcreteBufferNdarrayRemover>(ndarr)
+                    );
+                    wrapped_type::array_type sarr(shape, buffer);
+                    std::swap(self.coord(), sarr);
                 }
             )
-            .def_timed
-            (
-                "fill"
-              , &wrapped_type::fill
-              , py::arg("value")
-            )
+            .def_timed("fill", &wrapped_type::fill, py::arg("value"))
         ;
 
     }
