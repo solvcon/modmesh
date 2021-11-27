@@ -68,11 +68,7 @@ protected:
         namespace py = pybind11;
 
         (*this)
-            .def_property_readonly_static
-            (
-                "me"
-              , [](py::object const &) -> wrapped_type& { return wrapped_type::me(); }
-            )
+            .def_property_readonly_static("me", [](py::object const &) -> wrapped_type& { return wrapped_type::me(); })
             .def_property_readonly("enabled", &wrapped_type::enabled)
             .def("enable", &wrapped_type::enable)
             .def("disable", &wrapped_type::disable)
@@ -105,16 +101,11 @@ protected:
         (*this)
             .def_property_readonly_static
             (
-                "me"
-              , [](py::object const &) -> wrapped_type& { return wrapped_type::me(); }
+                "me", [](py::object const &) -> wrapped_type & { return wrapped_type::me(); }
             )
             .def("lap", &wrapped_type::lap)
             .def_property_readonly("duration", &wrapped_type::duration)
-            .def_property_readonly_static
-            (
-                "resolution"
-              , [](py::object const &) -> double { return wrapped_type::resolution(); }
-            )
+            .def_property_readonly_static("resolution", [](py::object const &) { return wrapped_type::resolution(); })
         ;
 
         mod.attr("stop_watch") = mod.attr("StopWatch").attr("me");
@@ -182,8 +173,7 @@ protected:
             .def
             (
                 "add_time"
-              , static_cast<void (wrapped_type::*)(std::string const &, double)>
-                (&wrapped_type::add)
+              , static_cast<void (wrapped_type::*)(std::string const &, double)>(&wrapped_type::add)
               , py::arg("name"), py::arg("time")
             )
             .def_property_readonly("names", &wrapped_type::names)
@@ -234,17 +224,7 @@ WrapConcreteBuffer
         namespace py = pybind11;
 
         (*this)
-            .def_timed
-            (
-                py::init
-                (
-                    [](size_t nbytes)
-                    {
-                        return wrapped_type::construct(nbytes);
-                    }
-                )
-              , py::arg("nbytes")
-            )
+            .def_timed(py::init([](size_t nbytes){ return wrapped_type::construct(nbytes); }), py::arg("nbytes"))
             .def
             (
                 py::init
@@ -264,19 +244,8 @@ WrapConcreteBuffer
             .def_timed("clone", &wrapped_type::clone)
             .def_property_readonly("nbytes", &wrapped_type::nbytes)
             .def("__len__", &wrapped_type::size)
-            .def_timed
-            (
-                "__getitem__"
-              , [](wrapped_type const & self, size_t it) { return self.at(it); }
-            )
-            .def_timed
-            (
-                "__setitem__"
-              , [](wrapped_type & self, size_t it, int8_t val)
-                {
-                    self.at(it) = val;
-                }
-            )
+            .def("__getitem__", [](wrapped_type const & self, size_t it) { return self.at(it); })
+            .def("__setitem__", [](wrapped_type & self, size_t it, int8_t val) { self.at(it) = val; })
             .def_buffer
             (
                 [](wrapped_type & self)
@@ -292,7 +261,7 @@ WrapConcreteBuffer
                     );
                 }
             )
-            .def_property_readonly_timed
+            .def_property_readonly
             (
                 "ndarray"
               , [](wrapped_type & self)
@@ -325,6 +294,23 @@ WrapConcreteBuffer
 }; /* end class WrapConcreteBuffer */
 
 template <typename T>
+pybind11::array to_ndarray(SimpleArray<T> & sarr)
+{
+    namespace py = pybind11;
+    std::vector<size_t> shape(sarr.shape().begin(), sarr.shape().end());
+    std::vector<size_t> stride(sarr.stride().begin(), sarr.stride().end());
+    for (size_t & v: stride) { v *= sarr.itemsize(); }
+    return py::array
+    (
+        py::detail::npy_format_descriptor<T>::dtype() /* Numpy dtype */
+      , shape /* Buffer dimensions */
+      , stride /* Strides (in bytes) for each index */
+      , sarr.data() /* Pointer to buffer */
+      , py::cast(sarr.buffer().shared_from_this()) /* Owning Python object */
+    );
+}
+
+template <typename T>
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapSimpleArray
@@ -346,13 +332,7 @@ WrapSimpleArray
         (*this)
             .def_timed
             (
-                py::init
-                (
-                    [](py::object const & shape)
-                    {
-                        return wrapped_type(make_shape(shape));
-                    }
-                )
+                py::init([](py::object const & shape) { return wrapped_type(make_shape(shape)); })
               , py::arg("shape")
             )
             .def
@@ -401,25 +381,7 @@ WrapSimpleArray
                     );
                 }
             )
-            .def_property_readonly_timed
-            (
-                "ndarray"
-              , [](wrapped_type const & self)
-                {
-                    namespace py = pybind11;
-                    std::vector<size_t> shape(self.shape().begin(), self.shape().end());
-                    std::vector<size_t> stride(self.stride().begin(), self.stride().end());
-                    for(size_t & v: stride) { v *= self.itemsize(); }
-                    return py::array
-                    (
-                        py::detail::npy_format_descriptor<T>::dtype() /* Numpy dtype */
-                      , shape /* Buffer dimensions */
-                      , stride /* Strides (in bytes) for each index */
-                      , self.data() /* Pointer to buffer */
-                      , py::cast(self.buffer().shared_from_this()) /* Owning Python object */
-                    );
-                }
-            )
+            .def_property_readonly("ndarray", [](wrapped_type & self) { return to_ndarray(self); })
             .def_property_readonly
             (
                 "is_from_python"
@@ -465,13 +427,10 @@ WrapSimpleArray
             .def("__getitem__", [](wrapped_type const & self, std::vector<ssize_t> const & key) { return self.at(key); })
             .def("__setitem__", [](wrapped_type & self, ssize_t key, T val) { self.at(key) = val; })
             .def("__setitem__", [](wrapped_type & self, std::vector<ssize_t> const & key, T val) { self.at(key) = val; })
-            .def_timed
+            .def
             (
                 "reshape"
-              , [](wrapped_type const & self, py::object const & shape)
-                {
-                    return self.reshape(make_shape(shape));
-                }
+              , [](wrapped_type const & self, py::object const & shape) { return self.reshape(make_shape(shape)); }
             )
             .def_property_readonly("has_ghost", &wrapped_type::has_ghost)
             .def_property("nghost", &wrapped_type::nghost, &wrapped_type::set_nghost)
@@ -523,11 +482,7 @@ protected:
         namespace py = pybind11;
 
         (*this)
-            .def_property_readonly_static
-            (
-                "NDIM"
-              , [](py::object const &) { return wrapped_type::NDIM; }
-            )
+            .def_property_readonly_static("NDIM", [](py::object const &) { return wrapped_type::NDIM; })
         ;
 
     }
