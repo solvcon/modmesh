@@ -186,29 +186,6 @@ protected:
 
 }; /* end class WrapTimeRegistry */
 
-struct
-MODMESH_PYTHON_WRAPPER_VISIBILITY
-ConcreteBufferNdarrayRemover : ConcreteBuffer::remover_type
-{
-
-    static bool is_same_type(ConcreteBuffer::remover_type const & other)
-    {
-        return typeid(other) == typeid(ConcreteBufferNdarrayRemover);
-    }
-
-    ConcreteBufferNdarrayRemover() = delete;
-
-    explicit ConcreteBufferNdarrayRemover(pybind11::array arr_in)
-      : ndarray(std::move(arr_in))
-    {}
-
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
-    void operator()(int8_t *) const override {}
-
-    pybind11::array ndarray;
-
-}; /* end struct ConcreteBufferNdarrayRemover */
-
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapConcreteBuffer
@@ -519,31 +496,7 @@ protected:
             .def("__getitem__", [](wrapped_type const & self, size_t it) { return self.at(it); })
             .def("__setitem__", [](wrapped_type & self, size_t it, wrapped_type::real_type val) { self.at(it) = val; })
             .def_property_readonly("nx", [](wrapped_type const & self) { return self.nx(); })
-            .def_property
-            (
-                "coord"
-              , [](wrapped_type & self) -> wrapped_type::array_type & { return self.coord(); }
-              , [](wrapped_type & self, py::array_t<wrapped_type::value_type> & ndarr)
-                {
-                    if (self.nx() != static_cast<size_t>(ndarr.size()))
-                    {
-                        MODMESH_EXCEPT(StaticGrid1d, std::length_error, "input array size differs from internal");
-                    }
-                    wrapped_type::array_type::shape_type shape;
-                    for (ssize_t i = 0 ; i < ndarr.ndim() ; ++i)
-                    {
-                        shape.push_back(ndarr.shape(i));
-                    }
-                    std::shared_ptr<ConcreteBuffer> buffer = ConcreteBuffer::construct
-                    (
-                        ndarr.nbytes()
-                      , ndarr.mutable_data()
-                      , std::make_unique<ConcreteBufferNdarrayRemover>(ndarr)
-                    );
-                    wrapped_type::array_type sarr(shape, buffer);
-                    std::swap(self.coord(), sarr);
-                }
-            )
+            .expose_SimpleArray("coord", [](wrapped_type & self) -> decltype(auto) { return self.coord(); })
             .def_timed("fill", &wrapped_type::fill, py::arg("value"))
         ;
 
@@ -616,7 +569,8 @@ public:
         return instance;
     }
 
-    OneTimeInitializer<T> & operator()(
+    OneTimeInitializer<T> & operator()
+    (
         pybind11::module & mod
       , bool import_numpy
       , std::function<void(pybind11::module &)> const & initializer)
