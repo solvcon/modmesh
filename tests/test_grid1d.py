@@ -67,7 +67,7 @@ class StaticGrid1dTC(unittest.TestCase):
         # Cannot set coord with a different shape.
         with self.assertRaisesRegex(
             ValueError,
-            r"StaticGrid1d: input array size differs from internal"
+            r"80 bytes of input array differ from 88 bytes of internal array"
         ):
             gd.coord = np.arange(10, dtype='float64')
 

@@ -135,6 +135,46 @@ namespace modmesh
 namespace python
 {
 
+struct
+MODMESH_PYTHON_WRAPPER_VISIBILITY
+ConcreteBufferNdarrayRemover : ConcreteBuffer::remover_type
+{
+
+    static bool is_same_type(ConcreteBuffer::remover_type const & other)
+    {
+        return typeid(other) == typeid(ConcreteBufferNdarrayRemover);
+    }
+
+    ConcreteBufferNdarrayRemover() = delete;
+
+    explicit ConcreteBufferNdarrayRemover(pybind11::array arr_in)
+      : ndarray(std::move(arr_in))
+    {}
+
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
+    void operator()(int8_t *) const override {}
+
+    pybind11::array ndarray;
+
+}; /* end struct ConcreteBufferNdarrayRemover */
+
+template < typename T >
+static SimpleArray<T> makeSimpleArray(pybind11::array_t<T> & ndarr)
+{
+    typename SimpleArray<T>::shape_type shape;
+    for (ssize_t i = 0 ; i < ndarr.ndim() ; ++i)
+    {
+        shape.push_back(ndarr.shape(i));
+    }
+    std::shared_ptr<ConcreteBuffer> buffer = ConcreteBuffer::construct
+    (
+        ndarr.nbytes()
+      , ndarr.mutable_data()
+      , std::make_unique<ConcreteBufferNdarrayRemover>(ndarr)
+    );
+    return SimpleArray<T>(shape, buffer);
+}
+
 /**
  * Helper template for pybind11 class wrappers.
  */
@@ -232,6 +272,39 @@ public:
 #undef DECL_MM_PYBIND_CLASS_METHOD_UNTIMED
 #undef DECL_MM_PYBIND_CLASS_METHOD_TIMED
 #undef DECL_MM_PYBIND_CLASS_METHOD
+
+    template < typename Func >
+    wrapper_type & expose_SimpleArray(char const * name, Func && f)
+    {
+        namespace py = pybind11;
+
+        using array_reference = typename std::result_of<Func(wrapped_type &)>::type;
+        static_assert(std::is_reference<array_reference>::value, "this_array_reference is not a reference");
+        static_assert(!std::is_const<array_reference>::value, "this_array_reference cannot be const");
+        using array_type = typename std::remove_reference<array_reference>::type;
+
+        (*this).def_property
+        (
+            name
+          , [&f](wrapped_type & self) -> array_reference { return f(self); }
+          , [&f](wrapped_type & self, py::array_t<typename array_type::value_type> & ndarr)
+            {
+                array_reference this_array = f(self);
+                if (this_array.nbytes() != static_cast<size_t>(ndarr.nbytes()))
+                {
+                    std::ostringstream msg;
+                    msg
+                        << ndarr.nbytes() << " bytes of input array differ from "
+                        << this_array.nbytes() << " bytes of internal array"
+                    ;
+                    throw std::length_error(msg.str());
+                }
+                this_array.swap(makeSimpleArray(ndarr));
+            }
+        );
+
+        return *static_cast<wrapper_type*>(this);
+    }
 
     class_ & cls() { return m_cls; }
 

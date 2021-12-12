@@ -359,6 +359,18 @@ public:
         return SimpleArray(m_shape, m_buffer);
     }
 
+    void swap(SimpleArray<T> && other)
+    {
+        if (this != &other)
+        {
+            std::swap(m_buffer, other.m_buffer);
+            std::swap(m_shape, other.m_shape);
+            std::swap(m_stride, other.m_stride);
+            std::swap(m_nghost, other.m_nghost);
+            std::swap(m_body, other.m_body);
+        }
+    }
+
     template < typename ... Args >
     value_type const & operator()(Args ... args) const { return m_body[buffer_offset(m_stride, args...)]; }
 
