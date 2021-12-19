@@ -189,7 +189,7 @@ public:
         std::copy_n(init.begin(), init.size(), data());
     }
 
-    SimpleArray() = default;
+    SimpleArray() : SimpleArray(0) {}
 
     SimpleArray(SimpleArray const & other)
       : m_buffer(other.m_buffer->clone())

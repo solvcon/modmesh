@@ -496,7 +496,7 @@ protected:
             .def("__getitem__", [](wrapped_type const & self, size_t it) { return self.at(it); })
             .def("__setitem__", [](wrapped_type & self, size_t it, wrapped_type::real_type val) { self.at(it) = val; })
             .def_property_readonly("nx", [](wrapped_type const & self) { return self.nx(); })
-            .expose_SimpleArray("coord", [](wrapped_type & self) -> decltype(auto) { return self.coord(); })
+            .expose_SimpleArrayAsNdarray("coord", [](wrapped_type & self) -> decltype(auto) { return self.coord(); })
             .def_timed("fill", &wrapped_type::fill, py::arg("value"))
         ;
 
