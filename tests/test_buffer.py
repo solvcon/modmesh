@@ -278,22 +278,26 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
     def test_SimpleArray_types(self):
 
-        def _check(sarr, nbytes, dtype):
+        def _check(sarr, nbytes, dtype, get=True):
             self.assertEqual(nbytes, sarr.nbytes)
             self.assertEqual(dtype, sarr.ndarray.dtype)
+            if get:
+                dtype = getattr(np, dtype)
+                self.assertEqual(dtype, sarr.ndarray.dtype)
 
         # Boolean.
-        _check(modmesh.SimpleArrayBool((2, 3, 4)), 24, np.bool_)
+        _check(modmesh.SimpleArrayBool((2, 3, 4)), 24, 'bool', get=False)
+        _check(modmesh.SimpleArrayBool((2, 3, 4)), 24, 'bool_')
 
         # Integer types.
-        _check(modmesh.SimpleArrayInt8((2, 3)), 6, np.int8)
-        _check(modmesh.SimpleArrayUint8((2, 3)), 6, np.uint8)
-        _check(modmesh.SimpleArrayInt16((3, 5)), 30, np.int16)
-        _check(modmesh.SimpleArrayUint16((3, 5)), 30, np.uint16)
-        _check(modmesh.SimpleArrayInt32(7), 28, np.int32)
-        _check(modmesh.SimpleArrayUint32(7), 28, np.uint32)
-        _check(modmesh.SimpleArrayInt64((2, 3, 4)), 2*3*4*8, np.int64)
-        _check(modmesh.SimpleArrayUint64((2, 3, 4)), 2*3*4*8, np.uint64)
+        _check(modmesh.SimpleArrayInt8((2, 3)), 6, 'int8')
+        _check(modmesh.SimpleArrayUint8((2, 3)), 6, 'uint8')
+        _check(modmesh.SimpleArrayInt16((3, 5)), 30, 'int16')
+        _check(modmesh.SimpleArrayUint16((3, 5)), 30, 'uint16')
+        _check(modmesh.SimpleArrayInt32(7), 28, 'int32')
+        _check(modmesh.SimpleArrayUint32(7), 28, 'uint32')
+        _check(modmesh.SimpleArrayInt64((2, 3, 4)), 2*3*4*8, 'int64')
+        _check(modmesh.SimpleArrayUint64((2, 3, 4)), 2*3*4*8, 'uint64')
 
         # Real-number types.
         _check(modmesh.SimpleArrayFloat32((2, 3, 4, 5)), 2*3*4*5*4, 'float32')
