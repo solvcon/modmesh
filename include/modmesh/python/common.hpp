@@ -274,7 +274,7 @@ public:
 #undef DECL_MM_PYBIND_CLASS_METHOD
 
     template < typename Func >
-    wrapper_type & expose_SimpleArray(char const * name, Func && f)
+    wrapper_type & expose_SimpleArrayAsNdarray(char const * name, Func && f)
     {
         namespace py = pybind11;
 
