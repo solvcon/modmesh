@@ -278,7 +278,7 @@ public:
     {
         namespace py = pybind11;
 
-        using array_reference = typename std::result_of<Func(wrapped_type &)>::type;
+        using array_reference = typename std::invoke_result_t<Func, wrapped_type &>;
         static_assert(std::is_reference<array_reference>::value, "this_array_reference is not a reference");
         static_assert(!std::is_const<array_reference>::value, "this_array_reference cannot be const");
         using array_type = typename std::remove_reference<array_reference>::type;

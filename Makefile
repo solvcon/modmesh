@@ -14,6 +14,10 @@ ifneq (,$(wildcard $(SETUP_FILE)))
 	include $(SETUP_FILE)
 endif
 
+# To workaround macos SIP: https://github.com/solvcon/modmesh/pull/16.
+# Additional configuration can be loaded from SETUP_FILE.
+RUNENV += PYTHONPATH=$(MODMESH_ROOT)
+
 SKIP_PYTHON_EXECUTABLE ?= OFF
 HIDE_SYMBOL ?= OFF
 DEBUG_SYMBOL ?= ON
@@ -25,7 +29,6 @@ CMAKE_INSTALL_PREFIX ?= $(MODMESH_ROOT)/build/fakeinstall
 CMAKE_LIBRARY_OUTPUT_DIRECTORY ?= $(MODMESH_ROOT)/modmesh
 CMAKE_ARGS ?=
 VERBOSE ?=
-RUNENV += PYTHONPATH=$(MODMESH_ROOT)
 
 pyextsuffix := $(shell python3-config --extension-suffix)
 pyvminor := $(shell python3 -c 'import sys; print("%d%d" % sys.version_info[0:2])')
