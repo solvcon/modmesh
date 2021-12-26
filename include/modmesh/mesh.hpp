@@ -163,22 +163,23 @@ public:
         return std::make_shared<D>(std::forward<Args>(args) ..., ctor_passkey());
     }
 
-    StaticMeshBase(uint_type nnode, ctor_passkey const &)
-      : m_nnode(nnode), m_nface(0), m_ncell(0)
-      , m_nbound(0), m_ngstnode(0), m_ngstface(0), m_ngstcell(0)
+    /* NOLINTNEXTLINE(bugprone-easily-swappable-parameters) */
+    StaticMeshBase(uint_type nnode, uint_type nface, uint_type ncell, uint_type nbound, ctor_passkey const &)
+      : m_nnode(nnode), m_nface(nface), m_ncell(ncell), m_nbound(nbound)
+      , m_ngstnode(0), m_ngstface(0), m_ngstcell(0)
       , m_ndcrd(std::vector<size_t>{nnode, NDIM})
-      , m_fccnd(std::vector<size_t>{0, NDIM})
-      , m_fcnml(std::vector<size_t>{0, NDIM})
-      , m_fcara(std::vector<size_t>{0})
-      , m_clcnd(std::vector<size_t>{0, NDIM})
-      , m_clvol(std::vector<size_t>{0})
-      , m_fctpn(std::vector<size_t>{0})
-      , m_cltpn(std::vector<size_t>{0})
-      , m_clgrp(std::vector<size_t>{0})
-      , m_fcnds(std::vector<size_t>{0, FCMND})
-      , m_fccls(std::vector<size_t>{0, FCMCL})
-      , m_clnds(std::vector<size_t>{0, CLMND})
-      , m_clfcs(std::vector<size_t>{0, CLMFC})
+      , m_fccnd(std::vector<size_t>{nface, NDIM})
+      , m_fcnml(std::vector<size_t>{nface, NDIM})
+      , m_fcara(std::vector<size_t>{nface})
+      , m_clcnd(std::vector<size_t>{ncell, NDIM})
+      , m_clvol(std::vector<size_t>{ncell})
+      , m_fctpn(std::vector<size_t>{ncell})
+      , m_cltpn(std::vector<size_t>{ncell})
+      , m_clgrp(std::vector<size_t>{ncell})
+      , m_fcnds(std::vector<size_t>{nface, FCMND})
+      , m_fccls(std::vector<size_t>{nface, FCMCL})
+      , m_clnds(std::vector<size_t>{ncell, CLMND})
+      , m_clfcs(std::vector<size_t>{ncell, CLMFC})
     {}
     StaticMeshBase() = delete;
     StaticMeshBase(StaticMeshBase const & ) = delete;

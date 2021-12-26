@@ -271,23 +271,6 @@ WrapConcreteBuffer
 }; /* end class WrapConcreteBuffer */
 
 template <typename T>
-pybind11::array to_ndarray(SimpleArray<T> & sarr)
-{
-    namespace py = pybind11;
-    std::vector<size_t> shape(sarr.shape().begin(), sarr.shape().end());
-    std::vector<size_t> stride(sarr.stride().begin(), sarr.stride().end());
-    for (size_t & v: stride) { v *= sarr.itemsize(); }
-    return py::array
-    (
-        py::detail::npy_format_descriptor<T>::dtype() /* Numpy dtype */
-      , shape /* Buffer dimensions */
-      , stride /* Strides (in bytes) for each index */
-      , sarr.data() /* Pointer to buffer */
-      , py::cast(sarr.buffer().shared_from_this()) /* Owning Python object */
-    );
-}
-
-template <typename T>
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapSimpleArray
@@ -496,7 +479,7 @@ protected:
             .def("__getitem__", [](wrapped_type const & self, size_t it) { return self.at(it); })
             .def("__setitem__", [](wrapped_type & self, size_t it, wrapped_type::real_type val) { self.at(it) = val; })
             .def_property_readonly("nx", [](wrapped_type const & self) { return self.nx(); })
-            .expose_SimpleArrayAsNdarray("coord", [](wrapped_type & self) -> decltype(auto) { return self.coord(); })
+            .expose_SimpleArray("coord", [](wrapped_type & self) -> decltype(auto) { return self.coord(); })
             .def_timed("fill", &wrapped_type::fill, py::arg("value"))
         ;
 
@@ -560,8 +543,12 @@ protected:
         (*this)
             .def_timed
             (
-                py::init([](uint_type nnode) { return wrapped_type::construct(nnode); })
+                py::init([](uint_type nnode, uint_type nface, uint_type ncell, uint_type nbound)
+                { return wrapped_type::construct(nnode, nface, ncell, nbound); })
               , py::arg("nnode")
+              , py::arg("nface")=0
+              , py::arg("ncell")=0
+              , py::arg("nbound")=0
             )
         ;
 
@@ -592,7 +579,7 @@ protected:
         ;
 
 #define MM_DECL_ARRAY(NAME) \
-.expose_SimpleArrayAsNdarray(#NAME, [](wrapped_type & self) -> decltype(auto) { return self.NAME(); })
+.expose_SimpleArray(#NAME, [](wrapped_type & self) -> decltype(auto) { return self.NAME(); })
 
         (*this)
             MM_DECL_ARRAY(ndcrd)

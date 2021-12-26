@@ -66,4 +66,11 @@ class StaticMeshTC(unittest.TestCase):
         _test(modmesh.StaticMesh2d, 2)
         _test(modmesh.StaticMesh3d, 3)
 
+    def test_2d_trivial_triangles(self):
+        mh = modmesh.StaticMesh2d(nnode=4, nface=6, ncell=3, nbound=3)
+        mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
+        mh.cltpn.ndarray[:] = 3
+        mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
+        # FIXME: Need to build interior, boundary, and ghost data.
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
