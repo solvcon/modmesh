@@ -32,45 +32,55 @@ import modmesh
 
 class StaticMeshTC(unittest.TestCase):
 
+    def _check_shape(self, mh, ndim, nnode, nface, ncell):
+        self.assertEqual(ndim, mh.NDIM)
+
+        self.assertEqual(nnode, mh.nnode)
+        self.assertEqual(nface, mh.nface)
+        self.assertEqual(ncell, mh.ncell)
+        self.assertEqual(0, mh.nbound)
+        self.assertEqual(0, mh.ngstnode)
+        self.assertEqual(0, mh.ngstface)
+        self.assertEqual(0, mh.ngstcell)
+
+        self.assertEqual((mh.nnode, ndim), mh.ndcrd.shape)
+        self.assertEqual((mh.nface, ndim), mh.fccnd.shape)
+        self.assertEqual((mh.nface, ndim), mh.fcnml.shape)
+        self.assertEqual((mh.nface,), mh.fcara.shape)
+        self.assertEqual((mh.ncell, ndim), mh.clcnd.shape)
+        self.assertEqual((mh.ncell,), mh.clvol.shape)
+
+        self.assertEqual((mh.nface,), mh.fctpn.shape)
+        self.assertEqual((mh.ncell,), mh.cltpn.shape)
+        self.assertEqual((mh.ncell,), mh.clgrp.shape)
+
+        self.assertEqual((mh.nface, mh.FCMND+1), mh.fcnds.shape)
+        self.assertEqual((mh.nface, mh.FCNCL), mh.fccls.shape)
+        self.assertEqual((mh.ncell, mh.CLMND+1), mh.clnds.shape)
+        self.assertEqual((mh.ncell, mh.CLMFC+1), mh.clfcs.shape)
+
     def test_construct(self):
         def _test(cls, ndim):
-
             mh = cls(nnode=0)
-
             self.assertEqual(ndim, cls.NDIM)
+            self._check_shape(mh, ndim=ndim, nnode=0, nface=0, ncell=0)
 
-            self.assertEqual(0, mh.nnode)
-            self.assertEqual(0, mh.nface)
-            self.assertEqual(0, mh.ncell)
-            self.assertEqual(0, mh.nbound)
-            self.assertEqual(0, mh.ngstnode)
-            self.assertEqual(0, mh.ngstface)
-            self.assertEqual(0, mh.ngstcell)
-
-            self.assertEqual((mh.nnode, ndim), mh.ndcrd.shape)
-            self.assertEqual((mh.nface, ndim), mh.fccnd.shape)
-            self.assertEqual((mh.nface, ndim), mh.fcnml.shape)
-            self.assertEqual((mh.nface,), mh.fcara.shape)
-            self.assertEqual((mh.ncell, ndim), mh.clcnd.shape)
-            self.assertEqual((mh.ncell,), mh.clvol.shape)
-
-            self.assertEqual((mh.ncell,), mh.fctpn.shape)
-            self.assertEqual((mh.ncell,), mh.cltpn.shape)
-            self.assertEqual((mh.ncell,), mh.clgrp.shape)
-
-            self.assertEqual((mh.nface, cls.FCMND), mh.fcnds.shape)
-            self.assertEqual((mh.nface, cls.FCMCL), mh.fccls.shape)
-            self.assertEqual((mh.ncell, cls.CLMND), mh.clnds.shape)
-            self.assertEqual((mh.ncell, cls.CLMFC), mh.clfcs.shape)
-
-        _test(modmesh.StaticMesh2d, 2)
-        _test(modmesh.StaticMesh3d, 3)
+        _test(modmesh.StaticMesh2d, ndim=2)
+        _test(modmesh.StaticMesh3d, ndim=3)
 
     def test_2d_trivial_triangles(self):
-        mh = modmesh.StaticMesh2d(nnode=4, nface=6, ncell=3, nbound=3)
+        mh = modmesh.StaticMesh2d(nnode=4, nface=0, ncell=3, nbound=0)
         mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
-        mh.cltpn.ndarray[:] = 3
+        mh.cltpn.ndarray[:] = 4
         mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
-        # FIXME: Need to build interior, boundary, and ghost data.
+
+        self._check_shape(mh, ndim=2, nnode=4, nface=0, ncell=3)
+
+        # Test build interior data.
+        mh.build_interior()
+        self._check_shape(mh, ndim=2, nnode=4, nface=6, ncell=3)
+
+        # FIXME: Need to build boundary data.
+        # FIXME: Need to build ghost data.
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -558,7 +558,7 @@ protected:
         (*this)
             MM_DECL_STATIC(NDIM)
             MM_DECL_STATIC(FCMND)
-            MM_DECL_STATIC(FCMCL)
+            MM_DECL_STATIC(FCNCL)
             MM_DECL_STATIC(CLMND)
             MM_DECL_STATIC(CLMFC)
             MM_DECL_STATIC(FCNCL)
@@ -576,6 +576,10 @@ protected:
             .def_property_readonly("ngstnode", &wrapped_type::ngstnode)
             .def_property_readonly("ngstface", &wrapped_type::ngstface)
             .def_property_readonly("ngstcell", &wrapped_type::ngstcell)
+        ;
+
+        (*this)
+            .def_timed("build_interior", &wrapped_type::build_interior)
         ;
 
 #define MM_DECL_ARRAY(NAME) \

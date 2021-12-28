@@ -119,13 +119,27 @@ public:
         }
     }
 
+    // NOLINTNEXTLINE(modernize-pass-by-value)
+    explicit SimpleArray(small_vector<size_t> const & shape, value_type const & value)
+      : SimpleArray(shape)
+    {
+        std::fill(begin(), end(), value);
+    }
+
     explicit SimpleArray(std::vector<size_t> const & shape)
       : m_shape(shape), m_stride(calc_stride(m_shape))
     {
-        if (!m_shape.empty()) {
+        if (!m_shape.empty())
+        {
             m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE);
             m_body = m_buffer->data<T>();
         }
+    }
+
+    explicit SimpleArray(std::vector<size_t> const & shape, value_type const & value)
+      : SimpleArray(shape)
+    {
+        std::fill(begin(), end(), value);
     }
 
     explicit SimpleArray(std::shared_ptr<buffer_type> const & buffer)
