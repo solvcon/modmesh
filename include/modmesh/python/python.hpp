@@ -579,7 +579,12 @@ protected:
         ;
 
         (*this)
-            .def_timed("build_interior", &wrapped_type::build_interior)
+            .def_timed
+            (
+                "build_interior"
+              , &wrapped_type::build_interior
+              , py::arg("_do_metric")=true
+            )
         ;
 
 #define MM_DECL_ARRAY(NAME) \

@@ -27,6 +27,8 @@
 
 import unittest
 
+import numpy as np
+
 import modmesh
 
 
@@ -59,6 +61,13 @@ class StaticMeshTC(unittest.TestCase):
         self.assertEqual((mh.ncell, mh.CLMND+1), mh.clnds.shape)
         self.assertEqual((mh.ncell, mh.CLMFC+1), mh.clfcs.shape)
 
+    def _check_metric_trivial(self, mh):
+        self.assertTrue((mh.fccnd.ndarray[:, :] == 0).all())
+        self.assertTrue((mh.fcnml.ndarray[:, :] == 0).all())
+        self.assertTrue((mh.fcara.ndarray[:] == 0).all())
+        self.assertTrue((mh.clcnd.ndarray[:, :] == 0).all())
+        self.assertTrue((mh.clvol.ndarray[:] == 0).all())
+
     def test_construct(self):
         def _test(cls, ndim):
             mh = cls(nnode=0)
@@ -75,10 +84,27 @@ class StaticMeshTC(unittest.TestCase):
         mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
 
         self._check_shape(mh, ndim=2, nnode=4, nface=0, ncell=3)
+        self._check_metric_trivial(mh)
 
         # Test build interior data.
-        mh.build_interior()
+        mh.build_interior(_do_metric=False)
+        self._check_metric_trivial(mh)
         self._check_shape(mh, ndim=2, nnode=4, nface=6, ncell=3)
+        mh.build_interior()  # _do_metric=True
+        np.testing.assert_almost_equal(
+            mh.fccnd,
+            [[-0.5, -0.5], [0.0, -1.0], [0.5, -0.5],
+             [0.5, 0.0], [0.0, 0.5], [-0.5, 0.0]])
+        np.testing.assert_almost_equal(
+            mh.fcnml,
+            [[-0.7071068, 0.7071068], [0.0, -1.0], [0.7071068, 0.7071068],
+             [0.8944272, 0.4472136], [-1.0, -0.0], [-0.8944272, 0.4472136]])
+        np.testing.assert_almost_equal(
+            mh.fcara, [1.4142136, 2.0, 1.4142136, 2.236068, 1.0, 2.236068])
+        np.testing.assert_almost_equal(
+            mh.clcnd, [[0.0, -0.6666667], [0.3333333, 0.0], [-0.3333333, 0.0]])
+        np.testing.assert_almost_equal(
+            mh.clvol, [1.0, 0.5, 0.5])
 
         # FIXME: Need to build boundary data.
         # FIXME: Need to build ghost data.
