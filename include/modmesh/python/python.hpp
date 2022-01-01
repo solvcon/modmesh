@@ -586,6 +586,7 @@ protected:
               , py::arg("_do_metric")=true
             )
             .def_timed("build_boundary", &wrapped_type::build_boundary)
+            .def_timed("build_ghost", &wrapped_type::build_ghost)
         ;
 
 #define MM_DECL_ARRAY(NAME) \
