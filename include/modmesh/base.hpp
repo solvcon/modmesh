@@ -43,22 +43,40 @@
 namespace modmesh
 {
 
-/**
- * Spatial table basic information.  Any table-based data store for spatial
- * data should inherit this class template.
- */
-template <uint8_t ND>
-class SpaceBase
+template <typename I, typename R>
+class NumberBase
 {
 
 public:
 
-    static constexpr const uint8_t NDIM = ND;
+    using int_type = I;
+    using uint_type = std::make_unsigned_t<I>;
+    using size_type = uint_type;
+    using real_type = R;
 
-    using int_type = int32_t;
-    using uint_type = uint32_t;
-    using serial_type = uint_type;
-    using real_type = double;
+}; /* end class NumberBase */
+
+/**
+ * Spatial table basic information.  Any table-based data store for spatial
+ * data should inherit this class template.
+ */
+template <uint8_t ND, typename I, typename R>
+class SpaceBase
+  : public NumberBase<I, R>
+{
+
+public:
+
+    using dim_type = uint8_t;
+    static constexpr const dim_type NDIM = ND;
+
+    using number_base = NumberBase<I, R>;
+
+    using int_type = typename number_base::int_type;
+    using uint_type = typename number_base::uint_type;
+    using size_type = typename number_base::size_type;
+    using serial_type = typename number_base::size_type;
+    using real_type = typename number_base::real_type;
 
 }; /* end class SpaceBase */
 

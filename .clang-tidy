@@ -13,6 +13,7 @@ Checks: >
     hicpp-avoid-goto,hicpp-exception-baseclass,hicpp-multiway-paths-covered,
     hicpp-no-assembler,hicpp-signed-bitwise,
     -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+    -cppcoreguidelines-pro-bounds-constant-array-index,
     -cppcoreguidelines-pro-bounds-pointer-arithmetic,
     -google-readability-todo,
     -google-runtime-references,
