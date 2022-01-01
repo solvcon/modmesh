@@ -543,12 +543,11 @@ protected:
         (*this)
             .def_timed
             (
-                py::init([](uint_type nnode, uint_type nface, uint_type ncell, uint_type nbound)
-                { return wrapped_type::construct(nnode, nface, ncell, nbound); })
+                py::init([](uint_type nnode, uint_type nface, uint_type ncell)
+                { return wrapped_type::construct(nnode, nface, ncell); })
               , py::arg("nnode")
               , py::arg("nface")=0
               , py::arg("ncell")=0
-              , py::arg("nbound")=0
             )
         ;
 
@@ -576,6 +575,7 @@ protected:
             .def_property_readonly("ngstnode", &wrapped_type::ngstnode)
             .def_property_readonly("ngstface", &wrapped_type::ngstface)
             .def_property_readonly("ngstcell", &wrapped_type::ngstcell)
+            .def_property_readonly("nbcs", &wrapped_type::nbcs)
         ;
 
         (*this)
@@ -585,6 +585,7 @@ protected:
               , &wrapped_type::build_interior
               , py::arg("_do_metric")=true
             )
+            .def_timed("build_boundary", &wrapped_type::build_boundary)
         ;
 
 #define MM_DECL_ARRAY(NAME) \
@@ -604,6 +605,7 @@ protected:
             MM_DECL_ARRAY(fccls)
             MM_DECL_ARRAY(clnds)
             MM_DECL_ARRAY(clfcs)
+            MM_DECL_ARRAY(bndfcs)
         ;
 
 #undef MM_DECL_ARRAY

@@ -66,10 +66,11 @@ struct CellTypeBase
  */
 template < uint8_t ND > struct CellType
   : public CellTypeBase
-  , public SpaceBase<ND>
+  , public SpaceBase<ND, int32_t, double>
 {
 
-    static constexpr const uint8_t NDIM = SpaceBase<ND>::NDIM;
+    using space_base = SpaceBase<ND, int32_t, double>;
+    static constexpr const uint8_t NDIM = space_base::NDIM;
 
     /* NOLINTNEXTLINE(bugprone-easily-swappable-parameters) */
     CellType(uint8_t id_in, uint8_t nnode_in, uint8_t nedge_in, uint8_t nsurface_in)
@@ -129,9 +130,90 @@ MM_DECL_CELL_TYPE(Prism        ,    7,    3,     6,     9,        5 )
 MM_DECL_CELL_TYPE(Pyramid      ,    8,    3,     5,     8,        5 )
 #undef MH_DECL_CELL_TYPE
 
+// FIXME: StaticMeshBC may use polymorphism.
+class StaticMeshBC
+  : public NumberBase<int32_t, double>
+{
+
+public:
+
+    using number_base = NumberBase<int32_t, double>;
+
+    using int_type = typename number_base::int_type;
+    using uint_type = typename number_base::uint_type;
+    using real_type = typename number_base::real_type;
+
+    static constexpr size_t BFREL = 3;
+
+private:
+
+    /**
+     * First column is the face index in block.  The second column is the face
+     * index in bndfcs.  The third column is the face index of the related
+     * block (if exists).
+     */
+    SimpleArray<int_type> m_facn = SimpleArray<int_type>(std::vector<size_t>{0});
+
+public:
+
+    static const std::string & NONAME()
+    {
+        static const std::string str("<NONAME>");
+        return str;
+    }
+
+    StaticMeshBC() = default;
+
+    explicit StaticMeshBC(size_t nbound)
+      : m_facn(SimpleArray<int_type>(std::vector<size_t>{nbound, BFREL}))
+    {}
+
+    StaticMeshBC(StaticMeshBC const & other)
+    {
+        if (this != &other)
+        {
+            m_facn = other.m_facn;
+        }
+    }
+
+    StaticMeshBC(StaticMeshBC && other)
+    {
+        if (this != &other)
+        {
+            m_facn = std::move(other.m_facn);
+        }
+    }
+
+    StaticMeshBC & operator=(StaticMeshBC const & other)
+    {
+        if (this != &other)
+        {
+            m_facn = other.m_facn;
+        }
+        return *this;
+    }
+
+    StaticMeshBC & operator=(StaticMeshBC && other)
+    {
+        if (this != &other)
+        {
+            m_facn = std::move(other.m_facn);
+        }
+        return *this;
+    }
+
+    ~StaticMeshBC() = default;
+
+    size_t nbound() const { return m_facn.nbody(); }
+
+    SimpleArray<int_type> const & facn() const { return m_facn; }
+    SimpleArray<int_type>       & facn()       { return m_facn; }
+
+}; /* end class StaticMeshBC */
+
 template < typename D /* derived type */, uint8_t ND >
 class StaticMeshBase
-  : public SpaceBase<ND>
+  : public SpaceBase<ND, int32_t, double>
   , public std::enable_shared_from_this<D>
 {
 
@@ -141,7 +223,7 @@ private:
 
 public:
 
-    using space_base = SpaceBase<ND>;
+    using space_base = SpaceBase<ND, int32_t, double>;
     using int_type = typename space_base::int_type;
     using uint_type = typename space_base::uint_type;
     using real_type = typename space_base::real_type;
@@ -161,9 +243,9 @@ public:
     }
 
     /* NOLINTNEXTLINE(bugprone-easily-swappable-parameters) */
-    StaticMeshBase(uint_type nnode, uint_type nface, uint_type ncell, uint_type nbound, ctor_passkey const &)
-      : m_nnode(nnode), m_nface(nface), m_ncell(ncell), m_nbound(nbound)
-      , m_ngstnode(0), m_ngstface(0), m_ngstcell(0)
+    StaticMeshBase(uint_type nnode, uint_type nface, uint_type ncell, ctor_passkey const &)
+      : m_nnode(nnode), m_nface(nface), m_ncell(ncell)
+      , m_nbound(0), m_ngstnode(0), m_ngstface(0), m_ngstcell(0)
       , m_ndcrd(std::vector<size_t>{nnode, NDIM}, 0)
       , m_fccnd(std::vector<size_t>{nface, NDIM}, 0)
       , m_fcnml(std::vector<size_t>{nface, NDIM}, 0)
@@ -177,6 +259,7 @@ public:
       , m_fccls(std::vector<size_t>{nface, FCNCL})
       , m_clnds(std::vector<size_t>{ncell, CLMND+1})
       , m_clfcs(std::vector<size_t>{ncell, CLMFC+1})
+      , m_bndfcs(std::vector<size_t>{0, StaticMeshBC::BFREL})
     {}
     StaticMeshBase() = delete;
     StaticMeshBase(StaticMeshBase const & ) = delete;
@@ -240,6 +323,8 @@ public:
         }
     }
 
+    void build_boundary();
+
     uint_type nnode() const { return m_nnode; }
     uint_type nface() const { return m_nface; }
     uint_type ncell() const { return m_ncell; }
@@ -248,6 +333,26 @@ public:
     uint_type ngstface() const { return m_ngstface; }
     uint_type ngstcell() const { return m_ngstcell; }
     bool use_incenter() const { return m_use_incenter; }
+
+    size_t nbcs() const { return m_bcs.size(); }
+
+    /**
+     * Get the "self" cell number of the input face by index.  A shorthand of
+     * fccls()[ifc][0] .
+     *
+     * @param[in] ifc index of the face of interest.
+     * @return        index of the cell.
+     */
+    int_type fcicl(int_type ifc) const { return m_fccls(ifc, 0); }
+
+    /**
+     * Get the "related" cell number of the input face by index.  A shorthand
+     * of fccls()[ifc][1] .
+     *
+     * @param[in] ifc index of the face of interest.
+     * @return        index of the cell.
+     */
+    int_type fcjcl(int_type ifc) const { return m_fccls(ifc, 1); }
 
 // Shape data.
 private:
@@ -286,6 +391,9 @@ private: \
     MM_DECL_StaticMesh_ARRAY(int_type, fccls);
     MM_DECL_StaticMesh_ARRAY(int_type, clnds);
     MM_DECL_StaticMesh_ARRAY(int_type, clfcs);
+    // boundary information.
+    MM_DECL_StaticMesh_ARRAY(int_type, bndfcs);
+    std::vector<StaticMeshBC> m_bcs;
 
 #undef MM_DECL_StaticMesh_ARRAY
 
@@ -1241,6 +1349,94 @@ void StaticMeshBase<D, ND>::calc_metric()
         pclcnd += NDIM;
         pclvol += 1;
     }
+}
+
+/**
+ * Calculate all metric information, including:
+ *
+ *  1. center of faces.
+ *  2. unit normal and area of faces.
+ *  3. center of cells.
+ *  4. volume of cells.
+ *
+ * And fcnds could be reordered.
+ */
+template < typename D /* derived type */, uint8_t ND >
+/* NOLINTNEXTLINE(readability-function-cognitive-complexity) */
+void StaticMeshBase<D, ND>::build_boundary()
+{
+    assert(0 == m_nbound); // nothing should touch m_nbound beforehand.
+    for (size_t it = 0 ; it < fccls().shape(0) ; ++it)
+    {
+        if (fccls()(it, 1) < 0)
+        {
+            m_nbound += 1;
+        }
+    }
+    m_bndfcs.swap(SimpleArray<int_type>(std::vector<size_t>{m_nbound, StaticMeshBC::BFREL}, -1));
+
+    std::vector<int_type> allfacn(m_nbound);
+    size_t ait = 0;
+    for (size_t ifc = 0 ; ifc < nface() ; ++ifc)
+    {
+        if (fcjcl(ifc) < 0)
+        {
+            assert(ait < allfacn.size());
+            allfacn[ait] = ifc;
+            ++ait;
+        }
+    }
+
+    std::vector<bool> specified(m_nbound, false);
+    size_t ibfc = 0;
+    ssize_t nleft = m_nbound;
+    for (size_t ibnd = 0 ; ibnd < m_bcs.size() ; ++ibnd)
+    {
+        StaticMeshBC & bnd = m_bcs[ibnd];
+        auto & bfacn = bnd.facn();
+        for (size_t bfit = 0 ; bfit < bfacn.nbody() ; ++bfit)
+        {
+            /**
+             * First column is the face index in block.  The second column is the face
+             * index in bndfcs.  The third column is the face index of the related
+             * block (if exists).
+             */
+            m_bndfcs(ibfc, 0) = bfacn(bfit, 0);
+            m_bndfcs(ibfc, 1) = ibnd;
+            bfacn(bfit, 1) = static_cast<int_type>(ibfc);
+            auto found = std::find(allfacn.begin(), allfacn.end(), bfacn(bfit, 0));
+            if (allfacn.end() != found)
+            {
+                specified.at(found - allfacn.begin()) = true;
+                --nleft;
+            }
+            ++ibfc;
+        }
+    }
+    assert(nleft >= 0);
+
+    if (nleft != 0)
+    {
+        StaticMeshBC bnd(static_cast<size_t>(nleft));
+        auto & bfacn = bnd.facn();
+        size_t bfit = 0;
+        size_t ibnd = m_bcs.size();
+        for (size_t sit = 0 ; sit < m_nbound ; ++sit)   // Specified ITerator.
+        {
+            if (!specified[sit])
+            {
+                m_bndfcs(ibfc, 0) = allfacn[sit];
+                m_bndfcs(ibfc, 1) = ibnd;
+                bfacn(bfit, 0) = allfacn[sit];
+                bfacn(bfit, 1) = static_cast<int_type>(ibfc);
+                ++ibfc;
+                ++bfit;
+            }
+        }
+        m_bcs.push_back(std::move(bnd));
+        assert(m_bcs.size() == ibnd+1);
+    }
+    assert(ibfc == m_nbound);
 }
 
 } /* end namespace modmesh */

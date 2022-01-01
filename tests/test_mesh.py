@@ -78,7 +78,7 @@ class StaticMeshTC(unittest.TestCase):
         _test(modmesh.StaticMesh3d, ndim=3)
 
     def test_2d_trivial_triangles(self):
-        mh = modmesh.StaticMesh2d(nnode=4, nface=0, ncell=3, nbound=0)
+        mh = modmesh.StaticMesh2d(nnode=4, nface=0, ncell=3)
         mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
         mh.cltpn.ndarray[:] = 4
         mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
@@ -106,7 +106,20 @@ class StaticMeshTC(unittest.TestCase):
         np.testing.assert_almost_equal(
             mh.clvol, [1.0, 0.5, 0.5])
 
-        # FIXME: Need to build boundary data.
+        # Build boundary data.
+        self.assertEqual(0, mh.nbcs)
+        self.assertEqual(0, mh.nbound)
+        self.assertEqual((mh.nbound, 3), mh.bndfcs.shape)
+        mh.build_boundary()
+        self.assertEqual(1, mh.nbcs)
+        self.assertEqual(3, mh.nbound)
+        self.assertEqual((mh.nbound, 3), mh.bndfcs.shape)
+        self.assertEqual(
+            [[1, 0, -1], [3, 0, -1], [5, 0, -1]],
+            mh.bndfcs.ndarray.tolist()
+        )
+
         # FIXME: Need to build ghost data.
+        # mh.build_ghost()
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
