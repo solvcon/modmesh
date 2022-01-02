@@ -41,33 +41,28 @@ template < typename D /* derived type */, uint8_t ND >
 /* NOLINTNEXTLINE(readability-function-cognitive-complexity) */
 void StaticMeshBase<D, ND>::build_faces_from_cells()
 {
+
     size_t const mface = std::accumulate
     (
         m_cltpn.begin() + m_cltpn.nghost(), m_cltpn.end(), 0
       , [](size_t a, int8_t b){ return a + CellType::by_id(b).nface(); }
     );
-    int_type computed_nface = -1;
 
     // create temporary tables.
-    SimpleArray<int_type> tclfcs(small_vector<size_t>{ncell(), CLMFC+1}, -1);
+    SimpleArray<int_type> tclfcs(small_vector<size_t>{m_ncell, CLMFC+1}, -1);
     SimpleArray<int_type> tfctpn(small_vector<size_t>{mface}, -1);
     SimpleArray<int_type> tfcnds(small_vector<size_t>{mface, FCMND+1}, -1);
-    SimpleArray<int_type> tfccls(small_vector<size_t>{mface, FCNCL}, -1);
-    int_type * lclfcs = tclfcs.body();
-    int_type * lfctpn = tfctpn.body();
-    int_type * lfcnds = tfcnds.body();
-    int_type * lfccls = tfccls.body();
+    SimpleArray<int_type> tfccls(small_vector<size_t>{mface, FCREL}, -1);
 
     // extract face definition from the node list of cells.
-    int_type * pcltpn = cltpn().body();
-    int_type * pclnds = clnds().body();
-    int_type * pclfcs = lclfcs;
-    int_type * pfctpn = lfctpn;
-    int_type * pfcnds = lfcnds;
+    int_type * pclnds = m_clnds.body();
+    int_type * pclfcs = tclfcs.body();
+    int_type * pfctpn = tfctpn.body();
+    int_type * pfcnds = tfcnds.body();
     int_type ifc = 0;
     for (size_t icl = 0 ; icl < ncell() ; ++icl)
     {
-        int_type const tpnicl = pcltpn[0];
+        int_type const tpnicl = m_cltpn(icl);
         // parse each type of cell.
         if (tpnicl == 0 || tpnicl == 1)
         {
@@ -363,59 +358,38 @@ void StaticMeshBase<D, ND>::build_faces_from_cells()
             ifc += 1;
         }
         // advance pointers.
-        pcltpn += 1;
         pclnds += CLMND+1;
         pclfcs += CLMFC+1;
-    };
+    }
 
     // build the hash table, to know what faces connect to each node.
     /// first pass: get the maximum number of faces.
-    std::vector<int_type> ndnfc(nnode());
-    for (size_t ind = 0 ; ind < nnode() ; ++ind) // initialize.
-    {
-        ndnfc[ind] = 0;
-    }
-    pfcnds = lfcnds; // count.
+    std::vector<size_t> ndnfc(nnode(), 0);
     for (size_t ifc = 0 ; ifc < mface ; ++ifc)
     {
-        for (int_type inf = 1 ; inf <= pfcnds[0] ; ++inf)
+        for (int_type const * p = tfcnds.vptr(ifc, 1) ; p != tfcnds.vptr(ifc, tfcnds(ifc, 0)+1) ; ++p)
         {
-            int_type const ind = pfcnds[inf];  // node of interest.
-            ndnfc[ind] += 1;    // increment counting.
-        };
-        // advance pointers.
-        pfcnds += FCMND+1;
-    }
-    int_type ndmfc = 0;  // get maximum.
-    for (size_t ind = 0 ; ind < nnode() ; ++ind)
-    {
-        if (ndnfc[ind] > ndmfc)
-        {
-            ndmfc = ndnfc[ind];
+            ndnfc[*p] += 1;
         }
     }
-    assert(ndmfc >= 0); // FIXME: Throw an exception.
+    size_t const ndmfc = *std::max_element(ndnfc.begin(), ndnfc.end());
     /// second pass: scan again to build hash table.
     SimpleArray<int_type> ndfcs(small_vector<size_t>{nnode(), static_cast<size_t>(ndmfc)+1});
     for (size_t ind = 0 ; ind < nnode() ; ++ind)
     {
         ndfcs(ind, 0) = 0;
-        for (int_type it = 1 ; it <= ndmfc ; ++it)
+        for (size_t it = 1 ; it <= ndmfc ; ++it)
         {
             ndfcs(ind, it) = -1;
         }
     }
-    pfcnds = lfcnds; // build hash table mapping from node to face.
     for (size_t ifc = 0 ; ifc < mface ; ++ifc)
     {
-        for (int_type inf = 1; inf <= pfcnds[0]; ++inf)
+        for (int_type const * p = tfcnds.vptr(ifc, 1) ; p != tfcnds.vptr(ifc, tfcnds(ifc, 0)+1) ; ++p)
         {
-            int_type const ind = pfcnds[inf];  // node of interest.
-            ndfcs(ind, 0) += 1;
-            ndfcs(ind, ndfcs(ind, 0)) = ifc;
+            ndfcs(*p, 0) += 1;
+            ndfcs(*p, ndfcs(*p, 0)) = ifc;
         }
-        // advance pointers.
-        pfcnds += FCMND+1;
     }
 
     // scan for duplicated faces and build duplication map.
@@ -428,15 +402,15 @@ void StaticMeshBase<D, ND>::build_faces_from_cells()
     {
         if (map[ifc] == ifc)
         {
-            int_type * pifcnds = lfcnds + ifc*(FCMND+1);
+            int_type * pifcnds = tfcnds.vptr(ifc, 0);
             int_type const nd1 = pifcnds[1];    // take only the FIRST node of a face.
             for (int_type it = 1 ; it <= ndfcs(nd1, 0) ; ++it)
             {
                 size_t const jfc = ndfcs(nd1, it);
                 // test for duplication.
-                if ((jfc != ifc) && (lfctpn[jfc] == lfctpn[ifc]))
+                if ((jfc != ifc) && (tfctpn(jfc) == tfctpn(ifc)))
                 {
-                    int_type * pjfcnds = lfcnds + jfc*(FCMND+1);
+                    int_type * pjfcnds = tfcnds.vptr(jfc, 0);
                     int_type cond = pjfcnds[0];
                     // scan all nodes in ifc and jfc to see if all the same.
                     for (int_type jnf = 1 ; jnf <= pjfcnds[0] ; ++jnf)
@@ -461,99 +435,57 @@ void StaticMeshBase<D, ND>::build_faces_from_cells()
 
     // use the duplication map to remap nodes in faces, and build renewed map.
     std::vector<int_type> map2(mface);
-    int_type * pifcnds = lfcnds;
-    int_type * pjfcnds = lfcnds;
-    int_type * pifctpn = lfctpn;
-    int_type * pjfctpn = lfctpn;
-    int_type jfc = 0;
-    for (size_t ifc = 0 ; ifc < mface ; ++ifc)
     {
-        if (map[ifc] == ifc)
+        size_t jfc = 0;
+        for (size_t ifc = 0 ; ifc < mface ; ++ifc)
         {
-            for (int_type inf = 0 ; inf <= FCMND ; ++inf)
+            if (map[ifc] == ifc)
             {
-                pjfcnds[inf] = pifcnds[inf];
+                for (int_type inf = 0 ; inf <= FCMND ; ++inf)
+                {
+                    tfcnds(jfc, inf) = tfcnds(ifc, inf);
+                }
+                tfctpn(jfc) = tfctpn(ifc);
+                map2[ifc] = jfc;
+                // increment j-face.
+                jfc += 1;
             }
-            pjfctpn[0] = pifctpn[0];
-            map2[ifc] = jfc;
-            // increment j-face.
-            jfc += 1;
-            pjfcnds += FCMND+1;
-            pjfctpn += 1;
+            else
+            {
+                map2[ifc] = map2[map[ifc]];
+            }
         }
-        else
-        {
-            map2[ifc] = map2[map[ifc]];
-        }
-        // advance pointers;
-        pifcnds += FCMND+1;
-        pifctpn += 1;
+        m_nface = jfc; // record deduplicated number of face.
     }
-    computed_nface = jfc;    // record deduplicated number of face.
 
     // rebuild faces in cells and build face neighboring, according to the
     // renewed face map.
-    int_type * pfccls = lfccls; // initialize.
-    for (size_t ifc = 0 ; ifc < mface ; ++ifc)
-    {
-        for (int_type it = 0 ; it < FCREL ; ++it)
-        {
-            pfccls[it] = -1;
-        }
-        // advance pointers;
-        pfccls += FCREL;
-    }
-    pclfcs = lclfcs;
     for (size_t icl = 0 ; icl < ncell() ; ++icl)
     {
-        for (int_type ifl = 1 ; ifl <= pclfcs[0] ; ++ifl)
+        for (int_type ifl = 1 ; ifl <= tclfcs(icl, 0) ; ++ifl)
         {
-            int_type const ifc = pclfcs[ifl];
+            int_type const ifc = tclfcs(icl, ifl);
             int_type const jfc = map2[ifc];
             // rebuild faces in cells.
-            pclfcs[ifl] = jfc;
+            tclfcs(icl, ifl) = jfc;
             // build face neighboring.
-            pfccls = lfccls + jfc*FCREL;
-            if (pfccls[0] == -1)
-            {
-                pfccls[0] = icl;
-            }
-            else if (pfccls[1] == -1)
-            {
-                pfccls[1] = icl;
-            }
+            if      (-1 == tfccls(jfc, 0)) { tfccls(jfc, 0) = icl; }
+            else if (-1 == tfccls(jfc, 1)) { tfccls(jfc, 1) = icl; }
         }
-        // advance pointers;
-        pclfcs += CLMFC+1;
-    };
+    }
 
     // recreate member tables.
-    m_nface = computed_nface;
-    m_fctpn.swap(SimpleArray<int_type>(small_vector<size_t>{nface()}));
-    m_fcnds.swap(SimpleArray<int_type>(small_vector<size_t>{nface(), FCMND+1}));
-    m_fccls.swap(SimpleArray<int_type>(small_vector<size_t>{nface(), FCNCL}));
-    for (size_t icl = 0 ; icl < ncell() ; ++icl)
-    {
-        for (size_t it = 0 ; it < clfcs().shape(1) ; ++it)
-        {
-            clfcs()(icl, it) = tclfcs(icl, it);
-        }
-    }
-    for (size_t ifc = 0 ; ifc < nface() ; ++ifc)
-    {
-        fctpn()(ifc) = tfctpn(ifc);
-        for (size_t it = 0 ; it < fcnds().shape(1) ; ++it)
-        {
-            fcnds()(ifc, it) = tfcnds(ifc, it);
-        }
-        for (size_t it = 0 ; it < fccls().shape(1) ; ++it)
-        {
-            fccls()(ifc, it) = tfccls(ifc, it);
-        }
-    }
+    m_fctpn.swap(SimpleArray<int_type>(small_vector<size_t>{m_nface}));
+    std::copy(tfctpn.vptr(0), tfctpn.vptr(m_nface), m_fctpn.vptr(0));
+    m_fcnds.swap(SimpleArray<int_type>(small_vector<size_t>{m_nface, FCMND+1}));
+    std::copy(tfcnds.vptr(0, 0), tfcnds.vptr(m_nface, 0), m_fcnds.vptr(0, 0));
+    m_fccls.swap(SimpleArray<int_type>(small_vector<size_t>{m_nface, FCREL}));
+    std::copy(tfccls.vptr(0, 0), tfccls.vptr(m_nface, 0), m_fccls.vptr(0, 0));
     m_fccnd.swap(SimpleArray<real_type>(small_vector<size_t>{nface(), ND}, 0));
     m_fcnml.swap(SimpleArray<real_type>(small_vector<size_t>{nface(), ND}, 0));
     m_fcara.swap(SimpleArray<real_type>(small_vector<size_t>{nface()}, 0));
+    std::copy(tclfcs.vptr(0, 0), tclfcs.vptr(m_ncell, 0), m_clfcs.vptr(0, 0));
+
 }
 
 /**

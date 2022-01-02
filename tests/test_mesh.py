@@ -58,7 +58,7 @@ class StaticMeshTC(unittest.TestCase):
         self.assertEqual((mh.ngstcell + mh.ncell,), mh.clgrp.shape)
 
         self.assertEqual((mh.ngstface + mh.nface, mh.FCMND+1), mh.fcnds.shape)
-        self.assertEqual((mh.ngstface + mh.nface, mh.FCNCL), mh.fccls.shape)
+        self.assertEqual((mh.ngstface + mh.nface, mh.FCREL), mh.fccls.shape)
         self.assertEqual((mh.ngstcell + mh.ncell, mh.CLMND+1), mh.clnds.shape)
         self.assertEqual((mh.ngstcell + mh.ncell, mh.CLMFC+1), mh.clfcs.shape)
 

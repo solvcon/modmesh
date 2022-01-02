@@ -557,10 +557,8 @@ protected:
         (*this)
             MM_DECL_STATIC(NDIM)
             MM_DECL_STATIC(FCMND)
-            MM_DECL_STATIC(FCNCL)
             MM_DECL_STATIC(CLMND)
             MM_DECL_STATIC(CLMFC)
-            MM_DECL_STATIC(FCNCL)
             MM_DECL_STATIC(FCREL)
             MM_DECL_STATIC(BFREL)
         ;
