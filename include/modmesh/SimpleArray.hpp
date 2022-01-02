@@ -386,10 +386,14 @@ public:
     }
 
     template < typename ... Args >
-    value_type const & operator()(Args ... args) const { return m_body[buffer_offset(m_stride, args...)]; }
+    value_type const & operator()(Args ... args) const { return *vptr(args...); }
+    template < typename ... Args >
+    value_type       & operator()(Args ... args)       { return *vptr(args...); }
 
     template < typename ... Args >
-    value_type       & operator()(Args ... args)       { return m_body[buffer_offset(m_stride, args...)]; }
+    value_type const * vptr(Args ... args) const { return m_body + buffer_offset(m_stride, args...); }
+    template < typename ... Args >
+    value_type       * vptr(Args ... args)       { return m_body + buffer_offset(m_stride, args...); }
 
     /* Backdoor */
     value_type const & data(size_t it) const { return data()[it]; }

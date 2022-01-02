@@ -167,7 +167,7 @@ void StaticMeshBase<D, ND>::build_ghost()
     MM_DECL_GHOST_SWAP1(clgrp, int_type, cell, -1)
     // connectivity arrays.
     MM_DECL_GHOST_SWAP2(fcnds, int_type, face, FCMND+1, -1)
-    MM_DECL_GHOST_SWAP2(fccls, int_type, face, FCNCL, -1)
+    MM_DECL_GHOST_SWAP2(fccls, int_type, face, FCREL, -1)
     MM_DECL_GHOST_SWAP2(clnds, int_type, cell, CLMND+1, -1)
     MM_DECL_GHOST_SWAP2(clfcs, int_type, cell, CLMFC+1, -1)
 

@@ -237,7 +237,6 @@ public:
     static constexpr const uint8_t FCMND = CellType::FCNND_MAX;
     static constexpr const uint8_t CLMND = CellType::CLNND_MAX;
     static constexpr const uint8_t CLMFC = CellType::CLNFC_MAX;
-    static constexpr const uint8_t FCNCL = 4;
     static constexpr const uint8_t FCREL = 4;
     static constexpr const uint8_t BFREL = 3;
 
@@ -261,7 +260,7 @@ public:
       , m_cltpn(std::vector<size_t>{ncell})
       , m_clgrp(std::vector<size_t>{ncell})
       , m_fcnds(std::vector<size_t>{nface, FCMND+1})
-      , m_fccls(std::vector<size_t>{nface, FCNCL})
+      , m_fccls(std::vector<size_t>{nface, FCREL})
       , m_clnds(std::vector<size_t>{ncell, CLMND+1})
       , m_clfcs(std::vector<size_t>{ncell, CLMFC+1})
       , m_bndfcs(std::vector<size_t>{0, StaticMeshBC::BFREL})
