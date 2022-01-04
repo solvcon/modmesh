@@ -402,22 +402,20 @@ void StaticMeshBase<D, ND>::build_faces_from_cells()
     {
         if (map[ifc] == ifc)
         {
-            int_type * pifcnds = tfcnds.vptr(ifc, 0);
-            int_type const nd1 = pifcnds[1];    // take only the FIRST node of a face.
+            int_type const nd1 = tfcnds(ifc, 1);    // take only the FIRST node of a face.
             for (int_type it = 1 ; it <= ndfcs(nd1, 0) ; ++it)
             {
                 size_t const jfc = ndfcs(nd1, it);
                 // test for duplication.
                 if ((jfc != ifc) && (tfctpn(jfc) == tfctpn(ifc)))
                 {
-                    int_type * pjfcnds = tfcnds.vptr(jfc, 0);
-                    int_type cond = pjfcnds[0];
+                    int_type cond = tfcnds(jfc, 0);
                     // scan all nodes in ifc and jfc to see if all the same.
-                    for (int_type jnf = 1 ; jnf <= pjfcnds[0] ; ++jnf)
+                    for (int_type jnf = 1 ; jnf <= tfcnds(jfc, 0) ; ++jnf)
                     {
-                        for (int_type inf = 1 ; inf <= pifcnds[0] ; ++inf)
+                        for (int_type inf = 1 ; inf <= tfcnds(ifc, 0) ; ++inf)
                         {
-                            if (pjfcnds[jnf] == pifcnds[inf])
+                            if (tfcnds(jfc, jnf) == tfcnds(ifc, inf))
                             {
                                 cond -= 1;
                                 break;
@@ -502,68 +500,47 @@ template < typename D /* derived type */, uint8_t ND >
 /* NOLINTNEXTLINE(readability-function-cognitive-complexity) */
 void StaticMeshBase<D, ND>::calc_metric()
 {
-    // arrays.
-    std::array<int_type, FCMND> ndstf; // NOLINT(cppcoreguidelines-pro-type-member-init)
-    std::array<std::array<real_type, NDIM>, FCMND+2> cfd; // NOLINT(cppcoreguidelines-pro-type-member-init)
-    std::array<real_type, NDIM> crd; // NOLINT(cppcoreguidelines-pro-type-member-init)
-    std::array<std::array<real_type, NDIM>, FCMND> radvec; // NOLINT(cppcoreguidelines-pro-type-member-init)
-
-    // utilized arrays.
-    real_type * lndcrd = ndcrd().body();
-    int_type  * lfcnds = fcnds().body();
-    int_type  * lfccls = fccls().body();
-    real_type * lfccnd = fccnd().body();
-    real_type * lfcnml = fcnml().body();
-    real_type * lfcara = fcara().body();
-    int_type  * lcltpn = cltpn().body();
-    int_type  * lclnds = clnds().body();
-    int_type  * lclfcs = clfcs().body();
-    real_type * lclcnd = clcnd().body();
-    real_type * lclvol = clvol().body();
-
     // compute face centroids.
-    int_type * pfcnds = lfcnds;
-    real_type * pfccnd = lfccnd;
     if (NDIM == 2)
     {
         // 2D faces must be edge.
-        for (size_t ifc = 0 ; ifc < nface() ; ++ifc)
+        for (size_t ifc = 0 ; ifc < m_nface ; ++ifc)
         {
             // point 1.
-            int_type ind = pfcnds[1];
-            real_type const * pndcrd = lndcrd + ind*NDIM;
-            pfccnd[0] = pndcrd[0];
-            pfccnd[1] = pndcrd[1];
+            {
+                int_type const ind = m_fcnds(ifc, 1);
+                m_fccnd(ifc, 0) = m_ndcrd(ind, 0);
+                m_fccnd(ifc, 1) = m_ndcrd(ind, 1);
+            }
             // point 2.
-            ind = pfcnds[2];
-            pndcrd = lndcrd + ind*NDIM;
-            pfccnd[0] += pndcrd[0];
-            pfccnd[1] += pndcrd[1];
+            {
+                int_type const ind = m_fcnds(ifc, 2);
+                m_fccnd(ifc, 0) += m_ndcrd(ind, 0);
+                m_fccnd(ifc, 1) += m_ndcrd(ind, 1);
+            }
             // average.
-            pfccnd[0] /= 2;
-            pfccnd[1] /= 2;
-            // advance pointers.
-            pfcnds += FCMND+1;
-            pfccnd += NDIM;
+            m_fccnd(ifc, 0) /= 2;
+            m_fccnd(ifc, 1) /= 2;
         }
     }
     else if (NDIM == 3)
     {
         for (size_t ifc = 0 ; ifc < nface() ; ++ifc)
         {
+            std::array<real_type, NDIM> crd; // NOLINT(cppcoreguidelines-pro-type-member-init)
+            std::array<std::array<real_type, NDIM>, FCMND+2> cfd; // NOLINT(cppcoreguidelines-pro-type-member-init)
             // find averaged point.
             cfd[0][0] = cfd[0][1] = cfd[0][2] = 0.0;
-            size_t const nnd = pfcnds[0];
+            size_t const nnd = m_fcnds(ifc, 0);
             for (size_t inf = 1 ; inf <= nnd ; ++inf)
             {
-                int_type ind = pfcnds[inf];
-                real_type const * pndcrd = lndcrd + ind*NDIM;
-                cfd[inf][0]  = pndcrd[0];
-                cfd[0  ][0] += pndcrd[0];
-                cfd[inf][1]  = pndcrd[1];
-                cfd[0  ][1] += pndcrd[1];
-                cfd[inf][2]  = pndcrd[2];
-                cfd[0  ][2] += pndcrd[2];
+                int_type const ind = m_fcnds(ifc, inf);
+                cfd[inf][0]  = m_ndcrd(ind, 0);
+                cfd[0  ][0] += m_ndcrd(ind, 0);
+                cfd[inf][1]  = m_ndcrd(ind, 1);
+                cfd[0  ][1] += m_ndcrd(ind, 1);
+                cfd[inf][2]  = m_ndcrd(ind, 2);
+                cfd[0  ][2] += m_ndcrd(ind, 2);
             }
             cfd[nnd+1][0] = cfd[1][0];
             cfd[nnd+1][1] = cfd[1][1];
@@ -573,7 +550,7 @@ void StaticMeshBase<D, ND>::calc_metric()
             cfd[0][2] /= nnd;
             // calculate area.
             real_type voc = 0.0;
-            pfccnd[0] = pfccnd[1] = pfccnd[2] = 0.0;
+            m_fccnd(ifc, 0) = m_fccnd(ifc, 1) = m_fccnd(ifc, 2) = 0.0;
             for (size_t inf = 1 ; inf <= nnd ; ++inf)
             {
                 crd[0] = (cfd[0][0] + cfd[inf][0] + cfd[inf+1][0])/3;
@@ -588,324 +565,283 @@ void StaticMeshBase<D, ND>::calc_metric()
                 real_type const dw0 = du1*dv2 - du2*dv1;
                 real_type const dw1 = du2*dv0 - du0*dv2;
                 real_type const dw2 = du0*dv1 - du1*dv0;
-                real_type vob = sqrt(dw0*dw0 + dw1*dw1 + dw2*dw2);
-                pfccnd[0] += crd[0] * vob;
-                pfccnd[1] += crd[1] * vob;
-                pfccnd[2] += crd[2] * vob;
+                real_type vob = std::sqrt(dw0*dw0 + dw1*dw1 + dw2*dw2);
+                m_fccnd(ifc, 0) += crd[0] * vob;
+                m_fccnd(ifc, 1) += crd[1] * vob;
+                m_fccnd(ifc, 2) += crd[2] * vob;
                 voc += vob;
             }
-            pfccnd[0] /= voc;
-            pfccnd[1] /= voc;
-            pfccnd[2] /= voc;
-            // advance pointers.
-            pfcnds += FCMND+1;
-            pfccnd += NDIM;
+            m_fccnd(ifc, 0) /= voc;
+            m_fccnd(ifc, 1) /= voc;
+            m_fccnd(ifc, 2) /= voc;
         }
     }
 
     // compute face normal vector and area.
-    pfcnds = lfcnds;
-    pfccnd = lfccnd;
     if (NDIM == 2)
     {
-        real_type * pfcnml = lfcnml;
-        real_type * pfcara = lfcara;
         for (size_t ifc = 0 ; ifc < nface() ; ++ifc)
         {
             // 2D faces are always lines.
-            real_type const * pndcrd = lndcrd + pfcnds[1]*NDIM;
-            real_type const * p2ndcrd = lndcrd + pfcnds[2]*NDIM;
+            int_type const ind1 = m_fcnds(ifc, 1);
+            int_type const ind2 = m_fcnds(ifc, 2);
             // face normal.
-            pfcnml[0] = p2ndcrd[1] - pndcrd[1];
-            pfcnml[1] = -(p2ndcrd[0] - pndcrd[0]);
+            m_fcnml(ifc, 0) = m_ndcrd(ind2, 1) - m_ndcrd(ind1, 1);
+            m_fcnml(ifc, 1) = m_ndcrd(ind1, 0) - m_ndcrd(ind2, 0);
             // face ara.
-            pfcara[0] = sqrt(pfcnml[0]*pfcnml[0] + pfcnml[1]*pfcnml[1]);
+            m_fcara(ifc) = std::sqrt(m_fcnml(ifc, 0)*m_fcnml(ifc, 0) + m_fcnml(ifc, 1)*m_fcnml(ifc, 1));
             // normalize face normal.
-            pfcnml[0] /= pfcara[0];
-            pfcnml[1] /= pfcara[0];
-            // advance pointers.
-            pfcnds += FCMND+1;
-            pfcnml += NDIM;
-            pfcara += 1;
+            m_fcnml(ifc, 0) /= m_fcara(ifc);
+            m_fcnml(ifc, 1) /= m_fcara(ifc);
         }
     }
     else if (NDIM == 3)
     {
-        real_type * pfcnml = lfcnml;
-        real_type * pfcara = lfcara;
         for (size_t ifc = 0 ; ifc < nface() ; ++ifc)
         {
             // compute radial vector.
-            size_t const nnd = pfcnds[0];
+            std::array<std::array<real_type, NDIM>, FCMND> radvec; // NOLINT(cppcoreguidelines-pro-type-member-init)
+            size_t const nnd = m_fcnds(ifc, 0);
             for (size_t inf = 0 ; inf < nnd ; ++inf)
             {
-                int_type ind = pfcnds[inf+1];
-                real_type const * pndcrd = lndcrd + ind*NDIM;
-                radvec[inf][0] = pndcrd[0] - pfccnd[0];
-                radvec[inf][1] = pndcrd[1] - pfccnd[1];
-                radvec[inf][2] = pndcrd[2] - pfccnd[2];
+                int_type const ind = m_fcnds(ifc, inf+1);
+                radvec[inf][0] = m_ndcrd(ind, 0) - m_fccnd(ifc, 0);
+                radvec[inf][1] = m_ndcrd(ind, 1) - m_fccnd(ifc, 1);
+                radvec[inf][2] = m_ndcrd(ind, 2) - m_fccnd(ifc, 2);
             }
             // compute cross product.
-            pfcnml[0] = radvec[nnd-1][1]*radvec[0][2]
-                      - radvec[nnd-1][2]*radvec[0][1];
-            pfcnml[1] = radvec[nnd-1][2]*radvec[0][0]
-                      - radvec[nnd-1][0]*radvec[0][2];
-            pfcnml[2] = radvec[nnd-1][0]*radvec[0][1]
-                      - radvec[nnd-1][1]*radvec[0][0];
+            m_fcnml(ifc, 0) = radvec[nnd-1][1]*radvec[0][2]
+                            - radvec[nnd-1][2]*radvec[0][1];
+            m_fcnml(ifc, 1) = radvec[nnd-1][2]*radvec[0][0]
+                            - radvec[nnd-1][0]*radvec[0][2];
+            m_fcnml(ifc, 2) = radvec[nnd-1][0]*radvec[0][1]
+                            - radvec[nnd-1][1]*radvec[0][0];
             for (size_t ind = 1 ; ind < nnd ; ++ind)
             {
-                pfcnml[0] += radvec[ind-1][1]*radvec[ind][2]
-                           - radvec[ind-1][2]*radvec[ind][1];
-                pfcnml[1] += radvec[ind-1][2]*radvec[ind][0]
-                           - radvec[ind-1][0]*radvec[ind][2];
-                pfcnml[2] += radvec[ind-1][0]*radvec[ind][1]
-                           - radvec[ind-1][1]*radvec[ind][0];
+                m_fcnml(ifc, 0) += radvec[ind-1][1]*radvec[ind][2]
+                                 - radvec[ind-1][2]*radvec[ind][1];
+                m_fcnml(ifc, 1) += radvec[ind-1][2]*radvec[ind][0]
+                                 - radvec[ind-1][0]*radvec[ind][2];
+                m_fcnml(ifc, 2) += radvec[ind-1][0]*radvec[ind][1]
+                                 - radvec[ind-1][1]*radvec[ind][0];
             }
             // compute face area.
-            pfcara[0] = sqrt(pfcnml[0]*pfcnml[0] + pfcnml[1]*pfcnml[1]
-                           + pfcnml[2]*pfcnml[2]);
+            m_fcara(ifc) = std::sqrt
+            (
+                m_fcnml(ifc, 0)*m_fcnml(ifc, 0)
+              + m_fcnml(ifc, 1)*m_fcnml(ifc, 1)
+              + m_fcnml(ifc, 2)*m_fcnml(ifc, 2)
+            );
             // normalize normal vector.
-            pfcnml[0] /= pfcara[0];
-            pfcnml[1] /= pfcara[0];
-            pfcnml[2] /= pfcara[0];
+            m_fcnml(ifc, 0) /= m_fcara(ifc);
+            m_fcnml(ifc, 1) /= m_fcara(ifc);
+            m_fcnml(ifc, 2) /= m_fcara(ifc);
             // get real face area.
-            pfcara[0] /= 2.0;
-            // advance pointers.
-            pfcnds += FCMND+1;
-            pfccnd += NDIM;
-            pfcnml += NDIM;
-            pfcara += 1;
+            m_fcara(ifc) /= 2.0;
         }
     }
 
-    // compute cell centroids.
-    int_type * pclnds = lclnds;
-    int_type * pclfcs = lclfcs;
+    // compute cell centers.
     if (NDIM == 2)
     {
-        real_type * pclcnd = lclcnd;
         for (size_t icl = 0 ; icl < ncell() ; ++icl)
         {
-            if ((use_incenter()) && (lcltpn[icl] == 3))
+            if ((use_incenter()) && (CellType::TRIANGLE == m_cltpn(icl)))
             {
-                real_type const * pndcrd = lndcrd + pclnds[1]*NDIM;
-                real_type vob = lfcara[pclfcs[2]];
-                real_type voc = vob;
-                pclcnd[0] = vob*pndcrd[0];
-                pclcnd[1] = vob*pndcrd[1];
-                pndcrd = lndcrd + pclnds[2]*NDIM;
-                vob = lfcara[pclfcs[3]];
-                voc += vob;
-                pclcnd[0] += vob*pndcrd[0];
-                pclcnd[1] += vob*pndcrd[1];
-                pndcrd = lndcrd + pclnds[3]*NDIM;
-                vob = lfcara[pclfcs[1]];
-                voc += vob;
-                pclcnd[0] += vob*pndcrd[0];
-                pclcnd[1] += vob*pndcrd[1];
-                pclcnd[0] /= voc;
-                pclcnd[1] /= voc;
+                real_type voc = 0.0;
+                {
+                    int_type const ind = m_clnds(icl, 1);
+                    real_type const vob = m_fcara(m_clfcs(icl, 2));
+                    voc += vob;
+                    m_clcnd(icl, 0) = vob*m_ndcrd(ind, 0);
+                    m_clcnd(icl, 1) = vob*m_ndcrd(ind, 1);
+                }
+                {
+                    int_type const ind = m_clnds(icl, 2);
+                    real_type const vob = m_fcara(m_clfcs(icl, 3));
+                    voc += vob;
+                    m_clcnd(icl, 0) += vob*m_ndcrd(ind, 0);
+                    m_clcnd(icl, 1) += vob*m_ndcrd(ind, 1);
+                }
+                {
+                    int_type const ind = m_clnds(icl, 3);
+                    real_type const vob = m_fcara(m_clfcs(icl, 1));
+                    voc += vob;
+                    m_clcnd(icl, 0) += vob*m_ndcrd(ind, 0);
+                    m_clcnd(icl, 1) += vob*m_ndcrd(ind, 1);
+                }
+                m_clcnd(icl, 0) /= voc;
+                m_clcnd(icl, 1) /= voc;
             }
-            else
+            else // centroids.
             {
                 // averaged point.
+                std::array<real_type, NDIM> crd; // NOLINT(cppcoreguidelines-pro-type-member-init)
                 crd[0] = crd[1] = 0.0;
-                size_t const nnd = pclnds[0];
+                size_t const nnd = m_clnds(icl, 0);
                 for (size_t inc = 1 ; inc <= nnd ; ++inc)
                 {
-                    int_type const ind = pclnds[inc];
-                    real_type const * pndcrd = lndcrd + ind*NDIM;
-                    crd[0] += pndcrd[0];
-                    crd[1] += pndcrd[1];
+                    int_type const ind = m_clnds(icl, inc);
+                    crd[0] += m_ndcrd(ind, 0);
+                    crd[1] += m_ndcrd(ind, 1);
                 }
                 crd[0] /= nnd;
                 crd[1] /= nnd;
                 // weight centroid.
                 real_type voc = 0.0;
-                pclcnd[0] = pclcnd[1] = 0.0;
-                size_t const nfc = pclfcs[0];
+                m_clcnd(icl, 0) = m_clcnd(icl, 1) = 0.0;
+                size_t const nfc = m_clfcs(icl, 0);
                 for (size_t ifl = 1 ; ifl <= nfc ; ++ifl)
                 {
-                    int_type ifc = pclfcs[ifl];
-                    pfccnd = lfccnd + ifc*NDIM;
-                    real_type const * pfcnml = lfcnml + ifc*NDIM;
-                    real_type const * pfcara = lfcara + ifc;
-                    real_type const du0 = crd[0] - pfccnd[0];
-                    real_type const du1 = crd[1] - pfccnd[1];
-                    real_type vob = fabs(du0*pfcnml[0] + du1*pfcnml[1]) * pfcara[0];
+                    int_type const ifc = m_clfcs(icl, ifl);
+                    real_type const du0 = crd[0] - m_fccnd(ifc, 0);
+                    real_type const du1 = crd[1] - m_fccnd(ifc, 1);
+                    real_type vob = fabs(du0*m_fcnml(ifc, 0) + du1*m_fcnml(ifc, 1)) * m_fcara(ifc);
                     voc += vob;
-                    real_type const dv0 = pfccnd[0] + du0/3;
-                    real_type const dv1 = pfccnd[1] + du1/3;
-                    pclcnd[0] += dv0 * vob;
-                    pclcnd[1] += dv1 * vob;
+                    real_type const dv0 = m_fccnd(ifc, 0) + du0/3;
+                    real_type const dv1 = m_fccnd(ifc, 1) + du1/3;
+                    m_clcnd(icl, 0) += dv0 * vob;
+                    m_clcnd(icl, 1) += dv1 * vob;
                 }
-                pclcnd[0] /= voc;
-                pclcnd[1] /= voc;
+                m_clcnd(icl, 0) /= voc;
+                m_clcnd(icl, 1) /= voc;
             }
-            // advance pointers.
-            pclnds += CLMND+1;
-            pclfcs += CLMFC+1;
-            pclcnd += NDIM;
         }
     }
     else if (NDIM == 3)
     {
-        real_type * pclcnd = lclcnd;
         for (size_t icl = 0 ; icl < ncell() ; ++icl)
         {
-            if ((use_incenter()) && (lcltpn[icl] == 5))
+            if ((use_incenter()) && (m_cltpn(icl) == 5))
             {
-                real_type const * pndcrd = lndcrd + pclnds[1]*NDIM;
-                real_type vob = lfcara[pclfcs[4]];
-                real_type voc = vob;
-                pclcnd[0] = vob*pndcrd[0];
-                pclcnd[1] = vob*pndcrd[1];
-                pclcnd[2] = vob*pndcrd[2];
-                pndcrd = lndcrd + pclnds[2]*NDIM;
-                vob = lfcara[pclfcs[3]];
-                voc += vob;
-                pclcnd[0] += vob*pndcrd[0];
-                pclcnd[1] += vob*pndcrd[1];
-                pclcnd[2] += vob*pndcrd[2];
-                pndcrd = lndcrd + pclnds[3]*NDIM;
-                vob = lfcara[pclfcs[2]];
-                voc += vob;
-                pclcnd[0] += vob*pndcrd[0];
-                pclcnd[1] += vob*pndcrd[1];
-                pclcnd[2] += vob*pndcrd[2];
-                pndcrd = lndcrd + pclnds[4]*NDIM;
-                vob = lfcara[pclfcs[1]];
-                voc += vob;
-                pclcnd[0] += vob*pndcrd[0];
-                pclcnd[1] += vob*pndcrd[1];
-                pclcnd[2] += vob*pndcrd[2];
-                pclcnd[0] /= voc;
-                pclcnd[1] /= voc;
-                pclcnd[2] /= voc;
+                real_type voc = 0.0;
+                {
+                    int_type const ind = m_clnds(icl, 1);
+                    real_type const vob = m_fcara(m_clfcs(icl, 4));
+                    voc += vob;
+                    m_clcnd(icl, 0) = vob*m_ndcrd(ind, 0);
+                    m_clcnd(icl, 1) = vob*m_ndcrd(ind, 1);
+                    m_clcnd(icl, 2) = vob*m_ndcrd(ind, 2);
+                }
+                {
+                    int_type const ind = m_clnds(icl, 2);
+                    real_type const vob = m_fcara(m_clfcs(icl, 3));
+                    voc += vob;
+                    m_clcnd(icl, 0) = vob*m_ndcrd(ind, 0);
+                    m_clcnd(icl, 1) = vob*m_ndcrd(ind, 1);
+                    m_clcnd(icl, 2) = vob*m_ndcrd(ind, 2);
+                }
+                {
+                    int_type const ind = m_clnds(icl, 3);
+                    real_type const vob = m_fcara(m_clfcs(icl, 2));
+                    voc += vob;
+                    m_clcnd(icl, 0) = vob*m_ndcrd(ind, 0);
+                    m_clcnd(icl, 1) = vob*m_ndcrd(ind, 1);
+                    m_clcnd(icl, 2) = vob*m_ndcrd(ind, 2);
+                }
+                {
+                    int_type const ind = m_clnds(icl, 4);
+                    real_type const vob = m_fcara(m_clfcs(icl, 1));
+                    voc += vob;
+                    m_clcnd(icl, 0) = vob*m_ndcrd(ind, 0);
+                    m_clcnd(icl, 1) = vob*m_ndcrd(ind, 1);
+                    m_clcnd(icl, 2) = vob*m_ndcrd(ind, 2);
+                }
+                m_clcnd(icl, 0) /= voc;
+                m_clcnd(icl, 1) /= voc;
+                m_clcnd(icl, 2) /= voc;
             }
-            else
+            else // centroids.
             {
                 // averaged point.
+                std::array<real_type, NDIM> crd; // NOLINT(cppcoreguidelines-pro-type-member-init)
                 crd[0] = crd[1] = crd[2] = 0.0;
-                size_t const nnd = pclnds[0];
+                size_t const nnd = m_clnds(icl, 0);
                 for (size_t inc = 1 ; inc <= nnd ; ++inc)
                 {
-                    int_type const ind = pclnds[inc];
-                    real_type const * pndcrd = lndcrd + ind*NDIM;
-                    crd[0] += pndcrd[0];
-                    crd[1] += pndcrd[1];
-                    crd[2] += pndcrd[2];
+                    int_type const ind = m_clnds(icl, inc);
+                    crd[0] += m_ndcrd(ind, 0);
+                    crd[1] += m_ndcrd(ind, 1);
+                    crd[2] += m_ndcrd(ind, 2);
                 }
                 crd[0] /= nnd;
                 crd[1] /= nnd;
                 crd[2] /= nnd;
                 // weight centroid.
                 real_type voc = 0.0;
-                pclcnd[0] = pclcnd[1] = pclcnd[2] = 0.0;
-                size_t const nfc = pclfcs[0];
+                m_clcnd(icl, 0) = m_clcnd(icl, 1) = m_clcnd(icl, 2) = 0.0;
+                size_t const nfc = m_clfcs(icl, 0);
                 for (size_t ifl = 1 ; ifl <= nfc ; ++ifl)
                 {
-                    int_type ifc = pclfcs[ifl];
-                    pfccnd = lfccnd + ifc*NDIM;
-                    real_type const * pfcnml = lfcnml + ifc*NDIM;
-                    real_type const * pfcara = lfcara + ifc;
-                    real_type const du0 = crd[0] - pfccnd[0];
-                    real_type const du1 = crd[1] - pfccnd[1];
-                    real_type const du2 = crd[2] - pfccnd[2];
-                    real_type vob = fabs(du0*pfcnml[0] + du1*pfcnml[1] + du2*pfcnml[2]) * pfcara[0];
+                    int_type const ifc = m_clfcs(icl, ifl);
+                    real_type const du0 = crd[0] - m_fccnd(ifc, 0);
+                    real_type const du1 = crd[1] - m_fccnd(ifc, 1);
+                    real_type const du2 = crd[2] - m_fccnd(ifc, 2);
+                    real_type const vob = fabs(du0*m_fcnml(ifc, 0) + du1*m_fcnml(ifc, 1) + du2*m_fcnml(ifc, 2)) * m_fcara(ifc);
                     voc += vob;
-                    real_type const dv0 = pfccnd[0] + du0/4;
-                    real_type const dv1 = pfccnd[1] + du1/4;
-                    real_type const dv2 = pfccnd[2] + du2/4;
-                    pclcnd[0] += dv0 * vob;
-                    pclcnd[1] += dv1 * vob;
-                    pclcnd[2] += dv2 * vob;
+                    real_type const dv0 = m_fccnd(ifc, 0) + du0/4;
+                    real_type const dv1 = m_fccnd(ifc, 1) + du1/4;
+                    real_type const dv2 = m_fccnd(ifc, 2) + du2/4;
+                    m_clcnd(icl, 0) += dv0 * vob;
+                    m_clcnd(icl, 1) += dv1 * vob;
+                    m_clcnd(icl, 2) += dv2 * vob;
                 }
-                pclcnd[0] /= voc;
-                pclcnd[1] /= voc;
-                pclcnd[2] /= voc;
+                m_clcnd(icl, 0) /= voc;
+                m_clcnd(icl, 1) /= voc;
+                m_clcnd(icl, 2) /= voc;
             }
-            // advance pointers.
-            pclnds += CLMND+1;
-            pclfcs += CLMFC+1;
-            pclcnd += NDIM;
         }
     }
 
     // compute volume for each cell.
-    pclfcs = lclfcs;
-    real_type const * pclcnd = lclcnd;
-    real_type * pclvol = lclvol;
+    auto reorder_face = [this](int_type ifc)
+    {
+        size_t const nnd = m_fcnds(ifc, 0);
+        std::array<int_type, FCMND> ndstf; // NOLINT(cppcoreguidelines-pro-type-member-init)
+        for (size_t jt = 0 ; jt < nnd ; ++jt)
+        {
+            ndstf[jt] = m_fcnds(ifc, nnd-jt);
+        }
+        for (size_t jt = 0 ; jt < nnd ; ++jt)
+        {
+            m_fcnds(ifc, jt+1) = ndstf[jt];
+        }
+        for (size_t idm = 0 ; idm < NDIM ; ++idm)
+        {
+            m_fcnml(ifc, idm) = -m_fcnml(ifc, idm);
+        }
+    };
     for (size_t icl = 0 ; icl < ncell() ; ++icl)
     {
-        pclvol[0] = 0.0;
-        size_t const nfc = pclfcs[0];
+        m_clvol(icl) = 0.0;
+        size_t const nfc = m_clfcs(icl, 0);
         for (size_t it = 1 ; it <= nfc ; ++it)
         {
-            int_type ifc = pclfcs[it];
-            int_type * pfccls = lfccls + ifc*FCREL;
-            pfcnds = lfcnds + ifc*(FCMND+1);
-            pfccnd = lfccnd + ifc*NDIM;
-            real_type * pfcnml = lfcnml + ifc*NDIM;
-            real_type const * pfcara = lfcara + ifc;
+            int_type const ifc = m_clfcs(icl, it);
             // calculate volume associated with each face.
             real_type vol = 0.0;
             for (size_t idm = 0 ; idm < NDIM ; ++idm)
             {
-                vol += (pfccnd[idm] - pclcnd[idm]) * pfcnml[idm];
+                vol += (m_fccnd(ifc, idm) - m_clcnd(icl, idm)) * m_fcnml(ifc, idm);
             }
-            vol *= pfcara[0];
+            vol *= m_fcara(ifc);
             // check if need to reorder node definition and connecting cell
             // list for the face.
-            size_t const this_fcl = pfccls[0];
+            size_t const this_fcl = m_fccls(ifc, 0);
             if (vol < 0.0)
             {
-                if (this_fcl == icl)
-                {
-                    size_t const nnd = pfcnds[0];
-                    for (size_t jt = 0 ; jt < nnd ; ++jt)
-                    {
-                        ndstf[jt] = pfcnds[nnd-jt];
-                    }
-                    for (size_t jt = 0 ; jt < nnd ; ++jt)
-                    {
-                        pfcnds[jt+1] = ndstf[jt];
-                    }
-                    for (size_t idm = 0 ; idm < NDIM ; ++idm)
-                    {
-                        pfcnml[idm] = -pfcnml[idm];
-                    }
-                }
+                if (this_fcl == icl) { reorder_face(ifc); }
                 vol = -vol;
             }
             else
             {
-                if (this_fcl != icl)
-                {
-                    size_t const nnd = pfcnds[0];
-                    for (size_t jt = 0 ; jt < nnd ; ++jt)
-                    {
-                        ndstf[jt] = pfcnds[nnd-jt];
-                    }
-                    for (size_t jt = 0 ; jt < nnd ; ++jt)
-                    {
-                        pfcnds[jt+1] = ndstf[jt];
-                    }
-                    for (size_t idm = 0 ; idm < NDIM ; ++idm)
-                    {
-                        pfcnml[idm] = -pfcnml[idm];
-                    }
-                }
+                if (this_fcl != icl) { reorder_face(ifc); }
             }
             // accumulate the volume for the cell.
-            pclvol[0] += vol;
+            m_clvol(icl) += vol;
         }
         // calculate the real volume.
-        pclvol[0] /= NDIM;
-        // advance pointers.
-        pclfcs += CLMFC+1;
-        pclcnd += NDIM;
-        pclvol += 1;
+        m_clvol(icl) /= NDIM;
     }
 }
 
