@@ -41,76 +41,10 @@ struct FaceBuilder
   : public StaticMeshConstant
 {
 
-    static constexpr const uint8_t FCREL = StaticMeshConstant::FCREL;
-
     using number_base = N;
     using int_type = typename number_base::int_type;
     using uint_type = typename number_base::uint_type;
     using real_type = typename number_base::real_type;
-
-    size_t nnode = 0;
-    size_t mface = 0;
-    size_t nface = 0;
-    SimpleArray<int_type> const & cltpn;
-    SimpleArray<int_type> const & clnds;
-    SimpleArray<int_type> clfcs{};
-    SimpleArray<int_type> fctpn{};
-    SimpleArray<int_type> fcnds{};
-    SimpleArray<int_type> fccls{};
-    std::vector<uint_type> dedupmap{};
-
-    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    FaceBuilder(size_t nnode_in, SimpleArray<int_type> const & cltpn_in, SimpleArray<int_type> const & clnds_in)
-      : nnode(nnode_in), cltpn(cltpn_in), clnds(clnds_in)
-    {
-        mface = nface = std::accumulate
-        (
-            cltpn.body(), cltpn.body()+cltpn.nbody(), 0
-          , [](size_t a, int8_t b){ return a + CellType::by_id(b).nface(); }
-        );
-        clfcs.remake(small_vector<size_t>{cltpn.nbody(), CLMFC+1}, -1);
-        fctpn.remake(small_vector<size_t>{mface}, -1);
-        fcnds.remake(small_vector<size_t>{mface, FCMND+1}, -1);
-        populate();
-        SimpleArray<int_type>(small_vector<size_t>{mface, FCREL}, -1).swap(fccls);
-        dedupmap.resize(mface);
-        make_dedupmap();
-        remap_face();
-    }
-
-    void populate()
-    {
-        size_t ifc = 0;
-        for (size_t icl = 0 ; icl < cltpn.nbody() ; ++icl)
-        {
-            switch (cltpn(icl))
-            {
-            case CellType::LINE:
-                ifc += add_line(icl, ifc);
-                break;
-            case CellType::QUADRILATERAL:
-                ifc += add_quadrilateral(icl, ifc);
-                break;
-            case CellType::TRIANGLE:
-                ifc += add_triangle(icl, ifc);
-                break;
-            case CellType::HEXAHEDRON:
-                ifc += add_hexahedron(icl, ifc);
-                break;
-            case CellType::TETRAHEDRON:
-                ifc += add_tetrahedron(icl, ifc);
-                break;
-            case CellType::PRISM:
-                ifc += add_prism(icl, ifc);
-                break;
-            case CellType::PYRAMID:
-                ifc += add_pyramid(icl, ifc);
-                break;
-            default:
-                break;
-            }
-        }
-    }
 
     size_t add_line(int_type icl, int_type ifc)
     {
@@ -377,6 +311,78 @@ struct FaceBuilder
         fcnds(ifc, 4) = clnds(icl, 2);
         ++ifc;
         return NFACE;
+    }
+
+    // Data members.
+    size_t nnode = 0;
+    size_t nface = 0;
+    size_t mface = 0;
+    SimpleArray<int_type> const & cltpn;
+    SimpleArray<int_type> const & clnds;
+    SimpleArray<int_type> clfcs{};
+    SimpleArray<int_type> fctpn{};
+    SimpleArray<int_type> fcnds{};
+    SimpleArray<int_type> fccls{};
+    std::vector<uint_type> dedupmap{};
+
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+    FaceBuilder(size_t nnode_in, SimpleArray<int_type> const & cltpn_in, SimpleArray<int_type> const & clnds_in)
+      : nnode(nnode_in)
+      , nface(count_mface(cltpn_in))
+      , mface(nface)
+      , cltpn(cltpn_in), clnds(clnds_in)
+      , clfcs(small_vector<size_t>{cltpn.nbody(), CLMFC+1}, -1)
+      , fctpn(small_vector<size_t>{mface}, -1)
+      , fcnds(small_vector<size_t>{mface, FCMND+1}, -1)
+      , fccls(small_vector<size_t>{mface, FCREL}, -1)
+      , dedupmap(mface)
+    {
+        populate();
+        make_dedupmap();
+        remap_face();
+    }
+
+    static size_t count_mface(SimpleArray<int_type> const & tcltpn)
+    {
+        return std::accumulate
+        (
+            tcltpn.body(), tcltpn.body()+tcltpn.nbody(), 0
+          , [](size_t a, int8_t b){ return a + CellType::by_id(b).nface(); }
+        );
+    }
+
+    void populate()
+    {
+        size_t ifc = 0;
+        for (size_t icl = 0 ; icl < cltpn.nbody() ; ++icl)
+        {
+            switch (cltpn(icl))
+            {
+            case CellType::LINE:
+                ifc += add_line(icl, ifc);
+                break;
+            case CellType::QUADRILATERAL:
+                ifc += add_quadrilateral(icl, ifc);
+                break;
+            case CellType::TRIANGLE:
+                ifc += add_triangle(icl, ifc);
+                break;
+            case CellType::HEXAHEDRON:
+                ifc += add_hexahedron(icl, ifc);
+                break;
+            case CellType::TETRAHEDRON:
+                ifc += add_tetrahedron(icl, ifc);
+                break;
+            case CellType::PRISM:
+                ifc += add_prism(icl, ifc);
+                break;
+            case CellType::PYRAMID:
+                ifc += add_pyramid(icl, ifc);
+                break;
+            default:
+                break;
+            }
+        }
     }
 
     SimpleArray<int_type> make_ndfcs()
