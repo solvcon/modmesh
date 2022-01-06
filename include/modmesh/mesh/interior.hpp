@@ -419,10 +419,29 @@ struct FaceBuilder
     /**
      * @brief Build the (hash) table to know what faces connect to each node.
      */
-    /* NOLINTNEXTLINE(readability-function-cognitive-complexity) */
     void make_dedupmap()
     {
         auto const & ndfcs = make_ndfcs();
+
+        auto check_match = [this](int_type const ifc, int_type const jfc)
+        {
+            int_type cond = 0;
+            // scan all nodes in ifc and jfc to see if all the same.
+            for (int_type jnf = 1 ; jnf <= fcnds(jfc, 0) ; ++jnf)
+            {
+                auto result = std::find
+                (
+                    fcnds.vptr(ifc, 1)
+                  , fcnds.vptr(ifc, fcnds(ifc, 0)+1)
+                  , fcnds(jfc, jnf)
+                );
+                if (result != fcnds.vptr(ifc, fcnds(ifc, 0)+1))
+                {
+                    ++cond;
+                }
+            }
+            return cond;
+        };
 
         // scan for duplicated faces and build duplication map.
         std::iota(dedupmap.begin(), dedupmap.end(), 0);
@@ -430,30 +449,19 @@ struct FaceBuilder
         {
             if (dedupmap[ifc] == ifc)
             {
-                int_type const nd1 = fcnds(ifc, 1);    // take only the FIRST node of a face.
-                for (int_type it = 1 ; it <= ndfcs(nd1, 0) ; ++it)
+                int_type const ind = fcnds(ifc, 1); // take only the FIRST node of a face.
+                for (int_type it = 1 ; it <= ndfcs(ind, 0) ; ++it)
                 {
-                    size_t const jfc = ndfcs(nd1, it);
+                    size_t const jfc = ndfcs(ind, it);
                     // test for duplication.
-                    if ((jfc != ifc) && (fctpn(jfc) == fctpn(ifc)))
+                    if
+                    (
+                        (jfc != ifc)
+                     && (fctpn(jfc) == fctpn(ifc))
+                     && (check_match(ifc, jfc) == fcnds(jfc, 0))
+                    )
                     {
-                        int_type cond = fcnds(jfc, 0);
-                        // scan all nodes in ifc and jfc to see if all the same.
-                        for (int_type jnf = 1 ; jnf <= fcnds(jfc, 0) ; ++jnf)
-                        {
-                            for (int_type inf = 1 ; inf <= fcnds(ifc, 0) ; ++inf)
-                            {
-                                if (fcnds(jfc, jnf) == fcnds(ifc, inf))
-                                {
-                                    cond -= 1;
-                                    break;
-                                }
-                            }
-                        }
-                        if (cond == 0)
-                        {
-                            dedupmap[jfc] = ifc;  // record duplication.
-                        }
+                        dedupmap[jfc] = ifc;  // record duplication.
                     }
                 }
             }
