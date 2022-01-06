@@ -60,10 +60,13 @@ struct CellType
 
     //< Maximum number of nodes in a face.
     static constexpr const uint8_t FCNND_MAX = 4;
+    static constexpr const uint8_t FCMND = FCNND_MAX;
     //< Maximum number of nodes in a cell.
     static constexpr const uint8_t CLNND_MAX = 8;
+    static constexpr const uint8_t CLMND = CLNND_MAX;
     //< Maximum number of faces in a cell.
     static constexpr const uint8_t CLNFC_MAX = 6;
+    static constexpr const uint8_t CLMFC = CLNFC_MAX;
 
     static CellType by_id(uint8_t id);
 
@@ -216,6 +219,15 @@ public:
 
 }; /* end class StaticMeshBC */
 
+struct StaticMeshConstant
+{
+    static constexpr const uint8_t FCMND = CellType::FCNND_MAX;
+    static constexpr const uint8_t CLMND = CellType::CLNND_MAX;
+    static constexpr const uint8_t CLMFC = CellType::CLNFC_MAX;
+    static constexpr const uint8_t FCREL = 4;
+    static constexpr const uint8_t BFREL = 3;
+
+}; /* end struct StaticMeshConstant */
 template < typename D /* derived type */, uint8_t ND >
 class StaticMeshBase
   : public SpaceBase<ND, int32_t, double>
@@ -229,16 +241,17 @@ private:
 public:
 
     using space_base = SpaceBase<ND, int32_t, double>;
+    using number_base = typename space_base::number_base;
     using int_type = typename space_base::int_type;
     using uint_type = typename space_base::uint_type;
     using real_type = typename space_base::real_type;
 
     static constexpr const auto NDIM = space_base::NDIM;
-    static constexpr const uint8_t FCMND = CellType::FCNND_MAX;
-    static constexpr const uint8_t CLMND = CellType::CLNND_MAX;
-    static constexpr const uint8_t CLMFC = CellType::CLNFC_MAX;
-    static constexpr const uint8_t FCREL = 4;
-    static constexpr const uint8_t BFREL = 3;
+    static constexpr const uint8_t FCMND = StaticMeshConstant::FCMND;
+    static constexpr const uint8_t CLMND = StaticMeshConstant::CLMND;
+    static constexpr const uint8_t CLMFC = StaticMeshConstant::CLMFC;
+    static constexpr const uint8_t FCREL = StaticMeshConstant::FCREL;
+    static constexpr const uint8_t BFREL = StaticMeshConstant::BFREL;
 
     template < typename ... Args >
     static std::shared_ptr<D> construct(Args && ... args)
