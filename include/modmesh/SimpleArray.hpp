@@ -373,7 +373,7 @@ public:
         return SimpleArray(m_shape, m_buffer);
     }
 
-    void swap(SimpleArray<T> && other)
+    void swap(SimpleArray & other) noexcept
     {
         if (this != &other)
         {
