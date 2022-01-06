@@ -38,6 +38,7 @@ namespace detail
 
 template < typename N >
 struct FaceBuilder
+  : public StaticMeshConstant
 {
 
     static constexpr const uint8_t FCREL = StaticMeshConstant::FCREL;
@@ -67,9 +68,9 @@ struct FaceBuilder
             cltpn.body(), cltpn.body()+cltpn.nbody(), 0
           , [](size_t a, int8_t b){ return a + CellType::by_id(b).nface(); }
         );
-        SimpleArray<int_type>(small_vector<size_t>{cltpn.nbody(), CellType::CLMFC+1}, -1).swap(clfcs);
-        SimpleArray<int_type>(small_vector<size_t>{mface}, -1).swap(fctpn);
-        SimpleArray<int_type>(small_vector<size_t>{mface, CellType::FCMND+1}, -1).swap(fcnds);
+        clfcs.remake(small_vector<size_t>{cltpn.nbody(), CLMFC+1}, -1);
+        fctpn.remake(small_vector<size_t>{mface}, -1);
+        fcnds.remake(small_vector<size_t>{mface, FCMND+1}, -1);
         populate();
         SimpleArray<int_type>(small_vector<size_t>{mface, FCREL}, -1).swap(fccls);
         dedupmap.resize(mface);
@@ -470,7 +471,7 @@ struct FaceBuilder
                 if (dedupmap[ifc] == ifc)
                 {
                     //std::copy(fcnds.vptr(ifc, 0), fcnds.vptr(ifc, CellType::FCMND), fcnds.vptr(jfc));
-                    for (int_type inf = 0 ; inf <= CellType::FCMND ; ++inf)
+                    for (int_type inf = 0 ; inf <= FCMND ; ++inf)
                     {
                         fcnds(jfc, inf) = fcnds(ifc, inf);
                     }
@@ -505,6 +506,24 @@ struct FaceBuilder
         }
     }
 
+    void rebuild_fctpn(decltype(fctpn) & ofctpn)
+    {
+        ofctpn.remake(small_vector<size_t>{nface});
+        std::copy(fctpn.vptr(0), fctpn.vptr(nface), ofctpn.vptr(0));
+    }
+
+    void rebuild_fcnds(decltype(fcnds) & ofcnds)
+    {
+        ofcnds.remake(small_vector<size_t>{nface, FCMND+1});
+        std::copy(fcnds.vptr(0, 0), fcnds.vptr(nface, 0), ofcnds.vptr(0, 0));
+    }
+
+    void rebuild_fccls(decltype(fccls) & ofccls)
+    {
+        ofccls.remake(small_vector<size_t>{nface, FCREL});
+        std::copy(fccls.vptr(0, 0), fccls.vptr(nface, 0), ofccls.vptr(0, 0));
+    }
+
 }; /* end struct FaceBuilder */
 
 } /* end namespace detail */
@@ -516,26 +535,17 @@ struct FaceBuilder
 template < typename D /* derived type */, uint8_t ND >
 void StaticMeshBase<D, ND>::build_faces_from_cells()
 {
-
-    detail::FaceBuilder<number_base> face_builder(m_nnode, m_cltpn, m_clnds);
-    m_nface = face_builder.nface;
-    SimpleArray<int_type> & tclfcs = face_builder.clfcs;
-    SimpleArray<int_type> & tfctpn = face_builder.fctpn;
-    SimpleArray<int_type> & tfcnds = face_builder.fcnds;
-    SimpleArray<int_type> & tfccls = face_builder.fccls;
+    detail::FaceBuilder<number_base> fb(m_nnode, m_cltpn, m_clnds);
+    m_nface = fb.nface;
 
     // recreate member tables.
-    SimpleArray<int_type>(small_vector<size_t>{m_nface}).swap(m_fctpn);
-    std::copy(tfctpn.vptr(0), tfctpn.vptr(m_nface), m_fctpn.vptr(0));
-    SimpleArray<int_type>(small_vector<size_t>{m_nface, FCMND+1}).swap(m_fcnds);
-    std::copy(tfcnds.vptr(0, 0), tfcnds.vptr(m_nface, 0), m_fcnds.vptr(0, 0));
-    SimpleArray<int_type>(small_vector<size_t>{m_nface, FCREL}).swap(m_fccls);
-    std::copy(tfccls.vptr(0, 0), tfccls.vptr(m_nface, 0), m_fccls.vptr(0, 0));
-    SimpleArray<real_type>(small_vector<size_t>{nface(), ND}, 0).swap(m_fccnd);
-    SimpleArray<real_type>(small_vector<size_t>{nface(), ND}, 0).swap(m_fcnml);
-    SimpleArray<real_type>(small_vector<size_t>{nface()}, 0).swap(m_fcara);
-    std::copy(tclfcs.vptr(0, 0), tclfcs.vptr(m_ncell, 0), m_clfcs.vptr(0, 0));
-
+    fb.rebuild_fctpn(m_fctpn);
+    fb.rebuild_fcnds(m_fcnds);
+    fb.rebuild_fccls(m_fccls);
+    m_fccnd.remake(small_vector<size_t>{nface(), ND}, 0);
+    m_fcnml.remake(small_vector<size_t>{nface(), ND}, 0);
+    m_fcara.remake(small_vector<size_t>{nface()}, 0);
+    std::copy(fb.clfcs.vptr(0, 0), fb.clfcs.vptr(m_ncell, 0), m_clfcs.vptr(0, 0));
 }
 
 /**

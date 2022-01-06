@@ -183,20 +183,6 @@ public:
         }
     }
 
-    static shape_type calc_stride(shape_type const & shape)
-    {
-        shape_type stride(shape.size());
-        if (!shape.empty())
-        {
-            stride[shape.size()-1] = 1;
-            for (size_t it=shape.size()-1; it>0; --it)
-            {
-                stride[it-1] = stride[it] * shape[it];
-            }
-        }
-        return stride;
-    }
-
     SimpleArray(std::initializer_list<T> init)
       : SimpleArray(init.size())
     {
@@ -212,21 +198,6 @@ public:
       , m_nghost(other.m_nghost)
       , m_body(calc_body(m_buffer->data<T>(), m_stride, other.m_nghost))
     {}
-
-    static T * calc_body(T * data, shape_type const & stride, size_t nghost)
-    {
-        if (nullptr == data || stride.empty() || 0 == nghost)
-        {
-            // Do nothing.
-        }
-        else
-        {
-            shape_type shape(stride.size(), 0);
-            shape[0] = nghost;
-            data += buffer_offset(stride, shape);
-        }
-        return data;
-    }
 
     SimpleArray(SimpleArray && other) noexcept
       : m_buffer(std::move(other.m_buffer))
@@ -261,6 +232,42 @@ public:
     }
 
     ~SimpleArray() = default;
+
+    template < typename ... Args >
+    SimpleArray & remake(Args && ... args)
+    {
+        SimpleArray(args ...).swap(*this);
+        return *this;
+    }
+
+    static shape_type calc_stride(shape_type const & shape)
+    {
+        shape_type stride(shape.size());
+        if (!shape.empty())
+        {
+            stride[shape.size()-1] = 1;
+            for (size_t it=shape.size()-1; it>0; --it)
+            {
+                stride[it-1] = stride[it] * shape[it];
+            }
+        }
+        return stride;
+    }
+
+    static T * calc_body(T * data, shape_type const & stride, size_t nghost)
+    {
+        if (nullptr == data || stride.empty() || 0 == nghost)
+        {
+            // Do nothing.
+        }
+        else
+        {
+            shape_type shape(stride.size(), 0);
+            shape[0] = nghost;
+            data += buffer_offset(stride, shape);
+        }
+        return data;
+    }
 
     explicit operator bool() const noexcept { return bool(m_buffer) && bool(*m_buffer); }
 
