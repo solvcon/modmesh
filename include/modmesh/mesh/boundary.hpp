@@ -55,7 +55,7 @@ void StaticMeshBase<D, ND>::build_boundary()
             m_nbound += 1;
         }
     }
-    m_bndfcs.swap(SimpleArray<int_type>(std::vector<size_t>{m_nbound, StaticMeshBC::BFREL}, -1));
+    SimpleArray<int_type>(std::vector<size_t>{m_nbound, StaticMeshBC::BFREL}, -1).swap(m_bndfcs);
 
     std::vector<int_type> allfacn(m_nbound);
     size_t ait = 0;
@@ -136,7 +136,7 @@ void StaticMeshBase<D, ND>::build_ghost()
         { \
             arr(it) = m_##N(it); \
         } \
-        m_##N.swap(std::move(arr)); \
+        arr.swap(m_##N); \
     }
 
     #define MM_DECL_GHOST_SWAP2(N, T, D1, D2, I) \
@@ -151,7 +151,7 @@ void StaticMeshBase<D, ND>::build_ghost()
             } \
             arr(it) = m_##N(it); \
         } \
-        m_##N.swap(std::move(arr)); \
+        arr.swap(m_##N); \
     }
 
     // geometry arrays.

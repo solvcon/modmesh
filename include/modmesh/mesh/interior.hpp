@@ -67,11 +67,11 @@ struct FaceBuilder
             cltpn.body(), cltpn.body()+cltpn.nbody(), 0
           , [](size_t a, int8_t b){ return a + CellType::by_id(b).nface(); }
         );
-        clfcs.swap(SimpleArray<int_type>(small_vector<size_t>{cltpn.nbody(), CellType::CLMFC+1}, -1));
-        fctpn.swap(SimpleArray<int_type>(small_vector<size_t>{mface}, -1));
-        fcnds.swap(SimpleArray<int_type>(small_vector<size_t>{mface, CellType::FCMND+1}, -1));
+        SimpleArray<int_type>(small_vector<size_t>{cltpn.nbody(), CellType::CLMFC+1}, -1).swap(clfcs);
+        SimpleArray<int_type>(small_vector<size_t>{mface}, -1).swap(fctpn);
+        SimpleArray<int_type>(small_vector<size_t>{mface, CellType::FCMND+1}, -1).swap(fcnds);
         populate();
-        fccls.swap(SimpleArray<int_type>(small_vector<size_t>{mface, FCREL}, -1));
+        SimpleArray<int_type>(small_vector<size_t>{mface, FCREL}, -1).swap(fccls);
         dedupmap.resize(mface);
         make_dedupmap();
         remap_face();
@@ -525,15 +525,15 @@ void StaticMeshBase<D, ND>::build_faces_from_cells()
     SimpleArray<int_type> & tfccls = face_builder.fccls;
 
     // recreate member tables.
-    m_fctpn.swap(SimpleArray<int_type>(small_vector<size_t>{m_nface}));
+    SimpleArray<int_type>(small_vector<size_t>{m_nface}).swap(m_fctpn);
     std::copy(tfctpn.vptr(0), tfctpn.vptr(m_nface), m_fctpn.vptr(0));
-    m_fcnds.swap(SimpleArray<int_type>(small_vector<size_t>{m_nface, FCMND+1}));
+    SimpleArray<int_type>(small_vector<size_t>{m_nface, FCMND+1}).swap(m_fcnds);
     std::copy(tfcnds.vptr(0, 0), tfcnds.vptr(m_nface, 0), m_fcnds.vptr(0, 0));
-    m_fccls.swap(SimpleArray<int_type>(small_vector<size_t>{m_nface, FCREL}));
+    SimpleArray<int_type>(small_vector<size_t>{m_nface, FCREL}).swap(m_fccls);
     std::copy(tfccls.vptr(0, 0), tfccls.vptr(m_nface, 0), m_fccls.vptr(0, 0));
-    m_fccnd.swap(SimpleArray<real_type>(small_vector<size_t>{nface(), ND}, 0));
-    m_fcnml.swap(SimpleArray<real_type>(small_vector<size_t>{nface(), ND}, 0));
-    m_fcara.swap(SimpleArray<real_type>(small_vector<size_t>{nface()}, 0));
+    SimpleArray<real_type>(small_vector<size_t>{nface(), ND}, 0).swap(m_fccnd);
+    SimpleArray<real_type>(small_vector<size_t>{nface(), ND}, 0).swap(m_fcnml);
+    SimpleArray<real_type>(small_vector<size_t>{nface()}, 0).swap(m_fcara);
     std::copy(tclfcs.vptr(0, 0), tclfcs.vptr(m_ncell, 0), m_clfcs.vptr(0, 0));
 
 }

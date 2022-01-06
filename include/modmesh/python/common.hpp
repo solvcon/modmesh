@@ -316,7 +316,7 @@ public:
                     ;
                     throw std::length_error(msg.str());
                 }
-                this_array.swap(makeSimpleArray(ndarr));
+                makeSimpleArray(ndarr).swap(this_array);
             }
         );
 
