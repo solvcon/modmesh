@@ -32,6 +32,8 @@
 
 #include <stdexcept>
 #include <memory>
+#include <algorithm>
+#include <sstream>
 
 namespace modmesh
 {
