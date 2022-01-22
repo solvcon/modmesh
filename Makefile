@@ -29,6 +29,7 @@ CMAKE_INSTALL_PREFIX ?= $(MODMESH_ROOT)/build/fakeinstall
 CMAKE_LIBRARY_OUTPUT_DIRECTORY ?= $(MODMESH_ROOT)/modmesh
 CMAKE_ARGS ?=
 VERBOSE ?=
+FORCE_CLANG_FORMAT ?=
 
 pyextsuffix := $(shell python3-config --extension-suffix)
 pyvminor := $(shell python3 -c 'import sys; print("%d%d" % sys.version_info[0:2])')
@@ -70,6 +71,26 @@ pytest: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
 .PHONY: flake8
 flake8:
 	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) flake8
+
+CFFILES = $(shell find src include -type f -name '*.[ch]pp' | sort)
+ifeq ($(CFCMD),)
+	ifeq ($(FORCE_CLANG_FORMAT),)
+		CFCMD = clang-format --dry-run
+	else ifeq ($(FORCE_CLANG_FORMAT),inplace)
+		CFCMD = clang-format -i
+	else
+		CFCMD = clang-format --dry-run -Werror
+	endif
+endif
+
+.PHONY: cformat
+cformat: $(CFFILES)
+	@for fn in $(CFFILES) ; \
+	do \
+		echo "$(CFCMD) $${fn}:"; \
+		$(CFCMD) $${fn} ; ret=$$? ; \
+		if [ $${ret} -ne 0 ] ; then exit $${ret} ; fi ; \
+	done
 
 .PHONY: cmake
 cmake: $(BUILD_PATH)/Makefile
