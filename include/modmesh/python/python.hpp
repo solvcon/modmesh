@@ -271,23 +271,6 @@ WrapConcreteBuffer
 }; /* end class WrapConcreteBuffer */
 
 template <typename T>
-pybind11::array to_ndarray(SimpleArray<T> & sarr)
-{
-    namespace py = pybind11;
-    std::vector<size_t> shape(sarr.shape().begin(), sarr.shape().end());
-    std::vector<size_t> stride(sarr.stride().begin(), sarr.stride().end());
-    for (size_t & v: stride) { v *= sarr.itemsize(); }
-    return py::array
-    (
-        py::detail::npy_format_descriptor<T>::dtype() /* Numpy dtype */
-      , shape /* Buffer dimensions */
-      , stride /* Strides (in bytes) for each index */
-      , sarr.data() /* Pointer to buffer */
-      , py::cast(sarr.buffer().shared_from_this()) /* Owning Python object */
-    );
-}
-
-template <typename T>
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapSimpleArray
@@ -496,7 +479,7 @@ protected:
             .def("__getitem__", [](wrapped_type const & self, size_t it) { return self.at(it); })
             .def("__setitem__", [](wrapped_type & self, size_t it, wrapped_type::real_type val) { self.at(it) = val; })
             .def_property_readonly("nx", [](wrapped_type const & self) { return self.nx(); })
-            .expose_SimpleArrayAsNdarray("coord", [](wrapped_type & self) -> decltype(auto) { return self.coord(); })
+            .expose_SimpleArray("coord", [](wrapped_type & self) -> decltype(auto) { return self.coord(); })
             .def_timed("fill", &wrapped_type::fill, py::arg("value"))
         ;
 
@@ -504,45 +487,157 @@ protected:
 
 }; /* end class WrapStaticGrid1d */
 
+#define MM_DECL_StaticGridMD(NDIM) \
+class \
+MODMESH_PYTHON_WRAPPER_VISIBILITY \
+WrapStaticGrid ## NDIM ## d \
+  : public WrapStaticGridBase< WrapStaticGrid ## NDIM ## d, StaticGrid ## NDIM ## d > \
+{ \
+\
+public: \
+\
+    friend root_base_type; \
+\
+    using base_type = WrapStaticGridBase< WrapStaticGrid ## NDIM ## d, StaticGrid ## NDIM ## d >; \
+\
+protected: \
+\
+    explicit WrapStaticGrid ## NDIM ## d(pybind11::module & mod, char const * pyname, char const * pydoc) \
+      : base_type(mod, pyname, pydoc) \
+    {} \
+\
+}
+
+MM_DECL_StaticGridMD(2);
+MM_DECL_StaticGridMD(3);
+
+#undef MM_DECL_StaticGridMD
+
+template< typename Wrapper, typename GT >
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
-WrapStaticGrid2d
-  : public WrapStaticGridBase< WrapStaticGrid2d, StaticGrid2d >
+WrapStaticMeshBase
+  : public WrapBase< Wrapper, GT, std::shared_ptr<GT> >
 {
 
 public:
 
-    friend root_base_type;
+    using base_type = WrapBase< Wrapper, GT, std::shared_ptr<GT> >;
+    using wrapped_type = typename base_type::wrapped_type;
 
-    using base_type = WrapStaticGridBase< WrapStaticGrid2d, StaticGrid2d >;
+    using int_type = typename wrapped_type::int_type;
+    using uint_type = typename wrapped_type::uint_type;
+    using serial_type = typename wrapped_type::serial_type;
+    using real_type = typename wrapped_type::real_type;
 
-protected:
-
-    explicit WrapStaticGrid2d(pybind11::module & mod, char const * pyname, char const * pydoc)
-      : base_type(mod, pyname, pydoc)
-    {}
-
-}; /* end class WrapStaticGrid2d */
-
-class
-MODMESH_PYTHON_WRAPPER_VISIBILITY
-WrapStaticGrid3d
-  : public WrapStaticGridBase< WrapStaticGrid3d, StaticGrid3d >
-{
-
-public:
-
-    friend root_base_type;
-
-    using base_type = WrapStaticGridBase< WrapStaticGrid3d, StaticGrid3d >;
+    friend typename base_type::root_base_type;
 
 protected:
 
-    WrapStaticGrid3d(pybind11::module & mod, char const * pyname, char const * pydoc)
+    WrapStaticMeshBase(pybind11::module & mod, char const * pyname, char const * pydoc)
       : base_type(mod, pyname, pydoc)
-    {}
+    {
 
-}; /* end class WrapStaticGrid3d */
+        namespace py = pybind11;
+
+        (*this)
+            .def_timed
+            (
+                py::init([](uint_type nnode, uint_type nface, uint_type ncell)
+                { return wrapped_type::construct(nnode, nface, ncell); })
+              , py::arg("nnode")
+              , py::arg("nface")=0
+              , py::arg("ncell")=0
+            )
+        ;
+
+#define MM_DECL_STATIC(NAME) \
+.def_property_readonly_static(#NAME, [](py::object const &) { return wrapped_type::NAME; })
+
+        (*this)
+            MM_DECL_STATIC(NDIM)
+            MM_DECL_STATIC(FCMND)
+            MM_DECL_STATIC(CLMND)
+            MM_DECL_STATIC(CLMFC)
+            MM_DECL_STATIC(FCREL)
+            MM_DECL_STATIC(BFREL)
+        ;
+
+#undef MM_DECL_STATIC
+
+        (*this)
+            .def_property_readonly("nnode", &wrapped_type::nnode)
+            .def_property_readonly("nface", &wrapped_type::nface)
+            .def_property_readonly("ncell", &wrapped_type::ncell)
+            .def_property_readonly("nbound", &wrapped_type::nbound)
+            .def_property_readonly("ngstnode", &wrapped_type::ngstnode)
+            .def_property_readonly("ngstface", &wrapped_type::ngstface)
+            .def_property_readonly("ngstcell", &wrapped_type::ngstcell)
+            .def_property_readonly("nbcs", &wrapped_type::nbcs)
+        ;
+
+        (*this)
+            .def_timed
+            (
+                "build_interior"
+              , &wrapped_type::build_interior
+              , py::arg("_do_metric")=true
+            )
+            .def_timed("build_boundary", &wrapped_type::build_boundary)
+            .def_timed("build_ghost", &wrapped_type::build_ghost)
+        ;
+
+#define MM_DECL_ARRAY(NAME) \
+.expose_SimpleArray(#NAME, [](wrapped_type & self) -> decltype(auto) { return self.NAME(); })
+
+        (*this)
+            MM_DECL_ARRAY(ndcrd)
+            MM_DECL_ARRAY(fccnd)
+            MM_DECL_ARRAY(fcnml)
+            MM_DECL_ARRAY(fcara)
+            MM_DECL_ARRAY(clcnd)
+            MM_DECL_ARRAY(clvol)
+            MM_DECL_ARRAY(fctpn)
+            MM_DECL_ARRAY(cltpn)
+            MM_DECL_ARRAY(clgrp)
+            MM_DECL_ARRAY(fcnds)
+            MM_DECL_ARRAY(fccls)
+            MM_DECL_ARRAY(clnds)
+            MM_DECL_ARRAY(clfcs)
+            MM_DECL_ARRAY(bndfcs)
+        ;
+
+#undef MM_DECL_ARRAY
+
+    }
+
+}; /* end class WrapStaticMeshBase */
+
+#define MM_DECL_StaticMeshMD(NDIM) \
+class \
+MODMESH_PYTHON_WRAPPER_VISIBILITY \
+WrapStaticMesh ## NDIM ## d \
+  : public WrapStaticMeshBase< WrapStaticMesh ## NDIM ## d, StaticMesh ## NDIM ## d > \
+{ \
+\
+public: \
+\
+    friend root_base_type; \
+\
+    using base_type = WrapStaticMeshBase< WrapStaticMesh ## NDIM ## d, StaticMesh ## NDIM ## d >; \
+\
+protected: \
+\
+    explicit WrapStaticMesh ## NDIM ## d(pybind11::module & mod, char const * pyname, char const * pydoc) \
+      : base_type(mod, pyname, pydoc) \
+    {} \
+\
+}
+
+MM_DECL_StaticMeshMD(2);
+MM_DECL_StaticMeshMD(3);
+
+#undef MM_DECL_StaticMeshMD
 
 #pragma GCC diagnostic push
 // Suppress the warning "greater visibility than the type of its field"
@@ -645,6 +740,9 @@ inline void initialize_impl(pybind11::module & mod)
     WrapStaticGrid1d::commit(mod, "StaticGrid1d", "StaticGrid1d");
     WrapStaticGrid2d::commit(mod, "StaticGrid2d", "StaticGrid2d");
     WrapStaticGrid3d::commit(mod, "StaticGrid3d", "StaticGrid3d");
+
+    WrapStaticMesh2d::commit(mod, "StaticMesh2d", "StaticMesh2d");
+    WrapStaticMesh3d::commit(mod, "StaticMesh3d", "StaticMesh3d");
 
 }
 

@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2021, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,58 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Used in this file.
-#include <cstdint>
-
-// Shared by all code.
-#include <algorithm>
-#include <memory>
-#include <iostream>
-#include <sstream>
-#include <map>
-
-#define MODMESH_EXCEPT(CLS, EXC, MSG) throw EXC(#CLS ": " MSG);
-
-namespace modmesh
-{
-
-template <typename I, typename R>
-class NumberBase
-{
-
-public:
-
-    using int_type = I;
-    using uint_type = std::make_unsigned_t<I>;
-    using size_type = uint_type;
-    using real_type = R;
-
-}; /* end class NumberBase */
-
 /**
- * Spatial table basic information.  Any table-based data store for spatial
- * data should inherit this class template.
+ * Unstructured mesh.
  */
-template <uint8_t ND, typename I, typename R>
-class SpaceBase
-  : public NumberBase<I, R>
-{
 
-public:
-
-    using dim_type = uint8_t;
-    static constexpr const dim_type NDIM = ND;
-
-    using number_base = NumberBase<I, R>;
-
-    using int_type = typename number_base::int_type;
-    using uint_type = typename number_base::uint_type;
-    using size_type = typename number_base::size_type;
-    using serial_type = typename number_base::size_type;
-    using real_type = typename number_base::real_type;
-
-}; /* end class SpaceBase */
-
-} /* end namespace modmesh */
+#include <modmesh/mesh/StaticMesh_decl.hpp>
+#include <modmesh/mesh/boundary.hpp>
+#include <modmesh/mesh/interior.hpp>
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

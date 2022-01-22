@@ -158,6 +158,23 @@ ConcreteBufferNdarrayRemover : ConcreteBuffer::remover_type
 
 }; /* end struct ConcreteBufferNdarrayRemover */
 
+template <typename T>
+pybind11::array to_ndarray(SimpleArray<T> & sarr)
+{
+    namespace py = pybind11;
+    std::vector<size_t> shape(sarr.shape().begin(), sarr.shape().end());
+    std::vector<size_t> stride(sarr.stride().begin(), sarr.stride().end());
+    for (size_t & v: stride) { v *= sarr.itemsize(); }
+    return py::array
+    (
+        py::detail::npy_format_descriptor<T>::dtype() /* Numpy dtype */
+      , shape /* Buffer dimensions */
+      , stride /* Strides (in bytes) for each index */
+      , sarr.data() /* Pointer to buffer */
+      , py::cast(sarr.buffer().shared_from_this()) /* Owning Python object */
+    );
+}
+
 template < typename T >
 static SimpleArray<T> makeSimpleArray(pybind11::array_t<T> & ndarr)
 {
@@ -274,7 +291,7 @@ public:
 #undef DECL_MM_PYBIND_CLASS_METHOD
 
     template < typename Func >
-    wrapper_type & expose_SimpleArrayAsNdarray(char const * name, Func && f)
+    wrapper_type & expose_SimpleArray(char const * name, Func && f)
     {
         namespace py = pybind11;
 
@@ -287,6 +304,39 @@ public:
         (
             name
           , [&f](wrapped_type & self) -> array_reference { return f(self); }
+          , [&f](wrapped_type & self, py::array_t<typename array_type::value_type> & ndarr)
+            {
+                array_reference this_array = f(self);
+                if (this_array.nbytes() != static_cast<size_t>(ndarr.nbytes()))
+                {
+                    std::ostringstream msg;
+                    msg
+                        << ndarr.nbytes() << " bytes of input array differ from "
+                        << this_array.nbytes() << " bytes of internal array"
+                    ;
+                    throw std::length_error(msg.str());
+                }
+                makeSimpleArray(ndarr).swap(this_array);
+            }
+        );
+
+        return *static_cast<wrapper_type*>(this);
+    }
+
+    template < typename Func >
+    wrapper_type & expose_SimpleArrayAsNdarray(char const * name, Func && f)
+    {
+        namespace py = pybind11;
+
+        using array_reference = typename std::invoke_result_t<Func, wrapped_type &>;
+        static_assert(std::is_reference<array_reference>::value, "this_array_reference is not a reference");
+        static_assert(!std::is_const<array_reference>::value, "this_array_reference cannot be const");
+        using array_type = typename std::remove_reference<array_reference>::type;
+
+        (*this).def_property
+        (
+            name
+          , [&f](wrapped_type & self) { return to_ndarray(f(self)); }
           , [&f](wrapped_type & self, py::array_t<typename array_type::value_type> & ndarr)
             {
                 array_reference this_array = f(self);

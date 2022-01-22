@@ -73,6 +73,10 @@ set(MODMESH_HEADERS
     include/modmesh/base.hpp
     include/modmesh/profile.hpp
     include/modmesh/grid.hpp
+    include/modmesh/mesh.hpp
+    include/modmesh/mesh/StaticMesh_decl.hpp
+    include/modmesh/mesh/boundary.hpp
+    include/modmesh/mesh/interior.hpp
     include/modmesh/small_vector.hpp
     include/modmesh/ConcreteBuffer.hpp
     include/modmesh/SimpleArray.hpp

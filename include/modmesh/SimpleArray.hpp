@@ -119,13 +119,27 @@ public:
         }
     }
 
+    // NOLINTNEXTLINE(modernize-pass-by-value)
+    explicit SimpleArray(small_vector<size_t> const & shape, value_type const & value)
+      : SimpleArray(shape)
+    {
+        std::fill(begin(), end(), value);
+    }
+
     explicit SimpleArray(std::vector<size_t> const & shape)
       : m_shape(shape), m_stride(calc_stride(m_shape))
     {
-        if (!m_shape.empty()) {
+        if (!m_shape.empty())
+        {
             m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE);
             m_body = m_buffer->data<T>();
         }
+    }
+
+    explicit SimpleArray(std::vector<size_t> const & shape, value_type const & value)
+      : SimpleArray(shape)
+    {
+        std::fill(begin(), end(), value);
     }
 
     explicit SimpleArray(std::shared_ptr<buffer_type> const & buffer)
@@ -169,20 +183,6 @@ public:
         }
     }
 
-    static shape_type calc_stride(shape_type const & shape)
-    {
-        shape_type stride(shape.size());
-        if (!shape.empty())
-        {
-            stride[shape.size()-1] = 1;
-            for (size_t it=shape.size()-1; it>0; --it)
-            {
-                stride[it-1] = stride[it] * shape[it];
-            }
-        }
-        return stride;
-    }
-
     SimpleArray(std::initializer_list<T> init)
       : SimpleArray(init.size())
     {
@@ -198,21 +198,6 @@ public:
       , m_nghost(other.m_nghost)
       , m_body(calc_body(m_buffer->data<T>(), m_stride, other.m_nghost))
     {}
-
-    static T * calc_body(T * data, shape_type const & stride, size_t nghost)
-    {
-        if (nullptr == data || stride.empty() || 0 == nghost)
-        {
-            // Do nothing.
-        }
-        else
-        {
-            shape_type shape(stride.size(), 0);
-            shape[0] = nghost;
-            data += buffer_offset(stride, shape);
-        }
-        return data;
-    }
 
     SimpleArray(SimpleArray && other) noexcept
       : m_buffer(std::move(other.m_buffer))
@@ -247,6 +232,42 @@ public:
     }
 
     ~SimpleArray() = default;
+
+    template < typename ... Args >
+    SimpleArray & remake(Args && ... args)
+    {
+        SimpleArray(args ...).swap(*this);
+        return *this;
+    }
+
+    static shape_type calc_stride(shape_type const & shape)
+    {
+        shape_type stride(shape.size());
+        if (!shape.empty())
+        {
+            stride[shape.size()-1] = 1;
+            for (size_t it=shape.size()-1; it>0; --it)
+            {
+                stride[it-1] = stride[it] * shape[it];
+            }
+        }
+        return stride;
+    }
+
+    static T * calc_body(T * data, shape_type const & stride, size_t nghost)
+    {
+        if (nullptr == data || stride.empty() || 0 == nghost)
+        {
+            // Do nothing.
+        }
+        else
+        {
+            shape_type shape(stride.size(), 0);
+            shape[0] = nghost;
+            data += buffer_offset(stride, shape);
+        }
+        return data;
+    }
 
     explicit operator bool() const noexcept { return bool(m_buffer) && bool(*m_buffer); }
 
@@ -359,7 +380,7 @@ public:
         return SimpleArray(m_shape, m_buffer);
     }
 
-    void swap(SimpleArray<T> && other)
+    void swap(SimpleArray & other) noexcept
     {
         if (this != &other)
         {
@@ -372,10 +393,14 @@ public:
     }
 
     template < typename ... Args >
-    value_type const & operator()(Args ... args) const { return m_body[buffer_offset(m_stride, args...)]; }
+    value_type const & operator()(Args ... args) const { return *vptr(args...); }
+    template < typename ... Args >
+    value_type       & operator()(Args ... args)       { return *vptr(args...); }
 
     template < typename ... Args >
-    value_type       & operator()(Args ... args)       { return m_body[buffer_offset(m_stride, args...)]; }
+    value_type const * vptr(Args ... args) const { return m_body + buffer_offset(m_stride, args...); }
+    template < typename ... Args >
+    value_type       * vptr(Args ... args)       { return m_body + buffer_offset(m_stride, args...); }
 
     /* Backdoor */
     value_type const & data(size_t it) const { return data()[it]; }

@@ -42,9 +42,9 @@ namespace modmesh
 /**
  * Base class template for structured grid.
  */
-template <size_t ND>
+template <uint8_t ND>
 class StaticGridBase
-  : public SpaceBase<ND>
+  : public SpaceBase<ND, int32_t, double>
 {
 }; /* end class StaticGridBase */
 
