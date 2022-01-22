@@ -38,22 +38,22 @@ namespace modmesh
 namespace detail
 {
 
-template < size_t D, typename S >
+template <size_t D, typename S>
 size_t buffer_offset_impl(S const &)
 {
     return 0;
 }
 
-template < size_t D, typename S, typename Arg, typename ... Args >
-size_t buffer_offset_impl(S const & strides, Arg arg, Args ... args)
+template <size_t D, typename S, typename Arg, typename... Args>
+size_t buffer_offset_impl(S const & strides, Arg arg, Args... args)
 {
-    return arg * strides[D] + buffer_offset_impl<D+1>(strides, args...);
+    return arg * strides[D] + buffer_offset_impl<D + 1>(strides, args...);
 }
 
 } /* end namespace detail */
 
-template < typename S, typename ... Args >
-size_t buffer_offset(S const & strides, Args ... args)
+template <typename S, typename... Args>
+size_t buffer_offset(S const & strides, Args... args)
 {
     return detail::buffer_offset_impl<0>(strides, args...);
 }
@@ -69,20 +69,19 @@ inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<si
         throw std::out_of_range(ms.str());
     }
     size_t offset = 0;
-    for (size_t it = 0 ; it < stride.size() ; ++it)
+    for (size_t it = 0; it < stride.size(); ++it)
     {
         offset += stride[it] * idx[it];
     }
     return offset;
 }
 
-
 /**
  * Simple array type for contiguous memory storage. Size does not change. The
  * copy semantics performs data copy. The move semantics invalidates the
  * existing memory buffer.
  */
-template < typename T >
+template <typename T>
 class SimpleArray
 {
 
@@ -98,21 +97,24 @@ public:
     static constexpr size_t itemsize() { return ITEMSIZE; }
 
     explicit SimpleArray(size_t length)
-      : m_buffer(buffer_type::construct(length * ITEMSIZE))
-      , m_shape{length}
-      , m_stride{1}
-      , m_body(m_buffer->data<T>())
-    {}
+        : m_buffer(buffer_type::construct(length * ITEMSIZE))
+        , m_shape{length}
+        , m_stride{1}
+        , m_body(m_buffer->data<T>())
+    {
+    }
 
-    template< class InputIt > SimpleArray(InputIt first, InputIt last)
-      : SimpleArray(last-first)
+    template <class InputIt>
+    SimpleArray(InputIt first, InputIt last)
+        : SimpleArray(last - first)
     {
         std::copy(first, last, data());
     }
 
     // NOLINTNEXTLINE(modernize-pass-by-value)
     explicit SimpleArray(small_vector<size_t> const & shape)
-      : m_shape(shape), m_stride(calc_stride(m_shape))
+        : m_shape(shape)
+        , m_stride(calc_stride(m_shape))
     {
         if (!m_shape.empty())
         {
@@ -123,13 +125,14 @@ public:
 
     // NOLINTNEXTLINE(modernize-pass-by-value)
     explicit SimpleArray(small_vector<size_t> const & shape, value_type const & value)
-      : SimpleArray(shape)
+        : SimpleArray(shape)
     {
         std::fill(begin(), end(), value);
     }
 
     explicit SimpleArray(std::vector<size_t> const & shape)
-      : m_shape(shape), m_stride(calc_stride(m_shape))
+        : m_shape(shape)
+        , m_stride(calc_stride(m_shape))
     {
         if (!m_shape.empty())
         {
@@ -139,7 +142,7 @@ public:
     }
 
     explicit SimpleArray(std::vector<size_t> const & shape, value_type const & value)
-      : SimpleArray(shape)
+        : SimpleArray(shape)
     {
         std::fill(begin(), end(), value);
     }
@@ -164,12 +167,9 @@ public:
         }
     }
 
-    explicit SimpleArray
-    (
-        small_vector<size_t> const & shape
-      , std::shared_ptr<buffer_type> const & buffer
-    )
-      : SimpleArray(buffer)
+    explicit SimpleArray(
+        small_vector<size_t> const & shape, std::shared_ptr<buffer_type> const & buffer)
+        : SimpleArray(buffer)
     {
         if (buffer)
         {
@@ -186,26 +186,31 @@ public:
     }
 
     SimpleArray(std::initializer_list<T> init)
-      : SimpleArray(init.size())
+        : SimpleArray(init.size())
     {
         std::copy_n(init.begin(), init.size(), data());
     }
 
-    SimpleArray() : SimpleArray(0) {}
+    SimpleArray()
+        : SimpleArray(0)
+    {
+    }
 
     SimpleArray(SimpleArray const & other)
-      : m_buffer(other.m_buffer->clone())
-      , m_shape(other.m_shape)
-      , m_stride(other.m_stride)
-      , m_nghost(other.m_nghost)
-      , m_body(calc_body(m_buffer->data<T>(), m_stride, other.m_nghost))
-    {}
+        : m_buffer(other.m_buffer->clone())
+        , m_shape(other.m_shape)
+        , m_stride(other.m_stride)
+        , m_nghost(other.m_nghost)
+        , m_body(calc_body(m_buffer->data<T>(), m_stride, other.m_nghost))
+    {
+    }
 
     SimpleArray(SimpleArray && other) noexcept
-      : m_buffer(std::move(other.m_buffer))
-      , m_shape(std::move(other.m_shape))
-      , m_stride(std::move(other.m_stride))
-    {}
+        : m_buffer(std::move(other.m_buffer))
+        , m_shape(std::move(other.m_shape))
+        , m_stride(std::move(other.m_stride))
+    {
+    }
 
     SimpleArray & operator=(SimpleArray const & other)
     {
@@ -235,10 +240,10 @@ public:
 
     ~SimpleArray() = default;
 
-    template < typename ... Args >
-    SimpleArray & remake(Args && ... args)
+    template <typename... Args>
+    SimpleArray & remake(Args &&... args)
     {
-        SimpleArray(args ...).swap(*this);
+        SimpleArray(args...).swap(*this);
         return *this;
     }
 
@@ -247,10 +252,10 @@ public:
         shape_type stride(shape.size());
         if (!shape.empty())
         {
-            stride[shape.size()-1] = 1;
-            for (size_t it=shape.size()-1; it>0; --it)
+            stride[shape.size() - 1] = 1;
+            for (size_t it = shape.size() - 1; it > 0; --it)
             {
-                stride[it-1] = stride[it] * shape[it];
+                stride[it - 1] = stride[it] * shape[it];
             }
         }
         return stride;
@@ -287,16 +292,34 @@ public:
     const_iterator cend() const noexcept { return end(); }
 
     value_type const & operator[](size_t it) const noexcept { return data(it); }
-    value_type       & operator[](size_t it)       noexcept { return data(it); }
+    value_type & operator[](size_t it) noexcept { return data(it); }
 
-    value_type const & at(size_t it) const { validate_range(it); return data(it); }
-    value_type       & at(size_t it)       { validate_range(it); return data(it); }
+    value_type const & at(size_t it) const
+    {
+        validate_range(it);
+        return data(it);
+    }
+    value_type & at(size_t it)
+    {
+        validate_range(it);
+        return data(it);
+    }
 
-    value_type const & at(ssize_t it) const { validate_range(it); it += m_nghost; return data(it); }
-    value_type       & at(ssize_t it)       { validate_range(it); it += m_nghost; return data(it); }
+    value_type const & at(ssize_t it) const
+    {
+        validate_range(it);
+        it += m_nghost;
+        return data(it);
+    }
+    value_type & at(ssize_t it)
+    {
+        validate_range(it);
+        it += m_nghost;
+        return data(it);
+    }
 
     value_type const & at(std::vector<size_t> const & idx) const { return at(shape_type(idx)); }
-    value_type       & at(std::vector<size_t> const & idx)       { return at(shape_type(idx)); }
+    value_type & at(std::vector<size_t> const & idx) { return at(shape_type(idx)); }
 
     value_type const & at(shape_type const & idx) const
     {
@@ -312,7 +335,7 @@ public:
     }
 
     value_type const & at(std::vector<ssize_t> const & idx) const { return at(sshape_type(idx)); }
-    value_type       & at(std::vector<ssize_t> const & idx)       { return at(sshape_type(idx)); }
+    value_type & at(std::vector<ssize_t> const & idx) { return at(sshape_type(idx)); }
 
     value_type const & at(sshape_type sidx) const
     {
@@ -333,11 +356,11 @@ public:
 
     size_t ndim() const noexcept { return m_shape.size(); }
     shape_type const & shape() const { return m_shape; }
-    size_t   shape(size_t it) const noexcept { return m_shape[it]; }
-    size_t & shape(size_t it)       noexcept { return m_shape[it]; }
+    size_t shape(size_t it) const noexcept { return m_shape[it]; }
+    size_t & shape(size_t it) noexcept { return m_shape[it]; }
     shape_type const & stride() const { return m_stride; }
-    size_t   stride(size_t it) const noexcept { return m_stride[it]; }
-    size_t & stride(size_t it)       noexcept { return m_stride[it]; }
+    size_t stride(size_t it) const noexcept { return m_stride[it]; }
+    size_t & stride(size_t it) noexcept { return m_stride[it]; }
 
     size_t nghost() const { return m_nghost; }
     size_t nbody() const { return m_shape.empty() ? 0 : m_shape[0] - m_nghost; }
@@ -366,7 +389,7 @@ public:
         }
     }
 
-    template < typename U >
+    template <typename U>
     SimpleArray<U> reshape(shape_type const & shape) const
     {
         return SimpleArray<U>(shape, m_buffer);
@@ -394,27 +417,27 @@ public:
         }
     }
 
-    template < typename ... Args >
-    value_type const & operator()(Args ... args) const { return *vptr(args...); }
-    template < typename ... Args >
-    value_type       & operator()(Args ... args)       { return *vptr(args...); }
+    template <typename... Args>
+    value_type const & operator()(Args... args) const { return *vptr(args...); }
+    template <typename... Args>
+    value_type & operator()(Args... args) { return *vptr(args...); }
 
-    template < typename ... Args >
-    value_type const * vptr(Args ... args) const { return m_body + buffer_offset(m_stride, args...); }
-    template < typename ... Args >
-    value_type       * vptr(Args ... args)       { return m_body + buffer_offset(m_stride, args...); }
+    template <typename... Args>
+    value_type const * vptr(Args... args) const { return m_body + buffer_offset(m_stride, args...); }
+    template <typename... Args>
+    value_type * vptr(Args... args) { return m_body + buffer_offset(m_stride, args...); }
 
     /* Backdoor */
     value_type const & data(size_t it) const { return data()[it]; }
-    value_type       & data(size_t it)       { return data()[it]; }
+    value_type & data(size_t it) { return data()[it]; }
     value_type const * data() const { return buffer().template data<value_type>(); }
-    value_type       * data()       { return buffer().template data<value_type>(); }
+    value_type * data() { return buffer().template data<value_type>(); }
 
     buffer_type const & buffer() const { return *m_buffer; }
-    buffer_type       & buffer()       { return *m_buffer; }
+    buffer_type & buffer() { return *m_buffer; }
 
     value_type const * body() const { return m_body; }
-    value_type       * body()       { return m_body; }
+    value_type * body() { return m_body; }
 
 private:
 
@@ -448,10 +471,13 @@ private:
         {
             std::ostringstream ms;
             ms << "[";
-            for (size_t it = 0 ; it < idx.size() ; ++it)
+            for (size_t it = 0; it < idx.size(); ++it)
             {
                 ms << idx[it];
-                if (it != idx.size()-1) { ms << ", "; }
+                if (it != idx.size() - 1)
+                {
+                    ms << ", ";
+                }
             }
             ms << "]";
             return ms.str();
@@ -487,7 +513,7 @@ private:
         }
 
         // Test the rest of the dimensions.
-        for (size_t it = 1 ; it < m_shape.size() ; ++it)
+        for (size_t it = 1; it < m_shape.size(); ++it)
         {
             if (idx[it] < 0)
             {

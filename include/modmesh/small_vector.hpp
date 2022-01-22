@@ -34,7 +34,7 @@
 namespace modmesh
 {
 
-template < typename T, size_t N=3 >
+template <typename T, size_t N = 3>
 class small_vector
 {
 
@@ -45,7 +45,7 @@ public:
     using const_iterator = T const *;
 
     explicit small_vector(size_t size)
-      : m_size(size)
+        : m_size(size)
     {
         if (m_size > N)
         {
@@ -61,25 +61,26 @@ public:
     }
 
     explicit small_vector(size_t size, T const & v)
-      : small_vector(size)
+        : small_vector(size)
     {
         std::fill(begin(), end(), v);
     }
 
     explicit small_vector(std::vector<T> const & vector)
-      : small_vector(vector.size())
+        : small_vector(vector.size())
     {
         std::copy_n(vector.begin(), m_size, begin());
     }
 
-    template< class InputIt > small_vector(InputIt first, InputIt last)
-      : small_vector(last-first)
+    template <class InputIt>
+    small_vector(InputIt first, InputIt last)
+        : small_vector(last - first)
     {
         std::copy(first, last, begin());
     }
 
     small_vector(std::initializer_list<T> init)
-      : small_vector(init.size())
+        : small_vector(init.size())
     {
         std::copy_n(init.begin(), m_size, begin());
     }
@@ -87,7 +88,7 @@ public:
     small_vector() { m_head = m_data.data(); }
 
     small_vector(small_vector const & other)
-      : m_size(other.m_size)
+        : m_size(other.m_size)
     {
         if (other.m_head == other.m_data.data())
         {
@@ -104,7 +105,7 @@ public:
     }
 
     small_vector(small_vector && other) noexcept
-      : m_size(other.m_size)
+        : m_size(other.m_size)
     {
         if (other.m_head == other.m_data.data())
         {
@@ -179,7 +180,7 @@ public:
                 other.m_size = 0;
                 other.m_capacity = N;
                 other.m_head = other.m_data.data();
-           }
+            }
         }
         return *this;
     }
@@ -188,8 +189,8 @@ public:
     {
         if (size() < other.size())
         {
-            std::copy(other.begin(), other.begin()+size(), begin());
-            for (size_t it = size() ; it < other.size() ; ++it)
+            std::copy(other.begin(), other.begin() + size(), begin());
+            for (size_t it = size(); it < other.size(); ++it)
             {
                 push_back(other[it]);
             }
@@ -223,13 +224,21 @@ public:
     const_iterator cend() const noexcept { return end(); }
 
     T const & operator[](size_t it) const { return m_head[it]; }
-    T       & operator[](size_t it)       { return m_head[it]; }
+    T & operator[](size_t it) { return m_head[it]; }
 
-    T const & at(size_t it) const { validate_range(it); return (*this)[it]; }
-    T       & at(size_t it)       { validate_range(it); return (*this)[it]; }
+    T const & at(size_t it) const
+    {
+        validate_range(it);
+        return (*this)[it];
+    }
+    T & at(size_t it)
+    {
+        validate_range(it);
+        return (*this)[it];
+    }
 
     T const * data() const { return m_head; }
-    T       * data()       { return m_head; }
+    T * data() { return m_head; }
 
     void clear() noexcept
     {
@@ -272,11 +281,11 @@ private:
     T * m_head = nullptr;
     unsigned int m_size = 0;
     unsigned int m_capacity = N;
-    std::array<T,N> m_data;
+    std::array<T, N> m_data;
 
 }; /* end class small_vector */
 
-template < typename T >
+template <typename T>
 bool operator==(small_vector<T> const & lhs, small_vector<T> const & rhs)
 {
     return std::equal(lhs.begin(), lhs.end(), rhs.begin());

@@ -38,9 +38,9 @@
 #include <modmesh/python/common.hpp>
 
 #ifdef __GNUG__
-#  define MODMESH_PYTHON_WRAPPER_VISIBILITY __attribute__((visibility("hidden")))
+#define MODMESH_PYTHON_WRAPPER_VISIBILITY __attribute__((visibility("hidden")))
 #else
-#  define MODMESH_PYTHON_WRAPPER_VISIBILITY
+#define MODMESH_PYTHON_WRAPPER_VISIBILITY
 #endif
 
 namespace modmesh
@@ -54,7 +54,7 @@ class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapWrapperProfilerStatus
     // clang-format on
-    : public WrapBase< WrapWrapperProfilerStatus, WrapperProfilerStatus >
+    : public WrapBase<WrapWrapperProfilerStatus, WrapperProfilerStatus>
 {
 
 public:
@@ -64,7 +64,7 @@ public:
 protected:
 
     WrapWrapperProfilerStatus(pybind11::module & mod, char const * pyname, char const * pydoc)
-      : root_base_type(mod, pyname, pydoc)
+        : root_base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
@@ -79,7 +79,6 @@ protected:
             ;
 
         mod.attr("wrapper_profiler_status") = mod.attr("WrapperProfilerStatus").attr("me");
-
     }
 
 }; /* end class WrapWrapperTimerStatus */
@@ -89,7 +88,7 @@ class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapStopWatch
     // clang-format on
-    : public WrapBase< WrapStopWatch, StopWatch >
+    : public WrapBase<WrapStopWatch, StopWatch>
 {
 
 public:
@@ -99,7 +98,7 @@ public:
 protected:
 
     WrapStopWatch(pybind11::module & mod, char const * pyname, char const * pydoc)
-      : root_base_type(mod, pyname, pydoc)
+        : root_base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
@@ -119,7 +118,6 @@ protected:
             ;
 
         mod.attr("stop_watch") = mod.attr("StopWatch").attr("me");
-
     }
 
 }; /* end class WrapStopWatch */
@@ -129,7 +127,7 @@ class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapTimedEntry
     // clang-format on
-    : public WrapBase< WrapTimedEntry, TimedEntry >
+    : public WrapBase<WrapTimedEntry, TimedEntry>
 {
 
 public:
@@ -139,7 +137,7 @@ public:
 protected:
 
     WrapTimedEntry(pybind11::module & mod, char const * pyname, char const * pydoc)
-      : root_base_type(mod, pyname, pydoc)
+        : root_base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
@@ -152,7 +150,6 @@ protected:
             .def("add_time", &wrapped_type::add_time, py::arg("time"))
             //
             ;
-
     }
 
 }; /* end class WrapTimedEntry */
@@ -162,7 +159,7 @@ class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapTimeRegistry
     // clang-format on
-    : public WrapBase< WrapTimeRegistry, TimeRegistry >
+    : public WrapBase<WrapTimeRegistry, TimeRegistry>
 {
 
 public:
@@ -172,7 +169,7 @@ public:
 protected:
 
     WrapTimeRegistry(pybind11::module & mod, char const * pyname, char const * pydoc)
-      : root_base_type(mod, pyname, pydoc)
+        : root_base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
@@ -195,7 +192,6 @@ protected:
             ;
 
         mod.attr("time_registry") = mod.attr("TimeRegistry").attr("me");
-
     }
 
 }; /* end class WrapTimeRegistry */
@@ -205,13 +201,13 @@ class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapConcreteBuffer
     // clang-format on
-    : public WrapBase< WrapConcreteBuffer, ConcreteBuffer, std::shared_ptr<ConcreteBuffer> >
+    : public WrapBase<WrapConcreteBuffer, ConcreteBuffer, std::shared_ptr<ConcreteBuffer>>
 {
 
     friend root_base_type;
 
     WrapConcreteBuffer(pybind11::module & mod, char const * pyname, char const * pydoc)
-      : root_base_type(mod, pyname, pydoc, pybind11::buffer_protocol())
+        : root_base_type(mod, pyname, pydoc, pybind11::buffer_protocol())
     {
 
         namespace py = pybind11;
@@ -284,17 +280,17 @@ class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapSimpleArray
     // clang-format on
-  : public WrapBase< WrapSimpleArray<T>, SimpleArray<T> >
+    : public WrapBase<WrapSimpleArray<T>, SimpleArray<T>>
 {
 
-    using root_base_type = WrapBase< WrapSimpleArray<T>, SimpleArray<T> >;
+    using root_base_type = WrapBase<WrapSimpleArray<T>, SimpleArray<T>>;
     using wrapped_type = typename root_base_type::wrapped_type;
     using shape_type = typename wrapped_type::shape_type;
 
     friend root_base_type;
 
     WrapSimpleArray(pybind11::module & mod, char const * pyname, char const * pydoc)
-      : root_base_type(mod, pyname, pydoc, pybind11::buffer_protocol())
+        : root_base_type(mod, pyname, pydoc, pybind11::buffer_protocol())
     {
 
         namespace py = pybind11;
@@ -403,7 +399,6 @@ WrapSimpleArray
             .def_property_readonly("nbody", &wrapped_type::nbody)
             //
             ;
-
     }
 
     static shape_type make_shape(pybind11::object const & shape_in)
@@ -429,12 +424,12 @@ class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapStaticGridBase
     // clang-format on
-  : public WrapBase< Wrapper, GT >
+    : public WrapBase<Wrapper, GT>
 {
 
 public:
 
-    using base_type = WrapBase< Wrapper, GT >;
+    using base_type = WrapBase<Wrapper, GT>;
     using wrapped_type = typename base_type::wrapped_type;
 
     using serial_type = typename wrapped_type::serial_type;
@@ -445,7 +440,7 @@ public:
 protected:
 
     WrapStaticGridBase(pybind11::module & mod, char const * pyname, char const * pydoc)
-      : base_type(mod, pyname, pydoc)
+        : base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
@@ -457,7 +452,6 @@ protected:
                 { return wrapped_type::NDIM; })
             //
             ;
-
     }
 
 }; /* end class WrapStaticGridBase */
@@ -467,19 +461,19 @@ class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapStaticGrid1d
     // clang-format on
-  : public WrapStaticGridBase< WrapStaticGrid1d, StaticGrid1d >
+    : public WrapStaticGridBase<WrapStaticGrid1d, StaticGrid1d>
 {
 
 public:
 
     friend root_base_type;
 
-    using base_type = WrapStaticGridBase< WrapStaticGrid1d, StaticGrid1d >;
+    using base_type = WrapStaticGridBase<WrapStaticGrid1d, StaticGrid1d>;
 
 protected:
 
     WrapStaticGrid1d(pybind11::module & mod, char const * pyname, char const * pydoc)
-      : base_type(mod, pyname, pydoc)
+        : base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
@@ -513,7 +507,6 @@ protected:
             .def_timed("fill", &wrapped_type::fill, py::arg("value"))
             //
             ;
-
     }
 
 }; /* end class WrapStaticGrid1d */
@@ -552,12 +545,12 @@ class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapStaticMeshBase
     // clang-format on
-  : public WrapBase< Wrapper, GT, std::shared_ptr<GT> >
+    : public WrapBase<Wrapper, GT, std::shared_ptr<GT>>
 {
 
 public:
 
-    using base_type = WrapBase< Wrapper, GT, std::shared_ptr<GT> >;
+    using base_type = WrapBase<Wrapper, GT, std::shared_ptr<GT>>;
     using wrapped_type = typename base_type::wrapped_type;
 
     using int_type = typename wrapped_type::int_type;
@@ -570,7 +563,7 @@ public:
 protected:
 
     WrapStaticMeshBase(pybind11::module & mod, char const * pyname, char const * pydoc)
-      : base_type(mod, pyname, pydoc)
+        : base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
@@ -587,9 +580,9 @@ protected:
             ;
 
 #define MM_DECL_STATIC(NAME) \
-.def_property_readonly_static(#NAME, [](py::object const &) { return wrapped_type::NAME; })
+    .def_property_readonly_static(#NAME, [](py::object const &) { return wrapped_type::NAME; })
 
-// clang-format off
+        // clang-format off
         (*this)
             MM_DECL_STATIC(NDIM)
             MM_DECL_STATIC(FCMND)
@@ -598,7 +591,7 @@ protected:
             MM_DECL_STATIC(FCREL)
             MM_DECL_STATIC(BFREL)
         ;
-// clang-format on
+        // clang-format on
 
 #undef MM_DECL_STATIC
 
@@ -610,19 +603,17 @@ protected:
             .def_property_readonly("ngstnode", &wrapped_type::ngstnode)
             .def_property_readonly("ngstface", &wrapped_type::ngstface)
             .def_property_readonly("ngstcell", &wrapped_type::ngstcell)
-            .def_property_readonly("nbcs", &wrapped_type::nbcs)
-        ;
+            .def_property_readonly("nbcs", &wrapped_type::nbcs);
 
         (*this)
             .def_timed("build_interior", &wrapped_type::build_interior, py::arg("_do_metric") = true)
             .def_timed("build_boundary", &wrapped_type::build_boundary)
-            .def_timed("build_ghost", &wrapped_type::build_ghost)
-        ;
+            .def_timed("build_ghost", &wrapped_type::build_ghost);
 
 #define MM_DECL_ARRAY(NAME) \
-.expose_SimpleArray(#NAME, [](wrapped_type & self) -> decltype(auto) { return self.NAME(); })
+    .expose_SimpleArray(#NAME, [](wrapped_type & self) -> decltype(auto) { return self.NAME(); })
 
-// clang-format off
+        // clang-format off
         (*this)
             MM_DECL_ARRAY(ndcrd)
             MM_DECL_ARRAY(fccnd)
@@ -639,10 +630,9 @@ protected:
             MM_DECL_ARRAY(clfcs)
             MM_DECL_ARRAY(bndfcs)
         ;
-// clang-format on
+        // clang-format on
 
 #undef MM_DECL_ARRAY
-
     }
 
 }; /* end class WrapStaticMeshBase */
@@ -688,10 +678,10 @@ class OneTimeInitializer
 
 public:
 
-    OneTimeInitializer(OneTimeInitializer const & ) = delete;
-    OneTimeInitializer(OneTimeInitializer       &&) = delete;
-    OneTimeInitializer & operator=(OneTimeInitializer const & ) = delete;
-    OneTimeInitializer & operator=(OneTimeInitializer       &&) = delete;
+    OneTimeInitializer(OneTimeInitializer const &) = delete;
+    OneTimeInitializer(OneTimeInitializer &&) = delete;
+    OneTimeInitializer & operator=(OneTimeInitializer const &) = delete;
+    OneTimeInitializer & operator=(OneTimeInitializer &&) = delete;
     ~OneTimeInitializer() = default;
 
     static OneTimeInitializer<T> & me()
@@ -700,11 +690,8 @@ public:
         return instance;
     }
 
-    OneTimeInitializer<T> & operator()
-    (
-        pybind11::module & mod
-      , bool import_numpy
-      , std::function<void(pybind11::module &)> const & initializer)
+    OneTimeInitializer<T> & operator()(
+        pybind11::module & mod, bool import_numpy, std::function<void(pybind11::module &)> const & initializer)
     {
         if (!initialized())
         {
@@ -722,7 +709,7 @@ public:
     }
 
     pybind11::module const & mod() const { return *m_mod; }
-    pybind11::module       & mod()       { return *m_mod; }
+    pybind11::module & mod() { return *m_mod; }
 
     bool initialized() const { return m_initialized && nullptr != m_mod; }
 
@@ -735,7 +722,10 @@ private:
             import_array2("cannot import numpy", false); // or numpy c api segfault.
             return true;
         };
-        if (!import_numpy()) { throw pybind11::error_already_set(); }
+        if (!import_numpy())
+        {
+            throw pybind11::error_already_set();
+        }
     }
 
     OneTimeInitializer() = default;
@@ -779,7 +769,6 @@ inline void initialize_impl(pybind11::module & mod)
 
     WrapStaticMesh2d::commit(mod, "StaticMesh2d", "StaticMesh2d");
     WrapStaticMesh3d::commit(mod, "StaticMesh3d", "StaticMesh3d");
-
 }
 
 } /* end namespace detail */
