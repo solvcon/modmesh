@@ -63,7 +63,9 @@ inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<si
     if (stride.size() != idx.size())
     {
         std::ostringstream ms;
+        // clang-format off
         ms << "stride size " << stride.size() << " != " << "index size " << idx.size();
+        // clang-format on
         throw std::out_of_range(ms.str());
     }
     size_t offset = 0;
@@ -477,8 +479,10 @@ private:
         if (idx[0] >= static_cast<ssize_t>(nbody()))
         {
             std::ostringstream ms;
+            // clang-format off
             ms << "SimpleArray: dim 0 in " << index2string() << " >= nbody: " << nbody()
                 << " (shape[0]: " << m_shape[0] << " - nghost: " << nghost() << ")";
+            // clang-format on
             throw std::out_of_range(ms.str());
         }
 

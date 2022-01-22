@@ -344,11 +344,13 @@ struct FaceBuilder
 
     static size_t count_mface(SimpleArray<int_type> const & tcltpn)
     {
+        // clang-format off
         return std::accumulate
         (
             tcltpn.body(), tcltpn.body()+tcltpn.nbody(), 0
           , [](size_t a, int8_t b){ return a + CellType::by_id(b).nface(); }
         );
+        // clang-format on
     }
 
     void populate()
@@ -435,12 +437,14 @@ struct FaceBuilder
             // scan all nodes in ifc and jfc to see if all the same.
             for (int_type jnf = 1 ; jnf <= fcnds(jfc, 0) ; ++jnf)
             {
+                // clang-format off
                 auto result = std::find
                 (
                     fcnds.vptr(ifc, 1)
                   , fcnds.vptr(ifc, fcnds(ifc, 0)+1)
                   , fcnds(jfc, jnf)
                 );
+                // clang-format off
                 if (result != fcnds.vptr(ifc, fcnds(ifc, 0)+1))
                 {
                     ++cond;

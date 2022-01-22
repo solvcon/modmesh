@@ -135,9 +135,11 @@ namespace modmesh
 namespace python
 {
 
+// clang-format off
 struct
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 ConcreteBufferNdarrayRemover : ConcreteBuffer::remover_type
+// clang-format on
 {
 
     static bool is_same_type(ConcreteBuffer::remover_type const & other)
@@ -195,6 +197,7 @@ static SimpleArray<T> makeSimpleArray(pybind11::array_t<T> & ndarr)
 /**
  * Helper template for pybind11 class wrappers.
  */
+// clang-format off
 template
 <
     class Wrapper
@@ -208,6 +211,7 @@ template
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
 WrapBase
+// clang-format on
 {
 
 public:
@@ -216,6 +220,7 @@ public:
     using wrapped_type = Wrapped;
     using wrapped_base_type = WrappedBase;
     using holder_type = Holder;
+// clang-format off
     using root_base_type = WrapBase
     <
         wrapper_type
@@ -229,6 +234,7 @@ public:
       , pybind11::class_< wrapped_type, holder_type >
       , pybind11::class_< wrapped_type, wrapped_base_type, holder_type >
     >;
+// clang-format on
 
     static wrapper_type & commit(pybind11::module & mod)
     {
@@ -300,27 +306,27 @@ public:
         static_assert(!std::is_const<array_reference>::value, "this_array_reference cannot be const");
         using array_type = typename std::remove_reference<array_reference>::type;
 
-        (*this).def_property
-        (
-            name
-          , [&f](wrapped_type & self) -> array_reference { return f(self); }
-          , [&f](wrapped_type & self, py::array_t<typename array_type::value_type> & ndarr)
-            {
-                array_reference this_array = f(self);
-                if (this_array.nbytes() != static_cast<size_t>(ndarr.nbytes()))
+        (*this)
+            .def_property(
+                name,
+                [&f](wrapped_type & self) -> array_reference
+                { return f(self); },
+                [&f](wrapped_type & self, py::array_t<typename array_type::value_type> & ndarr)
                 {
-                    std::ostringstream msg;
-                    msg
-                        << ndarr.nbytes() << " bytes of input array differ from "
-                        << this_array.nbytes() << " bytes of internal array"
-                    ;
-                    throw std::length_error(msg.str());
-                }
-                makeSimpleArray(ndarr).swap(this_array);
-            }
-        );
+                    array_reference this_array = f(self);
+                    if (this_array.nbytes() != static_cast<size_t>(ndarr.nbytes()))
+                    {
+                        std::ostringstream msg;
+                        msg << ndarr.nbytes() << " bytes of input array differ from "
+                            << this_array.nbytes() << " bytes of internal array";
+                        throw std::length_error(msg.str());
+                    }
+                    makeSimpleArray(ndarr).swap(this_array);
+                })
+            //
+            ;
 
-        return *static_cast<wrapper_type*>(this);
+        return *static_cast<wrapper_type *>(this);
     }
 
     template < typename Func >
@@ -333,27 +339,27 @@ public:
         static_assert(!std::is_const<array_reference>::value, "this_array_reference cannot be const");
         using array_type = typename std::remove_reference<array_reference>::type;
 
-        (*this).def_property
-        (
-            name
-          , [&f](wrapped_type & self) { return to_ndarray(f(self)); }
-          , [&f](wrapped_type & self, py::array_t<typename array_type::value_type> & ndarr)
-            {
-                array_reference this_array = f(self);
-                if (this_array.nbytes() != static_cast<size_t>(ndarr.nbytes()))
+        (*this)
+            .def_property(
+                name,
+                [&f](wrapped_type & self)
+                { return to_ndarray(f(self)); },
+                [&f](wrapped_type & self, py::array_t<typename array_type::value_type> & ndarr)
                 {
-                    std::ostringstream msg;
-                    msg
-                        << ndarr.nbytes() << " bytes of input array differ from "
-                        << this_array.nbytes() << " bytes of internal array"
-                    ;
-                    throw std::length_error(msg.str());
-                }
-                this_array.swap(makeSimpleArray(ndarr));
-            }
-        );
+                    array_reference this_array = f(self);
+                    if (this_array.nbytes() != static_cast<size_t>(ndarr.nbytes()))
+                    {
+                        std::ostringstream msg;
+                        msg << ndarr.nbytes() << " bytes of input array differ from "
+                            << this_array.nbytes() << " bytes of internal array";
+                        throw std::length_error(msg.str());
+                    }
+                    this_array.swap(makeSimpleArray(ndarr));
+                })
+            //
+            ;
 
-        return *static_cast<wrapper_type*>(this);
+        return *static_cast<wrapper_type *>(this);
     }
 
     class_ & cls() { return m_cls; }

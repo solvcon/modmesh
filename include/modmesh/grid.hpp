@@ -43,16 +43,14 @@ namespace modmesh
  * Base class template for structured grid.
  */
 template <uint8_t ND>
-class StaticGridBase
-  : public SpaceBase<ND, int32_t, double>
+class StaticGridBase : public SpaceBase<ND, int32_t, double>
 {
 }; /* end class StaticGridBase */
 
 /**
  * 1D grid whose coordnate ascends with index.
  */
-class AscendantGrid1d
-  : public StaticGridBase<1>
+class AscendantGrid1d : public StaticGridBase<1>
 {
 
 public:
@@ -99,8 +97,7 @@ private:
 /**
  * 1D grid.
  */
-class StaticGrid1d
-  : public StaticGridBase<1>
+class StaticGrid1d : public StaticGridBase<1>
 {
 
 public:
@@ -170,13 +167,11 @@ private:
 
 }; /* end class StaticGrid1d */
 
-class StaticGrid2d
-  : public StaticGridBase<2>
+class StaticGrid2d : public StaticGridBase<2>
 {
 }; /* end class StaticGrid2d */
 
-class StaticGrid3d
-  : public StaticGridBase<3>
+class StaticGrid3d : public StaticGridBase<3>
 {
 }; /* end class StaticGrid3d */
 

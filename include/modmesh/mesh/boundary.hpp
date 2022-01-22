@@ -505,11 +505,13 @@ void StaticMeshBase<D, ND>::fill_ghost()
                 real_type const du0 = crd[0] - m_fccnd(ifc, 0);
                 real_type const du1 = crd[1] - m_fccnd(ifc, 1);
                 real_type const du2 = crd[2] - m_fccnd(ifc, 2);
+                // clang-format off
                 real_type const vob = std::fabs
                 (
                     (du0*m_fcnml(ifc, 0) + du1*m_fcnml(ifc, 1) + du2*m_fcnml(ifc, 2))
                   * m_fcara(ifc)
                 );
+                // clang-format on
                 voc += vob;
                 real_type const dv0 = m_fccnd(ifc, 0) + du0/4;
                 real_type const dv1 = m_fccnd(ifc, 1) + du1/4;

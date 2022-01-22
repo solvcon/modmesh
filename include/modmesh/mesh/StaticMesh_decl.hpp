@@ -42,8 +42,7 @@ namespace modmesh
 /**
  * Cell type for unstructured mesh.
  */
-struct CellType
-  : NumberBase<int32_t, double>
+struct CellType : NumberBase<int32_t, double>
 {
 
     /* symbols for type id codes */
@@ -119,17 +118,19 @@ inline CellType CellType::by_id(uint8_t id)
 
     switch (id)
     {
-    //                        id, ndim, nnode, nedge, nsurface
-    MM_DECL_SWITCH_CELL_TYPE(  0,    0,     0,     0,        0 ) // non-type
-    MM_DECL_SWITCH_CELL_TYPE(  1,    0,     1,     0,        0 ) // point/node/vertex
-    MM_DECL_SWITCH_CELL_TYPE(  2,    1,     2,     0,        0 ) // line/edge
-    MM_DECL_SWITCH_CELL_TYPE(  3,    2,     4,     4,        0 ) // quadrilateral
-    MM_DECL_SWITCH_CELL_TYPE(  4,    2,     3,     3,        0 ) // triangle
-    MM_DECL_SWITCH_CELL_TYPE(  5,    3,     8,    12,        6 ) // hexahedron/brick
-    MM_DECL_SWITCH_CELL_TYPE(  6,    3,     4,     6,        4 ) // tetrahedron
-    MM_DECL_SWITCH_CELL_TYPE(  7,    3,     6,     9,        5 ) // prism
-    MM_DECL_SWITCH_CELL_TYPE(  8,    3,     5,     8,        5 ) // pyramid
-    default: return CellType{}; break;
+        // clang-format off
+        //                        id, ndim, nnode, nedge, nsurface
+        MM_DECL_SWITCH_CELL_TYPE(  0,    0,     0,     0,        0 ) // non-type
+        MM_DECL_SWITCH_CELL_TYPE(  1,    0,     1,     0,        0 ) // point/node/vertex
+        MM_DECL_SWITCH_CELL_TYPE(  2,    1,     2,     0,        0 ) // line/edge
+        MM_DECL_SWITCH_CELL_TYPE(  3,    2,     4,     4,        0 ) // quadrilateral
+        MM_DECL_SWITCH_CELL_TYPE(  4,    2,     3,     3,        0 ) // triangle
+        MM_DECL_SWITCH_CELL_TYPE(  5,    3,     8,    12,        6 ) // hexahedron/brick
+        MM_DECL_SWITCH_CELL_TYPE(  6,    3,     4,     6,        4 ) // tetrahedron
+        MM_DECL_SWITCH_CELL_TYPE(  7,    3,     6,     9,        5 ) // prism
+        MM_DECL_SWITCH_CELL_TYPE(  8,    3,     5,     8,        5 ) // pyramid
+        default: return CellType{}; break;
+        // clang-format on
     }
 
     #undef MM_DECL_SWITCH_CELL_TYPE
