@@ -53,10 +53,10 @@ struct ConcreteBufferRemover
 {
 
     ConcreteBufferRemover() = default;
-    ConcreteBufferRemover(ConcreteBufferRemover const & ) = default;
-    ConcreteBufferRemover(ConcreteBufferRemover       &&) = default;
-    ConcreteBufferRemover & operator=(ConcreteBufferRemover const & ) = default;
-    ConcreteBufferRemover & operator=(ConcreteBufferRemover       &&) = default;
+    ConcreteBufferRemover(ConcreteBufferRemover const &) = default;
+    ConcreteBufferRemover(ConcreteBufferRemover &&) = default;
+    ConcreteBufferRemover & operator=(ConcreteBufferRemover const &) = default;
+    ConcreteBufferRemover & operator=(ConcreteBufferRemover &&) = default;
     virtual ~ConcreteBufferRemover() = default;
 
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
@@ -73,14 +73,17 @@ struct ConcreteBufferDataDeleter
 
     using remover_type = ConcreteBufferRemover;
 
-    ConcreteBufferDataDeleter(ConcreteBufferDataDeleter const & ) = delete;
-    ConcreteBufferDataDeleter & operator=(ConcreteBufferDataDeleter const & ) = delete;
+    ConcreteBufferDataDeleter(ConcreteBufferDataDeleter const &) = delete;
+    ConcreteBufferDataDeleter & operator=(ConcreteBufferDataDeleter const &) = delete;
 
     ConcreteBufferDataDeleter() = default;
     ConcreteBufferDataDeleter(ConcreteBufferDataDeleter &&) = default;
     ConcreteBufferDataDeleter & operator=(ConcreteBufferDataDeleter &&) = default;
     ~ConcreteBufferDataDeleter() = default;
-    explicit ConcreteBufferDataDeleter(std::unique_ptr<remover_type> && remover_in) : remover(std::move(remover_in)) {}
+    explicit ConcreteBufferDataDeleter(std::unique_ptr<remover_type> && remover_in)
+        : remover(std::move(remover_in))
+    {
+    }
 
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
     void operator()(int8_t * p) const
@@ -96,7 +99,7 @@ struct ConcreteBufferDataDeleter
         }
     }
 
-    std::unique_ptr<remover_type> remover {nullptr};
+    std::unique_ptr<remover_type> remover{nullptr};
 
 }; /* end struct ConcreteBufferDataDeleter */
 
@@ -106,12 +109,14 @@ struct ConcreteBufferDataDeleter
  * Untyped and unresizeable memory buffer for contiguous data storage.
  */
 class ConcreteBuffer
-  : public std::enable_shared_from_this<ConcreteBuffer>
+    : public std::enable_shared_from_this<ConcreteBuffer>
 {
 
 private:
 
-    struct ctor_passkey {};
+    struct ctor_passkey
+    {
+    };
 
     using data_deleter_type = detail::ConcreteBufferDataDeleter;
 
@@ -137,7 +142,7 @@ public:
 
     static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, void * data, std::unique_ptr<remover_type> && remover)
     {
-        return construct(nbytes, static_cast<int8_t*>(data), std::move(remover));
+        return construct(nbytes, static_cast<int8_t *>(data), std::move(remover));
     }
 
     static std::shared_ptr<ConcreteBuffer> construct() { return construct(0); }
@@ -154,9 +159,10 @@ public:
      *      Size of the memory buffer in bytes.
      */
     ConcreteBuffer(size_t nbytes, const ctor_passkey &)
-      : m_nbytes(nbytes)
-      , m_data(allocate(nbytes))
-    {}
+        : m_nbytes(nbytes)
+        , m_data(allocate(nbytes))
+    {
+    }
 
     /**
      * \param[in] nbytes
@@ -169,9 +175,10 @@ public:
      */
     // NOLINTNEXTLINE(readability-non-const-parameter)
     ConcreteBuffer(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover, const ctor_passkey &)
-      : m_nbytes(nbytes)
-      , m_data(data, data_deleter_type(std::move(remover)))
-    {}
+        : m_nbytes(nbytes)
+        , m_data(data, data_deleter_type(std::move(remover)))
+    {
+    }
 
     ~ConcreteBuffer() = default;
 
@@ -184,8 +191,8 @@ public:
     // Avoid enabled_shared_from_this copy constructor
     // NOLINTNEXTLINE(bugprone-copy-constructor-init)
     ConcreteBuffer(ConcreteBuffer const & other)
-      : m_nbytes(other.m_nbytes)
-      , m_data(allocate(other.m_nbytes))
+        : m_nbytes(other.m_nbytes)
+        , m_data(allocate(other.m_nbytes))
     {
         if (size() != other.size())
         {
@@ -223,25 +230,35 @@ public:
     const_iterator cbegin() const noexcept { return begin(); }
     const_iterator cend() const noexcept { return end(); }
 
-    int8_t   operator[](size_t it) const { return data(it); }
-    int8_t & operator[](size_t it)       { return data(it); }
+    int8_t operator[](size_t it) const { return data(it); }
+    int8_t & operator[](size_t it) { return data(it); }
 
-    int8_t   at(size_t it) const { validate_range(it); return data(it); }
-    int8_t & at(size_t it)       { validate_range(it); return data(it); }
+    int8_t at(size_t it) const
+    {
+        validate_range(it);
+        return data(it);
+    }
+    int8_t & at(size_t it)
+    {
+        validate_range(it);
+        return data(it);
+    }
 
     /* Backdoor */
-    int8_t   data(size_t it) const { return data()[it]; }
-    int8_t & data(size_t it)       { return data()[it]; }
+    int8_t data(size_t it) const { return data()[it]; }
+    int8_t & data(size_t it) { return data()[it]; }
     int8_t const * data() const noexcept { return data<int8_t>(); }
-    int8_t       * data()       noexcept { return data<int8_t>(); }
+    int8_t * data() noexcept { return data<int8_t>(); }
+    // clang-format off
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    template<typename T> T const * data() const noexcept { return reinterpret_cast<T*>(m_data.get()); }
+    template <typename T> T const * data() const noexcept { return reinterpret_cast<T *>(m_data.get()); }
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    template<typename T> T       * data()       noexcept { return reinterpret_cast<T*>(m_data.get()); }
+    template <typename T> T * data() noexcept { return reinterpret_cast<T *>(m_data.get()); }
+    // clang-format on
 
     bool has_remover() const noexcept { return bool(m_data.get_deleter().remover); }
     remover_type const & get_remover() const { return *m_data.get_deleter().remover; }
-    remover_type       & get_remover()       { return *m_data.get_deleter().remover; }
+    remover_type & get_remover() { return *m_data.get_deleter().remover; }
 
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
     using unique_ptr_type = std::unique_ptr<int8_t, data_deleter_type>;

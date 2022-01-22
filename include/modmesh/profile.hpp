@@ -56,12 +56,16 @@ public:
         return instance;
     }
 
-    StopWatch() : m_start(clock_type::now()), m_stop(m_start) {}
+    StopWatch()
+        : m_start(clock_type::now())
+        , m_stop(m_start)
+    {
+    }
 
-    StopWatch(StopWatch const & ) = default;
-    StopWatch(StopWatch       &&) = default;
-    StopWatch & operator=(StopWatch const & ) = default;
-    StopWatch & operator=(StopWatch       &&) = default;
+    StopWatch(StopWatch const &) = default;
+    StopWatch(StopWatch &&) = default;
+    StopWatch & operator=(StopWatch const &) = default;
+    StopWatch & operator=(StopWatch &&) = default;
     ~StopWatch() = default;
 
     /**
@@ -140,7 +144,7 @@ public:
     std::string report() const
     {
         std::ostringstream ostm;
-        for (auto it = m_entry.begin() ; it != m_entry.end() ; ++it)
+        for (auto it = m_entry.begin(); it != m_entry.end(); ++it)
         {
             ostm
                 << it->first << " : "
@@ -183,15 +187,15 @@ public:
 
     void clear() { m_entry.clear(); }
 
-    TimeRegistry(TimeRegistry const & ) = delete;
-    TimeRegistry(TimeRegistry       &&) = delete;
-    TimeRegistry & operator=(TimeRegistry const & ) = delete;
-    TimeRegistry & operator=(TimeRegistry       &&) = delete;
+    TimeRegistry(TimeRegistry const &) = delete;
+    TimeRegistry(TimeRegistry &&) = delete;
+    TimeRegistry & operator=(TimeRegistry const &) = delete;
+    TimeRegistry & operator=(TimeRegistry &&) = delete;
 
     ~TimeRegistry() // NOLINT(modernize-use-equals-default)
     {
         // Uncomment for debugging.
-        //std::cout << report();
+        // std::cout << report();
     }
 
 private:
@@ -208,12 +212,15 @@ class ScopedTimer
 public:
 
     ScopedTimer() = delete;
-    ScopedTimer(ScopedTimer const & ) = delete;
-    ScopedTimer(ScopedTimer       &&) = delete;
-    ScopedTimer & operator=(ScopedTimer const & ) = delete;
-    ScopedTimer & operator=(ScopedTimer       &&) = delete;
+    ScopedTimer(ScopedTimer const &) = delete;
+    ScopedTimer(ScopedTimer &&) = delete;
+    ScopedTimer & operator=(ScopedTimer const &) = delete;
+    ScopedTimer & operator=(ScopedTimer &&) = delete;
 
-    explicit ScopedTimer(const char * name) : m_name(name) {}
+    explicit ScopedTimer(const char * name)
+        : m_name(name)
+    {
+    }
 
     ~ScopedTimer()
     {
@@ -235,7 +242,7 @@ private:
 #ifdef MODMESH_PROFILE
 
 #define MODMESH_TIME(NAME) \
-    ScopedTimer _local_scoped_timer_ ## __LINE__(NAME);
+    ScopedTimer _local_scoped_timer_##__LINE__(NAME);
 
 /*
  * No MODMESH_PROFILE defined: Disable profiling API.

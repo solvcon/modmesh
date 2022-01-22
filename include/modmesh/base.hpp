@@ -61,8 +61,7 @@ public:
  * data should inherit this class template.
  */
 template <uint8_t ND, typename I, typename R>
-class SpaceBase
-  : public NumberBase<I, R>
+class SpaceBase : public NumberBase<I, R>
 {
 
 public:
