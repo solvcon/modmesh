@@ -68,7 +68,7 @@ jobs:
     - name: build_ext
       run: |
         python3 setup.py build_ext \
-          --cmake-args="-DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=$(which python3)" \
+          --cmake-args="-DBUILD_QT=OFF -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=$(which python3)" \
           --make-args="VERBOSE=1"
 
     - name: install

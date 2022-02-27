@@ -371,12 +371,16 @@ private:
     bool m_use_incenter = false; ///< While true, m_clcnd uses in-center for simplices.
 
 // Data arrays.
-#define MM_DECL_StaticMesh_ARRAY(TYPE, NAME)                    \
-public:                                                         \
-    SimpleArray<TYPE> const & NAME() const { return m_##NAME; } \
-    SimpleArray<TYPE> & NAME() { return m_##NAME; }             \
-                                                                \
-private:                                                        \
+#define MM_DECL_StaticMesh_ARRAY(TYPE, NAME)                            \
+public:                                                                 \
+    SimpleArray<TYPE> const & NAME() const { return m_##NAME; }         \
+    SimpleArray<TYPE> & NAME() { return m_##NAME; }                     \
+    template <typename... Args>                                         \
+    TYPE const & NAME(Args... args) const { return m_##NAME(args...); } \
+    template <typename... Args>                                         \
+    TYPE & NAME(Args... args) { return m_##NAME(args...); }             \
+                                                                        \
+private:                                                                \
     SimpleArray<TYPE> m_##NAME
 
     // geometry arrays.

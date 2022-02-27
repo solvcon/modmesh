@@ -22,11 +22,15 @@ SKIP_PYTHON_EXECUTABLE ?= OFF
 HIDE_SYMBOL ?= OFF
 DEBUG_SYMBOL ?= ON
 MODMESH_PROFILE ?= OFF
+BUILD_QT ?= ON
 USE_CLANG_TIDY ?= OFF
 CMAKE_BUILD_TYPE ?= Release
 MODMESH_ROOT ?= $(shell pwd)
 CMAKE_INSTALL_PREFIX ?= $(MODMESH_ROOT)/build/fakeinstall
 CMAKE_LIBRARY_OUTPUT_DIRECTORY ?= $(MODMESH_ROOT)/modmesh
+# Use CMAKE_PREFIX_PATH to make it easier to build with Qt, e.g.,
+# CMAKE_PREFIX_PATH=/path/to/qt/6.2.3/macos
+CMAKE_PREFIX_PATH ?=
 CMAKE_ARGS ?=
 VERBOSE ?=
 FORCE_CLANG_FORMAT ?=
@@ -72,7 +76,7 @@ pytest: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
 flake8:
 	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) flake8
 
-CFFILES = $(shell find src include -type f -name '*.[ch]pp' | sort)
+CFFILES = $(shell find include src -type f -name '*.[ch]pp' | sort)
 ifeq ($(CFCMD),)
 	ifeq ($(FORCE_CLANG_FORMAT),)
 		CFCMD = clang-format --dry-run
@@ -111,12 +115,14 @@ $(BUILD_PATH)/Makefile: CMakeLists.txt Makefile
 	cd $(BUILD_PATH) ; \
 	env $(RUNENV) \
 		cmake $(MODMESH_ROOT) \
+		-DCMAKE_PREFIX_PATH=$(CMAKE_PREFIX_PATH) \
 		-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX) \
 		-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$(CMAKE_LIBRARY_OUTPUT_DIRECTORY) \
 		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
 		-DSKIP_PYTHON_EXECUTABLE=$(SKIP_PYTHON_EXECUTABLE) \
 		-DHIDE_SYMBOL=$(HIDE_SYMBOL) \
 		-DDEBUG_SYMBOL=$(DEBUG_SYMBOL) \
+		-DBUILD_QT=$(BUILD_QT) \
 		-DUSE_CLANG_TIDY=$(USE_CLANG_TIDY) \
 		-DLINT_AS_ERRORS=ON \
 		-DMODMESH_PROFILE=$(MODMESH_PROFILE) \
