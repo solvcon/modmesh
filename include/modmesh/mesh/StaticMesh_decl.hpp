@@ -403,17 +403,15 @@ private:                                                        \
 
 }; /* end class StaticMeshBase */
 
-class StaticMesh2d
-    : public StaticMeshBase<StaticMesh2d, 2>
+template <uint8_t ND>
+class StaticMesh
+    : public StaticMeshBase<StaticMesh<ND>, ND>
 {
-    using StaticMeshBase::StaticMeshBase;
-}; /* end class StaticMesh2d */
+    using StaticMeshBase<StaticMesh<ND>, ND>::StaticMeshBase;
+}; /* end class StaticMesh */
 
-class StaticMesh3d
-    : public StaticMeshBase<StaticMesh3d, 3>
-{
-    using StaticMeshBase::StaticMeshBase;
-}; /* end class StaticMesh3d */
+using StaticMesh2d = StaticMesh<2>;
+using StaticMesh3d = StaticMesh<3>;
 
 } /* end namespace modmesh */
 
