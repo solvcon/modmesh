@@ -48,7 +48,174 @@
 
 #include <modmesh/modmesh.hpp>
 
-std::shared_ptr<modmesh::StaticMesh2d> make_sample_static_mesh()
+namespace modmesh
+{
+
+class REntityBase
+{
+
+public:
+
+    REntityBase(Qt3DCore::QEntity * ptr)
+        : m_ptr(ptr)
+    {
+    }
+
+    ~REntityBase()
+    {
+        if (nullptr != m_ptr)
+        {
+            // If not managed by a parent, signal for deletion.
+            if (nullptr == m_ptr->parent())
+            {
+                m_ptr->deleteLater();
+            }
+        }
+    }
+
+    void set(Qt3DCore::QEntity * ptr) { m_ptr = ptr; }
+
+    Qt3DCore::QEntity const * ptr() const { return m_ptr; }
+    Qt3DCore::QEntity * ptr() { return m_ptr; }
+
+    Qt3DCore::QEntity const * operator->() const { return m_ptr; }
+    Qt3DCore::QEntity * operator->() { return m_ptr; }
+
+private:
+
+    Qt3DCore::QEntity * m_ptr = nullptr;
+
+}; /* end class REntityBase */
+
+template <uint8_t ND>
+class RStaticMesh
+    : public REntityBase
+{
+
+public:
+
+    using mesh_type = StaticMesh<ND>;
+
+    RStaticMesh() = delete;
+    ~RStaticMesh() = default;
+
+    RStaticMesh(std::shared_ptr<mesh_type> const & static_mesh)
+        : REntityBase(new Qt3DCore::QEntity())
+        , m_static_mesh(static_mesh)
+        , m_geometry(make_geom(*static_mesh, ptr()))
+        , m_renderer(make_renderer(m_geometry))
+        , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
+    {
+        ptr()->addComponent(m_renderer);
+        ptr()->addComponent(m_material);
+    }
+
+    static Qt3DCore::QGeometry * make_geom(mesh_type const & mh, Qt3DCore::QEntity * root)
+    {
+        auto * geom = new Qt3DCore::QGeometry(root);
+
+        auto * buf = new Qt3DCore::QBuffer(geom);
+        {
+            QByteArray barray;
+            barray.resize(3 * mh.nnode() * sizeof(float));
+            float * ptr = reinterpret_cast<float *>(barray.data());
+            for (uint32_t ind = 0; ind < mh.nnode(); ++ind)
+            {
+                *ptr++ = mh.ndcrd(ind, 0);
+                *ptr++ = mh.ndcrd(ind, 1);
+                *ptr++ = 0;
+            }
+            buf->setData(barray);
+        }
+
+        auto * vertices = new Qt3DCore::QAttribute(geom);
+        vertices->setName(Qt3DCore::QAttribute::defaultPositionAttributeName());
+        vertices->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
+        vertices->setVertexBaseType(Qt3DCore::QAttribute::Float);
+        vertices->setVertexSize(3);
+        vertices->setBuffer(buf);
+        vertices->setByteStride(3 * sizeof(float));
+        vertices->setCount(mh.nnode());
+
+        geom->addAttribute(vertices);
+
+        uint32_t nend = 0;
+        for (uint32_t ifc = 0; ifc < mh.nface(); ++ifc)
+        {
+            nend += mh.fcnds(ifc, 0);
+        }
+
+        buf = new Qt3DCore::QBuffer(geom);
+        {
+            QByteArray barray;
+            barray.resize(nend * sizeof(uint32_t));
+            auto * indices = reinterpret_cast<uint32_t *>(barray.data());
+            for (uint32_t ifc = 0; ifc < mh.nface(); ++ifc)
+            {
+                for (int32_t inf = 1; inf <= mh.fcnds(ifc, 0); ++inf)
+                {
+                    *indices++ = mh.fcnds(ifc, inf);
+                }
+            }
+            buf->setData(barray);
+        }
+
+        auto * indices = new Qt3DCore::QAttribute(geom);
+        indices->setVertexBaseType(Qt3DCore::QAttribute::UnsignedInt);
+        indices->setAttributeType(Qt3DCore::QAttribute::IndexAttribute);
+        indices->setBuffer(buf);
+        indices->setCount(nend);
+
+        geom->addAttribute(indices);
+
+        return geom;
+    }
+
+    static Qt3DRender::QGeometryRenderer * make_renderer(Qt3DCore::QGeometry * geom)
+    {
+        auto * renderer = new Qt3DRender::QGeometryRenderer();
+        renderer->setGeometry(geom);
+        renderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Lines);
+        return renderer;
+    }
+
+    mesh_type const & static_mesh() const { return *m_static_mesh; }
+    mesh_type & static_mesh() { return *m_static_mesh; }
+
+private:
+
+    std::shared_ptr<mesh_type> m_static_mesh = nullptr;
+
+    Qt3DCore::QGeometry * m_geometry = nullptr;
+    Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
+    Qt3DRender::QMaterial * m_material = nullptr;
+
+}; /* end class RStaticMesh */
+
+class RScene
+    : public REntityBase
+{
+
+public:
+
+    RScene()
+        : REntityBase(new Qt3DCore::QEntity())
+        , m_camera_controller(new Qt3DExtras::QOrbitCameraController(ptr()))
+    {
+    }
+
+    Qt3DExtras::QOrbitCameraController const * camera_controller() const { return m_camera_controller; }
+    Qt3DExtras::QOrbitCameraController * camera_controller() { return m_camera_controller; }
+
+private:
+
+    Qt3DExtras::QOrbitCameraController * m_camera_controller = nullptr;
+
+}; /* end class RScene */
+
+} /* end namespace modmesh */
+
+std::shared_ptr<modmesh::StaticMesh2d> make_3triangles()
 {
     auto mh = modmesh::StaticMesh2d::construct(/*nnode*/ 4, /*nface*/ 0, /*ncell*/ 3);
 
@@ -83,111 +250,50 @@ std::shared_ptr<modmesh::StaticMesh2d> make_sample_static_mesh()
     return mh;
 }
 
-void draw_mesh(modmesh::StaticMesh2d const & mh, Qt3DCore::QEntity * root)
+int main(int argc, char ** argv)
 {
-    auto * geometry = new Qt3DCore::QGeometry(root);
+    /*
+     * TODO: Sequence of application startup:
+     *   1. Parsing arguments and parameters.
+     *   2. Initialize application globals.
+     *   3. Initialize GUI globals.
+     *   4. Set up GUI windowing.
+     */
 
-    {
-        auto * buf = new Qt3DCore::QBuffer(geometry);
-        {
-            QByteArray barray;
-            barray.resize(3 * mh.nnode() * sizeof(float));
-            float * ptr = reinterpret_cast<float *>(barray.data());
-            for (uint32_t ind = 0; ind < mh.nnode(); ++ind)
-            {
-                *ptr++ = mh.ndcrd(ind, 0);
-                *ptr++ = mh.ndcrd(ind, 1);
-                *ptr++ = 0;
-            }
-            buf->setData(barray);
-        }
+    using namespace modmesh;
 
-        auto * attr = new Qt3DCore::QAttribute(geometry);
-        attr->setName(Qt3DCore::QAttribute::defaultPositionAttributeName());
-        attr->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
-        attr->setVertexBaseType(Qt3DCore::QAttribute::Float);
-        attr->setVertexSize(3);
-        attr->setBuffer(buf);
-        attr->setByteStride(3 * sizeof(float));
-        attr->setCount(mh.nnode());
-
-        geometry->addAttribute(attr); // We add the vertices in the geometry
-    }
-
-    {
-        uint32_t nend = 0;
-        for (uint32_t ifc = 0; ifc < mh.nface(); ++ifc)
-        {
-            nend += mh.fcnds(ifc, 0);
-        }
-
-        auto * buf = new Qt3DCore::QBuffer(geometry);
-        {
-            QByteArray barray;
-            barray.resize(nend * sizeof(uint32_t));
-            auto * indices = reinterpret_cast<uint32_t *>(barray.data());
-            for (uint32_t ifc = 0; ifc < mh.nface(); ++ifc)
-            {
-                for (int32_t inf = 1; inf <= mh.fcnds(ifc, 0); ++inf)
-                {
-                    *indices++ = mh.fcnds(ifc, inf);
-                }
-            }
-            buf->setData(barray);
-        }
-
-        auto * attr = new Qt3DCore::QAttribute(geometry);
-        attr->setVertexBaseType(Qt3DCore::QAttribute::UnsignedInt);
-        attr->setAttributeType(Qt3DCore::QAttribute::IndexAttribute);
-        attr->setBuffer(buf);
-        attr->setCount(nend);
-
-        geometry->addAttribute(attr);
-    }
-
-    auto * line_entity = new Qt3DCore::QEntity(root);
-    {
-        auto * line_render = new Qt3DRender::QGeometryRenderer(root);
-        line_render->setGeometry(geometry);
-        line_render->setPrimitiveType(Qt3DRender::QGeometryRenderer::Lines);
-        line_entity->addComponent(line_render);
-
-        Qt3DRender::QMaterial * line_material = new Qt3DExtras::QDiffuseSpecularMaterial(root);
-        line_entity->addComponent(line_material);
-    }
-}
-
-Qt3DCore::QEntity * create_scene(modmesh::StaticMesh2d const & mh)
-{
-    // Root entity.
-    Qt3DCore::QEntity * root = new Qt3DCore::QEntity;
-
-    draw_mesh(mh, root);
-
-    return root;
-}
-
-int main(int argc, char * argv[])
-{
+    // Start application with GUI.
     QGuiApplication app(argc, argv);
-    Qt3DExtras::Qt3DWindow view;
 
-    auto mh = make_sample_static_mesh();
-    Qt3DCore::QEntity * scene = create_scene(*mh);
+    // Create and set up main window.
+    Qt3DExtras::Qt3DWindow window;
 
-    // Camera.
-    Qt3DRender::QCamera * camera = view.camera();
-    camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
-    camera->setPosition(QVector3D(0, 0, 40.0f));
-    camera->setViewCenter(QVector3D(0, 0, 0));
+    {
+        // Set up the camera.
+        Qt3DRender::QCamera * camera = window.camera();
+        camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
+        camera->setPosition(QVector3D(0, 0, 40.0f));
+        camera->setViewCenter(QVector3D(0, 0, 0));
+    }
 
-    Qt3DExtras::QOrbitCameraController * com_control = new Qt3DExtras::QOrbitCameraController(scene);
-    com_control->setLinearSpeed(50.0f);
-    com_control->setLookSpeed(180.0f);
-    com_control->setCamera(camera);
+    // Create and set up the root scene.
+    RScene scene;
 
-    view.setRootEntity(scene);
-    view.show();
+    {
+        // Set up the camera control.
+        auto * control = scene.camera_controller();
+        control->setCamera(window.camera());
+        control->setLinearSpeed(50.0f);
+        control->setLookSpeed(180.0f);
+
+        // Set the mesh to the scene.
+        RStaticMesh<2> rmh(make_3triangles());
+        rmh->setParent(scene.ptr());
+    }
+
+    // Show the window.
+    window.setRootEntity(scene.ptr());
+    window.show();
 
     return app.exec();
 }
