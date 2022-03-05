@@ -71,14 +71,14 @@ jobs:
     - name: buildext
       run: |
         make buildext \
-          VERBOSE=1 USE_CLANG_TIDY=ON \
+          VERBOSE=1 BUILD_QT=OFF USE_CLANG_TIDY=ON \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
 
     - name: pytest
       run: |
         make pytest \
-          VERBOSE=1 USE_CLANG_TIDY=ON \
+          VERBOSE=1 BUILD_QT=OFF USE_CLANG_TIDY=ON \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
 

@@ -36,6 +36,10 @@
 #include <modmesh/profile.hpp>
 #include <modmesh/SimpleArray.hpp>
 
+#include <cmath>
+#include <vector>
+#include <numeric>
+
 namespace modmesh
 {
 
@@ -371,12 +375,16 @@ private:
     bool m_use_incenter = false; ///< While true, m_clcnd uses in-center for simplices.
 
 // Data arrays.
-#define MM_DECL_StaticMesh_ARRAY(TYPE, NAME)                    \
-public:                                                         \
-    SimpleArray<TYPE> const & NAME() const { return m_##NAME; } \
-    SimpleArray<TYPE> & NAME() { return m_##NAME; }             \
-                                                                \
-private:                                                        \
+#define MM_DECL_StaticMesh_ARRAY(TYPE, NAME)                            \
+public:                                                                 \
+    SimpleArray<TYPE> const & NAME() const { return m_##NAME; }         \
+    SimpleArray<TYPE> & NAME() { return m_##NAME; }                     \
+    template <typename... Args>                                         \
+    TYPE const & NAME(Args... args) const { return m_##NAME(args...); } \
+    template <typename... Args>                                         \
+    TYPE & NAME(Args... args) { return m_##NAME(args...); }             \
+                                                                        \
+private:                                                                \
     SimpleArray<TYPE> m_##NAME
 
     // geometry arrays.
@@ -403,17 +411,15 @@ private:                                                        \
 
 }; /* end class StaticMeshBase */
 
-class StaticMesh2d
-    : public StaticMeshBase<StaticMesh2d, 2>
+template <uint8_t ND>
+class StaticMesh
+    : public StaticMeshBase<StaticMesh<ND>, ND>
 {
-    using StaticMeshBase::StaticMeshBase;
-}; /* end class StaticMesh2d */
+    using StaticMeshBase<StaticMesh<ND>, ND>::StaticMeshBase;
+}; /* end class StaticMesh */
 
-class StaticMesh3d
-    : public StaticMeshBase<StaticMesh3d, 3>
-{
-    using StaticMeshBase::StaticMeshBase;
-}; /* end class StaticMesh3d */
+using StaticMesh2d = StaticMesh<2>;
+using StaticMesh3d = StaticMesh<3>;
 
 } /* end namespace modmesh */
 

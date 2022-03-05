@@ -30,6 +30,7 @@
 
 #include <modmesh/base.hpp>
 
+#include <vector>
 #include <string>
 #include <chrono>
 
