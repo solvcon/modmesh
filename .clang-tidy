@@ -1,6 +1,7 @@
 Checks: >
     *,-clang-analyzer-alpha.*,-hicpp-*,
     -altera-*,
+    -bugprone-macro-parentheses,
     -llvmlibc-*,
     -modernize-concat-nested-namespaces,
     -modernize-loop-convert,
