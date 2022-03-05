@@ -36,6 +36,10 @@
 #include <modmesh/profile.hpp>
 #include <modmesh/SimpleArray.hpp>
 
+#include <cmath>
+#include <vector>
+#include <numeric>
+
 namespace modmesh
 {
 
