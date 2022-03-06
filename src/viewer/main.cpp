@@ -32,12 +32,8 @@
 
 #include <pybind11/embed.h>
 
-#include <Qt>
-#include <QWidget>
 #include <QApplication>
 #include <QMainWindow>
-
-#include <qt3dwindow.h>
 
 std::shared_ptr<modmesh::StaticMesh2d> make_3triangles()
 {
@@ -77,8 +73,8 @@ std::shared_ptr<modmesh::StaticMesh2d> make_3triangles()
 int main(int argc, char ** argv)
 {
     /*
-     * TODO: Sequence of application startup:
-     *   1. Parsing arguments and parameters.
+     * Sequence of application startup:
+     *   1. (Todo) Parsing arguments and parameters.
      *   2. Initialize application globals.
      *   3. Initialize GUI globals.
      *   4. Set up GUI windowing.
@@ -87,7 +83,12 @@ int main(int argc, char ** argv)
     using namespace modmesh;
     namespace py = pybind11;
 
+    // Start the interpreter.
     py::scoped_interpreter interpreter_guard{};
+
+    // Instantiate the application object.
+    QApplication app(argc, argv);
+    QMainWindow main_window;
 
     // Load the Python extension module.
     std::cerr << "Loading modmesh._modmesh ... ";
@@ -108,43 +109,16 @@ int main(int argc, char ** argv)
     }
     std::cerr << "succeeds" << std::endl;
 
-    // Start application with GUI.
-    QApplication app(argc, argv);
-
     // Create and set up main 3D view.
-    auto * view = new Qt3DExtras::Qt3DWindow;
+    auto * vwidget = new R3DWidget();
+    new RStaticMesh<2>(make_3triangles(), vwidget->scene());
 
-    {
-        // Set up the camera.
-        Qt3DRender::QCamera * camera = view->camera();
-        camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
-        camera->setPosition(QVector3D(0, 0, 40.0f));
-        camera->setViewCenter(QVector3D(0, 0, 0));
-    }
+    // Set up window.
+    main_window.setCentralWidget(vwidget);
+    main_window.resize(600, 400);
+    vwidget->resize(600, 400);
+    main_window.show();
 
-    // Create and set up the root scene.
-    auto * scene = new RScene;
-    view->setRootEntity(scene);
-
-    {
-        // Set up the camera control.
-        auto * control = scene->controller();
-        control->setCamera(view->camera());
-        control->setLinearSpeed(50.0f);
-        control->setLookSpeed(180.0f);
-
-        // Set the mesh to the scene.
-        new RStaticMesh<2>(make_3triangles(), scene);
-    }
-
-    auto * widget = new QWidget();
-    auto * container = widget->createWindowContainer(view, widget, Qt::Widget);
-    container->resize(400, 400);
-    widget->resize(400, 400);
-
-    QMainWindow window;
-    window.setCentralWidget(widget);
-    window.resize(400, 400);
-    window.show();
+    // Run the application.
     return app.exec();
 }

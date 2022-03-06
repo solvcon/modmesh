@@ -30,6 +30,10 @@
 
 #include <modmesh/modmesh.hpp>
 
+#include <Qt>
+#include <QWidget>
+#include <Qt3DWindow>
+
 #include <QByteArray>
 #include <QGeometryRenderer>
 
@@ -181,5 +185,56 @@ private:
     Qt3DExtras::QOrbitCameraController * m_controller = nullptr;
 
 }; /* end class RScene */
+
+class R3DWidget
+    : public QWidget
+{
+
+public:
+
+    R3DWidget(Qt3DExtras::Qt3DWindow * window = nullptr, RScene * scene = nullptr, QWidget * parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
+
+    template <typename... Args>
+    void resize(Args &&... args);
+
+    Qt3DExtras::Qt3DWindow * view() { return m_view; }
+    RScene * scene() { return m_scene; }
+
+private:
+
+    Qt3DExtras::Qt3DWindow * m_view;
+    RScene * m_scene;
+    QWidget * m_container;
+
+}; /* end class R3DWidget */
+
+R3DWidget::R3DWidget(Qt3DExtras::Qt3DWindow * window, RScene * scene, QWidget * parent, Qt::WindowFlags f)
+    : QWidget(parent, f)
+    , m_view(nullptr == window ? new Qt3DExtras::Qt3DWindow : window)
+    , m_scene(nullptr == scene ? new RScene : scene)
+    , m_container(createWindowContainer(m_view, this, Qt::Widget))
+{
+    m_view->setRootEntity(m_scene);
+
+    // Set up the camera.
+    Qt3DRender::QCamera * camera = m_view->camera();
+    camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
+    camera->setPosition(QVector3D(0, 0, 40.0f));
+    camera->setViewCenter(QVector3D(0, 0, 0));
+
+    // Set up the camera control.
+    auto * control = m_scene->controller();
+    control->setCamera(m_view->camera());
+    control->setLinearSpeed(50.0f);
+    control->setLookSpeed(180.0f);
+}
+
+template <typename... Args>
+void R3DWidget::resize(Args &&... args)
+{
+    QWidget::resize(std::forward<Args>(args)...);
+    m_view->resize(std::forward<Args>(args)...);
+    m_container->resize(std::forward<Args>(args)...);
+}
 
 } /* end namespace modmesh */
