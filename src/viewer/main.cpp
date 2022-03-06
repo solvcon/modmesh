@@ -90,7 +90,7 @@ int main(int argc, char ** argv)
     py::scoped_interpreter interpreter_guard{};
 
     // Load the Python extension module.
-    std::cout << "Loading modmesh._modmesh ... ";
+    std::cerr << "Loading modmesh._modmesh ... ";
     try
     {
         py::module_::import("modmesh._modmesh");
@@ -103,10 +103,10 @@ int main(int argc, char ** argv)
         }
         else
         {
-            std::cout << "fails";
+            std::cerr << "fails";
         }
     }
-    std::cout << "succeeds" << std::endl;
+    std::cerr << "succeeds" << std::endl;
 
     // Start application with GUI.
     QApplication app(argc, argv);
@@ -123,19 +123,18 @@ int main(int argc, char ** argv)
     }
 
     // Create and set up the root scene.
-    RScene scene;
-    view->setRootEntity(scene.ptr());
+    auto * scene = new RScene;
+    view->setRootEntity(scene);
 
     {
         // Set up the camera control.
-        auto * control = scene.camera_controller();
+        auto * control = scene->controller();
         control->setCamera(view->camera());
         control->setLinearSpeed(50.0f);
         control->setLookSpeed(180.0f);
 
         // Set the mesh to the scene.
-        RStaticMesh<2> rmh(make_3triangles());
-        rmh->setParent(scene.ptr());
+        new RStaticMesh<2>(make_3triangles(), scene);
     }
 
     auto * widget = new QWidget();

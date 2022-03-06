@@ -48,45 +48,18 @@
 namespace modmesh
 {
 
-class REntityBase
-{
-
-public:
-
-    REntityBase(Qt3DCore::QEntity * ptr)
-        : m_ptr(ptr)
-    {
-    }
-
-    void set(Qt3DCore::QEntity * ptr) { m_ptr = ptr; }
-
-    Qt3DCore::QEntity const * ptr() const { return m_ptr; }
-    Qt3DCore::QEntity * ptr() { return m_ptr; }
-
-    Qt3DCore::QEntity const * operator->() const { return m_ptr; }
-    Qt3DCore::QEntity * operator->() { return m_ptr; }
-
-private:
-
-    Qt3DCore::QEntity * m_ptr = nullptr;
-
-}; /* end class REntityBase */
-
 template <uint8_t ND>
 class RStaticMesh
-    : public REntityBase
+    : public Qt3DCore::QEntity
 {
 
 public:
 
     using mesh_type = StaticMesh<ND>;
 
-    RStaticMesh() = delete;
-    ~RStaticMesh() = default;
+    RStaticMesh(std::shared_ptr<mesh_type> const & static_mesh, Qt3DCore::QNode * parent = nullptr);
 
-    RStaticMesh(std::shared_ptr<mesh_type> const & static_mesh);
-
-    static Qt3DCore::QGeometry * make_geom(mesh_type const & mh, Qt3DCore::QEntity * root);
+    static Qt3DCore::QGeometry * make_geometry(mesh_type const & mh, Qt3DCore::QEntity * parent);
     static Qt3DRender::QGeometryRenderer * make_renderer(Qt3DCore::QGeometry * geom);
 
     mesh_type const & static_mesh() const { return *m_static_mesh; }
@@ -102,22 +75,25 @@ private:
 
 }; /* end class RStaticMesh */
 
+using RStaticMesh2d = RStaticMesh<2>;
+using RStaticMesh3d = RStaticMesh<3>;
+
 template <uint8_t ND>
-RStaticMesh<ND>::RStaticMesh(std::shared_ptr<mesh_type> const & static_mesh)
-    : REntityBase(new Qt3DCore::QEntity())
+RStaticMesh<ND>::RStaticMesh(std::shared_ptr<mesh_type> const & static_mesh, Qt3DCore::QNode * parent)
+    : QEntity(parent)
     , m_static_mesh(static_mesh)
-    , m_geometry(make_geom(*static_mesh, ptr()))
+    , m_geometry(make_geometry(*static_mesh, this))
     , m_renderer(make_renderer(m_geometry))
     , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
 {
-    ptr()->addComponent(m_renderer);
-    ptr()->addComponent(m_material);
+    addComponent(m_renderer);
+    addComponent(m_material);
 }
 
 template <uint8_t ND>
-Qt3DCore::QGeometry * RStaticMesh<ND>::make_geom(mesh_type const & mh, Qt3DCore::QEntity * root)
+Qt3DCore::QGeometry * RStaticMesh<ND>::make_geometry(mesh_type const & mh, Qt3DCore::QEntity * parent)
 {
-    auto * geom = new Qt3DCore::QGeometry(root);
+    auto * geom = new Qt3DCore::QGeometry(parent);
 
     auto * buf = new Qt3DCore::QBuffer(geom);
     {
@@ -186,23 +162,23 @@ Qt3DRender::QGeometryRenderer * RStaticMesh<ND>::make_renderer(Qt3DCore::QGeomet
 }
 
 class RScene
-    : public REntityBase
+    : public Qt3DCore::QEntity
 {
 
 public:
 
-    RScene()
-        : REntityBase(new Qt3DCore::QEntity())
-        , m_camera_controller(new Qt3DExtras::QOrbitCameraController(ptr()))
+    RScene(Qt3DCore::QNode * parent = nullptr)
+        : Qt3DCore::QEntity(parent)
+        , m_controller(new Qt3DExtras::QOrbitCameraController(this))
     {
     }
 
-    Qt3DExtras::QOrbitCameraController const * camera_controller() const { return m_camera_controller; }
-    Qt3DExtras::QOrbitCameraController * camera_controller() { return m_camera_controller; }
+    Qt3DExtras::QOrbitCameraController const * controller() const { return m_controller; }
+    Qt3DExtras::QOrbitCameraController * controller() { return m_controller; }
 
 private:
 
-    Qt3DExtras::QOrbitCameraController * m_camera_controller = nullptr;
+    Qt3DExtras::QOrbitCameraController * m_controller = nullptr;
 
 }; /* end class RScene */
 
