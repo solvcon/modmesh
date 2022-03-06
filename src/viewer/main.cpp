@@ -26,10 +26,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <modmesh/python/python.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>
 #include <modmesh/viewer/viewer.hpp>
 
-#include <QGuiApplication>
+#include <pybind11/embed.h>
+
+#include <Qt>
+#include <QWidget>
+#include <QApplication>
+#include <QMainWindow>
 
 #include <qt3dwindow.h>
 
@@ -79,16 +85,38 @@ int main(int argc, char ** argv)
      */
 
     using namespace modmesh;
+    namespace py = pybind11;
+
+    py::scoped_interpreter interpreter_guard{};
+
+    // Load the Python extension module.
+    std::cout << "Loading modmesh._modmesh ... ";
+    try
+    {
+        py::module_::import("modmesh._modmesh");
+    }
+    catch (const py::error_already_set & e)
+    {
+        if (std::string::npos == std::string(e.what()).find("ModuleNotFoundError"))
+        {
+            throw;
+        }
+        else
+        {
+            std::cout << "fails";
+        }
+    }
+    std::cout << "succeeds" << std::endl;
 
     // Start application with GUI.
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
 
-    // Create and set up main window.
-    Qt3DExtras::Qt3DWindow window;
+    // Create and set up main 3D view.
+    auto * view = new Qt3DExtras::Qt3DWindow;
 
     {
         // Set up the camera.
-        Qt3DRender::QCamera * camera = window.camera();
+        Qt3DRender::QCamera * camera = view->camera();
         camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
         camera->setPosition(QVector3D(0, 0, 40.0f));
         camera->setViewCenter(QVector3D(0, 0, 0));
@@ -96,11 +124,12 @@ int main(int argc, char ** argv)
 
     // Create and set up the root scene.
     RScene scene;
+    view->setRootEntity(scene.ptr());
 
     {
         // Set up the camera control.
         auto * control = scene.camera_controller();
-        control->setCamera(window.camera());
+        control->setCamera(view->camera());
         control->setLinearSpeed(50.0f);
         control->setLookSpeed(180.0f);
 
@@ -109,9 +138,14 @@ int main(int argc, char ** argv)
         rmh->setParent(scene.ptr());
     }
 
-    // Show the window.
-    window.setRootEntity(scene.ptr());
-    window.show();
+    auto * widget = new QWidget();
+    auto * container = widget->createWindowContainer(view, widget, Qt::Widget);
+    container->resize(400, 400);
+    widget->resize(400, 400);
 
+    QMainWindow window;
+    window.setCentralWidget(widget);
+    window.resize(400, 400);
+    window.show();
     return app.exec();
 }

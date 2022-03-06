@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -25,8 +27,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#pragma once
 
 #include <modmesh/modmesh.hpp>
 
@@ -58,8 +58,6 @@ public:
     {
     }
 
-    ~REntityBase();
-
     void set(Qt3DCore::QEntity * ptr) { m_ptr = ptr; }
 
     Qt3DCore::QEntity const * ptr() const { return m_ptr; }
@@ -73,15 +71,6 @@ private:
     Qt3DCore::QEntity * m_ptr = nullptr;
 
 }; /* end class REntityBase */
-
-inline REntityBase::~REntityBase()
-{
-    // If not managed by a parent, signal for deletion.
-    if (nullptr != m_ptr && nullptr == m_ptr->parent())
-    {
-        m_ptr->deleteLater();
-    }
-}
 
 template <uint8_t ND>
 class RStaticMesh
