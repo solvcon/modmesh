@@ -137,19 +137,6 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual((1, 24), sarr.reshape((1, 24)).shape)
         self.assertEqual((12, 2), sarr.reshape((12, 2)).shape)
 
-    def test_SimpleArray_invalid_ghost(self):
-        sarr = modmesh.SimpleArrayInt8(10)
-        with self.assertRaisesRegex(
-            IndexError, r"SimpleArray: cannot set nghost 11 > shape\(0\) 10"
-        ):
-            sarr.nghost = 11
-
-        empty_sarr = modmesh.SimpleArrayInt8(())
-        with self.assertRaisesRegex(
-            IndexError, r"SimpleArray: cannot set nghost 1 > 0 to an empty array"
-        ):
-            empty_sarr.nghost = 1
-
     def test_SimpleArray_ghost_1d(self):
 
         sarr = modmesh.SimpleArrayFloat64(4 * 3 * 2)
@@ -164,6 +151,20 @@ class SimpleArrayBasicTC(unittest.TestCase):
         for i in range(24):
             self.assertEqual(v, sarr[i])
             v += 1
+
+        # Test out-of-bound ghost setting.
+        with self.assertRaisesRegex(
+            IndexError, r"SimpleArray: cannot set nghost 11 > shape\(0\) 10"
+        ):
+            out_of_bound_ghost_sarr = modmesh.SimpleArrayInt8(10)
+            out_of_bound_ghost_sarr.nghost = 11
+
+        # Test empty array ghost setting.
+        with self.assertRaisesRegex(
+            IndexError, r"SimpleArray: cannot set nghost 1 > 0 to an empty array"
+        ):
+            empty_sarr = modmesh.SimpleArrayInt8(())
+            empty_sarr.nghost = 1
 
         sarr.nghost = 10
 
