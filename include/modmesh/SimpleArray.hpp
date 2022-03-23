@@ -378,7 +378,7 @@ public:
             if (nghost > shape(0))
             {
                 std::ostringstream ms;
-                ms << "SimpleArray: cannt set nghost " << nghost << " > shape(0) " << shape(0);
+                ms << "SimpleArray: cannot set nghost " << nghost << " > shape(0) " << shape(0);
                 throw std::out_of_range(ms.str());
             }
         }

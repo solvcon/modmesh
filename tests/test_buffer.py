@@ -152,6 +152,20 @@ class SimpleArrayBasicTC(unittest.TestCase):
             self.assertEqual(v, sarr[i])
             v += 1
 
+        # Test out-of-bound ghost setting.
+        with self.assertRaisesRegex(
+            IndexError, r"SimpleArray: cannot set nghost 11 > shape\(0\) 10"
+        ):
+            out_of_bound_ghost_sarr = modmesh.SimpleArrayInt8(10)
+            out_of_bound_ghost_sarr.nghost = 11
+
+        # Test empty array ghost setting.
+        with self.assertRaisesRegex(
+            IndexError, r"SimpleArray: cannot set nghost 1 > 0 to an empty array"
+        ):
+            empty_sarr = modmesh.SimpleArrayInt8(())
+            empty_sarr.nghost = 1
+
         sarr.nghost = 10
 
         self.assertTrue(sarr.has_ghost)
@@ -227,6 +241,13 @@ class SimpleArrayBasicTC(unittest.TestCase):
         # Test out-of-bound index for getitem.
         with self.assertRaisesRegex(
             IndexError,
+            r"SimpleArray::validate_shape\(\): empty index"
+        ):
+            invalid_empty_idx = ()
+            sarr[invalid_empty_idx]
+
+        with self.assertRaisesRegex(
+            IndexError,
             r"SimpleArray: dim 0 in \[-2, 0, 0\] < -nghost: -1"
         ):
             sarr[-2, 0, 0]
@@ -251,6 +272,13 @@ class SimpleArrayBasicTC(unittest.TestCase):
             sarr[0, 2, 2]
 
         # Test out-of-bound index for setitem.
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::validate_shape\(\): empty index"
+        ):
+            invalid_empty_idx = ()
+            sarr[invalid_empty_idx] = 1
+
         with self.assertRaisesRegex(
             IndexError,
             r"SimpleArray: dim 0 in \[-2, 0, 0\] < -nghost: -1"
