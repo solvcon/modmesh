@@ -29,11 +29,17 @@
 #include <modmesh/python/python.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>
 #include <modmesh/viewer/viewer.hpp>
+#include <modmesh/viewer/RPythonText.hpp>
 
 #include <pybind11/embed.h>
 
 #include <QApplication>
 #include <QMainWindow>
+#include <QDockWidget>
+
+#include <QTextEdit>
+#include <QPushButton>
+#include <QVBoxLayout>
 
 std::shared_ptr<modmesh::StaticMesh2d> make_3triangles()
 {
@@ -92,6 +98,7 @@ int main(int argc, char ** argv)
 
     // Load the Python extension module.
     std::cerr << "Loading modmesh._modmesh ... ";
+    bool load_failure = false;
     try
     {
         py::module_::import("modmesh._modmesh");
@@ -104,19 +111,27 @@ int main(int argc, char ** argv)
         }
         else
         {
-            std::cerr << "fails";
+            std::cerr << "fails" << std::endl;
+            load_failure = true;
         }
     }
-    std::cerr << "succeeds" << std::endl;
+    if (!load_failure)
+    {
+        std::cerr << "succeeds" << std::endl;
+    }
 
     // Create and set up main 3D view.
     auto * vwidget = new R3DWidget();
     new RStaticMesh<2>(make_3triangles(), vwidget->scene());
 
+    auto * pydock = new RPythonText(QString("Python"), &main_window);
+    pydock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    main_window.addDockWidget(Qt::RightDockWidgetArea, pydock);
+
     // Set up window.
     main_window.setCentralWidget(vwidget);
-    main_window.resize(600, 400);
-    vwidget->resize(600, 400);
+    main_window.resize(800, 400);
+    vwidget->resize(400, 400);
     main_window.show();
 
     // Run the application.
