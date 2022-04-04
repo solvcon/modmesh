@@ -31,37 +31,36 @@
 #include <modmesh/python/python.hpp> // Must be the first include.
 #include <pybind11/embed.h>
 
-#include <Qt>
-#include <QDockWidget>
+#include <modmesh/viewer/RPythonText.hpp>
+#include <modmesh/viewer/R3DWidget.hpp>
 
-#include <QTextEdit>
-#include <QPushButton>
-#include <QVBoxLayout>
+#include <Qt>
+#include <QMainWindow>
 
 namespace modmesh
 {
 
-class RPythonText
-    : public QDockWidget
+class RMainWindow
+    : public QMainWindow
 {
 
 public:
 
-    RPythonText(
-        QString const & title = "Python",
-        QWidget * parent = nullptr,
-        Qt::WindowFlags flags = Qt::WindowFlags());
+    RMainWindow()
+        : QMainWindow()
+    {
+        setUp();
+    }
+
+    RPythonText * pytext() { return m_pytext; }
+    R3DWidget * viewer() { return m_viewer; }
 
 private:
 
     void setUp();
 
-    void runPythonCode();
-
-    QTextEdit * m_text = nullptr;
-    QPushButton * m_run = nullptr;
-    QVBoxLayout * m_layout = nullptr;
-    QWidget * m_widget = nullptr;
+    RPythonText * m_pytext = nullptr;
+    R3DWidget * m_viewer = nullptr;
 
 }; /* end class RPythonText */
 

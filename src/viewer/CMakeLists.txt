@@ -24,6 +24,8 @@ find_package(Qt6 COMPONENTS 3DExtras)
 
 qt_add_executable(
     viewer
+    modmesh/viewer/R3DWidget.cpp
+    modmesh/viewer/RMainWindow.cpp
     modmesh/viewer/RPythonText.cpp
     main.cpp
 )

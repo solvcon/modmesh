@@ -28,42 +28,77 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/python.hpp> // Must be the first include.
-#include <pybind11/embed.h>
+#include <modmesh/modmesh.hpp>
 
 #include <Qt>
-#include <QDockWidget>
+#include <QWidget>
+#include <Qt3DWindow>
 
-#include <QTextEdit>
-#include <QPushButton>
-#include <QVBoxLayout>
+#include <Qt3DCore/QEntity>
+
+#include <QOrbitCameraController>
+
+#include <QResizeEvent>
 
 namespace modmesh
 {
 
-class RPythonText
-    : public QDockWidget
+class RScene
+    : public Qt3DCore::QEntity
 {
 
 public:
 
-    RPythonText(
-        QString const & title = "Python",
-        QWidget * parent = nullptr,
-        Qt::WindowFlags flags = Qt::WindowFlags());
+    RScene(Qt3DCore::QNode * parent = nullptr)
+        : Qt3DCore::QEntity(parent)
+        , m_controller(new Qt3DExtras::QOrbitCameraController(this))
+    {
+    }
+
+    Qt3DExtras::QOrbitCameraController const * controller() const { return m_controller; }
+    Qt3DExtras::QOrbitCameraController * controller() { return m_controller; }
 
 private:
 
-    void setUp();
+    Qt3DExtras::QOrbitCameraController * m_controller = nullptr;
 
-    void runPythonCode();
+}; /* end class RScene */
 
-    QTextEdit * m_text = nullptr;
-    QPushButton * m_run = nullptr;
-    QVBoxLayout * m_layout = nullptr;
-    QWidget * m_widget = nullptr;
+class R3DWidget
+    : public QWidget
+{
 
-}; /* end class RPythonText */
+public:
+
+    R3DWidget(
+        Qt3DExtras::Qt3DWindow * window = nullptr,
+        RScene * scene = nullptr,
+        QWidget * parent = nullptr,
+        Qt::WindowFlags f = Qt::WindowFlags());
+
+    template <typename... Args>
+    void resize(Args &&... args);
+
+    void resizeEvent(QResizeEvent * event);
+
+    Qt3DExtras::Qt3DWindow * view() { return m_view; }
+    RScene * scene() { return m_scene; }
+
+private:
+
+    Qt3DExtras::Qt3DWindow * m_view = nullptr;
+    RScene * m_scene = nullptr;
+    QWidget * m_container = nullptr;
+
+}; /* end class R3DWidget */
+
+template <typename... Args>
+void R3DWidget::resize(Args &&... args)
+{
+    QWidget::resize(std::forward<Args>(args)...);
+    m_view->resize(std::forward<Args>(args)...);
+    m_container->resize(std::forward<Args>(args)...);
+}
 
 } /* end namespace modmesh */
 

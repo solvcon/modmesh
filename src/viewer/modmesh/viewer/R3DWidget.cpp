@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -28,42 +26,42 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/python.hpp> // Must be the first include.
-#include <pybind11/embed.h>
+#include <modmesh/modmesh.hpp>
 
-#include <Qt>
-#include <QDockWidget>
+#include <modmesh/viewer/R3DWidget.hpp>
 
-#include <QTextEdit>
-#include <QPushButton>
-#include <QVBoxLayout>
+#include <Qt3DRender/QCamera>
 
 namespace modmesh
 {
 
-class RPythonText
-    : public QDockWidget
+R3DWidget::R3DWidget(Qt3DExtras::Qt3DWindow * window, RScene * scene, QWidget * parent, Qt::WindowFlags f)
+    : QWidget(parent, f)
+    , m_view(nullptr == window ? new Qt3DExtras::Qt3DWindow : window)
+    , m_scene(nullptr == scene ? new RScene : scene)
+    , m_container(createWindowContainer(m_view, this, Qt::Widget))
 {
+    m_view->setRootEntity(m_scene);
 
-public:
+    // Set up the camera.
+    Qt3DRender::QCamera * camera = m_view->camera();
+    camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
+    camera->setPosition(QVector3D(0, 0, 40.0f));
+    camera->setViewCenter(QVector3D(0, 0, 0));
 
-    RPythonText(
-        QString const & title = "Python",
-        QWidget * parent = nullptr,
-        Qt::WindowFlags flags = Qt::WindowFlags());
+    // Set up the camera control.
+    auto * control = m_scene->controller();
+    control->setCamera(m_view->camera());
+    control->setLinearSpeed(50.0f);
+    control->setLookSpeed(180.0f);
+}
 
-private:
-
-    void setUp();
-
-    void runPythonCode();
-
-    QTextEdit * m_text = nullptr;
-    QPushButton * m_run = nullptr;
-    QVBoxLayout * m_layout = nullptr;
-    QWidget * m_widget = nullptr;
-
-}; /* end class RPythonText */
+void R3DWidget::resizeEvent(QResizeEvent * event)
+{
+    QWidget::resizeEvent(event);
+    m_view->resize(event->size());
+    m_container->resize(event->size());
+}
 
 } /* end namespace modmesh */
 
