@@ -15,6 +15,7 @@ if(NOT DEFINED INSTALL_VIEWERDIR)
 endif()
 
 find_package(Qt6 COMPONENTS Core)
+find_package(Qt6 COMPONENTS Widgets)
 find_package(Qt6 COMPONENTS Gui)
 find_package(Qt6 COMPONENTS 3DCore)
 find_package(Qt6 COMPONENTS 3DRender)
@@ -23,6 +24,7 @@ find_package(Qt6 COMPONENTS 3DExtras)
 
 qt_add_executable(
     viewer
+    modmesh/viewer/RPythonText.cpp
     main.cpp
 )
 
@@ -39,6 +41,8 @@ set_target_properties(
 
 target_link_libraries(
     viewer PUBLIC
+    pybind11::embed
+    Qt::Widgets
     Qt::3DCore
     Qt::3DExtras
     Qt::3DInput

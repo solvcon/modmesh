@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -26,9 +28,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
-
 #include <modmesh/modmesh.hpp>
+
+#include <Qt>
+#include <QWidget>
+#include <Qt3DWindow>
 
 #include <QByteArray>
 #include <QGeometryRenderer>
@@ -48,56 +52,18 @@
 namespace modmesh
 {
 
-class REntityBase
-{
-
-public:
-
-    REntityBase(Qt3DCore::QEntity * ptr)
-        : m_ptr(ptr)
-    {
-    }
-
-    ~REntityBase();
-
-    void set(Qt3DCore::QEntity * ptr) { m_ptr = ptr; }
-
-    Qt3DCore::QEntity const * ptr() const { return m_ptr; }
-    Qt3DCore::QEntity * ptr() { return m_ptr; }
-
-    Qt3DCore::QEntity const * operator->() const { return m_ptr; }
-    Qt3DCore::QEntity * operator->() { return m_ptr; }
-
-private:
-
-    Qt3DCore::QEntity * m_ptr = nullptr;
-
-}; /* end class REntityBase */
-
-inline REntityBase::~REntityBase()
-{
-    // If not managed by a parent, signal for deletion.
-    if (nullptr != m_ptr && nullptr == m_ptr->parent())
-    {
-        m_ptr->deleteLater();
-    }
-}
-
 template <uint8_t ND>
 class RStaticMesh
-    : public REntityBase
+    : public Qt3DCore::QEntity
 {
 
 public:
 
     using mesh_type = StaticMesh<ND>;
 
-    RStaticMesh() = delete;
-    ~RStaticMesh() = default;
+    RStaticMesh(std::shared_ptr<mesh_type> const & static_mesh, Qt3DCore::QNode * parent = nullptr);
 
-    RStaticMesh(std::shared_ptr<mesh_type> const & static_mesh);
-
-    static Qt3DCore::QGeometry * make_geom(mesh_type const & mh, Qt3DCore::QEntity * root);
+    static Qt3DCore::QGeometry * make_geometry(mesh_type const & mh, Qt3DCore::QEntity * parent);
     static Qt3DRender::QGeometryRenderer * make_renderer(Qt3DCore::QGeometry * geom);
 
     mesh_type const & static_mesh() const { return *m_static_mesh; }
@@ -113,22 +79,25 @@ private:
 
 }; /* end class RStaticMesh */
 
+using RStaticMesh2d = RStaticMesh<2>;
+using RStaticMesh3d = RStaticMesh<3>;
+
 template <uint8_t ND>
-RStaticMesh<ND>::RStaticMesh(std::shared_ptr<mesh_type> const & static_mesh)
-    : REntityBase(new Qt3DCore::QEntity())
+RStaticMesh<ND>::RStaticMesh(std::shared_ptr<mesh_type> const & static_mesh, Qt3DCore::QNode * parent)
+    : QEntity(parent)
     , m_static_mesh(static_mesh)
-    , m_geometry(make_geom(*static_mesh, ptr()))
+    , m_geometry(make_geometry(*static_mesh, this))
     , m_renderer(make_renderer(m_geometry))
     , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
 {
-    ptr()->addComponent(m_renderer);
-    ptr()->addComponent(m_material);
+    addComponent(m_renderer);
+    addComponent(m_material);
 }
 
 template <uint8_t ND>
-Qt3DCore::QGeometry * RStaticMesh<ND>::make_geom(mesh_type const & mh, Qt3DCore::QEntity * root)
+Qt3DCore::QGeometry * RStaticMesh<ND>::make_geometry(mesh_type const & mh, Qt3DCore::QEntity * parent)
 {
-    auto * geom = new Qt3DCore::QGeometry(root);
+    auto * geom = new Qt3DCore::QGeometry(parent);
 
     auto * buf = new Qt3DCore::QBuffer(geom);
     {
@@ -197,24 +166,75 @@ Qt3DRender::QGeometryRenderer * RStaticMesh<ND>::make_renderer(Qt3DCore::QGeomet
 }
 
 class RScene
-    : public REntityBase
+    : public Qt3DCore::QEntity
 {
 
 public:
 
-    RScene()
-        : REntityBase(new Qt3DCore::QEntity())
-        , m_camera_controller(new Qt3DExtras::QOrbitCameraController(ptr()))
+    RScene(Qt3DCore::QNode * parent = nullptr)
+        : Qt3DCore::QEntity(parent)
+        , m_controller(new Qt3DExtras::QOrbitCameraController(this))
     {
     }
 
-    Qt3DExtras::QOrbitCameraController const * camera_controller() const { return m_camera_controller; }
-    Qt3DExtras::QOrbitCameraController * camera_controller() { return m_camera_controller; }
+    Qt3DExtras::QOrbitCameraController const * controller() const { return m_controller; }
+    Qt3DExtras::QOrbitCameraController * controller() { return m_controller; }
 
 private:
 
-    Qt3DExtras::QOrbitCameraController * m_camera_controller = nullptr;
+    Qt3DExtras::QOrbitCameraController * m_controller = nullptr;
 
 }; /* end class RScene */
+
+class R3DWidget
+    : public QWidget
+{
+
+public:
+
+    R3DWidget(Qt3DExtras::Qt3DWindow * window = nullptr, RScene * scene = nullptr, QWidget * parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
+
+    template <typename... Args>
+    void resize(Args &&... args);
+
+    Qt3DExtras::Qt3DWindow * view() { return m_view; }
+    RScene * scene() { return m_scene; }
+
+private:
+
+    Qt3DExtras::Qt3DWindow * m_view;
+    RScene * m_scene;
+    QWidget * m_container;
+
+}; /* end class R3DWidget */
+
+R3DWidget::R3DWidget(Qt3DExtras::Qt3DWindow * window, RScene * scene, QWidget * parent, Qt::WindowFlags f)
+    : QWidget(parent, f)
+    , m_view(nullptr == window ? new Qt3DExtras::Qt3DWindow : window)
+    , m_scene(nullptr == scene ? new RScene : scene)
+    , m_container(createWindowContainer(m_view, this, Qt::Widget))
+{
+    m_view->setRootEntity(m_scene);
+
+    // Set up the camera.
+    Qt3DRender::QCamera * camera = m_view->camera();
+    camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
+    camera->setPosition(QVector3D(0, 0, 40.0f));
+    camera->setViewCenter(QVector3D(0, 0, 0));
+
+    // Set up the camera control.
+    auto * control = m_scene->controller();
+    control->setCamera(m_view->camera());
+    control->setLinearSpeed(50.0f);
+    control->setLookSpeed(180.0f);
+}
+
+template <typename... Args>
+void R3DWidget::resize(Args &&... args)
+{
+    QWidget::resize(std::forward<Args>(args)...);
+    m_view->resize(std::forward<Args>(args)...);
+    m_container->resize(std::forward<Args>(args)...);
+}
 
 } /* end namespace modmesh */

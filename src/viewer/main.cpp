@@ -26,12 +26,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <modmesh/python/python.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>
 #include <modmesh/viewer/viewer.hpp>
+#include <modmesh/viewer/RPythonText.hpp>
 
-#include <QGuiApplication>
+#include <pybind11/embed.h>
 
-#include <qt3dwindow.h>
+#include <QApplication>
+#include <QMainWindow>
 
 std::shared_ptr<modmesh::StaticMesh2d> make_3triangles()
 {
@@ -71,47 +74,61 @@ std::shared_ptr<modmesh::StaticMesh2d> make_3triangles()
 int main(int argc, char ** argv)
 {
     /*
-     * TODO: Sequence of application startup:
-     *   1. Parsing arguments and parameters.
+     * Sequence of application startup:
+     *   1. (Todo) Parsing arguments and parameters.
      *   2. Initialize application globals.
      *   3. Initialize GUI globals.
      *   4. Set up GUI windowing.
      */
 
     using namespace modmesh;
+    namespace py = pybind11;
 
-    // Start application with GUI.
-    QGuiApplication app(argc, argv);
+    // Start the interpreter.
+    py::scoped_interpreter interpreter_guard{};
 
-    // Create and set up main window.
-    Qt3DExtras::Qt3DWindow window;
+    // Instantiate the application object.
+    QApplication app(argc, argv);
+    QMainWindow main_window;
 
+    // Load the Python extension module.
+    std::cerr << "Loading modmesh._modmesh ... ";
+    bool load_failure = false;
+    try
     {
-        // Set up the camera.
-        Qt3DRender::QCamera * camera = window.camera();
-        camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
-        camera->setPosition(QVector3D(0, 0, 40.0f));
-        camera->setViewCenter(QVector3D(0, 0, 0));
+        py::module_::import("modmesh._modmesh");
+    }
+    catch (const py::error_already_set & e)
+    {
+        if (std::string::npos == std::string(e.what()).find("ModuleNotFoundError"))
+        {
+            throw;
+        }
+        else
+        {
+            std::cerr << "fails" << std::endl;
+            load_failure = true;
+        }
+    }
+    if (!load_failure)
+    {
+        std::cerr << "succeeds" << std::endl;
     }
 
-    // Create and set up the root scene.
-    RScene scene;
+    // Create and set up main 3D view.
+    auto * vwidget = new R3DWidget();
+    new RStaticMesh<2>(make_3triangles(), vwidget->scene());
 
-    {
-        // Set up the camera control.
-        auto * control = scene.camera_controller();
-        control->setCamera(window.camera());
-        control->setLinearSpeed(50.0f);
-        control->setLookSpeed(180.0f);
+    auto * pydock = new RPythonText(QString("Python"), &main_window);
+    pydock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    main_window.addDockWidget(Qt::RightDockWidgetArea, pydock);
 
-        // Set the mesh to the scene.
-        RStaticMesh<2> rmh(make_3triangles());
-        rmh->setParent(scene.ptr());
-    }
+    // Set up window.
+    main_window.setCentralWidget(vwidget);
+    main_window.resize(800, 400);
+    vwidget->resize(400, 400);
+    main_window.show();
 
-    // Show the window.
-    window.setRootEntity(scene.ptr());
-    window.show();
-
+    // Run the application.
     return app.exec();
 }
