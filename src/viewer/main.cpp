@@ -35,11 +35,6 @@
 
 #include <QApplication>
 #include <QMainWindow>
-#include <QDockWidget>
-
-#include <QTextEdit>
-#include <QPushButton>
-#include <QVBoxLayout>
 
 std::shared_ptr<modmesh::StaticMesh2d> make_3triangles()
 {
