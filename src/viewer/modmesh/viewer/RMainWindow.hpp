@@ -59,8 +59,8 @@ private:
 
     void setUp();
 
-    RPythonText * m_pytext;
-    R3DWidget * m_viewer;
+    RPythonText * m_pytext = nullptr;
+    R3DWidget * m_viewer = nullptr;
 
 }; /* end class RPythonText */
 

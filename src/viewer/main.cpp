@@ -121,7 +121,6 @@ int main(int argc, char ** argv)
 
     // Set up window.
     main_window.resize(800, 400);
-    main_window.viewer()->resize(400, 400);
     main_window.show();
 
     // Create and set up main 3D view.

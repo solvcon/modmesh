@@ -38,6 +38,8 @@
 
 #include <QOrbitCameraController>
 
+#include <QResizeEvent>
+
 namespace modmesh
 {
 
@@ -77,14 +79,16 @@ public:
     template <typename... Args>
     void resize(Args &&... args);
 
+    void resizeEvent(QResizeEvent * event);
+
     Qt3DExtras::Qt3DWindow * view() { return m_view; }
     RScene * scene() { return m_scene; }
 
 private:
 
-    Qt3DExtras::Qt3DWindow * m_view;
-    RScene * m_scene;
-    QWidget * m_container;
+    Qt3DExtras::Qt3DWindow * m_view = nullptr;
+    RScene * m_scene = nullptr;
+    QWidget * m_container = nullptr;
 
 }; /* end class R3DWidget */
 

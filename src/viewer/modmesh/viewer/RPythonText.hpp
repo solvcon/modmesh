@@ -58,10 +58,10 @@ private:
 
     void runPythonCode();
 
-    QTextEdit * m_text;
-    QPushButton * m_run;
-    QVBoxLayout * m_layout;
-    QWidget * m_widget;
+    QTextEdit * m_text = nullptr;
+    QPushButton * m_run = nullptr;
+    QVBoxLayout * m_layout = nullptr;
+    QWidget * m_widget = nullptr;
 
 }; /* end class RPythonText */
 
