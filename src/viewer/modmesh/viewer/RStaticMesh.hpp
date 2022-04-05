@@ -28,6 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <modmesh/viewer/base.hpp> // Must be the first include.
+
 #include <modmesh/modmesh.hpp>
 
 #include <Qt>

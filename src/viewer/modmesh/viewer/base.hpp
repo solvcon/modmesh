@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,59 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/viewer/base.hpp> // Must be the first include.
-
-#include <pybind11/embed.h>
-
-#include <modmesh/viewer/RPythonText.hpp>
-#include <modmesh/viewer/R3DWidget.hpp>
-
-#include <Qt>
-#include <QApplication>
-#include <QMainWindow>
+// Shared by all code.
+#include <modmesh/python/python.hpp> // Must be the first include.
+#include <modmesh/modmesh.hpp>
 
 namespace modmesh
 {
-
-class RMainWindow
-    : public QMainWindow
-{
-
-public:
-
-    RMainWindow()
-        : QMainWindow()
-    {
-        setUp();
-    }
-
-    RPythonText * pytext() { return m_pytext; }
-    R3DWidget * viewer() { return m_viewer; }
-
-private:
-
-    void setUp();
-
-    RPythonText * m_pytext = nullptr;
-    R3DWidget * m_viewer = nullptr;
-
-}; /* end class RPythonText */
-
-class RApplication
-    : public QApplication
-{
-
-public:
-
-    RApplication(int & argc, char ** argv);
-
-    RMainWindow * main() { return m_main; }
-
-private:
-
-    RMainWindow * m_main = nullptr;
-
-}; /* end class RApplication */
 
 } /* end namespace modmesh */
 

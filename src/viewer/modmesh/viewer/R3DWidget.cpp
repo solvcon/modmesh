@@ -26,8 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/modmesh.hpp>
-
+#include <modmesh/viewer/base.hpp> // Must be the first include.
 #include <modmesh/viewer/R3DWidget.hpp>
 
 #include <Qt3DRender/QCamera>

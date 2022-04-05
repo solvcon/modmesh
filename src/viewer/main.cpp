@@ -26,17 +26,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/python.hpp> // Must be the first include.
+#include <modmesh/viewer/base.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>
+
 #include <modmesh/viewer/RStaticMesh.hpp>
-#include <modmesh/viewer/R3DWidget.hpp>
-#include <modmesh/viewer/RPythonText.hpp>
 #include <modmesh/viewer/RMainWindow.hpp>
-
-#include <pybind11/embed.h>
-
-#include <QApplication>
-#include <QMainWindow>
 
 std::shared_ptr<modmesh::StaticMesh2d> make_3triangles()
 {
@@ -75,57 +69,11 @@ std::shared_ptr<modmesh::StaticMesh2d> make_3triangles()
 
 int main(int argc, char ** argv)
 {
-    /*
-     * Sequence of application startup:
-     *   1. (Todo) Parsing arguments and parameters.
-     *   2. Initialize application globals.
-     *   3. Initialize GUI globals.
-     *   4. Set up GUI windowing.
-     */
-
     using namespace modmesh;
-    namespace py = pybind11;
 
-    // Start the interpreter.
-    py::scoped_interpreter interpreter_guard{};
+    RApplication app(argc, argv);
+    app.main()->resize(800, 400);
+    new RStaticMesh<2>(make_3triangles(), app.main()->viewer()->scene());
 
-    // Instantiate the application object.
-    QApplication app(argc, argv);
-
-    // Load the Python extension module.
-    std::cerr << "Loading modmesh._modmesh ... ";
-    bool load_failure = false;
-    try
-    {
-        py::module_::import("modmesh._modmesh");
-    }
-    catch (const py::error_already_set & e)
-    {
-        if (std::string::npos == std::string(e.what()).find("ModuleNotFoundError"))
-        {
-            throw;
-        }
-        else
-        {
-            std::cerr << "fails" << std::endl;
-            load_failure = true;
-        }
-    }
-    if (!load_failure)
-    {
-        std::cerr << "succeeds" << std::endl;
-    }
-
-    // Create the main window.
-    RMainWindow main_window;
-
-    // Set up window.
-    main_window.resize(800, 400);
-    main_window.show();
-
-    // Create and set up main 3D view.
-    new RStaticMesh<2>(make_3triangles(), main_window.viewer()->scene());
-
-    // Run the application.
     return app.exec();
 }

@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,57 +28,64 @@
 
 #include <modmesh/viewer/base.hpp> // Must be the first include.
 
-#include <pybind11/embed.h>
-
-#include <modmesh/viewer/RPythonText.hpp>
-#include <modmesh/viewer/R3DWidget.hpp>
-
-#include <Qt>
-#include <QApplication>
-#include <QMainWindow>
+#include <modmesh/viewer/PythonInterpreter.hpp>
 
 namespace modmesh
 {
 
-class RMainWindow
-    : public QMainWindow
+PythonInterpreter & PythonInterpreter::instance()
 {
+    static PythonInterpreter o;
+    return o;
+}
 
-public:
+PythonInterpreter::PythonInterpreter()
+    : m_interpreter(new pybind11::scoped_interpreter)
+{
+    load_modules();
+}
 
-    RMainWindow()
-        : QMainWindow()
+PythonInterpreter::~PythonInterpreter()
+{
+    if (m_interpreter)
     {
-        setUp();
+        delete m_interpreter;
     }
+}
 
-    RPythonText * pytext() { return m_pytext; }
-    R3DWidget * viewer() { return m_viewer; }
-
-private:
-
-    void setUp();
-
-    RPythonText * m_pytext = nullptr;
-    R3DWidget * m_viewer = nullptr;
-
-}; /* end class RPythonText */
-
-class RApplication
-    : public QApplication
+void PythonInterpreter::load_modules()
 {
+    namespace py = pybind11;
 
-public:
+    // Load the Python extension modules.
+    std::vector<std::string> modules{"modmesh._modmesh", "modmesh"};
 
-    RApplication(int & argc, char ** argv);
-
-    RMainWindow * main() { return m_main; }
-
-private:
-
-    RMainWindow * m_main = nullptr;
-
-}; /* end class RApplication */
+    for (auto const & mod : modules)
+    {
+        std::cerr << "Loading " << mod << " ... ";
+        bool load_failure = false;
+        try
+        {
+            py::module_::import(mod.c_str());
+        }
+        catch (const py::error_already_set & e)
+        {
+            if (std::string::npos == std::string(e.what()).find("ModuleNotFoundError"))
+            {
+                throw;
+            }
+            else
+            {
+                std::cerr << "fails" << std::endl;
+                load_failure = true;
+            }
+        }
+        if (!load_failure)
+        {
+            std::cerr << "succeeds" << std::endl;
+        }
+    }
+}
 
 } /* end namespace modmesh */
 

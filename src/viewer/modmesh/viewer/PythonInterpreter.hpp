@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -32,55 +32,31 @@
 
 #include <pybind11/embed.h>
 
-#include <modmesh/viewer/RPythonText.hpp>
-#include <modmesh/viewer/R3DWidget.hpp>
-
-#include <Qt>
-#include <QApplication>
-#include <QMainWindow>
-
 namespace modmesh
 {
 
-class RMainWindow
-    : public QMainWindow
+class PythonInterpreter
 {
 
 public:
 
-    RMainWindow()
-        : QMainWindow()
-    {
-        setUp();
-    }
+    static PythonInterpreter & instance();
 
-    RPythonText * pytext() { return m_pytext; }
-    R3DWidget * viewer() { return m_viewer; }
-
-private:
-
-    void setUp();
-
-    RPythonText * m_pytext = nullptr;
-    R3DWidget * m_viewer = nullptr;
-
-}; /* end class RPythonText */
-
-class RApplication
-    : public QApplication
-{
-
-public:
-
-    RApplication(int & argc, char ** argv);
-
-    RMainWindow * main() { return m_main; }
+    PythonInterpreter(PythonInterpreter const &) = delete;
+    PythonInterpreter(PythonInterpreter &&) = delete;
+    PythonInterpreter & operator=(PythonInterpreter const &) = delete;
+    PythonInterpreter & operator=(PythonInterpreter &&) = delete;
+    ~PythonInterpreter();
 
 private:
 
-    RMainWindow * m_main = nullptr;
+    PythonInterpreter();
 
-}; /* end class RApplication */
+    void load_modules();
+
+    pybind11::scoped_interpreter * m_interpreter = nullptr;
+
+}; /* end class PythonInterpreter */
 
 } /* end namespace modmesh */
 

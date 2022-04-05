@@ -27,6 +27,7 @@ qt_add_executable(
     modmesh/viewer/R3DWidget.cpp
     modmesh/viewer/RMainWindow.cpp
     modmesh/viewer/RPythonText.cpp
+    modmesh/viewer/PythonInterpreter.cpp
     main.cpp
 )
 
