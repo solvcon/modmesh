@@ -41,7 +41,7 @@
 #ifdef __GNUG__
 #define MODMESH_PYTHON_WRAPPER_VISIBILITY __attribute__((visibility("hidden")))
 #else
-#define MODMESH_PYTHON_WRAPPER_VISIBILITY
+#define MODMESH_PYTHON_WRAPPER_VISIBILITY PYBIND11_EXPORT
 #endif
 
 namespace modmesh

@@ -37,12 +37,6 @@
 #include <modmesh/modmesh.hpp>
 #include <modmesh/python/common.hpp>
 
-#ifdef __GNUG__
-#define MODMESH_PYTHON_WRAPPER_VISIBILITY __attribute__((visibility("hidden")))
-#else
-#define MODMESH_PYTHON_WRAPPER_VISIBILITY
-#endif
-
 namespace modmesh
 {
 

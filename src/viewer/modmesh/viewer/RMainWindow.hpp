@@ -76,6 +76,8 @@ public:
 
     RMainWindow * main() { return m_main; }
 
+    static RApplication * instance() { return dynamic_cast<RApplication *>(QApplication::instance()); }
+
 private:
 
     RMainWindow * m_main = nullptr;

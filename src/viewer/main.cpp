@@ -32,48 +32,12 @@
 #include <modmesh/viewer/RStaticMesh.hpp>
 #include <modmesh/viewer/RMainWindow.hpp>
 
-std::shared_ptr<modmesh::StaticMesh2d> make_3triangles()
-{
-    auto mh = modmesh::StaticMesh2d::construct(/*nnode*/ 4, /*nface*/ 0, /*ncell*/ 3);
-
-    mh->ndcrd(0, 0) = 0;
-    mh->ndcrd(0, 1) = 0;
-    mh->ndcrd(1, 0) = -1;
-    mh->ndcrd(1, 1) = -1;
-    mh->ndcrd(2, 0) = 1;
-    mh->ndcrd(2, 1) = -1;
-    mh->ndcrd(3, 0) = 0;
-    mh->ndcrd(3, 1) = 1;
-
-    std::fill(mh->cltpn().begin(), mh->cltpn().end(), modmesh::CellType::TRIANGLE);
-
-    mh->clnds(0, 0) = 3;
-    mh->clnds(0, 1) = 0;
-    mh->clnds(0, 2) = 1;
-    mh->clnds(0, 3) = 2;
-    mh->clnds(1, 0) = 3;
-    mh->clnds(1, 1) = 0;
-    mh->clnds(1, 2) = 2;
-    mh->clnds(1, 3) = 3;
-    mh->clnds(2, 0) = 3;
-    mh->clnds(2, 1) = 0;
-    mh->clnds(2, 2) = 3;
-    mh->clnds(2, 3) = 1;
-
-    mh->build_interior(/*do_metric*/ true);
-    mh->build_boundary();
-    mh->build_ghost();
-
-    return mh;
-}
-
 int main(int argc, char ** argv)
 {
     using namespace modmesh;
 
     RApplication app(argc, argv);
-    app.main()->resize(800, 400);
-    new RStaticMesh<2>(make_3triangles(), app.main()->viewer()->scene());
+    app.main()->resize(1000, 600);
 
     return app.exec();
 }

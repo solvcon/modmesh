@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,6 +30,9 @@
 
 #include <modmesh/viewer/PythonInterpreter.hpp>
 
+#include <modmesh/viewer/RMainWindow.hpp>
+#include <modmesh/viewer/RStaticMesh.hpp>
+
 namespace modmesh
 {
 
@@ -57,8 +60,32 @@ void PythonInterpreter::load_modules()
 {
     namespace py = pybind11;
 
+    {
+        // TODO: The hard-coded Python in C++ is difficult to debug.  This
+        // should be moved somewhere else in the future.
+        std::string cmd = R""""(def _set_modmesh_path():
+    import os
+    import sys
+    filename = os.path.join('modmesh', '__init__.py')
+    path = os.getcwd()
+    while True:
+        if os.path.exists(os.path.join(path, filename)):
+            break
+        if path == os.path.dirname(path):
+            path = None
+            break
+        else:
+            path = os.path.dirname(path)
+    if path:
+        sys.path.insert(0, path)
+_set_modmesh_path())"""";
+        py::exec(cmd);
+        // clang-format off
+    }
+    // clang-format on
+
     // Load the Python extension modules.
-    std::vector<std::string> modules{"modmesh._modmesh", "modmesh"};
+    std::vector<std::string> modules{"_modmesh_view", "modmesh"};
 
     for (auto const & mod : modules)
     {
@@ -83,10 +110,31 @@ void PythonInterpreter::load_modules()
         if (!load_failure)
         {
             std::cerr << "succeeds" << std::endl;
+            // Load into the namespace.
+            std::ostringstream ms;
+            ms << "import " << mod;
+            py::exec(ms.str());
         }
     }
+
+    py::exec("modmesh.view = _modmesh_view");
 }
 
 } /* end namespace modmesh */
+
+PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
+{
+    using namespace modmesh;
+    namespace py = pybind11;
+
+    mod
+        .def(
+            "show",
+            [](std::shared_ptr<StaticMesh2d> const & mesh)
+            {
+                RApplication * app = RApplication::instance();
+                new RStaticMesh<2>(mesh, app->main()->viewer()->scene());
+            });
+}
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
