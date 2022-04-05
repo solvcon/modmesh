@@ -1,5 +1,7 @@
+#pragma once
+
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,41 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/viewer/base.hpp> // Must be the first include.
-#include <modmesh/viewer/R3DWidget.hpp>
-
-#include <Qt3DRender/QCamera>
+// Shared by all code.
+#include <modmesh/python/python.hpp> // Must be the first include.
+#include <modmesh/modmesh.hpp>
 
 namespace modmesh
 {
-
-R3DWidget::R3DWidget(Qt3DExtras::Qt3DWindow * window, RScene * scene, QWidget * parent, Qt::WindowFlags f)
-    : QWidget(parent, f)
-    , m_view(nullptr == window ? new Qt3DExtras::Qt3DWindow : window)
-    , m_scene(nullptr == scene ? new RScene : scene)
-    , m_container(createWindowContainer(m_view, this, Qt::Widget))
-{
-    m_view->setRootEntity(m_scene);
-
-    // Set up the camera.
-    Qt3DRender::QCamera * camera = m_view->camera();
-    camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
-    camera->setPosition(QVector3D(0, 0, 40.0f));
-    camera->setViewCenter(QVector3D(0, 0, 0));
-
-    // Set up the camera control.
-    auto * control = m_scene->controller();
-    control->setCamera(m_view->camera());
-    control->setLinearSpeed(50.0f);
-    control->setLookSpeed(180.0f);
-}
-
-void R3DWidget::resizeEvent(QResizeEvent * event)
-{
-    QWidget::resizeEvent(event);
-    m_view->resize(event->size());
-    m_container->resize(event->size());
-}
 
 } /* end namespace modmesh */
 

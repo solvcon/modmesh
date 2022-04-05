@@ -26,10 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/python.hpp> // Must be the first include.
-#include <pybind11/embed.h>
-
+#include <modmesh/viewer/base.hpp> // Must be the first include.
 #include <modmesh/viewer/RMainWindow.hpp>
+
+#include <modmesh/viewer/PythonInterpreter.hpp>
 #include <modmesh/viewer/RPythonText.hpp>
 #include <modmesh/viewer/R3DWidget.hpp>
 
@@ -44,6 +44,15 @@ void RMainWindow::setUp()
 
     m_viewer = new R3DWidget();
     setCentralWidget(m_viewer);
+}
+
+RApplication::RApplication(int & argc, char ** argv)
+    : QApplication(argc, argv)
+    , m_main(new RMainWindow)
+{
+    /* TODO: parse arguments */
+    PythonInterpreter::instance();
+    m_main->show();
 }
 
 } /* end namespace modmesh */

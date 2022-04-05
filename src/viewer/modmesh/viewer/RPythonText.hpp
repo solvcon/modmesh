@@ -28,12 +28,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/python.hpp> // Must be the first include.
-#include <pybind11/embed.h>
+#include <modmesh/viewer/base.hpp> // Must be the first include.
 
 #include <Qt>
 #include <QDockWidget>
-
 #include <QTextEdit>
 #include <QPushButton>
 #include <QVBoxLayout>

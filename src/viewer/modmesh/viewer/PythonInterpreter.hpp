@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -27,40 +29,34 @@
  */
 
 #include <modmesh/viewer/base.hpp> // Must be the first include.
-#include <modmesh/viewer/R3DWidget.hpp>
 
-#include <Qt3DRender/QCamera>
+#include <pybind11/embed.h>
 
 namespace modmesh
 {
 
-R3DWidget::R3DWidget(Qt3DExtras::Qt3DWindow * window, RScene * scene, QWidget * parent, Qt::WindowFlags f)
-    : QWidget(parent, f)
-    , m_view(nullptr == window ? new Qt3DExtras::Qt3DWindow : window)
-    , m_scene(nullptr == scene ? new RScene : scene)
-    , m_container(createWindowContainer(m_view, this, Qt::Widget))
+class PythonInterpreter
 {
-    m_view->setRootEntity(m_scene);
 
-    // Set up the camera.
-    Qt3DRender::QCamera * camera = m_view->camera();
-    camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
-    camera->setPosition(QVector3D(0, 0, 40.0f));
-    camera->setViewCenter(QVector3D(0, 0, 0));
+public:
 
-    // Set up the camera control.
-    auto * control = m_scene->controller();
-    control->setCamera(m_view->camera());
-    control->setLinearSpeed(50.0f);
-    control->setLookSpeed(180.0f);
-}
+    static PythonInterpreter & instance();
 
-void R3DWidget::resizeEvent(QResizeEvent * event)
-{
-    QWidget::resizeEvent(event);
-    m_view->resize(event->size());
-    m_container->resize(event->size());
-}
+    PythonInterpreter(PythonInterpreter const &) = delete;
+    PythonInterpreter(PythonInterpreter &&) = delete;
+    PythonInterpreter & operator=(PythonInterpreter const &) = delete;
+    PythonInterpreter & operator=(PythonInterpreter &&) = delete;
+    ~PythonInterpreter();
+
+private:
+
+    PythonInterpreter();
+
+    void load_modules();
+
+    pybind11::scoped_interpreter * m_interpreter = nullptr;
+
+}; /* end class PythonInterpreter */
 
 } /* end namespace modmesh */
 
