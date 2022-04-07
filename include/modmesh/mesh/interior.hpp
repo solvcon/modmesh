@@ -793,7 +793,7 @@ void StaticMeshBase<D, ND>::calc_metric()
     {
         for (size_t icl = 0 ; icl < ncell() ; ++icl)
         {
-            if ((use_incenter()) && (m_cltpn(icl) == 5))
+            if ((use_incenter()) && (CellType::TETRAHEDRON == m_cltpn(icl)))
             {
                 real_type voc = 0.0;
                 {
