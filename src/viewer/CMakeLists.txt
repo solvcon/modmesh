@@ -10,6 +10,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+
 if(NOT DEFINED INSTALL_VIEWERDIR)
   set(INSTALL_VIEWERDIR "viewer")
 endif()
@@ -30,6 +31,12 @@ qt_add_executable(
     modmesh/viewer/PythonInterpreter.cpp
     main.cpp
 )
+
+if(HIDE_SYMBOL)
+    set_target_properties(viewer PROPERTIES CXX_VISIBILITY_PRESET "hidden")
+else()
+    set_target_properties(viewer PROPERTIES CXX_VISIBILITY_PRESET "default")
+endif()
 
 target_compile_options(
     viewer PRIVATE
