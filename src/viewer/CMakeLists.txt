@@ -31,6 +31,12 @@ qt_add_executable(
     main.cpp
 )
 
+if(HIDE_SYMBOL)
+    set_target_properties(viewer PROPERTIES CXX_VISIBILITY_PRESET "hidden")
+else()
+    set_target_properties(viewer PROPERTIES CXX_VISIBILITY_PRESET "default")
+endif()
+
 target_compile_options(
     viewer PRIVATE
     ${COMMON_COMPILER_OPTIONS}
