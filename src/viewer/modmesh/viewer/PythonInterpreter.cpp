@@ -133,6 +133,11 @@ PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
             [](std::shared_ptr<StaticMesh2d> const & mesh)
             {
                 RApplication * app = RApplication::instance();
+                RScene * scene = app->main()->viewer()->scene();
+                for (RStaticMesh<2> * child : scene->findChildren<RStaticMesh<2> *>())
+                {
+                    delete child;
+                }
                 new RStaticMesh<2>(mesh, app->main()->viewer()->scene());
             });
 }
