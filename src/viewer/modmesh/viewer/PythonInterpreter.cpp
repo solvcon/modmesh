@@ -138,7 +138,7 @@ PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
                 {
                     delete child;
                 }
-                new RStaticMesh<2>(mesh, app->main()->viewer()->scene());
+                new RStaticMesh<2>(mesh, scene);
             });
 }
 
