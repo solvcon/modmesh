@@ -29,8 +29,6 @@
 #include <modmesh/viewer/base.hpp> // Must be the first include.
 #include <modmesh/viewer/R3DWidget.hpp>
 
-#include <Qt3DRender/QCamera>
-
 namespace modmesh
 {
 
@@ -45,7 +43,7 @@ R3DWidget::R3DWidget(Qt3DExtras::Qt3DWindow * window, RScene * scene, QWidget * 
     // Set up the camera.
     Qt3DRender::QCamera * camera = m_view->camera();
     camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
-    camera->setPosition(QVector3D(0, 0, 40.0f));
+    camera->setPosition(QVector3D(0, 0, 10.0f));
     camera->setViewCenter(QVector3D(0, 0, 0));
 
     // Set up the camera control.

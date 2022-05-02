@@ -32,6 +32,7 @@
 
 #include <modmesh/viewer/RMainWindow.hpp>
 #include <modmesh/viewer/RStaticMesh.hpp>
+#include <modmesh/viewer/R3DWidget.hpp>
 
 namespace modmesh
 {
@@ -120,13 +121,98 @@ _set_modmesh_path())"""";
     py::exec("modmesh.view = _modmesh_view");
 }
 
+namespace python
+{
+
+// clang-format off
+class
+MODMESH_PYTHON_WRAPPER_VISIBILITY
+WrapR3DWidget
+    // clang-format on
+    : public WrapBase<WrapR3DWidget, R3DWidget>
+{
+
+    friend root_base_type;
+
+    WrapR3DWidget(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : root_base_type(mod, pyname, pydoc)
+    {
+
+        namespace py = pybind11;
+
+#define DECL_QVECTOR3D_PROPERTY(NAME, GETTER, SETTER)          \
+    .def_property(                                             \
+        #NAME,                                                 \
+        [](wrapped_type & self)                                \
+        {                                                      \
+            QVector3D const v = self.camera()->GETTER();       \
+            return py::make_tuple(v.x(), v.y(), v.z());        \
+        },                                                     \
+        [](wrapped_type & self, std::vector<double> const & v) \
+        {                                                      \
+            double const x = v.at(0);                          \
+            double const y = v.at(1);                          \
+            double const z = v.at(2);                          \
+            self.camera()->SETTER(QVector3D(x, y, z));         \
+        })
+
+        (*this)
+            DECL_QVECTOR3D_PROPERTY(position, position, setPosition)
+                DECL_QVECTOR3D_PROPERTY(up_vector, upVector, setUpVector)
+                    DECL_QVECTOR3D_PROPERTY(view_center, viewCenter, setViewCenter)
+            //
+            ;
+
+#undef DECL_QVECTOR3D_PROPERTY
+    }
+
+}; /* end class WrapR3DWidget */
+
+class
+    MODMESH_PYTHON_WRAPPER_VISIBILITY
+        WrapRApplication
+    // clang-format on
+    : public WrapBase<WrapRApplication, RApplication>
+{
+
+    friend root_base_type;
+
+    WrapRApplication(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : root_base_type(mod, pyname, pydoc)
+    {
+
+        namespace py = pybind11;
+
+        (*this)
+            .def_property_readonly_static(
+                "instance",
+                [](py::object const &)
+                {
+                    return RApplication::instance();
+                })
+            .def_property_readonly(
+                "viewer",
+                [](wrapped_type & self)
+                {
+                    return self.main()->viewer();
+                })
+            //
+            ;
+    }
+
+}; /* end class WrapRApplication */
+
+} /* end namespace python */
+
 } /* end namespace modmesh */
 
 PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
 {
     using namespace modmesh;
+    using namespace modmesh::python;
     namespace py = pybind11;
 
+    // FIXME: Do not distinguish 2/3D.
     mod
         .def(
             "show",
@@ -142,7 +228,29 @@ PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
                     }
                 }
                 new RStaticMesh<2>(mesh, scene);
-            });
+            })
+        .def(
+            "show",
+            [](std::shared_ptr<StaticMesh3d> const & mesh)
+            {
+                RApplication * app = RApplication::instance();
+                RScene * scene = app->main()->viewer()->scene();
+                for (Qt3DCore::QNode * child : scene->childNodes())
+                {
+                    if (typeid(*child) == typeid(RStaticMesh<3>))
+                    {
+                        child->deleteLater();
+                    }
+                }
+                new RStaticMesh<3>(mesh, scene);
+            })
+        //
+        ;
+
+    WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
+    WrapRApplication::commit(mod, "RApplication", "RApplication");
+
+    mod.attr("app") = py::cast(RApplication::instance());
 }
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
