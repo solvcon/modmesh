@@ -202,6 +202,25 @@ class
 
 }; /* end class WrapRApplication */
 
+namespace detail
+{
+
+template <uint8_t ND>
+static void update_appmesh(std::shared_ptr<StaticMesh<ND>> const & mesh)
+{
+    RScene * scene = RApplication::instance()->main()->viewer()->scene();
+    for (Qt3DCore::QNode * child : scene->childNodes())
+    {
+        if (typeid(*child) == typeid(RStaticMesh))
+        {
+            child->deleteLater();
+        }
+    }
+    new RStaticMesh(mesh, scene);
+}
+
+} /* end namespace detail */
+
 } /* end namespace python */
 
 } /* end namespace modmesh */
@@ -212,38 +231,9 @@ PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
     using namespace modmesh::python;
     namespace py = pybind11;
 
-    // FIXME: Do not distinguish 2/3D.
     mod
-        .def(
-            "show",
-            [](std::shared_ptr<StaticMesh2d> const & mesh)
-            {
-                RApplication * app = RApplication::instance();
-                RScene * scene = app->main()->viewer()->scene();
-                for (Qt3DCore::QNode * child : scene->childNodes())
-                {
-                    if (typeid(*child) == typeid(RStaticMesh<2>))
-                    {
-                        child->deleteLater();
-                    }
-                }
-                new RStaticMesh<2>(mesh, scene);
-            })
-        .def(
-            "show",
-            [](std::shared_ptr<StaticMesh3d> const & mesh)
-            {
-                RApplication * app = RApplication::instance();
-                RScene * scene = app->main()->viewer()->scene();
-                for (Qt3DCore::QNode * child : scene->childNodes())
-                {
-                    if (typeid(*child) == typeid(RStaticMesh<3>))
-                    {
-                        child->deleteLater();
-                    }
-                }
-                new RStaticMesh<3>(mesh, scene);
-            })
+        .def("show", &modmesh::python::detail::update_appmesh<2>, py::arg("mesh"))
+        .def("show", &modmesh::python::detail::update_appmesh<3>, py::arg("mesh"))
         //
         ;
 
