@@ -134,9 +134,12 @@ PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
             {
                 RApplication * app = RApplication::instance();
                 RScene * scene = app->main()->viewer()->scene();
-                for (RStaticMesh<2> * child : scene->findChildren<RStaticMesh<2> *>())
+                for (Qt3DCore::QNode * child : scene->childNodes())
                 {
-                    delete child;
+                    if (typeid(*child) == typeid(RStaticMesh<2>))
+                    {
+                        child->deleteLater();
+                    }
                 }
                 new RStaticMesh<2>(mesh, scene);
             });
