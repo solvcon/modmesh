@@ -627,6 +627,16 @@ protected:
         // clang-format on
 
 #undef MM_DECL_ARRAY
+
+        this->cls().attr("NONCELLTYPE") = uint8_t(CellType::NONCELLTYPE);
+        this->cls().attr("POINT") = uint8_t(CellType::POINT);
+        this->cls().attr("LINE") = uint8_t(CellType::LINE);
+        this->cls().attr("QUADRILATERAL") = uint8_t(CellType::QUADRILATERAL);
+        this->cls().attr("TRIANGLE") = uint8_t(CellType::TRIANGLE);
+        this->cls().attr("HEXAHEDRON") = uint8_t(CellType::HEXAHEDRON);
+        this->cls().attr("TETRAHEDRON") = uint8_t(CellType::TETRAHEDRON);
+        this->cls().attr("PRISM") = uint8_t(CellType::PRISM);
+        this->cls().attr("PYRAMID") = uint8_t(CellType::PYRAMID);
     }
 
 }; /* end class WrapStaticMeshBase */

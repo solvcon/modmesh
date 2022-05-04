@@ -35,6 +35,7 @@
 #include <Qt3DWindow>
 
 #include <Qt3DCore/QEntity>
+#include <Qt3DRender/QCamera>
 
 #include <QOrbitCameraController>
 
@@ -42,6 +43,12 @@
 
 namespace modmesh
 {
+
+class RCameraController
+    : public Qt3DExtras::QOrbitCameraController
+{
+    using Qt3DExtras::QOrbitCameraController::QOrbitCameraController;
+}; /* end class RCameraController */
 
 class RScene
     : public Qt3DCore::QEntity
@@ -51,16 +58,16 @@ public:
 
     RScene(Qt3DCore::QNode * parent = nullptr)
         : Qt3DCore::QEntity(parent)
-        , m_controller(new Qt3DExtras::QOrbitCameraController(this))
+        , m_controller(new RCameraController(this))
     {
     }
 
-    Qt3DExtras::QOrbitCameraController const * controller() const { return m_controller; }
-    Qt3DExtras::QOrbitCameraController * controller() { return m_controller; }
+    RCameraController const * controller() const { return m_controller; }
+    RCameraController * controller() { return m_controller; }
 
 private:
 
-    Qt3DExtras::QOrbitCameraController * m_controller = nullptr;
+    RCameraController * m_controller = nullptr;
 
 }; /* end class RScene */
 
@@ -83,6 +90,7 @@ public:
 
     Qt3DExtras::Qt3DWindow * view() { return m_view; }
     RScene * scene() { return m_scene; }
+    Qt3DRender::QCamera * camera() { return m_view->camera(); }
 
 private:
 

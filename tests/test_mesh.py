@@ -82,7 +82,7 @@ class StaticMeshTC(unittest.TestCase):
     def test_2d_trivial_triangles(self):
         mh = modmesh.StaticMesh2d(nnode=4, nface=0, ncell=3)
         mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
-        mh.cltpn.ndarray[:] = 4
+        mh.cltpn.ndarray[:] = modmesh.StaticMesh2d.TRIANGLE
         mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
 
         self._check_shape(mh, ndim=2, nnode=4, nface=0, ncell=3,
@@ -91,9 +91,9 @@ class StaticMeshTC(unittest.TestCase):
 
         # Test build interior data.
         mh.build_interior(_do_metric=False)
-        self._check_metric_trivial(mh)
         self._check_shape(mh, ndim=2, nnode=4, nface=6, ncell=3,
                           nbound=0, ngstnode=0, ngstface=0, ngstcell=0)
+        self._check_metric_trivial(mh)
         mh.build_interior()  # _do_metric=True
         np.testing.assert_almost_equal(
             mh.fccnd,
@@ -129,5 +129,61 @@ class StaticMeshTC(unittest.TestCase):
         mh.build_ghost()
         self._check_shape(mh, ndim=2, nnode=4, nface=6, ncell=3,
                           nbound=3, ngstnode=3, ngstface=6, ngstcell=3)
+
+    def test_3d_single_tetrahedron(self):
+        mh = modmesh.StaticMesh3d(nnode=4, nface=4, ncell=1)
+        mh.ndcrd.ndarray[:, :] = (0, 0, 0), (0, 1, 0), (-1, 1, 0), (0, 1, 1)
+        mh.cltpn.ndarray[:] = modmesh.StaticMesh3d.TETRAHEDRON
+        mh.clnds.ndarray[:, :5] = [(4, 0, 1, 2, 3)]
+
+        self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,
+                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0)
+        self._check_metric_trivial(mh)
+
+        mh.build_interior(_do_metric=False)
+        self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,
+                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0)
+        self._check_metric_trivial(mh)
+        mh.build_interior()  # _do_metric=True
+        # FIXME: I have not verified the numbers.  But the mesh looks OK in
+        # viewer.
+        np.testing.assert_almost_equal(
+            mh.fccnd,
+            [[-0.3333333,  0.6666667,  0.       ],
+             [ 0.       ,  0.6666667,  0.3333333],
+             [-0.3333333,  0.6666667,  0.3333333],
+             [-0.3333333,  1.       ,  0.3333333]])
+        np.testing.assert_almost_equal(
+            mh.fcnml,
+            [[ 0.       ,  0.       , -1.       ],
+             [ 1.       ,  0.       ,  0.       ],
+             [-0.5773503, -0.5773503,  0.5773503],
+             [ 0.       ,  1.       ,  0.       ]])
+        np.testing.assert_almost_equal(
+            mh.fcara, [0.5      , 0.5      , 0.8660254, 0.5      ])
+        np.testing.assert_almost_equal(
+            mh.clcnd, [[-0.25,  0.75,  0.25]])
+        np.testing.assert_almost_equal(
+            mh.clvol, [0.1666667])
+
+        # Build boundary data.
+        self.assertEqual(0, mh.nbcs)
+        self.assertEqual(0, mh.nbound)
+        self.assertEqual((mh.nbound, 3), mh.bndfcs.shape)
+        mh.build_boundary()
+        self.assertEqual(1, mh.nbcs)
+        self.assertEqual(4, mh.nbound)
+        self.assertEqual((mh.nbound, 3), mh.bndfcs.shape)
+        self.assertEqual(
+            [[0, 0, -1], [1, 0, -1], [2, 0, -1], [3, 0, -1]],
+            mh.bndfcs.ndarray.tolist()
+        )
+
+        # Build ghost data.
+        self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,
+                          nbound=4, ngstnode=0, ngstface=0, ngstcell=0)
+        mh.build_ghost()
+        self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,
+                          nbound=4, ngstnode=4, ngstface=12, ngstcell=4)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

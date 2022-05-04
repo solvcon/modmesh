@@ -50,26 +50,25 @@
 namespace modmesh
 {
 
-template <uint8_t ND>
 class RStaticMesh
     : public Qt3DCore::QEntity
 {
 
 public:
 
-    using mesh_type = StaticMesh<ND>;
+    template <uint8_t ND>
+    RStaticMesh(std::shared_ptr<StaticMesh<ND>> const & static_mesh, Qt3DCore::QNode * parent = nullptr);
 
-    RStaticMesh(std::shared_ptr<mesh_type> const & static_mesh, Qt3DCore::QNode * parent = nullptr);
-
-    static Qt3DCore::QGeometry * make_geometry(mesh_type const & mh, Qt3DCore::QEntity * parent);
-    static Qt3DRender::QGeometryRenderer * make_renderer(Qt3DCore::QGeometry * geom);
-
-    mesh_type const & static_mesh() const { return *m_static_mesh; }
-    mesh_type & static_mesh() { return *m_static_mesh; }
+    template <uint8_t ND>
+    void update_geometry(StaticMesh<ND> const & mh)
+    {
+        update_geometry_impl(mh, m_geometry);
+    }
 
 private:
 
-    std::shared_ptr<mesh_type> m_static_mesh = nullptr;
+    template <uint8_t ND>
+    static void update_geometry_impl(StaticMesh<ND> const & mh, Qt3DCore::QGeometry * geom);
 
     Qt3DCore::QGeometry * m_geometry = nullptr;
     Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
@@ -77,26 +76,23 @@ private:
 
 }; /* end class RStaticMesh */
 
-using RStaticMesh2d = RStaticMesh<2>;
-using RStaticMesh3d = RStaticMesh<3>;
-
 template <uint8_t ND>
-RStaticMesh<ND>::RStaticMesh(std::shared_ptr<mesh_type> const & static_mesh, Qt3DCore::QNode * parent)
-    : QEntity(parent)
-    , m_static_mesh(static_mesh)
-    , m_geometry(make_geometry(*static_mesh, this))
-    , m_renderer(make_renderer(m_geometry))
+RStaticMesh::RStaticMesh(std::shared_ptr<StaticMesh<ND>> const & static_mesh, Qt3DCore::QNode * parent)
+    : Qt3DCore::QEntity(parent)
+    , m_geometry(new Qt3DCore::QGeometry(this))
+    , m_renderer(new Qt3DRender::QGeometryRenderer())
     , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
 {
+    update_geometry(*static_mesh);
+    m_renderer->setGeometry(m_geometry);
+    m_renderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Lines);
     addComponent(m_renderer);
     addComponent(m_material);
 }
 
 template <uint8_t ND>
-Qt3DCore::QGeometry * RStaticMesh<ND>::make_geometry(mesh_type const & mh, Qt3DCore::QEntity * parent)
+void RStaticMesh::update_geometry_impl(StaticMesh<ND> const & mh, Qt3DCore::QGeometry * geom)
 {
-    auto * geom = new Qt3DCore::QGeometry(parent);
-
     auto * buf = new Qt3DCore::QBuffer(geom);
     {
         QByteArray barray;
@@ -106,7 +102,7 @@ Qt3DCore::QGeometry * RStaticMesh<ND>::make_geometry(mesh_type const & mh, Qt3DC
         {
             *ptr++ = mh.ndcrd(ind, 0);
             *ptr++ = mh.ndcrd(ind, 1);
-            *ptr++ = 0;
+            *ptr++ = (3 == ND) ? mh.ndcrd(ind, 2) : 0;
         }
         buf->setData(barray);
     }
@@ -122,6 +118,8 @@ Qt3DCore::QGeometry * RStaticMesh<ND>::make_geometry(mesh_type const & mh, Qt3DC
 
     geom->addAttribute(vertices);
 
+    // FIXME: This is naive implementation and creates a lot of duplicated
+    // edges.  The StaticMesh should provide a set of unique edges.
     uint32_t nend = 0;
     for (uint32_t ifc = 0; ifc < mh.nface(); ++ifc)
     {
@@ -150,17 +148,6 @@ Qt3DCore::QGeometry * RStaticMesh<ND>::make_geometry(mesh_type const & mh, Qt3DC
     indices->setCount(nend);
 
     geom->addAttribute(indices);
-
-    return geom;
-}
-
-template <uint8_t ND>
-Qt3DRender::QGeometryRenderer * RStaticMesh<ND>::make_renderer(Qt3DCore::QGeometry * geom)
-{
-    auto * renderer = new Qt3DRender::QGeometryRenderer();
-    renderer->setGeometry(geom);
-    renderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Lines);
-    return renderer;
 }
 
 } /* end namespace modmesh */
