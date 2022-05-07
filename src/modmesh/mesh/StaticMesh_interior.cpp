@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (c) 2021, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -28,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/mesh/StaticMesh_decl.hpp>
+#include <modmesh/mesh/StaticMesh.hpp>
 
 namespace modmesh
 {
@@ -551,8 +549,7 @@ struct FaceBuilder
  * Extract interier faces from node list of cells.  Subroutine is designed to
  * handle all types of cells.
  */
-template < typename D /* derived type */, uint8_t ND >
-void StaticMeshBase<D, ND>::build_faces_from_cells()
+void StaticMesh::build_faces_from_cells()
 {
     detail::FaceBuilder<number_base> fb(m_nnode, m_cltpn, m_clnds);
     m_nface = fb.nface;
@@ -561,8 +558,8 @@ void StaticMeshBase<D, ND>::build_faces_from_cells()
     fb.rebuild_fctpn(m_fctpn);
     fb.rebuild_fcnds(m_fcnds);
     fb.rebuild_fccls(m_fccls);
-    m_fccnd.remake(small_vector<size_t>{nface(), ND}, 0);
-    m_fcnml.remake(small_vector<size_t>{nface(), ND}, 0);
+    m_fccnd.remake(small_vector<size_t>{nface(), m_ndim}, 0);
+    m_fcnml.remake(small_vector<size_t>{nface(), m_ndim}, 0);
     m_fcara.remake(small_vector<size_t>{nface()}, 0);
     std::copy(fb.clfcs.vptr(0, 0), fb.clfcs.vptr(m_ncell, 0), m_clfcs.vptr(0, 0));
 }
@@ -577,9 +574,8 @@ void StaticMeshBase<D, ND>::build_faces_from_cells()
  *
  * And fcnds could be reordered.
  */
-template < typename D /* derived type */, uint8_t ND >
 /* NOLINTNEXTLINE(readability-function-cognitive-complexity) */
-void StaticMeshBase<D, ND>::calc_metric()
+void StaticMesh::calc_metric()
 {
     // compute face centroids.
     if (m_ndim == 2)

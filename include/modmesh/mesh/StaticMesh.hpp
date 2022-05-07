@@ -241,11 +241,10 @@ public:
 
 }; /* end class StaticMeshBC */
 
-template <typename D /* derived type */, uint8_t ND>
-class StaticMeshBase
+class StaticMesh
     : public NumberBase<int32_t, double>
     , public StaticMeshConstant
-    , public std::enable_shared_from_this<D>
+    , public std::enable_shared_from_this<StaticMesh>
 {
 
 private:
@@ -262,27 +261,17 @@ public:
     using real_type = typename number_base::real_type;
 
     template <typename... Args>
-    static std::shared_ptr<D> construct(Args &&... args)
+    static std::shared_ptr<StaticMesh> construct(Args &&... args)
     {
-        return std::make_shared<D>(std::forward<Args>(args)..., ctor_passkey());
+        return std::make_shared<StaticMesh>(std::forward<Args>(args)..., ctor_passkey());
     }
 
     /* NOLINTNEXTLINE(bugprone-easily-swappable-parameters) */
-    StaticMeshBase(uint_type nnode, uint_type nface, uint_type ncell, ctor_passkey const & ctorpk)
-        : StaticMeshBase(ND, nnode, nface, ncell, ctorpk)
-    {
-    }
-
-    /* NOLINTNEXTLINE(bugprone-easily-swappable-parameters) */
-    StaticMeshBase(uint8_t ndim, uint_type nnode, uint_type nface, uint_type ncell, ctor_passkey const &)
+    StaticMesh(uint8_t ndim, uint_type nnode, uint_type nface, uint_type ncell, ctor_passkey const &)
         : m_ndim(ndim)
         , m_nnode(nnode)
         , m_nface(nface)
         , m_ncell(ncell)
-        , m_nbound(0)
-        , m_ngstnode(0)
-        , m_ngstface(0)
-        , m_ngstcell(0)
         , m_ndcrd(std::vector<size_t>{nnode, m_ndim}, 0)
         , m_fccnd(std::vector<size_t>{nface, m_ndim}, 0)
         , m_fcnml(std::vector<size_t>{nface, m_ndim}, 0)
@@ -299,12 +288,12 @@ public:
         , m_bndfcs(std::vector<size_t>{0, StaticMeshBC::BFREL})
     {
     }
-    StaticMeshBase() = delete;
-    StaticMeshBase(StaticMeshBase const &) = delete;
-    StaticMeshBase(StaticMeshBase &&) = delete;
-    StaticMeshBase & operator=(StaticMeshBase const &) = delete;
-    StaticMeshBase & operator=(StaticMeshBase &&) = delete;
-    ~StaticMeshBase() = default;
+    StaticMesh() = delete;
+    StaticMesh(StaticMesh const &) = delete;
+    StaticMesh(StaticMesh &&) = delete;
+    StaticMesh & operator=(StaticMesh const &) = delete;
+    StaticMesh & operator=(StaticMesh &&) = delete;
+    ~StaticMesh() = default;
 
 public:
 
@@ -415,17 +404,7 @@ private:                                                                \
 
 #undef MM_DECL_StaticMesh_ARRAY
 
-}; /* end class StaticMeshBase */
-
-template <uint8_t ND>
-class StaticMesh
-    : public StaticMeshBase<StaticMesh<ND>, ND>
-{
-    using StaticMeshBase<StaticMesh<ND>, ND>::StaticMeshBase;
 }; /* end class StaticMesh */
-
-using StaticMesh2d = StaticMesh<2>;
-using StaticMesh3d = StaticMesh<3>;
 
 } /* end namespace modmesh */
 

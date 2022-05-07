@@ -534,29 +534,27 @@ MM_DECL_StaticGridMD(3);
 #undef MM_DECL_StaticGridMD
 
 // clang-format off
-template< typename Wrapper, typename GT >
 class
 MODMESH_PYTHON_WRAPPER_VISIBILITY
-WrapStaticMeshBase
+WrapStaticMesh
     // clang-format on
-    : public WrapBase<Wrapper, GT, std::shared_ptr<GT>>
+    : public WrapBase<WrapStaticMesh, StaticMesh, std::shared_ptr<StaticMesh>>
 {
 
 public:
 
-    using base_type = WrapBase<Wrapper, GT, std::shared_ptr<GT>>;
+    using base_type = WrapBase<WrapStaticMesh, StaticMesh, std::shared_ptr<StaticMesh>>;
     using wrapped_type = typename base_type::wrapped_type;
 
     using int_type = typename wrapped_type::int_type;
     using uint_type = typename wrapped_type::uint_type;
-    using serial_type = typename wrapped_type::size_type;
     using real_type = typename wrapped_type::real_type;
 
-    friend typename base_type::root_base_type;
+    friend root_base_type;
 
 protected:
 
-    WrapStaticMeshBase(pybind11::module & mod, char const * pyname, char const * pydoc)
+    WrapStaticMesh(pybind11::module & mod, char const * pyname, char const * pydoc)
         : base_type(mod, pyname, pydoc)
     {
 
@@ -565,8 +563,9 @@ protected:
         (*this)
             .def_timed(
                 py::init(
-                    [](uint_type nnode, uint_type nface, uint_type ncell)
-                    { return wrapped_type::construct(nnode, nface, ncell); }),
+                    [](uint8_t ndim, uint_type nnode, uint_type nface, uint_type ncell)
+                    { return wrapped_type::construct(ndim, nnode, nface, ncell); }),
+                py::arg("ndim"),
                 py::arg("nnode"),
                 py::arg("nface") = 0,
                 py::arg("ncell") = 0)
@@ -639,35 +638,7 @@ protected:
         this->cls().attr("PYRAMID") = uint8_t(CellType::PYRAMID);
     }
 
-}; /* end class WrapStaticMeshBase */
-
-// clang-format off
-#define MM_DECL_StaticMeshMD(NDIM) \
-class \
-MODMESH_PYTHON_WRAPPER_VISIBILITY \
-WrapStaticMesh ## NDIM ## d \
-  : public WrapStaticMeshBase< WrapStaticMesh ## NDIM ## d, StaticMesh ## NDIM ## d > \
-{ \
-\
-public: \
-\
-    friend root_base_type; \
-\
-    using base_type = WrapStaticMeshBase< WrapStaticMesh ## NDIM ## d, StaticMesh ## NDIM ## d >; \
-\
-protected: \
-\
-    explicit WrapStaticMesh ## NDIM ## d(pybind11::module & mod, char const * pyname, char const * pydoc) \
-      : base_type(mod, pyname, pydoc) \
-    {} \
-\
-}
-// clang-format on
-
-MM_DECL_StaticMeshMD(2);
-MM_DECL_StaticMeshMD(3);
-
-#undef MM_DECL_StaticMeshMD
+}; /* end class WrapStaticMesh */
 
 #pragma GCC diagnostic push
 // Suppress the warning "greater visibility than the type of its field"
@@ -771,8 +742,7 @@ inline void initialize_impl(pybind11::module & mod)
     WrapStaticGrid2d::commit(mod, "StaticGrid2d", "StaticGrid2d");
     WrapStaticGrid3d::commit(mod, "StaticGrid3d", "StaticGrid3d");
 
-    WrapStaticMesh2d::commit(mod, "StaticMesh2d", "StaticMesh2d");
-    WrapStaticMesh3d::commit(mod, "StaticMesh3d", "StaticMesh3d");
+    WrapStaticMesh::commit(mod, "StaticMesh", "StaticMesh");
 }
 
 } /* end namespace detail */

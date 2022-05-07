@@ -61,26 +61,33 @@ void RPythonText::setUp()
 
     m_text->setPlainText(QString(R""""(# Sample input
 import modmesh as mm
-ndim = 2
-if 2 == ndim:
-    mh = mm.StaticMesh2d(nnode=4, nface=0, ncell=3)
+
+def make_2d():
+    mh = mm.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
     mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
-    mh.cltpn.ndarray[:] = modmesh.StaticMesh2d.TRIANGLE
+    mh.cltpn.ndarray[:] = modmesh.StaticMesh.TRIANGLE
     mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
     mh.build_interior()
     mh.build_boundary()
     mh.build_ghost()
-else:
-    mh = modmesh.StaticMesh3d(nnode=4, nface=4, ncell=1)
+    return mh
+
+def make_3d():
+    mh = modmesh.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
     mh.ndcrd.ndarray[:, :] = (0, 0, 0), (0, 1, 0), (-1, 1, 0), (0, 1, 1)
-    mh.cltpn.ndarray[:] = modmesh.StaticMesh3d.TETRAHEDRON
+    mh.cltpn.ndarray[:] = modmesh.StaticMesh.TETRAHEDRON
     mh.clnds.ndarray[:, :5] = [(4, 0, 1, 2, 3)]
     mh.build_interior()
     mh.build_boundary()
     mh.build_ghost()
+    return mh
+
 #mm.view.app.viewer.up_vector = (0, 1, 0)
 #mm.view.app.viewer.position = (-10, -10, -20)
 #mm.view.app.viewer.view_center = (0, 0, 0)
+
+mh = make_2d()
+mm.view.show(mh)
 mm.view.show(mh)
 print("position:", mm.view.app.viewer.position)
 print("up_vector:", mm.view.app.viewer.up_vector)

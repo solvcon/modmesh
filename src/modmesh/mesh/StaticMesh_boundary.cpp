@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (c) 2021, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -28,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/mesh/StaticMesh_decl.hpp>
+#include <modmesh/mesh/StaticMesh.hpp>
 
 namespace modmesh
 {
@@ -43,9 +41,8 @@ namespace modmesh
  *
  * And fcnds could be reordered.
  */
-template <typename D /* derived type */, uint8_t ND>
 /* NOLINTNEXTLINE(readability-function-cognitive-complexity) */
-void StaticMeshBase<D, ND>::build_boundary()
+void StaticMesh::build_boundary()
 {
     assert(0 == m_nbound); // nothing should touch m_nbound beforehand.
     for (size_t it = 0; it < fccls().shape(0); ++it)
@@ -121,9 +118,8 @@ void StaticMeshBase<D, ND>::build_boundary()
     assert(ibfc == m_nbound);
 }
 
-template <typename D /* derived type */, uint8_t ND>
 /* NOLINTNEXTLINE(readability-function-cognitive-complexity) */
-void StaticMeshBase<D, ND>::build_ghost()
+void StaticMesh::build_ghost()
 {
 
     std::tie(m_ngstnode, m_ngstface, m_ngstcell) = count_ghost();
@@ -183,9 +179,7 @@ void StaticMeshBase<D, ND>::build_ghost()
  * @return std::tuple<size_t, size_t, size_t>
  *  ngstnode, ngstface, ngstcell
  */
-template <typename D /* derived type */, uint8_t ND>
-/* NOLINTNEXTLINE(readability-function-cognitive-complexity) */
-std::tuple<size_t, size_t, size_t> StaticMeshBase<D, ND>::count_ghost() const
+std::tuple<size_t, size_t, size_t> StaticMesh::count_ghost() const
 {
     size_t ngstface = 0;
     size_t ngstnode = 0;
@@ -216,9 +210,8 @@ std::tuple<size_t, size_t, size_t> StaticMeshBase<D, ND>::count_ghost() const
  * indices for ghost information should be carefully treated.  All the
  * ghost indices are negative in shared arrays.
  */
-template <typename D /* derived type */, uint8_t ND>
 /* NOLINTNEXTLINE(readability-function-cognitive-complexity) */
-void StaticMeshBase<D, ND>::fill_ghost()
+inline void StaticMesh::fill_ghost()
 {
     std::vector<int_type> gstndmap(nnode(), nnode());
 

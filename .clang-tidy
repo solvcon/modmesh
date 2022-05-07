@@ -2,6 +2,7 @@ Checks: >
     *,-clang-analyzer-alpha.*,-hicpp-*,
     -altera-*,
     -bugprone-macro-parentheses,
+    -bugprone-narrowing-conversions,-cppcoreguidelines-narrowing-conversions,
     -llvmlibc-*,
     -modernize-concat-nested-namespaces,
     -modernize-loop-convert,
