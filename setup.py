@@ -49,16 +49,16 @@ class cmake_build_ext(build_ext):
         local_cmake_args = '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={}'.format(
             str(extdir.absolute()))
 
-        subprocess.run(
-            'cmake {} {} {}'.format(cwd, local_cmake_args, self.cmake_args),
-            shell=True,
-            cwd=str(build_temp))
+        cmd = 'cmake {} {} {}'.format(cwd, local_cmake_args, self.cmake_args)
+        proc = subprocess.run(cmd, shell=True, cwd=str(build_temp))
+        if 0 != proc.returncode:
+            raise RuntimeError('{} return {}'.format(cmd, proc.returncode))
 
         target_name = ext.name.split('.')[-1]
-        subprocess.run(
-            'make {} {}'.format(target_name, self.make_args),
-            shell=True,
-            cwd=str(build_temp))
+        cmd = 'make {} {}'.format(target_name, self.make_args)
+        proc = subprocess.run(cmd, shell=True, cwd=str(build_temp))
+        if 0 != proc.returncode:
+            raise RuntimeError('{} return {}'.format(cmd, proc.returncode))
 
 
 def main():
