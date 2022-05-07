@@ -104,9 +104,12 @@ set(MODMESH_PY_DIR "${PROJECT_SOURCE_DIR}/modmesh")
 
 set(COMMON_COMPILER_OPTIONS -Werror -Wall -Wextra)
 
-add_subdirectory(src/pymod)
+add_subdirectory(src/python/wrapper/modmesh)
 if(BUILD_QT)
 add_subdirectory(src/viewer)
 endif()
+
+add_custom_target(flake8)
+flake8("flake8")
 
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

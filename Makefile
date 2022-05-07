@@ -25,6 +25,7 @@ MODMESH_PROFILE ?= OFF
 BUILD_QT ?= ON
 USE_CLANG_TIDY ?= OFF
 CMAKE_BUILD_TYPE ?= Release
+MAKE_PARALLEL ?= -j
 MODMESH_ROOT ?= $(shell pwd)
 CMAKE_INSTALL_PREFIX ?= $(MODMESH_ROOT)/build/fakeinstall
 CMAKE_LIBRARY_OUTPUT_DIRECTORY ?= $(MODMESH_ROOT)/modmesh
@@ -107,7 +108,7 @@ install: cmake
 	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) install
 
 $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix): $(BUILD_PATH)/Makefile
-	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) _modmesh_py
+	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) _modmesh_py $(MAKE_PARALLEL)
 	touch $@
 
 $(BUILD_PATH)/Makefile: CMakeLists.txt Makefile

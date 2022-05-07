@@ -31,8 +31,6 @@
 #include <pybind11/pybind11.h> // Must be the first include.
 #include <pybind11/attr.h>
 #include <pybind11/numpy.h>
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
 
 #include <atomic>
 

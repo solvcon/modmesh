@@ -2,10 +2,15 @@
 # BSD-style license; see COPYING
 
 cmake_minimum_required(VERSION 3.16)
-project(pymod)
+project(modmesh_pymod)
 
 set(MODMESH_PY_SOURCES
-    modmesh.cpp
+    module.cpp
+    wrap_profile.cpp
+    wrap_ConcreteBuffer.cpp
+    wrap_SimpleArray.cpp
+    wrap_StaticGrid.cpp
+    wrap_StaticMesh.cpp
 )
 pybind11_add_module(
     _modmesh
@@ -44,8 +49,5 @@ add_custom_target(_modmesh_py
 
 message(STATUS "CMAKE_INSTALL_INCLUDEDIR: ${CMAKE_INSTALL_INCLUDEDIR}")
 install(DIRECTORY ${MODMESH_INCLUDE_DIR}/modmesh DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-
-add_custom_target(flake8)
-flake8("flake8")
 
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

@@ -161,7 +161,8 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         # Test empty array ghost setting.
         with self.assertRaisesRegex(
-            IndexError, r"SimpleArray: cannot set nghost 1 > 0 to an empty array"
+            IndexError,
+            r"SimpleArray: cannot set nghost 1 > 0 to an empty array"
         ):
             empty_sarr = modmesh.SimpleArrayInt8(())
             empty_sarr.nghost = 1
