@@ -36,8 +36,7 @@ class StaticMeshTC(unittest.TestCase):
 
     def _check_shape(self, mh, ndim, nnode, nface, ncell,
                      nbound, ngstnode, ngstface, ngstcell):
-        self.assertEqual(ndim, mh.NDIM)
-
+        self.assertEqual(ndim, mh.ndim)
         self.assertEqual(nnode, mh.nnode)
         self.assertEqual(nface, mh.nface)
         self.assertEqual(ncell, mh.ncell)
@@ -72,7 +71,6 @@ class StaticMeshTC(unittest.TestCase):
     def test_construct(self):
         def _test(cls, ndim):
             mh = cls(nnode=0)
-            self.assertEqual(ndim, cls.NDIM)
             self._check_shape(mh, ndim=ndim, nnode=0, nface=0, ncell=0,
                               nbound=0, ngstnode=0, ngstface=0, ngstcell=0)
 

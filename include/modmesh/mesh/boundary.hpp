@@ -155,11 +155,11 @@ void StaticMeshBase<D, ND>::build_ghost()
     }
 
     // geometry arrays.
-    MM_DECL_GHOST_SWAP2(ndcrd, real_type, node, NDIM, 0)
-    MM_DECL_GHOST_SWAP2(fccnd, real_type, face, NDIM, 0)
-    MM_DECL_GHOST_SWAP2(fcnml, real_type, face, NDIM, 0)
+    MM_DECL_GHOST_SWAP2(ndcrd, real_type, node, m_ndim, 0)
+    MM_DECL_GHOST_SWAP2(fccnd, real_type, face, m_ndim, 0)
+    MM_DECL_GHOST_SWAP2(fcnml, real_type, face, m_ndim, 0)
     MM_DECL_GHOST_SWAP1(fcara, real_type, face, 0)
-    MM_DECL_GHOST_SWAP2(clcnd, real_type, cell, NDIM, 0)
+    MM_DECL_GHOST_SWAP2(clcnd, real_type, cell, m_ndim, 0)
     MM_DECL_GHOST_SWAP1(clvol, real_type, cell, 0)
     // meta arrays.
     MM_DECL_GHOST_SWAP1(fctpn, int_type, face, 0)
@@ -220,11 +220,6 @@ template <typename D /* derived type */, uint8_t ND>
 /* NOLINTNEXTLINE(readability-function-cognitive-complexity) */
 void StaticMeshBase<D, ND>::fill_ghost()
 {
-    // arrays.
-    std::array<std::array<real_type, NDIM>, FCMND + 2> cfd; // NOLINT(cppcoreguidelines-pro-type-member-init)
-    std::array<real_type, NDIM> crd; // NOLINT(cppcoreguidelines-pro-type-member-init)
-    std::array<std::array<real_type, NDIM>, FCMND> radvec; // NOLINT(cppcoreguidelines-pro-type-member-init)
-
     std::vector<int_type> gstndmap(nnode(), nnode());
 
     // create ghost entities and buil connectivities and by the way mirror node
@@ -264,11 +259,11 @@ void StaticMeshBase<D, ND>::fill_ghost()
                 // mirror coordinate of ghost cell.
                 // NOTE: fcnml always points outward.
                 real_type dist = 0.0;
-                for (size_t idm = 0; idm < NDIM; ++idm)
+                for (size_t idm = 0; idm < m_ndim; ++idm)
                 {
                     dist += (m_fccnd(ibfc, idm) - m_ndcrd(ind, idm)) * m_fcnml(ibfc, idm);
                 }
-                for (size_t idm = 0; idm < NDIM; ++idm)
+                for (size_t idm = 0; idm < m_ndim; ++idm)
                 {
                     m_ndcrd(igcl, idm) = m_ndcrd(icl, idm) + 2 * dist * m_fcnml(ibfc, idm);
                 }
@@ -317,7 +312,7 @@ void StaticMeshBase<D, ND>::fill_ghost()
     }
 
     // compute ghost face centroids.
-    if (NDIM == 2)
+    if (m_ndim == 2)
     {
         // 2D faces must be edge.
         for (int_type ifc = -1; ifc >= -static_cast<int_type>(ngstface()); --ifc)
@@ -335,8 +330,9 @@ void StaticMeshBase<D, ND>::fill_ghost()
             m_fccnd(ifc, 1) /= 2;
         }
     }
-    else if (NDIM == 3)
+    else if (m_ndim == 3)
     {
+        std::array<std::array<real_type, 3>, FCMND + 2> cfd; // NOLINT(cppcoreguidelines-pro-type-member-init)
         for (int_type ifc = -1; ifc >= -static_cast<int_type>(ngstface()); --ifc)
         {
             // find averaged point.
@@ -363,6 +359,7 @@ void StaticMeshBase<D, ND>::fill_ghost()
             real_type voc = 0.0;
             for (size_t inf = 1; inf <= nnd; ++inf)
             {
+                std::array<real_type, 3> crd; // NOLINT(cppcoreguidelines-pro-type-member-init)
                 crd[0] = (cfd[0][0] + cfd[inf][0] + cfd[inf + 1][0]) / 3;
                 crd[1] = (cfd[0][1] + cfd[inf][1] + cfd[inf + 1][1]) / 3;
                 crd[2] = (cfd[0][2] + cfd[inf][2] + cfd[inf + 1][2]) / 3;
@@ -388,7 +385,7 @@ void StaticMeshBase<D, ND>::fill_ghost()
     }
 
     // compute ghost face normal vector and area.
-    if (NDIM == 2)
+    if (m_ndim == 2)
     {
         for (int_type ifc = -1; ifc >= -static_cast<int_type>(ngstface()); --ifc)
         {
@@ -405,8 +402,9 @@ void StaticMeshBase<D, ND>::fill_ghost()
             m_fcnml(ifc, 1) /= m_fcara(ifc);
         }
     }
-    else if (NDIM == 3)
+    else if (m_ndim == 3)
     {
+        std::array<std::array<real_type, 3>, FCMND> radvec; // NOLINT(cppcoreguidelines-pro-type-member-init)
         for (int_type ifc = -1; ifc >= -static_cast<int_type>(ngstface()); --ifc)
         {
             // compute radial vector.
@@ -441,11 +439,12 @@ void StaticMeshBase<D, ND>::fill_ghost()
     }
 
     // compute cell centroids.
-    if (NDIM == 2)
+    if (m_ndim == 2)
     {
         for (int_type icl = -1; icl >= -static_cast<int_type>(ngstcell()); --icl)
         {
             // averaged point.
+            std::array<real_type, 2> crd{0.0, 0.0};
             crd[0] = crd[1] = 0.0;
             size_t const nnd = m_clnds(icl, 0);
             for (size_t inl = 1; inl <= nnd; ++inl)
@@ -476,12 +475,12 @@ void StaticMeshBase<D, ND>::fill_ghost()
             m_clcnd(icl, 1) /= voc;
         }
     }
-    else if (NDIM == 3)
+    else if (m_ndim == 3)
     {
         for (int_type icl = -1; icl >= -static_cast<int_type>(ngstcell()); --icl)
         {
             // averaged point.
-            crd[0] = crd[1] = crd[2] = 0.0;
+            std::array<real_type, 3> crd{0.0, 0.0, 0.0};
             size_t const nnd = m_clnds(icl, 0);
             for (size_t inl = 1; inl <= nnd; ++inl)
             {
@@ -533,7 +532,7 @@ void StaticMeshBase<D, ND>::fill_ghost()
             int_type const ifc = m_clfcs(icl, it);
             // calculate volume associated with each face.
             real_type vol = 0.0;
-            for (size_t idm = 0; idm < NDIM; ++idm)
+            for (size_t idm = 0; idm < m_ndim; ++idm)
             {
                 vol += (m_fccnd(ifc, idm) - m_clcnd(icl, idm)) * m_fcnml(ifc, idm);
             }
@@ -544,7 +543,7 @@ void StaticMeshBase<D, ND>::fill_ghost()
             {
                 if (m_fccls(ifc, 0) == icl)
                 {
-                    for (size_t idm = 0; idm < NDIM; ++idm)
+                    for (size_t idm = 0; idm < m_ndim; ++idm)
                     {
                         m_fcnml(ifc, idm) = -m_fcnml(ifc, idm);
                     }
@@ -555,7 +554,7 @@ void StaticMeshBase<D, ND>::fill_ghost()
             m_clvol(icl) += vol;
         }
         // calculate the real volume.
-        m_clvol(icl) /= NDIM;
+        m_clvol(icl) /= m_ndim;
     }
 }
 

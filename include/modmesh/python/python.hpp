@@ -549,7 +549,7 @@ public:
 
     using int_type = typename wrapped_type::int_type;
     using uint_type = typename wrapped_type::uint_type;
-    using serial_type = typename wrapped_type::serial_type;
+    using serial_type = typename wrapped_type::size_type;
     using real_type = typename wrapped_type::real_type;
 
     friend typename base_type::root_base_type;
@@ -578,7 +578,6 @@ protected:
 
         // clang-format off
         (*this)
-            MM_DECL_STATIC(NDIM)
             MM_DECL_STATIC(FCMND)
             MM_DECL_STATIC(CLMND)
             MM_DECL_STATIC(CLMFC)
@@ -590,6 +589,7 @@ protected:
 #undef MM_DECL_STATIC
 
         (*this)
+            .def_property_readonly("ndim", &wrapped_type::ndim)
             .def_property_readonly("nnode", &wrapped_type::nnode)
             .def_property_readonly("nface", &wrapped_type::nface)
             .def_property_readonly("ncell", &wrapped_type::ncell)
