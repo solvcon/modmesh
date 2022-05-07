@@ -29,7 +29,7 @@
  */
 
 /**
- * Unstructured mesh.
+ * The interface master header file for the unstructured mesh.
  */
 
 #include <modmesh/mesh/StaticMesh.hpp>

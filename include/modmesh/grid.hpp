@@ -34,7 +34,7 @@
 
 #include <modmesh/base.hpp>
 #include <modmesh/profile.hpp>
-#include <modmesh/SimpleArray.hpp>
+#include <modmesh/buffer/buffer.hpp>
 
 namespace modmesh
 {

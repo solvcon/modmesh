@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,14 +29,11 @@
  */
 
 /**
- * \file This is a template library for the meshes for numerical calculations
- * of partial differential equations.
+ * The interface master header file for the memory buffer.
  */
 
-#include <modmesh/base.hpp>
-#include <modmesh/profile.hpp>
-#include <modmesh/buffer/buffer.hpp>
-#include <modmesh/grid.hpp>
-#include <modmesh/mesh/mesh.hpp>
+#include <modmesh/buffer/small_vector.hpp>
+#include <modmesh/buffer/ConcreteBuffer.hpp>
+#include <modmesh/buffer/SimpleArray.hpp>
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
