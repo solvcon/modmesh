@@ -30,38 +30,31 @@
 
 #include <modmesh/view/base.hpp> // Must be the first include.
 
-#include <modmesh/view/RPythonText.hpp>
-#include <modmesh/view/R3DWidget.hpp>
+#include <modmesh/view/RMainWindow.hpp>
 
 #include <Qt>
-#include <QMainWindow>
+#include <QApplication>
 
 namespace modmesh
 {
 
-class RMainWindow
-    : public QMainWindow
+class RApplication
+    : public QApplication
 {
 
 public:
 
-    RMainWindow()
-        : QMainWindow()
-    {
-        setUp();
-    }
+    RApplication(int & argc, char ** argv);
 
-    RPythonText * pytext() { return m_pytext; }
-    R3DWidget * viewer() { return m_viewer; }
+    RMainWindow * main() { return m_main; }
+
+    static RApplication * instance() { return dynamic_cast<RApplication *>(QApplication::instance()); }
 
 private:
 
-    void setUp();
+    RMainWindow * m_main = nullptr;
 
-    RPythonText * m_pytext = nullptr;
-    R3DWidget * m_viewer = nullptr;
-
-}; /* end class RPythonText */
+}; /* end class RApplication */
 
 } /* end namespace modmesh */
 

@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -29,39 +27,26 @@
  */
 
 #include <modmesh/view/base.hpp> // Must be the first include.
+#include <modmesh/view/RApplication.hpp>
 
-#include <modmesh/view/RPythonText.hpp>
-#include <modmesh/view/R3DWidget.hpp>
-
-#include <Qt>
-#include <QMainWindow>
+#include <modmesh/view/RMainWindow.hpp>
 
 namespace modmesh
 {
 
-class RMainWindow
-    : public QMainWindow
+RApplication::RApplication(int & argc, char ** argv)
+    : QApplication(argc, argv)
+    , m_main(new RMainWindow)
 {
+    /* TODO: parse arguments */
 
-public:
+    // Setup Python interpreter.
+    python::Interpreter::instance().preload_modules({"_modmesh_view", "modmesh"});
+    pybind11::exec("modmesh.view = _modmesh_view");
 
-    RMainWindow()
-        : QMainWindow()
-    {
-        setUp();
-    }
-
-    RPythonText * pytext() { return m_pytext; }
-    R3DWidget * viewer() { return m_viewer; }
-
-private:
-
-    void setUp();
-
-    RPythonText * m_pytext = nullptr;
-    R3DWidget * m_viewer = nullptr;
-
-}; /* end class RPythonText */
+    // Show main window.
+    m_main->show();
+}
 
 } /* end namespace modmesh */
 

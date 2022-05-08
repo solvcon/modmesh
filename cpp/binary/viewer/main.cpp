@@ -29,8 +29,7 @@
 #include <modmesh/python/wrapper/view/view.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>
 
-#include <modmesh/view/RStaticMesh.hpp>
-#include <modmesh/view/RMainWindow.hpp>
+#include <modmesh/view/view.hpp>
 
 int main(int argc, char ** argv)
 {

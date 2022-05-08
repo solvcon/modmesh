@@ -45,20 +45,6 @@ void RMainWindow::setUp()
     setCentralWidget(m_viewer);
 }
 
-RApplication::RApplication(int & argc, char ** argv)
-    : QApplication(argc, argv)
-    , m_main(new RMainWindow)
-{
-    /* TODO: parse arguments */
-
-    // Setup Python interpreter.
-    python::Interpreter::instance().preload_modules({"_modmesh_view", "modmesh"});
-    pybind11::exec("modmesh.view = _modmesh_view");
-
-    // Show main window.
-    m_main->show();
-}
-
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

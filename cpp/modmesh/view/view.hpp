@@ -30,38 +30,14 @@
 
 #include <modmesh/view/base.hpp> // Must be the first include.
 
-#include <modmesh/view/RPythonText.hpp>
 #include <modmesh/view/R3DWidget.hpp>
-
-#include <Qt>
-#include <QMainWindow>
+#include <modmesh/view/RApplication.hpp>
+#include <modmesh/view/RMainWindow.hpp>
+#include <modmesh/view/RPythonText.hpp>
+#include <modmesh/view/RStaticMesh.hpp>
 
 namespace modmesh
 {
-
-class RMainWindow
-    : public QMainWindow
-{
-
-public:
-
-    RMainWindow()
-        : QMainWindow()
-    {
-        setUp();
-    }
-
-    RPythonText * pytext() { return m_pytext; }
-    R3DWidget * viewer() { return m_viewer; }
-
-private:
-
-    void setUp();
-
-    RPythonText * m_pytext = nullptr;
-    R3DWidget * m_viewer = nullptr;
-
-}; /* end class RPythonText */
 
 } /* end namespace modmesh */
 

@@ -28,9 +28,7 @@
 
 #include <modmesh/python/wrapper/view/view.hpp> // Must be the first include.
 
-#include <modmesh/view/RMainWindow.hpp>
-#include <modmesh/view/RStaticMesh.hpp>
-#include <modmesh/view/R3DWidget.hpp>
+#include <modmesh/view/view.hpp>
 
 namespace modmesh
 {
