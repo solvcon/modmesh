@@ -75,15 +75,20 @@ set(MODMESH_HEADERS
     include/modmesh/profile.hpp
     include/modmesh/grid.hpp
     include/modmesh/mesh.hpp
-    include/modmesh/mesh/StaticMesh_decl.hpp
-    include/modmesh/mesh/boundary.hpp
-    include/modmesh/mesh/interior.hpp
+    include/modmesh/mesh/StaticMesh.hpp
     include/modmesh/small_vector.hpp
     include/modmesh/ConcreteBuffer.hpp
     include/modmesh/SimpleArray.hpp
 )
 string(REPLACE "include/" "${CMAKE_CURRENT_SOURCE_DIR}/include/"
        MODMESH_HEADERS "${MODMESH_HEADERS}")
+
+set(MODMESH_SOURCES
+    src/modmesh/mesh/StaticMesh_interior.cpp
+    src/modmesh/mesh/StaticMesh_boundary.cpp
+)
+string(REPLACE "src/" "${CMAKE_CURRENT_SOURCE_DIR}/src/"
+       MODMESH_SOURCES "${MODMESH_SOURCES}")
 
 set(MODMESH_PY_HEADERS
     include/modmesh/python/python.hpp

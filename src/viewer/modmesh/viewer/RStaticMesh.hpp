@@ -56,19 +56,16 @@ class RStaticMesh
 
 public:
 
-    template <uint8_t ND>
-    RStaticMesh(std::shared_ptr<StaticMesh<ND>> const & static_mesh, Qt3DCore::QNode * parent = nullptr);
+    RStaticMesh(std::shared_ptr<StaticMesh> const & static_mesh, Qt3DCore::QNode * parent = nullptr);
 
-    template <uint8_t ND>
-    void update_geometry(StaticMesh<ND> const & mh)
+    void update_geometry(StaticMesh const & mh)
     {
         update_geometry_impl(mh, m_geometry);
     }
 
 private:
 
-    template <uint8_t ND>
-    static void update_geometry_impl(StaticMesh<ND> const & mh, Qt3DCore::QGeometry * geom);
+    static void update_geometry_impl(StaticMesh const & mh, Qt3DCore::QGeometry * geom);
 
     Qt3DCore::QGeometry * m_geometry = nullptr;
     Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
@@ -76,8 +73,7 @@ private:
 
 }; /* end class RStaticMesh */
 
-template <uint8_t ND>
-RStaticMesh::RStaticMesh(std::shared_ptr<StaticMesh<ND>> const & static_mesh, Qt3DCore::QNode * parent)
+inline RStaticMesh::RStaticMesh(std::shared_ptr<StaticMesh> const & static_mesh, Qt3DCore::QNode * parent)
     : Qt3DCore::QEntity(parent)
     , m_geometry(new Qt3DCore::QGeometry(this))
     , m_renderer(new Qt3DRender::QGeometryRenderer())
@@ -90,8 +86,7 @@ RStaticMesh::RStaticMesh(std::shared_ptr<StaticMesh<ND>> const & static_mesh, Qt
     addComponent(m_material);
 }
 
-template <uint8_t ND>
-void RStaticMesh::update_geometry_impl(StaticMesh<ND> const & mh, Qt3DCore::QGeometry * geom)
+inline void RStaticMesh::update_geometry_impl(StaticMesh const & mh, Qt3DCore::QGeometry * geom)
 {
     auto * buf = new Qt3DCore::QBuffer(geom);
     {
@@ -102,7 +97,7 @@ void RStaticMesh::update_geometry_impl(StaticMesh<ND> const & mh, Qt3DCore::QGeo
         {
             *ptr++ = mh.ndcrd(ind, 0);
             *ptr++ = mh.ndcrd(ind, 1);
-            *ptr++ = (3 == ND) ? mh.ndcrd(ind, 2) : 0;
+            *ptr++ = (3 == mh.ndim()) ? mh.ndcrd(ind, 2) : 0;
         }
         buf->setData(barray);
     }

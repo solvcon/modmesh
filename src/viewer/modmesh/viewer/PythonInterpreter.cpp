@@ -205,8 +205,7 @@ class
 namespace detail
 {
 
-template <uint8_t ND>
-static void update_appmesh(std::shared_ptr<StaticMesh<ND>> const & mesh)
+static void update_appmesh(std::shared_ptr<StaticMesh> const & mesh)
 {
     RScene * scene = RApplication::instance()->main()->viewer()->scene();
     for (Qt3DCore::QNode * child : scene->childNodes())
@@ -232,8 +231,7 @@ PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
     namespace py = pybind11;
 
     mod
-        .def("show", &modmesh::python::detail::update_appmesh<2>, py::arg("mesh"))
-        .def("show", &modmesh::python::detail::update_appmesh<3>, py::arg("mesh"))
+        .def("show", &modmesh::python::detail::update_appmesh, py::arg("mesh"))
         //
         ;
 

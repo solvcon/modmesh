@@ -4,13 +4,14 @@
 cmake_minimum_required(VERSION 3.16)
 project(pymod)
 
-set(MODMESH_SOURCES
+set(MODMESH_PY_SOURCES
     modmesh.cpp
 )
 pybind11_add_module(
     _modmesh
     ${MODMESH_SOURCES}
     ${MODMESH_HEADERS}
+    ${MODMESH_PY_SOURCES}
     ${MODMESH_PY_HEADERS}
 )
 if(HIDE_SYMBOL)

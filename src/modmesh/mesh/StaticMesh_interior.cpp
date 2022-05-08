@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (c) 2021, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -28,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/mesh/StaticMesh_decl.hpp>
+#include <modmesh/mesh/StaticMesh.hpp>
 
 namespace modmesh
 {
@@ -551,8 +549,7 @@ struct FaceBuilder
  * Extract interier faces from node list of cells.  Subroutine is designed to
  * handle all types of cells.
  */
-template < typename D /* derived type */, uint8_t ND >
-void StaticMeshBase<D, ND>::build_faces_from_cells()
+void StaticMesh::build_faces_from_cells()
 {
     detail::FaceBuilder<number_base> fb(m_nnode, m_cltpn, m_clnds);
     m_nface = fb.nface;
@@ -561,8 +558,8 @@ void StaticMeshBase<D, ND>::build_faces_from_cells()
     fb.rebuild_fctpn(m_fctpn);
     fb.rebuild_fcnds(m_fcnds);
     fb.rebuild_fccls(m_fccls);
-    m_fccnd.remake(small_vector<size_t>{nface(), ND}, 0);
-    m_fcnml.remake(small_vector<size_t>{nface(), ND}, 0);
+    m_fccnd.remake(small_vector<size_t>{nface(), m_ndim}, 0);
+    m_fcnml.remake(small_vector<size_t>{nface(), m_ndim}, 0);
     m_fcara.remake(small_vector<size_t>{nface()}, 0);
     std::copy(fb.clfcs.vptr(0, 0), fb.clfcs.vptr(m_ncell, 0), m_clfcs.vptr(0, 0));
 }
@@ -577,12 +574,11 @@ void StaticMeshBase<D, ND>::build_faces_from_cells()
  *
  * And fcnds could be reordered.
  */
-template < typename D /* derived type */, uint8_t ND >
 /* NOLINTNEXTLINE(readability-function-cognitive-complexity) */
-void StaticMeshBase<D, ND>::calc_metric()
+void StaticMesh::calc_metric()
 {
     // compute face centroids.
-    if (NDIM == 2)
+    if (m_ndim == 2)
     {
         // 2D faces must be edge.
         for (size_t ifc = 0 ; ifc < m_nface ; ++ifc)
@@ -604,12 +600,12 @@ void StaticMeshBase<D, ND>::calc_metric()
             m_fccnd(ifc, 1) /= 2;
         }
     }
-    else if (NDIM == 3)
+    else if (m_ndim == 3)
     {
         for (size_t ifc = 0 ; ifc < nface() ; ++ifc)
         {
-            std::array<real_type, NDIM> crd; // NOLINT(cppcoreguidelines-pro-type-member-init)
-            std::array<std::array<real_type, NDIM>, FCMND+2> cfd; // NOLINT(cppcoreguidelines-pro-type-member-init)
+            std::array<real_type, 3> crd; // NOLINT(cppcoreguidelines-pro-type-member-init)
+            std::array<std::array<real_type, 3>, FCMND+2> cfd; // NOLINT(cppcoreguidelines-pro-type-member-init)
             // find averaged point.
             cfd[0][0] = cfd[0][1] = cfd[0][2] = 0.0;
             size_t const nnd = m_fcnds(ifc, 0);
@@ -659,7 +655,7 @@ void StaticMeshBase<D, ND>::calc_metric()
     }
 
     // compute face normal vector and area.
-    if (NDIM == 2)
+    if (m_ndim == 2)
     {
         for (size_t ifc = 0 ; ifc < nface() ; ++ifc)
         {
@@ -676,12 +672,12 @@ void StaticMeshBase<D, ND>::calc_metric()
             m_fcnml(ifc, 1) /= m_fcara(ifc);
         }
     }
-    else if (NDIM == 3)
+    else if (m_ndim == 3)
     {
         for (size_t ifc = 0 ; ifc < nface() ; ++ifc)
         {
             // compute radial vector.
-            std::array<std::array<real_type, NDIM>, FCMND> radvec; // NOLINT(cppcoreguidelines-pro-type-member-init)
+            std::array<std::array<real_type, 3>, FCMND> radvec; // NOLINT(cppcoreguidelines-pro-type-member-init)
             size_t const nnd = m_fcnds(ifc, 0);
             for (size_t inf = 0 ; inf < nnd ; ++inf)
             {
@@ -723,7 +719,7 @@ void StaticMeshBase<D, ND>::calc_metric()
     }
 
     // compute cell centers.
-    if (NDIM == 2)
+    if (m_ndim == 2)
     {
         for (size_t icl = 0 ; icl < ncell() ; ++icl)
         {
@@ -757,7 +753,7 @@ void StaticMeshBase<D, ND>::calc_metric()
             else // centroids.
             {
                 // averaged point.
-                std::array<real_type, NDIM> crd; // NOLINT(cppcoreguidelines-pro-type-member-init)
+                std::array<real_type, 2> crd; // NOLINT(cppcoreguidelines-pro-type-member-init)
                 crd[0] = crd[1] = 0.0;
                 size_t const nnd = m_clnds(icl, 0);
                 for (size_t inc = 1 ; inc <= nnd ; ++inc)
@@ -789,7 +785,7 @@ void StaticMeshBase<D, ND>::calc_metric()
             }
         }
     }
-    else if (NDIM == 3)
+    else if (m_ndim == 3)
     {
         for (size_t icl = 0 ; icl < ncell() ; ++icl)
         {
@@ -835,7 +831,7 @@ void StaticMeshBase<D, ND>::calc_metric()
             else // centroids.
             {
                 // averaged point.
-                std::array<real_type, NDIM> crd; // NOLINT(cppcoreguidelines-pro-type-member-init)
+                std::array<real_type, 3> crd; // NOLINT(cppcoreguidelines-pro-type-member-init)
                 crd[0] = crd[1] = crd[2] = 0.0;
                 size_t const nnd = m_clnds(icl, 0);
                 for (size_t inc = 1 ; inc <= nnd ; ++inc)
@@ -887,7 +883,7 @@ void StaticMeshBase<D, ND>::calc_metric()
         {
             m_fcnds(ifc, jt+1) = ndstf[jt];
         }
-        for (size_t idm = 0 ; idm < NDIM ; ++idm)
+        for (size_t idm = 0 ; idm < m_ndim ; ++idm)
         {
             m_fcnml(ifc, idm) = -m_fcnml(ifc, idm);
         }
@@ -901,7 +897,7 @@ void StaticMeshBase<D, ND>::calc_metric()
             int_type const ifc = m_clfcs(icl, it);
             // calculate volume associated with each face.
             real_type vol = 0.0;
-            for (size_t idm = 0 ; idm < NDIM ; ++idm)
+            for (size_t idm = 0 ; idm < m_ndim ; ++idm)
             {
                 vol += (m_fccnd(ifc, idm) - m_clcnd(icl, idm)) * m_fcnml(ifc, idm);
             }
@@ -922,7 +918,7 @@ void StaticMeshBase<D, ND>::calc_metric()
             m_clvol(icl) += vol;
         }
         // calculate the real volume.
-        m_clvol(icl) /= NDIM;
+        m_clvol(icl) /= m_ndim;
     }
 }
 

@@ -32,6 +32,7 @@
 #include <cstdint>
 
 // Shared by all code.
+#include <cassert>
 #include <algorithm>
 #include <memory>
 #include <iostream>

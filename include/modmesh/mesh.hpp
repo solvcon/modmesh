@@ -32,8 +32,6 @@
  * Unstructured mesh.
  */
 
-#include <modmesh/mesh/StaticMesh_decl.hpp>
-#include <modmesh/mesh/boundary.hpp>
-#include <modmesh/mesh/interior.hpp>
+#include <modmesh/mesh/StaticMesh.hpp>
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

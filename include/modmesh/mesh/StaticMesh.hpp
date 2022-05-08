@@ -241,11 +241,10 @@ public:
 
 }; /* end class StaticMeshBC */
 
-template <typename D /* derived type */, uint8_t ND>
-class StaticMeshBase
-    : public SpaceBase<ND, int32_t, double>
+class StaticMesh
+    : public NumberBase<int32_t, double>
     , public StaticMeshConstant
-    , public std::enable_shared_from_this<D>
+    , public std::enable_shared_from_this<StaticMesh>
 {
 
 private:
@@ -256,34 +255,28 @@ private:
 
 public:
 
-    using space_base = SpaceBase<ND, int32_t, double>;
-    using number_base = typename space_base::number_base;
-    using int_type = typename space_base::int_type;
-    using uint_type = typename space_base::uint_type;
-    using real_type = typename space_base::real_type;
-
-    static constexpr const auto NDIM = space_base::NDIM;
+    using number_base = NumberBase<int32_t, double>;
+    using int_type = typename number_base::int_type;
+    using uint_type = typename number_base::uint_type;
+    using real_type = typename number_base::real_type;
 
     template <typename... Args>
-    static std::shared_ptr<D> construct(Args &&... args)
+    static std::shared_ptr<StaticMesh> construct(Args &&... args)
     {
-        return std::make_shared<D>(std::forward<Args>(args)..., ctor_passkey());
+        return std::make_shared<StaticMesh>(std::forward<Args>(args)..., ctor_passkey());
     }
 
     /* NOLINTNEXTLINE(bugprone-easily-swappable-parameters) */
-    StaticMeshBase(uint_type nnode, uint_type nface, uint_type ncell, ctor_passkey const &)
-        : m_nnode(nnode)
+    StaticMesh(uint8_t ndim, uint_type nnode, uint_type nface, uint_type ncell, ctor_passkey const &)
+        : m_ndim(ndim)
+        , m_nnode(nnode)
         , m_nface(nface)
         , m_ncell(ncell)
-        , m_nbound(0)
-        , m_ngstnode(0)
-        , m_ngstface(0)
-        , m_ngstcell(0)
-        , m_ndcrd(std::vector<size_t>{nnode, NDIM}, 0)
-        , m_fccnd(std::vector<size_t>{nface, NDIM}, 0)
-        , m_fcnml(std::vector<size_t>{nface, NDIM}, 0)
+        , m_ndcrd(std::vector<size_t>{nnode, m_ndim}, 0)
+        , m_fccnd(std::vector<size_t>{nface, m_ndim}, 0)
+        , m_fcnml(std::vector<size_t>{nface, m_ndim}, 0)
         , m_fcara(std::vector<size_t>{nface}, 0)
-        , m_clcnd(std::vector<size_t>{ncell, NDIM}, 0)
+        , m_clcnd(std::vector<size_t>{ncell, m_ndim}, 0)
         , m_clvol(std::vector<size_t>{ncell}, 0)
         , m_fctpn(std::vector<size_t>{nface})
         , m_cltpn(std::vector<size_t>{ncell})
@@ -295,15 +288,16 @@ public:
         , m_bndfcs(std::vector<size_t>{0, StaticMeshBC::BFREL})
     {
     }
-    StaticMeshBase() = delete;
-    StaticMeshBase(StaticMeshBase const &) = delete;
-    StaticMeshBase(StaticMeshBase &&) = delete;
-    StaticMeshBase & operator=(StaticMeshBase const &) = delete;
-    StaticMeshBase & operator=(StaticMeshBase &&) = delete;
-    ~StaticMeshBase() = default;
+    StaticMesh() = delete;
+    StaticMesh(StaticMesh const &) = delete;
+    StaticMesh(StaticMesh &&) = delete;
+    StaticMesh & operator=(StaticMesh const &) = delete;
+    StaticMesh & operator=(StaticMesh &&) = delete;
+    ~StaticMesh() = default;
 
 public:
 
+    uint8_t ndim() const { return m_ndim; }
     uint_type nnode() const { return m_nnode; }
     uint_type nface() const { return m_nface; }
     uint_type ncell() const { return m_ncell; }
@@ -364,6 +358,7 @@ private:
     // Shape data.
 private:
 
+    uint8_t m_ndim = 0;
     uint_type m_nnode = 0; ///< Number of nodes (interior).
     uint_type m_nface = 0; ///< Number of faces (interior).
     uint_type m_ncell = 0; ///< Number of cells (interior).
@@ -409,17 +404,7 @@ private:                                                                \
 
 #undef MM_DECL_StaticMesh_ARRAY
 
-}; /* end class StaticMeshBase */
-
-template <uint8_t ND>
-class StaticMesh
-    : public StaticMeshBase<StaticMesh<ND>, ND>
-{
-    using StaticMeshBase<StaticMesh<ND>, ND>::StaticMeshBase;
 }; /* end class StaticMesh */
-
-using StaticMesh2d = StaticMesh<2>;
-using StaticMesh3d = StaticMesh<3>;
 
 } /* end namespace modmesh */
 

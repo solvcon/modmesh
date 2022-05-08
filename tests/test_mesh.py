@@ -36,8 +36,7 @@ class StaticMeshTC(unittest.TestCase):
 
     def _check_shape(self, mh, ndim, nnode, nface, ncell,
                      nbound, ngstnode, ngstface, ngstcell):
-        self.assertEqual(ndim, mh.NDIM)
-
+        self.assertEqual(ndim, mh.ndim)
         self.assertEqual(nnode, mh.nnode)
         self.assertEqual(nface, mh.nface)
         self.assertEqual(ncell, mh.ncell)
@@ -71,18 +70,17 @@ class StaticMeshTC(unittest.TestCase):
 
     def test_construct(self):
         def _test(cls, ndim):
-            mh = cls(nnode=0)
-            self.assertEqual(ndim, cls.NDIM)
+            mh = cls(ndim=ndim, nnode=0)
             self._check_shape(mh, ndim=ndim, nnode=0, nface=0, ncell=0,
                               nbound=0, ngstnode=0, ngstface=0, ngstcell=0)
 
-        _test(modmesh.StaticMesh2d, ndim=2)
-        _test(modmesh.StaticMesh3d, ndim=3)
+        _test(modmesh.StaticMesh, ndim=2)
+        _test(modmesh.StaticMesh, ndim=3)
 
     def test_2d_trivial_triangles(self):
-        mh = modmesh.StaticMesh2d(nnode=4, nface=0, ncell=3)
+        mh = modmesh.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
         mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
-        mh.cltpn.ndarray[:] = modmesh.StaticMesh2d.TRIANGLE
+        mh.cltpn.ndarray[:] = modmesh.StaticMesh.TRIANGLE
         mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
 
         self._check_shape(mh, ndim=2, nnode=4, nface=0, ncell=3,
@@ -131,9 +129,9 @@ class StaticMeshTC(unittest.TestCase):
                           nbound=3, ngstnode=3, ngstface=6, ngstcell=3)
 
     def test_3d_single_tetrahedron(self):
-        mh = modmesh.StaticMesh3d(nnode=4, nface=4, ncell=1)
+        mh = modmesh.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
         mh.ndcrd.ndarray[:, :] = (0, 0, 0), (0, 1, 0), (-1, 1, 0), (0, 1, 1)
-        mh.cltpn.ndarray[:] = modmesh.StaticMesh3d.TETRAHEDRON
+        mh.cltpn.ndarray[:] = modmesh.StaticMesh.TETRAHEDRON
         mh.clnds.ndarray[:, :5] = [(4, 0, 1, 2, 3)]
 
         self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,

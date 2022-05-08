@@ -56,8 +56,7 @@ __all__ = [
     'StaticGrid1d',
     'StaticGrid2d',
     'StaticGrid3d',
-    'StaticMesh2d',
-    'StaticMesh3d',
+    'StaticMesh',
 ]
 
 
@@ -88,8 +87,7 @@ from ._modmesh import (
     StaticGrid1d,
     StaticGrid2d,
     StaticGrid3d,
-    StaticMesh2d,
-    StaticMesh3d,
+    StaticMesh,
 )
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
