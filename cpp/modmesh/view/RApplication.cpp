@@ -26,8 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/base.hpp> // Must be the first include.
-#include <modmesh/view/RApplication.hpp>
+#include <modmesh/view/RApplication.hpp> // Must be the first include.
 
 #include <modmesh/view/RMainWindow.hpp>
 

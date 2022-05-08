@@ -29,6 +29,9 @@
  */
 
 // Shared by all code.
+
+// FIXME: The C++ library should not depend on Python; move the Python
+// dependency outside.
 #include <modmesh/python/python.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>
 

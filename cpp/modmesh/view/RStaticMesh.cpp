@@ -26,10 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/base.hpp> // Must be the first include.
-#include <modmesh/view/RStaticMesh.hpp>
-
-#include <pybind11/embed.h>
+#include <modmesh/view/RStaticMesh.hpp> // Must be the first include.
 
 namespace modmesh
 {

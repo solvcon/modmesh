@@ -26,8 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/base.hpp> // Must be the first include.
-#include <modmesh/view/R3DWidget.hpp>
+#include <modmesh/view/R3DWidget.hpp> // Must be the first include.
 
 namespace modmesh
 {
