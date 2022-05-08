@@ -4,19 +4,12 @@
 cmake_minimum_required(VERSION 3.16)
 project(modmesh_pymod)
 
-set(MODMESH_PY_SOURCES
-    module.cpp
-    wrap_profile.cpp
-    wrap_ConcreteBuffer.cpp
-    wrap_SimpleArray.cpp
-    wrap_StaticGrid.cpp
-    wrap_StaticMesh.cpp
-)
 pybind11_add_module(
     _modmesh
-    ${MODMESH_SOURCES}
+    module.cpp
+    ${MODMESH_PYMOD_MODMESH_SOURCES}
     ${MODMESH_HEADERS}
-    ${MODMESH_PY_SOURCES}
+    ${MODMESH_SOURCES}
     ${MODMESH_PY_HEADERS}
 )
 if(HIDE_SYMBOL)

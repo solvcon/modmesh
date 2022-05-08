@@ -26,11 +26,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/viewer/base.hpp> // Must be the first include.
+#include <modmesh/view/base.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>
 
-#include <modmesh/viewer/RStaticMesh.hpp>
-#include <modmesh/viewer/RMainWindow.hpp>
+#include <modmesh/view/RStaticMesh.hpp>
+#include <modmesh/view/RMainWindow.hpp>
 
 int main(int argc, char ** argv)
 {

@@ -26,8 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/viewer/base.hpp> // Must be the first include.
-#include <modmesh/viewer/RPythonText.hpp>
+#include <modmesh/view/base.hpp> // Must be the first include.
+#include <modmesh/view/RPythonText.hpp>
 
 #include <pybind11/embed.h>
 

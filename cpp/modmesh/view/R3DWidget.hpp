@@ -28,35 +28,85 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/viewer/base.hpp> // Must be the first include.
+#include <modmesh/view/base.hpp> // Must be the first include.
 
-#include <pybind11/embed.h>
+#include <Qt>
+#include <QWidget>
+#include <Qt3DWindow>
+
+#include <Qt3DCore/QEntity>
+#include <Qt3DRender/QCamera>
+
+#include <QOrbitCameraController>
+
+#include <QResizeEvent>
 
 namespace modmesh
 {
 
-class PythonInterpreter
+class RCameraController
+    : public Qt3DExtras::QOrbitCameraController
+{
+    using Qt3DExtras::QOrbitCameraController::QOrbitCameraController;
+}; /* end class RCameraController */
+
+class RScene
+    : public Qt3DCore::QEntity
 {
 
 public:
 
-    static PythonInterpreter & instance();
+    RScene(Qt3DCore::QNode * parent = nullptr)
+        : Qt3DCore::QEntity(parent)
+        , m_controller(new RCameraController(this))
+    {
+    }
 
-    PythonInterpreter(PythonInterpreter const &) = delete;
-    PythonInterpreter(PythonInterpreter &&) = delete;
-    PythonInterpreter & operator=(PythonInterpreter const &) = delete;
-    PythonInterpreter & operator=(PythonInterpreter &&) = delete;
-    ~PythonInterpreter();
+    RCameraController const * controller() const { return m_controller; }
+    RCameraController * controller() { return m_controller; }
 
 private:
 
-    PythonInterpreter();
+    RCameraController * m_controller = nullptr;
 
-    void load_modules();
+}; /* end class RScene */
 
-    pybind11::scoped_interpreter * m_interpreter = nullptr;
+class R3DWidget
+    : public QWidget
+{
 
-}; /* end class PythonInterpreter */
+public:
+
+    R3DWidget(
+        Qt3DExtras::Qt3DWindow * window = nullptr,
+        RScene * scene = nullptr,
+        QWidget * parent = nullptr,
+        Qt::WindowFlags f = Qt::WindowFlags());
+
+    template <typename... Args>
+    void resize(Args &&... args);
+
+    void resizeEvent(QResizeEvent * event);
+
+    Qt3DExtras::Qt3DWindow * view() { return m_view; }
+    RScene * scene() { return m_scene; }
+    Qt3DRender::QCamera * camera() { return m_view->camera(); }
+
+private:
+
+    Qt3DExtras::Qt3DWindow * m_view = nullptr;
+    RScene * m_scene = nullptr;
+    QWidget * m_container = nullptr;
+
+}; /* end class R3DWidget */
+
+template <typename... Args>
+void R3DWidget::resize(Args &&... args)
+{
+    QWidget::resize(std::forward<Args>(args)...);
+    m_view->resize(std::forward<Args>(args)...);
+    m_container->resize(std::forward<Args>(args)...);
+}
 
 } /* end namespace modmesh */
 

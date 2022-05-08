@@ -28,12 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/viewer/base.hpp> // Must be the first include.
+#include <modmesh/view/base.hpp> // Must be the first include.
 
 #include <pybind11/embed.h>
 
-#include <modmesh/viewer/RPythonText.hpp>
-#include <modmesh/viewer/R3DWidget.hpp>
+#include <modmesh/view/RPythonText.hpp>
+#include <modmesh/view/R3DWidget.hpp>
 
 #include <Qt>
 #include <QApplication>

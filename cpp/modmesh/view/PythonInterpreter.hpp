@@ -28,85 +28,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/viewer/base.hpp> // Must be the first include.
+#include <modmesh/view/base.hpp> // Must be the first include.
 
-#include <Qt>
-#include <QWidget>
-#include <Qt3DWindow>
-
-#include <Qt3DCore/QEntity>
-#include <Qt3DRender/QCamera>
-
-#include <QOrbitCameraController>
-
-#include <QResizeEvent>
+#include <pybind11/embed.h>
 
 namespace modmesh
 {
 
-class RCameraController
-    : public Qt3DExtras::QOrbitCameraController
-{
-    using Qt3DExtras::QOrbitCameraController::QOrbitCameraController;
-}; /* end class RCameraController */
-
-class RScene
-    : public Qt3DCore::QEntity
+class PythonInterpreter
 {
 
 public:
 
-    RScene(Qt3DCore::QNode * parent = nullptr)
-        : Qt3DCore::QEntity(parent)
-        , m_controller(new RCameraController(this))
-    {
-    }
+    static PythonInterpreter & instance();
 
-    RCameraController const * controller() const { return m_controller; }
-    RCameraController * controller() { return m_controller; }
-
-private:
-
-    RCameraController * m_controller = nullptr;
-
-}; /* end class RScene */
-
-class R3DWidget
-    : public QWidget
-{
-
-public:
-
-    R3DWidget(
-        Qt3DExtras::Qt3DWindow * window = nullptr,
-        RScene * scene = nullptr,
-        QWidget * parent = nullptr,
-        Qt::WindowFlags f = Qt::WindowFlags());
-
-    template <typename... Args>
-    void resize(Args &&... args);
-
-    void resizeEvent(QResizeEvent * event);
-
-    Qt3DExtras::Qt3DWindow * view() { return m_view; }
-    RScene * scene() { return m_scene; }
-    Qt3DRender::QCamera * camera() { return m_view->camera(); }
+    PythonInterpreter(PythonInterpreter const &) = delete;
+    PythonInterpreter(PythonInterpreter &&) = delete;
+    PythonInterpreter & operator=(PythonInterpreter const &) = delete;
+    PythonInterpreter & operator=(PythonInterpreter &&) = delete;
+    ~PythonInterpreter();
 
 private:
 
-    Qt3DExtras::Qt3DWindow * m_view = nullptr;
-    RScene * m_scene = nullptr;
-    QWidget * m_container = nullptr;
+    PythonInterpreter();
 
-}; /* end class R3DWidget */
+    void load_modules();
 
-template <typename... Args>
-void R3DWidget::resize(Args &&... args)
-{
-    QWidget::resize(std::forward<Args>(args)...);
-    m_view->resize(std::forward<Args>(args)...);
-    m_container->resize(std::forward<Args>(args)...);
-}
+    pybind11::scoped_interpreter * m_interpreter = nullptr;
+
+}; /* end class PythonInterpreter */
 
 } /* end namespace modmesh */
 

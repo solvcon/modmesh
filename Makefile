@@ -77,7 +77,7 @@ pytest: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
 flake8:
 	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) flake8
 
-CFFILES = $(shell find include src -type f -name '*.[ch]pp' | sort)
+CFFILES = $(shell find cpp -type f -name '*.[ch]pp' | sort)
 ifeq ($(CFCMD),)
 	ifeq ($(FORCE_CLANG_FORMAT),)
 		CFCMD = clang-format --dry-run

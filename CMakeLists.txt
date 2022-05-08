@@ -65,38 +65,11 @@ find_package(NumPy REQUIRED)
 message(STATUS "NUMPY_INCLUDE_DIR: ${NUMPY_INCLUDE_DIR}")
 include_directories(${NUMPY_INCLUDE_DIR})
 
-set(MODMESH_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/include" CACHE INTERNAL "")
+set(MODMESH_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/cpp" CACHE INTERNAL "")
 
 include_directories(${MODMESH_INCLUDE_DIR})
 
-set(MODMESH_HEADERS
-    include/modmesh/modmesh.hpp
-    include/modmesh/base.hpp
-    include/modmesh/profile.hpp
-    include/modmesh/grid.hpp
-    include/modmesh/mesh/mesh.hpp
-    include/modmesh/mesh/StaticMesh.hpp
-    include/modmesh/buffer/buffer.hpp
-    include/modmesh/buffer/small_vector.hpp
-    include/modmesh/buffer/ConcreteBuffer.hpp
-    include/modmesh/buffer/SimpleArray.hpp
-)
-string(REPLACE "include/" "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-       MODMESH_HEADERS "${MODMESH_HEADERS}")
-
-set(MODMESH_SOURCES
-    src/modmesh/mesh/StaticMesh_interior.cpp
-    src/modmesh/mesh/StaticMesh_boundary.cpp
-)
-string(REPLACE "src/" "${CMAKE_CURRENT_SOURCE_DIR}/src/"
-       MODMESH_SOURCES "${MODMESH_SOURCES}")
-
-set(MODMESH_PY_HEADERS
-    include/modmesh/python/python.hpp
-    include/modmesh/python/common.hpp
-)
-string(REPLACE "include/" "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-       MODMESH_PY_HEADERS "${MODMESH_PY_HEADERS}")
+add_subdirectory(cpp/modmesh)
 
 include(GNUInstallDirs)
 
@@ -104,9 +77,9 @@ set(MODMESH_PY_DIR "${PROJECT_SOURCE_DIR}/modmesh")
 
 set(COMMON_COMPILER_OPTIONS -Werror -Wall -Wextra)
 
-add_subdirectory(src/python/wrapper/modmesh)
+add_subdirectory(cpp/binary/pymod_modmesh)
 if(BUILD_QT)
-add_subdirectory(src/viewer)
+add_subdirectory(cpp/binary/viewer)
 endif()
 
 add_custom_target(flake8)

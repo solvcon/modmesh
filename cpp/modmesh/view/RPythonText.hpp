@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -26,34 +28,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/viewer/base.hpp> // Must be the first include.
-#include <modmesh/viewer/RMainWindow.hpp>
+#include <modmesh/view/base.hpp> // Must be the first include.
 
-#include <modmesh/viewer/PythonInterpreter.hpp>
-#include <modmesh/viewer/RPythonText.hpp>
-#include <modmesh/viewer/R3DWidget.hpp>
+#include <Qt>
+#include <QDockWidget>
+#include <QTextEdit>
+#include <QPushButton>
+#include <QVBoxLayout>
 
 namespace modmesh
 {
 
-void RMainWindow::setUp()
+class RPythonText
+    : public QDockWidget
 {
-    m_pytext = new RPythonText(QString("Python"), this);
-    m_pytext->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    addDockWidget(Qt::RightDockWidgetArea, m_pytext);
 
-    m_viewer = new R3DWidget();
-    setCentralWidget(m_viewer);
-}
+public:
 
-RApplication::RApplication(int & argc, char ** argv)
-    : QApplication(argc, argv)
-    , m_main(new RMainWindow)
-{
-    /* TODO: parse arguments */
-    PythonInterpreter::instance();
-    m_main->show();
-}
+    RPythonText(
+        QString const & title = "Python",
+        QWidget * parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
+
+private:
+
+    void setUp();
+
+    void runPythonCode();
+
+    QTextEdit * m_text = nullptr;
+    QPushButton * m_run = nullptr;
+    QVBoxLayout * m_layout = nullptr;
+    QWidget * m_widget = nullptr;
+
+}; /* end class RPythonText */
 
 } /* end namespace modmesh */
 
