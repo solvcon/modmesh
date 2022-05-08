@@ -27,7 +27,7 @@ qt_add_executable(
     viewer.cpp
     ${MODMESH_PYMOD_VIEW_SOURCES}
     ${MODMESH_VIEW_SOURCES}
-    ${MODMESH_PY_SOURCES} # FIXME: This duplicates in two binaries.
+    ${MODMESH_PYTHON_SOURCES} # FIXME: This duplicates in two binaries.
 )
 
 if(HIDE_SYMBOL)

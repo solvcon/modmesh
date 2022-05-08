@@ -73,6 +73,10 @@ pytest: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
 	env $(RUNENV) \
 		$(PYTEST) $(PYTEST_OPTS) tests/
 
+.PHONY: viewer
+viewer: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
+	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) viewer $(MAKE_PARALLEL)
+
 .PHONY: flake8
 flake8:
 	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) flake8
