@@ -12,6 +12,7 @@ pybind11_add_module(
     ${MODMESH_HEADERS}
     ${MODMESH_SOURCES}
     ${MODMESH_PY_HEADERS}
+    ${MODMESH_PY_SOURCES}
 )
 if(HIDE_SYMBOL)
     set_target_properties(_modmesh PROPERTIES CXX_VISIBILITY_PRESET "hidden")

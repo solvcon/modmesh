@@ -1,6 +1,7 @@
 Checks: >
     *,-clang-analyzer-alpha.*,-hicpp-*,
     -altera-*,
+    -abseil-*,
     -bugprone-macro-parentheses,
     -bugprone-narrowing-conversions,-cppcoreguidelines-narrowing-conversions,
     -llvmlibc-*,

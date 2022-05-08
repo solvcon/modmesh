@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,45 +26,44 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/base.hpp> // Must be the first include.
+#include <modmesh/python/python.hpp> // Must be the first include.
+#include <pybind11/stl.h>
 
-#include <modmesh/view/PythonInterpreter.hpp>
-
-#include <modmesh/view/RMainWindow.hpp>
-#include <modmesh/view/RStaticMesh.hpp>
-#include <modmesh/view/R3DWidget.hpp>
+#include <modmesh/modmesh.hpp>
 
 namespace modmesh
 {
 
-PythonInterpreter & PythonInterpreter::instance()
+namespace python
 {
-    static PythonInterpreter o;
+
+Interpreter & Interpreter::instance()
+{
+    static Interpreter o;
     return o;
 }
 
-PythonInterpreter::PythonInterpreter()
+Interpreter::Interpreter()
     : m_interpreter(new pybind11::scoped_interpreter)
 {
-    load_modules();
+    setup_path();
 }
 
-PythonInterpreter::~PythonInterpreter()
+Interpreter::~Interpreter()
 {
-    if (m_interpreter)
+    // NOLINTNEXTLINE(readability-delete-null-pointer)
+    if (nullptr != m_interpreter)
     {
         delete m_interpreter;
     }
 }
 
-void PythonInterpreter::load_modules()
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static): implicitly requires m_interpreter
+void Interpreter::setup_path()
 {
-    namespace py = pybind11;
-
-    {
-        // TODO: The hard-coded Python in C++ is difficult to debug.  This
-        // should be moved somewhere else in the future.
-        std::string cmd = R""""(def _set_modmesh_path():
+    // TODO: The hard-coded Python in C++ is difficult to debug.  This
+    // should be moved somewhere else in the future.
+    std::string const cmd = R""""(def _set_modmesh_path():
     import os
     import sys
     filename = os.path.join('modmesh', '__init__.py')
@@ -80,46 +79,51 @@ void PythonInterpreter::load_modules()
     if path:
         sys.path.insert(0, path)
 _set_modmesh_path())"""";
-        py::exec(cmd);
-        // clang-format off
-    }
-    // clang-format on
-
-    // Load the Python extension modules.
-    std::vector<std::string> modules{"_modmesh_view", "modmesh"};
-
-    for (auto const & mod : modules)
-    {
-        std::cerr << "Loading " << mod << " ... ";
-        bool load_failure = false;
-        try
-        {
-            py::module_::import(mod.c_str());
-        }
-        catch (const py::error_already_set & e)
-        {
-            if (std::string::npos == std::string(e.what()).find("ModuleNotFoundError"))
-            {
-                throw;
-            }
-            else
-            {
-                std::cerr << "fails" << std::endl;
-                load_failure = true;
-            }
-        }
-        if (!load_failure)
-        {
-            std::cerr << "succeeds" << std::endl;
-            // Load into the namespace.
-            std::ostringstream ms;
-            ms << "import " << mod;
-            py::exec(ms.str());
-        }
-    }
-
-    py::exec("modmesh.view = _modmesh_view");
+    pybind11::exec(cmd);
 }
+
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static): implicitly requires m_interpreter
+void Interpreter::preload_module(std::string const & name)
+{
+    namespace py = pybind11;
+
+    std::cerr << "Loading " << name << " ... ";
+    bool load_failure = false;
+    try
+    {
+        py::module_::import(name.c_str());
+    }
+    catch (const py::error_already_set & e)
+    {
+        if (std::string::npos == std::string(e.what()).find("ModuleNotFoundError"))
+        {
+            throw;
+        }
+        else // NOLINT(llvm-else-after-return,readability-else-after-return)
+        {
+            std::cerr << "fails" << std::endl;
+            load_failure = true;
+        }
+    }
+    if (!load_failure)
+    {
+        std::cerr << "succeeds" << std::endl;
+        // Load into the namespace.
+        std::ostringstream ms;
+        ms << "import " << name;
+        py::exec(ms.str());
+    }
+}
+
+void Interpreter::preload_modules(std::vector<std::string> const & names)
+{
+    for (auto const & name : names)
+    {
+        preload_module(name);
+    }
+}
+
+} /* end namespace python */
 
 } /* end namespace modmesh */
 

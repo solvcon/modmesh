@@ -29,7 +29,6 @@
 #include <modmesh/view/base.hpp> // Must be the first include.
 #include <modmesh/view/RMainWindow.hpp>
 
-#include <modmesh/view/PythonInterpreter.hpp>
 #include <modmesh/view/RPythonText.hpp>
 #include <modmesh/view/R3DWidget.hpp>
 
@@ -51,7 +50,12 @@ RApplication::RApplication(int & argc, char ** argv)
     , m_main(new RMainWindow)
 {
     /* TODO: parse arguments */
-    PythonInterpreter::instance();
+
+    // Setup Python interpreter.
+    python::Interpreter::instance().preload_modules({"_modmesh_view", "modmesh"});
+    pybind11::exec("modmesh.view = _modmesh_view");
+
+    // Show main window.
     m_main->show();
 }
 
