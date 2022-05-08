@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,50 +28,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/common_detail.hpp> // Must be the first include.
+// Shared by all code.
 
+// FIXME: The C++ library should not depend on Python; move the Python
+// dependency outside.
+#include <modmesh/python/python.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>
-
-#include <Qt>
-#include <QWidget>
-#include <Qt3DWindow>
-
-#include <QByteArray>
-#include <QGeometryRenderer>
-
-#include <Qt3DCore/QBuffer>
-#include <Qt3DCore/QEntity>
-#include <Qt3DCore/QGeometry>
-#include <Qt3DCore/QAttribute>
-#include <Qt3DCore/QTransform>
-
-#include <Qt3DExtras/QDiffuseSpecularMaterial>
 
 namespace modmesh
 {
-
-class RStaticMesh
-    : public Qt3DCore::QEntity
-{
-
-public:
-
-    RStaticMesh(std::shared_ptr<StaticMesh> const & static_mesh, Qt3DCore::QNode * parent = nullptr);
-
-    void update_geometry(StaticMesh const & mh)
-    {
-        update_geometry_impl(mh, m_geometry);
-    }
-
-private:
-
-    static void update_geometry_impl(StaticMesh const & mh, Qt3DCore::QGeometry * geom);
-
-    Qt3DCore::QGeometry * m_geometry = nullptr;
-    Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
-    Qt3DRender::QMaterial * m_material = nullptr;
-
-}; /* end class RStaticMesh */
 
 } /* end namespace modmesh */
 

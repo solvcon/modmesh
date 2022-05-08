@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,12 +26,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Shared by all code.
-#include <modmesh/python/python.hpp> // Must be the first include.
-#include <modmesh/modmesh.hpp>
+#include <modmesh/view/RApplication.hpp> // Must be the first include.
+
+#include <modmesh/view/RMainWindow.hpp>
 
 namespace modmesh
 {
+
+RApplication::RApplication(int & argc, char ** argv)
+    : QApplication(argc, argv)
+    , m_main(new RMainWindow)
+{
+    /* TODO: parse arguments */
+
+    // Setup Python interpreter.
+    python::Interpreter::instance().preload_modules({"_modmesh_view", "modmesh"});
+    pybind11::exec("modmesh.view = _modmesh_view");
+
+    // Show main window.
+    m_main->show();
+}
 
 } /* end namespace modmesh */
 

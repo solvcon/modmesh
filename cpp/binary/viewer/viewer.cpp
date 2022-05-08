@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -28,51 +26,63 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/common_detail.hpp> // Must be the first include.
-
+#include <modmesh/python/wrapper/view/view.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>
 
-#include <Qt>
-#include <QWidget>
-#include <Qt3DWindow>
+#include <modmesh/view/view.hpp>
 
-#include <QByteArray>
-#include <QGeometryRenderer>
+int main(int argc, char ** argv)
+{
+    using namespace modmesh;
 
-#include <Qt3DCore/QBuffer>
-#include <Qt3DCore/QEntity>
-#include <Qt3DCore/QGeometry>
-#include <Qt3DCore/QAttribute>
-#include <Qt3DCore/QTransform>
+    RApplication app(argc, argv);
+    app.main()->resize(1000, 600);
 
-#include <Qt3DExtras/QDiffuseSpecularMaterial>
+    return app.exec();
+}
 
 namespace modmesh
 {
 
-class RStaticMesh
-    : public Qt3DCore::QEntity
+namespace python
 {
 
-public:
+namespace detail
+{
 
-    RStaticMesh(std::shared_ptr<StaticMesh> const & static_mesh, Qt3DCore::QNode * parent = nullptr);
-
-    void update_geometry(StaticMesh const & mh)
+static void update_appmesh(std::shared_ptr<StaticMesh> const & mesh)
+{
+    RScene * scene = RApplication::instance()->main()->viewer()->scene();
+    for (Qt3DCore::QNode * child : scene->childNodes())
     {
-        update_geometry_impl(mh, m_geometry);
+        if (typeid(*child) == typeid(RStaticMesh))
+        {
+            child->deleteLater();
+        }
     }
+    new RStaticMesh(mesh, scene);
+}
 
-private:
+} /* end namespace detail */
 
-    static void update_geometry_impl(StaticMesh const & mh, Qt3DCore::QGeometry * geom);
-
-    Qt3DCore::QGeometry * m_geometry = nullptr;
-    Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
-    Qt3DRender::QMaterial * m_material = nullptr;
-
-}; /* end class RStaticMesh */
+} /* end namespace python */
 
 } /* end namespace modmesh */
+
+PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
+{
+    using namespace modmesh;
+    using namespace modmesh::python;
+    namespace py = pybind11;
+
+    mod
+        .def("show", &modmesh::python::detail::update_appmesh, py::arg("mesh"))
+        //
+        ;
+
+    wrap_view(mod);
+
+    mod.attr("app") = py::cast(RApplication::instance());
+}
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

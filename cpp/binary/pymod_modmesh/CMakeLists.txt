@@ -11,8 +11,8 @@ pybind11_add_module(
     ${MODMESH_PYMOD_MODMESH_SOURCES}
     ${MODMESH_HEADERS}
     ${MODMESH_SOURCES}
-    ${MODMESH_PY_HEADERS}
-    ${MODMESH_PY_SOURCES}
+    ${MODMESH_PYTHON_HEADERS}
+    ${MODMESH_PYTHON_SOURCES} # FIXME: This duplicates in two binaries.
 )
 if(HIDE_SYMBOL)
     set_target_properties(_modmesh PROPERTIES CXX_VISIBILITY_PRESET "hidden")

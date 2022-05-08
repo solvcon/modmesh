@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -26,64 +28,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/wrapper/view/view.hpp> // Must be the first include.
-#include <modmesh/modmesh.hpp>
+#include <modmesh/view/common_detail.hpp> // Must be the first include.
 
-#include <modmesh/view/RStaticMesh.hpp>
 #include <modmesh/view/RMainWindow.hpp>
 
-int main(int argc, char ** argv)
-{
-    using namespace modmesh;
-
-    RApplication app(argc, argv);
-    app.main()->resize(1000, 600);
-
-    return app.exec();
-}
+#include <Qt>
+#include <QApplication>
 
 namespace modmesh
 {
 
-namespace python
+class RApplication
+    : public QApplication
 {
 
-namespace detail
-{
+public:
 
-static void update_appmesh(std::shared_ptr<StaticMesh> const & mesh)
-{
-    RScene * scene = RApplication::instance()->main()->viewer()->scene();
-    for (Qt3DCore::QNode * child : scene->childNodes())
-    {
-        if (typeid(*child) == typeid(RStaticMesh))
-        {
-            child->deleteLater();
-        }
-    }
-    new RStaticMesh(mesh, scene);
-}
+    RApplication(int & argc, char ** argv);
 
-} /* end namespace detail */
+    RMainWindow * main() { return m_main; }
 
-} /* end namespace python */
+    static RApplication * instance() { return dynamic_cast<RApplication *>(QApplication::instance()); }
+
+private:
+
+    RMainWindow * m_main = nullptr;
+
+}; /* end class RApplication */
 
 } /* end namespace modmesh */
-
-PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
-{
-    using namespace modmesh;
-    using namespace modmesh::python;
-    namespace py = pybind11;
-
-    mod
-        .def("show", &modmesh::python::detail::update_appmesh, py::arg("mesh"))
-        //
-        ;
-
-    wrap_view(mod);
-
-    mod.attr("app") = py::cast(RApplication::instance());
-}
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -30,48 +30,14 @@
 
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
 
-#include <modmesh/modmesh.hpp>
-
-#include <Qt>
-#include <QWidget>
-#include <Qt3DWindow>
-
-#include <QByteArray>
-#include <QGeometryRenderer>
-
-#include <Qt3DCore/QBuffer>
-#include <Qt3DCore/QEntity>
-#include <Qt3DCore/QGeometry>
-#include <Qt3DCore/QAttribute>
-#include <Qt3DCore/QTransform>
-
-#include <Qt3DExtras/QDiffuseSpecularMaterial>
+#include <modmesh/view/R3DWidget.hpp>
+#include <modmesh/view/RApplication.hpp>
+#include <modmesh/view/RMainWindow.hpp>
+#include <modmesh/view/RPythonText.hpp>
+#include <modmesh/view/RStaticMesh.hpp>
 
 namespace modmesh
 {
-
-class RStaticMesh
-    : public Qt3DCore::QEntity
-{
-
-public:
-
-    RStaticMesh(std::shared_ptr<StaticMesh> const & static_mesh, Qt3DCore::QNode * parent = nullptr);
-
-    void update_geometry(StaticMesh const & mh)
-    {
-        update_geometry_impl(mh, m_geometry);
-    }
-
-private:
-
-    static void update_geometry_impl(StaticMesh const & mh, Qt3DCore::QGeometry * geom);
-
-    Qt3DCore::QGeometry * m_geometry = nullptr;
-    Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
-    Qt3DRender::QMaterial * m_material = nullptr;
-
-}; /* end class RStaticMesh */
 
 } /* end namespace modmesh */
 

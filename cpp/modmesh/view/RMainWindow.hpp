@@ -28,15 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/base.hpp> // Must be the first include.
-
-#include <pybind11/embed.h>
+#include <modmesh/view/common_detail.hpp> // Must be the first include.
 
 #include <modmesh/view/RPythonText.hpp>
 #include <modmesh/view/R3DWidget.hpp>
 
 #include <Qt>
-#include <QApplication>
 #include <QMainWindow>
 
 namespace modmesh
@@ -65,24 +62,6 @@ private:
     R3DWidget * m_viewer = nullptr;
 
 }; /* end class RPythonText */
-
-class RApplication
-    : public QApplication
-{
-
-public:
-
-    RApplication(int & argc, char ** argv);
-
-    RMainWindow * main() { return m_main; }
-
-    static RApplication * instance() { return dynamic_cast<RApplication *>(QApplication::instance()); }
-
-private:
-
-    RMainWindow * m_main = nullptr;
-
-}; /* end class RApplication */
 
 } /* end namespace modmesh */
 
