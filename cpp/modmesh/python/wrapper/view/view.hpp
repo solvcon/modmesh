@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,59 +40,7 @@ namespace modmesh
 namespace python
 {
 
-#pragma GCC diagnostic push
-// Suppress the warning "greater visibility than the type of its field"
-#pragma GCC diagnostic ignored "-Wattributes"
-/**
- * Take a pybind11 module and an initializing function and only run the
- * initializing function once.
- */
-template <typename T>
-class OneTimeInitializer
-{
-
-public:
-
-    OneTimeInitializer(OneTimeInitializer const &) = delete;
-    OneTimeInitializer(OneTimeInitializer &&) = delete;
-    OneTimeInitializer & operator=(OneTimeInitializer const &) = delete;
-    OneTimeInitializer & operator=(OneTimeInitializer &&) = delete;
-    ~OneTimeInitializer() = default;
-
-    static OneTimeInitializer<T> & me()
-    {
-        static OneTimeInitializer<T> instance;
-        return instance;
-    }
-
-    OneTimeInitializer<T> & operator()(
-        pybind11::module & mod, std::function<void(pybind11::module &)> const & initializer)
-    {
-        if (!initialized())
-        {
-            m_mod = &mod;
-            m_initializer = initializer;
-            m_initializer(*m_mod);
-        }
-        m_initialized = true;
-        return *this;
-    }
-
-    pybind11::module const & mod() const { return *m_mod; }
-    pybind11::module & mod() { return *m_mod; }
-
-    bool initialized() const { return m_initialized && nullptr != m_mod; }
-
-private:
-
-    OneTimeInitializer() = default;
-
-    bool m_initialized = false;
-    pybind11::module * m_mod = nullptr;
-    std::function<void(pybind11::module &)> m_initializer;
-
-}; /* end class OneTimeInitializer */
-#pragma GCC diagnostic pop
+void wrap_view(pybind11::module & mod);
 
 } /* end namespace python */
 

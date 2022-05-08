@@ -7,6 +7,7 @@ project(modmesh_pymod)
 pybind11_add_module(
     _modmesh
     module.cpp
+    ${MODMESH_PYMOD_MODMESH_HEADERS}
     ${MODMESH_PYMOD_MODMESH_SOURCES}
     ${MODMESH_HEADERS}
     ${MODMESH_SOURCES}

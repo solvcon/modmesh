@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/base.hpp> // Must be the first include.
+#include <modmesh/python/wrapper/view/view.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>
 
 #include <modmesh/view/RStaticMesh.hpp>
@@ -41,3 +41,49 @@ int main(int argc, char ** argv)
 
     return app.exec();
 }
+
+namespace modmesh
+{
+
+namespace python
+{
+
+namespace detail
+{
+
+static void update_appmesh(std::shared_ptr<StaticMesh> const & mesh)
+{
+    RScene * scene = RApplication::instance()->main()->viewer()->scene();
+    for (Qt3DCore::QNode * child : scene->childNodes())
+    {
+        if (typeid(*child) == typeid(RStaticMesh))
+        {
+            child->deleteLater();
+        }
+    }
+    new RStaticMesh(mesh, scene);
+}
+
+} /* end namespace detail */
+
+} /* end namespace python */
+
+} /* end namespace modmesh */
+
+PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
+{
+    using namespace modmesh;
+    using namespace modmesh::python;
+    namespace py = pybind11;
+
+    mod
+        .def("show", &modmesh::python::detail::update_appmesh, py::arg("mesh"))
+        //
+        ;
+
+    wrap_view(mod);
+
+    mod.attr("app") = py::cast(RApplication::instance());
+}
+
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

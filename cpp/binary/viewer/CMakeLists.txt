@@ -25,6 +25,7 @@ find_package(Qt6 COMPONENTS 3DExtras)
 qt_add_executable(
     viewer
     main.cpp
+    ${MODMESH_PYMOD_VIEW_SOURCES}
     ${MODMESH_VIEW_SOURCES}
 )
 

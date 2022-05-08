@@ -3,6 +3,11 @@
 
 cmake_minimum_required(VERSION 3.16)
 
+set(MODMESH_PYMOD_MODMESH_HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/modmesh.hpp
+    CACHE FILEPATH ""
+)
+
 set(MODMESH_PYMOD_MODMESH_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_profile.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_ConcreteBuffer.cpp
