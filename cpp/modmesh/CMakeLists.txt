@@ -4,6 +4,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 add_subdirectory(python/wrapper/modmesh)
+add_subdirectory(python/wrapper/view)
 add_subdirectory(view)
 
 set(MODMESH_HEADERS
@@ -17,19 +18,24 @@ set(MODMESH_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer/small_vector.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer/ConcreteBuffer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer/SimpleArray.hpp
-    CACHE FILEPATH ""
+    CACHE FILEPATH "" FORCE
 )
 
 set(MODMESH_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/mesh/StaticMesh_interior.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mesh/StaticMesh_boundary.cpp
-    CACHE FILEPATH ""
+    CACHE FILEPATH "" FORCE
 )
 
 set(MODMESH_PY_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/python/python.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/python/common.hpp
-    CACHE FILEPATH ""
+    CACHE FILEPATH "" FORCE
+)
+
+set(MODMESH_PY_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/python/python.cpp
+    CACHE FILEPATH "" FORCE
 )
 
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

@@ -20,7 +20,7 @@
  */
 
 #include <modmesh/python/python.hpp> // Must be the first include.
-#include <modmesh/modmesh.hpp>
+#include <modmesh/python/wrapper/modmesh/modmesh.hpp>
 
 #include <pybind11/numpy.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION

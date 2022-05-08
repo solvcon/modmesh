@@ -1,0 +1,130 @@
+/*
+ * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * - Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * - Neither the name of the copyright holder nor the names of its contributors
+ *   may be used to endorse or promote products derived from this software
+ *   without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <modmesh/python/python.hpp> // Must be the first include.
+#include <pybind11/stl.h>
+
+#include <modmesh/modmesh.hpp>
+
+namespace modmesh
+{
+
+namespace python
+{
+
+Interpreter & Interpreter::instance()
+{
+    static Interpreter o;
+    return o;
+}
+
+Interpreter::Interpreter()
+    : m_interpreter(new pybind11::scoped_interpreter)
+{
+    setup_path();
+}
+
+Interpreter::~Interpreter()
+{
+    // NOLINTNEXTLINE(readability-delete-null-pointer)
+    if (nullptr != m_interpreter)
+    {
+        delete m_interpreter;
+    }
+}
+
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static): implicitly requires m_interpreter
+void Interpreter::setup_path()
+{
+    // TODO: The hard-coded Python in C++ is difficult to debug.  This
+    // should be moved somewhere else in the future.
+    std::string const cmd = R""""(def _set_modmesh_path():
+    import os
+    import sys
+    filename = os.path.join('modmesh', '__init__.py')
+    path = os.getcwd()
+    while True:
+        if os.path.exists(os.path.join(path, filename)):
+            break
+        if path == os.path.dirname(path):
+            path = None
+            break
+        else:
+            path = os.path.dirname(path)
+    if path:
+        sys.path.insert(0, path)
+_set_modmesh_path())"""";
+    pybind11::exec(cmd);
+}
+
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static): implicitly requires m_interpreter
+void Interpreter::preload_module(std::string const & name)
+{
+    namespace py = pybind11;
+
+    std::cerr << "Loading " << name << " ... ";
+    bool load_failure = false;
+    try
+    {
+        py::module_::import(name.c_str());
+    }
+    catch (const py::error_already_set & e)
+    {
+        if (std::string::npos == std::string(e.what()).find("ModuleNotFoundError"))
+        {
+            throw;
+        }
+        else // NOLINT(llvm-else-after-return,readability-else-after-return)
+        {
+            std::cerr << "fails" << std::endl;
+            load_failure = true;
+        }
+    }
+    if (!load_failure)
+    {
+        std::cerr << "succeeds" << std::endl;
+        // Load into the namespace.
+        std::ostringstream ms;
+        ms << "import " << name;
+        py::exec(ms.str());
+    }
+}
+
+void Interpreter::preload_modules(std::vector<std::string> const & names)
+{
+    for (auto const & name : names)
+    {
+        preload_module(name);
+    }
+}
+
+} /* end namespace python */
+
+} /* end namespace modmesh */
+
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

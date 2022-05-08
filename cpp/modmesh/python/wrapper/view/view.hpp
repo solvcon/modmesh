@@ -28,35 +28,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/base.hpp> // Must be the first include.
+#include <pybind11/pybind11.h> // Must be the first include.
+#include <pybind11/stl.h>
 
-#include <pybind11/embed.h>
+#include <modmesh/modmesh.hpp>
+#include <modmesh/python/common.hpp>
 
 namespace modmesh
 {
 
-class PythonInterpreter
+namespace python
 {
 
-public:
+void wrap_view(pybind11::module & mod);
 
-    static PythonInterpreter & instance();
-
-    PythonInterpreter(PythonInterpreter const &) = delete;
-    PythonInterpreter(PythonInterpreter &&) = delete;
-    PythonInterpreter & operator=(PythonInterpreter const &) = delete;
-    PythonInterpreter & operator=(PythonInterpreter &&) = delete;
-    ~PythonInterpreter();
-
-private:
-
-    PythonInterpreter();
-
-    void load_modules();
-
-    pybind11::scoped_interpreter * m_interpreter = nullptr;
-
-}; /* end class PythonInterpreter */
+} /* end namespace python */
 
 } /* end namespace modmesh */
 

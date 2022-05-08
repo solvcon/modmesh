@@ -30,6 +30,7 @@
 
 #include <pybind11/pybind11.h> // Must be the first include.
 #include <pybind11/stl.h>
+#include <pybind11/embed.h>
 
 #include <modmesh/modmesh.hpp>
 #include <modmesh/python/common.hpp>
@@ -94,11 +95,30 @@ private:
 }; /* end class OneTimeInitializer */
 #pragma GCC diagnostic pop
 
-void wrap_profile(pybind11::module & mod);
-void wrap_ConcreteBuffer(pybind11::module & mod);
-void wrap_SimpleArray(pybind11::module & mod);
-void wrap_StaticGrid(pybind11::module & mod);
-void wrap_StaticMesh(pybind11::module & mod);
+class MODMESH_PYTHON_WRAPPER_VISIBILITY Interpreter
+{
+
+public:
+
+    static Interpreter & instance();
+
+    Interpreter(Interpreter const &) = delete;
+    Interpreter(Interpreter &&) = delete;
+    Interpreter & operator=(Interpreter const &) = delete;
+    Interpreter & operator=(Interpreter &&) = delete;
+    ~Interpreter();
+
+    void preload_module(std::string const & name);
+    void preload_modules(std::vector<std::string> const & names);
+
+private:
+
+    Interpreter();
+    void setup_path();
+
+    pybind11::scoped_interpreter * m_interpreter = nullptr;
+
+}; /* end class Interpreter */
 
 } /* end namespace python */
 

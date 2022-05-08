@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -26,38 +28,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/base.hpp> // Must be the first include.
-#include <modmesh/view/RMainWindow.hpp>
+#include <pybind11/pybind11.h> // Must be the first include.
+#include <pybind11/stl.h>
 
-#include <modmesh/view/RPythonText.hpp>
-#include <modmesh/view/R3DWidget.hpp>
+#include <modmesh/modmesh.hpp>
+#include <modmesh/python/common.hpp>
 
 namespace modmesh
 {
 
-void RMainWindow::setUp()
+namespace python
 {
-    m_pytext = new RPythonText(QString("Python"), this);
-    m_pytext->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    addDockWidget(Qt::RightDockWidgetArea, m_pytext);
 
-    m_viewer = new R3DWidget();
-    setCentralWidget(m_viewer);
-}
+void wrap_profile(pybind11::module & mod);
+void wrap_ConcreteBuffer(pybind11::module & mod);
+void wrap_SimpleArray(pybind11::module & mod);
+void wrap_StaticGrid(pybind11::module & mod);
+void wrap_StaticMesh(pybind11::module & mod);
 
-RApplication::RApplication(int & argc, char ** argv)
-    : QApplication(argc, argv)
-    , m_main(new RMainWindow)
-{
-    /* TODO: parse arguments */
-
-    // Setup Python interpreter.
-    python::Interpreter::instance().preload_modules({"_modmesh_view", "modmesh"});
-    pybind11::exec("modmesh.view = _modmesh_view");
-
-    // Show main window.
-    m_main->show();
-}
+} /* end namespace python */
 
 } /* end namespace modmesh */
 

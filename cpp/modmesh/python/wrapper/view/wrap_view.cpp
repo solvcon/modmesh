@@ -26,9 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/base.hpp> // Must be the first include.
-
-#include <modmesh/view/PythonInterpreter.hpp>
+#include <modmesh/python/wrapper/view/view.hpp> // Must be the first include.
 
 #include <modmesh/view/RMainWindow.hpp>
 #include <modmesh/view/RStaticMesh.hpp>
@@ -37,98 +35,10 @@
 namespace modmesh
 {
 
-PythonInterpreter & PythonInterpreter::instance()
-{
-    static PythonInterpreter o;
-    return o;
-}
-
-PythonInterpreter::PythonInterpreter()
-    : m_interpreter(new pybind11::scoped_interpreter)
-{
-    load_modules();
-}
-
-PythonInterpreter::~PythonInterpreter()
-{
-    if (m_interpreter)
-    {
-        delete m_interpreter;
-    }
-}
-
-void PythonInterpreter::load_modules()
-{
-    namespace py = pybind11;
-
-    {
-        // TODO: The hard-coded Python in C++ is difficult to debug.  This
-        // should be moved somewhere else in the future.
-        std::string cmd = R""""(def _set_modmesh_path():
-    import os
-    import sys
-    filename = os.path.join('modmesh', '__init__.py')
-    path = os.getcwd()
-    while True:
-        if os.path.exists(os.path.join(path, filename)):
-            break
-        if path == os.path.dirname(path):
-            path = None
-            break
-        else:
-            path = os.path.dirname(path)
-    if path:
-        sys.path.insert(0, path)
-_set_modmesh_path())"""";
-        py::exec(cmd);
-        // clang-format off
-    }
-    // clang-format on
-
-    // Load the Python extension modules.
-    std::vector<std::string> modules{"_modmesh_view", "modmesh"};
-
-    for (auto const & mod : modules)
-    {
-        std::cerr << "Loading " << mod << " ... ";
-        bool load_failure = false;
-        try
-        {
-            py::module_::import(mod.c_str());
-        }
-        catch (const py::error_already_set & e)
-        {
-            if (std::string::npos == std::string(e.what()).find("ModuleNotFoundError"))
-            {
-                throw;
-            }
-            else
-            {
-                std::cerr << "fails" << std::endl;
-                load_failure = true;
-            }
-        }
-        if (!load_failure)
-        {
-            std::cerr << "succeeds" << std::endl;
-            // Load into the namespace.
-            std::ostringstream ms;
-            ms << "import " << mod;
-            py::exec(ms.str());
-        }
-    }
-
-    py::exec("modmesh.view = _modmesh_view");
-}
-
 namespace python
 {
 
-// clang-format off
-class
-MODMESH_PYTHON_WRAPPER_VISIBILITY
-WrapR3DWidget
-    // clang-format on
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
     : public WrapBase<WrapR3DWidget, R3DWidget>
 {
 
@@ -157,10 +67,11 @@ WrapR3DWidget
         })
 
         (*this)
+            // clang-format off
             DECL_QVECTOR3D_PROPERTY(position, position, setPosition)
-                DECL_QVECTOR3D_PROPERTY(up_vector, upVector, setUpVector)
-                    DECL_QVECTOR3D_PROPERTY(view_center, viewCenter, setViewCenter)
-            //
+            DECL_QVECTOR3D_PROPERTY(up_vector, upVector, setUpVector)
+            DECL_QVECTOR3D_PROPERTY(view_center, viewCenter, setViewCenter)
+            // clang-format on
             ;
 
 #undef DECL_QVECTOR3D_PROPERTY
@@ -168,10 +79,7 @@ WrapR3DWidget
 
 }; /* end class WrapR3DWidget */
 
-class
-    MODMESH_PYTHON_WRAPPER_VISIBILITY
-        WrapRApplication
-    // clang-format on
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
     : public WrapBase<WrapRApplication, RApplication>
 {
 
@@ -202,43 +110,14 @@ class
 
 }; /* end class WrapRApplication */
 
-namespace detail
+void wrap_view(pybind11::module & mod)
 {
-
-static void update_appmesh(std::shared_ptr<StaticMesh> const & mesh)
-{
-    RScene * scene = RApplication::instance()->main()->viewer()->scene();
-    for (Qt3DCore::QNode * child : scene->childNodes())
-    {
-        if (typeid(*child) == typeid(RStaticMesh))
-        {
-            child->deleteLater();
-        }
-    }
-    new RStaticMesh(mesh, scene);
+    WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
+    WrapRApplication::commit(mod, "RApplication", "RApplication");
 }
-
-} /* end namespace detail */
 
 } /* end namespace python */
 
 } /* end namespace modmesh */
-
-PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
-{
-    using namespace modmesh;
-    using namespace modmesh::python;
-    namespace py = pybind11;
-
-    mod
-        .def("show", &modmesh::python::detail::update_appmesh, py::arg("mesh"))
-        //
-        ;
-
-    WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
-    WrapRApplication::commit(mod, "RApplication", "RApplication");
-
-    mod.attr("app") = py::cast(RApplication::instance());
-}
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
