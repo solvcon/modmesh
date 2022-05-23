@@ -1,0 +1,95 @@
+name: modmesh_viewer
+
+on:
+  push:
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+        matrix:
+          os: [ubuntu-22.04, macos-11]
+          cmake_build_type: [Release, Debug]
+
+        fail-fast: false
+
+    steps:
+
+    - uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+
+    - name: dependency (ubuntu)
+      if: matrix.os != 'macos-11'
+      run: |
+        sudo apt-get -qqy update
+        sudo apt-get -qy install \
+            sudo curl git build-essential make cmake libc6-dev gcc-10 g++-10 \
+            python3 python3-dev python3-venv \
+            qt6-3d-dev
+        # TODO: not figure out why this is needed. Without this package, we do
+        # not make cmake navigate to the right path to get the qt lib
+        sudo apt-get -qy install \
+            libgl1-mesa-dev
+
+        sudo pip3 install numpy pytest flake8
+
+    - name: dependency (macos)
+      if: matrix.os == 'macos-11'
+      run: |
+        brew install python3 llvm
+        ln -s "$(brew --prefix llvm)/bin/clang-format" "/usr/local/bin/clang-format"
+        ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+        echo "which pip3: $(which pip3)"
+        pip3 install -U setuptools
+        pip3 install -U numpy pytest flake8
+
+    - name: dependency (manual)
+      run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
+
+    - name: show dependency
+      run: |
+        echo "gcc path: $(which gcc)"
+        echo "gcc version: $(gcc --version)"
+        echo "cmake path: $(which cmake)"
+        echo "cmake version: $(cmake --version)"
+        echo "python3 path: $(which python3)"
+        echo "python3 version: $(python3 --version)"
+        echo "pip3 path: $(which pip3)"
+        python3 -c 'import numpy ; print("numpy.__version__:", numpy.__version__)'
+        echo "pytest path: $(which pytest)"
+        echo "pytest version: $(pytest --version)"
+        echo "clang-tidy path: $(which clang-tidy)"
+        echo "clang-tidy version: $(clang-tidy -version)"
+        echo "flake8 path: $(which flake8)"
+        echo "flake8 version: $(flake8 --version)"
+
+    - name: buildext
+      run: |
+        make buildext \
+          VERBOSE=1 BUILD_QT=ON \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+
+    - name: pytest
+      run: |
+        make pytest \
+          VERBOSE=1 BUILD_QT=ON \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+
+    - name: viewer
+      run: |
+        make viewer \
+          VERBOSE=1 BUILD_QT=ON \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+
+    - name: flake8
+      run: |
+        make flake8 \
+          VERBOSE=1 \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
