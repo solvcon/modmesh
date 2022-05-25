@@ -87,7 +87,7 @@ def make_3d():
 
 mh = make_2d()
 mm.view.show(mh)
-mm.view.show(mh)
+
 print("position:", mm.view.app.viewer.position)
 print("up_vector:", mm.view.app.viewer.up_vector)
 print("view_center:", mm.view.app.viewer.view_center)

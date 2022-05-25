@@ -30,15 +30,57 @@
 
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
 
-#include <modmesh/view/R3DWidget.hpp>
-#include <modmesh/view/RApplication.hpp>
-#include <modmesh/view/RMainWindow.hpp>
-#include <modmesh/view/RPythonText.hpp>
-#include <modmesh/view/RStaticMesh.hpp>
-#include <modmesh/view/RAxisMark.hpp>
+#include <modmesh/modmesh.hpp>
+
+#include <Qt>
+#include <QWidget>
+#include <Qt3DWindow>
+
+#include <QByteArray>
+#include <QGeometryRenderer>
+
+#include <Qt3DCore/QBuffer>
+#include <Qt3DCore/QEntity>
+#include <Qt3DCore/QGeometry>
+#include <Qt3DCore/QAttribute>
+#include <Qt3DCore/QTransform>
+
+#include <Qt3DExtras/QDiffuseSpecularMaterial>
 
 namespace modmesh
 {
+
+class RLine
+    : public Qt3DCore::QEntity
+{
+
+public:
+
+    RLine(QVector3D const & v0, QVector3D const & v1, QColor const & color, Qt3DCore::QNode * parent = nullptr);
+
+private:
+
+    Qt3DCore::QGeometry * m_geometry = nullptr;
+    Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
+    Qt3DExtras::QDiffuseSpecularMaterial * m_material = nullptr;
+
+}; /* end class RLine */
+
+class RAxisMark
+    : public Qt3DCore::QEntity
+{
+
+public:
+
+    RAxisMark(Qt3DCore::QNode * parent = nullptr);
+
+private:
+
+    RLine * m_xmark = nullptr;
+    RLine * m_ymark = nullptr;
+    RLine * m_zmark = nullptr;
+
+}; /* end class RAxisMark */
 
 } /* end namespace modmesh */
 
