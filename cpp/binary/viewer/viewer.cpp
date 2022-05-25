@@ -31,16 +31,6 @@
 
 #include <modmesh/view/view.hpp>
 
-int main(int argc, char ** argv)
-{
-    using namespace modmesh;
-
-    RApplication app(argc, argv);
-    app.main()->resize(1000, 600);
-
-    return app.exec();
-}
-
 namespace modmesh
 {
 
@@ -49,6 +39,19 @@ namespace python
 
 namespace detail
 {
+
+static void show_mark()
+{
+    RScene * scene = RApplication::instance()->main()->viewer()->scene();
+    for (Qt3DCore::QNode * child : scene->childNodes())
+    {
+        if (typeid(*child) == typeid(RAxisMark))
+        {
+            child->deleteLater();
+        }
+    }
+    new RAxisMark(scene);
+}
 
 static void update_appmesh(std::shared_ptr<StaticMesh> const & mesh)
 {
@@ -77,12 +80,25 @@ PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
 
     mod
         .def("show", &modmesh::python::detail::update_appmesh, py::arg("mesh"))
+        .def("showMark", &modmesh::python::detail::show_mark)
         //
         ;
 
     wrap_view(mod);
 
     mod.attr("app") = py::cast(RApplication::instance());
+}
+
+int main(int argc, char ** argv)
+{
+    using namespace modmesh;
+
+    RApplication app(argc, argv);
+    app.main()->resize(1000, 600);
+
+    python::detail::show_mark();
+
+    return app.exec();
 }
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
