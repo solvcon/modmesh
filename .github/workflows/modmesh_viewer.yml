@@ -10,7 +10,7 @@ jobs:
 
     strategy:
         matrix:
-          os: [ubuntu-22.04, macos-11]
+          os: [ubuntu-22.04]
           cmake_build_type: [Release, Debug]
 
         fail-fast: false
@@ -35,16 +35,6 @@ jobs:
             libgl1-mesa-dev
 
         sudo pip3 install numpy pytest flake8
-
-    - name: dependency (macos)
-      if: matrix.os == 'macos-11'
-      run: |
-        brew install python3 llvm
-        ln -s "$(brew --prefix llvm)/bin/clang-format" "/usr/local/bin/clang-format"
-        ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
-        echo "which pip3: $(which pip3)"
-        pip3 install -U setuptools
-        pip3 install -U numpy pytest flake8
 
     - name: dependency (manual)
       run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
@@ -84,12 +74,5 @@ jobs:
       run: |
         make viewer \
           VERBOSE=1 BUILD_QT=ON \
-          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
-
-    - name: flake8
-      run: |
-        make flake8 \
-          VERBOSE=1 \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
