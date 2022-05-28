@@ -2,6 +2,9 @@ name: modmesh_viewer
 
 on:
   push:
+  pull_request:
+  schedule:
+    - cron: '34 17 * * *'
 
 jobs:
   build:
