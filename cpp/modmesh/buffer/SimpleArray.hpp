@@ -167,8 +167,7 @@ public:
         }
     }
 
-    explicit SimpleArray(
-        small_vector<size_t> const & shape, std::shared_ptr<buffer_type> const & buffer)
+    explicit SimpleArray(small_vector<size_t> const & shape, std::shared_ptr<buffer_type> const & buffer)
         : SimpleArray(buffer)
     {
         if (buffer)
@@ -209,6 +208,8 @@ public:
         : m_buffer(std::move(other.m_buffer))
         , m_shape(std::move(other.m_shape))
         , m_stride(std::move(other.m_stride))
+        , m_nghost(other.m_nghost)
+        , m_body(other.m_body)
     {
     }
 

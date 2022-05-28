@@ -28,6 +28,8 @@
 
 #include <modmesh/view/RStaticMesh.hpp> // Must be the first include.
 
+#include <modmesh/view/common_detail.hpp>
+
 namespace modmesh
 {
 
@@ -49,13 +51,13 @@ void RStaticMesh::update_geometry_impl(StaticMesh const & mh, Qt3DCore::QGeometr
     auto * buf = new Qt3DCore::QBuffer(geom);
     {
         QByteArray barray;
-        barray.resize(3 * mh.nnode() * sizeof(float));
-        float * ptr = reinterpret_cast<float *>(barray.data());
+        barray.resize(mh.nnode() * 3 * sizeof(float));
+        SimpleArray<float> sarr = makeSimpleArray<float>(barray, small_vector<size_t>{mh.nnode(), 3}, /*copy*/ false);
         for (uint32_t ind = 0; ind < mh.nnode(); ++ind)
         {
-            *ptr++ = mh.ndcrd(ind, 0);
-            *ptr++ = mh.ndcrd(ind, 1);
-            *ptr++ = (3 == mh.ndim()) ? mh.ndcrd(ind, 2) : 0;
+            sarr(ind, 0) = mh.ndcrd(ind, 0);
+            sarr(ind, 1) = mh.ndcrd(ind, 1);
+            sarr(ind, 2) = (3 == mh.ndim()) ? mh.ndcrd(ind, 2) : 0;
         }
         buf->setData(barray);
     }

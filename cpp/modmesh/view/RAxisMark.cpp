@@ -59,7 +59,7 @@ RLine::RLine(QVector3D const & v0, QVector3D const & v1, QColor const & color, Q
         auto * buf = new Qt3DCore::QBuffer(m_geometry);
         {
             QByteArray barray;
-            barray.resize(3 * 2 * sizeof(float));
+            barray.resize(2 * 3 * sizeof(float));
             float * ptr = reinterpret_cast<float *>(barray.data());
             ptr[0] = v0.x();
             ptr[1] = v0.y();

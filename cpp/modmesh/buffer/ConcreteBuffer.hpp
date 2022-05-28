@@ -68,6 +68,14 @@ struct ConcreteBufferRemover
 
 }; /* end struct ConcreteBufferRemover */
 
+struct ConcreteBufferNoRemove : public ConcreteBufferRemover
+{
+
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
+    void operator()(int8_t *) const override {}
+
+}; /* end struct ConcreteBufferNoRemove */
+
 struct ConcreteBufferDataDeleter
 {
 
