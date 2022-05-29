@@ -9,6 +9,8 @@ on:
 jobs:
   build:
 
+    name: test after cmake build qt-based viewer
+
     runs-on: ${{ matrix.os }}
 
     strategy:
