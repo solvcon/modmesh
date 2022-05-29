@@ -9,6 +9,8 @@ on:
 jobs:
   build:
 
+    name: test after setup.py
+
     if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
 
     runs-on: ${{ matrix.os }}

@@ -1,5 +1,5 @@
 # Run clang-format
-name: modmesh_format.yml
+name: modmesh_format
 
 on:
   push:
