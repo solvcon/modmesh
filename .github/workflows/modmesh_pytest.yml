@@ -17,7 +17,7 @@ jobs:
 
     strategy:
         matrix:
-          os: [ubuntu-20.04, macos-11]
+          os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
           cmake_build_type: [Release, Debug]
 
         fail-fast: false
@@ -29,19 +29,21 @@ jobs:
         fetch-depth: 1
 
     - name: dependency (ubuntu)
-      if: matrix.os != 'macos-11'
+      if: ${{ startsWith(matrix.os, 'ubuntu') }}
       run: |
+        VERSION_ID=$(bash -c 'source /etc/os-release ; echo $VERSION_ID')        
+        if [ "20.04" == "$VERSION_ID" ] ; then CLANG_TIDY_VERSION=10 ; else CLANG_TIDY_VERSION=14 ; fi
         sudo apt-get -qqy update
         sudo apt-get -qy install \
-            sudo curl git build-essential make cmake libc6-dev gcc-10 g++-10 \
-            clang-tidy-10 \
+            sudo curl git build-essential make cmake libc6-dev gcc g++ \
+            clang-tidy-${CLANG_TIDY_VERSION} \
             python3 python3-dev python3-venv
-        sudo ln -s "$(which clang-tidy-10)" "$(dirname $(which clang-tidy-10))/clang-tidy"
+        sudo ln -s "$(which clang-tidy-${CLANG_TIDY_VERSION})" "$(dirname $(which clang-tidy-${CLANG_TIDY_VERSION}))/clang-tidy"
         sudo pip3 install setuptools
         sudo pip3 install numpy pytest flake8
 
     - name: dependency (macos)
-      if: matrix.os == 'macos-11'
+      if: ${{ startsWith(matrix.os, 'macos') }}
       run: |
         brew install python3 llvm
         ln -s "$(brew --prefix llvm)/bin/clang-format" "/usr/local/bin/clang-format"

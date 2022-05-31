@@ -75,7 +75,13 @@ include(GNUInstallDirs)
 
 set(MODMESH_PY_DIR "${PROJECT_SOURCE_DIR}/modmesh")
 
-set(COMMON_COMPILER_OPTIONS -Werror -Wall -Wextra)
+set(COMMON_COMPILER_OPTIONS -Wall -Wextra)
+if(USE_CLANG_TIDY AND LINT_AS_ERRORS)
+    message(STATUS "Disable -Werror because clang-tidy (with lint as errors) is enabled")
+else()
+    set(COMMON_COMPILER_OPTIONS ${COMMON_COMPILER_OPTIONS} -Werror)
+    message(STATUS "Enable -Werror because clang-tidy (with lint as errors) is disabled")
+endif()
 
 add_subdirectory(cpp/binary/pymod_modmesh)
 if(BUILD_QT)
