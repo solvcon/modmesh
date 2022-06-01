@@ -52,7 +52,7 @@ void RStaticMesh::update_geometry_impl(StaticMesh const & mh, Qt3DCore::QGeometr
     {
         QByteArray barray;
         barray.resize(mh.nnode() * 3 * sizeof(float));
-        SimpleArray<float> sarr = makeSimpleArray<float>(barray, small_vector<size_t>{mh.nnode(), 3}, /*copy*/ false);
+        SimpleArray<float> sarr = makeSimpleArray<float>(barray, small_vector<size_t>{mh.nnode(), 3}, /*view*/ true);
         for (uint32_t ind = 0; ind < mh.nnode(); ++ind)
         {
             sarr(ind, 0) = mh.ndcrd(ind, 0);
