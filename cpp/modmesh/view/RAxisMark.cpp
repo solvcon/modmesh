@@ -97,8 +97,8 @@ void RLine::addArrowHead(float erate, float wrate)
     if (!m_arrow_head)
     {
         QVector3D v2 = (m_v1 - m_v0) * erate;
-        v2 += m_v1;
-        m_arrow_head = new RArrowHead(m_v1, v2, color(), this);
+        v2 = m_v1 - v2;
+        m_arrow_head = new RArrowHead(v2, m_v1, color(), this);
         m_arrow_head->setBottomRadiusRatio(wrate);
     }
 }
