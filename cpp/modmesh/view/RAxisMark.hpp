@@ -47,8 +47,37 @@
 
 #include <Qt3DExtras/QDiffuseSpecularMaterial>
 
+namespace Qt3DExtras
+{
+
+class QConeMesh;
+
+}
+
 namespace modmesh
 {
+
+class RArrowHead
+    : public Qt3DCore::QEntity
+{
+
+public:
+
+    RArrowHead(QVector3D const & v0, QVector3D const & v1, QColor const & color, Qt3DCore::QNode * parent = nullptr);
+
+    void setColor(QColor const & color);
+    float length() const;
+    void setLength(float v);
+    float bottomRadius() const;
+    void setBottomRadius(float v);
+    void setBottomRadiusRatio(float v);
+
+private:
+
+    Qt3DExtras::QConeMesh * m_renderer = nullptr;
+    Qt3DExtras::QDiffuseSpecularMaterial * m_material = nullptr;
+
+}; /* end class RArrowHead */
 
 class RLine
     : public Qt3DCore::QEntity
@@ -58,11 +87,19 @@ public:
 
     RLine(QVector3D const & v0, QVector3D const & v1, QColor const & color, Qt3DCore::QNode * parent = nullptr);
 
+    void addArrowHead(float erate, float wrate);
+
+    QColor color() const;
+    void setColor(QColor const & color);
+
 private:
 
     Qt3DCore::QGeometry * m_geometry = nullptr;
     Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
     Qt3DExtras::QDiffuseSpecularMaterial * m_material = nullptr;
+    RArrowHead * m_arrow_head = nullptr;
+    QVector3D m_v0;
+    QVector3D m_v1;
 
 }; /* end class RLine */
 
