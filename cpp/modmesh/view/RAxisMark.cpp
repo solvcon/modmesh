@@ -44,16 +44,72 @@
 #include <Qt3DCore/QAttribute>
 #include <Qt3DCore/QTransform>
 
+#include <Qt3DExtras/QConeMesh>
 #include <Qt3DExtras/QDiffuseSpecularMaterial>
 
 namespace modmesh
 {
+
+RArrowHead::RArrowHead(QVector3D const & v0, QVector3D const & v1, QColor const & color, Qt3DCore::QNode * parent)
+    : Qt3DCore::QEntity(parent)
+    , m_renderer(new Qt3DExtras::QConeMesh())
+    , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
+{
+    QVector3D const vec = v1 - v0;
+    m_renderer->setLength(vec.length());
+    addComponent(m_renderer);
+
+    auto * transform = new Qt3DCore::QTransform();
+    transform->setRotation(QQuaternion::rotationTo(QVector3D(0, 1, 0), vec));
+    transform->setScale(1.0f);
+    transform->setTranslation(v0 + vec / 2);
+    addComponent(transform);
+
+    m_material->setAmbient(color);
+    addComponent(m_material);
+}
+
+void RArrowHead::setColor(QColor const & color) { m_material->setAmbient(color); }
+
+float RArrowHead::length() const { return m_renderer->length(); }
+
+void RArrowHead::setLength(float v) { m_renderer->setLength(v); }
+
+float RArrowHead::bottomRadius() const { return m_renderer->bottomRadius(); }
+
+void RArrowHead::setBottomRadius(float v) { m_renderer->setBottomRadius(v); }
+
+void RArrowHead::setBottomRadiusRatio(float v) { setBottomRadius(length() * v); }
+
+QColor RLine::color() const { return m_material->ambient(); }
+
+void RLine::setColor(QColor const & color)
+{
+    m_material->setAmbient(color);
+    if (m_arrow_head)
+    {
+        m_arrow_head->setColor(color);
+    }
+}
+
+void RLine::addArrowHead(float erate, float wrate)
+{
+    if (!m_arrow_head)
+    {
+        QVector3D v2 = (m_v1 - m_v0) * erate;
+        v2 += m_v1;
+        m_arrow_head = new RArrowHead(m_v1, v2, color(), this);
+        m_arrow_head->setBottomRadiusRatio(wrate);
+    }
+}
 
 RLine::RLine(QVector3D const & v0, QVector3D const & v1, QColor const & color, Qt3DCore::QNode * parent)
     : Qt3DCore::QEntity(parent)
     , m_geometry(new Qt3DCore::QGeometry(this))
     , m_renderer(new Qt3DRender::QGeometryRenderer())
     , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
+    , m_v0(v0)
+    , m_v1(v1)
 {
     {
         auto * buf = new Qt3DCore::QBuffer(m_geometry);
@@ -117,6 +173,9 @@ RAxisMark::RAxisMark(Qt3DCore::QNode * parent)
     , m_ymark(new RLine(QVector3D(0, 0, 0), QVector3D(0, 1, 0), QColor(0, 255, 0, 255), this))
     , m_zmark(new RLine(QVector3D(0, 0, 0), QVector3D(0, 0, 1), QColor(0, 0, 255, 255), this))
 {
+    m_xmark->addArrowHead(0.2, 0.4);
+    m_ymark->addArrowHead(0.2, 0.4);
+    m_zmark->addArrowHead(0.2, 0.4);
 }
 
 } /* end namespace modmesh */

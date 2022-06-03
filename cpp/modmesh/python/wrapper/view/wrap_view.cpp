@@ -77,6 +77,34 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
 
 }; /* end class WrapR3DWidget */
 
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRLine
+    : public WrapBase<WrapRLine, RLine>
+{
+
+    friend root_base_type;
+
+    WrapRLine(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : root_base_type(mod, pyname, pydoc)
+    {
+        namespace py = pybind11;
+
+        (*this)
+            .def(
+                py::init(
+                    [](float x0, float y0, float z0, float x1, float y1, float z1, uint8_t color_r, uint8_t color_g, uint8_t color_b)
+                    {
+                        auto * scene = RApplication::instance()->main()->viewer()->scene();
+                        QVector3D v0(x0, y0, z0);
+                        QVector3D v1(x1, y1, z1);
+                        QColor color(color_r, color_g, color_b, 255);
+                        auto * ret = new RLine(v0, v1, color, scene);
+                        ret->addArrowHead(0.2, 0.4);
+                        return ret;
+                    }));
+    }
+
+}; /* end class WrapRLine */
+
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
     : public WrapBase<WrapRApplication, RApplication>
 {
@@ -111,6 +139,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
 void wrap_view(pybind11::module & mod)
 {
     WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
+    WrapRLine::commit(mod, "RLine", "RLine");
     WrapRApplication::commit(mod, "RApplication", "RApplication");
 }
 

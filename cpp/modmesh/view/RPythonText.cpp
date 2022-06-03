@@ -91,6 +91,9 @@ mm.view.show(mh)
 print("position:", mm.view.app.viewer.position)
 print("up_vector:", mm.view.app.viewer.up_vector)
 print("view_center:", mm.view.app.viewer.view_center)
+
+# line = mm.view.RLine(-1, -1, -1, -2, -2, -2, 0, 128, 128)
+# print(line)
 )""""));
 }
 
