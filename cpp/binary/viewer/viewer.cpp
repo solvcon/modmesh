@@ -31,6 +31,8 @@
 
 #include <modmesh/view/view.hpp>
 
+#include <QClipboard>
+
 namespace modmesh
 {
 
@@ -81,6 +83,22 @@ PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
     mod
         .def("show", &modmesh::python::detail::update_appmesh, py::arg("mesh"))
         .def("showMark", &modmesh::python::detail::show_mark)
+        .def(
+            "clipImage",
+            []()
+            {
+                R3DWidget * viewer = RApplication::instance()->main()->viewer();
+                QClipboard * clipboard = QGuiApplication::clipboard();
+                clipboard->setPixmap(viewer->grabPixmap());
+            })
+        .def(
+            "saveImage",
+            [](std::string const & filename)
+            {
+                R3DWidget * viewer = RApplication::instance()->main()->viewer();
+                viewer->grabPixmap().save(filename.c_str());
+            },
+            py::arg("filename"))
         //
         ;
 

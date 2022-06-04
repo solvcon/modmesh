@@ -92,6 +92,8 @@ public:
     RScene * scene() { return m_scene; }
     Qt3DRender::QCamera * camera() { return m_view->camera(); }
 
+    QPixmap grabPixmap() const { return m_view->screen()->grabWindow(m_view->winId()); }
+
 private:
 
     Qt3DExtras::Qt3DWindow * m_view = nullptr;
