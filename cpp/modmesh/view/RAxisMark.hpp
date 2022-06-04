@@ -117,6 +117,10 @@ private:
     RLine * m_ymark = nullptr;
     RLine * m_zmark = nullptr;
 
+    QEntity * m_xtext = nullptr;
+    QEntity * m_ytext = nullptr;
+    QEntity * m_ztext = nullptr;
+
 }; /* end class RAxisMark */
 
 } /* end namespace modmesh */

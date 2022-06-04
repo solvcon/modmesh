@@ -168,7 +168,10 @@ RLine::RLine(QVector3D const & v0, QVector3D const & v1, QColor const & color, Q
     m_material->setAmbient(color);
 }
 
-static void drawText(std::string const & text, QVector3D loc, float scale, QColor color, Qt3DCore::QEntity * parent = nullptr)
+namespace detail
+{
+
+static Qt3DCore::QEntity * drawText(std::string const & text, QVector3D loc, float scale, QColor color, Qt3DCore::QEntity * parent = nullptr)
 {
     auto * entity = new Qt3DCore::QEntity(parent);
 
@@ -186,20 +189,24 @@ static void drawText(std::string const & text, QVector3D loc, float scale, QColo
     auto * material = new Qt3DExtras::QDiffuseSpecularMaterial(entity);
     material->setAmbient(color);
     entity->addComponent(material);
+
+    return entity;
 }
+
+} // end namespace detail
 
 RAxisMark::RAxisMark(Qt3DCore::QNode * parent)
     : Qt3DCore::QEntity(parent)
     , m_xmark(new RLine(QVector3D(0, 0, 0), QVector3D(1, 0, 0), Qt::red, this))
     , m_ymark(new RLine(QVector3D(0, 0, 0), QVector3D(0, 1, 0), Qt::green, this))
     , m_zmark(new RLine(QVector3D(0, 0, 0), QVector3D(0, 0, 1), Qt::blue, this))
+    , m_xtext(detail::drawText("X", QVector3D{1.1, 0, 0}, 0.2f, Qt::red, this))
+    , m_ytext(detail::drawText("Y", QVector3D{0, 1.1, 0}, 0.2f, Qt::green, this))
+    , m_ztext(detail::drawText("Z", QVector3D{0, 0, 1.1}, 0.2f, Qt::blue, this))
 {
     m_xmark->addArrowHead(0.2, 0.4);
     m_ymark->addArrowHead(0.2, 0.4);
     m_zmark->addArrowHead(0.2, 0.4);
-    drawText("X", QVector3D{1.1, 0, 0}, 0.2f, Qt::red, m_xmark);
-    drawText("Y", QVector3D{0, 1.1, 0}, 0.2f, Qt::green, m_xmark);
-    drawText("Z", QVector3D{0, 0, 1.1}, 0.2f, Qt::blue, m_xmark);
 }
 
 } /* end namespace modmesh */
