@@ -46,6 +46,7 @@
 
 #include <Qt3DExtras/QConeMesh>
 #include <Qt3DExtras/QDiffuseSpecularMaterial>
+#include <Qt3DExtras/QExtrudedTextMesh>
 
 namespace modmesh
 {
@@ -167,15 +168,38 @@ RLine::RLine(QVector3D const & v0, QVector3D const & v1, QColor const & color, Q
     m_material->setAmbient(color);
 }
 
+static void drawText(std::string const & text, QVector3D loc, float scale, QColor color, Qt3DCore::QEntity * parent = nullptr)
+{
+    auto * entity = new Qt3DCore::QEntity(parent);
+
+    auto * transform = new Qt3DCore::QTransform(entity);
+    transform->setTranslation(loc);
+    transform->setScale(scale);
+    entity->addComponent(transform);
+
+    auto * mesh = new Qt3DExtras::QExtrudedTextMesh(entity);
+    mesh->setDepth(0.0f);
+    mesh->setFont(QFont("Courier New", 10, -1, false));
+    mesh->setText(text.c_str());
+    entity->addComponent(mesh);
+
+    auto * material = new Qt3DExtras::QDiffuseSpecularMaterial(entity);
+    material->setAmbient(color);
+    entity->addComponent(material);
+}
+
 RAxisMark::RAxisMark(Qt3DCore::QNode * parent)
     : Qt3DCore::QEntity(parent)
-    , m_xmark(new RLine(QVector3D(0, 0, 0), QVector3D(1, 0, 0), QColor(255, 0, 0, 255), this))
-    , m_ymark(new RLine(QVector3D(0, 0, 0), QVector3D(0, 1, 0), QColor(0, 255, 0, 255), this))
-    , m_zmark(new RLine(QVector3D(0, 0, 0), QVector3D(0, 0, 1), QColor(0, 0, 255, 255), this))
+    , m_xmark(new RLine(QVector3D(0, 0, 0), QVector3D(1, 0, 0), Qt::red, this))
+    , m_ymark(new RLine(QVector3D(0, 0, 0), QVector3D(0, 1, 0), Qt::green, this))
+    , m_zmark(new RLine(QVector3D(0, 0, 0), QVector3D(0, 0, 1), Qt::blue, this))
 {
     m_xmark->addArrowHead(0.2, 0.4);
     m_ymark->addArrowHead(0.2, 0.4);
     m_zmark->addArrowHead(0.2, 0.4);
+    drawText("X", QVector3D{1.1, 0, 0}, 0.2f, Qt::red, m_xmark);
+    drawText("Y", QVector3D{0, 1.1, 0}, 0.2f, Qt::green, m_xmark);
+    drawText("Z", QVector3D{0, 0, 1.1}, 0.2f, Qt::blue, m_xmark);
 }
 
 } /* end namespace modmesh */
