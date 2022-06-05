@@ -61,6 +61,8 @@ void RPythonText::setUp()
     m_text->setPlainText(QString(R""""(# Sample input
 import modmesh as mm
 
+mm.view.show_mark()
+
 def make_2d():
     mh = mm.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
     mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)

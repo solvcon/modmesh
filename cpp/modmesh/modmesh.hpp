@@ -38,5 +38,6 @@
 #include <modmesh/buffer/buffer.hpp>
 #include <modmesh/grid.hpp>
 #include <modmesh/mesh/mesh.hpp>
+#include <modmesh/toggle/toggle.hpp>
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

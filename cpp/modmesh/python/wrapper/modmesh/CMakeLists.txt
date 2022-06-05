@@ -14,6 +14,7 @@ set(MODMESH_PYMOD_MODMESH_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_SimpleArray.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_StaticGrid.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_StaticMesh.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wrap_Toggle.cpp
     CACHE FILEPATH "" FORCE
 )
 

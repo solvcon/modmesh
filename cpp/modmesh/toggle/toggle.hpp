@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -26,21 +28,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/wrapper/view/view.hpp> // Must be the first include.
-#include <modmesh/modmesh.hpp>
-
-#include <modmesh/view/view.hpp>
-
-PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
+namespace modmesh
 {
-    modmesh::python::wrap_view(mod);
-}
 
-int main(int argc, char ** argv)
+class Toggle
 {
-    modmesh::RApplication app(argc, argv);
-    app.main()->resize(1000, 600);
-    return app.exec();
-}
+
+public:
+
+    static Toggle & instance();
+
+    Toggle(Toggle const &) = delete;
+    Toggle(Toggle &&) = delete;
+    Toggle & operator=(Toggle const &) = delete;
+    Toggle & operator=(Toggle &&) = delete;
+    ~Toggle() = default;
+
+    bool get_show_axis() const { return m_show_axis; }
+    void set_show_axis(bool v) { m_show_axis = v; }
+
+private:
+
+    Toggle() = default;
+
+    bool m_show_axis;
+
+}; /* end class Toggle */
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

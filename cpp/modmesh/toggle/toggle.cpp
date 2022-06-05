@@ -26,21 +26,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/wrapper/view/view.hpp> // Must be the first include.
-#include <modmesh/modmesh.hpp>
+#include <modmesh/toggle/toggle.hpp>
 
-#include <modmesh/view/view.hpp>
-
-PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
+namespace modmesh
 {
-    modmesh::python::wrap_view(mod);
+
+Toggle & Toggle::instance()
+{
+    static Toggle o;
+    return o;
 }
 
-int main(int argc, char ** argv)
-{
-    modmesh::RApplication app(argc, argv);
-    app.main()->resize(1000, 600);
-    return app.exec();
-}
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

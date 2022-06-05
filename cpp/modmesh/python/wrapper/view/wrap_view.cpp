@@ -30,6 +30,8 @@
 
 #include <modmesh/view/view.hpp>
 
+#include <QClipboard>
+
 namespace modmesh
 {
 
@@ -136,11 +138,73 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
 
 }; /* end class WrapRApplication */
 
+namespace detail
+{
+
+static void show_mark()
+{
+    RScene * scene = RApplication::instance()->main()->viewer()->scene();
+    for (Qt3DCore::QNode * child : scene->childNodes())
+    {
+        if (typeid(*child) == typeid(RAxisMark))
+        {
+            child->deleteLater();
+        }
+    }
+    new RAxisMark(scene);
+}
+
+static void update_appmesh(std::shared_ptr<StaticMesh> const & mesh)
+{
+    RScene * scene = RApplication::instance()->main()->viewer()->scene();
+    for (Qt3DCore::QNode * child : scene->childNodes())
+    {
+        if (typeid(*child) == typeid(RStaticMesh))
+        {
+            child->deleteLater();
+        }
+    }
+    new RStaticMesh(mesh, scene);
+}
+
+} /* end namespace detail */
+
 void wrap_view(pybind11::module & mod)
 {
+    namespace py = pybind11;
+
     WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
     WrapRLine::commit(mod, "RLine", "RLine");
     WrapRApplication::commit(mod, "RApplication", "RApplication");
+
+    mod
+        .def("show", &modmesh::python::detail::update_appmesh, py::arg("mesh"))
+        .def("show_mark", &modmesh::python::detail::show_mark)
+        .def(
+            "clip_image",
+            []()
+            {
+                R3DWidget * viewer = RApplication::instance()->main()->viewer();
+                QClipboard * clipboard = QGuiApplication::clipboard();
+                clipboard->setPixmap(viewer->grabPixmap());
+            })
+        .def(
+            "save_image",
+            [](std::string const & filename)
+            {
+                R3DWidget * viewer = RApplication::instance()->main()->viewer();
+                viewer->grabPixmap().save(filename.c_str());
+            },
+            py::arg("filename"))
+        //
+        ;
+
+    mod.attr("app") = py::cast(RApplication::instance());
+
+    if (Toggle::instance().get_show_axis())
+    {
+        detail::show_mark();
+    }
 }
 
 } /* end namespace python */
