@@ -31,94 +31,15 @@
 
 #include <modmesh/view/view.hpp>
 
-#include <QClipboard>
-
-namespace modmesh
-{
-
-namespace python
-{
-
-namespace detail
-{
-
-static void show_mark()
-{
-    RScene * scene = RApplication::instance()->main()->viewer()->scene();
-    for (Qt3DCore::QNode * child : scene->childNodes())
-    {
-        if (typeid(*child) == typeid(RAxisMark))
-        {
-            child->deleteLater();
-        }
-    }
-    new RAxisMark(scene);
-}
-
-static void update_appmesh(std::shared_ptr<StaticMesh> const & mesh)
-{
-    RScene * scene = RApplication::instance()->main()->viewer()->scene();
-    for (Qt3DCore::QNode * child : scene->childNodes())
-    {
-        if (typeid(*child) == typeid(RStaticMesh))
-        {
-            child->deleteLater();
-        }
-    }
-    new RStaticMesh(mesh, scene);
-}
-
-} /* end namespace detail */
-
-} /* end namespace python */
-
-} /* end namespace modmesh */
-
 PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod)
 {
-    using namespace modmesh;
-    using namespace modmesh::python;
-    namespace py = pybind11;
-
-    mod
-        .def("show", &modmesh::python::detail::update_appmesh, py::arg("mesh"))
-        .def("showMark", &modmesh::python::detail::show_mark)
-        .def(
-            "clipImage",
-            []()
-            {
-                R3DWidget * viewer = RApplication::instance()->main()->viewer();
-                QClipboard * clipboard = QGuiApplication::clipboard();
-                clipboard->setPixmap(viewer->grabPixmap());
-            })
-        .def(
-            "saveImage",
-            [](std::string const & filename)
-            {
-                R3DWidget * viewer = RApplication::instance()->main()->viewer();
-                viewer->grabPixmap().save(filename.c_str());
-            },
-            py::arg("filename"))
-        //
-        ;
-
-    wrap_view(mod);
-
-    mod.attr("app") = py::cast(RApplication::instance());
+    modmesh::python::wrap_view(mod);
 }
 
 int main(int argc, char ** argv)
 {
-    using namespace modmesh;
-
-    RApplication app(argc, argv);
+    modmesh::RApplication app(argc, argv);
     app.main()->resize(1000, 600);
-
-    if (modmesh::Toggle::instance().get_show_axis())
-    {
-        python::detail::show_mark();
-    }
-
     return app.exec();
 }
 
