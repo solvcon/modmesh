@@ -114,7 +114,10 @@ int main(int argc, char ** argv)
     RApplication app(argc, argv);
     app.main()->resize(1000, 600);
 
-    python::detail::show_mark();
+    if (modmesh::Toggle::instance().get_show_axis())
+    {
+        python::detail::show_mark();
+    }
 
     return app.exec();
 }

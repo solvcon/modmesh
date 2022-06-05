@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,16 +26,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * \file This is a template library for the meshes for numerical calculations
- * of partial differential equations.
- */
+#include <modmesh/python/wrapper/modmesh/modmesh.hpp> // Must be the first include.
+#include <modmesh/modmesh.hpp>
 
-#include <modmesh/base.hpp>
-#include <modmesh/profile.hpp>
-#include <modmesh/buffer/buffer.hpp>
-#include <modmesh/grid.hpp>
-#include <modmesh/mesh/mesh.hpp>
-#include <modmesh/toggle/toggle.hpp>
+namespace modmesh
+{
+
+namespace python
+{
+
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapToggle
+    : public WrapBase<WrapToggle, Toggle>
+{
+
+public:
+
+    using base_type = WrapBase<WrapToggle, Toggle>;
+    using wrapped_type = typename base_type::wrapped_type;
+
+    friend root_base_type;
+
+protected:
+
+    WrapToggle(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+}; /* end class WrapToggle */
+
+WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    (*this)
+        .def_property("show_axis", &wrapped_type::get_show_axis, &wrapped_type::set_show_axis);
+
+    mod.attr("toggle") = Toggle::instance();
+}
+
+void wrap_Toggle(pybind11::module & mod)
+{
+    WrapToggle::commit(mod, "Toggle", "Toggle");
+}
+
+} /* end namespace python */
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

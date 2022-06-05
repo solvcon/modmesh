@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,16 +28,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * \file This is a template library for the meshes for numerical calculations
- * of partial differential equations.
- */
+namespace modmesh
+{
 
-#include <modmesh/base.hpp>
-#include <modmesh/profile.hpp>
-#include <modmesh/buffer/buffer.hpp>
-#include <modmesh/grid.hpp>
-#include <modmesh/mesh/mesh.hpp>
-#include <modmesh/toggle/toggle.hpp>
+class Toggle
+{
+
+public:
+
+    static Toggle & instance();
+
+    Toggle(Toggle const &) = delete;
+    Toggle(Toggle &&) = delete;
+    Toggle & operator=(Toggle const &) = delete;
+    Toggle & operator=(Toggle &&) = delete;
+    ~Toggle() = default;
+
+    bool get_show_axis() const { return m_show_axis; }
+    void set_show_axis(bool v) { m_show_axis = v; }
+
+private:
+
+    Toggle() = default;
+
+    bool m_show_axis;
+
+}; /* end class Toggle */
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
