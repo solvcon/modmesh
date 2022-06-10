@@ -31,6 +31,7 @@
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
 
 #include <modmesh/view/RMainWindow.hpp>
+#include <modmesh/view/RMenu.hpp>
 
 #include <Qt>
 #include <QApplication>
