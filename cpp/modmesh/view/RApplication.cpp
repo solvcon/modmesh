@@ -44,24 +44,33 @@ RApplication::RApplication(int & argc, char ** argv)
     pybind11::exec("modmesh.view = _modmesh_view");
 
     RMenuBar * menuBar = new RMenuBar();
-    RMenu * fileMmenu = new RMenu(QString("File"));
+    RMenu * fileMenu = new RMenu(QString("File"));
     RMenu * newMenu = new RMenu(QString("New"));
+
     RAction * newFileAction = new RAction(
         QString("New file"),
         QString("Create new file"),
         []()
         {
+            // FIXME: This is only a demo.
             qDebug() << "Create new file!";
         });
+
+    newMenu->addAction(newFileAction);
+    fileMenu->addMenu(newMenu);
+
+#ifndef Q_OS_MACOS
+    // Qt for mac merges "quit" or "exit" with the default quit item in the
+    // system menu:
+    // https://doc.qt.io/qt-6/qmenubar.html#qmenubar-as-a-global-menu-bar
     RAction * exitAction = new RAction(
         QString("Exit"),
         QString("Exit the application"),
         quit);
+    fileMenu->addAction(exitAction);
+#endif
 
-    newMenu->addAction(newFileAction);
-    fileMmenu->addMenu(newMenu);
-    fileMmenu->addAction(exitAction);
-    menuBar->addMenu(fileMmenu);
+    menuBar->addMenu(fileMenu);
     m_main->setMenuBar(menuBar);
 
     // Show main window.
