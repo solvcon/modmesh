@@ -26,59 +26,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/RApplication.hpp> // Must be the first include.
-
-#include <modmesh/view/RMainWindow.hpp>
+#include <modmesh/view/RMenu.hpp> // Must be the first include.
 
 namespace modmesh
 {
 
-RApplication::RApplication(int & argc, char ** argv)
-    : QApplication(argc, argv)
-    , m_main(new RMainWindow)
+RAction::RAction(QString const & text, QString const & tipText, std::function<void(void)> callback, QObject * parent)
+    : QAction(text, parent)
 {
-    /* TODO: parse arguments */
+    setStatusTip(tipText);
+    if (callback != nullptr)
+    {
+        connect(this, &QAction::triggered, this, callback);
+    }
+}
 
-    // Setup Python interpreter.
-    python::Interpreter::instance().preload_modules({"_modmesh_view", "modmesh"});
-    pybind11::exec("modmesh.view = _modmesh_view");
+RMenu::RMenu(QString const & text, QWidget * parent)
+    : QMenu(text, parent)
+{
+}
 
-    RMenuBar * menuBar = new RMenuBar();
-    RMenu * fileMenu = new RMenu(QString("File"));
-    RMenu * newMenu = new RMenu(QString("New"));
-
-    RAction * newFileAction = new RAction(
-        QString("New file"),
-        QString("Create new file"),
-        []()
-        {
-            // FIXME: This is only a demo.
-            qDebug() << "Create new file!";
-        });
-
-    newMenu->addAction(newFileAction);
-    fileMenu->addMenu(newMenu);
-
-#ifndef Q_OS_MACOS
-    // Qt for mac merges "quit" or "exit" with the default quit item in the
-    // system menu:
-    // https://doc.qt.io/qt-6/qmenubar.html#qmenubar-as-a-global-menu-bar
-    RAction * exitAction = new RAction(
-        QString("Exit"),
-        QString("Exit the application"),
-        quit);
-    fileMenu->addAction(exitAction);
-#endif
-
-    menuBar->addMenu(fileMenu);
-    m_main->setMenuBar(menuBar);
-
-    // Setup main window
-    m_main->setWindowTitle(m_title);
-    m_main->setWindowIcon(QIcon(m_iconFilePath));
-
-    // Show main window.
-    m_main->show();
+RMenuBar::RMenuBar(QWidget * parent)
+    : QMenuBar(parent)
+{
 }
 
 } /* end namespace modmesh */
