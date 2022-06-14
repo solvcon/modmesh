@@ -55,6 +55,8 @@ private:
 
     RMainWindow * m_main = nullptr;
 
+    const QString m_title = "Modmesh Viewer";
+    const QString m_iconFilePath = ":/icon.ico";
 }; /* end class RApplication */
 
 } /* end namespace modmesh */

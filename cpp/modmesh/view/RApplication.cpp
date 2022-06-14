@@ -73,6 +73,10 @@ RApplication::RApplication(int & argc, char ** argv)
     menuBar->addMenu(fileMenu);
     m_main->setMenuBar(menuBar);
 
+    // Setup main window
+    m_main->setWindowTitle(m_title);
+    m_main->setWindowIcon(QIcon(m_iconFilePath));
+
     // Show main window.
     m_main->show();
 }

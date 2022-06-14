@@ -10,8 +10,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+# get the root of the modmdesh project
+set(PROJECT_ROOT_DIR ${PROJECT_SOURCE_DIR}/../../../)
+
 if(NOT DEFINED INSTALL_VIEWERDIR)
-  set(INSTALL_VIEWERDIR "viewer")
+    set(INSTALL_VIEWERDIR "viewer")
 endif()
 
 find_package(Qt6 COMPONENTS Core)
@@ -29,6 +32,13 @@ qt_add_executable(
     ${MODMESH_VIEW_SOURCES}
     ${MODMESH_PYTHON_SOURCES} # FIXME: This duplicates in two binaries and will cause duplicated symbols.
     ${MODMESH_SOURCES} # FIXME: This duplicates in two binaries and will cause duplicated symbols.
+)
+
+qt_add_resources(viewer "app_icon"
+    PREFIX "/"
+    BASE ${PROJECT_ROOT_DIR}/resources/viewer
+    FILES
+    ${PROJECT_ROOT_DIR}/resources/viewer/icon.ico
 )
 
 if(HIDE_SYMBOL)
