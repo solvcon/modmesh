@@ -43,6 +43,10 @@ RApplication::RApplication(int & argc, char ** argv)
     python::Interpreter::instance().preload_modules({"_modmesh_view", "modmesh"});
     pybind11::exec("modmesh.view = _modmesh_view");
 
+    // Setup main window
+    m_main->setWindowTitle(m_title);
+    m_main->setWindowIcon(QIcon(m_iconFilePath));
+
     // Show main window.
     m_main->show();
 }
