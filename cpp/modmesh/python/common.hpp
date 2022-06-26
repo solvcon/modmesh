@@ -408,16 +408,8 @@ public:
     OneTimeInitializer & operator=(OneTimeInitializer &&) = delete;
     ~OneTimeInitializer() = default;
 
-#ifdef IAMWWRONG
-    static OneTimeInitializer<T> & me()
-    {
-        static OneTimeInitializer<T> instance;
-        return instance;
-    }
-#else // IAMWWRONG
     // Do not implement this function as a template. It should use a specialization in only one compilation unit.
     static OneTimeInitializer<T> & me();
-#endif // IAMWWRONG
 
     OneTimeInitializer<T> & operator()(
         pybind11::module & mod, std::function<void(pybind11::module &)> const & initializer)
