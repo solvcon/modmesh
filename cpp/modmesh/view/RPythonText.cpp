@@ -38,26 +38,26 @@ RPythonText::RPythonText(
     QWidget * parent,
     Qt::WindowFlags flags)
     : QDockWidget(title, parent, flags)
+    , m_text(new QTextEdit)
+    , m_run(new QPushButton)
+    , m_layout(new QVBoxLayout)
+    , m_widget(new QWidget)
 {
-    setUp();
-}
-
-void RPythonText::setUp()
-{
-    m_text = new QTextEdit();
     m_text->setFont(QFont("Courier New"));
-    m_run = new QPushButton(QString("run"));
-
-    m_layout = new QVBoxLayout();
+    m_run->setText(QString("run"));
     m_layout->addWidget(m_text);
     m_layout->addWidget(m_run);
-    m_widget = new QWidget();
     m_widget->setLayout(m_layout);
 
     setWidget(m_widget);
 
     connect(m_run, &QPushButton::clicked, this, &RPythonText::runPythonCode);
 
+    setUp();
+}
+
+void RPythonText::setUp()
+{
     m_text->setPlainText(QString(R""""(# Sample input
 import modmesh as mm
 
@@ -90,6 +90,7 @@ def make_3d():
 mh = make_2d()
 mm.view.show(mh)
 
+print("nedge:", mh.nedge)
 print("position:", mm.view.app.viewer.position)
 print("up_vector:", mm.view.app.viewer.up_vector)
 print("view_center:", mm.view.app.viewer.view_center)

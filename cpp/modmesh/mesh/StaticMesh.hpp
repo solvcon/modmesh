@@ -285,6 +285,7 @@ public:
         , m_fccls(std::vector<size_t>{nface, FCREL})
         , m_clnds(std::vector<size_t>{ncell, CLMND + 1})
         , m_clfcs(std::vector<size_t>{ncell, CLMFC + 1})
+        , m_ednds(std::vector<size_t>{0, 2})
         , m_bndfcs(std::vector<size_t>{0, StaticMeshBC::BFREL})
     {
     }
@@ -307,6 +308,7 @@ public:
     uint_type ngstcell() const { return m_ngstcell; }
     bool use_incenter() const { return m_use_incenter; }
 
+    uint_type nedge() const { return m_ednds.shape(0); }
     size_t nbcs() const { return m_bcs.size(); }
 
     /**
@@ -330,14 +332,20 @@ public:
     // Helpers for interior data.
 public:
 
-    void build_interior(bool do_metric)
+    void build_interior(bool do_metric, bool do_edge = true)
     {
         build_faces_from_cells();
         if (do_metric)
         {
             calc_metric();
         }
+        if (do_edge)
+        {
+            build_edge();
+        }
     }
+
+    void build_edge();
 
 private:
 
@@ -398,6 +406,7 @@ private:                                                                \
     MM_DECL_StaticMesh_ARRAY(int_type, fccls);
     MM_DECL_StaticMesh_ARRAY(int_type, clnds);
     MM_DECL_StaticMesh_ARRAY(int_type, clfcs);
+    MM_DECL_StaticMesh_ARRAY(int_type, ednds);
     // boundary information.
     MM_DECL_StaticMesh_ARRAY(int_type, bndfcs);
     std::vector<StaticMeshBC> m_bcs;

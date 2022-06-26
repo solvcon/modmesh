@@ -95,12 +95,14 @@ WrapStaticMesh::WrapStaticMesh(pybind11::module & mod, char const * pyname, char
         .def_property_readonly("ngstnode", &wrapped_type::ngstnode)
         .def_property_readonly("ngstface", &wrapped_type::ngstface)
         .def_property_readonly("ngstcell", &wrapped_type::ngstcell)
+        .def_property_readonly("nedge", &wrapped_type::nedge)
         .def_property_readonly("nbcs", &wrapped_type::nbcs);
 
     (*this)
-        .def_timed("build_interior", &wrapped_type::build_interior, py::arg("_do_metric") = true)
+        .def_timed("build_interior", &wrapped_type::build_interior, py::arg("_do_metric") = true, py::arg("_build_edge") = true)
         .def_timed("build_boundary", &wrapped_type::build_boundary)
-        .def_timed("build_ghost", &wrapped_type::build_ghost);
+        .def_timed("build_ghost", &wrapped_type::build_ghost)
+        .def_timed("build_edge", &wrapped_type::build_edge);
 
 #define MM_DECL_ARRAY(NAME) \
     .expose_SimpleArray(#NAME, [](wrapped_type & self) -> decltype(auto) { return self.NAME(); })
@@ -120,6 +122,7 @@ WrapStaticMesh::WrapStaticMesh(pybind11::module & mod, char const * pyname, char
             MM_DECL_ARRAY(fccls)
             MM_DECL_ARRAY(clnds)
             MM_DECL_ARRAY(clfcs)
+            MM_DECL_ARRAY(ednds)
             MM_DECL_ARRAY(bndfcs)
         ;
     // clang-format on
