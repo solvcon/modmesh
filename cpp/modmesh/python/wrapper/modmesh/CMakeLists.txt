@@ -9,6 +9,7 @@ set(MODMESH_PYMOD_MODMESH_HEADERS
 )
 
 set(MODMESH_PYMOD_MODMESH_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/modmesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_profile.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_ConcreteBuffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_SimpleArray.cpp

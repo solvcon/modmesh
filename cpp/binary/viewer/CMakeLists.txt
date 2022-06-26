@@ -28,10 +28,16 @@ find_package(Qt6 COMPONENTS 3DExtras)
 qt_add_executable(
     viewer
     viewer.cpp
-    ${MODMESH_PYMOD_VIEW_SOURCES}
+    ${MODMESH_HEADERS}
+    ${MODMESH_SOURCES}
+    ${MODMESH_VIEW_HEADERS}
     ${MODMESH_VIEW_SOURCES}
-    ${MODMESH_PYTHON_SOURCES} # FIXME: This duplicates in two binaries and will cause duplicated symbols.
-    ${MODMESH_SOURCES} # FIXME: This duplicates in two binaries and will cause duplicated symbols.
+    ${MODMESH_PYTHON_HEADERS}
+    ${MODMESH_PYTHON_SOURCES}
+    ${MODMESH_PYMOD_MODMESH_HEADERS}
+    ${MODMESH_PYMOD_MODMESH_SOURCES}
+    ${MODMESH_PYMOD_VIEW_HEADERS}
+    ${MODMESH_PYMOD_VIEW_SOURCES}
 )
 
 qt_add_resources(viewer "app_icon"

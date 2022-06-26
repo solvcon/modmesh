@@ -40,6 +40,7 @@ namespace modmesh
 namespace python
 {
 
+void initialize_modmesh(pybind11::module & mod);
 void wrap_profile(pybind11::module & mod);
 void wrap_ConcreteBuffer(pybind11::module & mod);
 void wrap_SimpleArray(pybind11::module & mod);

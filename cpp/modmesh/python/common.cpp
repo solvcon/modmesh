@@ -26,16 +26,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/python.hpp> // Must be the first include.
-#include <pybind11/stl.h>
+#include <modmesh/python/common.hpp> // Must be the first include.
 
-#include <modmesh/modmesh.hpp>
+#include <pybind11/numpy.h>
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
 
 namespace modmesh
 {
 
 namespace python
 {
+
+void import_numpy()
+{
+    auto local_import_numpy = []()
+    {
+        import_array2("cannot import numpy", false); // or numpy c api segfault.
+        return true;
+    };
+    if (!local_import_numpy())
+    {
+        throw pybind11::error_already_set();
+    }
+}
 
 Interpreter & Interpreter::instance()
 {
