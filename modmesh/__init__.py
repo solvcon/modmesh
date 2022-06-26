@@ -62,32 +62,24 @@ __all__ = [
 
 # A hidden loophole to impolementation; it should only be used for testing
 # during development.
-from . import _modmesh as _impl  # noqa: F401
+try:
+    import _modmesh as _impl  # noqa: F401
+except ImportError:
+    from . import _modmesh as _impl  # noqa: F401
+
+# Try to import the viewer code but easily give up.
+try:
+    import _modmesh_view as view  # noqa: F401
+except ImportError:
+    view = None
 
 
-from ._modmesh import (
-    WrapperProfilerStatus,
-    wrapper_profiler_status,
-    StopWatch,
-    stop_watch,
-    TimeRegistry,
-    time_registry,
-    ConcreteBuffer,
-    SimpleArrayBool,
-    SimpleArrayInt8,
-    SimpleArrayInt16,
-    SimpleArrayInt32,
-    SimpleArrayInt64,
-    SimpleArrayUint8,
-    SimpleArrayUint16,
-    SimpleArrayUint32,
-    SimpleArrayUint64,
-    SimpleArrayFloat32,
-    SimpleArrayFloat64,
-    StaticGrid1d,
-    StaticGrid2d,
-    StaticGrid3d,
-    StaticMesh,
-)
+def _load():
+    for name in __all__:
+        globals()[name] = getattr(_impl, name)
+
+
+_load()
+del _load
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -40,14 +40,14 @@ RApplication::RApplication(int & argc, char ** argv)
     /* TODO: parse arguments */
 
     // Setup Python interpreter.
-    python::Interpreter::instance().preload_modules({"_modmesh_view", "modmesh"});
+    python::Interpreter::instance().preload_modules({"_modmesh", "_modmesh_view", "modmesh"});
     pybind11::exec("modmesh.view = _modmesh_view");
 
-    RMenuBar * menuBar = new RMenuBar();
-    RMenu * fileMenu = new RMenu(QString("File"));
-    RMenu * newMenu = new RMenu(QString("New"));
+    auto * menuBar = new RMenuBar();
+    auto * fileMenu = new RMenu(QString("File"));
+    auto * newMenu = new RMenu(QString("New"));
 
-    RAction * newFileAction = new RAction(
+    auto * newFileAction = new RAction(
         QString("New file"),
         QString("Create new file"),
         []()

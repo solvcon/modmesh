@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <pybind11/pybind11.h> // Must be the first include.
+#include <modmesh/python/python.hpp> // Must be the first include.
 #include <pybind11/stl.h>
 
 #include <modmesh/modmesh.hpp>
@@ -40,6 +40,7 @@ namespace modmesh
 namespace python
 {
 
+void initialize_view(pybind11::module & mod);
 void wrap_view(pybind11::module & mod);
 
 } /* end namespace python */
