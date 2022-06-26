@@ -48,61 +48,48 @@ RStaticMesh::RStaticMesh(std::shared_ptr<StaticMesh> const & static_mesh, Qt3DCo
 
 void RStaticMesh::update_geometry_impl(StaticMesh const & mh, Qt3DCore::QGeometry * geom)
 {
-    auto * buf = new Qt3DCore::QBuffer(geom);
     {
-        QByteArray barray;
-        barray.resize(mh.nnode() * 3 * sizeof(float));
-        SimpleArray<float> sarr = makeSimpleArray<float>(barray, small_vector<size_t>{mh.nnode(), 3}, /*view*/ true);
-        for (uint32_t ind = 0; ind < mh.nnode(); ++ind)
+        // Build the Qt node (vertex) coordinate buffer.
+        auto * vertices = new Qt3DCore::QAttribute(geom);
+
+        vertices->setName(Qt3DCore::QAttribute::defaultPositionAttributeName());
+        vertices->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
+        vertices->setVertexBaseType(Qt3DCore::QAttribute::Float);
+        vertices->setVertexSize(3);
+        auto * buf = new Qt3DCore::QBuffer(geom);
         {
-            sarr(ind, 0) = mh.ndcrd(ind, 0);
-            sarr(ind, 1) = mh.ndcrd(ind, 1);
-            sarr(ind, 2) = (3 == mh.ndim()) ? mh.ndcrd(ind, 2) : 0;
-        }
-        buf->setData(barray);
-    }
-
-    auto * vertices = new Qt3DCore::QAttribute(geom);
-    vertices->setName(Qt3DCore::QAttribute::defaultPositionAttributeName());
-    vertices->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
-    vertices->setVertexBaseType(Qt3DCore::QAttribute::Float);
-    vertices->setVertexSize(3);
-    vertices->setBuffer(buf);
-    vertices->setByteStride(3 * sizeof(float));
-    vertices->setCount(mh.nnode());
-
-    geom->addAttribute(vertices);
-
-    // FIXME: This is naive implementation and creates a lot of duplicated
-    // edges.  The StaticMesh should provide a set of unique edges.
-    uint32_t nend = 0;
-    for (uint32_t ifc = 0; ifc < mh.nface(); ++ifc)
-    {
-        nend += mh.fcnds(ifc, 0);
-    }
-
-    buf = new Qt3DCore::QBuffer(geom);
-    {
-        QByteArray barray;
-        barray.resize(nend * sizeof(uint32_t));
-        auto * indices = reinterpret_cast<uint32_t *>(barray.data());
-        for (uint32_t ifc = 0; ifc < mh.nface(); ++ifc)
-        {
-            for (int32_t inf = 1; inf <= mh.fcnds(ifc, 0); ++inf)
+            // Copy mesh node coordinates into the Qt buffer.
+            QByteArray barray;
+            barray.resize(mh.nnode() * 3 * sizeof(float));
+            SimpleArray<float> sarr = makeSimpleArray<float>(barray, small_vector<size_t>{mh.nnode(), 3}, /*view*/ true);
+            for (uint32_t ind = 0; ind < mh.nnode(); ++ind)
             {
-                *indices++ = mh.fcnds(ifc, inf);
+                sarr(ind, 0) = mh.ndcrd(ind, 0);
+                sarr(ind, 1) = mh.ndcrd(ind, 1);
+                sarr(ind, 2) = (3 == mh.ndim()) ? mh.ndcrd(ind, 2) : 0;
             }
+            buf->setData(barray);
         }
-        buf->setData(barray);
+        vertices->setBuffer(buf);
+        vertices->setByteStride(3 * sizeof(float));
+        vertices->setCount(mh.nnode());
+
+        geom->addAttribute(vertices);
     }
 
-    auto * indices = new Qt3DCore::QAttribute(geom);
-    indices->setVertexBaseType(Qt3DCore::QAttribute::UnsignedInt);
-    indices->setAttributeType(Qt3DCore::QAttribute::IndexAttribute);
-    indices->setBuffer(buf);
-    indices->setCount(nend);
+    {
+        // Build the Qt node index buffer.
+        auto * indices = new Qt3DCore::QAttribute(geom);
 
-    geom->addAttribute(indices);
+        indices->setVertexBaseType(Qt3DCore::QAttribute::UnsignedInt);
+        indices->setAttributeType(Qt3DCore::QAttribute::IndexAttribute);
+        auto * buf = new Qt3DCore::QBuffer(geom);
+        buf->setData(makeQByteArray(mh.ednds()));
+        indices->setBuffer(buf);
+        indices->setCount(mh.nedge() * 2);
+
+        geom->addAttribute(indices);
+    }
 }
 
 } /* end namespace modmesh */

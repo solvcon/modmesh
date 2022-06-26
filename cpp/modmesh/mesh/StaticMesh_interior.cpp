@@ -28,6 +28,8 @@
 
 #include <modmesh/mesh/StaticMesh.hpp>
 
+#include <set>
+
 namespace modmesh
 {
 
@@ -562,6 +564,52 @@ void StaticMesh::build_faces_from_cells()
     m_fcnml.remake(small_vector<size_t>{nface(), m_ndim}, 0);
     m_fcara.remake(small_vector<size_t>{nface()}, 0);
     std::copy(fb.clfcs.vptr(0, 0), fb.clfcs.vptr(m_ncell, 0), m_clfcs.vptr(0, 0));
+}
+
+void StaticMesh::build_edge()
+{
+    using etype = std::pair<int32_t, int32_t>;
+    std::set<etype> known_edges;
+    std::vector<etype> edges;
+
+    size_t nedge_max = 0;
+    for (uint32_t ifc = 0; ifc < nface(); ++ifc)
+    {
+        nedge_max += fcnds(ifc, 0);
+    }
+    edges.reserve(nedge_max);
+    // Can we optimize the memory allocation for the known_edges (std::set) too?
+
+    for (uint32_t ifc = 0; ifc < nface(); ++ifc)
+    {
+        for (int32_t inf = 1; inf <= fcnds(ifc, 0); ++inf)
+        {
+            // Determine the edge of this node index.
+            unsigned int const idx1 = (fcnds(ifc, 0) == inf) ? 1 : inf+1;
+            int32_t nd0 = fcnds(ifc, inf);
+            int32_t nd1 = fcnds(ifc, idx1);
+            if (nd0 > nd1) // Lower node index goes first.
+            {
+                std::swap(nd0, nd1);
+            }
+            // Add the edge to the container array.
+            etype edge(nd0, nd1);
+            if (0 == known_edges.count(edge))
+            {
+                edges.push_back(edge);
+                known_edges.insert(edge);
+            }
+        }
+    }
+
+    // Build the edge node array and populate.
+    m_ednds.remake(small_vector<size_t>{edges.size(), 2}, 0);
+    for (size_t ied = 0; ied < edges.size(); ++ied)
+    {
+        etype edge = edges[ied];
+        m_ednds(ied, 0) = edge.first;
+        m_ednds(ied, 1) = edge.second;
+    }
 }
 
 /**

@@ -35,7 +35,7 @@ import modmesh
 class StaticMeshTC(unittest.TestCase):
 
     def _check_shape(self, mh, ndim, nnode, nface, ncell,
-                     nbound, ngstnode, ngstface, ngstcell):
+                     nbound, ngstnode, ngstface, ngstcell, nedge):
         self.assertEqual(ndim, mh.ndim)
         self.assertEqual(nnode, mh.nnode)
         self.assertEqual(nface, mh.nface)
@@ -44,6 +44,8 @@ class StaticMeshTC(unittest.TestCase):
         self.assertEqual(ngstnode, mh.ngstnode)
         self.assertEqual(ngstface, mh.ngstface)
         self.assertEqual(ngstcell, mh.ngstcell)
+
+        self.assertEqual(nedge, mh.nedge)
 
         self.assertEqual((mh.ngstnode + mh.nnode, ndim), mh.ndcrd.shape)
         self.assertEqual((mh.ngstface + mh.nface, ndim), mh.fccnd.shape)
@@ -72,7 +74,8 @@ class StaticMeshTC(unittest.TestCase):
         def _test(cls, ndim):
             mh = cls(ndim=ndim, nnode=0)
             self._check_shape(mh, ndim=ndim, nnode=0, nface=0, ncell=0,
-                              nbound=0, ngstnode=0, ngstface=0, ngstcell=0)
+                              nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
+                              nedge=0)
 
         _test(modmesh.StaticMesh, ndim=2)
         _test(modmesh.StaticMesh, ndim=3)
@@ -84,15 +87,20 @@ class StaticMeshTC(unittest.TestCase):
         mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
 
         self._check_shape(mh, ndim=2, nnode=4, nface=0, ncell=3,
-                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0)
+                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
+                          nedge=0)
         self._check_metric_trivial(mh)
 
         # Test build interior data.
-        mh.build_interior(_do_metric=False)
+        mh.build_interior(_do_metric=False, _build_edge=False)
         self._check_shape(mh, ndim=2, nnode=4, nface=6, ncell=3,
-                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0)
+                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
+                          nedge=0)
         self._check_metric_trivial(mh)
-        mh.build_interior()  # _do_metric=True
+        mh.build_interior()  # _do_metric=True, _build_edge=True
+        self._check_shape(mh, ndim=2, nnode=4, nface=6, ncell=3,
+                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
+                          nedge=6)
         np.testing.assert_almost_equal(
             mh.fccnd,
             [[-0.5, -0.5], [0.0, -1.0], [0.5, -0.5],
@@ -123,10 +131,12 @@ class StaticMeshTC(unittest.TestCase):
 
         # Build ghost data.
         self._check_shape(mh, ndim=2, nnode=4, nface=6, ncell=3,
-                          nbound=3, ngstnode=0, ngstface=0, ngstcell=0)
+                          nbound=3, ngstnode=0, ngstface=0, ngstcell=0,
+                          nedge=6)
         mh.build_ghost()
         self._check_shape(mh, ndim=2, nnode=4, nface=6, ncell=3,
-                          nbound=3, ngstnode=3, ngstface=6, ngstcell=3)
+                          nbound=3, ngstnode=3, ngstface=6, ngstcell=3,
+                          nedge=6)
 
     def test_3d_single_tetrahedron(self):
         mh = modmesh.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
@@ -135,14 +145,19 @@ class StaticMeshTC(unittest.TestCase):
         mh.clnds.ndarray[:, :5] = [(4, 0, 1, 2, 3)]
 
         self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,
-                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0)
+                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
+                          nedge=0)
         self._check_metric_trivial(mh)
 
-        mh.build_interior(_do_metric=False)
+        mh.build_interior(_do_metric=False, _build_edge=False)
         self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,
-                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0)
+                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
+                          nedge=0)
         self._check_metric_trivial(mh)
-        mh.build_interior()  # _do_metric=True
+        mh.build_interior()  # _do_metric=True, _build_edge=True
+        self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,
+                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
+                          nedge=6)
         # FIXME: I have not verified the numbers.  But the mesh looks OK in
         # viewer.
         np.testing.assert_almost_equal(
@@ -179,9 +194,11 @@ class StaticMeshTC(unittest.TestCase):
 
         # Build ghost data.
         self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,
-                          nbound=4, ngstnode=0, ngstface=0, ngstcell=0)
+                          nbound=4, ngstnode=0, ngstface=0, ngstcell=0,
+                          nedge=6)
         mh.build_ghost()
         self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,
-                          nbound=4, ngstnode=4, ngstface=12, ngstcell=4)
+                          nbound=4, ngstnode=4, ngstface=12, ngstcell=4,
+                          nedge=6)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

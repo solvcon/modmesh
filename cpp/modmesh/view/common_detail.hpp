@@ -78,6 +78,15 @@ SimpleArray<T> makeSimpleArray(QByteArray & qbarr, small_vector<size_t> shape, b
     return SimpleArray<T>(small_vector<size_t>(shape), cbuf);
 }
 
+template <typename T>
+QByteArray makeQByteArray(SimpleArray<T> const & sarr)
+{
+    QByteArray barray;
+    barray.resize(sarr.nbytes());
+    std::copy_n(sarr.data(), sarr.size(), reinterpret_cast<T *>(barray.data()));
+    return barray;
+}
+
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
