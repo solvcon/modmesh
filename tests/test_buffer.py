@@ -363,4 +363,29 @@ class SimpleArrayBasicTC(unittest.TestCase):
         sarr.ndarray.fill(100)
         self.assertTrue((ndarr == 100).all())
 
+    def test_SimpleArray_copy_buffer_from_ndarray_using_ellipsis(self):
+        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        ndarr = np.arange(2*3*4, dtype='float64').reshape((2, 3, 4))
+        sarr[...] = ndarr[...]
+        v = 0
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(v, sarr[i, j, k])
+                    v += 1
+
+        ndarr = np.arange(2*3, dtype='float64').reshape((2, 3))
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"Input array from shape\(2, 3\) into shape\(2, 3, 4\)"
+        ):
+            sarr[...] = ndarr[...]
+
+        ndarr = np.arange(2*4*3, dtype='float64').reshape((2, 4, 3))
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"Input array from shape\(2, 4, 3\) into shape\(2, 3, 4\)"
+        ):
+            sarr[...] = ndarr[...]
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

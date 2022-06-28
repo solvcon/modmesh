@@ -147,6 +147,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 [](wrapped_type & self, std::vector<ssize_t> const & key, T val)
                 { self.at(key) = val; })
             .def(
+                "__setitem__",
+                [](wrapped_type & self, const py::ellipsis &, pybind11::array & arr_in)
+                { copy_array_using_ellipsis(self, arr_in); })
+            .def(
                 "reshape",
                 [](wrapped_type const & self, py::object const & shape)
                 { return self.reshape(make_shape(shape)); })
@@ -155,6 +159,53 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def_property_readonly("nbody", &wrapped_type::nbody)
             //
             ;
+    }
+
+    static void copy_array_using_ellipsis(wrapped_type & self, pybind11::array & arr_in)
+    {
+        const auto left_shape = self.shape();
+        const auto * right_shape = arr_in.shape();
+
+        auto throw_error = [=]()
+        {
+            std::ostringstream msg;
+            msg << "Input array from shape(";
+            for (pybind11::ssize_t i = 0; i < arr_in.ndim(); ++i)
+            {
+                msg << right_shape[i];
+                if (i != arr_in.ndim() - 1)
+                {
+                    msg << ", ";
+                }
+            }
+            msg << ") into shape(";
+            for (size_t i = 0; i < self.ndim(); ++i)
+            {
+                msg << left_shape[i];
+                if (i != self.ndim() - 1)
+                {
+                    msg << ", ";
+                }
+            }
+            msg << ")";
+
+            throw std::runtime_error(msg.str());
+        };
+
+        if (self.ndim() != static_cast<size_t>(arr_in.ndim()))
+        {
+            throw_error();
+        }
+
+        for (size_t i = 0; i < left_shape.size(); ++i)
+        {
+            if (left_shape[i] != static_cast<size_t>(right_shape[i]))
+            {
+                throw_error();
+            }
+        }
+
+        std::memcpy(self.data(), arr_in.data(), arr_in.nbytes());
     }
 
     static shape_type make_shape(pybind11::object const & shape_in)
