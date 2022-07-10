@@ -424,4 +424,26 @@ class SimpleArrayBasicTC(unittest.TestCase):
                 for k in range(4):
                     self.assertEqual(stride_arr[i, j, k], sarr[i, j, k])
 
+    def test_SimpleArray_broadcast_ellipsis_dtype(self):
+        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        ndarr = np.arange(2*3*4, dtype='int32').reshape((2, 3, 4))
+        sarr[...] = ndarr[...]
+        v = 0
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(v, sarr[i, j, k])
+                    v += 1
+
+        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        ndarr = np.arange(2*3*4, dtype='float32').reshape((2, 3, 4))
+        sarr[...] = ndarr[...]
+        v = 0
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(v, sarr[i, j, k])
+                    v += 1
+        
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
