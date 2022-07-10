@@ -39,10 +39,10 @@ RApplication::RApplication(int & argc, char ** argv)
 {
     /* TODO: parse arguments */
 
-    // Setup Python interpreter.
-    python::Interpreter::instance().preload_modules({"_modmesh", "_modmesh_view", "modmesh"});
-    pybind11::exec("modmesh.view = _modmesh_view");
+    // Set up Python interpreter.
+    python::Interpreter::instance();
 
+    // Set up menu.
     auto * menuBar = new RMenuBar();
     auto * fileMenu = new RMenu(QString("File"));
     auto * newMenu = new RMenu(QString("New"));
