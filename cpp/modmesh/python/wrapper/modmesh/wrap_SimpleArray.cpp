@@ -251,6 +251,14 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             }
         }
 
+        size_t nghost = 0;
+
+        if (arr_out.has_ghost())
+        {
+            nghost = arr_out.nghost();
+            arr_out.set_nghost(0);
+        }
+
         if (dtype_is_type<bool>(arr_in))
         {
             TypeBroadCast<bool>::broadcast(arr_out, arr_in);
@@ -298,6 +306,11 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         else
         {
             throw std::runtime_error("input array data type not support!");
+        }
+
+        if (nghost != 0)
+        {
+            arr_out.set_nghost(nghost);
         }
     }
 
