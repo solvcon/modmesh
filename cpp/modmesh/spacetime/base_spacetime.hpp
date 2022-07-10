@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2018, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,19 +26,20 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
+ * */
 
-/**
- * \file This is a template library for the meshes for numerical calculations
- * of partial differential equations.
- */
+// FIXME: This is a temporary alias file.  Once the spacetime namespace is
+// merged with modmesh, this file should not be needed.
 
 #include <modmesh/base.hpp>
-#include <modmesh/math.hpp>
-#include <modmesh/profile.hpp>
-#include <modmesh/buffer/buffer.hpp>
-#include <modmesh/grid.hpp>
-#include <modmesh/mesh/mesh.hpp>
-#include <modmesh/toggle/toggle.hpp>
+
+namespace spacetime
+{
+
+using real_type = modmesh::real_type;
+using uint_type = modmesh::uint_type;
+using int_type = modmesh::int_type;
+
+} /* end namespace spacetime */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

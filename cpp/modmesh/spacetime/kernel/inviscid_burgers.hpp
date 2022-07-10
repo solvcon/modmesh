@@ -9,8 +9,7 @@
  * Inviscid Burgers' equation.
  */
 
-#include <modmesh/spacetime/system.hpp>
-#include <modmesh/spacetime/type.hpp>
+#include <modmesh/spacetime/base_spacetime.hpp>
 #include <modmesh/spacetime/ElementBase_decl.hpp>
 #include <modmesh/spacetime/Grid_decl.hpp>
 #include <modmesh/spacetime/Field_decl.hpp>

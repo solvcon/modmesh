@@ -5,8 +5,7 @@
  * BSD 3-Clause License, see COPYING
  */
 
-#include <modmesh/spacetime/system.hpp>
-#include <modmesh/spacetime/type.hpp>
+#include <modmesh/spacetime/base_spacetime.hpp>
 #include <modmesh/spacetime/ElementBase_decl.hpp>
 #include <modmesh/spacetime/Grid_decl.hpp>
 #include <modmesh/spacetime/SolverBase_decl.hpp>

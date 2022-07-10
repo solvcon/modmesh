@@ -9,8 +9,7 @@
 #include <vector>
 #include <functional>
 
-#include <modmesh/spacetime/system.hpp>
-#include <modmesh/spacetime/type.hpp>
+#include <modmesh/spacetime/base_spacetime.hpp>
 #include <modmesh/spacetime/Grid_decl.hpp>
 
 namespace spacetime

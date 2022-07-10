@@ -7,8 +7,7 @@
 
 #include <modmesh/modmesh.hpp>
 
-#include <modmesh/spacetime/system.hpp>
-#include <modmesh/spacetime/type.hpp>
+#include <modmesh/spacetime/base_spacetime.hpp>
 
 namespace spacetime
 {

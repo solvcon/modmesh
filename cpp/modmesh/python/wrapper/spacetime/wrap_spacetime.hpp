@@ -58,7 +58,7 @@ namespace detail
 {
 
 template <class T>
-std::string to_str(T const & self) { return Formatter() << self >> Formatter::to_str; }
+std::string to_str(T const & self) { return modmesh::Formatter() << self >> modmesh::Formatter::to_str; }
 
 } /* end namespace detail */
 

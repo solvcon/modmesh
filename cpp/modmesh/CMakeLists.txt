@@ -12,6 +12,7 @@ add_subdirectory(view)
 set(MODMESH_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/modmesh.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/base.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/math.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/profile.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/grid.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/toggle/toggle.hpp

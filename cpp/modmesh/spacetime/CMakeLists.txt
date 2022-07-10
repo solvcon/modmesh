@@ -13,15 +13,13 @@ set(MODMESH_SPACETIME_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/Grid.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Grid_decl.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/io.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/math.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Selm.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Selm_decl.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Solver.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SolverBase.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SolverBase_decl.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/spacetime.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/system.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/type.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/base_spacetime.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/inviscid_burgers.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/linear_scalar.hpp
     CACHE FILEPATH "" FORCE

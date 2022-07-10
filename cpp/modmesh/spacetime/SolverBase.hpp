@@ -78,7 +78,7 @@ SolverBase<ST, CE, SE>::set_so0(size_t iv, typename SolverBase<ST, CE, SE>::arra
 {
     if (iv >= m_field.nvar())
     {
-        throw std::out_of_range(Formatter() << "set_so0(): iv " << iv << " >= nvar " << m_field.nvar());
+        throw std::out_of_range(modmesh::Formatter() << "set_so0(): iv " << iv << " >= nvar " << m_field.nvar());
     }
     if (1 != arr.shape().size())
     {
@@ -87,7 +87,7 @@ SolverBase<ST, CE, SE>::set_so0(size_t iv, typename SolverBase<ST, CE, SE>::arra
     const uint_type nselm = grid().nselm() - odd_plane;
     if (nselm != arr.size())
     {
-        throw std::out_of_range(Formatter() << "set_so0(): arr size " << arr.size() << " != nselm " << nselm);
+        throw std::out_of_range(modmesh::Formatter() << "set_so0(): arr size " << arr.size() << " != nselm " << nselm);
     }
     for (uint_type it = 0; it < nselm; ++it) { selm(it, odd_plane).so0(iv) = arr[it]; }
 }

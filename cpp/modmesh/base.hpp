@@ -41,8 +41,24 @@
 
 #define MODMESH_EXCEPT(CLS, EXC, MSG) throw EXC(#CLS ": " MSG);
 
+#ifndef MODMESH_INTSIZE
+#define MODMESH_INTSIZE 4
+#endif // MODMESH_INTSIZE
+
 namespace modmesh
 {
+
+using real_type = double;
+
+#if 4 == MODMESH_INTSIZE
+using uint_type = uint32_t;
+using int_type = int32_t;
+#elif 8 == MODMESH_INTSIZE
+using uint_type = uint64_t;
+using int_type = int64_t;
+#else // MODMESH_INTSIZE
+#error MODMESH_INTSIZE is not supported
+#endif // MODMESH_INTSIZE
 
 template <typename I, typename R>
 class NumberBase
@@ -79,6 +95,43 @@ public:
     using real_type = typename number_base::real_type;
 
 }; /* end class SpaceBase */
+
+// Taken from https://stackoverflow.com/a/12262626
+class Formatter
+{
+
+public:
+
+    Formatter() = default; // NOLINT(fuchsia-default-arguments) not sure why it's needed
+    Formatter(Formatter const &) = delete;
+    Formatter(Formatter &&) = delete;
+    Formatter & operator=(Formatter const &) = delete;
+    Formatter & operator=(Formatter &&) = delete;
+    ~Formatter() = default;
+
+    template <typename T>
+    Formatter & operator<<(T const & value)
+    {
+        m_stream << value;
+        return *this;
+    }
+
+    std::string str() const { return m_stream.str(); }
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    operator std::string() const { return m_stream.str(); }
+
+    enum ConvertToString
+    {
+        to_str
+    };
+
+    std::string operator>>(ConvertToString const &) { return m_stream.str(); }
+
+private:
+
+    std::ostringstream m_stream;
+
+}; /* end class Formatter */
 
 } /* end namespace modmesh */
 

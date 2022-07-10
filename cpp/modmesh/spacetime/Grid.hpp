@@ -18,13 +18,13 @@ inline Grid::Grid(real_type xmin, real_type xmax, size_t ncelm, ctor_passkey con
 {
     if (ncelm < 1)
     {
-        throw std::invalid_argument(Formatter()
+        throw std::invalid_argument(modmesh::Formatter()
                                     << "Grid::Grid(xmin=" << xmin << ", xmax=" << xmax
                                     << ", ncelm=" << ncelm << ") invalid argument: ncelm smaller than 1");
     }
     if (xmin >= xmax)
     {
-        throw std::invalid_argument(Formatter()
+        throw std::invalid_argument(modmesh::Formatter()
                                     << "Grid::Grid(xmin=" << xmin << ", xmax=" << xmax
                                     << ", ncelm=" << ncelm << ") invalid arguments: xmin >= xmax");
     }
@@ -45,7 +45,7 @@ inline void Grid::init_from_array(array_type const & xloc)
 {
     if (xloc.size() < 2)
     {
-        throw std::invalid_argument(Formatter()
+        throw std::invalid_argument(modmesh::Formatter()
                                     << "Grid::init_from_array(xloc) invalid arguments: "
                                     << "xloc.size()=" << xloc.size() << " smaller than 2");
     }
@@ -53,7 +53,7 @@ inline void Grid::init_from_array(array_type const & xloc)
     {
         if (xloc[it] >= xloc[it + 1])
         {
-            throw std::invalid_argument(Formatter()
+            throw std::invalid_argument(modmesh::Formatter()
                                         << "Grid::init_from_array(xloc) invalid arguments: "
                                         << "xloc[" << it << "]=" << xloc[it]
                                         << " >= xloc[" << it + 1 << "]=" << xloc[it + 1]);

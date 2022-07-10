@@ -7,7 +7,7 @@
 
 #include <modmesh/spacetime/Celm_decl.hpp>
 
-#include <modmesh/spacetime/math.hpp>
+#include "modmesh/math.hpp"
 
 namespace spacetime
 {
@@ -17,7 +17,7 @@ inline void Celm::move_at(int_type offset)
     const size_t xindex = this->xindex() + offset;
     if (xindex < 2 || xindex >= grid().xsize() - 2)
     {
-        throw std::out_of_range(Formatter()
+        throw std::out_of_range(modmesh::Formatter()
                                 << "Celm(xindex=" << this->xindex() << ")::move_at(offset=" << offset
                                 << "): xindex = " << xindex
                                 << " outside the interval [2, " << grid().xsize() - 2 << ")");
@@ -52,8 +52,8 @@ inline
     // alpha-scheme.
     const value_type duxn = (utp - upn) / se_xn.dxpos();
     const value_type duxp = (upp - utp) / se_xp.dxneg();
-    const value_type fan = pow<ALPHA>(std::fabs(duxn));
-    const value_type fap = pow<ALPHA>(std::fabs(duxp));
+    const value_type fan = modmesh::pow<ALPHA>(std::fabs(duxn));
+    const value_type fap = modmesh::pow<ALPHA>(std::fabs(duxp));
     constexpr value_type tiny = std::numeric_limits<value_type>::min();
     return (fap * duxn + fan * duxp) / (fap + fan + tiny);
 }

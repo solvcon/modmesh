@@ -15,7 +15,7 @@ inline void Selm::move_at(int_type offset)
     const size_t xindex = this->xindex() + offset;
     if (xindex < 1 || xindex >= grid().xsize() - 1)
     {
-        throw std::out_of_range(Formatter()
+        throw std::out_of_range(modmesh::Formatter()
                                 << "Selm(xindex=" << this->xindex() << ")::move_at(offset=" << offset
                                 << "): xindex = " << xindex
                                 << " outside the interval [1, " << grid().xsize() - 1 << ")");

@@ -36,7 +36,7 @@ inline CE const Field::celm_at(int_type ielm, bool odd_plane) const
     const CE elm = celm<CE>(ielm, odd_plane);
     if (elm.xindex() < 2 || elm.xindex() >= grid().xsize() - 2)
     {
-        throw std::out_of_range(Formatter()
+        throw std::out_of_range(modmesh::Formatter()
                                 << "Field::celm_at(ielm=" << ielm << ", odd_plane=" << odd_plane
                                 << "): xindex = " << elm.xindex()
                                 << " outside the interval [2, " << grid().xsize() - 2 << ")");
@@ -50,7 +50,7 @@ inline CE Field::celm_at(int_type ielm, bool odd_plane)
     const CE elm = celm<CE>(ielm, odd_plane);
     if (elm.xindex() < 2 || elm.xindex() >= grid().xsize() - 2)
     {
-        throw std::out_of_range(Formatter()
+        throw std::out_of_range(modmesh::Formatter()
                                 << "Field::celm_at(ielm=" << ielm << ", odd_plane=" << odd_plane
                                 << "): xindex = " << elm.xindex()
                                 << " outside the interval [2, " << grid().xsize() - 2 << ")");
@@ -65,7 +65,7 @@ inline SE const Field::selm_at(int_type ielm, bool odd_plane) const
     const SE elm = selm<SE>(ielm, odd_plane);
     if (elm.xindex() < 1 || elm.xindex() >= grid().xsize() - 1)
     {
-        throw std::out_of_range(Formatter()
+        throw std::out_of_range(modmesh::Formatter()
                                 << "Field::selm_at(ielm=" << ielm << ", odd_plane=" << odd_plane
                                 << "): xindex = " << elm.xindex()
                                 << " outside the interval [1, " << grid().xsize() - 1 << ")");
@@ -79,7 +79,7 @@ inline SE Field::selm_at(int_type ielm, bool odd_plane)
     const SE elm = selm<SE>(ielm, odd_plane);
     if (elm.xindex() < 1 || elm.xindex() >= grid().xsize() - 1)
     {
-        throw std::out_of_range(Formatter()
+        throw std::out_of_range(modmesh::Formatter()
                                 << "Field::selm_at(ielm=" << ielm << ", odd_plane=" << odd_plane
                                 << "): xindex = " << elm.xindex()
                                 << " outside the interval [1, " << grid().xsize() - 1 << ")");

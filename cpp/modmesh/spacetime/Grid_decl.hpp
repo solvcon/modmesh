@@ -8,8 +8,7 @@
 #include <memory>
 #include <vector>
 
-#include <modmesh/spacetime/system.hpp>
-#include <modmesh/spacetime/type.hpp>
+#include <modmesh/spacetime/base_spacetime.hpp>
 #include <modmesh/spacetime/ElementBase_decl.hpp>
 
 #include <modmesh/modmesh.hpp>
