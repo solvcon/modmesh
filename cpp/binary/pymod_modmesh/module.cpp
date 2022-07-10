@@ -21,10 +21,13 @@
 
 #include <modmesh/python/python.hpp> // Must be the first include.
 #include <modmesh/python/wrapper/modmesh/modmesh.hpp>
+#include <modmesh/python/wrapper/spacetime/spacetime.hpp>
 
 PYBIND11_MODULE(_modmesh, mod) // NOLINT
 {
     modmesh::python::initialize_modmesh(mod);
+    pybind11::module_ spacetime_mod = mod.def_submodule("spacetime", "spacetime");
+    modmesh::python::initialize_spacetime(spacetime_mod);
 }
 
 // vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

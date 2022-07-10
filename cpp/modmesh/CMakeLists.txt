@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.16)
 add_subdirectory(buffer)
 add_subdirectory(mesh)
 add_subdirectory(python)
+add_subdirectory(spacetime)
 add_subdirectory(view)
 
 set(MODMESH_HEADERS
