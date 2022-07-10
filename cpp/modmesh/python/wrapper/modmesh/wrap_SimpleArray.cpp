@@ -171,6 +171,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             using shape_type = small_vector<size_t>;
             using out_type = typename std::remove_reference<decltype(arr_out[0])>::type;
 
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
             auto * arr_new = reinterpret_cast<pybind11::array_t<D> *>(&arr_in);
 
             shape_type sidx_init(arr_out.ndim());
@@ -184,7 +185,9 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             copy_idx = [&](shape_type sidx, int dim)
             {
                 if (dim < 0)
+                {
                     return;
+                }
 
                 for (size_t i = 0; i < arr_out.shape(dim); ++i)
                 {
@@ -197,6 +200,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                     }
 
                     const D * ptr_in = arr_new->data();
+                    // NOLINTNEXTLINE
                     arr_out.at(sidx) = static_cast<out_type>(*(ptr_in + offset_in));
                     copy_idx(sidx, dim - 1);
                 }
@@ -206,6 +210,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         }
     };
 
+    // NOLINTNEXTLINE(readability-function-cognitive-complexity)
     static void broadcast_array_using_ellipsis(
         wrapped_type & arr_out, pybind11::array & arr_in)
     {
