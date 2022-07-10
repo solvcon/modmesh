@@ -66,7 +66,7 @@ mm.view.show_mark()
 def make_2d():
     mh = mm.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
     mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
-    mh.cltpn.ndarray[:] = modmesh.StaticMesh.TRIANGLE
+    mh.cltpn.ndarray[:] = mm.StaticMesh.TRIANGLE
     mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
     mh.build_interior()
     mh.build_boundary()
@@ -74,9 +74,9 @@ def make_2d():
     return mh
 
 def make_3d():
-    mh = modmesh.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
+    mh = mm.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
     mh.ndcrd.ndarray[:, :] = (0, 0, 0), (0, 1, 0), (-1, 1, 0), (0, 1, 1)
-    mh.cltpn.ndarray[:] = modmesh.StaticMesh.TETRAHEDRON
+    mh.cltpn.ndarray[:] = mm.StaticMesh.TETRAHEDRON
     mh.clnds.ndarray[:, :5] = [(4, 0, 1, 2, 3)]
     mh.build_interior()
     mh.build_boundary()
