@@ -389,7 +389,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ):
             sarr[...] = ndarr[...]
 
-    def test_SimpleArray_broadcast_ellipsis_ghost(self):
+    def test_SimpleArray_broadcast_ellipsis_ghost_1d(self):
 
         N = 13
         G = 3
@@ -404,6 +404,23 @@ class SimpleArrayBasicTC(unittest.TestCase):
         for i in range(-G, N-G):
             self.assertEqual(v, sarr[i])
             v += 1
+
+    def test_SimpleArray_broadcast_ellipsis_ghost_md(self):
+        N = 5
+        G = 2
+
+        sarr = modmesh.SimpleArrayFloat64((5, 3, 4))
+        ndarr = np.arange(5*3*4, dtype='float64').reshape((5, 3, 4))
+        sarr.nghost = G
+
+        sarr[...] = ndarr[...]
+
+        v = 0
+        for i in range(-G, N-G):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(v, sarr[i, j, k])
+                    v += 1
 
     def test_SimpleArray_broadcast_ellipsis_stride(self):
 
@@ -444,6 +461,6 @@ class SimpleArrayBasicTC(unittest.TestCase):
                 for k in range(4):
                     self.assertEqual(v, sarr[i, j, k])
                     v += 1
-        
+
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
