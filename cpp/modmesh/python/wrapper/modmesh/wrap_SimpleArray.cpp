@@ -165,9 +165,9 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
 
     struct TypeBroadCast
     {
-        static void check_shape(wrapped_type & arr_out, pybind11::array & arr_in)
+        static void check_shape(wrapped_type const & arr_out, pybind11::array const & arr_in)
         {
-            const auto left_shape = arr_out.shape();
+            const auto & left_shape = arr_out.shape();
             const auto * right_shape = arr_in.shape();
 
             if (arr_out.ndim() != static_cast<size_t>(arr_in.ndim()))
@@ -184,7 +184,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             }
         }
 
-        static void broadcast(wrapped_type & arr_out, pybind11::array & arr_in)
+        static void broadcast(wrapped_type & arr_out, pybind11::array const & arr_in)
         {
             if (dtype_is_type<bool>(arr_in))
             {
@@ -236,7 +236,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             }
         }
 
-        static void throw_shape_error(wrapped_type & arr_out, pybind11::array & arr_in)
+        static void throw_shape_error(wrapped_type const & arr_out, pybind11::array const & arr_in)
         {
             const auto & left_shape = arr_out.shape();
             const auto * right_shape = arr_in.shape();
@@ -269,12 +269,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
     template <typename D /* for destination type */>
     struct TypeBroadCastImpl
     {
-        static void broadcast(wrapped_type & arr_out, pybind11::array & arr_in)
+        static void broadcast(wrapped_type & arr_out, pybind11::array const & arr_in)
         {
             using out_type = typename std::remove_reference<decltype(arr_out[0])>::type;
 
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-            auto * arr_new = reinterpret_cast<pybind11::array_t<D> *>(&arr_in);
+            auto * arr_new = reinterpret_cast<pybind11::array_t<D> const *>(&arr_in);
 
             shape_type sidx_init(arr_out.ndim());
 
@@ -304,6 +304,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                     const D * ptr_in = arr_new->data() + offset_in;
                     // NOLINTNEXTLINE(bugprone-signed-char-misuse, cert-str34-c)
                     arr_out.at(sidx) = static_cast<out_type>(*ptr_in);
+                    // recursion here
                     copy_idx(sidx, dim - 1);
                 }
             };
@@ -313,7 +314,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
     };
 
     static void
-    broadcast_array_using_ellipsis(wrapped_type & arr_out, pybind11::array & arr_in)
+    broadcast_array_using_ellipsis(wrapped_type & arr_out, pybind11::array const & arr_in)
     {
 
         TypeBroadCast::check_shape(arr_out, arr_in);
