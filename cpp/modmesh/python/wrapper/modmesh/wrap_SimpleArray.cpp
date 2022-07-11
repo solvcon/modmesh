@@ -148,7 +148,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 { self.at(key) = val; })
             .def(
                 "__setitem__",
-                [](wrapped_type & self, const py::ellipsis &, pybind11::array & arr_in)
+                [](wrapped_type & self, py::ellipsis const &, pybind11::array & arr_in)
                 {
                     broadcast_array_using_ellipsis(self, arr_in);
                 })
@@ -163,12 +163,114 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             ;
     }
 
-    template <typename D /* for destination type */>
     struct TypeBroadCast
+    {
+        static void check_shape(wrapped_type & arr_out, pybind11::array & arr_in)
+        {
+            const auto left_shape = arr_out.shape();
+            const auto * right_shape = arr_in.shape();
+
+            if (arr_out.ndim() != static_cast<size_t>(arr_in.ndim()))
+            {
+                throw_shape_error(arr_out, arr_in);
+            }
+
+            for (size_t i = 0; i < left_shape.size(); ++i)
+            {
+                if (left_shape[i] != static_cast<size_t>(right_shape[i]))
+                {
+                    throw_shape_error(arr_out, arr_in);
+                }
+            }
+        }
+
+        static void broadcast(wrapped_type & arr_out, pybind11::array & arr_in)
+        {
+            if (dtype_is_type<bool>(arr_in))
+            {
+                TypeBroadCastImpl<bool>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<int8_t>(arr_in))
+            {
+                TypeBroadCastImpl<int8_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<int16_t>(arr_in))
+            {
+                TypeBroadCastImpl<int16_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<int32_t>(arr_in))
+            {
+                TypeBroadCastImpl<int32_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<int64_t>(arr_in))
+            {
+                TypeBroadCastImpl<int64_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<uint32_t>(arr_in))
+            {
+                TypeBroadCastImpl<uint32_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<uint16_t>(arr_in))
+            {
+                TypeBroadCastImpl<uint16_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<uint32_t>(arr_in))
+            {
+                TypeBroadCastImpl<uint32_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<uint64_t>(arr_in))
+            {
+                TypeBroadCastImpl<uint64_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<float>(arr_in))
+            {
+                TypeBroadCastImpl<float>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<double>(arr_in))
+            {
+                TypeBroadCastImpl<double>::broadcast(arr_out, arr_in);
+            }
+            else
+            {
+                throw std::runtime_error("input array data type not support!");
+            }
+        }
+
+        static void throw_shape_error(wrapped_type & arr_out, pybind11::array & arr_in)
+        {
+            const auto & left_shape = arr_out.shape();
+            const auto * right_shape = arr_in.shape();
+
+            std::ostringstream msg;
+            msg << "Broadcast input array from shape(";
+            for (pybind11::ssize_t i = 0; i < arr_in.ndim(); ++i)
+            {
+                msg << right_shape[i];
+                if (i != arr_in.ndim() - 1)
+                {
+                    msg << ", ";
+                }
+            }
+            msg << ") into shape(";
+            for (size_t i = 0; i < arr_out.ndim(); ++i)
+            {
+                msg << left_shape[i];
+                if (i != arr_out.ndim() - 1)
+                {
+                    msg << ", ";
+                }
+            }
+            msg << ")";
+
+            throw std::runtime_error(msg.str());
+        };
+    };
+
+    template <typename D /* for destination type */>
+    struct TypeBroadCastImpl
     {
         static void broadcast(wrapped_type & arr_out, pybind11::array & arr_in)
         {
-            using shape_type = small_vector<size_t>;
             using out_type = typename std::remove_reference<decltype(arr_out[0])>::type;
 
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -199,9 +301,9 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                         offset_in += arr_in.strides(it) / arr_in.itemsize() * sidx[it];
                     }
 
-                    const D * ptr_in = arr_new->data();
-                    // NOLINTNEXTLINE
-                    arr_out.at(sidx) = static_cast<out_type>(*(ptr_in + offset_in));
+                    const D * ptr_in = arr_new->data() + offset_in;
+                    // NOLINTNEXTLINE(bugprone-signed-char-misuse, cert-str34-c)
+                    arr_out.at(sidx) = static_cast<out_type>(*ptr_in);
                     copy_idx(sidx, dim - 1);
                 }
             };
@@ -210,51 +312,11 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         }
     };
 
-    // NOLINTNEXTLINE(readability-function-cognitive-complexity)
-    static void broadcast_array_using_ellipsis(
-        wrapped_type & arr_out, pybind11::array & arr_in)
+    static void
+    broadcast_array_using_ellipsis(wrapped_type & arr_out, pybind11::array & arr_in)
     {
-        const auto left_shape = arr_out.shape();
-        const auto * right_shape = arr_in.shape();
 
-        auto throw_shape_error = [&]()
-        {
-            std::ostringstream msg;
-            msg << "Broadcast input array from shape(";
-            for (pybind11::ssize_t i = 0; i < arr_in.ndim(); ++i)
-            {
-                msg << right_shape[i];
-                if (i != arr_in.ndim() - 1)
-                {
-                    msg << ", ";
-                }
-            }
-            msg << ") into shape(";
-            for (size_t i = 0; i < arr_out.ndim(); ++i)
-            {
-                msg << left_shape[i];
-                if (i != arr_out.ndim() - 1)
-                {
-                    msg << ", ";
-                }
-            }
-            msg << ")";
-
-            throw std::runtime_error(msg.str());
-        };
-
-        if (arr_out.ndim() != static_cast<size_t>(arr_in.ndim()))
-        {
-            throw_shape_error();
-        }
-
-        for (size_t i = 0; i < left_shape.size(); ++i)
-        {
-            if (left_shape[i] != static_cast<size_t>(right_shape[i]))
-            {
-                throw_shape_error();
-            }
-        }
+        TypeBroadCast::check_shape(arr_out, arr_in);
 
         size_t nghost = 0;
 
@@ -264,54 +326,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             arr_out.set_nghost(0);
         }
 
-        if (dtype_is_type<bool>(arr_in))
-        {
-            TypeBroadCast<bool>::broadcast(arr_out, arr_in);
-        }
-        else if (dtype_is_type<int8_t>(arr_in))
-        {
-            TypeBroadCast<int8_t>::broadcast(arr_out, arr_in);
-        }
-        else if (dtype_is_type<int16_t>(arr_in))
-        {
-            TypeBroadCast<int16_t>::broadcast(arr_out, arr_in);
-        }
-        else if (dtype_is_type<int32_t>(arr_in))
-        {
-            TypeBroadCast<int32_t>::broadcast(arr_out, arr_in);
-        }
-        else if (dtype_is_type<int64_t>(arr_in))
-        {
-            TypeBroadCast<int64_t>::broadcast(arr_out, arr_in);
-        }
-        else if (dtype_is_type<uint32_t>(arr_in))
-        {
-            TypeBroadCast<uint32_t>::broadcast(arr_out, arr_in);
-        }
-        else if (dtype_is_type<uint16_t>(arr_in))
-        {
-            TypeBroadCast<uint16_t>::broadcast(arr_out, arr_in);
-        }
-        else if (dtype_is_type<uint32_t>(arr_in))
-        {
-            TypeBroadCast<uint32_t>::broadcast(arr_out, arr_in);
-        }
-        else if (dtype_is_type<uint64_t>(arr_in))
-        {
-            TypeBroadCast<uint64_t>::broadcast(arr_out, arr_in);
-        }
-        else if (dtype_is_type<float>(arr_in))
-        {
-            TypeBroadCast<float>::broadcast(arr_out, arr_in);
-        }
-        else if (dtype_is_type<double>(arr_in))
-        {
-            TypeBroadCast<double>::broadcast(arr_out, arr_in);
-        }
-        else
-        {
-            throw std::runtime_error("input array data type not support!");
-        }
+        TypeBroadCast::broadcast(arr_out, arr_in);
 
         if (nghost != 0)
         {
