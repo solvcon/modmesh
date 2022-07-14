@@ -363,4 +363,104 @@ class SimpleArrayBasicTC(unittest.TestCase):
         sarr.ndarray.fill(100)
         self.assertTrue((ndarr == 100).all())
 
+    def test_SimpleArray_broadcast_ellipsis_shape(self):
+        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        ndarr = np.arange(2*3*4, dtype='float64').reshape((2, 3, 4))
+        sarr[...] = ndarr[...]
+        v = 0
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(v, sarr[i, j, k])
+                    v += 1
+
+        ndarr = np.arange(2*3, dtype='float64').reshape((2, 3))
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"Broadcast input array from shape\(2, 3\) into shape\(2, 3, 4\)"
+        ):
+            sarr[...] = ndarr[...]
+
+        ndarr = np.arange(2*4*3, dtype='float64').reshape((2, 4, 3))
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"Broadcast input array from shape\(2, 4, 3\) "
+            r"into shape\(2, 3, 4\)"
+        ):
+            sarr[...] = ndarr[...]
+
+    def test_SimpleArray_broadcast_ellipsis_ghost_1d(self):
+
+        N = 13
+        G = 3
+
+        sarr = modmesh.SimpleArrayFloat64(N)
+        ndarr = np.arange(N, dtype='float64')
+        sarr.nghost = G
+
+        sarr[...] = ndarr[...]
+
+        v = 0
+        for i in range(-G, N-G):
+            self.assertEqual(v, sarr[i])
+            v += 1
+
+    def test_SimpleArray_broadcast_ellipsis_ghost_md(self):
+        N = 5
+        G = 2
+
+        sarr = modmesh.SimpleArrayFloat64((5, 3, 4))
+        ndarr = np.arange(5*3*4, dtype='float64').reshape((5, 3, 4))
+        sarr.nghost = G
+
+        sarr[...] = ndarr[...]
+
+        v = 0
+        for i in range(-G, N-G):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(v, sarr[i, j, k])
+                    v += 1
+
+    def test_SimpleArray_broadcast_ellipsis_stride(self):
+
+        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        ndarr = np.arange(
+            (4*2) * (3*3) * (2*4), dtype='float64').reshape((4*2, 3*3, 2*4))
+
+        stride_arr = ndarr[::4, ::3, ::2]
+
+        # point to the same data
+        self.assertEqual(ndarr.__array_interface__['data'],
+                         stride_arr.__array_interface__['data'])
+
+        sarr[...] = stride_arr[...]
+
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(stride_arr[i, j, k], sarr[i, j, k])
+
+    def test_SimpleArray_broadcast_ellipsis_dtype(self):
+        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        ndarr = np.arange(2*3*4, dtype='int32').reshape((2, 3, 4))
+        sarr[...] = ndarr[...]
+        v = 0
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(v, sarr[i, j, k])
+                    v += 1
+
+        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        ndarr = np.arange(2*3*4, dtype='float32').reshape((2, 3, 4))
+        sarr[...] = ndarr[...]
+        v = 0
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(v, sarr[i, j, k])
+                    v += 1
+
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

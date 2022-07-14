@@ -147,6 +147,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 [](wrapped_type & self, std::vector<ssize_t> const & key, T val)
                 { self.at(key) = val; })
             .def(
+                "__setitem__",
+                [](wrapped_type & self, py::ellipsis const &, pybind11::array & arr_in)
+                {
+                    broadcast_array_using_ellipsis(self, arr_in);
+                })
+            .def(
                 "reshape",
                 [](wrapped_type const & self, py::object const & shape)
                 { return self.reshape(make_shape(shape)); })
@@ -155,6 +161,178 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def_property_readonly("nbody", &wrapped_type::nbody)
             //
             ;
+    }
+
+    struct TypeBroadCast
+    {
+        static void check_shape(wrapped_type const & arr_out, pybind11::array const & arr_in)
+        {
+            const auto & left_shape = arr_out.shape();
+            const auto * right_shape = arr_in.shape();
+
+            if (arr_out.ndim() != static_cast<size_t>(arr_in.ndim()))
+            {
+                throw_shape_error(arr_out, arr_in);
+            }
+
+            for (size_t i = 0; i < left_shape.size(); ++i)
+            {
+                if (left_shape[i] != static_cast<size_t>(right_shape[i]))
+                {
+                    throw_shape_error(arr_out, arr_in);
+                }
+            }
+        }
+
+        static void broadcast(wrapped_type & arr_out, pybind11::array const & arr_in)
+        {
+            if (dtype_is_type<bool>(arr_in))
+            {
+                TypeBroadCastImpl<bool>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<int8_t>(arr_in))
+            {
+                TypeBroadCastImpl<int8_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<int16_t>(arr_in))
+            {
+                TypeBroadCastImpl<int16_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<int32_t>(arr_in))
+            {
+                TypeBroadCastImpl<int32_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<int64_t>(arr_in))
+            {
+                TypeBroadCastImpl<int64_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<uint32_t>(arr_in))
+            {
+                TypeBroadCastImpl<uint32_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<uint16_t>(arr_in))
+            {
+                TypeBroadCastImpl<uint16_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<uint32_t>(arr_in))
+            {
+                TypeBroadCastImpl<uint32_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<uint64_t>(arr_in))
+            {
+                TypeBroadCastImpl<uint64_t>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<float>(arr_in))
+            {
+                TypeBroadCastImpl<float>::broadcast(arr_out, arr_in);
+            }
+            else if (dtype_is_type<double>(arr_in))
+            {
+                TypeBroadCastImpl<double>::broadcast(arr_out, arr_in);
+            }
+            else
+            {
+                throw std::runtime_error("input array data type not support!");
+            }
+        }
+
+        static void throw_shape_error(wrapped_type const & arr_out, pybind11::array const & arr_in)
+        {
+            const auto & left_shape = arr_out.shape();
+            const auto * right_shape = arr_in.shape();
+
+            std::ostringstream msg;
+            msg << "Broadcast input array from shape(";
+            for (pybind11::ssize_t i = 0; i < arr_in.ndim(); ++i)
+            {
+                msg << right_shape[i];
+                if (i != arr_in.ndim() - 1)
+                {
+                    msg << ", ";
+                }
+            }
+            msg << ") into shape(";
+            for (size_t i = 0; i < arr_out.ndim(); ++i)
+            {
+                msg << left_shape[i];
+                if (i != arr_out.ndim() - 1)
+                {
+                    msg << ", ";
+                }
+            }
+            msg << ")";
+
+            throw std::runtime_error(msg.str());
+        };
+    };
+
+    template <typename D /* for destination type */>
+    struct TypeBroadCastImpl
+    {
+        static void broadcast(wrapped_type & arr_out, pybind11::array const & arr_in)
+        {
+            using out_type = typename std::remove_reference<decltype(arr_out[0])>::type;
+
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+            auto * arr_new = reinterpret_cast<pybind11::array_t<D> const *>(&arr_in);
+
+            shape_type sidx_init(arr_out.ndim());
+
+            for (size_t i = 0; i < arr_out.ndim(); ++i)
+            {
+                sidx_init[i] = 0;
+            }
+
+            std::function<void(shape_type, int)> copy_idx;
+            copy_idx = [&](shape_type sidx, int dim)
+            {
+                if (dim < 0)
+                {
+                    return;
+                }
+
+                for (size_t i = 0; i < arr_out.shape(dim); ++i)
+                {
+                    sidx[dim] = i;
+
+                    size_t offset_in = 0;
+                    for (pybind11::ssize_t it = 0; it < arr_in.ndim(); ++it)
+                    {
+                        offset_in += arr_in.strides(it) / arr_in.itemsize() * sidx[it];
+                    }
+
+                    const D * ptr_in = arr_new->data() + offset_in;
+                    // NOLINTNEXTLINE(bugprone-signed-char-misuse, cert-str34-c)
+                    arr_out.at(sidx) = static_cast<out_type>(*ptr_in);
+                    // recursion here
+                    copy_idx(sidx, dim - 1);
+                }
+            };
+
+            copy_idx(sidx_init, arr_out.ndim() - 1);
+        }
+    };
+
+    static void
+    broadcast_array_using_ellipsis(wrapped_type & arr_out, pybind11::array const & arr_in)
+    {
+
+        TypeBroadCast::check_shape(arr_out, arr_in);
+
+        size_t nghost = 0;
+
+        if (arr_out.has_ghost())
+        {
+            nghost = arr_out.nghost();
+            arr_out.set_nghost(0);
+        }
+
+        TypeBroadCast::broadcast(arr_out, arr_in);
+
+        if (nghost != 0)
+        {
+            arr_out.set_nghost(nghost);
+        }
     }
 
     static shape_type make_shape(pybind11::object const & shape_in)
