@@ -26,15 +26,54 @@
 
 
 """
-modmesh
+General mesh data definition and manipulation in one, two, and
+three-dimensional space.
 """
 
 
 # Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
 
 
-from .core import *  # noqa: F401, F403
-from . import view  # noqa: F401
+__all__ = [  # noqa: F822
+    'WrapperProfilerStatus',
+    'wrapper_profiler_status',
+    'StopWatch',
+    'stop_watch',
+    'TimeRegistry',
+    'time_registry',
+    'ConcreteBuffer',
+    'SimpleArrayBool',
+    'SimpleArrayInt8',
+    'SimpleArrayInt16',
+    'SimpleArrayInt32',
+    'SimpleArrayInt64',
+    'SimpleArrayUint8',
+    'SimpleArrayUint16',
+    'SimpleArrayUint32',
+    'SimpleArrayUint64',
+    'SimpleArrayFloat32',
+    'SimpleArrayFloat64',
+    'StaticGrid1d',
+    'StaticGrid2d',
+    'StaticGrid3d',
+    'StaticMesh',
+]
 
+
+# A hidden loophole to impolementation; it should only be used for testing
+# during development.
+try:
+    import _modmesh as _impl  # noqa: F401
+except ImportError:
+    from . import _modmesh as _impl  # noqa: F401
+
+
+def _load():
+    for name in __all__:
+        globals()[name] = getattr(_impl, name)
+
+
+_load()
+del _load
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

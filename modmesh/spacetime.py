@@ -38,10 +38,9 @@ del _load
 del _toload
 
 
-class SolverProxy():
+class SolverProxy:
 
     def __init__(self, *args, **kw):
-
         self.svr = Solver(*args, **kw)  # noqa: F821
         self.svr.kernel.xp_calc = self._xp_calc
         self.svr.kernel.xn_calc = self._xn_calc

@@ -45,7 +45,7 @@ RApplication::RApplication(int & argc, char ** argv)
     // Set up menu.
     auto * menuBar = new RMenuBar();
     auto * fileMenu = new RMenu(QString("File"));
-    auto * newMenu = new RMenu(QString("New"));
+    auto * appMenu = new RMenu(QString("App"));
 
     auto * newFileAction = new RAction(
         QString("New file"),
@@ -56,6 +56,7 @@ RApplication::RApplication(int & argc, char ** argv)
             qDebug() << "Create new file!";
         });
 
+    auto * newMenu = new RMenu(QString("New"));
     newMenu->addAction(newFileAction);
     fileMenu->addMenu(newMenu);
 
@@ -71,6 +72,32 @@ RApplication::RApplication(int & argc, char ** argv)
 #endif
 
     menuBar->addMenu(fileMenu);
+
+    auto * app_sample_mesh = new RAction(
+        QString("Load sample_mesh"),
+        QString("Load sample_mesh"),
+        []()
+        {
+            namespace py = pybind11;
+            py::object appmod = py::module_::import("modmesh.app.sample_mesh");
+            appmod.attr("load_app")();
+        });
+    appMenu->addAction(app_sample_mesh);
+
+    auto * app_linear_wave = new RAction(
+        QString("Load linear_wave"),
+        QString("Load linear_wave"),
+        []()
+        {
+            namespace py = pybind11;
+            py::module_ appmod = py::module_::import("modmesh.app.linear_wave");
+            appmod.reload();
+            appmod.attr("load_app")();
+        });
+    appMenu->addAction(app_linear_wave);
+
+    menuBar->addMenu(appMenu);
+
     m_main->setMenuBar(menuBar);
 
     // Setup main window

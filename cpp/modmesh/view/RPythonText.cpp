@@ -58,46 +58,7 @@ RPythonText::RPythonText(
 
 void RPythonText::setUp()
 {
-    m_text->setPlainText(QString(R""""(# Sample input
-import modmesh as mm
-
-mm.view.show_mark()
-
-def make_2d():
-    mh = mm.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
-    mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
-    mh.cltpn.ndarray[:] = mm.StaticMesh.TRIANGLE
-    mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
-    mh.build_interior()
-    mh.build_boundary()
-    mh.build_ghost()
-    return mh
-
-def make_3d():
-    mh = mm.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
-    mh.ndcrd.ndarray[:, :] = (0, 0, 0), (0, 1, 0), (-1, 1, 0), (0, 1, 1)
-    mh.cltpn.ndarray[:] = mm.StaticMesh.TETRAHEDRON
-    mh.clnds.ndarray[:, :5] = [(4, 0, 1, 2, 3)]
-    mh.build_interior()
-    mh.build_boundary()
-    mh.build_ghost()
-    return mh
-
-#mm.view.app.viewer.up_vector = (0, 1, 0)
-#mm.view.app.viewer.position = (-10, -10, -20)
-#mm.view.app.viewer.view_center = (0, 0, 0)
-
-mh = make_2d()
-mm.view.show(mh)
-
-print("nedge:", mh.nedge)
-print("position:", mm.view.app.viewer.position)
-print("up_vector:", mm.view.app.viewer.up_vector)
-print("view_center:", mm.view.app.viewer.view_center)
-
-# line = mm.view.RLine(-1, -1, -1, -2, -2, -2, 0, 128, 128)
-# print(line)
-)""""));
+    m_text->setPlainText(QString(""));
 }
 
 void RPythonText::runPythonCode()
@@ -113,6 +74,16 @@ void RPythonText::runPythonCode()
     {
         std::cerr << e.what() << std::endl;
     }
+}
+
+std::string RPythonText::code() const
+{
+    return m_text->toPlainText().toStdString();
+}
+
+void RPythonText::setCode(std::string const & value)
+{
+    m_text->setPlainText(QString(value.c_str()));
 }
 
 } /* end namespace modmesh */
