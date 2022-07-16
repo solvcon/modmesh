@@ -46,6 +46,7 @@ class RApplication
 public:
 
     RApplication(int & argc, char ** argv);
+    ~RApplication();
 
     RMainWindow * main() { return m_main; }
 

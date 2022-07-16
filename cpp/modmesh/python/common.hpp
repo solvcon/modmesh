@@ -451,14 +451,18 @@ public:
     Interpreter(Interpreter &&) = delete;
     Interpreter & operator=(Interpreter const &) = delete;
     Interpreter & operator=(Interpreter &&) = delete;
-    ~Interpreter();
+    ~Interpreter() { finalize(); };
+
+    Interpreter & initialize();
+    Interpreter & finalize();
+    bool initialized() const { return nullptr != m_interpreter; }
 
     void preload_module(std::string const & name);
     void preload_modules(std::vector<std::string> const & names);
 
 private:
 
-    Interpreter();
+    Interpreter() = default;
     void setup_path();
 
     pybind11::scoped_interpreter * m_interpreter = nullptr;

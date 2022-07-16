@@ -39,9 +39,6 @@ RApplication::RApplication(int & argc, char ** argv)
 {
     /* TODO: parse arguments */
 
-    // Set up Python interpreter.
-    python::Interpreter::instance();
-
     // Set up menu.
     auto * menuBar = new RMenuBar();
     auto * fileMenu = new RMenu(QString("File"));
@@ -79,7 +76,8 @@ RApplication::RApplication(int & argc, char ** argv)
         []()
         {
             namespace py = pybind11;
-            py::object appmod = py::module_::import("modmesh.app.sample_mesh");
+            py::module_ appmod = py::module_::import("modmesh.app.sample_mesh");
+            appmod.reload();
             appmod.attr("load_app")();
         });
     appMenu->addAction(app_sample_mesh);
@@ -106,6 +104,12 @@ RApplication::RApplication(int & argc, char ** argv)
 
     // Show main window.
     m_main->show();
+}
+
+RApplication::~RApplication()
+{
+    // Shuts down the interpreter when the application stops.
+    python::Interpreter::instance().finalize();
 }
 
 } /* end namespace modmesh */

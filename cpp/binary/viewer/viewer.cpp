@@ -48,6 +48,9 @@ PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod) // NOLINT
 
 int main(int argc, char ** argv)
 {
+    // Set up Python interpreter.
+    modmesh::python::Interpreter::instance().initialize();
+
     modmesh::RApplication app(argc, argv);
     app.main()->resize(1000, 600);
     return app.exec();

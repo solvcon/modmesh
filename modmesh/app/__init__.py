@@ -33,9 +33,4 @@ Sub-package for applications
 # Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
 
 
-# Preloaded modules
-from . import linear_wave  # noqa: F401
-from . import sample_mesh  # noqa: F401
-
-
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

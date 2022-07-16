@@ -41,7 +41,8 @@ def load_app():
 from modmesh import spacetime as libst
 from modmesh.app import linear_wave as app
 
-svr = app.run_linear()
+# Need to hold the win object to keep PySide alive.
+win, svr = app.run_linear()
 """
 
 
@@ -60,9 +61,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         layout.addWidget(NavigationToolbar(static_canvas, self))
 
         self.ax = static_canvas.figure.subplots()
-
-
-_ui_holder = []
 
 
 def run_linear():
@@ -87,9 +85,6 @@ def run_linear():
     win = ApplicationWindow()
     win.show()
     win.activateWindow()
-    # FIXME: This is a hack for PySide object lifecycle management.
-    global _ui_holder
-    _ui_holder.append(win)
 
     win.ax.plot(svr.xctr() / np.pi, svr.get_so0(0).ndarray, '-')
 
@@ -98,6 +93,6 @@ def run_linear():
 
     win.ax.plot(svr.xctr() / np.pi, svr.get_so0(0).ndarray, '-')
 
-    return svr
+    return win, svr
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

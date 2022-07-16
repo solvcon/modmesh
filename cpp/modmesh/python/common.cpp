@@ -57,19 +57,25 @@ Interpreter & Interpreter::instance()
     return o;
 }
 
-Interpreter::Interpreter()
-    : m_interpreter(new pybind11::scoped_interpreter)
+Interpreter & Interpreter::initialize()
 {
-    setup_path();
+    if (nullptr == m_interpreter)
+    {
+        // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+        m_interpreter = new pybind11::scoped_interpreter(true, 0, nullptr, true);
+        setup_path();
+    }
+    return *this;
 }
 
-Interpreter::~Interpreter()
+Interpreter & Interpreter::finalize()
 {
-    // NOLINTNEXTLINE(readability-delete-null-pointer)
     if (nullptr != m_interpreter)
     {
         delete m_interpreter;
+        m_interpreter = nullptr;
     }
+    return *this;
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static): implicitly requires m_interpreter
