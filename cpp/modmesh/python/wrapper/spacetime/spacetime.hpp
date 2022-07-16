@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -27,30 +29,22 @@
  */
 
 #include <modmesh/python/python.hpp> // Must be the first include.
-#include <modmesh/python/wrapper/modmesh/modmesh.hpp>
-#include <modmesh/python/wrapper/view/view.hpp>
-#include <modmesh/python/wrapper/spacetime/spacetime.hpp>
+#include <pybind11/stl.h>
+
 #include <modmesh/modmesh.hpp>
-#include <modmesh/view/view.hpp>
-#include <modmesh/spacetime/spacetime.hpp>
+#include <modmesh/python/common.hpp>
 
-PYBIND11_EMBEDDED_MODULE(_modmesh, mod) // NOLINT
+namespace modmesh
 {
-    modmesh::python::initialize_modmesh(mod);
-    pybind11::module_ spacetime_mod = mod.def_submodule("spacetime", "spacetime");
-    modmesh::python::initialize_spacetime(spacetime_mod);
-}
 
-PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod) // NOLINT
+namespace python
 {
-    modmesh::python::initialize_view(mod);
-}
 
-int main(int argc, char ** argv)
-{
-    modmesh::RApplication app(argc, argv);
-    app.main()->resize(1000, 600);
-    return app.exec();
-}
+void initialize_spacetime(pybind11::module & mod);
+void wrap_spacetime(pybind11::module & mod);
+
+} /* end namespace python */
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

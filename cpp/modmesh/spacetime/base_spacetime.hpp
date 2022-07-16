@@ -1,5 +1,7 @@
+#pragma once
+
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2018, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -24,33 +26,20 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
+ * */
 
-#include <modmesh/python/python.hpp> // Must be the first include.
-#include <modmesh/python/wrapper/modmesh/modmesh.hpp>
-#include <modmesh/python/wrapper/view/view.hpp>
-#include <modmesh/python/wrapper/spacetime/spacetime.hpp>
-#include <modmesh/modmesh.hpp>
-#include <modmesh/view/view.hpp>
-#include <modmesh/spacetime/spacetime.hpp>
+// FIXME: This is a temporary alias file.  Once the spacetime namespace is
+// merged with modmesh, this file should not be needed.
 
-PYBIND11_EMBEDDED_MODULE(_modmesh, mod) // NOLINT
+#include <modmesh/base.hpp>
+
+namespace spacetime
 {
-    modmesh::python::initialize_modmesh(mod);
-    pybind11::module_ spacetime_mod = mod.def_submodule("spacetime", "spacetime");
-    modmesh::python::initialize_spacetime(spacetime_mod);
-}
 
-PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod) // NOLINT
-{
-    modmesh::python::initialize_view(mod);
-}
+using real_type = modmesh::real_type;
+using uint_type = modmesh::uint_type;
+using int_type = modmesh::int_type;
 
-int main(int argc, char ** argv)
-{
-    modmesh::RApplication app(argc, argv);
-    app.main()->resize(1000, 600);
-    return app.exec();
-}
+} /* end namespace spacetime */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
