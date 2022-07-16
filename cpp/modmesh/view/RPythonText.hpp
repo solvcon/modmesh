@@ -50,6 +50,9 @@ public:
         QWidget * parent = nullptr,
         Qt::WindowFlags flags = Qt::WindowFlags());
 
+    std::string code() const;
+    void setCode(std::string const & value);
+
 private:
 
     void setUp();

@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+# Copyright (c) 2018, Yung-Yu Chen <yyc@solvcon.net>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -26,15 +26,16 @@
 
 
 """
-modmesh
+Sub-package for applications
 """
 
 
 # Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
 
 
-from .core import *  # noqa: F401, F403
-from . import view  # noqa: F401
+# Preloaded modules
+from . import linear_wave  # noqa: F401
+from . import sample_mesh  # noqa: F401
 
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
