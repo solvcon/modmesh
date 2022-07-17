@@ -5,11 +5,10 @@
  * BSD 3-Clause License, see COPYING
  */
 
-// FIXME: use modmesh/base.hpp
-#include <modmesh/modmesh.hpp>
+#include <modmesh/base.hpp>
 
 #include <modmesh/spacetime/base_spacetime.hpp>
-#include "modmesh/math.hpp"
+#include <modmesh/math.hpp>
 #include <modmesh/spacetime/ElementBase.hpp>
 #include <modmesh/spacetime/Grid.hpp>
 #include <modmesh/spacetime/Celm.hpp>

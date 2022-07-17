@@ -37,12 +37,8 @@ from .. import spacetime as libst
 
 
 def load_app():
-    view.app.pytext.code = """import importlib
-from modmesh import spacetime as libst
-from modmesh.app import linear_wave as app
-
-# Need to hold the win object to keep PySide alive.
-win, svr = app.run_linear()
+    view.app.pytext.code = """# Need to hold the win object to keep PySide alive.
+win, svr = mm.app.linear_wave.run_linear()
 """
 
 

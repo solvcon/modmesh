@@ -160,7 +160,7 @@ struct StaticMeshConstant
 
 }; /* end struct StaticMeshConstant */
 
-// FIXME: StaticMeshBC may use polymorphism.
+// TODO: StaticMeshBC may use polymorphism.
 class StaticMeshBC
     : public NumberBase<int32_t, double>
     , public StaticMeshConstant

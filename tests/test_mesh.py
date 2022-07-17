@@ -158,7 +158,7 @@ class StaticMeshTC(unittest.TestCase):
         self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,
                           nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
                           nedge=6)
-        # FIXME: I have not verified the numbers.  But the mesh looks OK in
+        # TODO: I have not verified the numbers.  But the mesh looks OK in
         # viewer.
         np.testing.assert_almost_equal(
             mh.fccnd,

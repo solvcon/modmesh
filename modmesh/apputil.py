@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Yung-Yu Chen <yyc@solvcon.net>
+# Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -19,62 +19,55 @@
 # LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 # CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 # SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
 
 """
-Show sample mesh
+Tools to run applications
 """
 
 
-from .. import core
-from .. import view
+# Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
 
 
-def load_app():
-    view.app.pytext.code = """import modmesh as mm
-
-#mm.view.app.viewer.up_vector = (0, 1, 0)
-#mm.view.app.viewer.position = (-10, -10, -20)
-#mm.view.app.viewer.view_center = (0, 0, 0)
-
-mh = mm.app.sample_mesh.make_triangle()
-#mh = mm.app.sample_mesh.make_tetrahedron()
-mm.view.show_mark()
-mm.view.show(mh)
-
-print("nedge:", mh.nedge)
-print("position:", mm.view.app.viewer.position)
-print("up_vector:", mm.view.app.viewer.up_vector)
-print("view_center:", mm.view.app.viewer.view_center)
-
-# line = mm.view.RLine(-1, -1, -1, -2, -2, -2, 0, 128, 128)
-# print(line)
-"""
+import importlib
 
 
-def make_triangle():
-    mh = core.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
-    mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
-    mh.cltpn.ndarray[:] = core.StaticMesh.TRIANGLE
-    mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
-    mh.build_interior()
-    mh.build_boundary()
-    mh.build_ghost()
-    return mh
+__all__ = [
+    'environ',
+    'AppEnvironment',
+    'run_code',
+]
 
 
-def make_tetrahedron():
-    mh = core.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
-    mh.ndcrd.ndarray[:, :] = (0, 0, 0), (0, 1, 0), (-1, 1, 0), (0, 1, 1)
-    mh.cltpn.ndarray[:] = core.StaticMesh.TETRAHEDRON
-    mh.clnds.ndarray[:, :5] = [(4, 0, 1, 2, 3)]
-    mh.build_interior()
-    mh.build_boundary()
-    mh.build_ghost()
-    return mh
+# All environment objects of this process.
+environ = []
+
+
+class AppEnvironment:
+    """
+    Collects the environment for an application.
+
+    :ivar locals:
+        The local namespace of the application.
+    """
+    def __init__(self):
+        self.locals = {
+            # Give the application an alias of the top package.
+            'mm': importlib.import_module('modmesh'),
+        }
+        # Each run of the application appends a new environment.
+        environ.append(self)
+
+    def run_code(self, code):
+        exec(code, globals(), self.locals)
+
+
+def run_code(code):
+    aenv = AppEnvironment()
+    aenv.run_code(code)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

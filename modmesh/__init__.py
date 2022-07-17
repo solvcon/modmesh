@@ -26,7 +26,7 @@
 
 
 """
-modmesh
+modmesh: the description of the package is intentionally left blank
 """
 
 
@@ -34,6 +34,7 @@ modmesh
 
 
 from .core import *  # noqa: F401, F403
+from . import apputil  # noqa: F401
 from . import view  # noqa: F401
 
 

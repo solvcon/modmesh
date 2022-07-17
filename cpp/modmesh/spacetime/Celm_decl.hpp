@@ -14,7 +14,7 @@
 namespace spacetime
 {
 
-/* FIXME: The naming of Celm and CelmBase is confusing: Celm is the base class
+/* TODO: The naming of Celm and CelmBase is confusing: Celm is the base class
  * of CelmBase. */
 
 /**
