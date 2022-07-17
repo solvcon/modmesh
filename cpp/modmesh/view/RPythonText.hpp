@@ -53,11 +53,11 @@ public:
     std::string code() const;
     void setCode(std::string const & value);
 
+    void runCode();
+
 private:
 
     void setUp();
-
-    void runPythonCode();
 
     QTextEdit * m_text = nullptr;
     QPushButton * m_run = nullptr;

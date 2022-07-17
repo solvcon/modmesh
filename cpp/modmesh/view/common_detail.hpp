@@ -30,8 +30,9 @@
 
 // Shared by all code.
 
-// FIXME: The C++ library should not depend on Python; move the Python
-// dependency outside.
+// TODO: Most of the code in view is highly coupled with Python; move the
+// Python-related parts to modmesh/python/.
+
 #include <modmesh/python/python.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>
 

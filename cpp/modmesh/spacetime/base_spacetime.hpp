@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  * */
 
-// FIXME: This is a temporary alias file.  Once the spacetime namespace is
+// TODO: This is a temporary alias file.  Once the spacetime namespace is
 // merged with modmesh, this file should not be needed.
 
 #include <modmesh/base.hpp>

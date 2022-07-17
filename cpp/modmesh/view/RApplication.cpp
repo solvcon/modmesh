@@ -49,8 +49,7 @@ RApplication::RApplication(int & argc, char ** argv)
         QString("Create new file"),
         []()
         {
-            // FIXME: This is only a demo.
-            qDebug() << "Create new file!";
+            qDebug() << "This is only a demo: Create new file!";
         });
 
     auto * newMenu = new RMenu(QString("New"));

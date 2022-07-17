@@ -51,7 +51,7 @@ RPythonText::RPythonText(
 
     setWidget(m_widget);
 
-    connect(m_run, &QPushButton::clicked, this, &RPythonText::runPythonCode);
+    connect(m_run, &QPushButton::clicked, this, &RPythonText::runCode);
 
     setUp();
 }
@@ -61,14 +61,15 @@ void RPythonText::setUp()
     m_text->setPlainText(QString(""));
 }
 
-void RPythonText::runPythonCode()
+void RPythonText::runCode()
 {
     namespace py = pybind11;
 
-    std::string code = m_text->toPlainText().toStdString();
     try
     {
-        py::exec(code);
+        py::module_ mod = py::module_::import("modmesh.apputil");
+        // TODO: Use a toggle flag to reload the apputil module.
+        mod.attr("run_code")(code());
     }
     catch (const py::error_already_set & e)
     {
