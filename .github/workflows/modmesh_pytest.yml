@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    name: test and lint after cmake
+    name: test after cmake
 
     if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
 
@@ -18,7 +18,7 @@ jobs:
     strategy:
         matrix:
           os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12]
-          cmake_build_type: [Release, Debug]
+          cmake_build_type: [Release]
 
         fail-fast: false
 
@@ -75,7 +75,7 @@ jobs:
     - name: buildext
       run: |
         make buildext \
-          VERBOSE=1 BUILD_QT=OFF USE_CLANG_TIDY=ON \
+          VERBOSE=1 BUILD_QT=OFF USE_CLANG_TIDY=OFF \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
 
@@ -83,12 +83,5 @@ jobs:
       run: |
         make pytest \
           VERBOSE=1 BUILD_QT=OFF USE_CLANG_TIDY=ON \
-          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
-
-    - name: flake8
-      run: |
-        make flake8 \
-          VERBOSE=1 \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"

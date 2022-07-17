@@ -1,4 +1,4 @@
-name: modmesh_install
+name: modmesh_lint
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    name: test after setup.py
+    name: clang-tidy and flake8
 
     if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
 
@@ -18,6 +18,7 @@ jobs:
     strategy:
         matrix:
           os: [ubuntu-22.04, macos-12]
+          cmake_build_type: [Debug]
 
         fail-fast: false
 
@@ -71,26 +72,23 @@ jobs:
         echo "flake8 path: $(which flake8)"
         echo "flake8 version: $(flake8 --version)"
 
-    - name: build_ext
+    - name: buildext
       run: |
-        python3 setup.py build_ext \
-          --cmake-args="-DBUILD_QT=OFF -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=$(which python3)" \
-          --make-args="VERBOSE=1"
-
-    - name: install
-      run: |
-        case "$(uname -s)" in
-            Linux*) cmdprefix=sudo;;
-            *) cmdprefix=
-        esac
-        ${cmdprefix} python3 setup.py install
+        make buildext \
+          VERBOSE=1 BUILD_QT=OFF USE_CLANG_TIDY=ON \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
 
     - name: pytest
       run: |
-        rm -rf tmp/
-        mkdir -p tmp/
-        cp -a tests tmp/
-        cd tmp/
-        python3 -c "import modmesh; print(modmesh._modmesh.__file__)"
-        pytest -v
-        cd ..
+        make pytest \
+          VERBOSE=1 BUILD_QT=OFF USE_CLANG_TIDY=ON \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+
+    - name: flake8
+      run: |
+        make flake8 \
+          VERBOSE=1 \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"

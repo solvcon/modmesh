@@ -12,8 +12,7 @@ jobs:
     strategy:
       matrix:
         path:
-          - 'include'
-          - 'src'
+          - 'cpp'
     steps:
     - uses: actions/checkout@v2
     - name: Run clang-format style check for C/C++/Protobuf programs.
