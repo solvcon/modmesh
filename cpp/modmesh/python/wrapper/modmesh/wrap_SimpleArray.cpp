@@ -152,6 +152,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 {
                     broadcast_array_using_ellipsis(self, arr_in);
                 })
+            .def("__setitem__", &copy_array)
             .def(
                 "reshape",
                 [](wrapped_type const & self, py::object const & shape)
@@ -161,6 +162,117 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def_property_readonly("nbody", &wrapped_type::nbody)
             //
             ;
+    }
+
+    static void copy_slice(small_vector<int> & slice_out, pybind11::slice const & slice_in)
+    {
+        auto start = std::string(pybind11::str(slice_in.attr("start")));
+        auto end = std::string(pybind11::str(slice_in.attr("stop")));
+        auto stride = std::string(pybind11::str(slice_in.attr("step")));
+
+        slice_out[0] = start == "None" ? slice_out[0] : std::stoi(start);
+        slice_out[1] = end == "None" ? slice_out[1] : std::stoi(end);
+        slice_out[2] = stride == "None" ? slice_out[2] : std::stoi(stride);
+    }
+
+    static void slice_syntax_check(pybind11::tuple const & tuple, size_t ndim)
+    {
+        namespace py = pybind11;
+
+        size_t ellipsis_cnt = 0;
+        size_t slice_cnt = 0;
+
+        for (auto it = tuple.begin(); it != tuple.end(); it++)
+        {
+            if (py::isinstance<py::ellipsis>(*it))
+            {
+                ellipsis_cnt += 1;
+            }
+            else if (py::isinstance<py::slice>(*it))
+            {
+                slice_cnt += 1;
+            }
+            else
+            {
+                throw std::runtime_error("unsupported operation.");
+            }
+        }
+
+        if (ellipsis_cnt + slice_cnt > ndim)
+        {
+            throw std::runtime_error("syntax error. dimensions mismatches");
+        }
+
+        if (ellipsis_cnt > 1)
+        {
+            throw std::runtime_error("syntax error. no more than one ellipsis.");
+        }
+    }
+
+    static void copy_array(wrapped_type & arr_out, pybind11::args & args)
+    {
+        namespace py = pybind11;
+
+        if (args.size() != 2 || !py::isinstance<py::tuple>(args[0]) || !py::isinstance<py::array>(args[1]))
+        {
+            throw std::runtime_error("unsupported operation.");
+        }
+
+        py::tuple tuple = args[0].cast<py::tuple>();
+        py::array arr_in = args[1].cast<py::array>();
+
+        slice_syntax_check(tuple, arr_out.ndim());
+
+        std::vector<small_vector<int>> slices;
+        slices.reserve(arr_out.ndim());
+        for (size_t i = 0; i < arr_out.ndim(); ++i)
+        {
+            small_vector<int> default_slice(3);
+            default_slice[0] = 0; // start
+            default_slice[1] = arr_out.shape(i); // end
+            default_slice[2] = 1; // stride
+            slices.push_back(std::move(default_slice));
+        }
+
+        // copy slices from the front untill an ellipsis
+        bool ellipsis_flag = false;
+        for (auto it = tuple.begin(); it != tuple.end(); it++)
+        {
+            if (py::isinstance<py::ellipsis>(*it))
+            {
+                // stop here and iterator the tuple from back later
+                ellipsis_flag = true;
+                break;
+            }
+            else if (py::isinstance<py::slice>(*it))
+            {
+                auto & slice_out = slices[it - tuple.begin()];
+                const auto slice_in = (*it).cast<py::slice>();
+
+                copy_slice(slice_out, slice_in);
+            }
+        }
+
+        // copy slices from the back until an ellipsis
+        if (ellipsis_flag)
+        {
+            for (size_t size = 0; size < tuple.size(); size++)
+            {
+                auto it = tuple.end() - size - 1;
+
+                if (py::isinstance<py::ellipsis>(*it))
+                {
+                    break;
+                }
+                else if (py::isinstance<py::slice>(*it))
+                {
+                    auto & slice_out = slices[arr_out.ndim() - size - 1];
+                    const auto slice_in = (*it).cast<py::slice>();
+
+                    copy_slice(slice_out, slice_in);
+                }
+            }
+        }
     }
 
     struct TypeBroadCast
