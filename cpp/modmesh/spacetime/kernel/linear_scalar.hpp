@@ -9,11 +9,7 @@
  * Linear scalar equation.
  */
 
-#include <modmesh/spacetime/base_spacetime.hpp>
-#include <modmesh/spacetime/ElementBase_decl.hpp>
-#include <modmesh/spacetime/Grid_decl.hpp>
-#include <modmesh/spacetime/Field_decl.hpp>
-#include <modmesh/spacetime/SolverBase_decl.hpp>
+#include <modmesh/spacetime/core.hpp>
 
 namespace spacetime
 {

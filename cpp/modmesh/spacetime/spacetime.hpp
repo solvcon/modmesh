@@ -5,19 +5,9 @@
  * BSD 3-Clause License, see COPYING
  */
 
-#include <modmesh/base.hpp>
-
-#include <modmesh/spacetime/base_spacetime.hpp>
-#include <modmesh/math.hpp>
-#include <modmesh/spacetime/ElementBase.hpp>
-#include <modmesh/spacetime/Grid.hpp>
-#include <modmesh/spacetime/Celm.hpp>
-#include <modmesh/spacetime/Field.hpp>
-#include <modmesh/spacetime/SolverBase.hpp>
-#include <modmesh/spacetime/Solver.hpp>
-#include <modmesh/spacetime/Selm.hpp>
+#include <modmesh/spacetime/core.hpp>
+#include <modmesh/spacetime/io.hpp>
 #include <modmesh/spacetime/kernel/linear_scalar.hpp>
 #include <modmesh/spacetime/kernel/inviscid_burgers.hpp>
-#include <modmesh/spacetime/io.hpp>
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

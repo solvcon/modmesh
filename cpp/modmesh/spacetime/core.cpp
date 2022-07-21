@@ -1,17 +1,14 @@
-#pragma once
-
 /*
  * Copyright (c) 2018, Yung-Yu Chen <yyc@solvcon.net>
  * BSD 3-Clause License, see COPYING
  */
 
-#include <modmesh/spacetime/Grid_decl.hpp>
-#include <modmesh/spacetime/Celm_decl.hpp>
+#include <modmesh/spacetime/core.hpp>
 
 namespace spacetime
 {
 
-inline Grid::Grid(real_type xmin, real_type xmax, size_t ncelm, ctor_passkey const &)
+Grid::Grid(real_type xmin, real_type xmax, size_t ncelm, ctor_passkey const &)
     : m_xmin(xmin)
     , m_xmax(xmax)
     , m_ncelm(ncelm)
@@ -41,7 +38,7 @@ inline Grid::Grid(real_type xmin, real_type xmax, size_t ncelm, ctor_passkey con
     init_from_array(xloc);
 }
 
-inline void Grid::init_from_array(array_type const & xloc)
+void Grid::init_from_array(array_type const & xloc)
 {
     if (xloc.size() < 2)
     {
@@ -90,6 +87,49 @@ inline void Grid::init_from_array(array_type const & xloc)
             m_agrid[ref + it] = m_agrid[ref] + m_agrid[ref] - m_agrid[ref - it];
         }
     }
+}
+
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+Field::Field(std::shared_ptr<Grid> const & grid, Field::value_type time_increment, size_t nvar)
+    : m_grid(grid)
+    , m_so0(array_type(std::vector<size_t>{grid->xsize(), nvar}))
+    , m_so1(array_type(std::vector<size_t>{grid->xsize(), nvar}))
+    , m_cfl(array_type(std::vector<size_t>{grid->xsize()}))
+{
+    set_time_increment(time_increment);
+}
+
+void Field::set_time_increment(value_type time_increment)
+{
+    m_time_increment = time_increment;
+    m_half_time_increment = 0.5 * time_increment;
+    m_quarter_time_increment = 0.25 * time_increment;
+}
+
+void Celm::move_at(int_type offset)
+{
+    const size_t xindex = this->xindex() + offset;
+    if (xindex < 2 || xindex >= grid().xsize() - 2)
+    {
+        throw std::out_of_range(modmesh::Formatter()
+                                << "Celm(xindex=" << this->xindex() << ")::move_at(offset=" << offset
+                                << "): xindex = " << xindex
+                                << " outside the interval [2, " << grid().xsize() - 2 << ")");
+    }
+    move(offset);
+}
+
+void Selm::move_at(int_type offset)
+{
+    const size_t xindex = this->xindex() + offset;
+    if (xindex < 1 || xindex >= grid().xsize() - 1)
+    {
+        throw std::out_of_range(modmesh::Formatter()
+                                << "Selm(xindex=" << this->xindex() << ")::move_at(offset=" << offset
+                                << "): xindex = " << xindex
+                                << " outside the interval [1, " << grid().xsize() - 1 << ")");
+    }
+    move(offset);
 }
 
 } /* end namespace spacetime */
