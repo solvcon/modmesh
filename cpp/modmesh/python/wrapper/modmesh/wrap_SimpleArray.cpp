@@ -43,8 +43,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
     using root_base_type = WrapBase<WrapSimpleArray<T>, SimpleArray<T>>;
     using wrapped_type = typename root_base_type::wrapped_type;
     using shape_type = typename wrapped_type::shape_type;
-
-    typedef small_vector<int> slice_type;
+    using slice_type = small_vector<int>;
 
     friend root_base_type;
 
