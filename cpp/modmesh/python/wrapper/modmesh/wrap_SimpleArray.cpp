@@ -158,9 +158,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         if (args.size() == 2)
         {
             // sarr[K] = V
-            if (py::isinstance<py::int_>(args[0]) &&
-                (py::isinstance<py::bool_>(args[1]) || py::isinstance<py::int_>(args[1]) ||
-                 py::isinstance<py::float_>(args[1])))
+            if (py::isinstance<py::int_>(args[0]) && !py::isinstance<py::array>(args[1]))
             {
                 const auto key = args[0].cast<ssize_t>();
 
@@ -168,9 +166,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 return;
             }
             // sarr[K1, K2, K3] = V
-            if (py::isinstance<py::tuple>(args[0]) &&
-                (py::isinstance<py::bool_>(args[1]) || py::isinstance<py::int_>(args[1]) ||
-                 py::isinstance<py::float_>(args[1])))
+            if (py::isinstance<py::tuple>(args[0]) && !py::isinstance<py::array>(args[1]))
             {
                 const auto key = args[0].cast<std::vector<ssize_t>>();
 
