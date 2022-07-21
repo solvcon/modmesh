@@ -44,6 +44,8 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
     using wrapped_type = typename root_base_type::wrapped_type;
     using shape_type = typename wrapped_type::shape_type;
 
+    typedef small_vector<int> slice_type;
+
     friend root_base_type;
 
     WrapSimpleArray(pybind11::module & mod, char const * pyname, char const * pydoc)
@@ -150,7 +152,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             ;
     }
 
-    static void setitem_parser(wrapped_type & arr_out, pybind11::args & args)
+    static void setitem_parser(wrapped_type & arr_out, pybind11::args const & args)
     {
         namespace py = pybind11;
 
@@ -180,11 +182,11 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             // sarr[slice, slice, ellipsis] = ndarr
             if (py::isinstance<py::tuple>(args[0]) && py::isinstance<py::array>(args[1]))
             {
-                const auto tuple = args[0].cast<py::tuple>();
-                const auto arr_in = args[1].cast<py::array>();
+                const py::tuple tuple_in = args[0];
+                const py::array arr_in = args[1];
 
-                auto slices = make_default_slice(arr_out);
-                process_slice(tuple, slices, arr_out.ndim());
+                auto slices = make_default_slices(arr_out);
+                process_slices(tuple_in, slices, arr_out.ndim());
 
                 broadcast_array_using_slice(arr_out, slices, arr_in);
                 return;
@@ -196,7 +198,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 const auto slice_in = args[0].cast<py::slice>();
                 const auto arr_in = args[1].cast<py::array>();
 
-                auto slices = make_default_slice(arr_out);
+                auto slices = make_default_slices(arr_out);
                 copy_slice(slices[0], slice_in);
 
                 broadcast_array_using_slice(arr_out, slices, arr_in);
@@ -214,7 +216,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         throw std::runtime_error("unsupported operation.");
     }
 
-    static void copy_slice(small_vector<int> & slice_out, pybind11::slice const & slice_in)
+    static void copy_slice(slice_type & slice_out, pybind11::slice const & slice_in)
     {
         auto start = std::string(pybind11::str(slice_in.attr("start")));
         auto stop = std::string(pybind11::str(slice_in.attr("stop")));
@@ -225,13 +227,13 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         slice_out[2] = step == "None" ? slice_out[2] : std::stoi(step);
     }
 
-    static std::vector<small_vector<int>> make_default_slice(wrapped_type const & arr)
+    static std::vector<slice_type> make_default_slices(wrapped_type const & arr)
     {
-        std::vector<small_vector<int>> slices;
+        std::vector<slice_type> slices;
         slices.reserve(arr.ndim());
         for (size_t i = 0; i < arr.ndim(); ++i)
         {
-            small_vector<int> default_slice(3);
+            slice_type default_slice(3);
             default_slice[0] = 0; // start
             default_slice[1] = arr.shape(i); // stop
             default_slice[2] = 1; // step
@@ -240,13 +242,13 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         return slices;
     }
 
-    static void process_slice(pybind11::tuple const & tuple,
-                              std::vector<small_vector<int>> & slices,
-                              size_t ndim)
+    static void process_slices(pybind11::tuple const & tuple,
+                               std::vector<slice_type> & slices,
+                               size_t ndim)
     {
         namespace py = pybind11;
 
-        // copy slices from the front untill an ellipsis
+        // copy slices from the front until an ellipsis
         bool ellipsis_flag = false;
         for (auto it = tuple.begin(); it != tuple.end(); it++)
         {
@@ -317,22 +319,20 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
     }
 
     static void broadcast_array_using_slice(wrapped_type & arr_out,
-                                            std::vector<small_vector<int>> const & slices,
+                                            std::vector<slice_type> const & slices,
                                             pybind11::array const & arr_in)
     {
         TypeBroadCast::check_shape(arr_out, slices, arr_in);
 
-        size_t nghost = 0;
-
-        if (arr_out.has_ghost())
+        const size_t nghost = arr_out.nghost();
+        if (0 != nghost)
         {
-            nghost = arr_out.nghost();
             arr_out.set_nghost(0);
         }
 
         TypeBroadCast::broadcast(arr_out, slices, arr_in);
 
-        if (nghost != 0)
+        if (0 != nghost)
         {
             arr_out.set_nghost(nghost);
         }
@@ -341,7 +341,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
     struct TypeBroadCast
     {
         static void check_shape(wrapped_type const & arr_out,
-                                std::vector<small_vector<int>> const & slices,
+                                std::vector<slice_type> const & slices,
                                 pybind11::array const & arr_in)
         {
             shape_type right_shape(arr_in.ndim());
@@ -351,10 +351,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             }
 
             shape_type left_shape(arr_out.ndim());
-            // todo: range check
+            // TODO: range check
             for (size_t i = 0; i < arr_out.ndim(); i++)
             {
-                const auto & slice = slices[i];
+                const slice_type & slice = slices[i];
                 if ((slice[1] - slice[0]) % slice[2] == 0)
                 {
                     left_shape[i] = (slice[1] - slice[0]) / slice[2];
@@ -381,7 +381,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
 
         static void
         broadcast(wrapped_type & arr_out,
-                  std::vector<small_vector<int>> const & slices,
+                  std::vector<slice_type> const & slices,
                   pybind11::array const & arr_in)
         {
             if (dtype_is_type<bool>(arr_in))
@@ -466,7 +466,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
     struct TypeBroadCastImpl
     {
         static void broadcast(wrapped_type & arr_out,
-                              std::vector<small_vector<int>> const & slices,
+                              std::vector<slice_type> const & slices,
                               pybind11::array const & arr_in)
         {
             using out_type = typename std::remove_reference<decltype(arr_out[0])>::type;
@@ -477,7 +477,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             shape_type left_shape(arr_out.ndim());
             for (size_t i = 0; i < arr_out.ndim(); i++)
             {
-                const auto & slice = slices[i];
+                slice_type const & slice = slices[i];
                 if ((slice[1] - slice[0]) % slice[2] == 0)
                 {
                     left_shape[i] = (slice[1] - slice[0]) / slice[2];
@@ -535,21 +535,19 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
     static void
     broadcast_array_using_ellipsis(wrapped_type & arr_out, pybind11::array const & arr_in)
     {
-        auto slices = make_default_slice(arr_out);
+        auto slices = make_default_slices(arr_out);
 
         TypeBroadCast::check_shape(arr_out, slices, arr_in);
 
-        size_t nghost = 0;
-
-        if (arr_out.has_ghost())
+        const size_t nghost = arr_out.nghost();
+        if (0 != nghost)
         {
-            nghost = arr_out.nghost();
             arr_out.set_nghost(0);
         }
 
         TypeBroadCast::broadcast(arr_out, slices, arr_in);
 
-        if (nghost != 0)
+        if (0 != nghost)
         {
             arr_out.set_nghost(nghost);
         }
