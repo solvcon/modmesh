@@ -11,6 +11,9 @@
 #include <modmesh/spacetime/kernel/linear_scalar.hpp>
 #include <modmesh/spacetime/kernel/inviscid_burgers.hpp>
 
+namespace modmesh
+{
+
 namespace spacetime
 {
 
@@ -27,5 +30,7 @@ std::ostream & operator<<(std::ostream & os, const LinearScalarCelm & elm);
 std::ostream & operator<<(std::ostream & os, const LinearScalarSelm & elm);
 
 } /* end namespace spacetime */
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

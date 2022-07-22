@@ -7,6 +7,9 @@
 
 #include <modmesh/spacetime/io.hpp>
 
+namespace modmesh
+{
+
 namespace spacetime
 {
 
@@ -83,5 +86,7 @@ std::ostream & operator<<(std::ostream & os, const LinearScalarSelm & elm)
 }
 
 } /* end namespace spacetime */
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

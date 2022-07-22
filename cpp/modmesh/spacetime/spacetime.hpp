@@ -5,6 +5,10 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * One-dimensional space-time CESE solver.
+ */
+
 #include <modmesh/spacetime/core.hpp>
 #include <modmesh/spacetime/io.hpp>
 #include <modmesh/spacetime/kernel/linear_scalar.hpp>

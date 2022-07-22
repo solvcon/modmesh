@@ -10,12 +10,11 @@
 
 #include <modmesh/modmesh.hpp>
 
-namespace spacetime
+namespace modmesh
 {
 
-using real_type = modmesh::real_type;
-using uint_type = modmesh::uint_type;
-using int_type = modmesh::int_type;
+namespace spacetime
+{
 
 class Grid;
 class Field;
@@ -99,7 +98,7 @@ public:
 
     // Remove the two aliases duplicated in ElementBase.
     using value_type = real_type;
-    using array_type = modmesh::AscendantGrid1d::array_type;
+    using array_type = AscendantGrid1d::array_type;
     constexpr static size_t BOUND_COUNT = 2;
     static_assert(BOUND_COUNT >= 2, "BOUND_COUNT must be greater or equal to 2");
 
@@ -204,7 +203,7 @@ private:
     real_type m_xmax;
     size_t m_ncelm;
 
-    modmesh::AscendantGrid1d m_agrid;
+    AscendantGrid1d m_agrid;
 
     template <class ET>
     friend class ElementBase;
@@ -379,7 +378,7 @@ inline CE const Field::celm_at(int_type ielm, bool odd_plane) const
     const CE elm = celm<CE>(ielm, odd_plane);
     if (elm.xindex() < 2 || elm.xindex() >= grid().xsize() - 2)
     {
-        throw std::out_of_range(modmesh::Formatter()
+        throw std::out_of_range(Formatter()
                                 << "Field::celm_at(ielm=" << ielm << ", odd_plane=" << odd_plane
                                 << "): xindex = " << elm.xindex()
                                 << " outside the interval [2, " << grid().xsize() - 2 << ")");
@@ -393,7 +392,7 @@ inline CE Field::celm_at(int_type ielm, bool odd_plane)
     const CE elm = celm<CE>(ielm, odd_plane);
     if (elm.xindex() < 2 || elm.xindex() >= grid().xsize() - 2)
     {
-        throw std::out_of_range(modmesh::Formatter()
+        throw std::out_of_range(Formatter()
                                 << "Field::celm_at(ielm=" << ielm << ", odd_plane=" << odd_plane
                                 << "): xindex = " << elm.xindex()
                                 << " outside the interval [2, " << grid().xsize() - 2 << ")");
@@ -408,7 +407,7 @@ inline SE const Field::selm_at(int_type ielm, bool odd_plane) const
     const SE elm = selm<SE>(ielm, odd_plane);
     if (elm.xindex() < 1 || elm.xindex() >= grid().xsize() - 1)
     {
-        throw std::out_of_range(modmesh::Formatter()
+        throw std::out_of_range(Formatter()
                                 << "Field::selm_at(ielm=" << ielm << ", odd_plane=" << odd_plane
                                 << "): xindex = " << elm.xindex()
                                 << " outside the interval [1, " << grid().xsize() - 1 << ")");
@@ -422,7 +421,7 @@ inline SE Field::selm_at(int_type ielm, bool odd_plane)
     const SE elm = selm<SE>(ielm, odd_plane);
     if (elm.xindex() < 1 || elm.xindex() >= grid().xsize() - 1)
     {
-        throw std::out_of_range(modmesh::Formatter()
+        throw std::out_of_range(Formatter()
                                 << "Field::selm_at(ielm=" << ielm << ", odd_plane=" << odd_plane
                                 << "): xindex = " << elm.xindex()
                                 << " outside the interval [1, " << grid().xsize() - 1 << ")");
@@ -664,8 +663,8 @@ inline
     // alpha-scheme.
     const value_type duxn = (utp - upn) / se_xn.dxpos();
     const value_type duxp = (upp - utp) / se_xp.dxneg();
-    const value_type fan = modmesh::pow<ALPHA>(std::fabs(duxn));
-    const value_type fap = modmesh::pow<ALPHA>(std::fabs(duxp));
+    const value_type fan = pow<ALPHA>(std::fabs(duxn));
+    const value_type fap = pow<ALPHA>(std::fabs(duxp));
     constexpr value_type tiny = std::numeric_limits<value_type>::min();
     return (fap * duxn + fan * duxp) / (fap + fan + tiny);
 }
@@ -870,7 +869,7 @@ SolverBase<ST, CE, SE>::set_so0(size_t iv, typename SolverBase<ST, CE, SE>::arra
 {
     if (iv >= m_field.nvar())
     {
-        throw std::out_of_range(modmesh::Formatter() << "set_so0(): iv " << iv << " >= nvar " << m_field.nvar());
+        throw std::out_of_range(Formatter() << "set_so0(): iv " << iv << " >= nvar " << m_field.nvar());
     }
     if (1 != arr.shape().size())
     {
@@ -879,7 +878,7 @@ SolverBase<ST, CE, SE>::set_so0(size_t iv, typename SolverBase<ST, CE, SE>::arra
     const uint_type nselm = grid().nselm() - odd_plane;
     if (nselm != arr.size())
     {
-        throw std::out_of_range(modmesh::Formatter() << "set_so0(): arr size " << arr.size() << " != nselm " << nselm);
+        throw std::out_of_range(Formatter() << "set_so0(): arr size " << arr.size() << " != nselm " << nselm);
     }
     for (uint_type it = 0; it < nselm; ++it) { selm(it, odd_plane).so0(iv) = arr[it]; }
 }
@@ -1040,6 +1039,8 @@ public:
 }; /* end class Solver */
 
 } /* end namespace spacetime */
+
+} /* end namespace modmesh */
 
 #define SPACETIME_DERIVED_SELM_BODY_DEFAULT \
 public:                                     \
