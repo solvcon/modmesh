@@ -28,11 +28,11 @@
 
 #include <modmesh/python/python.hpp> // Must be the first include.
 #include <modmesh/python/wrapper/modmesh/modmesh.hpp>
-#include <modmesh/python/wrapper/view/view.hpp>
 #include <modmesh/python/wrapper/spacetime/spacetime.hpp>
 #include <modmesh/modmesh.hpp>
-#include <modmesh/view/view.hpp>
 #include <modmesh/spacetime/spacetime.hpp>
+#include <modmesh/view/view.hpp>
+#include <modmesh/view/wrap_view.hpp>
 
 PYBIND11_EMBEDDED_MODULE(_modmesh, mod) // NOLINT
 {

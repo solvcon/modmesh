@@ -34,9 +34,9 @@
 #include <pybind11/numpy.h>
 #include <pybind11/functional.h>
 
-#include "modmesh/spacetime/spacetime.hpp"
+#include <modmesh/spacetime/spacetime.hpp>
 
-#include "modmesh/modmesh.hpp"
+#include <modmesh/modmesh.hpp>
 
 #include <functional>
 #include <list>
