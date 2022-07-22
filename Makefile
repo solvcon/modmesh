@@ -101,6 +101,10 @@ cformat: $(CFFILES)
 		if [ $${ret} -ne 0 ] ; then exit $${ret} ; fi ; \
 	done
 
+.PHONY: cinclude
+cinclude: $(CFFILES)
+	if [ "$(shell ag \#include\ \*\" cpp/)" != "" ] ; then exit 1 ; fi
+
 .PHONY: cmake
 cmake: $(BUILD_PATH)/Makefile
 

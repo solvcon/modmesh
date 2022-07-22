@@ -29,10 +29,6 @@
  */
 
 #include <modmesh/python/python.hpp> // Must be the first include.
-#include <pybind11/stl.h>
-
-#include <modmesh/modmesh.hpp>
-#include <modmesh/python/common.hpp>
 
 namespace modmesh
 {

@@ -49,6 +49,14 @@ namespace modmesh
 namespace python
 {
 
+namespace detail
+{
+
+template <class T>
+std::string to_str(T const & self) { return Formatter() << self >> Formatter::to_str; }
+
+} /* end namespace detail */
+
 template <typename T>
 bool dtype_is_type(pybind11::array const & arr)
 {

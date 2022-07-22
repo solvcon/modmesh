@@ -34,40 +34,19 @@
 #include <pybind11/numpy.h>
 #include <pybind11/functional.h>
 
-#include "modmesh/spacetime/spacetime.hpp"
+#include <modmesh/spacetime/spacetime.hpp>
 
-#include "modmesh/modmesh.hpp"
+#include <modmesh/modmesh.hpp>
 
 #include <functional>
 #include <list>
 #include <sstream>
 
-#ifdef __GNUG__
-#define SPACETIME_PYTHON_WRAPPER_VISIBILITY __attribute__((visibility("hidden")))
-#else
-#define SPACETIME_PYTHON_WRAPPER_VISIBILITY
-#endif
-
-namespace spacetime
+namespace modmesh
 {
 
 namespace python
 {
-
-namespace detail
-{
-
-template <class T>
-std::string to_str(T const & self) { return modmesh::Formatter() << self >> modmesh::Formatter::to_str; }
-
-} /* end namespace detail */
-
-template <
-    class Wrapper,
-    class Wrapped,
-    class Holder = std::unique_ptr<Wrapped>,
-    class WrappedBase = Wrapped>
-using WrapBase = modmesh::python::WrapBase<Wrapper, Wrapped, Holder, WrappedBase>;
 
 template <class WT, class ET>
 class WrapElementBase
@@ -89,6 +68,7 @@ protected:
     WrapElementBase(pybind11::module & mod, const char * pyname, const char * clsdoc)
         : base_type(mod, pyname, clsdoc)
     {
+        using namespace modmesh::spacetime; // NOLINT(google-build-using-namespace)
         namespace py = pybind11;
 
         (*this)
@@ -392,7 +372,7 @@ protected:
     ( \
         "set_" #NAME \
       , [](wrapped_type & self, py::array_t<typename wrapped_type::value_type> & arr, bool odd_plane) \
-        { self.set_ ## NAME(modmesh::python::makeSimpleArray(arr), odd_plane); } \
+        { self.set_ ## NAME(makeSimpleArray(arr), odd_plane); } \
       , py::arg("arr"), py::arg("odd_plane")=false \
     )
 #define DECL_ST_WRAP_ARRAY_ACCESS_1D(NAME) \
@@ -413,7 +393,7 @@ protected:
     ( \
         "set_" #NAME \
       , [](wrapped_type & self, size_t iv, py::array_t<typename wrapped_type::value_type> & arr, bool odd_plane) \
-        { self.set_ ## NAME(iv, modmesh::python::makeSimpleArray(arr), odd_plane); } \
+        { self.set_ ## NAME(iv, makeSimpleArray(arr), odd_plane); } \
       , py::arg("iv"), py::arg("arr"), py::arg("odd_plane")=false \
     )
         (*this)
@@ -471,6 +451,6 @@ protected:
 
 } /* end namespace python */
 
-} /* end namespace spacetime */
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

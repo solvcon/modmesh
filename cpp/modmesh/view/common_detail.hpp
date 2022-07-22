@@ -28,10 +28,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Shared by all code.
-
-// TODO: Most of the code in view is highly coupled with Python; move the
-// Python-related parts to modmesh/python/.
+/**
+ * This file is shared by all code in the view directory.
+ */
 
 #include <modmesh/python/python.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>

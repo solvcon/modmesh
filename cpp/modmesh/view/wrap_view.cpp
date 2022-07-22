@@ -26,7 +26,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/wrapper/view/view.hpp> // Must be the first include.
+#include <modmesh/view/wrap_view.hpp> // Must be the first include.
+#include <modmesh/python/common.hpp>
+#include <pybind11/stl.h>
 
 #include <modmesh/view/view.hpp>
 
@@ -232,6 +234,25 @@ void wrap_view(pybind11::module & mod)
     {
         detail::show_mark();
     }
+}
+
+struct view_pymod_tag;
+
+template <>
+OneTimeInitializer<view_pymod_tag> & OneTimeInitializer<view_pymod_tag>::me()
+{
+    static OneTimeInitializer<view_pymod_tag> instance;
+    return instance;
+}
+
+void initialize_view(pybind11::module & mod)
+{
+    auto initialize_impl = [](pybind11::module & mod)
+    {
+        wrap_view(mod);
+    };
+
+    OneTimeInitializer<view_pymod_tag>::me()(mod, initialize_impl);
 }
 
 } /* end namespace python */

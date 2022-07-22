@@ -32,13 +32,15 @@
 
 #include <modmesh/python/wrapper/spacetime/wrap_spacetime.hpp>
 
-namespace spacetime
+namespace modmesh
 {
 
 namespace python
 {
 
-class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapGrid
+using namespace modmesh::spacetime; // NOLINT(google-build-using-namespace)
+
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapGrid
     : public WrapBase<WrapGrid, Grid, std::shared_ptr<Grid>>
 {
 
@@ -62,7 +64,7 @@ class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapGrid
                 py::init(
                     [](py::array_t<wrapped_type::value_type> & xloc)
                     {
-                        return Grid::construct(modmesh::python::makeSimpleArray(xloc));
+                        return Grid::construct(makeSimpleArray(xloc));
                     }),
                 py::arg("xloc"))
             .def("__str__", &detail::to_str<wrapped_type>)
@@ -78,7 +80,7 @@ class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapGrid
 
 }; /* end class WrapGrid */
 
-class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapKernel
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapKernel
     : public WrapBase<WrapKernel, Kernel>
 {
 
@@ -113,7 +115,7 @@ class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapKernel
 
 }; /* end class WrapKernel */
 
-class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapField
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapField
     : public WrapBase<WrapField, Field, std::shared_ptr<Field>>
 {
 
@@ -139,7 +141,7 @@ class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapField
 
 }; /* end class WrapField */
 
-class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapSolver
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSolver
     : public WrapSolverBase<WrapSolver, Solver>
 {
 
@@ -171,7 +173,7 @@ class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapSolver
 
 }; /* end class WrapSolver */
 
-class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapCelm
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapCelm
     : public WrapCelmBase<WrapCelm, Celm>
 {
 
@@ -185,7 +187,7 @@ class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapCelm
 
 }; /* end class WrapCelm */
 
-class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapSelm
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSelm
     : public WrapSelmBase<WrapSelm, Selm>
 {
 
@@ -199,7 +201,7 @@ class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapSelm
 
 }; /* end class WrapSelm */
 
-class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapInviscidBurgersSolver
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapInviscidBurgersSolver
     : public WrapSolverBase<WrapInviscidBurgersSolver, InviscidBurgersSolver>
 {
 
@@ -224,7 +226,7 @@ class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapInviscidBurgersSolver
 
 }; /* end class WrapInviscidBurgersSolver */
 
-class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapInviscidBurgersCelm
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapInviscidBurgersCelm
     : public WrapCelmBase<WrapInviscidBurgersCelm, InviscidBurgersCelm>
 {
 
@@ -238,7 +240,7 @@ class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapInviscidBurgersCelm
 
 }; /* end class WrapInviscidBurgersCelm */
 
-class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapInviscidBurgersSelm
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapInviscidBurgersSelm
     : public WrapSelmBase<WrapInviscidBurgersSelm, InviscidBurgersSelm>
 {
 
@@ -252,7 +254,7 @@ class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapInviscidBurgersSelm
 
 }; /* end class WrapInviscidBurgersSelm */
 
-class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapLinearScalarSolver
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapLinearScalarSolver
     : public WrapSolverBase<WrapLinearScalarSolver, LinearScalarSolver>
 {
 
@@ -277,7 +279,7 @@ class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapLinearScalarSolver
 
 }; /* end class WrapLinearScalarSolver */
 
-class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapLinearScalarCelm
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapLinearScalarCelm
     : public WrapCelmBase<WrapLinearScalarCelm, LinearScalarCelm>
 {
 
@@ -291,7 +293,7 @@ class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapLinearScalarCelm
 
 }; /* end class WrapLinearScalarCelm */
 
-class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapLinearScalarSelm
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapLinearScalarSelm
     : public WrapSelmBase<WrapLinearScalarSelm, LinearScalarSelm>
 {
 
@@ -305,16 +307,6 @@ class SPACETIME_PYTHON_WRAPPER_VISIBILITY WrapLinearScalarSelm
 
 }; /* end class WrapLinearScalarSelm */
 
-} /* end namespace python */
-
-} /* end namespace spacetime */
-
-namespace modmesh
-{
-
-namespace python
-{
-
 template <typename WST, typename WCET, typename WSET>
 void add_solver(pybind11::module & mod, const std::string & name, const std::string & desc)
 {
@@ -325,28 +317,26 @@ void add_solver(pybind11::module & mod, const std::string & name, const std::str
 
 void wrap_spacetime(pybind11::module & mod)
 {
-    namespace spy = spacetime::python;
-
     mod.doc() = "_libst: One-dimensional space-time CESE method code";
 
-    spy::WrapGrid::commit(mod, "Grid", "Spatial grid data");
-    spy::WrapKernel::commit(mod, "Kernel", "Solution element calculation hooks");
-    spy::WrapField::commit(mod, "Field", "Solution data");
+    WrapGrid::commit(mod, "Grid", "Spatial grid data");
+    WrapKernel::commit(mod, "Kernel", "Solution element calculation hooks");
+    WrapField::commit(mod, "Field", "Solution data");
 
     add_solver<
-        spy::WrapSolver,
-        spy::WrapCelm,
-        spy::WrapSelm>(mod, "", "no equation");
+        WrapSolver,
+        WrapCelm,
+        WrapSelm>(mod, "", "no equation");
 
     add_solver<
-        spy::WrapLinearScalarSolver,
-        spy::WrapLinearScalarCelm,
-        spy::WrapLinearScalarSelm>(mod, "LinearScalar", "a linear scalar equation");
+        WrapLinearScalarSolver,
+        WrapLinearScalarCelm,
+        WrapLinearScalarSelm>(mod, "LinearScalar", "a linear scalar equation");
 
     add_solver<
-        spy::WrapInviscidBurgersSolver,
-        spy::WrapInviscidBurgersCelm,
-        spy::WrapInviscidBurgersSelm>(mod, "InviscidBurgers", "the inviscid Burgers equation");
+        WrapInviscidBurgersSolver,
+        WrapInviscidBurgersCelm,
+        WrapInviscidBurgersSelm>(mod, "InviscidBurgers", "the inviscid Burgers equation");
 }
 
 } /* end namespace python */

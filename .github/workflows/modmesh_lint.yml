@@ -35,7 +35,7 @@ jobs:
         if [ "20.04" == "$VERSION_ID" ] ; then CLANG_TIDY_VERSION=10 ; else CLANG_TIDY_VERSION=14 ; fi
         sudo apt-get -qqy update
         sudo apt-get -qy install \
-            sudo curl git build-essential make cmake libc6-dev gcc g++ \
+            sudo curl git build-essential make cmake libc6-dev gcc g++ silversearcher-ag \
             clang-tidy-${CLANG_TIDY_VERSION} \
             python3 python3-dev python3-venv
         sudo ln -fs "$(which clang-tidy-${CLANG_TIDY_VERSION})" "$(dirname $(which clang-tidy-${CLANG_TIDY_VERSION}))/clang-tidy"
@@ -45,7 +45,7 @@ jobs:
     - name: dependency (macos)
       if: ${{ startsWith(matrix.os, 'macos') }}
       run: |
-        brew install python3 llvm
+        brew install python3 llvm the_silver_searcher
         ln -s "$(brew --prefix llvm)/bin/clang-format" "/usr/local/bin/clang-format"
         ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
         echo "which pip3: $(which pip3)"
@@ -71,6 +71,9 @@ jobs:
         echo "clang-tidy version: $(clang-tidy -version)"
         echo "flake8 path: $(which flake8)"
         echo "flake8 version: $(flake8 --version)"
+
+    - name: check_include
+      run: make cinclude
 
     - name: buildext
       run: |

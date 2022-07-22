@@ -54,7 +54,7 @@ void initialize_spacetime(pybind11::module & mod)
         wrap_spacetime(mod);
     };
 
-    modmesh::python::OneTimeInitializer<spacetime_pymod_tag>::me()(mod, initialize_impl);
+    OneTimeInitializer<spacetime_pymod_tag>::me()(mod, initialize_impl);
 }
 
 } /* end namespace python */
