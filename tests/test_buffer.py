@@ -462,5 +462,133 @@ class SimpleArrayBasicTC(unittest.TestCase):
                     self.assertEqual(v, sarr[i, j, k])
                     v += 1
 
+    def test_SimpleArray_broadcast_slice_basic(self):
+        ndarr_input = np.arange(
+            1*2*3*4*5, dtype='float64').reshape((1, 2, 3, 4, 5))
+        ndarr_input += 999  # just a magic number
+
+        def init(sarr):
+            v = 0
+            for x1 in range(sarr.shape[0]):
+                for x2 in range(sarr.shape[1]):
+                    for x3 in range(sarr.shape[2]):
+                        for x4 in range(sarr.shape[3]):
+                            for x5 in range(sarr.shape[4]):
+                                sarr[x1, x2, x3, x4, x5] = v
+                                v += 1
+
+        def check(sarr, ndarr):
+            for x1 in range(sarr.shape[0]):
+                for x2 in range(sarr.shape[1]):
+                    for x3 in range(sarr.shape[2]):
+                        for x4 in range(sarr.shape[3]):
+                            for x5 in range(sarr.shape[4]):
+                                self.assertEqual(
+                                    ndarr[x1, x2, x3, x4, x5],
+                                    sarr[x1, x2, x3, x4, x5])
+
+        sarr = modmesh.SimpleArrayFloat64((2, 2, 3, 4, 5))
+        ndarr = np.arange(2*2*3*4*5, dtype='float64').reshape((2, 2, 3, 4, 5))
+        init(sarr)
+        sarr[::2, ...] = ndarr_input[...]
+        ndarr[::2, ...] = ndarr_input[...]
+        check(sarr, ndarr)
+
+        sarr = modmesh.SimpleArrayFloat64((2, 4, 3, 4, 5))
+        ndarr = np.arange(2*4*3*4*5, dtype='float64').reshape((2, 4, 3, 4, 5))
+        init(sarr)
+        sarr[::2, ::2, ...] = ndarr_input[...]
+        ndarr[::2, ::2, ...] = ndarr_input[...]
+        check(sarr, ndarr)
+
+        sarr = modmesh.SimpleArrayFloat64((2, 2, 3, 8, 10))
+        ndarr = np.arange(
+            2*2*3*8*10, dtype='float64').reshape((2, 2, 3, 8, 10))
+        init(sarr)
+        sarr[::2, ..., ::2, ::2] = ndarr_input[...]
+        ndarr[::2, ..., ::2, ::2] = ndarr_input[...]
+        check(sarr, ndarr)
+
+        sarr = modmesh.SimpleArrayFloat64((1, 2, 3, 8, 10))
+        ndarr = np.arange(
+            1*2*3*8*10, dtype='float64').reshape((1, 2, 3, 8, 10))
+        init(sarr)
+        sarr[..., ::2, ::2] = ndarr_input[...]
+        ndarr[..., ::2, ::2] = ndarr_input[...]
+        check(sarr, ndarr)
+
+        sarr = modmesh.SimpleArrayFloat64((2, 4, 6, 8, 10))
+        ndarr = np.arange(
+            2*4*6*8*10, dtype='float64').reshape((2, 4, 6, 8, 10))
+        init(sarr)
+        sarr[::2, ::2, ::2, ::2, ::2] = ndarr_input[...]
+        ndarr[::2, ::2, ::2, ::2, ::2] = ndarr_input[...]
+        check(sarr, ndarr)
+
+        sarr = modmesh.SimpleArrayFloat64((2, 6, 3, 4, 5))
+        ndarr = np.arange(
+            2*6*3*4*5, dtype='float64').reshape((2, 6, 3, 4, 5))
+        init(sarr)
+        sarr[::2, ::3, ::, :, ::1] = ndarr_input[...]
+        ndarr[::2, ::3, ::, :, ::1] = ndarr_input[...]
+        check(sarr, ndarr)
+
+    def test_SimpleArray_broadcast_slice_shape(self):
+        ndarr = np.arange(2 * 3 * 4, dtype='float64').reshape((2, 3, 4))
+
+        sarr = modmesh.SimpleArrayFloat64((4, 6, 8))
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"Broadcast input array from shape\(2, 3, 4\) "
+            r"into shape\(2, 2, 2\)"
+        ):
+            sarr[::2, ::3, ::4] = ndarr[...]
+
+        sarr = modmesh.SimpleArrayFloat64((4, 6, 8))
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"Broadcast input array from shape\(2, 3, 4\) "
+            r"into shape\(2, 6, 8\)"
+        ):
+            sarr[::2, ::1, ...] = ndarr[...]
+
+    def test_SimpleArray_broadcast_slice_ghost_1d(self):
+        import math
+        N = 13
+        G = 3
+        STEP = 3
+
+        sarr = modmesh.SimpleArrayFloat64(N)
+        ndarr = np.arange(math.ceil(N/STEP), dtype='float64')
+        ndarr2 = np.arange(N, dtype='float64')
+        sarr.nghost = G
+
+        sarr[::STEP] = ndarr[...]
+        ndarr2[::STEP] = ndarr[...]
+
+        print(ndarr2.shape)
+
+        for i in range(0, N, STEP):
+            self.assertEqual(ndarr2[i], sarr[i - G])
+
+    def test_SimpleArray_broadcast_slice_ghost_md(self):
+        import math
+        N = 5
+        G = 2
+        STEP = 2
+
+        sarr = modmesh.SimpleArrayFloat64((N, 3, 4))
+        ndarr = np.arange(math.ceil(N/STEP)*3*4, dtype='float64') \
+            .reshape((math.ceil(N/STEP), 3, 4))
+        ndarr2 = np.arange(N*3*4, dtype='float64').reshape((N, 3, 4))
+        sarr.nghost = G
+
+        sarr[::STEP, ...] = ndarr[...]
+        ndarr2[::STEP, ...] = ndarr[...]
+
+        for i in range(0, N, STEP):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(ndarr2[i, j, k], sarr[i - G, j, k])
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
