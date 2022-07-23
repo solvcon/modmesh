@@ -38,7 +38,7 @@ from .. import spacetime as libst
 
 def load_app():
     view.app.pytext.code = """# Need to hold the win object to keep PySide alive.
-win, svr = mm.app.linear_wave.run_linear()
+win, svr = mm.app.linear_wave.run_linear(animate=True, interval=10)
 """
 
 
@@ -49,17 +49,40 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self._main)
         layout = QtWidgets.QVBoxLayout(self._main)
 
-        static_canvas = FigureCanvas(Figure(figsize=(15, 10)))
+        self.canvas = FigureCanvas(Figure(figsize=(15, 10)))
         # Ideally one would use self.addToolBar here, but it is slightly
         # incompatible between PyQt6 and other bindings, so we just add the
         # toolbar as a plain widget instead.
-        layout.addWidget(static_canvas)
-        layout.addWidget(NavigationToolbar(static_canvas, self))
+        layout.addWidget(self.canvas)
+        layout.addWidget(NavigationToolbar(self.canvas, self))
 
-        self.ax = static_canvas.figure.subplots()
+        self.svr = None
+        self.ax = self.canvas.figure.subplots()
+        self.timer = None
+        self.line = None
+
+    def set_solver(self, svr, interval):
+        """
+        :param svr: Solver
+        :param interval: milliseconds
+        :return: nothing
+        """
+        self.svr = svr
+        x = svr.xctr() / np.pi
+        y = svr.get_so0(0).ndarray
+        self.line, = self.ax.plot(x, y, '-')
+        self.timer = self.canvas.new_timer(interval)
+        self.timer.add_callback(self._update_canvas)
+        self.timer.start()
+
+    def _update_canvas(self):
+        self.svr.march_alpha2(1)
+        self.line.set_data(self.svr.xctr() / np.pi,
+                           self.svr.get_so0(0).ndarray)
+        self.line.figure.canvas.draw()
 
 
-def run_linear():
+def run_linear(animate, interval=10):
     grid = libst.Grid(0, 4 * 2 * np.pi, 4 * 64)
 
     cfl = 1
@@ -82,12 +105,14 @@ def run_linear():
     win.show()
     win.activateWindow()
 
-    win.ax.plot(svr.xctr() / np.pi, svr.get_so0(0).ndarray, '-')
-
     svr.setup_march()
-    svr.march_alpha2(50)
 
-    win.ax.plot(svr.xctr() / np.pi, svr.get_so0(0).ndarray, '-')
+    if animate:
+        win.set_solver(svr, interval)
+    else:
+        win.ax.plot(svr.xctr() / np.pi, svr.get_so0(0).ndarray, '-')
+        svr.march_alpha2(50)
+        win.ax.plot(svr.xctr() / np.pi, svr.get_so0(0).ndarray, '-')
 
     return win, svr
 
