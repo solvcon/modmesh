@@ -464,7 +464,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                               std::vector<slice_type> const & slices,
                               pybind11::array const & arr_in)
         {
-            using out_type = typename std::remove_reference<decltype(arr_out[0])>::type;
+            using out_type = typename std::remove_reference_t<decltype(arr_out[0])>;
 
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
             auto * arr_new = reinterpret_cast<pybind11::array_t<D> const *>(&arr_in);
