@@ -37,7 +37,7 @@
 #include <Qt3DCore/QEntity>
 #include <Qt3DRender/QCamera>
 
-#include <QOrbitCameraController>
+#include <QFirstPersonCameraController>
 
 #include <QResizeEvent>
 
@@ -45,9 +45,9 @@ namespace modmesh
 {
 
 class RCameraController
-    : public Qt3DExtras::QOrbitCameraController
+    : public Qt3DExtras::QFirstPersonCameraController
 {
-    using Qt3DExtras::QOrbitCameraController::QOrbitCameraController;
+    using Qt3DExtras::QFirstPersonCameraController::QFirstPersonCameraController;
 }; /* end class RCameraController */
 
 class RScene
