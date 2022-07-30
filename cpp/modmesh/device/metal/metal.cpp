@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,43 +26,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/python.hpp> // Must be the first include.
-#include <modmesh/python/wrapper/modmesh/modmesh.hpp>
+#define NS_PRIVATE_IMPLEMENTATION
+#define CA_PRIVATE_IMPLEMENTATION
+#define MTL_PRIVATE_IMPLEMENTATION
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#include <Metal/Metal.hpp>
+#pragma GCC diagnostic pop
+
+#include <modmesh/device/metal/metal.hpp>
 
 namespace modmesh
 {
 
-namespace python
+namespace device
 {
 
-struct modmesh_pymod_tag;
-
-template <>
-OneTimeInitializer<modmesh_pymod_tag> & OneTimeInitializer<modmesh_pymod_tag>::me()
+MetalManager & MetalManager::instance()
 {
-    static OneTimeInitializer<modmesh_pymod_tag> instance;
-    return instance;
+    static MetalManager o;
+    return o;
 }
 
-void initialize_modmesh(pybind11::module & mod)
+void MetalManager::startup()
 {
-    auto initialize_impl = [](pybind11::module & mod)
+    if (nullptr == m_device)
     {
-        import_numpy();
-
-        wrap_profile(mod);
-        wrap_ConcreteBuffer(mod);
-        wrap_SimpleArray(mod);
-        wrap_StaticGrid(mod);
-        wrap_StaticMesh(mod);
-        wrap_Toggle(mod);
-    };
-
-    OneTimeInitializer<modmesh_pymod_tag>::me()(mod, initialize_impl);
+        m_device = MTL::CreateSystemDefaultDevice();
+    }
 }
 
-} /* end namespace python */
+void MetalManager::shutdown()
+{
+    if (nullptr != m_device)
+    {
+        m_device->release();
+        m_device = nullptr;
+    }
+}
+
+} /* end namespace device */
 
 } /* end namespace modmesh */
 
-// vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

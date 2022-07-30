@@ -1,5 +1,7 @@
+#pragma once
+
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,43 +28,45 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/python.hpp> // Must be the first include.
-#include <modmesh/python/wrapper/modmesh/modmesh.hpp>
+// forward declaration.
+namespace MTL
+{
+class Device;
+}
 
 namespace modmesh
 {
 
-namespace python
+namespace device
 {
 
-struct modmesh_pymod_tag;
-
-template <>
-OneTimeInitializer<modmesh_pymod_tag> & OneTimeInitializer<modmesh_pymod_tag>::me()
+class MetalManager
 {
-    static OneTimeInitializer<modmesh_pymod_tag> instance;
-    return instance;
-}
 
-void initialize_modmesh(pybind11::module & mod)
-{
-    auto initialize_impl = [](pybind11::module & mod)
-    {
-        import_numpy();
+public:
 
-        wrap_profile(mod);
-        wrap_ConcreteBuffer(mod);
-        wrap_SimpleArray(mod);
-        wrap_StaticGrid(mod);
-        wrap_StaticMesh(mod);
-        wrap_Toggle(mod);
-    };
+    static MetalManager & instance();
 
-    OneTimeInitializer<modmesh_pymod_tag>::me()(mod, initialize_impl);
-}
+    MetalManager(MetalManager const &) = delete;
+    MetalManager(MetalManager &&) = delete;
+    MetalManager & operator=(MetalManager const &) = delete;
+    MetalManager & operator=(MetalManager &&) = delete;
+    ~MetalManager() { shutdown(); }
 
-} /* end namespace python */
+    void startup();
+    bool started() { return nullptr != m_device; }
+    void shutdown();
+
+private:
+
+    MetalManager() { startup(); }
+
+    MTL::Device * m_device = nullptr;
+
+}; /* end class MetalManager */
+
+} /* end namespace device */
 
 } /* end namespace modmesh */
 
-// vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

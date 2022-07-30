@@ -33,6 +33,9 @@
 #include <modmesh/spacetime/spacetime.hpp>
 #include <modmesh/view/view.hpp>
 #include <modmesh/view/wrap_view.hpp>
+#ifdef MODMESH_METAL
+#include <modmesh/device/metal/metal.hpp>
+#endif // MODMESH_METAL
 
 PYBIND11_EMBEDDED_MODULE(_modmesh, mod) // NOLINT
 {
@@ -50,6 +53,10 @@ int main(int argc, char ** argv)
 {
     // Set up Python interpreter.
     modmesh::python::Interpreter::instance().initialize();
+
+#ifdef MODMESH_METAL
+    modmesh::device::MetalManager::instance();
+#endif // MODMESH_METAL
 
     modmesh::RApplication app(argc, argv);
     app.main()->resize(1000, 600);

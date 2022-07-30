@@ -11,7 +11,14 @@ if(NOT SKIP_PYTHON_EXECUTABLE)
     message(STATUS "use PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
 endif()
 
-option(BUILD_QT "build QT" ON)
+option(BUILD_QT "build with QT" ON)
+
+option(BUILD_METAL "build with Metal" OFF)
+message(STATUS "BUILD_METAL: ${BUILD_METAL}")
+if(BUILD_METAL)
+    add_compile_options(-DMODMESH_METAL)
+endif()
+
 option(USE_CLANG_TIDY "use clang-tidy" OFF)
 option(LINT_AS_ERRORS "clang-tidy warnings as errors" OFF)
 
@@ -54,6 +61,10 @@ option(MODMESH_PROFILE "enable profiler" OFF)
 message(STATUS "MODMESH_PROFILE: ${MODMESH_PROFILE}")
 if(MODMESH_PROFILE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMODMESH_PROFILE")
+endif()
+
+if(BUILD_QT)
+include_directories("${CMAKE_CURRENT_LIST_DIR}/thirdparty/install/metal-cpp")
 endif()
 
 option(pybind11_path "pybind11 path")

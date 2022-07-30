@@ -42,12 +42,26 @@ qt_add_executable(
     ${MODMESH_PYMOD_SPACETIME_SOURCES}
 )
 
-qt_add_resources(viewer "app_icon"
+qt_add_resources(
+    viewer "app_icon"
     PREFIX "/"
     BASE ${PROJECT_ROOT_DIR}/resources/viewer
     FILES
     ${PROJECT_ROOT_DIR}/resources/viewer/icon.ico
 )
+
+if(APPLE)
+    find_library(APPLE_FWK_FOUNDATION Foundation REQUIRED)
+    find_library(APPLE_FWK_QUARTZ_CORE QuartzCore REQUIRED)
+    find_library(APPLE_FWK_METAL Metal REQUIRED)
+
+    target_link_libraries(
+        viewer PUBLIC
+        ${APPLE_FWK_FOUNDATION}
+        ${APPLE_FWK_QUARTZ_CORE}
+        ${APPLE_FWK_METAL}
+    )
+endif()
 
 if(HIDE_SYMBOL)
     set_target_properties(viewer PROPERTIES CXX_VISIBILITY_PRESET "hidden")

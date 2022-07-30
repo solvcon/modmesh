@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+# Copyright (c) 2020, Yung-Yu Chen <yyc@solvcon.net>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,58 +25,23 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-"""
-General mesh data definition and manipulation in one, two, and
-three-dimensional space.
-"""
+import os
+import unittest
+
+import modmesh
 
 
-# Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
+class ToggleTc(unittest.TestCase):
+
+    def test_instance(self):
+        self.assertTrue(hasattr(modmesh.Toggle.instance, "show_axis"))
 
 
-__all__ = [  # noqa: F822
-    'WrapperProfilerStatus',
-    'wrapper_profiler_status',
-    'StopWatch',
-    'stop_watch',
-    'TimeRegistry',
-    'time_registry',
-    'ConcreteBuffer',
-    'SimpleArrayBool',
-    'SimpleArrayInt8',
-    'SimpleArrayInt16',
-    'SimpleArrayInt32',
-    'SimpleArrayInt64',
-    'SimpleArrayUint8',
-    'SimpleArrayUint16',
-    'SimpleArrayUint32',
-    'SimpleArrayUint64',
-    'SimpleArrayFloat32',
-    'SimpleArrayFloat64',
-    'StaticGrid1d',
-    'StaticGrid2d',
-    'StaticGrid3d',
-    'StaticMesh',
-    'Toggle',
-    'METAL_BUILT',
-    'metal_running',
-]
+class MetalTC(unittest.TestCase):
 
-
-# A hidden loophole to impolementation; it should only be used for testing
-# during development.
-try:
-    import _modmesh as _impl  # noqa: F401
-except ImportError:
-    from . import _modmesh as _impl  # noqa: F401
-
-
-def _load():
-    for name in __all__:
-        globals()[name] = getattr(_impl, name)
-
-
-_load()
-del _load
+    @unittest.skipUnless("TEST_METAL" in os.environ, "Metal is opt-in")
+    def test_metal_status(self):
+        self.assertEqual(True, modmesh.METAL_BUILT)
+        self.assertEqual(True, modmesh.metal_running())
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

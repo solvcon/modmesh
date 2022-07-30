@@ -29,6 +29,10 @@
 #include <modmesh/python/wrapper/modmesh/modmesh.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>
 
+#ifdef MODMESH_METAL
+#include <modmesh/device/metal/metal.hpp>
+#endif // MODMESH_METAL
+
 namespace modmesh
 {
 
@@ -55,15 +59,35 @@ protected:
 WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const * pydoc)
     : base_type(mod, pyname, pydoc)
 {
+    namespace py = pybind11;
     (*this)
+        .def_property_readonly_static(
+            "instance",
+            [](py::object const &) -> auto & {
+                return wrapped_type::instance();
+            })
         .def_property("show_axis", &wrapped_type::get_show_axis, &wrapped_type::set_show_axis);
-
-    mod.attr("toggle") = Toggle::instance();
 }
 
 void wrap_Toggle(pybind11::module & mod)
 {
     WrapToggle::commit(mod, "Toggle", "Toggle");
+
+#ifdef MODMESH_METAL
+    mod.attr("METAL_BUILT") = true;
+#else // MODMESH_METAL
+    mod.attr("METAL_BUILT") = false;
+#endif // MODMESH_METAL
+    mod.def(
+        "metal_running",
+        []()
+        {
+#ifdef MODMESH_METAL
+            return ::modmesh::device::MetalManager::instance().started();
+#else // MODMESH_METAL
+            return false;
+#endif // MODMESH_METAL
+        });
 }
 
 } /* end namespace python */

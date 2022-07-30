@@ -27,4 +27,16 @@ set(MODMESH_SOURCES
     CACHE FILEPATH "" FORCE
 )
 
+if(BUILD_METAL)
+    add_subdirectory(device/metal)
+    set(MODMESH_HEADERS
+        ${MODMESH_HEADERS}
+        ${MODMESH_METAL_HEADERS}
+        CACHE FILEPATH "" FORCE)
+    set(MODMESH_SOURCES
+        ${MODMESH_SOURCES}
+        ${MODMESH_METAL_SOURCES}
+        CACHE FILEPATH "" FORCE)
+endif()
+
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
