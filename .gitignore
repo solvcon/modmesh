@@ -3,6 +3,8 @@
 __pycache__/
 build/
 dist/
+thirdparty/install/
+thirdparty/archive/
 tmp/
 setup.mk
 *.egg-info/
