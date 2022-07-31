@@ -29,7 +29,7 @@ find_program(
 )
 if(USE_CLANG_TIDY)
     if(CLANG_TIDY_EXE)
-        set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}")
+        set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-header-filter=/cpp/.\*")
         if(LINT_AS_ERRORS)
             set(DO_CLANG_TIDY "${DO_CLANG_TIDY}" "-warnings-as-errors=*")
         endif()
@@ -63,7 +63,7 @@ if(MODMESH_PROFILE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMODMESH_PROFILE")
 endif()
 
-if(BUILD_QT)
+if(BUILD_METAL)
 include_directories("${CMAKE_CURRENT_LIST_DIR}/thirdparty/install/metal-cpp")
 endif()
 

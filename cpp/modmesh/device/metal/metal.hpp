@@ -32,7 +32,7 @@
 namespace MTL
 {
 class Device;
-}
+} /* end namespace MTL */
 
 namespace modmesh
 {

@@ -31,7 +31,7 @@ import unittest
 import modmesh
 
 
-class ToggleTc(unittest.TestCase):
+class ToggleTC(unittest.TestCase):
 
     def test_instance(self):
         self.assertTrue(hasattr(modmesh.Toggle.instance, "show_axis"))
@@ -39,9 +39,10 @@ class ToggleTc(unittest.TestCase):
 
 class MetalTC(unittest.TestCase):
 
-    @unittest.skipUnless("TEST_METAL" in os.environ, "Metal is opt-in")
+    # Github Actions macos-12 does not support GPU yet.
+    @unittest.skipUnless(modmesh.METAL_BUILT and "TEST_METAL" in os.environ,
+                         "Metal is not built")
     def test_metal_status(self):
-        self.assertEqual(True, modmesh.METAL_BUILT)
         self.assertEqual(True, modmesh.metal_running())
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
