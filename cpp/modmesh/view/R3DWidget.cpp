@@ -47,7 +47,7 @@ R3DWidget::R3DWidget(Qt3DExtras::Qt3DWindow * window, RScene * scene, QWidget * 
 
     // Set up the camera control.
     auto * control = m_scene->controller();
-    control->setCamera(m_view->camera());
+    control->setCamera(camera);
     control->setLinearSpeed(50.0f);
     control->setLookSpeed(180.0f);
 }

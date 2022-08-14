@@ -37,6 +37,8 @@
 #include <Qt3DCore/QEntity>
 #include <Qt3DRender/QCamera>
 
+#include <QAbstractCameraController>
+#include <QOrbitCameraController>
 #include <QFirstPersonCameraController>
 
 #include <QResizeEvent>
@@ -44,11 +46,17 @@
 namespace modmesh
 {
 
-class RCameraController
+class RFirstPersonCameraController
     : public Qt3DExtras::QFirstPersonCameraController
 {
     using Qt3DExtras::QFirstPersonCameraController::QFirstPersonCameraController;
-}; /* end class RCameraController */
+}; /* end class RFirstPersonCameraController */
+
+class ROrbitCameraController
+    : public Qt3DExtras::QOrbitCameraController
+{
+    using Qt3DExtras::QOrbitCameraController::QOrbitCameraController;
+}; /* end class ROrbitCameraController */
 
 class RScene
     : public Qt3DCore::QEntity
@@ -58,16 +66,26 @@ public:
 
     RScene(Qt3DCore::QNode * parent = nullptr)
         : Qt3DCore::QEntity(parent)
-        , m_controller(new RCameraController(this))
+        , m_controller(new ROrbitCameraController(this))
     {
     }
 
-    RCameraController const * controller() const { return m_controller; }
-    RCameraController * controller() { return m_controller; }
+    Qt3DExtras::QAbstractCameraController const * controller() const { return m_controller; }
+    Qt3DExtras::QAbstractCameraController * controller() { return m_controller; }
+
+    void setCameraController(Qt3DExtras::QAbstractCameraController * controller)
+    {
+        m_controller->deleteLater();
+        m_controller = controller;
+    }
+
+    void setOrbitCameraController() { setCameraController(new ROrbitCameraController(this)); }
+
+    void setFirstPersonCameraController() { setCameraController(new RFirstPersonCameraController(this)); }
 
 private:
 
-    RCameraController * m_controller = nullptr;
+    Qt3DExtras::QAbstractCameraController * m_controller = nullptr;
 
 }; /* end class RScene */
 
