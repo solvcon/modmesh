@@ -3,7 +3,8 @@
 
 
 """
-One-dimensional space-time CESE method implementation.
+One-dimensional space-time CESE method implementation.  (Old and to be
+deprecated).
 """
 
 
