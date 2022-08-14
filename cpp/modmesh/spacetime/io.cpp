@@ -85,6 +85,12 @@ std::ostream & operator<<(std::ostream & os, const LinearScalarSelm & elm)
     return os;
 }
 
+std::ostream & operator<<(std::ostream & os, const EulerSolver & sol)
+{
+    os << "EulerSolver(grid=" << sol.field().grid() << ")";
+    return os;
+}
+
 } /* end namespace spacetime */
 
 } /* end namespace modmesh */

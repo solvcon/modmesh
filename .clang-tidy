@@ -27,6 +27,7 @@ Checks: >
     -llvm-include-order,
     -performance-noexcept-move-constructor,
     -readability-identifier-length,
+    -readability-implicit-bool-conversion,
     -readability-named-parameter,
     -readability-magic-numbers,
     -readability-redundant-access-specifiers,

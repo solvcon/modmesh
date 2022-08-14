@@ -99,6 +99,18 @@ RApplication::RApplication(int & argc, char ** argv)
         });
     appMenu->addAction(app_linear_wave);
 
+    auto * app_euler1d = new RAction(
+        QString("Load euler1d"),
+        QString("Load euler1d"),
+        []()
+        {
+            namespace py = pybind11;
+            py::module_ appmod = py::module_::import("modmesh.app.euler1d");
+            appmod.reload();
+            appmod.attr("load_app")();
+        });
+    appMenu->addAction(app_euler1d);
+
     menuBar->addMenu(appMenu);
 
     auto * use_orbit_camera = new RAction(

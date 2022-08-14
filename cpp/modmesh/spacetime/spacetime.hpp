@@ -13,5 +13,6 @@
 #include <modmesh/spacetime/io.hpp>
 #include <modmesh/spacetime/kernel/linear_scalar.hpp>
 #include <modmesh/spacetime/kernel/inviscid_burgers.hpp>
+#include <modmesh/spacetime/kernel/EulerSolver.hpp>
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -174,21 +174,21 @@ public:
     real_type * xptr_selm(int_type ielm, bool odd_plane, SelmPK const &) { return xptr(xindex_selm(ielm, odd_plane)); }
     real_type const * xptr_selm(int_type ielm, bool odd_plane, SelmPK const &) const { return xptr(xindex_selm(ielm, odd_plane)); }
 
-private:
-
     /**
      * Convert celm index to coordinate index.
      */
     // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-    size_t xindex_celm(int_type ielm) const { return 1 + BOUND_COUNT + (ielm << 1); }
+    size_t xindex_celm(int_type ielm) const { return 1 + BOUND_COUNT + static_cast<ssize_t>(ielm * 2); }
     size_t xindex_celm(int_type ielm, bool odd_plane) const { return xindex_celm(ielm) + (odd_plane ? 1 : 0); }
 
     /**
      * Convert selm index to coordinate index.
      */
     // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-    size_t xindex_selm(int_type ielm) const { return BOUND_COUNT + (ielm << 1); }
+    size_t xindex_selm(int_type ielm) const { return BOUND_COUNT + static_cast<ssize_t>(ielm * 2); }
     size_t xindex_selm(int_type ielm, bool odd_plane) const { return xindex_selm(ielm) + (odd_plane ? 1 : 0); }
+
+private:
 
     /**
      * Get pointer to an coordinate value using coordinate index.
@@ -442,7 +442,7 @@ class Selm
 
 public:
 
-    Selm(Field * field, size_t index, bool odd_plane)
+    Selm(Field * field, int_type index, bool odd_plane)
         : base_type(field, field->grid().xptr_selm(index, odd_plane, Grid::SelmPK()))
     {
     }
@@ -453,7 +453,7 @@ public:
         friend Field;
     };
 
-    Selm(Field const * field, size_t index, bool odd_plane, const_ctor_passkey)
+    Selm(Field const * field, int_type index, bool odd_plane, const_ctor_passkey)
         // The only intention of this workaround is to let const Field to
         // create const object derived from Selm. Do not abuse.
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
@@ -527,7 +527,7 @@ public:
 
     using selm_type = Selm;
 
-    Celm(Field * field, size_t index, bool odd_plane)
+    Celm(Field * field, int_type index, bool odd_plane)
         : base_type(field, field->grid().xptr_celm(index, odd_plane, Grid::CelmPK()))
     {
     }
@@ -538,7 +538,7 @@ public:
         friend Field;
     };
 
-    Celm(Field const * field, size_t index, bool odd_plane, const_ctor_passkey)
+    Celm(Field const * field, int_type index, bool odd_plane, const_ctor_passkey)
         // The only intention of this workaround is to let const Field to
         // create const object derived from CelmBase. Do not abuse.
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
@@ -638,9 +638,7 @@ public:
 }; /* end class CelmBase */
 
 template <typename SE>
-inline
-    typename Celm::value_type
-    Celm::calc_so0(size_t iv) const
+inline typename Celm::value_type Celm::calc_so0(size_t iv) const
 {
     const SE se_xn = selm_xn<SE>();
     const SE se_xp = selm_xp<SE>();
@@ -651,9 +649,7 @@ inline
 }
 
 template <typename SE, size_t ALPHA>
-inline
-    typename Celm::value_type
-    Celm::calc_so1_alpha(size_t iv) const
+inline typename Celm::value_type Celm::calc_so1_alpha(size_t iv) const
 {
     // Fetch value.
     const SE se_xn = selm_xn<SE>();
@@ -735,15 +731,27 @@ public:
     array_type x(bool odd_plane) const;
     array_type xctr(bool odd_plane) const;
 
-#define DECL_ST_ARRAY_ACCESS_0D(NAME)                          \
-    array_type const & NAME() const { return m_field.NAME(); } \
-    array_type & NAME() { return m_field.NAME(); }             \
-    array_type get_##NAME(bool odd_plane) const;               \
+#define DECL_ST_ARRAY_ACCESS_0D(NAME)            \
+    array_type const & NAME() const              \
+    {                                            \
+        return m_field.NAME();                   \
+    }                                            \
+    array_type & NAME()                          \
+    {                                            \
+        return m_field.NAME();                   \
+    }                                            \
+    array_type get_##NAME(bool odd_plane) const; \
     void set_##NAME(array_type const & arr, bool odd_plane);
-#define DECL_ST_ARRAY_ACCESS_1D(NAME)                          \
-    array_type const & NAME() const { return m_field.NAME(); } \
-    array_type & NAME() { return m_field.NAME(); }             \
-    array_type get_##NAME(size_t iv, bool odd_plane) const;    \
+#define DECL_ST_ARRAY_ACCESS_1D(NAME)                       \
+    array_type const & NAME() const                         \
+    {                                                       \
+        return m_field.NAME();                              \
+    }                                                       \
+    array_type & NAME()                                     \
+    {                                                       \
+        return m_field.NAME();                              \
+    }                                                       \
+    array_type get_##NAME(size_t iv, bool odd_plane) const; \
     void set_##NAME(size_t iv, array_type const & arr, bool odd_plane);
 
     DECL_ST_ARRAY_ACCESS_0D(cfl)
