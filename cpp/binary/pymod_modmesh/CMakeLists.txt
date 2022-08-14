@@ -18,6 +18,20 @@ pybind11_add_module(
     ${MODMESH_PYTHON_HEADERS}
     ${MODMESH_PYTHON_SOURCES}
 )
+
+if(APPLE)
+    find_library(APPLE_FWK_FOUNDATION Foundation REQUIRED)
+    find_library(APPLE_FWK_QUARTZ_CORE QuartzCore REQUIRED)
+    find_library(APPLE_FWK_METAL Metal REQUIRED)
+
+    target_link_libraries(
+        _modmesh PUBLIC
+        ${APPLE_FWK_FOUNDATION}
+        ${APPLE_FWK_QUARTZ_CORE}
+        ${APPLE_FWK_METAL}
+    )
+endif()
+
 if(HIDE_SYMBOL)
     set_target_properties(_modmesh PROPERTIES CXX_VISIBILITY_PRESET "hidden")
 else()

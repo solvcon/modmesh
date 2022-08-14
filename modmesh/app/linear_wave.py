@@ -37,9 +37,10 @@ from .. import spacetime as libst
 
 
 def load_app():
-    view.app.pytext.code = """# Need to hold the win object to keep PySide alive.
+    view.app.pytext.code = """
+# Need to hold the win object to keep PySide alive.
 win, svr = mm.app.linear_wave.run_linear(animate=True, interval=10)
-"""
+""".lstrip()
 
 
 class ApplicationWindow(QtWidgets.QMainWindow):
