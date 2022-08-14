@@ -30,6 +30,10 @@
 
 #include <modmesh/view/RMainWindow.hpp>
 
+#include <vector>
+
+#include <QActionGroup>
+
 namespace modmesh
 {
 
@@ -44,6 +48,7 @@ RApplication::RApplication(int & argc, char ** argv)
     auto * menuBar = new RMenuBar();
     auto * fileMenu = new RMenu(QString("File"));
     auto * appMenu = new RMenu(QString("App"));
+    auto * cameraMenu = new RMenu(QString("Camera"));
 
     auto * newFileAction = new RAction(
         QString("New file"),
@@ -95,6 +100,39 @@ RApplication::RApplication(int & argc, char ** argv)
     appMenu->addAction(app_linear_wave);
 
     menuBar->addMenu(appMenu);
+
+    auto * use_orbit_camera = new RAction(
+        QString("Use Oribt Camera Controller"),
+        QString("Use Oribt Camera Controller"),
+        [&]()
+        {
+            qDebug() << "Use Orbit Camera Controller";
+            auto * viewer = this->m_main->viewer();
+            viewer->scene()->setOrbitCameraController();
+            viewer->scene()->controller()->setCamera(viewer->camera());
+        });
+
+    auto * use_fps_camera = new RAction(
+        QString("Use First Person Camera Controller"),
+        QString("Use First Person Camera Controller"),
+        [&]()
+        {
+            qDebug() << "Use First Person Camera Controller";
+            auto * viewer = this->m_main->viewer();
+            viewer->scene()->setFirstPersonCameraController();
+            viewer->scene()->controller()->setCamera(viewer->camera());
+        });
+
+    auto * cameraGroup = new QActionGroup(this);
+    cameraGroup->addAction(use_orbit_camera);
+    cameraGroup->addAction(use_fps_camera);
+    use_orbit_camera->setCheckable(true);
+    use_fps_camera->setCheckable(true);
+    use_orbit_camera->setChecked(true);
+
+    cameraMenu->addAction(use_orbit_camera);
+    cameraMenu->addAction(use_fps_camera);
+    menuBar->addMenu(cameraMenu);
 
     m_main->setMenuBar(menuBar);
 
