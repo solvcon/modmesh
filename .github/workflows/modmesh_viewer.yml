@@ -15,7 +15,7 @@ jobs:
 
     strategy:
         matrix:
-          os: [ubuntu-22.04, macos-latest]
+          os: [ubuntu-22.04, macos-12]
           cmake_build_type: [Release, Debug]
 
         fail-fast: false
@@ -42,11 +42,19 @@ jobs:
         sudo pip3 install numpy pytest flake8
         
     - name: dependency (macos)
-      if: ${{ startsWith(matrix.os, 'macos-latest') }}
+      if: ${{ startsWith(matrix.os, 'macos-12') }}
       run: |
-        brew update
-        brew install wget make cmake libccd gcc python3 qt6
-        pip3 install numpy pytest flake8
+        # brew install python3 llvm
+        # brew install qt6
+        # brew install wget make cmake libccd gcc python3 qt6
+        # pip3 install -U numpy pytest flake8
+
+        brew install python3 llvm qt6
+        ln -s "$(brew --prefix llvm)/bin/clang-format" "/usr/local/bin/clang-format"
+        ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+        echo "which pip3: $(which pip3)"
+        pip3 install -U setuptools
+        pip3 install -U numpy pytest flake8
 
     - name: dependency (manual)
       run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
