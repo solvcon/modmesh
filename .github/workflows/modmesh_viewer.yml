@@ -15,7 +15,7 @@ jobs:
 
     strategy:
         matrix:
-          os: [ubuntu-22.04]
+          os: [ubuntu-22.04, macos-latest]
           cmake_build_type: [Release, Debug]
 
         fail-fast: false
@@ -40,6 +40,13 @@ jobs:
             libgl1-mesa-dev
 
         sudo pip3 install numpy pytest flake8
+        
+    - name: dependency (macos)
+      if: ${{ startsWith(matrix.os, 'macos-latest') }}
+      run: |
+        brew update
+        brew install wget make cmake libccd gcc python3 qt6
+        pip3 install numpy pytest flake8
 
     - name: dependency (manual)
       run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
