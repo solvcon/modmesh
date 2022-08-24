@@ -36,6 +36,7 @@ CMAKE_PREFIX_PATH ?=
 CMAKE_ARGS ?=
 VERBOSE ?=
 FORCE_CLANG_FORMAT ?=
+QT3D_RENDERER ?=
 
 pyextsuffix := $(shell python3-config --extension-suffix)
 pyvminor := $(shell python3 -c 'import sys; print("%d%d" % sys.version_info[0:2])')
@@ -136,6 +137,7 @@ CMAKE_CMD = cmake $(MODMESH_ROOT) \
 	-DUSE_CLANG_TIDY=$(USE_CLANG_TIDY) \
 	-DLINT_AS_ERRORS=ON \
 	-DMODMESH_PROFILE=$(MODMESH_PROFILE) \
+	-DQT3D_RENDERER=$(QT3D_RENDERER) \
 	$(CMAKE_ARGS)
 
 $(BUILD_PATH)/Makefile: CMakeLists.txt Makefile

@@ -97,6 +97,8 @@ endif()
 add_subdirectory(cpp/binary/pymod_modmesh)
 if(BUILD_QT)
 add_subdirectory(cpp/binary/viewer)
+set(ENV{QT3D_RENDERER} ${QT3D_RENDERER})
+message(STATUS "QT3D_RENDERER: " $ENV{QT3D_RENDERER})
 endif()
 
 add_custom_target(flake8)
