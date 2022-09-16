@@ -17,7 +17,6 @@ jobs:
         matrix:
           os: [ubuntu-22.04, macos-12, windows-2022]
           cmake_build_type: [Release, Debug]
-          arch: [amd64]
 
         fail-fast: false
 
@@ -28,8 +27,6 @@ jobs:
         fetch-depth: 1
 
     - uses: ilammy/msvc-dev-cmd@v1
-      with:
-        arch: ${{ matrix.arch }}
 
     - name: dependency (ubuntu)
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
@@ -57,7 +54,7 @@ jobs:
         pip3 install -U numpy pytest flake8
 
     - name: Install Qt (windows)
-      if: runner.os == 'Windows'
+      if: ${{ startsWith(matrix.os, 'windows') }}
       uses: jurplel/install-qt-action@v3
       with:
         aqtversion: '==2.1.*'
@@ -68,15 +65,15 @@ jobs:
         modules: 'qt3d'
 
     - name: dependency (windows)
-      if: runner.os == 'Windows'
+      if: ${{ startsWith(matrix.os, 'windows') }}
       run: pip3 install -U numpy pytest flake8 pybind11
 
     - name: dependency (manual)
-      if: runner.os != 'Windows'
+      if: ${{ !startsWith(matrix.os, 'windows') }}
       run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
 
     - name: show dependency
-      if: runner.os != 'Windows'
+      if: ${{ !startsWith(matrix.os, 'windows') }}
       run: |
         echo "gcc path: $(which gcc)"
         echo "gcc version: $(gcc --version)"
@@ -94,7 +91,7 @@ jobs:
         echo "flake8 version: $(flake8 --version)"
 
     - name: show dependency (windows)
-      if: runner.os == 'Windows'
+      if: ${{ startsWith(matrix.os, 'windows') }}
       run: |
         Get-Command cl
         Get-Command cmake
@@ -108,7 +105,7 @@ jobs:
         Get-Command flake8
 
     - name: buildext
-      if: runner.os != 'Windows'
+      if: ${{ !startsWith(matrix.os, 'windows') }}
       run: |
         make buildext \
           VERBOSE=1 BUILD_QT=ON \
@@ -116,7 +113,7 @@ jobs:
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
 
     - name: pytest
-      if: runner.os != 'Windows'
+      if: ${{ !startsWith(matrix.os, 'windows') }}
       run: |
         make pytest \
           VERBOSE=1 BUILD_QT=ON \
@@ -124,7 +121,7 @@ jobs:
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
 
     - name: viewer
-      if: runner.os != 'Windows'
+      if: ${{ !startsWith(matrix.os, 'windows') }}
       run: |
         make viewer \
           VERBOSE=1 BUILD_QT=ON \
@@ -132,7 +129,7 @@ jobs:
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
 
     - name: viewer (windows)
-      if: runner.os == 'Windows'
+      if: ${{ startsWith(matrix.os, 'windows') }}
       run: |
         cmake `
           -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} `
