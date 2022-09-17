@@ -39,6 +39,11 @@
 #include <sstream>
 #include <map>
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#endif
+
 #define MODMESH_EXCEPT(CLS, EXC, MSG) throw EXC(#CLS ": " MSG);
 
 #ifndef MODMESH_INTSIZE

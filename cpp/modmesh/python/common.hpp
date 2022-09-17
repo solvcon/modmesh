@@ -396,10 +396,11 @@ private:
 }; /* end class WrapBase */
 
 void import_numpy();
-
+#ifdef __GNUC__
 #pragma GCC diagnostic push
 // Suppress the warning "greater visibility than the type of its field"
 #pragma GCC diagnostic ignored "-Wattributes"
+#endif
 /**
  * Take a pybind11 module and an initializing function and only run the
  * initializing function once.
@@ -446,8 +447,9 @@ private:
     std::function<void(pybind11::module &)> m_initializer;
 
 }; /* end class OneTimeInitializer */
+#ifdef __GNUC__
 #pragma GCC diagnostic pop
-
+#endif
 class MODMESH_PYTHON_WRAPPER_VISIBILITY Interpreter
 {
 
