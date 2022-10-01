@@ -27,6 +27,7 @@
  */
 
 #include <modmesh/python/wrapper/modmesh/modmesh.hpp> // Must be the first include.
+#include <modmesh/python/wrapper/modmesh/TypeBroadcast.hpp>
 #include <modmesh/modmesh.hpp>
 
 namespace modmesh
@@ -317,7 +318,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                                             std::vector<slice_type> const & slices,
                                             pybind11::array const & arr_in)
     {
-        TypeBroadCast::check_shape(arr_out, slices, arr_in);
+        TypeBroadcast<T>::check_shape(arr_out, slices, arr_in);
 
         const size_t nghost = arr_out.nghost();
         if (0 != nghost)
@@ -325,7 +326,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             arr_out.set_nghost(0);
         }
 
-        TypeBroadCast::broadcast(arr_out, slices, arr_in);
+        TypeBroadcast<T>::broadcast(arr_out, slices, arr_in);
 
         if (0 != nghost)
         {
@@ -333,206 +334,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         }
     }
 
-    struct TypeBroadCast
-    {
-        static void check_shape(wrapped_type const & arr_out,
-                                std::vector<slice_type> const & slices,
-                                pybind11::array const & arr_in)
-        {
-            shape_type right_shape(arr_in.ndim());
-            for (pybind11::ssize_t i = 0; i < arr_in.ndim(); i++)
-            {
-                right_shape[i] = arr_in.shape(i);
-            }
-
-            shape_type left_shape(arr_out.ndim());
-            // TODO: range check
-            for (size_t i = 0; i < arr_out.ndim(); i++)
-            {
-                const slice_type & slice = slices[i];
-                if ((slice[1] - slice[0]) % slice[2] == 0)
-                {
-                    left_shape[i] = (slice[1] - slice[0]) / slice[2];
-                }
-                else
-                {
-                    left_shape[i] = (slice[1] - slice[0]) / slice[2] + 1;
-                }
-            }
-
-            if (arr_out.ndim() != static_cast<size_t>(arr_in.ndim()))
-            {
-                throw_shape_error(left_shape, right_shape);
-            }
-
-            for (size_t i = 0; i < left_shape.size(); ++i)
-            {
-                if (left_shape[i] != static_cast<size_t>(right_shape[i]))
-                {
-                    throw_shape_error(left_shape, right_shape);
-                }
-            }
-        }
-
-        static void
-        broadcast(wrapped_type & arr_out,
-                  std::vector<slice_type> const & slices,
-                  pybind11::array const & arr_in)
-        {
-            if (dtype_is_type<bool>(arr_in))
-            {
-                TypeBroadCastImpl<bool>::broadcast(arr_out, slices, arr_in);
-            }
-            else if (dtype_is_type<int8_t>(arr_in))
-            {
-                TypeBroadCastImpl<int8_t>::broadcast(arr_out, slices, arr_in);
-            }
-            else if (dtype_is_type<int16_t>(arr_in))
-            {
-                TypeBroadCastImpl<int16_t>::broadcast(arr_out, slices, arr_in);
-            }
-            else if (dtype_is_type<int32_t>(arr_in))
-            {
-                TypeBroadCastImpl<int32_t>::broadcast(arr_out, slices, arr_in);
-            }
-            else if (dtype_is_type<int64_t>(arr_in))
-            {
-                TypeBroadCastImpl<int64_t>::broadcast(arr_out, slices, arr_in);
-            }
-            else if (dtype_is_type<uint32_t>(arr_in))
-            {
-                TypeBroadCastImpl<uint32_t>::broadcast(arr_out, slices, arr_in);
-            }
-            else if (dtype_is_type<uint16_t>(arr_in))
-            {
-                TypeBroadCastImpl<uint16_t>::broadcast(arr_out, slices, arr_in);
-            }
-            else if (dtype_is_type<uint32_t>(arr_in))
-            {
-                TypeBroadCastImpl<uint32_t>::broadcast(arr_out, slices, arr_in);
-            }
-            else if (dtype_is_type<uint64_t>(arr_in))
-            {
-                TypeBroadCastImpl<uint64_t>::broadcast(arr_out, slices, arr_in);
-            }
-            else if (dtype_is_type<float>(arr_in))
-            {
-                TypeBroadCastImpl<float>::broadcast(arr_out, slices, arr_in);
-            }
-            else if (dtype_is_type<double>(arr_in))
-            {
-                TypeBroadCastImpl<double>::broadcast(arr_out, slices, arr_in);
-            }
-            else
-            {
-                throw std::runtime_error("input array data type not support!");
-            }
-        }
-
-        // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-        static void throw_shape_error(shape_type const & left_shape, shape_type const & right_shape)
-        {
-            std::ostringstream msg;
-            msg << "Broadcast input array from shape(";
-            for (size_t i = 0; i < right_shape.size(); ++i)
-            {
-                msg << right_shape[i];
-                if (i != right_shape.size() - 1)
-                {
-                    msg << ", ";
-                }
-            }
-            msg << ") into shape(";
-            for (size_t i = 0; i < left_shape.size(); ++i)
-            {
-                msg << left_shape[i];
-                if (i != left_shape.size() - 1)
-                {
-                    msg << ", ";
-                }
-            }
-            msg << ")";
-
-            throw std::runtime_error(msg.str());
-        };
-    };
-
-    template <typename D /* for destination type */>
-    struct TypeBroadCastImpl
-    {
-        static void broadcast(wrapped_type & arr_out,
-                              std::vector<slice_type> const & slices,
-                              pybind11::array const & arr_in)
-        {
-            using out_type = typename std::remove_reference_t<decltype(arr_out[0])>;
-
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-            auto * arr_new = reinterpret_cast<pybind11::array_t<D> const *>(&arr_in);
-
-            shape_type left_shape(arr_out.ndim());
-            for (size_t i = 0; i < arr_out.ndim(); i++)
-            {
-                slice_type const & slice = slices[i];
-                if ((slice[1] - slice[0]) % slice[2] == 0)
-                {
-                    left_shape[i] = (slice[1] - slice[0]) / slice[2];
-                }
-                else
-                {
-                    left_shape[i] = (slice[1] - slice[0]) / slice[2] + 1;
-                }
-            }
-
-            shape_type sidx_init(arr_out.ndim());
-
-            for (size_t i = 0; i < arr_out.ndim(); ++i)
-            {
-                sidx_init[i] = 0;
-            }
-
-            std::function<void(shape_type, int)> copy_idx;
-            copy_idx = [&](shape_type sidx, int dim)
-            {
-                if (dim < 0)
-                {
-                    return;
-                }
-
-                for (size_t i = 0; i < left_shape[dim]; ++i)
-                {
-                    sidx[dim] = i;
-
-                    size_t offset_in = 0;
-                    for (pybind11::ssize_t it = 0; it < arr_in.ndim(); ++it)
-                    {
-                        offset_in += arr_in.strides(it) / arr_in.itemsize() * sidx[it];
-                    }
-                    const D * ptr_in = arr_new->data() + offset_in;
-
-                    size_t offset_out = 0;
-                    for (size_t it = 0; it < arr_out.ndim(); ++it)
-                    {
-                        auto step = slices[it][2];
-                        offset_out += arr_out.stride(it) * sidx[it] * step;
-                    }
-
-                    // NOLINTNEXTLINE(bugprone-signed-char-misuse, cert-str34-c)
-                    arr_out.at(offset_out) = static_cast<out_type>(*ptr_in);
-                    // recursion here
-                    copy_idx(sidx, dim - 1);
-                }
-            };
-
-            copy_idx(sidx_init, arr_out.ndim() - 1);
-        }
-    };
-
     static void
     broadcast_array_using_ellipsis(wrapped_type & arr_out, pybind11::array const & arr_in)
     {
         auto slices = make_default_slices(arr_out);
 
-        TypeBroadCast::check_shape(arr_out, slices, arr_in);
+        TypeBroadcast<T>::check_shape(arr_out, slices, arr_in);
 
         const size_t nghost = arr_out.nghost();
         if (0 != nghost)
@@ -540,7 +347,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             arr_out.set_nghost(0);
         }
 
-        TypeBroadCast::broadcast(arr_out, slices, arr_in);
+        TypeBroadcast<T>::broadcast(arr_out, slices, arr_in);
 
         if (0 != nghost)
         {
