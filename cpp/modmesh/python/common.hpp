@@ -208,7 +208,7 @@ static SimpleArray<T> makeSimpleArray(pybind11::array_t<T> & ndarr)
     {
         shape.push_back(ndarr.shape(i));
     }
-    std::shared_ptr<ConcreteBuffer> buffer = ConcreteBuffer::construct(
+    std::shared_ptr<ConcreteBuffer> const buffer = ConcreteBuffer::construct(
         ndarr.nbytes(), ndarr.mutable_data(), std::make_unique<ConcreteBufferNdarrayRemover>(ndarr));
     return SimpleArray<T>(shape, buffer);
 }

@@ -7,14 +7,24 @@ on:
 
 jobs:
   clang-format-check:
-    name: clang format check
+
+    name: format
+
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         path:
           - 'cpp'
+
     steps:
+
     - uses: actions/checkout@v2
+
+    - name: event name
+      run: |
+        echo "github.event_name: ${{ github.event_name }}"
+
     - name: Run clang-format style check for C/C++/Protobuf programs.
       uses: jidicula/clang-format-action@v4.5.0
       with:

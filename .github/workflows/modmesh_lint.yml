@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    name: clang-tidy and flake8
+    name: lint
 
     if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
 
@@ -28,6 +28,10 @@ jobs:
       with:
         fetch-depth: 1
 
+    - name: event name
+      run: |
+        echo "github.event_name: ${{ github.event_name }}"
+
     - name: dependency (ubuntu)
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
       run: |
@@ -45,7 +49,8 @@ jobs:
     - name: dependency (macos)
       if: ${{ startsWith(matrix.os, 'macos') }}
       run: |
-        brew install python3 llvm the_silver_searcher
+        brew update
+        brew install python3 llvm
         ln -s "$(brew --prefix llvm)/bin/clang-format" "/usr/local/bin/clang-format"
         ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
         echo "which pip3: $(which pip3)"
@@ -56,6 +61,7 @@ jobs:
       run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
 
     - name: show dependency
+      # Copy the commands from contrib/dependency/showdep.sh
       run: |
         echo "gcc path: $(which gcc)"
         echo "gcc version: $(gcc --version)"

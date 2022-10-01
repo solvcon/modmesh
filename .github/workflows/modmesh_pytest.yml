@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    name: test after cmake
+    name: pytest
 
     if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
 
@@ -28,26 +28,25 @@ jobs:
       with:
         fetch-depth: 1
 
+    - name: event name
+      run: |
+        echo "github.event_name: ${{ github.event_name }}"
+
     - name: dependency (ubuntu)
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
       run: |
-        VERSION_ID=$(bash -c 'source /etc/os-release ; echo $VERSION_ID')        
-        if [ "20.04" == "$VERSION_ID" ] ; then CLANG_TIDY_VERSION=10 ; else CLANG_TIDY_VERSION=14 ; fi
         sudo apt-get -qqy update
         sudo apt-get -qy install \
             sudo curl git build-essential make cmake libc6-dev gcc g++ \
-            clang-tidy-${CLANG_TIDY_VERSION} \
             python3 python3-dev python3-venv
-        sudo ln -fs "$(which clang-tidy-${CLANG_TIDY_VERSION})" "$(dirname $(which clang-tidy-${CLANG_TIDY_VERSION}))/clang-tidy"
         sudo pip3 install setuptools
         sudo pip3 install numpy pytest flake8
 
     - name: dependency (macos)
       if: ${{ startsWith(matrix.os, 'macos') }}
       run: |
-        brew install python3 llvm
-        ln -s "$(brew --prefix llvm)/bin/clang-format" "/usr/local/bin/clang-format"
-        ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+        brew update
+        brew install python3
         echo "which pip3: $(which pip3)"
         pip3 install -U setuptools
         pip3 install -U numpy pytest flake8
@@ -56,6 +55,7 @@ jobs:
       run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
 
     - name: show dependency
+      # Copy the commands from contrib/dependency/showdep.sh
       run: |
         echo "gcc path: $(which gcc)"
         echo "gcc version: $(gcc --version)"
@@ -81,6 +81,8 @@ jobs:
         fi
         make pytest \
           ${MAKE_ARGS} \
-          VERBOSE=1 BUILD_QT=OFF USE_CLANG_TIDY=ON \
+          VERBOSE=1 \
+          BUILD_QT=OFF \
+          USE_CLANG_TIDY=OFF \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
