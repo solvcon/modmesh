@@ -25,7 +25,7 @@ class EulerSolverTC(unittest.TestCase):
         dt_max = dx * cfl_max
         nstep = int(np.ceil(time_stop / dt_max))
         dt = time_stop / nstep
-        svr = libst.EulerSolver(grid=grid, time_increment=dt)
+        svr = libst.BadEuler1DSolver(grid=grid, time_increment=dt)
 
         # Initialize.
         svr.set_so0(0, np.zeros(resolution+1, dtype='float64'))

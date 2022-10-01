@@ -10,7 +10,7 @@
 #include <modmesh/spacetime/core.hpp>
 #include <modmesh/spacetime/kernel/linear_scalar.hpp>
 #include <modmesh/spacetime/kernel/inviscid_burgers.hpp>
-#include <modmesh/spacetime/kernel/EulerSolver.hpp>
+#include <modmesh/spacetime/kernel/BadEuler1DSolver.hpp>
 
 namespace modmesh
 {
@@ -29,7 +29,7 @@ std::ostream & operator<<(std::ostream & os, const InviscidBurgersSelm & elm);
 std::ostream & operator<<(std::ostream & os, const LinearScalarSolver & sol);
 std::ostream & operator<<(std::ostream & os, const LinearScalarCelm & elm);
 std::ostream & operator<<(std::ostream & os, const LinearScalarSelm & elm);
-std::ostream & operator<<(std::ostream & os, const EulerSolver & sol);
+std::ostream & operator<<(std::ostream & os, const BadEuler1DSolver & sol);
 
 } /* end namespace spacetime */
 

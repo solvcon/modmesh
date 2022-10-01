@@ -320,13 +320,13 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapLinearScalarSelm
 
 }; /* end class WrapLinearScalarSelm */
 
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapEulerSolver
-    : public WrapBase<WrapEulerSolver, EulerSolver, std::shared_ptr<EulerSolver>>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapBadEuler1DSolver
+    : public WrapBase<WrapBadEuler1DSolver, BadEuler1DSolver, std::shared_ptr<BadEuler1DSolver>>
 {
 
 public:
 
-    using base_type = WrapBase<WrapEulerSolver, EulerSolver, std::shared_ptr<EulerSolver>>;
+    using base_type = WrapBase<WrapBadEuler1DSolver, BadEuler1DSolver, std::shared_ptr<BadEuler1DSolver>>;
     using wrapper_type = typename base_type::wrapper_type;
     using wrapped_type = typename base_type::wrapped_type;
 
@@ -334,7 +334,7 @@ public:
 
 protected:
 
-    WrapEulerSolver(pybind11::module & mod, const char * pyname, const char * clsdoc)
+    WrapBadEuler1DSolver(pybind11::module & mod, const char * pyname, const char * clsdoc)
         : base_type(mod, pyname, clsdoc)
     {
 
@@ -588,7 +588,7 @@ protected:
         return *this;
     }
 
-}; /* end class WrapEulerSolver */
+}; /* end class WrapBadEuler1DSolver */
 
 template <typename WST, typename WCET, typename WSET>
 void add_solver(pybind11::module & mod, const std::string & name, const std::string & desc)
@@ -621,7 +621,7 @@ void wrap_spacetime(pybind11::module & mod)
         WrapInviscidBurgersCelm,
         WrapInviscidBurgersSelm>(mod, "InviscidBurgers", "the inviscid Burgers equation");
 
-    WrapEulerSolver::commit(mod, "EulerSolver", "Solve the Euler equation");
+    WrapBadEuler1DSolver::commit(mod, "BadEuler1DSolver", "Solve the Euler equation (a bad one)");
 }
 
 } /* end namespace python */

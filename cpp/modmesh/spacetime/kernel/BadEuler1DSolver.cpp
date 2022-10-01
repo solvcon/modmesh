@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/spacetime/kernel/EulerSolver.hpp>
+#include <modmesh/spacetime/kernel/BadEuler1DSolver.hpp>
 #include <cmath>
 
 namespace modmesh
@@ -34,7 +34,7 @@ namespace modmesh
 namespace spacetime
 {
 
-void EulerSolver::update_cfl(bool odd_plane)
+void BadEuler1DSolver::update_cfl(bool odd_plane)
 {
     const int_type start = odd_plane ? -1 : 0;
     const int_type stop = grid().nselm();
@@ -60,7 +60,7 @@ void EulerSolver::update_cfl(bool odd_plane)
     }
 }
 
-void EulerSolver::march_half_so0(bool odd_plane)
+void BadEuler1DSolver::march_half_so0(bool odd_plane)
 {
     const int_type start = odd_plane ? -1 : 0;
     const int_type stop = grid().ncelm();
@@ -97,7 +97,7 @@ void EulerSolver::march_half_so0(bool odd_plane)
     }
 }
 
-void EulerSolver::treat_boundary_so0()
+void BadEuler1DSolver::treat_boundary_so0()
 {
     selm_type const selm_left_in = selm(0, true);
     selm_type selm_left_out = selm(-1, true);
@@ -113,7 +113,7 @@ void EulerSolver::treat_boundary_so0()
     selm_right_out.so0(2) = selm_left_in.so0(2);
 }
 
-void EulerSolver::treat_boundary_so1()
+void BadEuler1DSolver::treat_boundary_so1()
 {
     selm_type const selm_left_in = selm(0, true);
     selm_type selm_left_out = selm(-1, true);

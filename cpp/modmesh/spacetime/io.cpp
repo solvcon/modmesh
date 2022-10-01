@@ -85,9 +85,9 @@ std::ostream & operator<<(std::ostream & os, const LinearScalarSelm & elm)
     return os;
 }
 
-std::ostream & operator<<(std::ostream & os, const EulerSolver & sol)
+std::ostream & operator<<(std::ostream & os, const BadEuler1DSolver & sol)
 {
-    os << "EulerSolver(grid=" << sol.field().grid() << ")";
+    os << "BadEuler1DSolver(grid=" << sol.field().grid() << ")";
     return os;
 }
 

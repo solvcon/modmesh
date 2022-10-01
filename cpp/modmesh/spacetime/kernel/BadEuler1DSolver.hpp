@@ -35,8 +35,8 @@ namespace modmesh
 namespace spacetime
 {
 
-class EulerSolver
-    : public std::enable_shared_from_this<EulerSolver>
+class BadEuler1DSolver
+    : public std::enable_shared_from_this<BadEuler1DSolver>
 {
 
 public:
@@ -54,9 +54,9 @@ private:
 
 public:
 
-    std::shared_ptr<EulerSolver> clone(bool grid = false)
+    std::shared_ptr<BadEuler1DSolver> clone(bool grid = false)
     {
-        auto ret = std::make_shared<EulerSolver>(*this);
+        auto ret = std::make_shared<BadEuler1DSolver>(*this);
         if (grid)
         {
             std::shared_ptr<Grid> new_grid = m_field.clone_grid();
@@ -66,25 +66,25 @@ public:
     }
 
     template <class... Args>
-    static std::shared_ptr<EulerSolver> construct(Args &&... args)
+    static std::shared_ptr<BadEuler1DSolver> construct(Args &&... args)
     {
-        return std::make_shared<EulerSolver>(std::forward<Args>(args)..., ctor_passkey());
+        return std::make_shared<BadEuler1DSolver>(std::forward<Args>(args)..., ctor_passkey());
     }
 
-    EulerSolver(
+    BadEuler1DSolver(
         std::shared_ptr<Grid> const & grid, double time_increment, ctor_passkey const &)
         : m_field(grid, time_increment, NVAR)
     {
     }
 
-    explicit EulerSolver(ctor_passkey const &);
+    explicit BadEuler1DSolver(ctor_passkey const &);
 
-    EulerSolver() = delete;
-    EulerSolver(EulerSolver const &) = default;
-    EulerSolver(EulerSolver &&) = default;
-    EulerSolver & operator=(EulerSolver const &) = default;
-    EulerSolver & operator=(EulerSolver &&) = default;
-    ~EulerSolver() = default;
+    BadEuler1DSolver() = delete;
+    BadEuler1DSolver(BadEuler1DSolver const &) = default;
+    BadEuler1DSolver(BadEuler1DSolver &&) = default;
+    BadEuler1DSolver & operator=(BadEuler1DSolver const &) = default;
+    BadEuler1DSolver & operator=(BadEuler1DSolver &&) = default;
+    ~BadEuler1DSolver() = default;
 
     Field const & field() const { return m_field; }
     Field & field() { return m_field; }
@@ -231,7 +231,7 @@ struct Euler1DKernel
 }; /* end struct Euler1DKernel */
 
 template <size_t ALPHA>
-inline void EulerSolver::march_half_so1_alpha(bool odd_plane)
+inline void BadEuler1DSolver::march_half_so1_alpha(bool odd_plane)
 {
     const int_type start = odd_plane ? -1 : 0;
     const int_type stop = grid().ncelm();
@@ -271,7 +271,7 @@ inline void EulerSolver::march_half_so1_alpha(bool odd_plane)
 }
 
 template <size_t ALPHA>
-inline void EulerSolver::march_half1_alpha()
+inline void BadEuler1DSolver::march_half1_alpha()
 {
     march_half_so0(false);
     treat_boundary_so0();
@@ -281,7 +281,7 @@ inline void EulerSolver::march_half1_alpha()
 }
 
 template <size_t ALPHA>
-inline void EulerSolver::march_half2_alpha()
+inline void BadEuler1DSolver::march_half2_alpha()
 {
     // In the second half step, no treating boundary conditions.
     march_half_so0(true);
@@ -290,7 +290,7 @@ inline void EulerSolver::march_half2_alpha()
 }
 
 template <size_t ALPHA>
-inline void EulerSolver::march_alpha(size_t steps)
+inline void BadEuler1DSolver::march_alpha(size_t steps)
 {
     for (size_t it = 0; it < steps; ++it)
     {

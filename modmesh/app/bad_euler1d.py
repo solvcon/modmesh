@@ -39,7 +39,7 @@ from .. import spacetime as libst
 def load_app():
     view.app.pytext.code = """
 # Need to hold the win object to keep PySide alive.
-win, svr = mm.app.euler1d.run(animate=True, interval=10)
+win, svr = mm.app.bad_euler1d.run(animate=True, interval=10)
 """.lstrip()
 
 
@@ -96,7 +96,7 @@ def run(animate, interval=10):
     cfl = 1
     dx = (grid.xmax - grid.xmin) / grid.ncelm
     dt = dx * cfl
-    svr = libst.EulerSolver(grid=grid, time_increment=dt)
+    svr = libst.BadEuler1DSolver(grid=grid, time_increment=dt)
 
     # Initialize.
     d = (grid.ncelm+1) // 2

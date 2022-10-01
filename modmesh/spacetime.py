@@ -20,7 +20,7 @@ _toload = [
     'Solver',
     'InviscidBurgersSolver',
     'LinearScalarSolver',
-    'EulerSolver',
+    'BadEuler1DSolver',
 ]
 
 
