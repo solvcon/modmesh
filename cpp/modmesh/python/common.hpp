@@ -184,7 +184,7 @@ template <typename T>
 pybind11::array to_ndarray(SimpleArray<T> & sarr)
 {
     namespace py = pybind11;
-    std::vector<size_t> shape(sarr.shape().begin(), sarr.shape().end());
+    std::vector<size_t> const shape(sarr.shape().begin(), sarr.shape().end());
     std::vector<size_t> stride(sarr.stride().begin(), sarr.stride().end());
     for (size_t & v : stride) { v *= sarr.itemsize(); }
     return py::array(
@@ -333,7 +333,7 @@ public:
                     array_reference this_array = f(self);
                     if (this_array.nbytes() != static_cast<size_t>(ndarr.nbytes()))
                     {
-                        std::ostringstream msg;
+                        std::ostringstream msg; // NOLINT(misc-const-correctness) tidy bug
                         msg << ndarr.nbytes() << " bytes of input array differ from "
                             << this_array.nbytes() << " bytes of internal array";
                         throw std::length_error(msg.str());
@@ -366,7 +366,7 @@ public:
                     array_reference this_array = f(self);
                     if (this_array.nbytes() != static_cast<size_t>(ndarr.nbytes()))
                     {
-                        std::ostringstream msg;
+                        std::ostringstream msg; // NOLINT(misc-const-correctness) tidy bug
                         msg << ndarr.nbytes() << " bytes of input array differ from "
                             << this_array.nbytes() << " bytes of internal array";
                         throw std::length_error(msg.str());

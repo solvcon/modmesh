@@ -71,7 +71,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                         {
                             shape.push_back(arr_in.shape(i));
                         }
-                        std::shared_ptr<ConcreteBuffer> buffer = ConcreteBuffer::construct(
+                        std::shared_ptr<ConcreteBuffer> const buffer = ConcreteBuffer::construct(
                             arr_in.nbytes(),
                             arr_in.mutable_data(),
                             std::make_unique<ConcreteBufferNdarrayRemover>(arr_in));
@@ -82,7 +82,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 [](wrapped_type & self)
                 {
                     std::vector<size_t> stride;
-                    for (size_t i : self.stride())
+                    for (size_t const i : self.stride())
                     {
                         stride.push_back(i * sizeof(T));
                     }

@@ -99,7 +99,7 @@ void StaticMesh::build_boundary()
         StaticMeshBC bnd(static_cast<size_t>(nleft));
         auto & bfacn = bnd.facn();
         size_t bfit = 0;
-        size_t ibnd = m_bcs.size();
+        size_t const ibnd = m_bcs.size();
         for (size_t sit = 0; sit < m_nbound; ++sit) // Specified ITerator.
         {
             if (!specified[sit])
@@ -451,7 +451,7 @@ inline void StaticMesh::fill_ghost()
             // weight centroid.
             m_clcnd(icl, 0) = m_clcnd(icl, 1) = 0.0;
             real_type voc = 0.0;
-            size_t nfc = m_clfcs(icl, 0);
+            size_t const nfc = m_clfcs(icl, 0);
             for (size_t ifl = 1; ifl <= nfc; ++ifl)
             {
                 int_type const ifc = m_clfcs(icl, ifl);
