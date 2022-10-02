@@ -12,6 +12,7 @@ if(NOT SKIP_PYTHON_EXECUTABLE)
 endif()
 
 option(BUILD_QT "build with QT" ON)
+message(STATUS "BUILD_QT: ${BUILD_QT}")
 
 option(BUILD_METAL "build with Metal" OFF)
 message(STATUS "BUILD_METAL: ${BUILD_METAL}")

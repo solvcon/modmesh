@@ -593,7 +593,7 @@ void StaticMesh::build_edge()
                 std::swap(nd0, nd1);
             }
             // Add the edge to the container array.
-            etype edge(nd0, nd1);
+            etype const edge(nd0, nd1);
             if (0 == known_edges.count(edge))
             {
                 edges.push_back(edge);
@@ -606,7 +606,7 @@ void StaticMesh::build_edge()
     m_ednds.remake(small_vector<size_t>{edges.size(), 2}, 0);
     for (size_t ied = 0; ied < edges.size(); ++ied)
     {
-        etype edge = edges[ied];
+        etype const edge = edges[ied];
         m_ednds(ied, 0) = edge.first;
         m_ednds(ied, 1) = edge.second;
     }
@@ -690,7 +690,7 @@ void StaticMesh::calc_metric()
                 real_type const dw0 = du1*dv2 - du2*dv1;
                 real_type const dw1 = du2*dv0 - du0*dv2;
                 real_type const dw2 = du0*dv1 - du1*dv0;
-                real_type vob = std::sqrt(dw0*dw0 + dw1*dw1 + dw2*dw2);
+                real_type const vob = std::sqrt(dw0*dw0 + dw1*dw1 + dw2*dw2);
                 m_fccnd(ifc, 0) += crd[0] * vob;
                 m_fccnd(ifc, 1) += crd[1] * vob;
                 m_fccnd(ifc, 2) += crd[2] * vob;
@@ -821,7 +821,7 @@ void StaticMesh::calc_metric()
                     int_type const ifc = m_clfcs(icl, ifl);
                     real_type const du0 = crd[0] - m_fccnd(ifc, 0);
                     real_type const du1 = crd[1] - m_fccnd(ifc, 1);
-                    real_type vob = fabs(du0*m_fcnml(ifc, 0) + du1*m_fcnml(ifc, 1)) * m_fcara(ifc);
+                    real_type const vob = fabs(du0*m_fcnml(ifc, 0) + du1*m_fcnml(ifc, 1)) * m_fcara(ifc);
                     voc += vob;
                     real_type const dv0 = m_fccnd(ifc, 0) + du0/3;
                     real_type const dv1 = m_fccnd(ifc, 1) + du1/3;

@@ -710,7 +710,7 @@ public:
         auto ret = std::make_shared<ST>(*reinterpret_cast<ST *>(this));
         if (grid)
         {
-            std::shared_ptr<Grid> new_grid = m_field.clone_grid();
+            std::shared_ptr<Grid> const new_grid = m_field.clone_grid();
             ret->m_field.set_grid(new_grid);
         }
         return ret;

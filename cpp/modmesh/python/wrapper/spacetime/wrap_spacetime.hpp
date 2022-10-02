@@ -299,7 +299,7 @@ protected:
         namespace py = pybind11;
 
         using elm_iter_type = SolverElementIterator<wrapped_type>;
-        std::string elm_pyname = std::string(pyname) + "ElementIterator";
+        std::string const elm_pyname = std::string(pyname) + "ElementIterator";
         pybind11::class_<elm_iter_type>(*mod, elm_pyname.c_str())
             .def("__str__", &detail::to_str<elm_iter_type>)
             .def("__iter__", [](elm_iter_type & self)

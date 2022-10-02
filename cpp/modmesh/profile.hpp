@@ -171,7 +171,7 @@ public:
         std::vector<std::string> ret;
         for (auto const & item : m_entry)
         {
-            ret.push_back(item.first);
+            ret.push_back(item.first); // NOLINT(performance-inefficient-vector-operation)
         }
         return ret;
     }

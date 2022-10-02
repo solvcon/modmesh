@@ -1,0 +1,162 @@
+name: nouse_install
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '34 17 * * *'
+
+jobs:
+
+  nouse_install_ubuntu:
+
+    if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
+
+    name: nouse_install_${{ matrix.os }}_Release
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      JOB_CMAKE_ARGS: -DBUILD_QT=OFF -DUSE_CLANG_TIDY=OFF -DCMAKE_BUILD_TYPE=Release
+
+    strategy:
+        matrix:
+          os: [ubuntu-20.04, ubuntu-22.04]
+
+        fail-fast: false
+
+    steps:
+
+    - uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+
+    - name: event name
+      run: |
+        echo "github.event_name: ${{ github.event_name }}"
+
+    - name: dependency by apt
+      run: |
+        sudo apt-get -qqy update
+        sudo apt-get -qy install \
+            sudo curl git build-essential make cmake libc6-dev gcc g++ \
+            python3 python3-dev python3-venv
+
+    - name: dependency by pip
+      run: |
+        sudo pip3 install setuptools
+        sudo pip3 install numpy pytest flake8
+
+    - name: dependency by manual script
+      run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
+
+    - name: show dependency
+      # Copy the commands from contrib/dependency/showdep.sh
+      run: |
+        echo "gcc path: $(which gcc)"
+        echo "gcc version: $(gcc --version)"
+        echo "cmake path: $(which cmake)"
+        echo "cmake version: $(cmake --version)"
+        echo "python3 path: $(which python3)"
+        echo "python3 version: $(python3 --version)"
+        echo "pip3 path: $(which pip3)"
+        python3 -c 'import numpy ; print("numpy.__version__:", numpy.__version__)'
+        echo "pytest path: $(which pytest)"
+        echo "pytest version: $(pytest --version)"
+        echo "clang-tidy path: $(which clang-tidy)"
+        echo "clang-tidy version: $(clang-tidy -version)"
+        echo "flake8 path: $(which flake8)"
+        echo "flake8 version: $(flake8 --version)"
+
+    - name: setup.py install build_ext
+      run: |
+        sudo python3 setup.py install build_ext \
+          --cmake-args="${JOB_CMAKE_ARGS} -DPYTHON_EXECUTABLE=$(which python3)" \
+          --make-args="VERBOSE=1"
+
+    - name: pytest
+      run: |
+        rm -rf tmp/
+        mkdir -p tmp/
+        cp -a tests tmp/
+        cd tmp/
+        python3 -c 'import os; print(os.getcwd())'
+        python3 -c "import modmesh; print(modmesh._modmesh.__file__)"
+        pytest -v
+        cd ..
+
+  nouse_install_macos:
+
+    if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
+
+    name: nouse_install_${{ matrix.os }}_Release
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      JOB_CMAKE_ARGS: -DBUILD_QT=OFF -DUSE_CLANG_TIDY=OFF -DCMAKE_BUILD_TYPE=Release
+
+    strategy:
+      matrix:
+        os: [macos-11, macos-12]
+
+      fail-fast: false
+
+    steps:
+
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+
+      - name: event name
+        run: |
+          echo "github.event_name: ${{ github.event_name }}"
+
+      - name: dependency by homebrew
+        run: |
+          # brew update  # No update because it is slow
+          brew install python3
+
+      - name: dependency by homebrew
+        run: |
+          echo "which pip3: $(which pip3)"
+          pip3 install -U setuptools
+          pip3 install -U numpy pytest flake8
+
+      - name: dependency by manual script
+        run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
+
+      - name: show dependency
+        # Copy the commands from contrib/dependency/showdep.sh
+        run: |
+          echo "gcc path: $(which gcc)"
+          echo "gcc version: $(gcc --version)"
+          echo "cmake path: $(which cmake)"
+          echo "cmake version: $(cmake --version)"
+          echo "python3 path: $(which python3)"
+          echo "python3 version: $(python3 --version)"
+          echo "pip3 path: $(which pip3)"
+          python3 -c 'import numpy ; print("numpy.__version__:", numpy.__version__)'
+          echo "pytest path: $(which pytest)"
+          echo "pytest version: $(pytest --version)"
+          echo "clang-tidy path: $(which clang-tidy)"
+          echo "clang-tidy version: $(clang-tidy -version)"
+          echo "flake8 path: $(which flake8)"
+          echo "flake8 version: $(flake8 --version)"
+
+      - name: setup.py install build_ext
+        run: |
+          python3 setup.py install build_ext \
+            --cmake-args="${JOB_CMAKE_ARGS} -DPYTHON_EXECUTABLE=$(which python3)" \
+            --make-args="VERBOSE=1"
+
+      - name: pytest
+        run: |
+          rm -rf tmp/
+          mkdir -p tmp/
+          cp -a tests tmp/
+          cd tmp/
+          python3 -c 'import os; print(os.getcwd())'
+          python3 -c "import modmesh; print(modmesh._modmesh.__file__)"
+          pytest -v
+          cd ..

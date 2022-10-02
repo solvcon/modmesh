@@ -1,8 +1,6 @@
 #!/bin/bash
 #
 # Copyright (C) 2018 Yung-Yu Chen <yyc@solvcon.net>.
-#
-# Build and install xtensor-python.
 
 if [ "$(uname)" == "Darwin" ] ; then
 INSTALL_PREFIX=${INSTALL_PREFIX:-/usr/local}
