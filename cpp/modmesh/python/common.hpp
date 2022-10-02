@@ -180,11 +180,12 @@ ConcreteBufferNdarrayRemover : ConcreteBuffer::remover_type
 
 }; /* end struct ConcreteBufferNdarrayRemover */
 
-template <typename T>
-pybind11::array to_ndarray(SimpleArray<T> & sarr)
+template <typename S>
+std::enable_if_t<is_simple_array_v<S>, pybind11::array> to_ndarray(S && sarr)
 {
     namespace py = pybind11;
-    std::vector<size_t> const shape(sarr.shape().begin(), sarr.shape().end());
+    using T = typename std::remove_reference_t<S>::value_type;
+    std::vector<size_t> shape(sarr.shape().begin(), sarr.shape().end());
     std::vector<size_t> stride(sarr.stride().begin(), sarr.stride().end());
     for (size_t & v : stride) { v *= sarr.itemsize(); }
     return py::array(
@@ -208,7 +209,7 @@ static SimpleArray<T> makeSimpleArray(pybind11::array_t<T> & ndarr)
     {
         shape.push_back(ndarr.shape(i));
     }
-    std::shared_ptr<ConcreteBuffer> const buffer = ConcreteBuffer::construct(
+    std::shared_ptr<ConcreteBuffer> buffer = ConcreteBuffer::construct(
         ndarr.nbytes(), ndarr.mutable_data(), std::make_unique<ConcreteBufferNdarrayRemover>(ndarr));
     return SimpleArray<T>(shape, buffer);
 }
@@ -333,7 +334,7 @@ public:
                     array_reference this_array = f(self);
                     if (this_array.nbytes() != static_cast<size_t>(ndarr.nbytes()))
                     {
-                        std::ostringstream msg; // NOLINT(misc-const-correctness) tidy bug
+                        std::ostringstream msg;
                         msg << ndarr.nbytes() << " bytes of input array differ from "
                             << this_array.nbytes() << " bytes of internal array";
                         throw std::length_error(msg.str());
@@ -366,7 +367,7 @@ public:
                     array_reference this_array = f(self);
                     if (this_array.nbytes() != static_cast<size_t>(ndarr.nbytes()))
                     {
-                        std::ostringstream msg; // NOLINT(misc-const-correctness) tidy bug
+                        std::ostringstream msg;
                         msg << ndarr.nbytes() << " bytes of input array differ from "
                             << this_array.nbytes() << " bytes of internal array";
                         throw std::length_error(msg.str());

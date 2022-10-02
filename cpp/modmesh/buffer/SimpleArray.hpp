@@ -546,6 +546,14 @@ private:
 
 }; /* end class SimpleArray */
 
+template <typename S>
+using is_simple_array = std::is_same<
+    std::remove_reference_t<S>,
+    SimpleArray<typename std::remove_reference_t<S>::value_type>>;
+
+template <typename S>
+inline constexpr bool is_simple_array_v = is_simple_array<S>::value;
+
 } /* end namespace modmesh */
 
 /* vim: set et ts=4 sw=4: */

@@ -37,6 +37,7 @@
 #include <modmesh/spacetime/spacetime.hpp>
 
 #include <modmesh/modmesh.hpp>
+#include <modmesh/python/common.hpp>
 
 #include <functional>
 #include <list>
@@ -91,21 +92,25 @@ protected:
             .def_property_readonly("on_even_plane", &wrapped_type::on_even_plane)
             .def_property_readonly("on_odd_plane", &wrapped_type::on_odd_plane)
             .def_property_readonly("grid", &wrapped_type::grid)
-            .def_property_readonly(
-                "field", static_cast<Field & (wrapped_type::*)()>(&wrapped_type::field))
+            .def_property_readonly("field", static_cast<Field & (wrapped_type::*)()>(&wrapped_type::field))
             .def_property_readonly("time_increment", &wrapped_type::time_increment)
             .def_property_readonly("dt", &wrapped_type::dt)
             .def_property_readonly("hdt", &wrapped_type::hdt)
             .def_property_readonly("qdt", &wrapped_type::qdt)
-            .def("move", [](wrapped_type & s, size_t v)
+            .def("move",
+                 [](wrapped_type & s, size_t v)
                  { s.move_at(v); return s; })
-            .def("move_left", [](wrapped_type & s)
+            .def("move_left",
+                 [](wrapped_type & s)
                  { s.move_left_at(); return s; })
-            .def("move_right", [](wrapped_type & s)
+            .def("move_right",
+                 [](wrapped_type & s)
                  { s.move_right_at(); return s; })
-            .def("move_neg", [](wrapped_type & s)
+            .def("move_neg",
+                 [](wrapped_type & s)
                  { s.move_neg_at(); return s; })
-            .def("move_pos", [](wrapped_type & s)
+            .def("move_pos",
+                 [](wrapped_type & s)
                  { s.move_pos_at(); return s; });
     }
 
@@ -127,6 +132,14 @@ protected:
     {
         using se_getter_type = typename wrapped_type::selm_type (wrapped_type::*)();
         using calc_so_type = typename wrapped_type::value_type (wrapped_type::*)(size_t) const;
+
+        (*this)
+            .def_property_readonly("selm_xn", static_cast<se_getter_type>(&wrapped_type::selm_xn))
+            .def_property_readonly("selm_xp", static_cast<se_getter_type>(&wrapped_type::selm_xp))
+            .def_property_readonly("selm_tn", static_cast<se_getter_type>(&wrapped_type::selm_tn))
+            .def_property_readonly("selm_tp", static_cast<se_getter_type>(&wrapped_type::selm_tp))
+            .def("calc_so0", static_cast<calc_so_type>(&wrapped_type::calc_so0));
+
 #define DECL_ST_WRAP_CALC_SO1_ALPHA(ALPHA)                  \
     .def(                                                   \
         "calc_so1_alpha" #ALPHA,                            \
@@ -136,11 +149,6 @@ protected:
         })
 
         (*this)
-            .def_property_readonly("selm_xn", static_cast<se_getter_type>(&wrapped_type::selm_xn))
-            .def_property_readonly("selm_xp", static_cast<se_getter_type>(&wrapped_type::selm_xp))
-            .def_property_readonly("selm_tn", static_cast<se_getter_type>(&wrapped_type::selm_tn))
-            .def_property_readonly("selm_tp", static_cast<se_getter_type>(&wrapped_type::selm_tp))
-            .def("calc_so0", static_cast<calc_so_type>(&wrapped_type::calc_so0))
             // clang-format off
             DECL_ST_WRAP_CALC_SO1_ALPHA(0)
             DECL_ST_WRAP_CALC_SO1_ALPHA(1)

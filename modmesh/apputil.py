@@ -40,11 +40,12 @@ __all__ = [
     'environ',
     'AppEnvironment',
     'run_code',
+    'stop_code',
 ]
 
 
 # All environment objects of this process.
-environ = []
+environ = {}
 
 
 class AppEnvironment:
@@ -54,20 +55,55 @@ class AppEnvironment:
     :ivar locals:
         The local namespace of the application.
     """
-    def __init__(self):
+    def __init__(self, name):
+        self.globals = {}
         self.locals = {
             # Give the application an alias of the top package.
             'mm': importlib.import_module('modmesh'),
+            'appenv': self,
         }
+        self.name = name
         # Each run of the application appends a new environment.
-        environ.append(self)
+        environ[name] = self
 
     def run_code(self, code):
-        exec(code, globals(), self.locals)
+        exec(code, self.globals, self.locals)
+
+
+def get_appenv(name=None):
+    if None is name:
+        i = 0
+        name = 'anonymous%d' % i
+        while name in environ:
+            i += 1
+            name = 'anonymous%d' % i
+    app = environ.get(name, None)
+    if None is app:
+        app = AppEnvironment(name)
+    return app
+
+
+get_appenv(name='master')
 
 
 def run_code(code):
-    aenv = AppEnvironment()
+    has_key = False
+    for k in reversed(environ):
+        has_key = True
+        break
+    if not has_key:
+        raise KeyError("No AppEnviron is available")
+    aenv = environ[k]
     aenv.run_code(code)
+
+
+def stop_code(appenvobj=None):
+    if None is appenvobj:
+        environ.clear()
+    else:
+        indices = [i for i, o in enumerate(environ) if o == appenvobj]
+        indices = reversed(indices)
+        for i in indices:
+            del environ[i]
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
