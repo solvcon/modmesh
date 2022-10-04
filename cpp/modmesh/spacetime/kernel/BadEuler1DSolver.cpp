@@ -54,7 +54,7 @@ void BadEuler1DSolver::update_cfl(bool odd_plane)
         // CFL.
         const double dxpos = se.xpos() - se.x();
         const double dxneg = se.x() - se.xneg();
-        double cfl = m_field.hdt() * wspd / (dxpos < dxneg ? dxpos : dxneg);
+        const double cfl = m_field.hdt() * wspd / (dxpos < dxneg ? dxpos : dxneg);
         // Set back.
         se.cfl() = cfl;
     }
