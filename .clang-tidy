@@ -31,7 +31,8 @@ Checks: >
     -readability-named-parameter,
     -readability-magic-numbers,
     -readability-redundant-access-specifiers,
-    -misc-non-private-member-variables-in-classes
+    -misc-non-private-member-variables-in-classes,
+    -misc-confusable-identifiers
 WarningsAsErrors: ''
 HeaderFilterRegex: 'modmesh.*'
 AnalyzeTemporaryDtors: false

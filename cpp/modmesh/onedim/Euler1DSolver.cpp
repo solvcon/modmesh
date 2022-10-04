@@ -103,7 +103,7 @@ void Euler1DSolver::update_cfl(bool odd_plane)
         // CFL.
         const double dxpos = m_coord(it + 1) - m_coord(it);
         const double dxneg = m_coord(it) - m_coord(it - 1);
-        double cfl = hdt * wspd / (dxpos < dxneg ? dxpos : dxneg);
+        const double cfl = hdt * wspd / (dxpos < dxneg ? dxpos : dxneg);
         // Set back.
         m_cfl(it) = cfl;
     }
