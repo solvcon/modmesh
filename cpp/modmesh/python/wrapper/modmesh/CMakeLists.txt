@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.16)
 
 set(MODMESH_PYMOD_MODMESH_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/modmesh.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TypeBroadcast.hpp
     CACHE FILEPATH "" FORCE
 )
 
