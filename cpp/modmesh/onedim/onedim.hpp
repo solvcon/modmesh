@@ -9,6 +9,6 @@
  * One-dimensional space-time CESE solver.
  */
 
-#include <modmesh/onedim/Euler1DSolver.hpp>
+#include <modmesh/onedim/Euler1DCore.hpp>
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

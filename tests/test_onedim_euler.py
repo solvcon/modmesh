@@ -12,31 +12,26 @@ class Euler1DSolverTC(unittest.TestCase):
 
     @staticmethod
     def _build_solver(resolution):
-        # Build grid.
-        xcrd = np.arange(resolution + 1, dtype='float64') / resolution
-        xcrd *= 2 * np.pi
-        dx = xcrd[2] - xcrd[0]
-
-        # Build solver.
         time_stop = 2 * np.pi
         cfl_max = 1.0
+        xmin = 0.0
+        xmax = 2 * np.pi
+        dx = xmax / resolution * 2
         dt_max = dx * cfl_max
         nstep = int(np.ceil(time_stop / dt_max))
         dt = time_stop / nstep
-        svr = onedim.Euler1DSolver(ncoord=resolution + 1, time_increment=dt)
-        svr.coord[...] = xcrd
 
-        # Initialize.
-        svr.cfl.fill(0)
-        svr.so0.fill(0)
-        svr.so1.fill(0)
+        svr = onedim.Euler1DSolver(
+            xmin=xmin, xmax=xmax, ncoord=resolution + 1,
+            time_increment=dt)
         svr.setup_march()
 
-        return nstep, xcrd, svr
+        return nstep, svr
 
     def setUp(self):
         self.resolution = 8
-        self.nstep, self.xcrd, self.svr = self._build_solver(self.resolution)
+        self.nstep, self.svr = self._build_solver(self.resolution)
+        self.xcrd = self.svr.coord.copy()
         self.cycle = 10
 
     def test_coord(self):

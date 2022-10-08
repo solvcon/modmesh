@@ -40,8 +40,8 @@ namespace modmesh
 namespace onedim
 {
 
-class Euler1DSolver
-    : public std::enable_shared_from_this<Euler1DSolver>
+class Euler1DCore
+    : public std::enable_shared_from_this<Euler1DCore>
 {
 
 public:
@@ -58,33 +58,33 @@ private:
 
 public:
 
-    std::shared_ptr<Euler1DSolver> clone()
+    std::shared_ptr<Euler1DCore> clone()
     {
-        auto ret = std::make_shared<Euler1DSolver>(*this);
+        auto ret = std::make_shared<Euler1DCore>(*this);
         return ret;
     }
 
     template <class... Args>
-    static std::shared_ptr<Euler1DSolver> construct(Args &&... args)
+    static std::shared_ptr<Euler1DCore> construct(Args &&... args)
     {
-        return std::make_shared<Euler1DSolver>(std::forward<Args>(args)..., ctor_passkey());
+        return std::make_shared<Euler1DCore>(std::forward<Args>(args)..., ctor_passkey());
     }
 
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    Euler1DSolver(size_t ncoord, double time_increment, ctor_passkey const &)
+    Euler1DCore(size_t ncoord, double time_increment, ctor_passkey const &)
         : m_time_increment(time_increment)
     {
         initialize_data(ncoord);
     }
 
-    explicit Euler1DSolver(ctor_passkey const &);
+    explicit Euler1DCore(ctor_passkey const &);
 
-    Euler1DSolver() = delete;
-    Euler1DSolver(Euler1DSolver const &) = default;
-    Euler1DSolver(Euler1DSolver &&) = default;
-    Euler1DSolver & operator=(Euler1DSolver const &) = default;
-    Euler1DSolver & operator=(Euler1DSolver &&) = default;
-    ~Euler1DSolver() = default;
+    Euler1DCore() = delete;
+    Euler1DCore(Euler1DCore const &) = default;
+    Euler1DCore(Euler1DCore &&) = default;
+    Euler1DCore & operator=(Euler1DCore const &) = default;
+    Euler1DCore & operator=(Euler1DCore &&) = default;
+    ~Euler1DCore() = default;
 
     void initialize_data(size_t ncoord);
 
@@ -136,11 +136,11 @@ private:
     SimpleArray<double> m_so0;
     SimpleArray<double> m_so1;
     SimpleArray<double> m_gamma;
-}; /* end class Euler1DSolver */
+}; /* end class Euler1DCore */
 
-std::ostream & operator<<(std::ostream & os, const Euler1DSolver & sol);
+std::ostream & operator<<(std::ostream & os, const Euler1DCore & sol);
 
-inline double Euler1DSolver::pressure(size_t it) const
+inline double Euler1DCore::pressure(size_t it) const
 {
     double ret = m_so0(it, 1);
     ret *= ret;
@@ -253,7 +253,7 @@ struct Euler1DKernel
 }; /* end struct Euler1DKernel */
 
 template <size_t ALPHA>
-inline void Euler1DSolver::march_half_so1_alpha(bool odd_plane)
+inline void Euler1DCore::march_half_so1_alpha(bool odd_plane)
 {
     const int_type start = BOUND_COUNT - (odd_plane ? 1 : 0);
     const int_type stop = ncoord() - BOUND_COUNT - (odd_plane ? 0 : 1);
@@ -289,7 +289,7 @@ inline void Euler1DSolver::march_half_so1_alpha(bool odd_plane)
 }
 
 template <size_t ALPHA>
-inline void Euler1DSolver::march_half1_alpha()
+inline void Euler1DCore::march_half1_alpha()
 {
     march_half_so0(/*odd_plane*/ false);
     update_cfl(/*odd_plane*/ false);
@@ -297,7 +297,7 @@ inline void Euler1DSolver::march_half1_alpha()
 }
 
 template <size_t ALPHA>
-inline void Euler1DSolver::march_half2_alpha()
+inline void Euler1DCore::march_half2_alpha()
 {
     // In the second half step, no treating boundary conditions.
     march_half_so0(/*odd_plane*/ true);
@@ -306,7 +306,7 @@ inline void Euler1DSolver::march_half2_alpha()
 }
 
 template <size_t ALPHA>
-inline void Euler1DSolver::march_alpha(size_t steps)
+inline void Euler1DCore::march_alpha(size_t steps)
 {
     for (size_t it = 0; it < steps; ++it)
     {
