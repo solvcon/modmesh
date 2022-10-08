@@ -6,9 +6,8 @@
 One-dimensional space-time CESE method implementation.
 """
 
-
 from ._euler1d import Euler1DSolver
-
+from . import draw  # noqa: F401
 
 __all__ = [
     'Euler1DSolver',
