@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/onedim/Euler1DSolver.hpp>
+#include <modmesh/onedim/Euler1DCore.hpp>
 #include <cmath>
 
 namespace modmesh
@@ -35,13 +35,13 @@ namespace modmesh
 namespace onedim
 {
 
-std::ostream & operator<<(std::ostream & os, const Euler1DSolver & sol)
+std::ostream & operator<<(std::ostream & os, const Euler1DCore & sol)
 {
-    os << "Euler1DSolver(ncoord=" << sol.ncoord() << ", time_increment=" << sol.time_increment() << ")";
+    os << "Euler1DCore(ncoord=" << sol.ncoord() << ", time_increment=" << sol.time_increment() << ")";
     return os;
 }
 
-void Euler1DSolver::initialize_data(size_t ncoord)
+void Euler1DCore::initialize_data(size_t ncoord)
 {
     if (0 == ncoord % 2)
     {
@@ -54,7 +54,7 @@ void Euler1DSolver::initialize_data(size_t ncoord)
     m_gamma = SimpleArray<double>(/*shape*/ small_vector<size_t>{ncoord}, /*value*/ 1.4);
 }
 
-SimpleArray<double> Euler1DSolver::density() const
+SimpleArray<double> Euler1DCore::density() const
 {
     SimpleArray<double> ret(ncoord());
     for (size_t it = 0; it < ncoord(); ++it)
@@ -64,7 +64,7 @@ SimpleArray<double> Euler1DSolver::density() const
     return ret;
 }
 
-SimpleArray<double> Euler1DSolver::velocity() const
+SimpleArray<double> Euler1DCore::velocity() const
 {
     SimpleArray<double> ret(ncoord());
     for (size_t it = 0; it < ncoord(); ++it)
@@ -74,7 +74,7 @@ SimpleArray<double> Euler1DSolver::velocity() const
     return ret;
 }
 
-SimpleArray<double> Euler1DSolver::pressure() const
+SimpleArray<double> Euler1DCore::pressure() const
 {
     SimpleArray<double> ret(ncoord());
     for (size_t it = 0; it < ncoord(); ++it)
@@ -84,7 +84,7 @@ SimpleArray<double> Euler1DSolver::pressure() const
     return ret;
 }
 
-void Euler1DSolver::update_cfl(bool odd_plane)
+void Euler1DCore::update_cfl(bool odd_plane)
 {
     const int_type start = BOUND_COUNT - (odd_plane ? 1 : 0);
     const int_type stop = ncoord() - BOUND_COUNT - (odd_plane ? 0 : 1);
@@ -109,7 +109,7 @@ void Euler1DSolver::update_cfl(bool odd_plane)
     }
 }
 
-void Euler1DSolver::march_half_so0(bool odd_plane)
+void Euler1DCore::march_half_so0(bool odd_plane)
 {
     const int_type start = BOUND_COUNT - (odd_plane ? 1 : 0);
     const int_type stop = ncoord() - BOUND_COUNT - (odd_plane ? 0 : 1);
@@ -144,7 +144,7 @@ void Euler1DSolver::march_half_so0(bool odd_plane)
     }
 }
 
-void Euler1DSolver::treat_boundary_so0()
+void Euler1DCore::treat_boundary_so0()
 {
     // Set outside value from inside value.
     {
@@ -163,7 +163,7 @@ void Euler1DSolver::treat_boundary_so0()
     }
 }
 
-void Euler1DSolver::treat_boundary_so1()
+void Euler1DCore::treat_boundary_so1()
 {
     // Set outside value from inside value.
     {

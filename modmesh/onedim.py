@@ -45,11 +45,10 @@ class Euler1DSolver:
     @staticmethod
     def init_solver(xmin, xmax, ncoord, time_increment):
         # Create the solver object.
-        svr = _impl.Euler1DSolver(ncoord=ncoord, time_increment=time_increment)
+        svr = _impl.Euler1DCore(ncoord=ncoord, time_increment=time_increment)
 
         # Initialize spatial grid.
         svr.coord[...] = np.linspace(xmin, xmax, num=ncoord)
-        dx = svr.coord[2] - svr.coord[0]
 
         # Initialize field.
         svr.cfl.fill(0)

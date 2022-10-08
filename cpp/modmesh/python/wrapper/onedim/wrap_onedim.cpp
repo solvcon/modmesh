@@ -38,13 +38,13 @@ namespace python
 
 using namespace modmesh::onedim; // NOLINT(google-build-using-namespace)
 
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapEuler1DSolver
-    : public WrapBase<WrapEuler1DSolver, Euler1DSolver, std::shared_ptr<Euler1DSolver>>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapEuler1DCore
+    : public WrapBase<WrapEuler1DCore, Euler1DCore, std::shared_ptr<Euler1DCore>>
 {
 
 public:
 
-    using base_type = WrapBase<WrapEuler1DSolver, Euler1DSolver, std::shared_ptr<Euler1DSolver>>;
+    using base_type = WrapBase<WrapEuler1DCore, Euler1DCore, std::shared_ptr<Euler1DCore>>;
     using wrapper_type = typename base_type::wrapper_type;
     using wrapped_type = typename base_type::wrapped_type;
 
@@ -52,7 +52,7 @@ public:
 
 protected:
 
-    WrapEuler1DSolver(pybind11::module & mod, const char * pyname, const char * clsdoc)
+    WrapEuler1DCore(pybind11::module & mod, const char * pyname, const char * clsdoc)
         : base_type(mod, pyname, clsdoc)
     {
 
@@ -162,13 +162,13 @@ protected:
         return *this;
     }
 
-}; /* end class WrapEuler1DSolver */
+}; /* end class WrapEuler1DCore */
 
 void wrap_onedim(pybind11::module & mod)
 {
     mod.doc() = "One-dimensional space-time CESE method code";
 
-    WrapEuler1DSolver::commit(mod, "Euler1DSolver", "Solve the Euler equation");
+    WrapEuler1DCore::commit(mod, "Euler1DCore", "Solve the Euler equation");
 }
 
 } /* end namespace python */
