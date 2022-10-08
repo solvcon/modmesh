@@ -82,7 +82,7 @@ jobs:
         cd tmp/
         python3 -c 'import os; print(os.getcwd())'
         python3 -c "import modmesh; print(modmesh._modmesh.__file__)"
-        pytest -v
+        pytest --rootdir=/tmp -v
         cd ..
 
   nouse_install_macos:
@@ -158,5 +158,5 @@ jobs:
           cd tmp/
           python3 -c 'import os; print(os.getcwd())'
           python3 -c "import modmesh; print(modmesh._modmesh.__file__)"
-          pytest -v
+          pytest --rootdir=/tmp -v
           cd ..
