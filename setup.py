@@ -16,7 +16,6 @@ class CMakeExtension(Extension):
 
 
 class cmake_build_ext(build_ext):
-
     user_options = build_ext.user_options + [
         ('cmake-args=', None, 'arguments to cmake'),
         ('make-args=', None, 'arguments to make'),
@@ -62,12 +61,12 @@ class cmake_build_ext(build_ext):
 
 
 def main():
-
     setup(
         name="modmesh",
         version="0.0",
         packages=[
             'modmesh',
+            'modmesh.onedim',
         ],
         ext_modules=[CMakeExtension("modmesh._modmesh")],
         cmdclass={'build_ext': cmake_build_ext},

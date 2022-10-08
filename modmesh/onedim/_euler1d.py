@@ -3,7 +3,7 @@
 
 
 """
-One-dimensional space-time CESE method implementation.
+One-dimensional Solver for the Euler Equations
 """
 
 import numpy as np
@@ -11,24 +11,12 @@ import numpy as np
 try:
     from _modmesh import onedim as _impl  # noqa: F401
 except ImportError:
-    from ._modmesh import onedim as _impl  # noqa: F401
-
-_toload = [
-]
+    from .._modmesh import onedim as _impl  # noqa: F401
 
 
-def _load():
-    for name in _toload:  # noqa: F821
-        globals()[name] = getattr(_impl, name)
-
-
-__all__ = _toload + [
+__all__ = [
     'Euler1DSolver',
 ]
-
-_load()
-del _load
-del _toload
 
 
 class Euler1DSolver:
