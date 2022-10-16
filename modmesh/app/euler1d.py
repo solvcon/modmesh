@@ -95,6 +95,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         """
         svr = self.svr
         x = svr.coord[::2]
+        self.ax.grid()
         self.line_density, = self.ax.plot(x, svr.density[::2], 'r+')
         self.line_velocity, = self.ax.plot(x, svr.velocity[::2], 'g+')
         self.line_pressure, = self.ax.plot(x, svr.pressure[::2], 'b+')
