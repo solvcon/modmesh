@@ -6,11 +6,11 @@
 One-dimensional space-time CESE method implementation.
 """
 
-from ._euler1d import Euler1DSolver
+from . import euler1d
 from . import draw  # noqa: F401
 
 __all__ = [
-    'Euler1DSolver',
+    'euler1d',
 ]
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
