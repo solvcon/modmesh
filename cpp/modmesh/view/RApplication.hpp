@@ -45,14 +45,22 @@ class RApplication
 
 public:
 
-    RApplication(int & argc, char ** argv);
     ~RApplication();
+
+    RApplication & setup();
 
     RMainWindow * main() { return m_main; }
 
-    static RApplication * instance() { return dynamic_cast<RApplication *>(QApplication::instance()); }
+    static RApplication * initialize(int argc, char ** argv);
+    static RApplication * instance();
 
 private:
+
+    RApplication(int & argc, char ** argv)
+        : QApplication(argc, argv)
+        , m_main(new RMainWindow)
+    {
+    }
 
     RMainWindow * m_main = nullptr;
 

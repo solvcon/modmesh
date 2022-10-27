@@ -99,6 +99,13 @@ jobs:
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
 
+    - name: make run_viewer_pytest
+      run: |
+        make run_viewer_pytest \
+          ${JOB_MAKE_ARGS} \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+
   build_macos:
 
     if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
@@ -187,6 +194,13 @@ jobs:
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
             CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
 
+      - name: make run_viewer_pytest
+        run: |
+          make run_viewer_pytest \
+            ${JOB_MAKE_ARGS} \
+            CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+
   build_windows:
 
     if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
@@ -249,4 +263,12 @@ jobs:
             -Dpybind11_DIR="$(pybind11-config --cmakedir)" `
             -S${{ github.workspace }} `
             -B${{ github.workspace }}/build
-          cmake --build ${{ github.workspace }}/build --config ${{ matrix.cmake_build_type }} --target ALL_BUILD
+          cmake --build ${{ github.workspace }}/build `
+            --config ${{ matrix.cmake_build_type }} `
+            --target ALL_BUILD
+
+      - name: cmake run_viewer_pytest
+        run: |
+          cmake --build ${{ github.workspace }}/build `
+            --config ${{ matrix.cmake_build_type }} `
+            --target run_viewer_pytest

@@ -37,9 +37,30 @@
 namespace modmesh
 {
 
-RApplication::RApplication(int & argc, char ** argv)
-    : QApplication(argc, argv)
-    , m_main(new RMainWindow)
+RApplication * RApplication::initialize(int argc, char ** argv)
+{
+    RApplication * ret = dynamic_cast<RApplication *>(QApplication::instance());
+    if (nullptr == ret)
+    {
+        ret = new RApplication(argc, argv);
+    }
+    return ret;
+}
+
+RApplication * RApplication::instance()
+{
+    RApplication * ret = dynamic_cast<RApplication *>(QApplication::instance());
+    static int argc = 1;
+    static char exename[] = "viewer";
+    static char * argv[] = {exename};
+    if (nullptr == ret)
+    {
+        ret = initialize(argc, argv);
+    }
+    return ret;
+}
+
+RApplication & RApplication::setup()
 {
     /* TODO: parse arguments */
 
@@ -165,7 +186,10 @@ RApplication::RApplication(int & argc, char ** argv)
     m_main->setWindowIcon(QIcon(m_iconFilePath));
 
     // Show main window.
+    m_main->resize(1000, 600);
     m_main->show();
+
+    return *this;
 }
 
 RApplication::~RApplication()

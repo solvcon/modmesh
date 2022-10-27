@@ -37,7 +37,7 @@ from .. import spacetime as libst
 
 
 def load_app():
-    view.app.pytext.code = """
+    view.app().pytext.code = """
 # Need to hold the win object to keep PySide alive.
 win, svr = mm.app.bad_euler1d.run(animate=True, interval=10)
 """.lstrip()

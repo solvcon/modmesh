@@ -35,11 +35,11 @@ from .. import view
 
 
 def load_app():
-    view.app.pytext.code = """import modmesh as mm
+    view.app().pytext.code = """import modmesh as mm
 
-#mm.view.app.viewer.up_vector = (0, 1, 0)
-#mm.view.app.viewer.position = (-10, -10, -20)
-#mm.view.app.viewer.view_center = (0, 0, 0)
+#mm.view.app().viewer.up_vector = (0, 1, 0)
+#mm.view.app().viewer.position = (-10, -10, -20)
+#mm.view.app().viewer.view_center = (0, 0, 0)
 
 mh = mm.app.sample_mesh.make_triangle()
 #mh = mm.app.sample_mesh.make_tetrahedron()
@@ -47,9 +47,9 @@ mm.view.show_mark()
 mm.view.show(mh)
 
 print("nedge:", mh.nedge)
-print("position:", mm.view.app.viewer.position)
-print("up_vector:", mm.view.app.viewer.up_vector)
-print("view_center:", mm.view.app.viewer.view_center)
+print("position:", mm.view.app().viewer.position)
+print("up_vector:", mm.view.app().viewer.up_vector)
+print("view_center:", mm.view.app().viewer.view_center)
 
 # line = mm.view.RLine(-1, -1, -1, -2, -2, -2, 0, 128, 128)
 # print(line)

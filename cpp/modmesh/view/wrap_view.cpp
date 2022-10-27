@@ -160,6 +160,13 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
                 {
                     return self.main()->pytext();
                 })
+            .def("setup", &RApplication::setup)
+            .def(
+                "exec",
+                [](wrapped_type & self)
+                {
+                    return self.exec();
+                })
             //
             ;
     }
@@ -225,10 +232,15 @@ void wrap_view(pybind11::module & mod)
                 viewer->grabPixmap().save(filename.c_str());
             },
             py::arg("filename"))
+        .def(
+            "app",
+            []()
+            {
+                return RApplication::instance();
+            },
+            py::return_value_policy::reference)
         //
         ;
-
-    mod.attr("app") = py::cast(RApplication::instance());
 
     if (Toggle::instance().get_show_axis())
     {

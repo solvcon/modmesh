@@ -471,10 +471,12 @@ public:
     void preload_module(std::string const & name);
     void preload_modules(std::vector<std::string> const & names);
 
+    Interpreter & setup_modmesh_path();
+    Interpreter & setup_process(int argc, char ** argv);
+
 private:
 
     Interpreter() = default;
-    void setup_path();
 
     pybind11::scoped_interpreter * m_interpreter = nullptr;
 
