@@ -78,6 +78,10 @@ pytest: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
 viewer: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
 	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) viewer $(MAKE_PARALLEL)
 
+.PHONY: run_viewer_pytest
+run_viewer_pytest: viewer
+	cmake --build $(BUILD_PATH) --target run_viewer_pytest VERBOSE=1
+
 .PHONY: flake8
 flake8:
 	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) flake8

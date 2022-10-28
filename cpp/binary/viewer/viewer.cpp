@@ -53,16 +53,18 @@ PYBIND11_EMBEDDED_MODULE(_modmesh_view, mod) // NOLINT
 
 int main(int argc, char ** argv)
 {
-    // Set up Python interpreter.
-    modmesh::python::Interpreter::instance().initialize();
-
 #ifdef MODMESH_METAL
     modmesh::device::MetalManager::instance();
 #endif // MODMESH_METAL
 
-    modmesh::RApplication app(argc, argv);
-    app.main()->resize(1000, 600);
-    return app.exec();
+    // Initialize the Python interpreter.
+    modmesh::python::Interpreter::instance()
+        .initialize()
+        .setup_modmesh_path();
+
+    modmesh::python::Interpreter::instance().setup_process(argc, argv);
+    modmesh::python::Interpreter::instance().finalize();
+    return 0;
 }
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

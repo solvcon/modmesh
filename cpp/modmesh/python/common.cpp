@@ -27,6 +27,7 @@
  */
 
 #include <modmesh/python/common.hpp> // Must be the first include.
+#include <pybind11/stl.h> // Required for automatic conversion.
 
 #include <pybind11/numpy.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -63,7 +64,6 @@ Interpreter & Interpreter::initialize()
     {
         // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
         m_interpreter = new pybind11::scoped_interpreter(true, 0, nullptr, true);
-        setup_path();
     }
     return *this;
 }
@@ -79,10 +79,9 @@ Interpreter & Interpreter::finalize()
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static): implicitly requires m_interpreter
-void Interpreter::setup_path()
+Interpreter & Interpreter::setup_modmesh_path()
 {
-    // TODO: The hard-coded Python in C++ is difficult to debug.  This
-    // should be moved somewhere else in the future.
+    // The hard-coded Python in C++ is difficult to debug. Any better way?
     std::string const cmd = R""""(def _set_modmesh_path():
     import os
     import sys
@@ -100,6 +99,21 @@ void Interpreter::setup_path()
         sys.path.insert(0, path)
 _set_modmesh_path())"""";
     pybind11::exec(cmd);
+    return *this;
+}
+
+Interpreter & Interpreter::setup_process(int argc, char ** argv_in)
+{
+    std::vector<std::string> argv;
+    argv.reserve(argc);
+    for (int i = 0; i < argc; ++i)
+    {
+        argv.emplace_back(argv_in[i]);
+    }
+    // NOLINTNEXTLINE(misc-const-correctness)
+    pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
+    mod_sys.attr("setup_process")(argv);
+    return *this;
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static): implicitly requires m_interpreter
