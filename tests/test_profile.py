@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+import os
 import unittest
 import time
 
@@ -42,6 +43,8 @@ class StopWatchTC(unittest.TestCase):
         sw = modmesh.stop_watch
         self.assertGreater(1.e-6, sw.resolution)
 
+    @unittest.skipUnless("nt" != os.name,
+                         "timing code on windows does not work yet")
     def test_lap_with_sleep(self):
 
         sw = modmesh.stop_watch
