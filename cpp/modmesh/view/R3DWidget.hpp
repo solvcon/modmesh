@@ -64,7 +64,7 @@ class RScene
 
 public:
 
-    RScene(Qt3DCore::QNode * parent = nullptr)
+    explicit RScene(Qt3DCore::QNode * parent = nullptr)
         : Qt3DCore::QEntity(parent)
         , m_controller(new ROrbitCameraController(this))
     {

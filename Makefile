@@ -59,73 +59,11 @@ endif
 .PHONY: default
 default: buildext
 
-.PHONY: clean
-clean:
-	rm -f $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
-	make -C $(BUILD_PATH) clean
-
-.PHONY: cmakeclean
-cmakeclean:
-	rm -f $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
-	rm -rf $(BUILD_PATH)
-
-.PHONY: pytest
-pytest: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
-	env $(RUNENV) \
-		$(PYTEST) $(PYTEST_OPTS) tests/
-
-.PHONY: viewer
-viewer: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
-	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) viewer $(MAKE_PARALLEL)
-
-.PHONY: run_viewer_pytest
-run_viewer_pytest: viewer
-	cmake --build $(BUILD_PATH) --target run_viewer_pytest VERBOSE=1
-
-.PHONY: flake8
-flake8:
-	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) flake8
-
-CFFILES = $(shell find cpp -type f -name '*.[ch]pp' | sort)
-ifeq ($(CFCMD),)
-	ifeq ($(FORCE_CLANG_FORMAT),)
-		CFCMD = clang-format --dry-run
-	else ifeq ($(FORCE_CLANG_FORMAT),inplace)
-		CFCMD = clang-format -i
-	else
-		CFCMD = clang-format --dry-run -Werror
-	endif
-endif
-
-.PHONY: cformat
-cformat: $(CFFILES)
-	@for fn in $(CFFILES) ; \
-	do \
-		echo "$(CFCMD) $${fn}:"; \
-		$(CFCMD) $${fn} ; ret=$$? ; \
-		if [ $${ret} -ne 0 ] ; then exit $${ret} ; fi ; \
-	done
-
-.PHONY: cinclude
-cinclude: $(CFFILES)
-	if [ "$(shell ag \#include\ \*\" cpp/)" != "" ] ; then exit 1 ; fi
-
 .PHONY: cmake
 cmake: $(BUILD_PATH)/Makefile
 
 .PHONY: xcode
 xcode: $(BUILD_PATH)_xcode/Makefile
-
-.PHONY: buildext
-buildext: $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
-
-.PHONY: install
-install: cmake
-	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) install
-
-$(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix): $(BUILD_PATH)/Makefile
-	make -C $(BUILD_PATH) VERBOSE=$(VERBOSE) _modmesh_py $(MAKE_PARALLEL)
-	touch $@
 
 CMAKE_CMD = cmake $(MODMESH_ROOT) \
 	-DCMAKE_PREFIX_PATH=$(CMAKE_PREFIX_PATH) \
@@ -151,3 +89,65 @@ $(BUILD_PATH)_xcode/Makefile: CMakeLists.txt Makefile
 	mkdir -p $(BUILD_PATH)_xcode ; \
 	cd $(BUILD_PATH)_xcode ; \
 	env $(RUNENV) $(CMAKE_CMD) -G Xcode
+
+.PHONY: buildext
+buildext: cmake
+	cmake --build $(BUILD_PATH) --target _modmesh_py VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)
+
+.PHONY: install
+install: cmake
+	cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)
+
+.PHONY: pytest
+pytest: buildext
+	env $(RUNENV) \
+		$(PYTEST) $(PYTEST_OPTS) tests/
+
+.PHONY: viewer
+viewer: cmake
+	cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)
+
+.PHONY: run_viewer_pytest
+run_viewer_pytest: viewer
+	cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE)
+
+CFFILES = $(shell find cpp -type f -name '*.[ch]pp' | sort)
+ifeq ($(CFCMD),)
+	ifeq ($(FORCE_CLANG_FORMAT),)
+		CFCMD = clang-format --dry-run
+	else ifeq ($(FORCE_CLANG_FORMAT),inplace)
+		CFCMD = clang-format -i
+	else
+		CFCMD = clang-format --dry-run -Werror
+	endif
+endif
+
+.PHONY: cformat
+cformat: $(CFFILES)
+	@for fn in $(CFFILES) ; \
+	do \
+		echo "$(CFCMD) $${fn}:"; \
+		$(CFCMD) $${fn} ; ret=$$? ; \
+		if [ $${ret} -ne 0 ] ; then exit $${ret} ; fi ; \
+	done
+
+.PHONY: cinclude
+cinclude: $(CFFILES)
+	if [ "$(shell ag \#include\ \*\" cpp/)" != "" ] ; then exit 1 ; fi
+
+.PHONY: flake8
+flake8:
+	cmake --build $(BUILD_PATH) --target $@
+
+.PHONY: lint
+lint: cformat cinclude flake8
+
+.PHONY: clean
+clean:
+	rm -f $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
+	make -C $(BUILD_PATH) clean
+
+.PHONY: cmakeclean
+cmakeclean:
+	rm -f $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
+	rm -rf $(BUILD_PATH)

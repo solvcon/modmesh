@@ -84,7 +84,6 @@ Interpreter & Interpreter::finalize()
     return *this;
 }
 
-// NOLINTNEXTLINE(readability-convert-member-functions-to-static): implicitly requires m_interpreter
 Interpreter & Interpreter::setup_modmesh_path()
 {
     // The hard-coded Python in C++ is difficult to debug. Any better way?

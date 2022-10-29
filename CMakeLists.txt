@@ -30,7 +30,7 @@ find_program(
 )
 if(USE_CLANG_TIDY)
     if(CLANG_TIDY_EXE)
-        set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-header-filter=/cpp/.\*")
+        set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-header-filter=/cpp/.\*/modmesh/.\*")
         if(LINT_AS_ERRORS)
             set(DO_CLANG_TIDY "${DO_CLANG_TIDY}" "-warnings-as-errors=*")
         endif()

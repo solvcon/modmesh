@@ -42,7 +42,7 @@ from . import onedim  # noqa: F401
 from . import system  # noqa: F401
 
 
-clinfo = core.ProcessInfo.instance.command_line  # noqa: F401
+clinfo = core.ProcessInfo.instance.command_line
 
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

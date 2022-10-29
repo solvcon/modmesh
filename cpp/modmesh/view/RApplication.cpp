@@ -194,8 +194,6 @@ RApplication & RApplication::setup()
 
 RApplication::~RApplication()
 {
-    // Shuts down the interpreter when the application stops.
-    python::Interpreter::instance().finalize();
 }
 
 } /* end namespace modmesh */
