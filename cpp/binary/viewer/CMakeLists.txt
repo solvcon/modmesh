@@ -80,6 +80,18 @@ target_compile_options(
     ${COMMON_COMPILER_OPTIONS}
 )
 
+if(CLANG_TIDY_EXE AND USE_CLANG_TIDY)
+    set_target_properties(
+        viewer PROPERTIES
+        CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
+    )
+endif()
+
+# Hack: add a .clang-tidy file in the generated .rcc directory.
+# See https://gitlab.kitware.com/cmake/cmake/-/merge_requests/777
+file(WRITE "${viewer_BINARY_DIR}/.rcc/.clang-tidy" "---
+Checks: '-*,llvm-twine-local'")
+
 set_target_properties(
     viewer PROPERTIES
     WIN32_EXECUTABLE TRUE
