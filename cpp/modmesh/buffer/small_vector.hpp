@@ -31,6 +31,7 @@
 #include <stdexcept>
 #include <array>
 #include <vector>
+#include <algorithm>
 
 namespace modmesh
 {

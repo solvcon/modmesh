@@ -41,6 +41,7 @@ from . import view
 
 __all__ = [
     'setup_process',
+    'enter_main',
 ]
 
 
@@ -62,10 +63,8 @@ def _parse_command_line(argv):
     parser = ModmeshArgumentParser(description="Viewer")
     parser.add_argument('--mode', dest='mode', action='store',
                         default='viewer',
-                        choices=['viewer', 'command', 'terminal', 'pytest'],
+                        choices=['viewer', 'python', 'pytest'],
                         help='mode selection (default = %(default)s)')
-    parser.add_argument('--command', dest='command', action='store',
-                        default='', help='command to run')
     args = parser.parse_args(argv[1:])
     if parser.exited:
         args.exit = (parser.exited_status, parser.exited_message)
@@ -74,29 +73,10 @@ def _parse_command_line(argv):
     return args
 
 
-def _setup_builtin():
-    """Install the namespace."""
-    builtins.modmesh = modmesh
-    builtins.mm = modmesh
-
-
 def _run_viewer(argv):
     """Run the viewer application."""
     view.app().setup()
     return view.app().exec()
-
-
-def _run_ipython(argv):
-    # Import IPython locally to avoid making it a dependency to the whole
-    # modmesh.
-    import IPython
-    ret = IPython.start_ipython(argv=[])
-    return ret
-
-
-def _run_command(cmd):
-    exec(cmd)
-    return 0
 
 
 def _run_pytest():
@@ -110,21 +90,25 @@ def _run_pytest():
 
 def setup_process(argv):
     """Set up the runtime environment for the process."""
-    _setup_builtin()
+    # Install the namespace.
+    builtins.modmesh = modmesh
+    builtins.mm = modmesh
+
+
+def enter_main(argv):
     args = _parse_command_line(argv)
     ret = 0
     if args.exit:
         ret = args.exit[0]
-    elif 'command' == args.mode or args.command:
-        ret = _run_command(args.command)
     elif 'viewer' == args.mode:
         ret = _run_viewer(argv)
-    elif 'terminal' == args.mode:
-        ret = _run_ipython(argv)
     elif 'pytest' == args.mode:
         ret = _run_pytest()
+    elif 'python' == args.mode:
+        sys.stderr.write('mode "python" should not run in Python main')
+        ret = 1
     else:
-        sys.stderr.write('mode {} is not supported'.format(args.mode))
+        sys.stderr.write('mode "{}" is not supported'.format(args.mode))
     return ret
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -472,7 +472,9 @@ public:
     void preload_modules(std::vector<std::string> const & names);
 
     Interpreter & setup_modmesh_path();
-    Interpreter & setup_process(int argc, char ** argv);
+    Interpreter & setup_process();
+
+    int enter_main();
 
 private:
 

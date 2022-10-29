@@ -28,6 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <modmesh/base.hpp>
+#include <modmesh/buffer/buffer.hpp>
+
+#include <string>
+#include <vector>
+
 namespace modmesh
 {
 
@@ -54,6 +60,95 @@ private:
     bool m_show_axis;
 
 }; /* end class Toggle */
+
+class ProcessInfo;
+
+class CommandLineInfo
+{
+
+public:
+
+    CommandLineInfo() = default;
+    CommandLineInfo(CommandLineInfo const &) = default;
+    // NOLINTNEXTLINE(bugprone-exception-escape)
+    CommandLineInfo(CommandLineInfo &&) = default;
+    CommandLineInfo & operator=(CommandLineInfo const &) = default;
+    CommandLineInfo & operator=(CommandLineInfo &&) = default;
+    ~CommandLineInfo() = default;
+
+    std::string const & executable_basename() const { return m_executable_basename; }
+    std::vector<std::string> const & populated_argv() const { return m_populated_argv; }
+    std::vector<std::string> const & python_argv() const { return m_python_argv; }
+    void set_python_argv(std::vector<std::string> const & argv)
+    {
+        if (!m_frozen)
+        {
+            m_python_argv = argv;
+        }
+    }
+
+    class PopulatePasskey
+    {
+        friend ProcessInfo;
+    };
+
+    void populate(int argc, char ** argv, PopulatePasskey const &)
+    {
+        populate(argc, argv, /* repopulate */ false);
+    }
+
+    void freeze() { m_frozen = true; }
+
+    bool frozen() const { return m_frozen; }
+    bool populated() const { return m_populated; }
+
+    bool python_main() const { return m_python_main; }
+    int python_main_argc() const { return m_python_main_argc; }
+    char ** python_main_argv_ptr() { return m_python_main_argv_ptr.data(); }
+
+private:
+
+    void unfreeze() { m_frozen = false; }
+
+    void populate(int argc, char ** argv, bool repopulate);
+
+    bool m_frozen = false;
+    bool m_populated = false;
+    std::string m_executable_basename;
+    std::vector<std::string> m_populated_argv;
+    std::vector<std::string> m_python_argv;
+
+    bool m_python_main = false;
+    int m_python_main_argc = 0;
+    SimpleArray<char> m_python_main_argv_char;
+    SimpleArray<char *> m_python_main_argv_ptr;
+
+}; /* end class CommandLineInfo */
+
+// NOLINTNEXTLINE(bugprone-exception-escape)
+class ProcessInfo
+{
+
+public:
+
+    static ProcessInfo & instance();
+
+    ProcessInfo & populate_command_line(int argc, char ** argv)
+    {
+        m_command_line.populate(argc, argv, CommandLineInfo::PopulatePasskey{});
+        return *this;
+    }
+
+    CommandLineInfo const & command_line() const { return m_command_line; }
+    CommandLineInfo & command_line() { return m_command_line; }
+
+private:
+
+    ProcessInfo() = default;
+
+    CommandLineInfo m_command_line;
+
+}; /* end class ProcessInfo */
 
 } /* end namespace modmesh */
 

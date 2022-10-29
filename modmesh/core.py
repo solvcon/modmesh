@@ -58,6 +58,8 @@ __all__ = [  # noqa: F822
     'StaticGrid3d',
     'StaticMesh',
     'Toggle',
+    'CommandLineInfo',
+    'ProcessInfo',
     'METAL_BUILT',
     'metal_running',
 ]

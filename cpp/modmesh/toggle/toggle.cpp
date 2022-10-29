@@ -37,6 +37,68 @@ Toggle & Toggle::instance()
     return o;
 }
 
+ProcessInfo & ProcessInfo::instance()
+{
+    static ProcessInfo inst;
+    return inst;
+}
+
+void CommandLineInfo::populate(int argc, char ** argv, bool repopulate)
+{
+    if (!m_frozen && (!m_populated || repopulate))
+    {
+        m_populated_argv.clear();
+        m_populated_argv.reserve(argc);
+        size_t nchar = 0;
+        for (int i = 0; i < argc; ++i)
+        {
+            m_populated_argv.emplace_back(argv[i]);
+            nchar += m_populated_argv.back().size() + 1;
+        }
+        m_populated = true;
+        // Determine Python entry-point mode.
+        {
+            // Populate char buffer.
+            m_python_main_argv_char = SimpleArray<char>(nchar);
+            m_python_main_argv_ptr = SimpleArray<char *>(argc);
+            m_python_main_argc = 0;
+            size_t ichar = 0;
+            size_t icnt = 0;
+            for (int i = 0; i < argc; ++i)
+            {
+                std::string const & arg = m_populated_argv[i];
+                if ("--mode=python" == arg)
+                {
+                    m_python_main = true;
+                }
+                else
+                {
+                    ++m_python_main_argc;
+                    m_python_main_argv_ptr[icnt++] = &m_python_main_argv_char[ichar];
+                    for (size_t j = 0; j < arg.size(); ++j)
+                    {
+                        m_python_main_argv_char[ichar++] = arg[j];
+                    }
+                    m_python_main_argv_char[ichar++] = 0;
+                }
+            }
+        }
+        // Copy to other containers.
+        m_python_argv = m_populated_argv;
+        // Get executable base name.
+        if (!m_populated_argv.empty())
+        {
+            std::string const & path = m_populated_argv.front();
+            if (!path.empty())
+            {
+                size_t idx = path.find_last_of("/\\");
+                idx = (idx < path.size()) ? idx + 1 : 0;
+                m_executable_basename = path.substr(idx);
+            }
+        }
+    }
+}
+
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

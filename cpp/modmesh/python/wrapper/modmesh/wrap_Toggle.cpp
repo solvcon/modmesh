@@ -69,9 +69,75 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
         .def_property("show_axis", &wrapped_type::get_show_axis, &wrapped_type::set_show_axis);
 }
 
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapCommandLineInfo
+    : public WrapBase<WrapCommandLineInfo, CommandLineInfo>
+{
+
+public:
+
+    using base_type = WrapBase<WrapCommandLineInfo, CommandLineInfo>;
+    using wrapped_type = typename base_type::wrapped_type;
+
+    friend root_base_type;
+
+protected:
+
+    WrapCommandLineInfo(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+}; /* end class WrapCommandLineInfo */
+
+WrapCommandLineInfo::WrapCommandLineInfo(pybind11::module & mod, char const * pyname, char const * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    (*this)
+        .def("freeze", &wrapped_type::freeze)
+        .def_property_readonly("frozen", &wrapped_type::frozen)
+        .def_property_readonly("populated", &wrapped_type::populated)
+        .def_property_readonly("populated_argv", &wrapped_type::populated_argv)
+        .def_property_readonly("executable_basename", &wrapped_type::executable_basename)
+        .def_property("python_argv", &wrapped_type::python_argv, &wrapped_type::set_python_argv);
+}
+
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapProcessInfo
+    : public WrapBase<WrapProcessInfo, ProcessInfo>
+{
+
+public:
+
+    using base_type = WrapBase<WrapProcessInfo, ProcessInfo>;
+    using wrapped_type = typename base_type::wrapped_type;
+
+    friend root_base_type;
+
+protected:
+
+    WrapProcessInfo(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+}; /* end class WrapProcessInfo */
+
+WrapProcessInfo::WrapProcessInfo(pybind11::module & mod, char const * pyname, char const * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+    (*this)
+        .def_property_readonly_static(
+            "instance",
+            [](py::object const &) -> auto & {
+                return wrapped_type::instance();
+            })
+        .def_property_readonly(
+            "command_line",
+            [](wrapped_type & self) -> auto & {
+                return self.command_line();
+            },
+            py::return_value_policy::reference_internal);
+}
+
 void wrap_Toggle(pybind11::module & mod)
 {
     WrapToggle::commit(mod, "Toggle", "Toggle");
+    WrapCommandLineInfo::commit(mod, "CommandLineInfo", "CommandLineInfo");
+    WrapProcessInfo::commit(mod, "ProcessInfo", "ProcessInfo");
 
 #ifdef MODMESH_METAL
     mod.attr("METAL_BUILT") = true;

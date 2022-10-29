@@ -29,6 +29,8 @@
 #include <modmesh/python/common.hpp> // Must be the first include.
 #include <pybind11/stl.h> // Required for automatic conversion.
 
+#include <modmesh/toggle/toggle.hpp>
+
 #include <pybind11/numpy.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
@@ -72,7 +74,11 @@ Interpreter & Interpreter::finalize()
 {
     if (nullptr != m_interpreter)
     {
-        delete m_interpreter;
+        // Py_Main and Py_BytesMain may finalize the interpreter before this is reached.
+        if (0 != Py_IsInitialized())
+        {
+            delete m_interpreter;
+        }
         m_interpreter = nullptr;
     }
     return *this;
@@ -102,18 +108,22 @@ _set_modmesh_path())"""";
     return *this;
 }
 
-Interpreter & Interpreter::setup_process(int argc, char ** argv_in)
+Interpreter & Interpreter::setup_process()
 {
-    std::vector<std::string> argv;
-    argv.reserve(argc);
-    for (int i = 0; i < argc; ++i)
-    {
-        argv.emplace_back(argv_in[i]);
-    }
     // NOLINTNEXTLINE(misc-const-correctness)
     pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
-    mod_sys.attr("setup_process")(argv);
+    CommandLineInfo const & cmdinfo = ProcessInfo::instance().command_line();
+    mod_sys.attr("setup_process")(cmdinfo.python_argv());
     return *this;
+}
+
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+int Interpreter::enter_main()
+{
+    // NOLINTNEXTLINE(misc-const-correctness)
+    pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
+    CommandLineInfo const & cmdinfo = ProcessInfo::instance().command_line();
+    return pybind11::cast<int>(mod_sys.attr("enter_main")(cmdinfo.python_argv()));
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static): implicitly requires m_interpreter

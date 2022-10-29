@@ -37,6 +37,18 @@ class ToggleTC(unittest.TestCase):
         self.assertTrue(hasattr(modmesh.Toggle.instance, "show_axis"))
 
 
+@unittest.skipUnless("viewer" in modmesh.clinfo.executable_basename,
+                     "not in viewer binary")
+class CommandLineInfoTC(unittest.TestCase):
+
+    def setUp(self):
+        self.cmdline = modmesh.ProcessInfo.instance.command_line
+
+    def test_populated(self):
+        self.assertTrue(self.cmdline.populated)
+        self.assertNotEqual(len(self.cmdline.populated_argv), 0)
+
+
 class MetalTC(unittest.TestCase):
 
     # Github Actions macos-12 does not support GPU yet.
