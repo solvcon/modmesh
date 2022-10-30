@@ -144,7 +144,7 @@ public:
 
 private:
 
-    ProcessInfo() = default;
+    ProcessInfo();
 
     CommandLineInfo m_command_line;
 
