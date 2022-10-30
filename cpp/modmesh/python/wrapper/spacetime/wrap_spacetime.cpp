@@ -460,7 +460,7 @@ protected:
         bool odd_plane,
         R const & r)
     {
-        const uint_type nselm = self.grid().nselm() - odd_plane;
+        const uint_type nselm =  static_cast<uint_type>(self.grid().nselm()) - static_cast<uint_type>(odd_plane);
         SimpleArray<double> ret(std::vector<size_t>{nselm});
         for (uint_type it = 0; it < nselm; ++it)
         {
@@ -521,7 +521,7 @@ protected:
         {
             throw std::out_of_range(Formatter() << name << ": input not 1D");
         }
-        const uint_type nselm = self.grid().nselm() - odd_plane;
+        const uint_type nselm = static_cast<uint_type>(self.grid().nselm() - odd_plane);
         if (nselm != arr.size())
         {
             throw std::out_of_range(Formatter() << name << ": arr size " << arr.size() << " != nselm " << nselm);

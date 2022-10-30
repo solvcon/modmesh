@@ -87,7 +87,7 @@ SimpleArray<double> Euler1DCore::pressure() const
 void Euler1DCore::update_cfl(bool odd_plane)
 {
     const int_type start = BOUND_COUNT - (odd_plane ? 1 : 0);
-    const int_type stop = ncoord() - BOUND_COUNT - (odd_plane ? 0 : 1);
+    const int_type stop = static_cast<int_type>(ncoord() - BOUND_COUNT - (odd_plane ? 0 : 1));
     const double hdt = m_time_increment / 2;
     for (int_type it = start; it < stop; it += 2)
     {
@@ -112,7 +112,7 @@ void Euler1DCore::update_cfl(bool odd_plane)
 void Euler1DCore::march_half_so0(bool odd_plane)
 {
     const int_type start = BOUND_COUNT - (odd_plane ? 1 : 0);
-    const int_type stop = ncoord() - BOUND_COUNT - (odd_plane ? 0 : 1);
+    const int_type stop = static_cast<int_type>(ncoord() - BOUND_COUNT - (odd_plane ? 0 : 1));
     // Kernal at xneg solution element.
     Euler1DKernel kernxn{};
     kernxn

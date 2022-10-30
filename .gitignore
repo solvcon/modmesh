@@ -16,6 +16,6 @@ setup.mk
 *.pyd
 *.vcx*
 *.sln
-*log
+*.tlog
 *.obj
 *.pdb

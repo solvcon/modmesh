@@ -37,7 +37,7 @@ namespace spacetime
 void BadEuler1DSolver::update_cfl(bool odd_plane)
 {
     const int_type start = odd_plane ? -1 : 0;
-    const int_type stop = grid().nselm();
+    const int_type stop = static_cast<int_type>(grid().nselm());
     // TODO: specific heat ratio should not be hard-coded.
     constexpr double ga = 1.4;
     constexpr double ga1 = ga - 1.0;
@@ -63,7 +63,7 @@ void BadEuler1DSolver::update_cfl(bool odd_plane)
 void BadEuler1DSolver::march_half_so0(bool odd_plane)
 {
     const int_type start = odd_plane ? -1 : 0;
-    const int_type stop = grid().ncelm();
+    const int_type stop = static_cast<int_type>(grid().ncelm());
     const double gamma = 1.4;
     // Kernal at xneg solution element.
     Euler1DKernel kernxn;
@@ -101,8 +101,8 @@ void BadEuler1DSolver::treat_boundary_so0()
 {
     selm_type const selm_left_in = selm(0, true);
     selm_type selm_left_out = selm(-1, true);
-    selm_type const selm_right_in = selm(grid().ncelm() - 1, true);
-    selm_type selm_right_out = selm(grid().ncelm(), true);
+    selm_type const selm_right_in = selm(static_cast<int_type>(grid().ncelm()) - 1, true);
+    selm_type selm_right_out = selm(static_cast<int_type>(grid().ncelm()), true);
 
     // Periodic boundary condition treatment.
     selm_left_out.so0(0) = selm_right_in.so0(0);
@@ -117,8 +117,8 @@ void BadEuler1DSolver::treat_boundary_so1()
 {
     selm_type const selm_left_in = selm(0, true);
     selm_type selm_left_out = selm(-1, true);
-    selm_type const selm_right_in = selm(grid().ncelm() - 1, true);
-    selm_type selm_right_out = selm(grid().ncelm(), true);
+    selm_type const selm_right_in = selm(static_cast<int_type>(grid().ncelm()) - 1, true);
+    selm_type selm_right_out = selm(static_cast<int_type>(grid().ncelm()), true);
 
     // Periodic boundary condition treatment.
     selm_left_out.so1(0) = selm_right_in.so1(0);

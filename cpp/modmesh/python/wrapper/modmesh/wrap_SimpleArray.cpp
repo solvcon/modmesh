@@ -231,7 +231,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         {
             slice_type default_slice(3);
             default_slice[0] = 0; // start
-            default_slice[1] = arr.shape(i); // stop
+            default_slice[1] = static_cast<int>(arr.shape(i)); // stop
             default_slice[2] = 1; // step
             slices.push_back(std::move(default_slice));
         }

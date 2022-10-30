@@ -99,7 +99,7 @@ protected:
             .def_property_readonly("qdt", &wrapped_type::qdt)
             .def("move",
                  [](wrapped_type & s, size_t v)
-                 { s.move_at(v); return s; })
+                 { s.move_at(static_cast<int_type>(v)); return s; })
             .def("move_left",
                  [](wrapped_type & s)
                  { s.move_left_at(); return s; })
@@ -231,7 +231,7 @@ public:
         {
             throw pybind11::stop_iteration();
         }
-        typename ST::celm_type ret = m_solver->celm(m_current, m_odd_plane);
+        typename ST::celm_type ret = m_solver->celm(static_cast<int_type>(m_current), m_odd_plane);
         ++m_current;
         return ret;
     }
@@ -247,7 +247,7 @@ public:
         {
             throw pybind11::stop_iteration();
         }
-        typename ST::selm_type ret = m_solver->selm(m_current, m_odd_plane);
+        typename ST::selm_type ret = m_solver->selm(static_cast<int_type>(m_current), m_odd_plane);
         ++m_current;
         return ret;
     }

@@ -308,7 +308,7 @@ public:
     uint_type ngstcell() const { return m_ngstcell; }
     bool use_incenter() const { return m_use_incenter; }
 
-    uint_type nedge() const { return m_ednds.shape(0); }
+    uint_type nedge() const { return static_cast<uint_type>(m_ednds.shape(0)); }
     size_t nbcs() const { return m_bcs.size(); }
 
     /**

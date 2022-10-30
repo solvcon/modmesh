@@ -348,8 +348,8 @@ struct FaceBuilder
         // clang-format off
         return std::accumulate
         (
-            tcltpn.body(), tcltpn.body()+tcltpn.nbody(), 0
-          , [](size_t a, int8_t b){ return a + CellType::by_id(b).nface(); }
+            tcltpn.body(), tcltpn.body()+tcltpn.nbody(), size_t(0) 
+          , [](size_t a, uint8_t b){ return a + static_cast<size_t>(CellType::by_id(b).nface()); }
         );
         // clang-format on
     }
@@ -362,25 +362,25 @@ struct FaceBuilder
             switch (cltpn(icl))
             {
             case CellType::LINE:
-                ifc += add_line(icl, ifc);
+                ifc += add_line(static_cast<int_type>(icl), static_cast<int_type>(ifc));
                 break;
             case CellType::QUADRILATERAL:
-                ifc += add_quadrilateral(icl, ifc);
+                ifc += add_quadrilateral(static_cast<int_type>(icl), static_cast<int_type>(ifc));
                 break;
             case CellType::TRIANGLE:
-                ifc += add_triangle(icl, ifc);
+                ifc += add_triangle(static_cast<int_type>(icl), static_cast<int_type>(ifc));
                 break;
             case CellType::HEXAHEDRON:
-                ifc += add_hexahedron(icl, ifc);
+                ifc += add_hexahedron(static_cast<int_type>(icl), static_cast<int_type>(ifc));
                 break;
             case CellType::TETRAHEDRON:
-                ifc += add_tetrahedron(icl, ifc);
+                ifc += add_tetrahedron(static_cast<int_type>(icl), static_cast<int_type>(ifc));
                 break;
             case CellType::PRISM:
-                ifc += add_prism(icl, ifc);
+                ifc += add_prism(static_cast<int_type>(icl), static_cast<int_type>(ifc));
                 break;
             case CellType::PYRAMID:
-                ifc += add_pyramid(icl, ifc);
+                ifc += add_pyramid(static_cast<int_type>(icl), static_cast<int_type>(ifc));
                 break;
             default:
                 break;
@@ -418,7 +418,7 @@ struct FaceBuilder
             for (int_type const * p = fcnds.vptr(ifc, 1); p != fcnds.vptr(ifc, fcnnd + 1); ++p)
             {
                 ndfcs(*p, 0) += 1;
-                ndfcs(*p, ndfcs(*p, 0)) = ifc;
+                ndfcs(*p, ndfcs(*p, 0)) = static_cast<int_type>(ifc);
             }
         }
 
@@ -469,10 +469,10 @@ struct FaceBuilder
                     (
                         (jfc != ifc)
                      && (fctpn(jfc) == fctpn(ifc))
-                     && (check_match(ifc, jfc) == fcnds(jfc, 0))
+                     && (check_match(static_cast<int_type>(ifc), static_cast<int_type>(jfc)) == fcnds(static_cast<int_type>(jfc), 0))
                     )
                     {
-                        dedupmap[jfc] = ifc;  // record duplication.
+                        dedupmap[jfc] = static_cast<uint_type>(ifc);  // record duplication.
                     }
                 }
             }
@@ -495,7 +495,7 @@ struct FaceBuilder
                         fcnds(jfc, inf) = fcnds(ifc, inf);
                     }
                     fctpn(jfc) = fctpn(ifc);
-                    map2[ifc] = jfc;
+                    map2[ifc] = static_cast<int_type>(jfc);
                     // increment j-face.
                     jfc += 1;
                 }
@@ -519,8 +519,8 @@ struct FaceBuilder
                 // rebuild faces in cells.
                 clfcs(icl, ifl) = jfc;
                 // build face neighboring.
-                if      (-1 == fccls(jfc, 0)) { fccls(jfc, 0) = icl; }
-                else if (-1 == fccls(jfc, 1)) { fccls(jfc, 1) = icl; }
+                if      (-1 == fccls(jfc, 0)) { fccls(jfc, 0) = static_cast<int_type>(icl); }
+                else if (-1 == fccls(jfc, 1)) { fccls(jfc, 1) = static_cast<int_type>(icl); }
             }
         }
     }
@@ -554,7 +554,7 @@ struct FaceBuilder
 void StaticMesh::build_faces_from_cells()
 {
     detail::FaceBuilder<number_base> fb(m_nnode, m_cltpn, m_clnds);
-    m_nface = fb.nface;
+    m_nface = static_cast<uint_type>(fb.nface);
 
     // recreate member tables.
     fb.rebuild_fctpn(m_fctpn);

@@ -154,6 +154,9 @@ namespace modmesh
 namespace python
 {
 
+#pragma warning(push)
+#pragma warning(disable : 4251) // needs to have dll-interface to be used by clients of class
+#pragma warning(disable : 4275) // non dll-interface struct used as base for dll-interface struct
 // clang-format off
 struct
 MODMESH_PYTHON_WRAPPER_VISIBILITY
@@ -179,6 +182,7 @@ ConcreteBufferNdarrayRemover : ConcreteBuffer::remover_type
     pybind11::array ndarray;
 
 }; /* end struct ConcreteBufferNdarrayRemover */
+#pragma warning(push)
 
 template <typename S>
 std::enable_if_t<is_simple_array_v<S>, pybind11::array> to_ndarray(S && sarr)
@@ -214,6 +218,8 @@ static SimpleArray<T> makeSimpleArray(pybind11::array_t<T> & ndarr)
     return SimpleArray<T>(shape, buffer);
 }
 
+#pragma warning(push)
+#pragma warning(disable : 4251) // needs to have dll-interface to be used by clients of class
 /**
  * Helper template for pybind11 class wrappers.
  */
@@ -395,6 +401,7 @@ private:
     class_ m_cls;
 
 }; /* end class WrapBase */
+#pragma warning(push)
 
 void import_numpy();
 #ifdef __GNUC__
