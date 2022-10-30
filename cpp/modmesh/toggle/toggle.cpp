@@ -40,6 +40,7 @@ Toggle & Toggle::instance()
     return o;
 }
 
+// NOLINTNEXTLINE(modernize-use-equals-default) lack of MODMESH_METAL
 ProcessInfo::ProcessInfo()
 {
 #ifdef MODMESH_METAL
