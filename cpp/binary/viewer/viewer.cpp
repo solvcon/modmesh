@@ -33,9 +33,6 @@
 #include <modmesh/modmesh.hpp>
 #include <modmesh/view/view.hpp>
 #include <modmesh/view/wrap_view.hpp>
-#ifdef MODMESH_METAL
-#include <modmesh/device/metal/metal.hpp>
-#endif // MODMESH_METAL
 
 PYBIND11_EMBEDDED_MODULE(_modmesh, mod) // NOLINT
 {
@@ -55,10 +52,6 @@ int main(int argc, char ** argv)
 {
     modmesh::ProcessInfo::instance().populate_command_line(argc, argv);
     auto & clinfo = modmesh::ProcessInfo::instance().command_line();
-
-#ifdef MODMESH_METAL
-    modmesh::device::MetalManager::instance();
-#endif // MODMESH_METAL
 
     // Initialize the Python interpreter.
     modmesh::python::Interpreter::instance()

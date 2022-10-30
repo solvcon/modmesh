@@ -27,6 +27,9 @@
  */
 
 #include <modmesh/toggle/toggle.hpp>
+#ifdef MODMESH_METAL
+#include <modmesh/device/metal/metal.hpp>
+#endif // MODMESH_METAL
 
 namespace modmesh
 {
@@ -35,6 +38,14 @@ Toggle & Toggle::instance()
 {
     static Toggle o;
     return o;
+}
+
+// NOLINTNEXTLINE(modernize-use-equals-default) lack of MODMESH_METAL
+ProcessInfo::ProcessInfo()
+{
+#ifdef MODMESH_METAL
+    modmesh::device::MetalManager::instance();
+#endif // MODMESH_METAL
 }
 
 ProcessInfo & ProcessInfo::instance()
