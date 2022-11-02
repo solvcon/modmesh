@@ -91,6 +91,8 @@ endif()
 # See https://gitlab.kitware.com/cmake/cmake/-/merge_requests/777
 file(WRITE "${viewer_BINARY_DIR}/.rcc/.clang-tidy" "---
 Checks: '-*,llvm-twine-local'")
+file(WRITE "${viewer_BINARY_DIR}/viewer_autogen/.clang-tidy" "---
+Checks: '-bugprone-suspicious-include,llvm-twine-local'")
 
 set_target_properties(
     viewer PROPERTIES
