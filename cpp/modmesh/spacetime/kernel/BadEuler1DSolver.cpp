@@ -37,7 +37,7 @@ namespace spacetime
 void BadEuler1DSolver::update_cfl(bool odd_plane)
 {
     const int_type start = odd_plane ? -1 : 0;
-    const int_type stop = static_cast<int_type>(grid().nselm());
+    const auto stop = static_cast<int_type>(grid().nselm());
     // TODO: specific heat ratio should not be hard-coded.
     constexpr double ga = 1.4;
     constexpr double ga1 = ga - 1.0;
