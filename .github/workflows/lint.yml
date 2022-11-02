@@ -138,6 +138,7 @@ jobs:
 
     strategy:
       matrix:
+        # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
         os: [macos-12]
         cmake_build_type: [Debug]
 
@@ -156,15 +157,20 @@ jobs:
       - name: dependency by homebrew
         run: |
           # brew update  # No update because it is slow
-          brew install python3 llvm qt6
+          # Force using python 3.10 from homebrew
+          brew unlink python
+          brew link --force --overwrite python@3.10
+          brew install llvm qt6
           ln -s "$(brew --prefix llvm)/bin/clang-format" "/usr/local/bin/clang-format"
           ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 
       - name: dependency by pip
         run: |
-          echo "which pip3: $(which pip3)"
-          pip3 install -U setuptools
-          pip3 install -U numpy pytest flake8
+          echo "which python3: $(which python3)"
+          ls -al $(which python3)
+          python3 -m pip -v install --upgrade setuptools
+          python3 -m pip -v install --upgrade pip
+          python3 -m pip -v install --upgrade numpy pytest flake8
 
       - name: dependency (manual)
         run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
