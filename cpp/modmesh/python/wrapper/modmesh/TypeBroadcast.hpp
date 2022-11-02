@@ -44,7 +44,7 @@ struct TypeBroadcastImpl
     using shape_type = typename SimpleArray<T>::shape_type;
 
     // NOLINTNEXTLINE(misc-no-recursion)
-    static void copy_idx(SimpleArray<T> & arr_out, std::vector<slice_type> const & slices, pybind11::array_t<D> const * arr_in, shape_type left_shape, shape_type sidx, size_t dim)
+    static void copy_idx(SimpleArray<T> & arr_out, std::vector<slice_type> const & slices, pybind11::array_t<D> const * arr_in, shape_type left_shape, shape_type sidx, int dim)
     {
         using out_type = typename std::remove_reference_t<decltype(arr_out[0])>;
 
@@ -104,7 +104,7 @@ struct TypeBroadcastImpl
             sidx_init[i] = 0;
         }
 
-        copy_idx(arr_out, slices, arr_new, left_shape, sidx_init, arr_out.ndim() - 1);
+        copy_idx(arr_out, slices, arr_new, left_shape, sidx_init, static_cast<int>(arr_out.ndim()) - 1);
     }
 }; /* end struct TypeBroadcastImpl */
 
