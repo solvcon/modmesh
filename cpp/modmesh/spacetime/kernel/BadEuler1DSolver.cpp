@@ -63,7 +63,7 @@ void BadEuler1DSolver::update_cfl(bool odd_plane)
 void BadEuler1DSolver::march_half_so0(bool odd_plane)
 {
     const int_type start = odd_plane ? -1 : 0;
-    const int_type stop = static_cast<int_type>(grid().ncelm());
+    const auto stop = static_cast<int_type>(grid().ncelm());
     const double gamma = 1.4;
     // Kernal at xneg solution element.
     Euler1DKernel kernxn;

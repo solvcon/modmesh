@@ -521,7 +521,7 @@ protected:
         {
             throw std::out_of_range(Formatter() << name << ": input not 1D");
         }
-        const uint_type nselm = static_cast<uint_type>(self.grid().nselm() - odd_plane);
+        const auto nselm = static_cast<uint_type>(self.grid().nselm() - odd_plane);
         if (nselm != arr.size())
         {
             throw std::out_of_range(Formatter() << name << ": arr size " << arr.size() << " != nselm " << nselm);
