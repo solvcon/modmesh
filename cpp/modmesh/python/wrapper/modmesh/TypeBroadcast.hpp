@@ -104,7 +104,7 @@ struct TypeBroadcastImpl
             sidx_init[i] = 0;
         }
 
-        copy_idx(arr_out, slices, arr_new, left_shape, sidx_init, arr_out.ndim() - 1);
+        copy_idx(arr_out, slices, arr_new, left_shape, sidx_init, static_cast<int>(arr_out.ndim()) - 1);
     }
 }; /* end struct TypeBroadcastImpl */
 

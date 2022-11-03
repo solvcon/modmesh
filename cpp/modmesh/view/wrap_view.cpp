@@ -102,7 +102,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRLine
                         QVector3D v1(x1, y1, z1);
                         QColor color(color_r, color_g, color_b, 255);
                         auto * ret = new RLine(v0, v1, color, scene);
-                        ret->addArrowHead(0.2, 0.4);
+                        ret->addArrowHead(0.2f, 0.4f);
                         return ret;
                     }));
     }

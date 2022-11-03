@@ -1,4 +1,5 @@
 .vscode
+.vs
 .idea
 __pycache__/
 build/
@@ -12,3 +13,9 @@ setup.mk
 *.pyo
 *.so
 *.dylib
+*.pyd
+*.vcx*
+*.sln
+*.tlog
+*.obj
+*.pdb

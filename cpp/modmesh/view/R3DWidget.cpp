@@ -42,8 +42,8 @@ R3DWidget::R3DWidget(Qt3DExtras::Qt3DWindow * window, RScene * scene, QWidget * 
     // Set up the camera.
     Qt3DRender::QCamera * camera = m_view->camera();
     camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
-    camera->setPosition(QVector3D(0, 0, 10.0f));
-    camera->setViewCenter(QVector3D(0, 0, 0));
+    camera->setPosition(QVector3D(0.0f, 0.0f, 10.0f));
+    camera->setViewCenter(QVector3D(0.0f, 0.0f, 0.0f));
 
     // Set up the camera control.
     auto * control = m_scene->controller();

@@ -234,7 +234,7 @@ template <size_t ALPHA>
 inline void BadEuler1DSolver::march_half_so1_alpha(bool odd_plane)
 {
     const int_type start = odd_plane ? -1 : 0;
-    const int_type stop = grid().ncelm();
+    const int_type stop = static_cast<int_type>(grid().ncelm());
     const double gamma = 1.4;
     // Kernal at xneg solution element.
     Euler1DKernel kernxn;

@@ -61,7 +61,7 @@ RArrowHead::RArrowHead(QVector3D const & v0, QVector3D const & v1, QColor const 
     addComponent(m_renderer);
 
     auto * transform = new Qt3DCore::QTransform();
-    transform->setRotation(QQuaternion::rotationTo(QVector3D(0, 1, 0), vec));
+    transform->setRotation(QQuaternion::rotationTo(QVector3D(0.0f, 1.0f, 0.0f), vec));
     transform->setScale(1.0f);
     transform->setTranslation(v0 + vec / 2);
     addComponent(transform);
@@ -197,16 +197,16 @@ static Qt3DCore::QEntity * drawText(std::string const & text, QVector3D loc, flo
 
 RAxisMark::RAxisMark(Qt3DCore::QNode * parent)
     : Qt3DCore::QEntity(parent)
-    , m_xmark(new RLine(QVector3D(0, 0, 0), QVector3D(1, 0, 0), Qt::red, this))
-    , m_ymark(new RLine(QVector3D(0, 0, 0), QVector3D(0, 1, 0), Qt::green, this))
-    , m_zmark(new RLine(QVector3D(0, 0, 0), QVector3D(0, 0, 1), Qt::blue, this))
-    , m_xtext(detail::drawText("X", QVector3D{1.1, 0, 0}, 0.2f, Qt::red, this))
-    , m_ytext(detail::drawText("Y", QVector3D{0, 1.1, 0}, 0.2f, Qt::green, this))
-    , m_ztext(detail::drawText("Z", QVector3D{0, 0, 1.1}, 0.2f, Qt::blue, this))
+    , m_xmark(new RLine(QVector3D(0.0f, 0.0f, 0.0f), QVector3D(1.0f, 0.0f, 0.0f), Qt::red, this))
+    , m_ymark(new RLine(QVector3D(0.0f, 0.0f, 0.0f), QVector3D(0.0f, 1.0f, 0.0f), Qt::green, this))
+    , m_zmark(new RLine(QVector3D(0.0f, 0.0f, 0.0f), QVector3D(0.0f, 0.0f, 1.0f), Qt::blue, this))
+    , m_xtext(detail::drawText("X", QVector3D{1.1f, 0.0f, 0.0f}, 0.2f, Qt::red, this))
+    , m_ytext(detail::drawText("Y", QVector3D{0.0f, 1.1f, 0.0f}, 0.2f, Qt::green, this))
+    , m_ztext(detail::drawText("Z", QVector3D{0.0f, 0.0f, 1.1f}, 0.2f, Qt::blue, this))
 {
-    m_xmark->addArrowHead(0.2, 0.4);
-    m_ymark->addArrowHead(0.2, 0.4);
-    m_zmark->addArrowHead(0.2, 0.4);
+    m_xmark->addArrowHead(0.2f, 0.4f);
+    m_ymark->addArrowHead(0.2f, 0.4f);
+    m_zmark->addArrowHead(0.2f, 0.4f);
 }
 
 } /* end namespace modmesh */

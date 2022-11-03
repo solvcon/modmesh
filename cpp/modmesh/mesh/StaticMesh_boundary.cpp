@@ -58,10 +58,10 @@ void StaticMesh::build_boundary()
     size_t ait = 0;
     for (size_t ifc = 0; ifc < nface(); ++ifc)
     {
-        if (fcjcl(ifc) < 0)
+        if (fcjcl(static_cast<int_type>(ifc)) < 0)
         {
             assert(ait < allfacn.size());
-            allfacn[ait] = ifc;
+            allfacn[ait] = static_cast<int_type>(ifc);
             ++ait;
         }
     }
@@ -81,7 +81,7 @@ void StaticMesh::build_boundary()
              * block (if exists).
              */
             m_bndfcs(ibfc, 0) = bfacn(bfit, 0);
-            m_bndfcs(ibfc, 1) = ibnd;
+            m_bndfcs(ibfc, 1) = static_cast<int_type>(ibnd);
             bfacn(bfit, 1) = static_cast<int_type>(ibfc);
             auto found = std::find(allfacn.begin(), allfacn.end(), bfacn(bfit, 0));
             if (allfacn.end() != found)
@@ -105,7 +105,7 @@ void StaticMesh::build_boundary()
             if (!specified[sit])
             {
                 m_bndfcs(ibfc, 0) = allfacn[sit];
-                m_bndfcs(ibfc, 1) = ibnd;
+                m_bndfcs(ibfc, 1) = static_cast<int_type>(ibnd);
                 bfacn(bfit, 0) = allfacn[sit];
                 bfacn(bfit, 1) = static_cast<int_type>(ibfc);
                 ++ibfc;
@@ -122,7 +122,10 @@ void StaticMesh::build_boundary()
 void StaticMesh::build_ghost()
 {
 
-    std::tie(m_ngstnode, m_ngstface, m_ngstcell) = count_ghost();
+    auto count_ghost_tuple = count_ghost();
+    m_ngstnode = static_cast<uint_type>(std::get<0>(count_ghost_tuple));
+    m_ngstface = static_cast<uint_type>(std::get<1>(count_ghost_tuple));
+    m_ngstcell = static_cast<uint_type>(std::get<2>(count_ghost_tuple));
 
 #define MM_DECL_GHOST_SWAP1(N, T, D1, I)                                  \
     {                                                                     \
@@ -187,10 +190,10 @@ std::tuple<size_t, size_t, size_t> StaticMesh::count_ghost() const
     {
         const int_type ifc = m_bndfcs(ibfc, 0);
         const int_type icl = m_fccls(ifc, 0);
-        ngstface += CellType::by_id(m_cltpn(icl)).nface() - 1;
+        ngstface += static_cast<size_t>(CellType::by_id(static_cast<uint8_t>(m_cltpn(icl))).nface()) - 1;
         ngstnode += m_clnds(icl, 0) - m_fcnds(ifc, 0);
     }
-    return std::make_tuple(ngstnode, ngstface, m_nbound);
+    return std::make_tuple(ngstnode, ngstface, static_cast<size_t>(m_nbound));
 }
 
 /**

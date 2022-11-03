@@ -47,7 +47,7 @@ public:
     using const_iterator = T const *;
 
     explicit small_vector(size_t size)
-        : m_size(size)
+        : m_size(static_cast<unsigned int>(size))
     {
         if (m_size > N)
         {
@@ -200,7 +200,7 @@ public:
         else
         {
             std::copy(other.begin(), other.end(), begin());
-            m_size = other.size();
+            m_size = static_cast<unsigned int>(other.size());
         }
         return *this;
     }
