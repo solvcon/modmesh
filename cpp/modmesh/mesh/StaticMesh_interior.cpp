@@ -356,31 +356,31 @@ struct FaceBuilder
 
     void populate()
     {
-        size_t ifc = 0;
-        for (size_t icl = 0; icl < cltpn.nbody(); ++icl)
+        int_type ifc = 0;
+        for (int icl = 0; icl < static_cast<int_type>(cltpn.nbody()); ++icl)
         {
             switch (cltpn(icl))
             {
             case CellType::LINE:
-                ifc += add_line(static_cast<int_type>(icl), static_cast<int_type>(ifc));
+                ifc += static_cast<int_type>(add_line(icl, ifc));
                 break;
             case CellType::QUADRILATERAL:
-                ifc += add_quadrilateral(static_cast<int_type>(icl), static_cast<int_type>(ifc));
+                ifc += static_cast<int_type>(add_quadrilateral(icl, ifc));
                 break;
             case CellType::TRIANGLE:
-                ifc += add_triangle(static_cast<int_type>(icl), static_cast<int_type>(ifc));
+                ifc += static_cast<int_type>(add_triangle(icl, ifc));
                 break;
             case CellType::HEXAHEDRON:
-                ifc += add_hexahedron(static_cast<int_type>(icl), static_cast<int_type>(ifc));
+                ifc += static_cast<int_type>(add_hexahedron(icl, ifc));
                 break;
             case CellType::TETRAHEDRON:
-                ifc += add_tetrahedron(static_cast<int_type>(icl), static_cast<int_type>(ifc));
+                ifc += static_cast<int_type>(add_tetrahedron(icl, ifc));
                 break;
             case CellType::PRISM:
-                ifc += add_prism(static_cast<int_type>(icl), static_cast<int_type>(ifc));
+                ifc += static_cast<int_type>(add_prism(icl, ifc));
                 break;
             case CellType::PYRAMID:
-                ifc += add_pyramid(static_cast<int_type>(icl), static_cast<int_type>(ifc));
+                ifc += static_cast<int_type>(add_pyramid(icl, ifc));
                 break;
             default:
                 break;
