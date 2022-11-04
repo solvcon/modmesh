@@ -96,7 +96,7 @@ include(GNUInstallDirs)
 set(MODMESH_PY_DIR "${PROJECT_SOURCE_DIR}/modmesh")
 
 if(MSVC)
-    set(COMMON_COMPILER_OPTIONS /W4 /bigobj /WX)
+    set(COMMON_COMPILER_OPTIONS /W4 /bigobj /WX -D_CRT_SECURE_NO_WARNINGS)
 else()
     set(COMMON_COMPILER_OPTIONS -Wall -Wextra)
     if(USE_CLANG_TIDY AND LINT_AS_ERRORS)

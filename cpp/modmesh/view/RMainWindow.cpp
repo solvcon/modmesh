@@ -36,9 +36,16 @@ namespace modmesh
 
 void RMainWindow::setUp()
 {
-    m_pytext = new RPythonText(QString("Python"), this);
+    auto console = std::make_shared<RPythonConsole>(QString("Console"), this);
+
+    m_pyconsole = console;
+    m_pyconsole->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+
+    m_pytext = new RPythonText(QString("Python"), this, Qt::WindowFlags(), console);
     m_pytext->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+
     addDockWidget(Qt::RightDockWidgetArea, m_pytext);
+    addDockWidget(Qt::RightDockWidgetArea, m_pyconsole.get());
 
     m_viewer = new R3DWidget();
     setCentralWidget(m_viewer);

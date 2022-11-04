@@ -160,6 +160,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
                 {
                     return self.main()->pytext();
                 })
+            .def_property_readonly(
+                "pyconsole",
+                [](wrapped_type & self)
+                {
+                    return self.main()->pyconsole();
+                })
             .def("setup", &RApplication::setup)
             .def(
                 "exec",

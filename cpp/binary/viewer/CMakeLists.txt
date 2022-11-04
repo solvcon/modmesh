@@ -27,6 +27,7 @@ find_package(Qt6 COMPONENTS 3DExtras)
 
 qt_add_executable(
     viewer
+    WIN32
     viewer.cpp
     ${MODMESH_HEADERS}
     ${MODMESH_SOURCES}
@@ -45,6 +46,15 @@ qt_add_executable(
     ${MODMESH_PYMOD_SPACETIME_HEADERS}
     ${MODMESH_PYMOD_SPACETIME_SOURCES}
 )
+
+if(WIN32)
+    set_target_properties(
+        viewer
+        PROPERTIES
+        LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE" # open the console for debug mode
+        LINK_FLAGS_RELEASE "/SUBSYSTEM:windows /ENTRY:mainCRTStartup"
+    )
+endif(WIN32)
 
 add_custom_target(run_viewer_pytest $<TARGET_FILE:viewer> --mode=pytest)
 

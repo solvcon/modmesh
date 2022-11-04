@@ -9,6 +9,7 @@ set(MODMESH_VIEW_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/RAxisMark.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMainWindow.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RPythonText.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RPythonConsole.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RStaticMesh.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMenu.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/view.hpp
@@ -22,6 +23,7 @@ set(MODMESH_VIEW_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/RAxisMark.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMainWindow.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RPythonText.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RPythonConsole.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RStaticMesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMenu.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_view.cpp

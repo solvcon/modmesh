@@ -29,6 +29,7 @@
  */
 
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
+#include <modmesh/view/RPythonConsole.hpp>
 
 #include <Qt>
 #include <QDockWidget>
@@ -48,7 +49,8 @@ public:
     RPythonText(
         QString const & title = "Python",
         QWidget * parent = nullptr,
-        Qt::WindowFlags flags = Qt::WindowFlags());
+        Qt::WindowFlags flags = Qt::WindowFlags(),
+        std::shared_ptr<RPythonConsole> console = nullptr);
 
     std::string code() const;
     void setCode(std::string const & value);
@@ -63,6 +65,7 @@ private:
     QPushButton * m_run = nullptr;
     QVBoxLayout * m_layout = nullptr;
     QWidget * m_widget = nullptr;
+    std::shared_ptr<RPythonConsole> m_console = nullptr;
 
 }; /* end class RPythonText */
 

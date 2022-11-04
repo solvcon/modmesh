@@ -27,45 +27,40 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <memory>
 
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
 
-#include <modmesh/view/RPythonText.hpp>
-#include <modmesh/view/RPythonConsole.hpp>
-#include <modmesh/view/R3DWidget.hpp>
-
 #include <Qt>
-#include <QMainWindow>
+#include <QDockWidget>
+#include <QTextEdit>
+#include <QPushButton>
+#include <QVBoxLayout>
 
 namespace modmesh
 {
 
-class RMainWindow
-    : public QMainWindow
+class RPythonConsole
+    : public QDockWidget
 {
 
 public:
 
-    RMainWindow()
-        : QMainWindow()
-    {
-        setUp();
-    }
+    RPythonConsole(
+        QString const & title = "Console",
+        QWidget * parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
-    RPythonText * pytext() { return m_pytext; }
-    RPythonConsole * pyconsole() { return m_pyconsole.get(); }
-    R3DWidget * viewer() { return m_viewer; }
+    void setConsole(std::string const & stdout_str, std::string const & stderr_str);
 
 private:
 
     void setUp();
 
-    RPythonText * m_pytext = nullptr;
-    std::shared_ptr<RPythonConsole> m_pyconsole = nullptr;
-    R3DWidget * m_viewer = nullptr;
+    QTextEdit * m_text = nullptr;
+    QVBoxLayout * m_layout = nullptr;
+    QWidget * m_widget = nullptr;
 
-}; /* end class RPythonText */
+}; /* end class RPythonConsole */
 
 } /* end namespace modmesh */
 

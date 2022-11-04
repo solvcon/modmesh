@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -27,45 +25,46 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <memory>
 
-#include <modmesh/view/common_detail.hpp> // Must be the first include.
-
-#include <modmesh/view/RPythonText.hpp>
-#include <modmesh/view/RPythonConsole.hpp>
-#include <modmesh/view/R3DWidget.hpp>
-
-#include <Qt>
-#include <QMainWindow>
+#include <modmesh/view/RPythonConsole.hpp> // Must be the first include.
+#include <sstream>
 
 namespace modmesh
 {
 
-class RMainWindow
-    : public QMainWindow
+RPythonConsole::RPythonConsole(
+    QString const & title,
+    QWidget * parent,
+    Qt::WindowFlags flags)
+    : QDockWidget(title, parent, flags)
+    , m_text(new QTextEdit)
+    , m_layout(new QVBoxLayout)
+    , m_widget(new QWidget)
 {
+    m_text->setFont(QFont("Courier New"));
+    m_layout->addWidget(m_text);
+    m_widget->setLayout(m_layout);
 
-public:
+    setWidget(m_widget);
 
-    RMainWindow()
-        : QMainWindow()
-    {
-        setUp();
-    }
+    setUp();
+}
 
-    RPythonText * pytext() { return m_pytext; }
-    RPythonConsole * pyconsole() { return m_pyconsole.get(); }
-    R3DWidget * viewer() { return m_viewer; }
+void RPythonConsole::setUp()
+{
+    m_text->setReadOnly(true);
+    m_text->setPlainText(QString(""));
+}
 
-private:
-
-    void setUp();
-
-    RPythonText * m_pytext = nullptr;
-    std::shared_ptr<RPythonConsole> m_pyconsole = nullptr;
-    R3DWidget * m_viewer = nullptr;
-
-}; /* end class RPythonText */
+void RPythonConsole::setConsole(std::string const & stdout_str, std::string const & stderr_str)
+{
+    std::stringstream ss;
+    ss << "stdout:" << std::endl
+       << stdout_str << std::endl
+       << "stderr:" << std::endl
+       << stderr_str << std::endl;
+    m_text->setPlainText(QString(ss.str().c_str()));
+}
 
 } /* end namespace modmesh */
 
