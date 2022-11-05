@@ -31,6 +31,7 @@
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
 
 #include <modmesh/view/RPythonText.hpp>
+#include <modmesh/view/RPythonConsoleDockWidget.hpp>
 #include <modmesh/view/R3DWidget.hpp>
 
 #include <Qt>
@@ -59,6 +60,7 @@ private:
     void setUp();
 
     RPythonText * m_pytext = nullptr;
+    RPythonConsoleDockWidget * m_pycon = nullptr;
     R3DWidget * m_viewer = nullptr;
 
 }; /* end class RPythonText */

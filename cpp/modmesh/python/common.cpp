@@ -166,6 +166,14 @@ void Interpreter::preload_modules(std::vector<std::string> const & names)
     }
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+void Interpreter::exec_code(std::string const & code)
+{
+    // NOLINTNEXTLINE(misc-const-correctness)
+    pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
+    mod_sys.attr("exec_code")(code);
+}
+
 } /* end namespace python */
 
 } /* end namespace modmesh */

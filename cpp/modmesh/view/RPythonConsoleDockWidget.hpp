@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -26,27 +28,63 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/RMainWindow.hpp> // Must be the first include.
+#include <modmesh/python/common.hpp> // must be first.
 
-#include <modmesh/view/RPythonText.hpp>
-#include <modmesh/view/R3DWidget.hpp>
+#include <string>
+#include <deque>
+
+#include <Qt>
+#include <QDockWidget>
+#include <QTextEdit>
 
 namespace modmesh
 {
 
-void RMainWindow::setUp()
+class RPythonCommandTextEdit
+    : public QTextEdit
 {
-    m_pytext = new RPythonText(QString("Python"), this);
-    m_pytext->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    addDockWidget(Qt::RightDockWidgetArea, m_pytext);
+    Q_OBJECT
 
-    m_pycon = new RPythonConsoleDockWidget(QString("Console"), this);
-    m_pycon->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::TopDockWidgetArea);
-    addDockWidget(Qt::BottomDockWidgetArea, m_pycon);
+public:
 
-    m_viewer = new R3DWidget();
-    setCentralWidget(m_viewer);
-}
+    void keyPressEvent(QKeyEvent * event) override;
+
+signals:
+
+    void execute();
+    void navigate(int offset);
+
+}; /* end class RPythonCommandTextEdit */
+
+class RPythonConsoleDockWidget
+    : public QDockWidget
+{
+    Q_OBJECT
+
+public:
+
+    explicit RPythonConsoleDockWidget(
+        QString const & title = "Console",
+        QWidget * parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
+
+public slots:
+
+    void executeCommand();
+    void navigateCommand(int offset);
+
+private:
+
+    void appendPastCommand(std::string const & code);
+
+    QTextEdit * m_history_edit = nullptr;
+    RPythonCommandTextEdit * m_command_edit = nullptr;
+    std::string m_command_string;
+    std::deque<std::string> m_past_command_strings;
+    int m_current_command_index = 0;
+    size_t m_past_limit = 1024;
+
+}; /* end class RPythonConsoleDockWidget */
 
 } /* end namespace modmesh */
 

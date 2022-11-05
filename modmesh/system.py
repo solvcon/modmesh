@@ -34,14 +34,17 @@ import builtins
 import sys
 import os
 import argparse
+import traceback
 
 import modmesh
 from . import view
+from . import apputil
 
 
 __all__ = [
     'setup_process',
     'enter_main',
+    'exec_code',
 ]
 
 
@@ -110,5 +113,15 @@ def enter_main(argv):
     else:
         sys.stderr.write('mode "{}" is not supported'.format(args.mode))
     return ret
+
+
+def exec_code(code):
+    try:
+        apputil.run_code(code)
+    except Exception as e:
+        sys.stdout.write("code:\n{}\n".format(code))
+        sys.stdout.write("{}: {}\n".format(type(e).__name__, str(e)))
+        sys.stdout.write("traceback:\n")
+        traceback.print_stack()
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
