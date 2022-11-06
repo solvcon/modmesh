@@ -30,7 +30,6 @@
 
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
 
-#include <modmesh/view/RPythonText.hpp>
 #include <modmesh/view/RPythonConsoleDockWidget.hpp>
 #include <modmesh/view/R3DWidget.hpp>
 
@@ -52,14 +51,13 @@ public:
         setUp();
     }
 
-    RPythonText * pytext() { return m_pytext; }
+    RPythonConsoleDockWidget * pycon() { return m_pycon; }
     R3DWidget * viewer() { return m_viewer; }
 
 private:
 
     void setUp();
 
-    RPythonText * m_pytext = nullptr;
     RPythonConsoleDockWidget * m_pycon = nullptr;
     R3DWidget * m_viewer = nullptr;
 
