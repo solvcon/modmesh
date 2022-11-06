@@ -26,7 +26,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/RMenu.hpp> // Must be the first include.
+#include <modmesh/view/RAction.hpp> // Must be the first include.
+
+#include <functional>
 
 namespace modmesh
 {
@@ -41,14 +43,20 @@ RAction::RAction(QString const & text, QString const & tipText, std::function<vo
     }
 }
 
-RMenu::RMenu(QString const & text, QWidget * parent)
-    : QMenu(text, parent)
+RAppAction::RAppAction(const QString & text, const QString & tipText, const QString & appName, QObject * parent)
+    : QAction(text, parent)
+    , m_appName(appName)
 {
+    setStatusTip(tipText);
+    connect(this, &QAction::triggered, this, &RAppAction::run);
 }
 
-RMenuBar::RMenuBar(QWidget * parent)
-    : QMenuBar(parent)
+void RAppAction::run()
 {
+    namespace py = pybind11;
+    py::module_ appmod = py::module_::import(m_appName.toStdString().c_str());
+    appmod.reload();
+    appmod.attr("load_app")();
 }
 
 } /* end namespace modmesh */

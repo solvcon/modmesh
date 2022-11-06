@@ -78,8 +78,12 @@ def _parse_command_line(argv):
 
 def _run_viewer(argv):
     """Run the viewer application."""
-    view.app().setup()
-    return view.app().exec()
+    view.app.setup()
+    wm = view.app.mainWindow
+    wm.windowTitle = "Modmesh Viewer"
+    wm.resize(w=1000, h=600)
+    wm.show()
+    return view.app.exec()
 
 
 def _run_pytest():
