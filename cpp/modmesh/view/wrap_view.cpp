@@ -109,25 +109,34 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRLine
 
 }; /* end class WrapRLine */
 
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRPythonText
-    : public WrapBase<WrapRPythonText, RPythonText>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRPythonConsoleDockWidget
+    : public WrapBase<WrapRPythonConsoleDockWidget, RPythonConsoleDockWidget>
 {
 
     friend root_base_type;
 
-    WrapRPythonText(pybind11::module & mod, char const * pyname, char const * pydoc)
+    WrapRPythonConsoleDockWidget(pybind11::module & mod, char const * pyname, char const * pydoc)
         : root_base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
 
         (*this)
-            .def_property("code", &wrapped_type::code, &wrapped_type::setCode)
+            .def_property(
+                "command",
+                [](wrapped_type const & self)
+                {
+                    return self.command().toStdString();
+                },
+                [](wrapped_type & self, std::string const & command)
+                {
+                    return self.setCommand(QString::fromStdString(command));
+                })
             //
             ;
     }
 
-}; /* end class WrapRPythonText */
+}; /* end class WrapRPythonConsoleDockWidget */
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
     : public WrapBase<WrapRApplication, RApplication>
@@ -155,10 +164,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
                     return self.main()->viewer();
                 })
             .def_property_readonly(
-                "pytext",
+                "pycon",
                 [](wrapped_type & self)
                 {
-                    return self.main()->pytext();
+                    return self.main()->pycon();
                 })
             .def("setup", &RApplication::setup)
             .def(
@@ -210,7 +219,7 @@ void wrap_view(pybind11::module & mod)
 
     WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
     WrapRLine::commit(mod, "RLine", "RLine");
-    WrapRPythonText::commit(mod, "RPythonText", "RPythonText");
+    WrapRPythonConsoleDockWidget::commit(mod, "RPythonConsoleDockWidget", "RPythonConsoleDockWidget");
     WrapRApplication::commit(mod, "RApplication", "RApplication");
 
     mod

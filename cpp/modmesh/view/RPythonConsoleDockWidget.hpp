@@ -68,8 +68,11 @@ public:
         QWidget * parent = nullptr,
         Qt::WindowFlags flags = Qt::WindowFlags());
 
+    QString command() const;
+
 public slots:
 
+    void setCommand(QString const & value);
     void executeCommand();
     void navigateCommand(int offset);
 

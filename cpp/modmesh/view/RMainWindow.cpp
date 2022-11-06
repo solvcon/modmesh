@@ -28,7 +28,6 @@
 
 #include <modmesh/view/RMainWindow.hpp> // Must be the first include.
 
-#include <modmesh/view/RPythonText.hpp>
 #include <modmesh/view/R3DWidget.hpp>
 
 namespace modmesh
@@ -36,12 +35,8 @@ namespace modmesh
 
 void RMainWindow::setUp()
 {
-    m_pytext = new RPythonText(QString("Python"), this);
-    m_pytext->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    addDockWidget(Qt::RightDockWidgetArea, m_pytext);
-
     m_pycon = new RPythonConsoleDockWidget(QString("Console"), this);
-    m_pycon->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::TopDockWidgetArea);
+    m_pycon->setAllowedAreas(Qt::AllDockWidgetAreas);
     addDockWidget(Qt::BottomDockWidgetArea, m_pycon);
 
     m_viewer = new R3DWidget();

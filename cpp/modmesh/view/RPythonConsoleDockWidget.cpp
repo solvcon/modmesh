@@ -87,6 +87,27 @@ RPythonConsoleDockWidget::RPythonConsoleDockWidget(const QString & title, QWidge
     connect(m_command_edit, &RPythonCommandTextEdit::navigate, this, &RPythonConsoleDockWidget::navigateCommand);
 }
 
+QString RPythonConsoleDockWidget::command() const
+{
+    return m_command_edit->toPlainText();
+}
+
+void RPythonConsoleDockWidget::setCommand(const QString & value)
+{
+    m_command_edit->setPlainText(value);
+    m_command_string = value.toStdString();
+    // Move cursor to the end of line.
+    {
+        QTextCursor cursor = m_command_edit->textCursor();
+        cursor.movePosition(QTextCursor::EndOfLine);
+        m_command_edit->setTextCursor(cursor);
+    }
+    if (!m_command_edit->hasFocus())
+    {
+        m_command_edit->setFocus();
+    }
+}
+
 void RPythonConsoleDockWidget::executeCommand()
 {
     std::string const code = m_command_edit->toPlainText().toStdString();
