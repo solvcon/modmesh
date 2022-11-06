@@ -36,7 +36,7 @@ from .. import view
 
 def load_app():
     cmd = "mh = mm.app.sample_mesh.run()"
-    view.app().pycon.command = cmd
+    view.app.pycon.command = cmd
 
 
 def make_triangle():
@@ -64,9 +64,9 @@ def make_tetrahedron():
 def run():
 
     # Uncomment to set direction.
-    # view.app().viewer.up_vector = (0, 1, 0)
-    # view.app().viewer.position = (-10, -10, -20)
-    # view.app().viewer.view_center = (0, 0, 0)
+    # view.app().mainWindow.viewer.up_vector = (0, 1, 0)
+    # view.app().mainWindow.viewer.position = (-10, -10, -20)
+    # view.app().mainWindow.viewer.view_center = (0, 0, 0)
 
     mh = make_triangle()
     # mh = make_tetrahedron()
@@ -74,9 +74,9 @@ def run():
     view.show(mh)
 
     print("nedge:", mh.nedge)
-    print("position:", view.app().viewer.position)
-    print("up_vector:", view.app().viewer.up_vector)
-    print("view_center:", view.app().viewer.view_center)
+    print("position:", view.app.mainWindow.viewer.position)
+    print("up_vector:", view.app.mainWindow.viewer.up_vector)
+    print("view_center:", view.app.mainWindow.viewer.view_center)
 
     # line = mm.view.RLine(-1, -1, -1, -2, -2, -2, 0, 128, 128)
     # print(line)

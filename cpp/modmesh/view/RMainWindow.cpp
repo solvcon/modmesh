@@ -30,17 +30,119 @@
 
 #include <modmesh/view/R3DWidget.hpp>
 
+#include <modmesh/view/RAction.hpp>
+#include <modmesh/view/RApplication.hpp>
+#include <Qt>
+#include <QMenuBar>
+#include <QMenu>
+#include <QAction>
+#include <QActionGroup>
+
 namespace modmesh
 {
 
+RMainWindow::RMainWindow()
+    : QMainWindow()
+{
+    setUp();
+}
+
 void RMainWindow::setUp()
 {
+    this->setWindowIcon(QIcon(m_iconFilePath));
+
+    this->setMenuBar(new QMenuBar(nullptr));
+    m_fileMenu = this->menuBar()->addMenu(QString("File"));
+    m_appMenu = this->menuBar()->addMenu(QString("App"));
+    m_cameraMenu = this->menuBar()->addMenu(QString("Camera"));
+
+    {
+        auto * action = new RAction(
+            QString("New file"),
+            QString("Create new file"),
+            []()
+            {
+                qDebug() << "This is only a demo: Create new file!";
+            });
+        m_fileMenu->addAction(action);
+    }
+
+#ifndef Q_OS_MACOS
+    {
+        // Qt for mac merges "quit" or "exit" with the default quit item in the
+        // system menu:
+        // https://doc.qt.io/qt-6/qmenubar.html#qmenubar-as-a-global-menu-bar
+        auto * action = new RAction(
+            QString("Exit"),
+            QString("Exit the application"),
+            []()
+            {
+                RApplication::instance()->quit();
+            });
+        m_fileMenu->addAction(action);
+    }
+#endif
+
+    {
+        auto * use_orbit_camera = new RAction(
+            QString("Use Oribt Camera Controller"),
+            QString("Use Oribt Camera Controller"),
+            [this]()
+            {
+                qDebug() << "Use Orbit Camera Controller";
+                auto * viewer = this->viewer();
+                viewer->scene()->setOrbitCameraController();
+                viewer->scene()->controller()->setCamera(viewer->camera());
+            });
+
+        auto * use_fps_camera = new RAction(
+            QString("Use First Person Camera Controller"),
+            QString("Use First Person Camera Controller"),
+            [this]()
+            {
+                qDebug() << "Use First Person Camera Controller";
+                auto * viewer = this->viewer();
+                viewer->scene()->setFirstPersonCameraController();
+                viewer->scene()->controller()->setCamera(viewer->camera());
+            });
+
+        auto * cameraGroup = new QActionGroup(this);
+        cameraGroup->addAction(use_orbit_camera);
+        cameraGroup->addAction(use_fps_camera);
+        use_orbit_camera->setCheckable(true);
+        use_fps_camera->setCheckable(true);
+        use_orbit_camera->setChecked(true);
+
+        m_cameraMenu->addAction(use_orbit_camera);
+        m_cameraMenu->addAction(use_fps_camera);
+    }
+
     m_pycon = new RPythonConsoleDockWidget(QString("Console"), this);
     m_pycon->setAllowedAreas(Qt::AllDockWidgetAreas);
     addDockWidget(Qt::BottomDockWidgetArea, m_pycon);
 
     m_viewer = new R3DWidget();
     setCentralWidget(m_viewer);
+}
+
+void RMainWindow::clearApplications()
+{
+    for (QAction * a : this->m_appMenu->actions())
+    {
+        auto * p = dynamic_cast<RAppAction *>(a);
+        if (nullptr != p)
+        {
+            this->m_appMenu->removeAction(a);
+        }
+    }
+}
+
+void RMainWindow::addApplication(QString const & name)
+{
+    m_appMenu->addAction(new RAppAction(
+        QString("Load ") + name,
+        QString("Load ") + name,
+        QString("modmesh.app.") + name));
 }
 
 } /* end namespace modmesh */
