@@ -35,25 +35,8 @@ from .. import view
 
 
 def load_app():
-    view.app().pytext.code = """import modmesh as mm
-
-#mm.view.app().viewer.up_vector = (0, 1, 0)
-#mm.view.app().viewer.position = (-10, -10, -20)
-#mm.view.app().viewer.view_center = (0, 0, 0)
-
-mh = mm.app.sample_mesh.make_triangle()
-#mh = mm.app.sample_mesh.make_tetrahedron()
-mm.view.show_mark()
-mm.view.show(mh)
-
-print("nedge:", mh.nedge)
-print("position:", mm.view.app().viewer.position)
-print("up_vector:", mm.view.app().viewer.up_vector)
-print("view_center:", mm.view.app().viewer.view_center)
-
-# line = mm.view.RLine(-1, -1, -1, -2, -2, -2, 0, 128, 128)
-# print(line)
-"""
+    cmd = "mh = mm.app.sample_mesh.run()"
+    view.app().pycon.command = cmd
 
 
 def make_triangle():
@@ -75,6 +58,29 @@ def make_tetrahedron():
     mh.build_interior()
     mh.build_boundary()
     mh.build_ghost()
+    return mh
+
+
+def run():
+
+    # Uncomment to set direction.
+    # view.app().viewer.up_vector = (0, 1, 0)
+    # view.app().viewer.position = (-10, -10, -20)
+    # view.app().viewer.view_center = (0, 0, 0)
+
+    mh = make_triangle()
+    # mh = make_tetrahedron()
+    view.show_mark()
+    view.show(mh)
+
+    print("nedge:", mh.nedge)
+    print("position:", view.app().viewer.position)
+    print("up_vector:", view.app().viewer.up_vector)
+    print("view_center:", view.app().viewer.view_center)
+
+    # line = mm.view.RLine(-1, -1, -1, -2, -2, -2, 0, 128, 128)
+    # print(line)
+
     return mh
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

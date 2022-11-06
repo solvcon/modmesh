@@ -36,7 +36,7 @@ Viewer
 __all__ = [  # noqa: F822
     'R3DWidget',
     'RLine',
-    'RPythonText',
+    'RPythonConsoleDockWidget',
     'RApplication',
     'show',
     'show_mark',
