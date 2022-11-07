@@ -48,6 +48,8 @@ public:
 
     RMainWindow();
 
+    void setUp();
+
     RPythonConsoleDockWidget * pycon() { return m_pycon; }
     R3DWidget * viewer() { return m_viewer; }
 
@@ -58,10 +60,7 @@ public slots:
 
 private:
 
-    void setUp();
-
-    QString m_title = "";
-    QString m_iconFilePath = ":/icon.ico";
+    bool m_already_setup = false;
 
     QMenu * m_fileMenu = nullptr;
     QMenu * m_appMenu = nullptr;

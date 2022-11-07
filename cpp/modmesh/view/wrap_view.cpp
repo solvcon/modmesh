@@ -238,7 +238,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
                 {
                     return self.mainWindow()->pycon();
                 })
-            .def("setup", &RApplication::setup)
+            .def("setUp", &RApplication::setUp)
             .def(
                 "exec",
                 [](wrapped_type & self)

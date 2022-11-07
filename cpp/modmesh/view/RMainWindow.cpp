@@ -44,17 +44,25 @@ namespace modmesh
 RMainWindow::RMainWindow()
     : QMainWindow()
 {
-    setUp();
+    // Do not call setUp() from the constructor.  Windows may crash with
+    // "exited with code -1073740791".  The reason is not yet clarified.
 }
 
 void RMainWindow::setUp()
 {
-    this->setWindowIcon(QIcon(m_iconFilePath));
+    if (m_already_setup)
+    {
+        return;
+    }
+
+    this->setWindowIcon(QIcon(QString(":/icon.ico")));
 
     this->setMenuBar(new QMenuBar(nullptr));
     m_fileMenu = this->menuBar()->addMenu(QString("File"));
     m_appMenu = this->menuBar()->addMenu(QString("App"));
     m_cameraMenu = this->menuBar()->addMenu(QString("Camera"));
+    // NOTE: All menus need to be populated or Windows may crash with
+    // "exited with code -1073740791".  The reason is not yet clarified.
 
     {
         auto * action = new RAction(
@@ -82,6 +90,13 @@ void RMainWindow::setUp()
         m_fileMenu->addAction(action);
     }
 #endif
+
+    {
+        this->addApplication(QString("sample_mesh"));
+        this->addApplication(QString("euler1d"));
+        this->addApplication(QString("linear_wave"));
+        this->addApplication(QString("bad_euler1d"));
+    }
 
     {
         auto * use_orbit_camera = new RAction(
@@ -123,6 +138,8 @@ void RMainWindow::setUp()
 
     m_viewer = new R3DWidget();
     setCentralWidget(m_viewer);
+
+    m_already_setup = true;
 }
 
 void RMainWindow::clearApplications()
