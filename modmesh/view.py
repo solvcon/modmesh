@@ -78,7 +78,6 @@ def _load():
     if enable:
         for name in _from_impl:
             globals()[name] = getattr(_impl, name)
-        populate_applications()
 
 
 _load()

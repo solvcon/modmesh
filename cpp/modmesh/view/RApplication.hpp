@@ -47,7 +47,7 @@ public:
 
     ~RApplication();
 
-    RApplication & setup();
+    RApplication & setUp();
 
     RMainWindow * mainWindow() { return m_mainWindow; }
 
