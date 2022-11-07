@@ -30,28 +30,16 @@
 
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
 
-#include <Qt>
-#include <QMenu>
-#include <QMenuBar>
 #include <QAction>
-
-#include <functional>
 
 namespace modmesh
 {
-
-class RMenuBar
-    : public QMenuBar
-{
-public:
-    RMenuBar(
-        QWidget * parent = nullptr);
-}; /* end class RMenuBar */
 
 class RAction
     : public QAction
 {
 public:
+
     RAction(
         QString const & text,
         QString const & tipText,
@@ -59,14 +47,26 @@ public:
         QObject * parent = nullptr);
 }; /* end class RAction */
 
-class RMenu
-    : public QMenu
+class RAppAction
+    : public QAction
 {
 public:
-    RMenu(
+
+    RAppAction(
         QString const & text,
-        QWidget * parent = nullptr);
-}; /* end class RMenu */
+        QString const & tipText,
+        QString const & appName,
+        QObject * parent = nullptr);
+
+    void run();
+
+    QString const & appName() const { return m_appName; }
+
+private:
+
+    QString m_appName;
+
+}; /* end class RAppAction */
 
 } /* end namespace modmesh */
 

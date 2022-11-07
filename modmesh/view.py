@@ -33,10 +33,11 @@ Viewer
 # Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
 
 
-__all__ = [  # noqa: F822
+_from_impl = [  # noqa: F822
     'R3DWidget',
     'RLine',
     'RPythonConsoleDockWidget',
+    'RMainWindow',
     'RApplication',
     'show',
     'show_mark',
@@ -45,6 +46,10 @@ __all__ = [  # noqa: F822
     'app',
 ]
 
+__all__ = _from_impl + [  # noqa: F822
+    'populateApplications',
+    'resetApplications',
+]
 
 # Try to import the viewer code but easily give up.
 enable = False
@@ -55,9 +60,23 @@ except ImportError:
     pass
 
 
+def populate_applications():
+    mw = _impl.RApplication.instance.mainWindow
+    mw.addApplication("sample_mesh")
+    mw.addApplication("euler1d")
+    mw.addApplication("linear_wave")
+    mw.addApplication("bad_euler1d")
+
+
+def reset_applications():
+    mw = _impl.RApplication.instance.mainWindow
+    mw.clearApplications()
+    populate_applications()
+
+
 def _load():
     if enable:
-        for name in __all__:
+        for name in _from_impl:
             globals()[name] = getattr(_impl, name)
 
 

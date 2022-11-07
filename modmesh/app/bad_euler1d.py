@@ -38,7 +38,7 @@ from .. import spacetime as libst
 
 def load_app():
     cmd = "win, svr = mm.app.bad_euler1d.run(animate=True, interval=10)"
-    view.app().pycon.command = cmd
+    view.app.pycon.command = cmd
 
 
 class ApplicationWindow(QtWidgets.QMainWindow):

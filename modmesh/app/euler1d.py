@@ -38,7 +38,8 @@ from ..onedim import euler1d
 
 def load_app():
     cmd = "win = mm.app.euler1d.run(animate=True, interval=10, max_steps=50)"
-    view.app().pycon.command = cmd
+    cmd += "; win.start()"
+    view.app.pycon.command = cmd
 
 
 class ApplicationWindow(QtWidgets.QMainWindow):

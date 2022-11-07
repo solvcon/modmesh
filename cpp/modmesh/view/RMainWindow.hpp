@@ -42,21 +42,29 @@ namespace modmesh
 class RMainWindow
     : public QMainWindow
 {
+    Q_OBJECT
 
 public:
 
-    RMainWindow()
-        : QMainWindow()
-    {
-        setUp();
-    }
+    RMainWindow();
+
+    void setUp();
 
     RPythonConsoleDockWidget * pycon() { return m_pycon; }
     R3DWidget * viewer() { return m_viewer; }
 
+public slots:
+
+    void clearApplications();
+    void addApplication(QString const & name);
+
 private:
 
-    void setUp();
+    bool m_already_setup = false;
+
+    QMenu * m_fileMenu = nullptr;
+    QMenu * m_appMenu = nullptr;
+    QMenu * m_cameraMenu = nullptr;
 
     RPythonConsoleDockWidget * m_pycon = nullptr;
     R3DWidget * m_viewer = nullptr;
