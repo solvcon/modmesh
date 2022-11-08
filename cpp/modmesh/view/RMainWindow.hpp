@@ -60,6 +60,10 @@ public slots:
 
 private:
 
+    void setUpConsole();
+    void setUpViewer();
+    void setUpMenu();
+
     bool m_already_setup = false;
 
     QMenu * m_fileMenu = nullptr;

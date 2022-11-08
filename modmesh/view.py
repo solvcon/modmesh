@@ -54,14 +54,14 @@ __all__ = _from_impl + [  # noqa: F822
 # Try to import the viewer code but easily give up.
 enable = False
 try:
-    import _modmesh_view as _impl  # noqa: F401
+    from _modmesh import view as _vimpl  # noqa: F401
     enable = True
 except ImportError:
     pass
 
 
 def populate_applications():
-    mw = _impl.RApplication.instance.mainWindow
+    mw = _vimpl.RApplication.instance.mainWindow
     mw.addApplication("sample_mesh")
     mw.addApplication("euler1d")
     mw.addApplication("linear_wave")
@@ -69,7 +69,7 @@ def populate_applications():
 
 
 def reset_applications():
-    mw = _impl.RApplication.instance.mainWindow
+    mw = _vimpl.RApplication.instance.mainWindow
     mw.clearApplications()
     populate_applications()
 
@@ -77,7 +77,7 @@ def reset_applications():
 def _load():
     if enable:
         for name in _from_impl:
-            globals()[name] = getattr(_impl, name)
+            globals()[name] = getattr(_vimpl, name)
 
 
 _load()
