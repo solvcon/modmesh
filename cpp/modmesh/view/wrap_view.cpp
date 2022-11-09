@@ -97,7 +97,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRLine
                 py::init(
                     [](float x0, float y0, float z0, float x1, float y1, float z1, uint8_t color_r, uint8_t color_g, uint8_t color_b)
                     {
-                        auto * scene = RApplication::instance()->main()->viewer()->scene();
+                        auto * scene = RApplication::instance()->mainWindow()->viewer()->scene();
                         QVector3D v0(x0, y0, z0);
                         QVector3D v1(x1, y1, z1);
                         QColor color(color_r, color_g, color_b, 255);
@@ -109,25 +109,103 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRLine
 
 }; /* end class WrapRLine */
 
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRPythonText
-    : public WrapBase<WrapRPythonText, RPythonText>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRPythonConsoleDockWidget
+    : public WrapBase<WrapRPythonConsoleDockWidget, RPythonConsoleDockWidget>
 {
 
     friend root_base_type;
 
-    WrapRPythonText(pybind11::module & mod, char const * pyname, char const * pydoc)
+    WrapRPythonConsoleDockWidget(pybind11::module & mod, char const * pyname, char const * pydoc)
         : root_base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
 
         (*this)
-            .def_property("code", &wrapped_type::code, &wrapped_type::setCode)
+            .def_property(
+                "command",
+                [](wrapped_type const & self)
+                {
+                    return self.command().toStdString();
+                },
+                [](wrapped_type & self, std::string const & command)
+                {
+                    return self.setCommand(QString::fromStdString(command));
+                })
             //
             ;
     }
 
-}; /* end class WrapRPythonText */
+}; /* end class WrapRPythonConsoleDockWidget */
+
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRMainWindow
+    : public WrapBase<WrapRMainWindow, RMainWindow>
+{
+
+    friend root_base_type;
+
+    WrapRMainWindow(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : root_base_type(mod, pyname, pydoc)
+    {
+        namespace py = pybind11;
+
+        (*this)
+            .wrap_basic_qt()
+            .def("clearApplications", &wrapped_type::clearApplications)
+            .def(
+                "addApplication",
+                [](wrapped_type & self, std::string const & name)
+                {
+                    self.addApplication(QString::fromStdString(name));
+                },
+                py::arg("name"))
+            .def_property_readonly(
+                "viewer",
+                [](wrapped_type & self)
+                {
+                    return self.viewer();
+                })
+            .def_property_readonly(
+                "pycon",
+                [](wrapped_type & self)
+                {
+                    return self.pycon();
+                })
+            //
+            ;
+    }
+
+    wrapper_type & wrap_basic_qt()
+    {
+        namespace py = pybind11;
+
+        (*this)
+            .def("show", &wrapped_type::show)
+            .def(
+                "resize",
+                [](wrapped_type & self, int w, int h)
+                {
+                    self.resize(w, h);
+                },
+                py::arg("w"),
+                py::arg("h"))
+            .def_property(
+                "windowTitle",
+                [](wrapped_type const & self)
+                {
+                    return self.windowTitle().toStdString();
+                },
+                [](wrapped_type & self, std::string const & name)
+                {
+                    self.setWindowTitle(QString::fromStdString(name));
+                })
+            //
+            ;
+
+        return *this;
+    }
+
+}; /* end class WrapRMainWindow */
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
     : public WrapBase<WrapRApplication, RApplication>
@@ -149,24 +227,18 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
                     return RApplication::instance();
                 })
             .def_property_readonly(
-                "viewer",
+                "mainWindow",
                 [](wrapped_type & self)
                 {
-                    return self.main()->viewer();
+                    return self.mainWindow();
                 })
             .def_property_readonly(
-                "pytext",
+                "pycon",
                 [](wrapped_type & self)
                 {
-                    return self.main()->pytext();
+                    return self.mainWindow()->pycon();
                 })
-            .def_property_readonly(
-                "pyconsole",
-                [](wrapped_type & self)
-                {
-                    return self.main()->pyconsole();
-                })
-            .def("setup", &RApplication::setup)
+            .def("setUp", &RApplication::setUp)
             .def(
                 "exec",
                 [](wrapped_type & self)
@@ -179,12 +251,42 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
 
 }; /* end class WrapRApplication */
 
+struct RApplicationProxy
+{
+};
+
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplicationProxy
+    : public WrapBase<WrapRApplicationProxy, RApplicationProxy>
+{
+
+    friend root_base_type;
+
+    WrapRApplicationProxy(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : root_base_type(mod, pyname, pydoc)
+    {
+        namespace py = pybind11;
+
+        (*this)
+            .def(
+                "__getattr__",
+                [](wrapped_type &, char const * name)
+                {
+                    py::object obj = py::cast(RApplication::instance());
+                    obj = obj.attr(name);
+                    return obj;
+                })
+            //
+            ;
+    }
+
+}; /* end class WrapRApplicationProxy */
+
 namespace detail
 {
 
 static void show_mark()
 {
-    RScene * scene = RApplication::instance()->main()->viewer()->scene();
+    RScene * scene = RApplication::instance()->mainWindow()->viewer()->scene();
     for (Qt3DCore::QNode * child : scene->childNodes())
     {
         if (typeid(*child) == typeid(RAxisMark))
@@ -197,7 +299,7 @@ static void show_mark()
 
 static void update_appmesh(std::shared_ptr<StaticMesh> const & mesh)
 {
-    RScene * scene = RApplication::instance()->main()->viewer()->scene();
+    RScene * scene = RApplication::instance()->mainWindow()->viewer()->scene();
     for (Qt3DCore::QNode * child : scene->childNodes())
     {
         if (typeid(*child) == typeid(RStaticMesh))
@@ -216,8 +318,10 @@ void wrap_view(pybind11::module & mod)
 
     WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
     WrapRLine::commit(mod, "RLine", "RLine");
-    WrapRPythonText::commit(mod, "RPythonText", "RPythonText");
+    WrapRPythonConsoleDockWidget::commit(mod, "RPythonConsoleDockWidget", "RPythonConsoleDockWidget");
+    WrapRMainWindow::commit(mod, "RMainWindow", "RMainWindow");
     WrapRApplication::commit(mod, "RApplication", "RApplication");
+    WrapRApplicationProxy::commit(mod, "RApplicationProxy", "RApplicationProxy");
 
     mod
         .def("show", &modmesh::python::detail::update_appmesh, py::arg("mesh"))
@@ -226,7 +330,7 @@ void wrap_view(pybind11::module & mod)
             "clip_image",
             []()
             {
-                R3DWidget * viewer = RApplication::instance()->main()->viewer();
+                R3DWidget * viewer = RApplication::instance()->mainWindow()->viewer();
                 QClipboard * clipboard = QGuiApplication::clipboard();
                 clipboard->setPixmap(viewer->grabPixmap());
             })
@@ -234,19 +338,14 @@ void wrap_view(pybind11::module & mod)
             "save_image",
             [](std::string const & filename)
             {
-                R3DWidget * viewer = RApplication::instance()->main()->viewer();
+                R3DWidget * viewer = RApplication::instance()->mainWindow()->viewer();
                 viewer->grabPixmap().save(filename.c_str());
             },
             py::arg("filename"))
-        .def(
-            "app",
-            []()
-            {
-                return RApplication::instance();
-            },
-            py::return_value_policy::reference)
         //
         ;
+
+    mod.attr("app") = RApplicationProxy();
 
     if (Toggle::instance().get_show_axis())
     {

@@ -37,10 +37,8 @@ from .. import spacetime as libst
 
 
 def load_app():
-    view.app().pytext.code = """
-# Need to hold the win object to keep PySide alive.
-win, svr = mm.app.linear_wave.run_linear(animate=True, interval=10)
-""".lstrip()
+    cmd = "win, svr = mm.app.linear_wave.run_linear(animate=True, interval=10)"
+    view.app.pycon.command = cmd
 
 
 class ApplicationWindow(QtWidgets.QMainWindow):

@@ -37,16 +37,9 @@ from ..onedim import euler1d
 
 
 def load_app():
-    view.app().pytext.code = """
-# Need to hold the win object to keep PySide alive.
-win = mm.app.euler1d.run(animate=True, interval=10, max_steps=50)
-print(mm.apputil.environ)
-#win.march_alpha2()
-win.start()
-#win.stop()
-#mm.apputil.stop_code(appenvobj)
-#mm.apputil.environ['master'].locals['win'].timer.stop()
-""".lstrip()
+    cmd = "win = mm.app.euler1d.run(animate=True, interval=10, max_steps=50)"
+    cmd += "; win.start()"
+    view.app.pycon.command = cmd
 
 
 class ApplicationWindow(QtWidgets.QMainWindow):

@@ -31,8 +31,7 @@
 
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
 
-#include <modmesh/view/RPythonText.hpp>
-#include <modmesh/view/RPythonConsole.hpp>
+#include <modmesh/view/RPythonConsoleDockWidget.hpp>
 #include <modmesh/view/R3DWidget.hpp>
 
 #include <Qt>
@@ -44,25 +43,31 @@ namespace modmesh
 class RMainWindow
     : public QMainWindow
 {
+    Q_OBJECT
 
 public:
 
-    RMainWindow()
-        : QMainWindow()
-    {
-        setUp();
-    }
-
-    RPythonText * pytext() { return m_pytext; }
-    RPythonConsole * pyconsole() { return m_pyconsole.get(); }
-    R3DWidget * viewer() { return m_viewer; }
-
-private:
+    RMainWindow();
 
     void setUp();
 
-    RPythonText * m_pytext = nullptr;
-    std::shared_ptr<RPythonConsole> m_pyconsole = nullptr;
+    RPythonConsoleDockWidget * pycon() { return m_pycon; }
+    R3DWidget * viewer() { return m_viewer; }
+
+public slots:
+
+    void clearApplications();
+    void addApplication(QString const & name);
+
+private:
+
+    bool m_already_setup = false;
+
+    QMenu * m_fileMenu = nullptr;
+    QMenu * m_appMenu = nullptr;
+    QMenu * m_cameraMenu = nullptr;
+
+    RPythonConsoleDockWidget * m_pycon = nullptr;
     R3DWidget * m_viewer = nullptr;
 
 }; /* end class RPythonText */

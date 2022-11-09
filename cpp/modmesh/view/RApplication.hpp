@@ -31,7 +31,7 @@
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
 
 #include <modmesh/view/RMainWindow.hpp>
-#include <modmesh/view/RMenu.hpp>
+#include <modmesh/view/RAction.hpp>
 
 #include <Qt>
 #include <QApplication>
@@ -47,9 +47,9 @@ public:
 
     ~RApplication();
 
-    RApplication & setup();
+    RApplication & setUp();
 
-    RMainWindow * main() { return m_main; }
+    RMainWindow * mainWindow() { return m_mainWindow; }
 
     static RApplication * initialize(int argc, char ** argv);
     static RApplication * instance();
@@ -58,14 +58,11 @@ private:
 
     RApplication(int & argc, char ** argv)
         : QApplication(argc, argv)
-        , m_main(new RMainWindow)
+        , m_mainWindow(new RMainWindow)
     {
     }
 
-    RMainWindow * m_main = nullptr;
-
-    const QString m_title = "Modmesh Viewer";
-    const QString m_iconFilePath = ":/icon.ico";
+    RMainWindow * m_mainWindow = nullptr;
 }; /* end class RApplication */
 
 } /* end namespace modmesh */

@@ -18,7 +18,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * A*RE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -29,45 +29,44 @@
  */
 
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
-#include <modmesh/view/RPythonConsole.hpp>
 
-#include <Qt>
-#include <QDockWidget>
-#include <QTextEdit>
-#include <QPushButton>
-#include <QVBoxLayout>
+#include <QAction>
 
 namespace modmesh
 {
 
-class RPythonText
-    : public QDockWidget
+class RAction
+    : public QAction
 {
-
 public:
 
-    RPythonText(
-        QString const & title = "Python",
-        QWidget * parent = nullptr,
-        Qt::WindowFlags flags = Qt::WindowFlags(),
-        std::shared_ptr<RPythonConsole> console = nullptr);
+    RAction(
+        QString const & text,
+        QString const & tipText,
+        std::function<void(void)> callback,
+        QObject * parent = nullptr);
+}; /* end class RAction */
 
-    std::string code() const;
-    void setCode(std::string const & value);
+class RAppAction
+    : public QAction
+{
+public:
 
-    void runCode();
+    RAppAction(
+        QString const & text,
+        QString const & tipText,
+        QString const & appName,
+        QObject * parent = nullptr);
+
+    void run();
+
+    QString const & appName() const { return m_appName; }
 
 private:
 
-    void setUp();
+    QString m_appName;
 
-    QTextEdit * m_text = nullptr;
-    QPushButton * m_run = nullptr;
-    QVBoxLayout * m_layout = nullptr;
-    QWidget * m_widget = nullptr;
-    std::shared_ptr<RPythonConsole> m_console = nullptr;
-
-}; /* end class RPythonText */
+}; /* end class RAppAction */
 
 } /* end namespace modmesh */
 

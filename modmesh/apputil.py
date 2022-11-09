@@ -52,16 +52,18 @@ class AppEnvironment:
     """
     Collects the environment for an application.
 
+    :ivar globals:
+        The global namespace of the application.
     :ivar locals:
         The local namespace of the application.
     """
     def __init__(self, name):
-        self.globals = {}
-        self.locals = {
+        self.globals = {
             # Give the application an alias of the top package.
             'mm': importlib.import_module('modmesh'),
             'appenv': self,
         }
+        self.locals = {}
         self.name = name
         # Each run of the application appends a new environment.
         environ[name] = self

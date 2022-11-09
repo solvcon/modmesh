@@ -18,7 +18,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * A*RE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -28,45 +28,67 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/common_detail.hpp> // Must be the first include.
+#include <modmesh/python/common.hpp> // must be first.
+
+#include <string>
+#include <deque>
 
 #include <Qt>
-#include <QMenu>
-#include <QMenuBar>
-#include <QAction>
-
-#include <functional>
+#include <QDockWidget>
+#include <QTextEdit>
 
 namespace modmesh
 {
 
-class RMenuBar
-    : public QMenuBar
+class RPythonCommandTextEdit
+    : public QTextEdit
 {
-public:
-    RMenuBar(
-        QWidget * parent = nullptr);
-}; /* end class RMenuBar */
+    Q_OBJECT
 
-class RAction
-    : public QAction
-{
 public:
-    RAction(
-        QString const & text,
-        QString const & tipText,
-        std::function<void(void)> callback,
-        QObject * parent = nullptr);
-}; /* end class RAction */
 
-class RMenu
-    : public QMenu
+    void keyPressEvent(QKeyEvent * event) override;
+
+signals:
+
+    void execute();
+    void navigate(int offset);
+
+}; /* end class RPythonCommandTextEdit */
+
+class RPythonConsoleDockWidget
+    : public QDockWidget
 {
+    Q_OBJECT
+
 public:
-    RMenu(
-        QString const & text,
-        QWidget * parent = nullptr);
-}; /* end class RMenu */
+
+    explicit RPythonConsoleDockWidget(
+        QString const & title = "Console",
+        QWidget * parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags(),
+        std::shared_ptr<RPythonConsole> console = nullptr);
+
+    QString command() const;
+
+public slots:
+
+    void setCommand(QString const & value);
+    void executeCommand();
+    void navigateCommand(int offset);
+
+private:
+
+    void appendPastCommand(std::string const & code);
+
+    QTextEdit * m_history_edit = nullptr;
+    RPythonCommandTextEdit * m_command_edit = nullptr;
+    std::string m_command_string;
+    std::deque<std::string> m_past_command_strings;
+    int m_current_command_index = 0;
+    size_t m_past_limit = 1024;
+
+}; /* end class RPythonConsoleDockWidget */
 
 } /* end namespace modmesh */
 

@@ -18,6 +18,8 @@ jobs:
 
     env:
       JOB_MAKE_ARGS: VERBOSE=1 BUILD_QT=ON USE_CLANG_TIDY=OFF
+      QT_DEBUG_PLUGINS: 1
+      QT_QPA_PLATFORM: offscreen
 
     strategy:
         matrix:
@@ -48,7 +50,7 @@ jobs:
         # we do not make cmake navigate to the right path to get the qt lib.
         if [ "${{ matrix.os }}" == "ubuntu-22.04" ] ; then \
           sudo apt-get -qy install \
-              qt6-3d-dev \
+              qt6-3d-dev xvfb \
               libgl1-mesa-dev
         fi
 
@@ -116,6 +118,7 @@ jobs:
 
     env:
       JOB_MAKE_ARGS: VERBOSE=1 BUILD_QT=ON USE_CLANG_TIDY=OFF
+      QT_DEBUG_PLUGINS: 1
 
     strategy:
       matrix:
@@ -215,6 +218,9 @@ jobs:
     name: build_${{ matrix.os }}_${{ matrix.cmake_build_type }}
 
     runs-on: ${{ matrix.os }}
+
+    env:
+      QT_DEBUG_PLUGINS: 1
 
     strategy:
       matrix:
