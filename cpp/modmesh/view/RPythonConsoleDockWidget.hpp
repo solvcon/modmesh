@@ -32,6 +32,8 @@
 
 #include <string>
 #include <deque>
+#include <stdexcept>
+#include <fstream>
 
 #include <Qt>
 #include <QDockWidget>
@@ -79,6 +81,10 @@ public slots:
 private:
 
     void appendPastCommand(std::string const & code);
+    void printCommandOutput();
+    void printCommandHistory();
+    void printCommandStdout(const std::string & stdout_message);
+    void printCommandStderr(const std::string & stderr_message);
 
     QTextEdit * m_history_edit = nullptr;
     RPythonCommandTextEdit * m_command_edit = nullptr;
@@ -86,6 +92,11 @@ private:
     std::deque<std::string> m_past_command_strings;
     int m_current_command_index = 0;
     size_t m_past_limit = 1024;
+
+    QString m_commandHtml = "<font color=\"Black\"> <b>$</b> ";
+    QString m_stderrHtml = "<font color=\"Red\">";
+    QString m_stdoutHtml = "<font color=\"Blue\">";
+    QString m_endHtml = "</font><br>";
 
 }; /* end class RPythonConsoleDockWidget */
 

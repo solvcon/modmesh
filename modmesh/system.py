@@ -114,9 +114,9 @@ def enter_main(argv):
     return ret
 
 
-def exec_code(code):
+def exec_code(code, redirectStdOutFile=None, redirectStdErrFile=None):
     try:
-        apputil.run_code(code)
+        apputil.run_code(code, redirectStdOutFile, redirectStdErrFile)
     except Exception as e:
         sys.stdout.write("code:\n{}\n".format(code))
         sys.stdout.write("{}: {}\n".format(type(e).__name__, str(e)))

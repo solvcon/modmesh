@@ -74,7 +74,7 @@ RPythonConsoleDockWidget::RPythonConsoleDockWidget(const QString & title, QWidge
     widget()->setLayout(new QVBoxLayout);
 
     m_history_edit->setFont(QFont("Courier New"));
-    m_history_edit->setPlainText(QString(""));
+    m_history_edit->setHtml(QString(""));
     m_history_edit->setReadOnly(true);
     widget()->layout()->addWidget(m_history_edit);
 
@@ -112,13 +112,70 @@ void RPythonConsoleDockWidget::executeCommand()
 {
     std::string const code = m_command_edit->toPlainText().toStdString();
     appendPastCommand(code);
-    m_history_edit->insertPlainText(m_command_edit->toPlainText());
-    m_history_edit->insertPlainText("\n");
+    printCommandHistory();
     m_command_edit->setPlainText("");
     m_command_string = "";
     m_current_command_index = static_cast<int>(m_past_command_strings.size());
     auto & interp = modmesh::python::Interpreter::instance();
-    interp.exec_code(code);
+
+    // TODO: runtime configuration
+    const std::string redirect_stdout_file_path = "stdout.txt";
+    const std::string redirect_stderr_file_path = "stderr.txt";
+    interp.exec_code(code, redirect_stdout_file_path, redirect_stderr_file_path);
+    printCommandOutput();
+}
+
+void RPythonConsoleDockWidget::printCommandOutput()
+{
+    const std::string redirect_stdout_file_path = "stdout.txt";
+    const std::string redirect_stderr_file_path = "stderr.txt";
+
+    std::string stdout_str;
+    std::string stderr_str;
+    std::ifstream redirect_stdout_stream(redirect_stdout_file_path);
+    std::ifstream redirect_stderr_stream(redirect_stderr_file_path);
+    if (!redirect_stdout_stream.bad())
+    {
+        Formatter formatter;
+        formatter << redirect_stdout_stream.rdbuf();
+        stdout_str = formatter.str();
+        redirect_stdout_stream.close();
+    }
+    else
+    {
+        std::string err_msg = "cannot open file: " + redirect_stdout_file_path;
+        throw std::runtime_error(err_msg);
+    }
+    if (!redirect_stderr_stream.bad())
+    {
+        Formatter formatter;
+        formatter << redirect_stderr_stream.rdbuf();
+        stderr_str = formatter.str();
+        redirect_stdout_stream.close();
+    }
+    else
+    {
+        std::string err_msg = "cannot open file: " + redirect_stderr_file_path;
+        throw std::runtime_error(err_msg);
+    }
+
+    printCommandStdout(stdout_str);
+    printCommandStderr(stderr_str);
+}
+
+void RPythonConsoleDockWidget::printCommandHistory()
+{
+    m_history_edit->insertHtml(m_commandHtml + m_command_edit->toPlainText() + m_endHtml);
+}
+
+void RPythonConsoleDockWidget::printCommandStdout(const std::string & stdout_message)
+{
+    m_history_edit->insertHtml(m_stdoutHtml + QString::fromStdString(stdout_message) + m_endHtml);
+}
+
+void RPythonConsoleDockWidget::printCommandStderr(const std::string & stderr_message)
+{
+    m_history_edit->insertHtml(m_stderrHtml + QString::fromStdString(stderr_message) + m_endHtml);
 }
 
 void RPythonConsoleDockWidget::navigateCommand(int offset)

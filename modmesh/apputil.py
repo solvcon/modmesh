@@ -34,6 +34,7 @@ Tools to run applications
 
 
 import importlib
+import contextlib
 
 
 __all__ = [
@@ -68,8 +69,16 @@ class AppEnvironment:
         # Each run of the application appends a new environment.
         environ[name] = self
 
+        # default value will be overwritten when `run_code` is called
+        self._redirectStdOutFile = "stdout.txt"
+        self._redirectStdErrFile = "stderr.txt"
+
     def run_code(self, code):
-        exec(code, self.globals, self.locals)
+        with open(self._redirectStdOutFile , 'w') as f1:
+            with contextlib.redirect_stdout(f1):
+                with open(self._redirectStdErrFile , 'w') as f2:
+                    with contextlib.redirect_stderr(f2):
+                        exec(code, self.globals, self.locals)
 
 
 def get_appenv(name=None):
@@ -89,7 +98,7 @@ def get_appenv(name=None):
 get_appenv(name='master')
 
 
-def run_code(code):
+def run_code(code, redirectStdOutFile=None, redirectStdErrFile=None):
     has_key = False
     for k in reversed(environ):
         has_key = True
@@ -97,6 +106,12 @@ def run_code(code):
     if not has_key:
         raise KeyError("No AppEnviron is available")
     aenv = environ[k]
+
+    if redirectStdOutFile:
+        aenv._redirectStdOutFile = redirectStdOutFile
+    if redirectStdErrFile:
+        aenv._redirectStdErrFile = redirectStdErrFile
+
     aenv.run_code(code)
 
 
