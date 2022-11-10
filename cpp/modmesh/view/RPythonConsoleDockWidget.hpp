@@ -93,7 +93,7 @@ private:
     int m_current_command_index = 0;
     size_t m_past_limit = 1024;
 
-    QString m_commandHtml = "<font color=\"Black\"> <b>$</b> ";
+    QString m_commandHtml = "<font color=\"Black\"> <b>&#62;&#62;&#62;</b> ";
     QString m_stderrHtml = "<font color=\"Red\">";
     QString m_stdoutHtml = "<font color=\"Blue\">";
     QString m_endHtml = "</font><br>";
