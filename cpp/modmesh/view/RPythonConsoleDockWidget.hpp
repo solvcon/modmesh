@@ -58,6 +58,19 @@ signals:
 
 }; /* end class RPythonCommandTextEdit */
 
+class RPythonHistoryTextEdit
+    : public QTextEdit
+{
+    Q_OBJECT
+
+    void doubleClickHistoryEdit();
+
+    void mouseDoubleClickEvent(QMouseEvent *) override
+    {
+        doubleClickHistoryEdit();
+    }
+}; /* end class RPythonHistoryTextEdit */
+
 class RPythonConsoleDockWidget
     : public QDockWidget
 {
@@ -86,7 +99,7 @@ private:
     void printCommandStdout(const std::string & stdout_message);
     void printCommandStderr(const std::string & stderr_message);
 
-    QTextEdit * m_history_edit = nullptr;
+    RPythonHistoryTextEdit * m_history_edit = nullptr;
     RPythonCommandTextEdit * m_command_edit = nullptr;
     std::string m_command_string;
     std::deque<std::string> m_past_command_strings;
