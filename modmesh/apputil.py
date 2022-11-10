@@ -35,7 +35,8 @@ Tools to run applications
 
 import importlib
 import contextlib
-
+import traceback
+import sys
 
 __all__ = [
     'environ',
@@ -78,7 +79,12 @@ class AppEnvironment:
             with contextlib.redirect_stdout(f1):
                 with open(self._redirectStdErrFile , 'w') as f2:
                     with contextlib.redirect_stderr(f2):
-                        exec(code, self.globals, self.locals)
+                        try:
+                            exec(code, self.globals, self.locals)
+                        except Exception as e:
+                            print(("{}: {}".format(type(e).__name__, str(e))), file=sys.stderr)
+                            print("traceback:", file=sys.stderr)
+                            traceback.print_stack()
 
 
 def get_appenv(name=None):
