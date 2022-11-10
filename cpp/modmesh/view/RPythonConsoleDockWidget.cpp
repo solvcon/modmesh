@@ -137,7 +137,11 @@ void RPythonConsoleDockWidget::printCommandOutput()
     if (!redirect_stdout_stream.bad())
     {
         Formatter formatter;
-        formatter << redirect_stdout_stream.rdbuf();
+        std::string line;
+        while (std::getline(redirect_stdout_stream, line))
+        {
+            formatter << line << "<br>";
+        }
         stdout_str = formatter.str();
         redirect_stdout_stream.close();
     }
@@ -149,7 +153,11 @@ void RPythonConsoleDockWidget::printCommandOutput()
     if (!redirect_stderr_stream.bad())
     {
         Formatter formatter;
-        formatter << redirect_stderr_stream.rdbuf();
+        std::string line;
+        while (std::getline(redirect_stderr_stream, line))
+        {
+            formatter << line << "<br>";
+        }
         stderr_str = formatter.str();
         redirect_stdout_stream.close();
     }
@@ -166,16 +174,25 @@ void RPythonConsoleDockWidget::printCommandOutput()
 void RPythonConsoleDockWidget::printCommandHistory()
 {
     m_history_edit->insertHtml(m_commandHtml + m_command_edit->toPlainText() + m_endHtml);
+    QTextCursor cursor = m_history_edit->textCursor();
+    cursor.movePosition(QTextCursor::EndOfLine);
+    m_history_edit->setTextCursor(cursor);
 }
 
 void RPythonConsoleDockWidget::printCommandStdout(const std::string & stdout_message)
 {
     m_history_edit->insertHtml(m_stdoutHtml + QString::fromStdString(stdout_message) + m_endHtml);
+    QTextCursor cursor = m_history_edit->textCursor();
+    cursor.movePosition(QTextCursor::EndOfLine);
+    m_history_edit->setTextCursor(cursor);
 }
 
 void RPythonConsoleDockWidget::printCommandStderr(const std::string & stderr_message)
 {
     m_history_edit->insertHtml(m_stderrHtml + QString::fromStdString(stderr_message) + m_endHtml);
+    QTextCursor cursor = m_history_edit->textCursor();
+    cursor.movePosition(QTextCursor::EndOfLine);
+    m_history_edit->setTextCursor(cursor);
 }
 
 void RPythonConsoleDockWidget::navigateCommand(int offset)
