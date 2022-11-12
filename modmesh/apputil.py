@@ -41,7 +41,6 @@ import sys
 __all__ = [
     'environ',
     'AppEnvironment',
-    'run_code',
     'stop_code',
 ]
 
@@ -59,32 +58,43 @@ class AppEnvironment:
     :ivar locals:
         The local namespace of the application.
     """
-    def __init__(self, name):
+
+    # default config
+    _config = {
+        'appEnvName': None,
+        'redirectStdOutFile': 'stdout.txt',
+        'redirectStdErrFile': 'stderr.txt',
+    }
+
+    def __init__(self, config=None):
         self.globals = {
             # Give the application an alias of the top package.
             'mm': importlib.import_module('modmesh'),
             'appenv': self,
         }
         self.locals = {}
-        self.name = name
         # Each run of the application appends a new environment.
-        environ[name] = self
+        environ[config['appEnvName']] = self
 
-        # default value will be overwritten when `run_code` is called
-        self._redirectStdOutFile = "stdout.txt"
-        self._redirectStdErrFile = "stderr.txt"
+        # replace the config value; otherwise keep the default value
+        for k, v in config.items():
+            if v is not None:
+                self._config[k] = v
 
     def run_code(self, code):
-        with open(self._redirectStdOutFile , 'w') as f1:
+        with open(self._config['redirectStdOutFile'], 'w') as f1:
             with contextlib.redirect_stdout(f1):
-                with open(self._redirectStdErrFile , 'w') as f2:
+                with open(self._config['redirectStdErrFile'], 'w') as f2:
                     with contextlib.redirect_stderr(f2):
                         try:
                             exec(code, self.globals, self.locals)
                         except Exception as e:
-                            print(("{}: {}".format(type(e).__name__, str(e))), file=sys.stderr)
+                            print(("{}: {}".format(
+                                type(e).__name__, str(e))), file=sys.stderr)
                             print("traceback:", file=sys.stderr)
                             traceback.print_stack()
+                        sys.stdout.flush()
+                        sys.stderr.flush()
 
 
 def get_appenv(name=None):
@@ -101,24 +111,13 @@ def get_appenv(name=None):
     return app
 
 
-get_appenv(name='master')
+def get_appenv(name=None):
+    app = environ.get(name, None)
 
-
-def run_code(code, redirectStdOutFile=None, redirectStdErrFile=None):
-    has_key = False
-    for k in reversed(environ):
-        has_key = True
-        break
-    if not has_key:
-        raise KeyError("No AppEnviron is available")
-    aenv = environ[k]
-
-    if redirectStdOutFile:
-        aenv._redirectStdOutFile = redirectStdOutFile
-    if redirectStdErrFile:
-        aenv._redirectStdErrFile = redirectStdErrFile
-
-    aenv.run_code(code)
+    if None is app:
+        config = {'name': name}
+        new_appenv(config)
+    return app
 
 
 def stop_code(appenvobj=None):

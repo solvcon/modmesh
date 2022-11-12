@@ -130,17 +130,14 @@ void RPythonConsoleDockWidget::executeCommand()
     m_current_command_index = static_cast<int>(m_past_command_strings.size());
     auto & interp = modmesh::python::Interpreter::instance();
 
-    // TODO: runtime configuration
-    const std::string redirect_stdout_file_path = "stdout.txt";
-    const std::string redirect_stderr_file_path = "stderr.txt";
-    interp.exec_code(code, redirect_stdout_file_path, redirect_stderr_file_path);
+    interp.exec_code(m_config["appEnvName"], code);
     printCommandOutput();
 }
 
 void RPythonConsoleDockWidget::printCommandOutput()
 {
-    const std::string redirect_stdout_file_path = "stdout.txt";
-    const std::string redirect_stderr_file_path = "stderr.txt";
+    const std::string redirect_stdout_file_path = m_config["redirectStdOutFile"];
+    const std::string redirect_stderr_file_path = m_config["redirectStdErrFile"];
 
     std::string stdout_str;
     std::string stderr_str;

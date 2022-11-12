@@ -167,11 +167,11 @@ void Interpreter::preload_modules(std::vector<std::string> const & names)
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-void Interpreter::exec_code(std::string const & code, std::string const & redirect_stdout_file_path, std::string const & redirect_stderr_file_path)
+void Interpreter::exec_code(std::string const & app_env_name, std::string const & code)
 {
     // NOLINTNEXTLINE(misc-const-correctness)
     pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
-    mod_sys.attr("exec_code")(code, redirect_stdout_file_path, redirect_stderr_file_path);
+    mod_sys.attr("exec_code")(app_env_name, code);
 }
 
 } /* end namespace python */
