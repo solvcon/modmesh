@@ -59,7 +59,7 @@ void RPythonHistoryTextEdit::doubleClickHistoryEdit()
 
 void RPythonCommandTextEdit::keyPressEvent(QKeyEvent * event)
 {
-    if (Qt::Key_Return == event->key())
+    if (Qt::Key_Return == event->key() || Qt::Key_Enter == event->key())
     {
         execute();
     }
