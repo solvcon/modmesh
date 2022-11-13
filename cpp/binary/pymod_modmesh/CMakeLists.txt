@@ -23,7 +23,45 @@ pybind11_add_module(
     ${MODMESH_PYTHON_SOURCES}
 )
 
-if(APPLE)
+if (BUILD_QT)
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTORCC ON)
+    set(CMAKE_AUTOUIC ON)
+
+    find_package(Qt6 REQUIRED COMPONENTS Core)
+    find_package(Qt6 REQUIRED COMPONENTS Widgets)
+    find_package(Qt6 REQUIRED COMPONENTS Gui)
+    find_package(Qt6 REQUIRED COMPONENTS 3DCore)
+    find_package(Qt6 REQUIRED COMPONENTS 3DRender)
+    find_package(Qt6 REQUIRED COMPONENTS 3DInput)
+    find_package(Qt6 REQUIRED COMPONENTS 3DExtras)
+
+    qt_add_library(
+        _modmesh_qt
+        STATIC
+        ${MODMESH_VIEW_HEADERS}
+        ${MODMESH_VIEW_SOURCES}
+    )
+
+    target_link_libraries(
+        _modmesh_qt PUBLIC
+        pybind11::module
+        Qt::Widgets
+        Qt::3DCore
+        Qt::3DExtras
+        Qt::3DInput
+        Qt::3DRender
+        Qt::Core
+        Qt::Gui
+    )
+
+    target_link_libraries(
+        _modmesh PUBLIC
+        _modmesh_qt
+    )
+endif () # BUILD_QT
+
+if (APPLE)
     find_library(APPLE_FWK_FOUNDATION Foundation REQUIRED)
     find_library(APPLE_FWK_QUARTZ_CORE QuartzCore REQUIRED)
     find_library(APPLE_FWK_METAL Metal REQUIRED)
@@ -34,38 +72,39 @@ if(APPLE)
         ${APPLE_FWK_QUARTZ_CORE}
         ${APPLE_FWK_METAL}
     )
-endif()
+endif () # APPLE
 
-if(HIDE_SYMBOL)
+if (HIDE_SYMBOL)
     set_target_properties(_modmesh PROPERTIES CXX_VISIBILITY_PRESET "hidden")
-else()
+else () # HIDE_SYMBOL
     set_target_properties(_modmesh PROPERTIES CXX_VISIBILITY_PRESET "default")
-endif()
+endif () # HIDE_SYMBOL
 
-if(MSVC)
+if (MSVC)
     target_compile_options(
         _modmesh PRIVATE
         ${COMMON_COMPILER_OPTIONS}
     )
-else()
+else () # MSVC
     target_compile_options(
         _modmesh PRIVATE
         ${COMMON_COMPILER_OPTIONS}
         -Wno-unused-value # for PYBIND11_EXPAND_SIDE_EFFECTS in pybind11.h
         -Wno-noexcept-type # GCC
     )
-endif()
+endif () # MSVC
 
-if(CLANG_TIDY_EXE AND USE_CLANG_TIDY)
+if (CLANG_TIDY_EXE AND USE_CLANG_TIDY)
     set_target_properties(
         _modmesh PROPERTIES
         CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
     )
-endif()
+endif () # CLANG_TIDY
 
 execute_process(
     COMMAND python3-config --extension-suffix
-    OUTPUT_VARIABLE PYEXTSUFFIX)
+    OUTPUT_VARIABLE PYEXTSUFFIX
+)
 
 add_custom_target(_modmesh_py
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:_modmesh> ${MODMESH_PY_DIR}/_modmesh${PYEXTSUFFIX}

@@ -49,6 +49,13 @@ class CommandLineInfoTC(unittest.TestCase):
         self.assertNotEqual(len(self.cmdline.populated_argv), 0)
 
 
+class ViewTC(unittest.TestCase):
+
+    @unittest.skipUnless(modmesh.HAS_VIEW, "Qt view is not built")
+    def test_import(self):
+        self.assertTrue(hasattr(modmesh.view, "app"))
+
+
 class MetalTC(unittest.TestCase):
 
     # Github Actions macos-12 does not support GPU yet.

@@ -49,6 +49,7 @@ _from_impl = [  # noqa: F822
 __all__ = _from_impl + [  # noqa: F822
     'populateApplications',
     'resetApplications',
+    'launch',
 ]
 
 # Try to import the viewer code but easily give up.
@@ -58,6 +59,22 @@ try:
     enable = True
 except ImportError:
     pass
+
+try:
+    from ._modmesh import view as _vimpl  # noqa: F401, F811
+    enable = True
+except ImportError:
+    pass
+
+
+def _load():
+    if enable:
+        for name in _from_impl:
+            globals()[name] = getattr(_vimpl, name)
+
+
+_load()
+del _load
 
 
 def populate_applications():
@@ -74,13 +91,13 @@ def reset_applications():
     populate_applications()
 
 
-def _load():
-    if enable:
-        for name in _from_impl:
-            globals()[name] = getattr(_vimpl, name)
-
-
-_load()
-del _load
+def launch(name="Modmesh Viewer", size=(1000, 600)):
+    app = _vimpl.RApplication.instance
+    app.setUp()
+    wm = app.mainWindow
+    wm.windowTitle = name
+    wm.resize(w=size[0], h=size[1])
+    wm.show()
+    return app.exec()
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

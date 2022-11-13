@@ -62,6 +62,7 @@ __all__ = [  # noqa: F822
     'ProcessInfo',
     'METAL_BUILT',
     'metal_running',
+    'HAS_VIEW',
 ]
 
 

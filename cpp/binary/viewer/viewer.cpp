@@ -41,6 +41,7 @@ PYBIND11_EMBEDDED_MODULE(_modmesh, mod) // NOLINT
     modmesh::python::initialize_spacetime(spacetime_mod);
     pybind11::module_ onedim_mod = mod.def_submodule("onedim", "onedim");
     modmesh::python::initialize_onedim(onedim_mod);
+    mod.attr("HAS_VIEW") = true;
     pybind11::module_ view_mod = mod.def_submodule("view", "view");
     modmesh::python::initialize_view(view_mod);
 }
