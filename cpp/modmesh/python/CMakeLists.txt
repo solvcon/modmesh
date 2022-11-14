@@ -10,11 +10,13 @@ add_subdirectory(wrapper/spacetime)
 set(MODMESH_PYTHON_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/python.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/common.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/module.hpp
     CACHE FILEPATH "" FORCE
 )
 
 set(MODMESH_PYTHON_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/common.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/module.cpp
     CACHE FILEPATH "" FORCE
 )
 

@@ -20,27 +20,11 @@
  */
 
 #include <modmesh/python/python.hpp> // Must be the first include.
-#include <modmesh/python/wrapper/modmesh/modmesh.hpp>
-#include <modmesh/python/wrapper/onedim/onedim.hpp>
-#include <modmesh/python/wrapper/spacetime/spacetime.hpp>
-#ifdef QT_CORE_LIB
-#include <modmesh/view/wrap_view.hpp>
-#endif // QT_CORE_LIB
+#include <modmesh/python/wrapper/module.hpp>
 
 PYBIND11_MODULE(_modmesh, mod) // NOLINT
 {
-    modmesh::python::initialize_modmesh(mod);
-    pybind11::module_ spacetime_mod = mod.def_submodule("spacetime", "spacetime");
-    modmesh::python::initialize_spacetime(spacetime_mod);
-    pybind11::module_ onedim_mod = mod.def_submodule("onedim", "onedim");
-    modmesh::python::initialize_onedim(onedim_mod);
-#ifdef QT_CORE_LIB
-    mod.attr("HAS_VIEW") = true;
-    pybind11::module_ view_mod = mod.def_submodule("view", "view");
-    modmesh::python::initialize_view(view_mod);
-#else // QT_CORE_LIB
-    mod.attr("HAS_VIEW") = false;
-#endif // QT_CORE_LIB
+    modmesh::python::initialize(mod);
 }
 
 // vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
