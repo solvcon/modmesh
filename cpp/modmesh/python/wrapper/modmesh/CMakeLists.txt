@@ -10,8 +10,6 @@ set(MODMESH_ROOT_PYMODHEADERS
 set(MODMESH_ROOT_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/modmesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_profile.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/wrap_StaticGrid.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/wrap_StaticMesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_Toggle.cpp
     CACHE FILEPATH "" FORCE)
 
