@@ -6,12 +6,12 @@ cmake_minimum_required(VERSION 3.16)
 set(MODMESH_PYTYON_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/python.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/common.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/module.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/module.hpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_PYTHON_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/common.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/module.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/module.cpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_PYTHON_FILES

@@ -20,7 +20,7 @@
  */
 
 #include <modmesh/python/python.hpp> // Must be the first include.
-#include <modmesh/python/wrapper/module.hpp>
+#include <modmesh/python/module.hpp>
 
 PYBIND11_MODULE(_modmesh, mod) // NOLINT
 {

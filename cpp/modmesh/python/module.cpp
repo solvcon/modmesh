@@ -20,7 +20,7 @@
  */
 
 #include <modmesh/python/python.hpp> // Must be the first include.
-#include <modmesh/python/wrapper/module.hpp>
+#include <modmesh/python/module.hpp>
 #include <modmesh/toggle/pymod/toggle_pymod.hpp>
 #include <modmesh/onedim/pymod/onedim_pymod.hpp>
 #include <modmesh/spacetime/pymod/spacetime_pymod.hpp>
