@@ -3,7 +3,6 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-add_subdirectory(wrapper/modmesh)
 add_subdirectory(wrapper/onedim)
 add_subdirectory(wrapper/spacetime)
 

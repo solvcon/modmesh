@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/wrapper/modmesh/modmesh.hpp> // Must be the first include.
+#include <modmesh/pymod/root_pymod.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>
 
 namespace modmesh

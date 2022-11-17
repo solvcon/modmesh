@@ -21,7 +21,7 @@
 
 #include <modmesh/python/python.hpp> // Must be the first include.
 #include <modmesh/python/wrapper/module.hpp>
-#include <modmesh/python/wrapper/modmesh/modmesh.hpp>
+#include <modmesh/pymod/root_pymod.hpp>
 #include <modmesh/python/wrapper/onedim/onedim.hpp>
 #include <modmesh/python/wrapper/spacetime/spacetime.hpp>
 #ifdef QT_CORE_LIB
