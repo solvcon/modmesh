@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/wrapper/onedim/onedim.hpp> // Must be the first include.
+#include <modmesh/onedim/pymod/onedim_pymod.hpp> // Must be the first include.
 #include <pybind11/stl.h>
 
 #include <modmesh/modmesh.hpp>

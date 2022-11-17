@@ -22,7 +22,7 @@
 #include <modmesh/python/python.hpp> // Must be the first include.
 #include <modmesh/python/wrapper/module.hpp>
 #include <modmesh/pymod/root_pymod.hpp>
-#include <modmesh/python/wrapper/onedim/onedim.hpp>
+#include <modmesh/onedim/pymod/onedim_pymod.hpp>
 #include <modmesh/python/wrapper/spacetime/spacetime.hpp>
 #ifdef QT_CORE_LIB
 #include <modmesh/view/wrap_view.hpp>

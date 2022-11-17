@@ -13,4 +13,13 @@ set(MODMESH_ONEDIM_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Euler1DCore.cpp
     CACHE FILEPATH "" FORCE)
 
+set(MODMESH_ONEDIM_PYMODHEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/onedim_pymod.hpp
+    CACHE FILEPATH "" FORCE)
+
+set(MODMESH_ONEDIM_PYMODSOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/onedim_pymod.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_onedim.cpp
+    CACHE FILEPATH "" FORCE)
+
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
