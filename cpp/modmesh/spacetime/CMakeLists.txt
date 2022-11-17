@@ -17,7 +17,16 @@ set(MODMESH_SPACETIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/io.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/core.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/BadEuler1DSolver.cpp
-    CACHE FILEPATH "" FORCE
-)
+    CACHE FILEPATH "" FORCE)
+
+set(MODMESH_SPACETIME_PYMODHEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/spacetime_pymod.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_spacetime.hpp
+    CACHE FILEPATH "" FORCE)
+
+set(MODMESH_SPACETIME_PYMODSOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/spacetime_pymod.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_spacetime.cpp
+    CACHE FILEPATH "" FORCE)
 
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

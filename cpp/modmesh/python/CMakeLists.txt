@@ -3,8 +3,6 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-add_subdirectory(wrapper/spacetime)
-
 set(MODMESH_PYMODHEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/python.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/common.hpp

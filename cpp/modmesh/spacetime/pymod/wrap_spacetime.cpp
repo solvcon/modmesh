@@ -26,11 +26,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/wrapper/spacetime/spacetime.hpp> // Must be the first include.
+#include <modmesh/spacetime/pymod/spacetime_pymod.hpp> // Must be the first include.
 
 #include <modmesh/spacetime/spacetime.hpp>
 
-#include <modmesh/python/wrapper/spacetime/wrap_spacetime.hpp>
+#include <modmesh/spacetime/pymod/wrap_spacetime.hpp>
 
 namespace modmesh
 {
