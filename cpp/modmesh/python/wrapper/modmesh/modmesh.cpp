@@ -27,6 +27,7 @@
  */
 
 #include <modmesh/python/python.hpp> // Must be the first include.
+#include <modmesh/buffer/pymod/buffer_pymod.hpp>
 #include <modmesh/python/wrapper/modmesh/modmesh.hpp>
 
 namespace modmesh

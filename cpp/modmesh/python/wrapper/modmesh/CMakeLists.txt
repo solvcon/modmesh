@@ -5,14 +5,11 @@ cmake_minimum_required(VERSION 3.16)
 
 set(MODMESH_ROOT_PYMODHEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/modmesh.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/TypeBroadcast.hpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_ROOT_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/modmesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_profile.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/wrap_ConcreteBuffer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/wrap_SimpleArray.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_StaticGrid.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_StaticMesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_Toggle.cpp
