@@ -3,15 +3,13 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-set(MODMESH_PYMOD_ONEDIM_HEADERS
+set(MODMESH_ONEDIM_PYMODHEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/onedim.hpp
-    CACHE FILEPATH "" FORCE
-)
+    CACHE FILEPATH "" FORCE)
 
-set(MODMESH_PYMOD_ONEDIM_SOURCES
+set(MODMESH_ONEDIM_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/onedim.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrap_onedim.cpp
-    CACHE FILEPATH "" FORCE
-)
+    CACHE FILEPATH "" FORCE)
 
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

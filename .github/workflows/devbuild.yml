@@ -111,6 +111,7 @@ jobs:
 
     - name: make viewer
       run: |
+        rm -f build/*/Makefile
         make viewer \
           VERBOSE=1 USE_CLANG_TIDY=OFF \
           BUILD_QT=ON \
@@ -230,6 +231,7 @@ jobs:
 
       - name: make viewer
         run: |
+          rm -f build/*/Makefile
           make viewer \
             VERBOSE=1 USE_CLANG_TIDY=OFF \
             BUILD_QT=ON \

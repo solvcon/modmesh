@@ -7,17 +7,15 @@ add_subdirectory(wrapper/modmesh)
 add_subdirectory(wrapper/onedim)
 add_subdirectory(wrapper/spacetime)
 
-set(MODMESH_PYTHON_HEADERS
+set(MODMESH_PYMODHEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/python.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/common.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/module.hpp
-    CACHE FILEPATH "" FORCE
-)
+    CACHE FILEPATH "" FORCE)
 
-set(MODMESH_PYTHON_SOURCES
+set(MODMESH_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/common.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/module.cpp
-    CACHE FILEPATH "" FORCE
-)
+    CACHE FILEPATH "" FORCE)
 
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
