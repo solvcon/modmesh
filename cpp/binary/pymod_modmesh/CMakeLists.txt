@@ -7,68 +7,39 @@ project(modmesh_pymod)
 pybind11_add_module(
     _modmesh
     module.cpp
-    ${MODMESH_PYMOD_MODMESH_HEADERS}
-    ${MODMESH_PYMOD_MODMESH_SOURCES}
-    ${MODMESH_PYMOD_ONEDIM_HEADERS}
-    ${MODMESH_PYMOD_ONEDIM_SOURCES}
-    ${MODMESH_PYMOD_SPACETIME_HEADERS}
-    ${MODMESH_PYMOD_SPACETIME_SOURCES}
-    ${MODMESH_HEADERS}
-    ${MODMESH_SOURCES}
-    ${MODMESH_ONEDIM_HEADERS}
-    ${MODMESH_ONEDIM_SOURCES}
-    ${MODMESH_SPACETIME_HEADERS}
-    ${MODMESH_SPACETIME_SOURCES}
-    ${MODMESH_PYTHON_HEADERS}
-    ${MODMESH_PYTHON_SOURCES}
 )
 
-if(APPLE)
-    find_library(APPLE_FWK_FOUNDATION Foundation REQUIRED)
-    find_library(APPLE_FWK_QUARTZ_CORE QuartzCore REQUIRED)
-    find_library(APPLE_FWK_METAL Metal REQUIRED)
+target_link_libraries(
+    _modmesh PUBLIC
+    pybind11::module
+    modmesh_primary
+)
 
-    target_link_libraries(
-        _modmesh PUBLIC
-        ${APPLE_FWK_FOUNDATION}
-        ${APPLE_FWK_QUARTZ_CORE}
-        ${APPLE_FWK_METAL}
-    )
-endif()
-
-if(HIDE_SYMBOL)
+if (HIDE_SYMBOL)
     set_target_properties(_modmesh PROPERTIES CXX_VISIBILITY_PRESET "hidden")
-else()
+else () # HIDE_SYMBOL
     set_target_properties(_modmesh PROPERTIES CXX_VISIBILITY_PRESET "default")
-endif()
+endif () # HIDE_SYMBOL
 
-if(MSVC)
-    target_compile_options(
-        _modmesh PRIVATE
-        ${COMMON_COMPILER_OPTIONS}
-    )
-else()
-    target_compile_options(
-        _modmesh PRIVATE
-        ${COMMON_COMPILER_OPTIONS}
-        -Wno-unused-value # for PYBIND11_EXPAND_SIDE_EFFECTS in pybind11.h
-        -Wno-noexcept-type # GCC
-    )
-endif()
+target_compile_options(
+    _modmesh PRIVATE
+    ${COMMON_COMPILER_OPTIONS}
+)
 
-if(CLANG_TIDY_EXE AND USE_CLANG_TIDY)
+if (CLANG_TIDY_EXE AND USE_CLANG_TIDY)
     set_target_properties(
         _modmesh PROPERTIES
         CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
     )
-endif()
+endif ()
 
 execute_process(
     COMMAND python3-config --extension-suffix
-    OUTPUT_VARIABLE PYEXTSUFFIX)
+    OUTPUT_VARIABLE PYEXTSUFFIX
+)
 
 add_custom_target(_modmesh_py
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:_modmesh> ${MODMESH_PY_DIR}/_modmesh${PYEXTSUFFIX}
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:_modmesh> ${MODMESH_PY_DIR}/../_modmesh${PYEXTSUFFIX}
     DEPENDS _modmesh)
 
 message(STATUS "CMAKE_INSTALL_INCLUDEDIR: ${CMAKE_INSTALL_INCLUDEDIR}")

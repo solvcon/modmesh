@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -26,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/wrapper/spacetime/spacetime.hpp> // Must be the first include.
+#include <pybind11/pybind11.h> // Must be the first include.
 #include <pybind11/stl.h>
 
 #include <modmesh/modmesh.hpp>
@@ -38,24 +40,11 @@ namespace modmesh
 namespace python
 {
 
-struct spacetime_pymod_tag;
-
-template <>
-OneTimeInitializer<spacetime_pymod_tag> & OneTimeInitializer<spacetime_pymod_tag>::me()
-{
-    static OneTimeInitializer<spacetime_pymod_tag> instance;
-    return instance;
-}
-
-void initialize_spacetime(pybind11::module & mod)
-{
-    auto initialize_impl = [](pybind11::module & mod)
-    {
-        wrap_spacetime(mod);
-    };
-
-    OneTimeInitializer<spacetime_pymod_tag>::me()(mod, initialize_impl);
-}
+void initialize_modmesh(pybind11::module & mod);
+void wrap_profile(pybind11::module & mod);
+void wrap_StaticGrid(pybind11::module & mod);
+void wrap_StaticMesh(pybind11::module & mod);
+void wrap_Toggle(pybind11::module & mod);
 
 } /* end namespace python */
 

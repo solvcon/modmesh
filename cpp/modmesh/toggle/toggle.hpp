@@ -30,6 +30,7 @@
 
 #include <modmesh/base.hpp>
 #include <modmesh/buffer/buffer.hpp>
+#include <modmesh/toggle/profile.hpp>
 
 #include <string>
 #include <vector>
