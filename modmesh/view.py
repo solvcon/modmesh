@@ -60,12 +60,6 @@ try:
 except ImportError:
     pass
 
-try:
-    from ._modmesh import view as _vimpl  # noqa: F401, F811
-    enable = True
-except ImportError:
-    pass
-
 
 def _load():
     if enable:

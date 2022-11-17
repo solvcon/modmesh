@@ -69,7 +69,7 @@ def main():
             'modmesh.onedim',
             'modmesh.app',
         ],
-        ext_modules=[CMakeExtension("modmesh._modmesh")],
+        ext_modules=[CMakeExtension("_modmesh")],
         cmdclass={'build_ext': cmake_build_ext},
     )
 
