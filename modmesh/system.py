@@ -113,6 +113,6 @@ def enter_main(argv):
     return ret
 
 
-def exec_code(code, redirectStdOutFile=None, redirectStdErrFile=None):
-    apputil.run_code(code, redirectStdOutFile, redirectStdErrFile)
+def exec_code(code, redirectStdOutFd=-1, redirectStdErrFd=-1):
+    apputil.run_code(code, redirectStdOutFd, redirectStdErrFd)
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

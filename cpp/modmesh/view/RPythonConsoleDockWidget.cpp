@@ -130,10 +130,29 @@ void RPythonConsoleDockWidget::executeCommand()
     m_current_command_index = static_cast<int>(m_past_command_strings.size());
     auto & interp = modmesh::python::Interpreter::instance();
 
-    // TODO: runtime configuration
-    const std::string redirect_stdout_file_path = "stdout.txt";
-    const std::string redirect_stderr_file_path = "stderr.txt";
-    interp.exec_code(code, redirect_stdout_file_path, redirect_stderr_file_path);
+#ifdef _MSC_VER
+    FILE *stdoutFile, *stderrFile;
+
+    errno_t err = fopen_s(&stdoutFile, "stdout.txt", "wb");
+    if (err != 0)
+    {
+        // cannot open
+    }
+    err = fopen_s(&stderrFile, "stderr.txt", "wb");
+    if (err != 0)
+    {
+        // cannot open
+    }
+
+    int stdout_fd = (int)_fileno(stdoutFile);
+    int stderr_fd = (int)_fileno(stderrFile);
+#endif
+
+    interp.exec_code(code, stdout_fd, stderr_fd);
+
+
+    fclose( stdoutFile );
+    fclose( stderrFile );
     printCommandOutput();
 }
 

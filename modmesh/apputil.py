@@ -70,21 +70,32 @@ class AppEnvironment:
         # Each run of the application appends a new environment.
         environ[name] = self
 
-        # default value will be overwritten when `run_code` is called
-        self._redirectStdOutFile = "stdout.txt"
-        self._redirectStdErrFile = "stderr.txt"
+        self._stdoutFd = -1
+        self._stderrFd = -1
 
     def run_code(self, code):
-        with open(self._redirectStdOutFile , 'w') as f1:
-            with contextlib.redirect_stdout(f1):
-                with open(self._redirectStdErrFile , 'w') as f2:
-                    with contextlib.redirect_stderr(f2):
-                        try:
-                            exec(code, self.globals, self.locals)
-                        except Exception as e:
-                            print(("{}: {}".format(type(e).__name__, str(e))), file=sys.stderr)
-                            print("traceback:", file=sys.stderr)
-                            traceback.print_stack()
+        import msvcrt
+
+        oldStdoutFd = sys.stdout
+        oldStderrFd = sys.stderr
+        try:
+            if self._stdoutFd <= 0:
+                raise Exception("wrong stdout fd:", self._stdoutFd)
+            if self._stderrFd <= 0:
+                raise Exception("wrong stderr fd:", self._stderrFd)
+
+            sys.stdout = msvcrt.get_osfhandle(self._stdoutFd)
+            sys.stderr = msvcrt.get_osfhandle(self._stderrFd)
+            exec(code, self.globals, self.locals)
+            
+            sys.stdout = oldStdoutFd
+            sys.stderr = oldStderrFd
+        except Exception as e:
+            sys.stdout = oldStdoutFd
+            sys.stderr = oldStderrFd
+            sys.stderr.write(("{}: {}".format(type(e).__name__, str(e))))
+            sys.stderr.write("traceback:")
+            traceback.print_stack()
 
 
 def get_appenv(name=None):
@@ -104,7 +115,7 @@ def get_appenv(name=None):
 get_appenv(name='master')
 
 
-def run_code(code, redirectStdOutFile=None, redirectStdErrFile=None):
+def run_code(code, redirectStdOutFd=-1, redirectStdErrFd=-1):
     has_key = False
     for k in reversed(environ):
         has_key = True
@@ -113,11 +124,8 @@ def run_code(code, redirectStdOutFile=None, redirectStdErrFile=None):
         raise KeyError("No AppEnviron is available")
     aenv = environ[k]
 
-    if redirectStdOutFile:
-        aenv._redirectStdOutFile = redirectStdOutFile
-    if redirectStdErrFile:
-        aenv._redirectStdErrFile = redirectStdErrFile
-
+    aenv._stdoutFd = redirectStdOutFd
+    aenv._stderrFd = redirectStdErrFd
     aenv.run_code(code)
 
 
