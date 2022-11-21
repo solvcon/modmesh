@@ -43,8 +43,6 @@ if(WIN32)
     )
 endif(WIN32)
 
-add_custom_target(run_viewer_pytest $<TARGET_FILE:viewer> --mode=pytest)
-
 qt_add_resources(
     viewer "app_icon"
     PREFIX "/"
