@@ -490,7 +490,7 @@ public:
     Interpreter & setup_process();
 
     int enter_main();
-    void exec_code(std::string const & app_env_name, std::string const & code);
+    void exec_code(std::string const & code, std::string const & redirect_stdout_file_path, std::string const & redirect_stderr_file_path);
 
 private:
 

@@ -122,11 +122,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRPythonConsoleDockWidget
         namespace py = pybind11;
 
         (*this)
-            .def("setConfig", [](wrapped_type & self, std::string const & key, std::string const & value)
-                 { self.setConfig(key, value); })
             .def_property(
-                "command", [](wrapped_type const & self)
-                { return self.command().toStdString(); },
+                "command",
+                [](wrapped_type const & self)
+                {
+                    return self.command().toStdString();
+                },
                 [](wrapped_type & self, std::string const & command)
                 {
                     return self.setCommand(QString::fromStdString(command));

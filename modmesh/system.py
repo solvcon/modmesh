@@ -77,24 +77,6 @@ def _parse_command_line(argv):
 
 def _run_viewer(argv=None):
     """Run the viewer application."""
-    view.app.setUp()
-    wm = view.app.mainWindow
-    wm.windowTitle = "Modmesh Viewer"
-    wm.resize(w=1000, h=600)
-    wm.show()
-
-    config = {
-        'appEnvName': 'main',
-        'redirectStdOutFile': 'stdout_viewer.txt',
-        'redirectStdErrFile': 'stderr_viewer.txt',
-    }
-
-    # setup new app environment
-    apputil.new_appenv(config)
-    pycon = view.app.pycon
-    for k, v in config.items():
-        pycon.setConfig(k, v)
-
     return view.launch()
 
 
@@ -131,8 +113,6 @@ def enter_main(argv):
     return ret
 
 
-def exec_code(appName, code):
-    appEnv = apputil.get_appenv(appName)
-    appEnv.run_code(code)
-
+def exec_code(code, redirectStdOutFile=None, redirectStdErrFile=None):
+    apputil.run_code(code, redirectStdOutFile, redirectStdErrFile)
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

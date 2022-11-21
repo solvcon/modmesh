@@ -85,8 +85,6 @@ public:
 
     QString command() const;
 
-    void setConfig(std::string const & key, std::string const & value) { m_config[key] = value; }
-
 public slots:
 
     void setCommand(QString const & value);
@@ -112,8 +110,6 @@ private:
     QString m_stderrHtml = "<font color=\"Red\">";
     QString m_stdoutHtml = "<font color=\"Blue\">";
     QString m_endHtml = "</font><br>";
-
-    std::unordered_map<std::string, std::string> m_config;
 
 }; /* end class RPythonConsoleDockWidget */
 
