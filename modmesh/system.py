@@ -34,6 +34,8 @@ import builtins
 import sys
 import os
 import argparse
+import msvcrt
+import traceback
 
 import modmesh
 from . import view
@@ -114,5 +116,25 @@ def enter_main(argv):
 
 
 def exec_code(code, redirectStdOutFd=-1, redirectStdErrFd=-1):
-    apputil.run_code(code, redirectStdOutFd, redirectStdErrFd)
+    if redirectStdOutFd <= 0:
+        raise ValueError("wrong fd:", redirectStdOutFd)
+    if redirectStdErrFd <= 0:
+        raise ValueError("wrong fd:", redirectStdErrFd)
+
+    oldStdout = sys.stdout
+    oldStderr = sys.stderr
+    try:
+        sys.stdout = msvcrt.get_osfhandle(redirectStdOutFd)
+        sys.stderr = msvcrt.get_osfhandle(redirectStdErrFd)
+        apputil.run_code(code)
+        
+        sys.stdout = oldStdout
+        sys.stderr = oldStderr
+    except Exception as e:
+        sys.stdout = oldStdout
+        sys.stderr = oldStderr
+        sys.stderr.write(("{}: {}".format(type(e).__name__, str(e))))
+        sys.stderr.write("\ntraceback:\n")
+        traceback.print_stack()
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -94,7 +94,7 @@ public slots:
 private:
 
     void appendPastCommand(std::string const & code);
-    void printCommandOutput();
+    void printCommandOutput(int pipe_stdout_out_fd, int pipe_stderr_out_fd);
     void printCommandHistory();
     void printCommandStdout(const std::string & stdout_message);
     void printCommandStderr(const std::string & stderr_message);

@@ -34,9 +34,6 @@ Tools to run applications
 
 
 import importlib
-import contextlib
-import traceback
-import sys
 
 __all__ = [
     'environ',
@@ -70,32 +67,8 @@ class AppEnvironment:
         # Each run of the application appends a new environment.
         environ[name] = self
 
-        self._stdoutFd = -1
-        self._stderrFd = -1
-
     def run_code(self, code):
-        import msvcrt
-
-        oldStdoutFd = sys.stdout
-        oldStderrFd = sys.stderr
-        try:
-            if self._stdoutFd <= 0:
-                raise Exception("wrong stdout fd:", self._stdoutFd)
-            if self._stderrFd <= 0:
-                raise Exception("wrong stderr fd:", self._stderrFd)
-
-            sys.stdout = msvcrt.get_osfhandle(self._stdoutFd)
-            sys.stderr = msvcrt.get_osfhandle(self._stderrFd)
-            exec(code, self.globals, self.locals)
-            
-            sys.stdout = oldStdoutFd
-            sys.stderr = oldStderrFd
-        except Exception as e:
-            sys.stdout = oldStdoutFd
-            sys.stderr = oldStderrFd
-            sys.stderr.write(("{}: {}".format(type(e).__name__, str(e))))
-            sys.stderr.write("traceback:")
-            traceback.print_stack()
+        exec(code, self.globals, self.locals)
 
 
 def get_appenv(name=None):
@@ -115,7 +88,7 @@ def get_appenv(name=None):
 get_appenv(name='master')
 
 
-def run_code(code, redirectStdOutFd=-1, redirectStdErrFd=-1):
+def run_code(code):
     has_key = False
     for k in reversed(environ):
         has_key = True
@@ -123,9 +96,6 @@ def run_code(code, redirectStdOutFd=-1, redirectStdErrFd=-1):
     if not has_key:
         raise KeyError("No AppEnviron is available")
     aenv = environ[k]
-
-    aenv._stdoutFd = redirectStdOutFd
-    aenv._stderrFd = redirectStdErrFd
     aenv.run_code(code)
 
 

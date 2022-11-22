@@ -29,6 +29,7 @@
 #include <modmesh/view/RPythonConsoleDockWidget.hpp>
 #include <QVBoxLayout>
 #include <QKeyEvent>
+#include <fcntl.h>
 
 namespace modmesh
 {
@@ -130,72 +131,61 @@ void RPythonConsoleDockWidget::executeCommand()
     m_current_command_index = static_cast<int>(m_past_command_strings.size());
     auto & interp = modmesh::python::Interpreter::instance();
 
+    int pipe_stdout_fd[2];
+    int pipe_stderr_fd[2];
+
 #ifdef _MSC_VER
-    FILE *stdoutFile, *stderrFile;
-
-    errno_t err = fopen_s(&stdoutFile, "stdout.txt", "wb");
-    if (err != 0)
+    /* Open a set of pipes */
+    if (_pipe(pipe_stdout_fd, 256, _O_BINARY) == -1)
     {
-        // cannot open
+        throw "failed to open pipe";
     }
-    err = fopen_s(&stderrFile, "stderr.txt", "wb");
-    if (err != 0)
+    if (_pipe(pipe_stderr_fd, 256, _O_BINARY) == -1)
     {
-        // cannot open
+        throw "failed to open pipe";
     }
-
-    int stdout_fd = (int)_fileno(stdoutFile);
-    int stderr_fd = (int)_fileno(stderrFile);
 #endif
 
-    interp.exec_code(code, stdout_fd, stderr_fd);
+    interp.exec_code(code, pipe_stdout_fd[0], pipe_stderr_fd[0]);
 
-
-    fclose( stdoutFile );
-    fclose( stderrFile );
-    printCommandOutput();
+    printCommandOutput(pipe_stdout_fd[1], pipe_stderr_fd[1]);
+    _close(pipe_stdout_fd[0]);
+    _close(pipe_stdout_fd[1]);
+    _close(pipe_stderr_fd[0]);
+    _close(pipe_stderr_fd[1]);
 }
 
-void RPythonConsoleDockWidget::printCommandOutput()
+void RPythonConsoleDockWidget::printCommandOutput(int pipe_stdout_out_fd, int pipe_stderr_out_fd)
 {
-    const std::string redirect_stdout_file_path = "stdout.txt";
-    const std::string redirect_stderr_file_path = "stderr.txt";
-
     std::string stdout_str;
     std::string stderr_str;
-    std::ifstream redirect_stdout_stream(redirect_stdout_file_path);
-    std::ifstream redirect_stderr_stream(redirect_stderr_file_path);
-    if (!redirect_stdout_stream.bad())
+
     {
         Formatter formatter;
-        std::string line;
-        while (std::getline(redirect_stdout_stream, line))
+        char buffer[256];
+        int number_read = 1;
+        while (number_read)
         {
-            formatter << line << "<br>";
+            number_read = _read(pipe_stdout_out_fd,
+                             buffer,
+                             256);
+            formatter << buffer << "<br>";
         }
         stdout_str = formatter.str();
-        redirect_stdout_stream.close();
     }
-    else
-    {
-        std::string err_msg = "cannot open file: " + redirect_stdout_file_path;
-        throw std::runtime_error(err_msg);
-    }
-    if (!redirect_stderr_stream.bad())
+
     {
         Formatter formatter;
-        std::string line;
-        while (std::getline(redirect_stderr_stream, line))
+        char buffer[256];
+        int number_read;
+        while (number_read)
         {
-            formatter << line << "<br>";
+            number_read = _read(pipe_stderr_out_fd,
+                             buffer,
+                             256);
+            formatter << buffer << "<br>";
         }
         stderr_str = formatter.str();
-        redirect_stdout_stream.close();
-    }
-    else
-    {
-        std::string err_msg = "cannot open file: " + redirect_stderr_file_path;
-        throw std::runtime_error(err_msg);
     }
 
     printCommandStdout(stdout_str);
