@@ -33,7 +33,7 @@
  */
 
 #include <modmesh/base.hpp>
-#include <modmesh/profile.hpp>
+#include <modmesh/toggle/toggle.hpp>
 #include <modmesh/buffer/buffer.hpp>
 
 #include <cmath>

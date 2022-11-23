@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -28,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <pybind11/pybind11.h> // Must be the first include.
+#include <modmesh/onedim/pymod/onedim_pymod.hpp> // Must be the first include.
 #include <pybind11/stl.h>
 
 #include <modmesh/modmesh.hpp>
@@ -40,13 +38,26 @@ namespace modmesh
 namespace python
 {
 
-void initialize_modmesh(pybind11::module & mod);
-void wrap_profile(pybind11::module & mod);
-void wrap_ConcreteBuffer(pybind11::module & mod);
-void wrap_SimpleArray(pybind11::module & mod);
-void wrap_StaticGrid(pybind11::module & mod);
-void wrap_StaticMesh(pybind11::module & mod);
-void wrap_Toggle(pybind11::module & mod);
+struct onedim_pymod_tag
+{
+};
+
+template <>
+OneTimeInitializer<onedim_pymod_tag> & OneTimeInitializer<onedim_pymod_tag>::me()
+{
+    static OneTimeInitializer<onedim_pymod_tag> instance;
+    return instance;
+}
+
+void initialize_onedim(pybind11::module & mod)
+{
+    auto initialize_impl = [](pybind11::module & mod)
+    {
+        wrap_onedim(mod);
+    };
+
+    OneTimeInitializer<onedim_pymod_tag>::me()(mod, initialize_impl);
+}
 
 } /* end namespace python */
 

@@ -44,6 +44,7 @@ namespace modmesh
 RMainWindow::RMainWindow()
     : QMainWindow()
 {
+    this->setWindowIcon(QIcon(QString(":/icon.ico")));
     // Do not call setUp() from the constructor.  Windows may crash with
     // "exited with code -1073740791".  The reason is not yet clarified.
 }
@@ -55,50 +56,66 @@ void RMainWindow::setUp()
         return;
     }
 
-    this->setWindowIcon(QIcon(QString(":/icon.ico")));
+    this->setUpConsole();
+    this->setUpViewer();
+    this->setUpMenu();
 
+    m_already_setup = true;
+}
+
+void RMainWindow::setUpConsole()
+{
+    m_pycon = new RPythonConsoleDockWidget(QString("Console"), this);
+    m_pycon->setAllowedAreas(Qt::AllDockWidgetAreas);
+    addDockWidget(Qt::BottomDockWidgetArea, m_pycon);
+}
+
+void RMainWindow::setUpViewer()
+{
+    m_viewer = new R3DWidget();
+    setCentralWidget(m_viewer);
+}
+
+void RMainWindow::setUpMenu()
+{
     this->setMenuBar(new QMenuBar(nullptr));
-    m_fileMenu = this->menuBar()->addMenu(QString("File"));
-    m_appMenu = this->menuBar()->addMenu(QString("App"));
-    m_cameraMenu = this->menuBar()->addMenu(QString("Camera"));
     // NOTE: All menus need to be populated or Windows may crash with
     // "exited with code -1073740791".  The reason is not yet clarified.
 
     {
-        auto * action = new RAction(
-            QString("New file"),
-            QString("Create new file"),
-            []()
-            {
-                qDebug() << "This is only a demo: Create new file!";
-            });
-        m_fileMenu->addAction(action);
-    }
+        m_fileMenu = this->menuBar()->addMenu(QString("File"));
+
+        {
+            auto * action = new RAction(
+                QString("New file"),
+                QString("Create new file"),
+                []()
+                {
+                    qDebug() << "This is only a demo: Create new file!";
+                });
+            m_fileMenu->addAction(action);
+        }
 
 #ifndef Q_OS_MACOS
-    {
-        // Qt for mac merges "quit" or "exit" with the default quit item in the
-        // system menu:
-        // https://doc.qt.io/qt-6/qmenubar.html#qmenubar-as-a-global-menu-bar
-        auto * action = new RAction(
-            QString("Exit"),
-            QString("Exit the application"),
-            []()
-            {
-                RApplication::instance()->quit();
-            });
-        m_fileMenu->addAction(action);
-    }
+        {
+            // Qt for mac merges "quit" or "exit" with the default quit item in the
+            // system menu:
+            // https://doc.qt.io/qt-6/qmenubar.html#qmenubar-as-a-global-menu-bar
+            auto * action = new RAction(
+                QString("Exit"),
+                QString("Exit the application"),
+                []()
+                {
+                    RApplication::instance()->quit();
+                });
+            m_fileMenu->addAction(action);
+        }
 #endif
-
-    {
-        this->addApplication(QString("sample_mesh"));
-        this->addApplication(QString("euler1d"));
-        this->addApplication(QString("linear_wave"));
-        this->addApplication(QString("bad_euler1d"));
     }
 
     {
+        m_cameraMenu = this->menuBar()->addMenu(QString("Camera"));
+
         auto * use_orbit_camera = new RAction(
             QString("Use Oribt Camera Controller"),
             QString("Use Oribt Camera Controller"),
@@ -132,14 +149,14 @@ void RMainWindow::setUp()
         m_cameraMenu->addAction(use_fps_camera);
     }
 
-    m_pycon = new RPythonConsoleDockWidget(QString("Console"), this);
-    m_pycon->setAllowedAreas(Qt::AllDockWidgetAreas);
-    addDockWidget(Qt::BottomDockWidgetArea, m_pycon);
+    {
+        m_appMenu = this->menuBar()->addMenu(QString("App"));
 
-    m_viewer = new R3DWidget();
-    setCentralWidget(m_viewer);
-
-    m_already_setup = true;
+        this->addApplication(QString("sample_mesh"));
+        this->addApplication(QString("euler1d"));
+        this->addApplication(QString("linear_wave"));
+        this->addApplication(QString("bad_euler1d"));
+    }
 }
 
 void RMainWindow::clearApplications()

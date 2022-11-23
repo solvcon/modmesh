@@ -490,7 +490,7 @@ public:
     Interpreter & setup_process();
 
     int enter_main();
-    void exec_code(std::string const & code);
+    void exec_code(std::string const & code, int stdout_fd, int stderr_fd);
 
 private:
 

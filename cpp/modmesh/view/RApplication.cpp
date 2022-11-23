@@ -69,6 +69,12 @@ RApplication & RApplication::setUp()
     return *this;
 }
 
+RApplication::RApplication(int & argc, char ** argv)
+    : QApplication(argc, argv)
+    , m_mainWindow(new RMainWindow)
+{
+}
+
 RApplication::~RApplication()
 {
 }

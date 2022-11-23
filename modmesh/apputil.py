@@ -35,7 +35,6 @@ Tools to run applications
 
 import importlib
 
-
 __all__ = [
     'environ',
     'AppEnvironment',
@@ -74,11 +73,12 @@ class AppEnvironment:
 
 def get_appenv(name=None):
     if None is name:
-        i = 0
-        name = 'anonymous%d' % i
-        while name in environ:
-            i += 1
-            name = 'anonymous%d' % i
+        for i in range(10):
+            name = f'anonymous{i}'
+            if name not in environ:
+                break
+        else:
+            raise ValueError("hit limit of anonymous environments (10)")
     app = environ.get(name, None)
     if None is app:
         app = AppEnvironment(name)

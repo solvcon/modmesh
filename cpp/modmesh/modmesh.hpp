@@ -35,7 +35,6 @@
 
 #include <modmesh/base.hpp>
 #include <modmesh/math.hpp>
-#include <modmesh/profile.hpp>
 #include <modmesh/buffer/buffer.hpp>
 #include <modmesh/grid.hpp>
 #include <modmesh/mesh/mesh.hpp>

@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+# Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,61 +25,46 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-"""
-General mesh data definition and manipulation in one, two, and
-three-dimensional space.
-"""
+import unittest
+
+import modmesh
 
 
-# Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
+class AppenvTC(unittest.TestCase):
 
+    def setUp(self):
+        self.envbak = modmesh.apputil.environ.copy()
+        self.envbasenum = len(self.envbak)
 
-__all__ = [  # noqa: F822
-    'WrapperProfilerStatus',
-    'wrapper_profiler_status',
-    'StopWatch',
-    'stop_watch',
-    'TimeRegistry',
-    'time_registry',
-    'ConcreteBuffer',
-    'SimpleArrayBool',
-    'SimpleArrayInt8',
-    'SimpleArrayInt16',
-    'SimpleArrayInt32',
-    'SimpleArrayInt64',
-    'SimpleArrayUint8',
-    'SimpleArrayUint16',
-    'SimpleArrayUint32',
-    'SimpleArrayUint64',
-    'SimpleArrayFloat32',
-    'SimpleArrayFloat64',
-    'StaticGrid1d',
-    'StaticGrid2d',
-    'StaticGrid3d',
-    'StaticMesh',
-    'Toggle',
-    'CommandLineInfo',
-    'ProcessInfo',
-    'METAL_BUILT',
-    'metal_running',
-    'HAS_VIEW',
-]
+    def tearDown(self):
+        modmesh.apputil.environ.clear()
+        modmesh.apputil.environ = self.envbak.copy()
 
+    def test_anonymous(self):
+        def _check(i, basenum):
+            env = modmesh.apputil.get_appenv()
+            self.assertEqual(f'anonymous{i}', env.name)
+            self.assertEqual(env, modmesh.apputil.environ[f'anonymous{i}'])
+            self.assertEqual(basenum + i + 1,
+                             len(modmesh.apputil.environ))
 
-# A hidden loophole to impolementation; it should only be used for testing
-# during development.
-try:
-    import _modmesh as _impl  # noqa: F401
-except ImportError:
-    from . import _modmesh as _impl  # noqa: F401
+        _check(0, basenum=self.envbasenum)
+        _check(1, basenum=self.envbasenum)
+        _check(2, basenum=self.envbasenum)
+        _check(3, basenum=self.envbasenum)
+        _check(4, basenum=self.envbasenum)
+        _check(5, basenum=self.envbasenum)
+        _check(6, basenum=self.envbasenum)
+        _check(7, basenum=self.envbasenum)
+        _check(8, basenum=self.envbasenum)
+        _check(9, basenum=self.envbasenum)
 
+        with self.assertRaisesRegex(
+                ValueError, r'hit limit of anonymous environments \(10\)'):
+            _check(10, basenum=self.envbasenum)
 
-def _load():
-    for name in __all__:
-        globals()[name] = getattr(_impl, name)
-
-
-_load()
-del _load
+        # Try to reset the environment dictionary.
+        modmesh.apputil.environ.clear()
+        _check(0, basenum=0)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

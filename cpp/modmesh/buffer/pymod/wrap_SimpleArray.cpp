@@ -26,8 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/wrapper/modmesh/modmesh.hpp> // Must be the first include.
-#include <modmesh/python/wrapper/modmesh/TypeBroadcast.hpp>
+#include <modmesh/buffer/pymod/buffer_pymod.hpp> // Must be the first include.
+#include <modmesh/buffer/pymod/TypeBroadcast.hpp>
 #include <modmesh/modmesh.hpp>
 
 namespace modmesh

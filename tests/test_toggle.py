@@ -37,16 +37,24 @@ class ToggleTC(unittest.TestCase):
         self.assertTrue(hasattr(modmesh.Toggle.instance, "show_axis"))
 
 
-@unittest.skipUnless("viewer" in modmesh.clinfo.executable_basename,
-                     "not in viewer binary")
 class CommandLineInfoTC(unittest.TestCase):
 
     def setUp(self):
         self.cmdline = modmesh.ProcessInfo.instance.command_line
 
     def test_populated(self):
-        self.assertTrue(self.cmdline.populated)
-        self.assertNotEqual(len(self.cmdline.populated_argv), 0)
+        if "viewer" in modmesh.clinfo.executable_basename:
+            self.assertTrue(self.cmdline.populated)
+            self.assertNotEqual(len(self.cmdline.populated_argv), 0)
+        else:
+            self.assertFalse(self.cmdline.populated)
+
+
+class ViewTC(unittest.TestCase):
+
+    @unittest.skipUnless(modmesh.HAS_VIEW, "Qt view is not built")
+    def test_import(self):
+        self.assertTrue(hasattr(modmesh.view, "app"))
 
 
 class MetalTC(unittest.TestCase):

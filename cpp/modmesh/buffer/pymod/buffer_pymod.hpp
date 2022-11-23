@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -26,17 +28,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/python.hpp> // Must be the first include.
-#include <modmesh/python/module.hpp>
+#include <pybind11/pybind11.h> // Must be the first include.
+#include <pybind11/stl.h>
 
-PYBIND11_EMBEDDED_MODULE(_modmesh, mod) // NOLINT
-{
-    modmesh::python::initialize(mod);
-}
+#include <modmesh/modmesh.hpp>
+#include <modmesh/python/common.hpp>
 
-int main(int argc, char ** argv)
+namespace modmesh
 {
-    return modmesh::python::program_entrance(argc, argv);
-}
+
+namespace python
+{
+
+void wrap_ConcreteBuffer(pybind11::module & mod);
+void wrap_SimpleArray(pybind11::module & mod);
+
+} /* end namespace python */
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

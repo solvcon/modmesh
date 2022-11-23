@@ -56,11 +56,7 @@ public:
 
 private:
 
-    RApplication(int & argc, char ** argv)
-        : QApplication(argc, argv)
-        , m_mainWindow(new RMainWindow)
-    {
-    }
+    RApplication(int & argc, char ** argv);
 
     RMainWindow * m_mainWindow = nullptr;
 }; /* end class RApplication */

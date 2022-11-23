@@ -34,6 +34,7 @@ import builtins
 import sys
 import os
 import argparse
+import msvcrt
 import traceback
 
 import modmesh
@@ -76,14 +77,9 @@ def _parse_command_line(argv):
     return args
 
 
-def _run_viewer(argv):
+def _run_viewer(argv=None):
     """Run the viewer application."""
-    view.app.setUp()
-    wm = view.app.mainWindow
-    wm.windowTitle = "Modmesh Viewer"
-    wm.resize(w=1000, h=600)
-    wm.show()
-    return view.app.exec()
+    return view.launch()
 
 
 def _run_pytest():
@@ -119,13 +115,26 @@ def enter_main(argv):
     return ret
 
 
-def exec_code(code):
+def exec_code(code, redirectStdOutFd=-1, redirectStdErrFd=-1):
+    if redirectStdOutFd <= 0:
+        raise ValueError("wrong fd:", redirectStdOutFd)
+    if redirectStdErrFd <= 0:
+        raise ValueError("wrong fd:", redirectStdErrFd)
+
+    oldStdout = sys.stdout
+    oldStderr = sys.stderr
     try:
+        sys.stdout = msvcrt.get_osfhandle(redirectStdOutFd)
+        sys.stderr = msvcrt.get_osfhandle(redirectStdErrFd)
         apputil.run_code(code)
+        
+        sys.stdout = oldStdout
+        sys.stderr = oldStderr
     except Exception as e:
-        sys.stdout.write("code:\n{}\n".format(code))
-        sys.stdout.write("{}: {}\n".format(type(e).__name__, str(e)))
-        sys.stdout.write("traceback:\n")
+        sys.stdout = oldStdout
+        sys.stderr = oldStderr
+        sys.stderr.write(("{}: {}".format(type(e).__name__, str(e))))
+        sys.stderr.write("\ntraceback:\n")
         traceback.print_stack()
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

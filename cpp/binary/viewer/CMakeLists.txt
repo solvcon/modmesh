@@ -6,16 +6,16 @@ project(viewer LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
-
 # get the root of the modmdesh project
 set(PROJECT_ROOT_DIR ${PROJECT_SOURCE_DIR}/../../../)
 
 if(NOT DEFINED INSTALL_VIEWERDIR)
     set(INSTALL_VIEWERDIR "viewer")
 endif()
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 COMPONENTS Core)
 find_package(Qt6 COMPONENTS Widgets)
@@ -28,25 +28,20 @@ find_package(Qt6 COMPONENTS 3DExtras)
 qt_add_executable(
     viewer
     viewer.cpp
-    ${MODMESH_HEADERS}
-    ${MODMESH_SOURCES}
-    ${MODMESH_VIEW_HEADERS}
-    ${MODMESH_VIEW_SOURCES}
-    ${MODMESH_ONEDIM_HEADERS}
-    ${MODMESH_ONEDIM_SOURCES}
-    ${MODMESH_SPACETIME_HEADERS}
-    ${MODMESH_SPACETIME_SOURCES}
-    ${MODMESH_PYTHON_HEADERS}
-    ${MODMESH_PYTHON_SOURCES}
-    ${MODMESH_PYMOD_MODMESH_HEADERS}
-    ${MODMESH_PYMOD_MODMESH_SOURCES}
-    ${MODMESH_PYMOD_ONEDIM_HEADERS}
-    ${MODMESH_PYMOD_ONEDIM_SOURCES}
-    ${MODMESH_PYMOD_SPACETIME_HEADERS}
-    ${MODMESH_PYMOD_SPACETIME_SOURCES}
 )
 
-add_custom_target(run_viewer_pytest $<TARGET_FILE:viewer> --mode=pytest)
+target_link_libraries(
+    viewer PUBLIC
+    pybind11::embed
+    modmesh_primary
+)
+if(WIN32)
+    set_target_properties(
+        viewer
+        PROPERTIES
+        LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE" # open the console for debug mode
+    )
+endif(WIN32)
 
 qt_add_resources(
     viewer "app_icon"
@@ -55,19 +50,6 @@ qt_add_resources(
     FILES
     ${PROJECT_ROOT_DIR}/resources/viewer/icon.ico
 )
-
-if(APPLE)
-    find_library(APPLE_FWK_FOUNDATION Foundation REQUIRED)
-    find_library(APPLE_FWK_QUARTZ_CORE QuartzCore REQUIRED)
-    find_library(APPLE_FWK_METAL Metal REQUIRED)
-
-    target_link_libraries(
-        viewer PUBLIC
-        ${APPLE_FWK_FOUNDATION}
-        ${APPLE_FWK_QUARTZ_CORE}
-        ${APPLE_FWK_METAL}
-    )
-endif()
 
 if(HIDE_SYMBOL)
     set_target_properties(viewer PROPERTIES CXX_VISIBILITY_PRESET "hidden")
@@ -100,17 +82,20 @@ set_target_properties(
     MACOSX_BUNDLE TRUE
 )
 
-target_link_libraries(
-    viewer PUBLIC
-    pybind11::embed
-    Qt::Widgets
-    Qt::3DCore
-    Qt::3DExtras
-    Qt::3DInput
-    Qt::3DRender
-    Qt::Core
-    Qt::Gui
-)
+if(APPLE)
+    find_library(APPLE_FWK_FOUNDATION Foundation REQUIRED)
+    find_library(APPLE_FWK_QUARTZ_CORE QuartzCore REQUIRED)
+    find_library(APPLE_FWK_METAL Metal REQUIRED)
+
+    target_link_libraries(
+        viewer PUBLIC
+        ${APPLE_FWK_FOUNDATION}
+        ${APPLE_FWK_QUARTZ_CORE}
+        ${APPLE_FWK_METAL}
+    )
+endif()
+
+add_custom_target(run_viewer_pytest $<TARGET_FILE:viewer> --mode=pytest)
 
 install(TARGETS viewer
     RUNTIME DESTINATION "${INSTALL_VIEWERDIR}"
