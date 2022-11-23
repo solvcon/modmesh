@@ -217,7 +217,7 @@ void RPythonConsoleDockWidget::printCommandStderr(const std::string & stderr_mes
     QTextCursor cursor = m_history_edit->textCursor();
     cursor.movePosition(QTextCursor::End);
     m_history_edit->setTextCursor(cursor);
-    m_history_edit->insertHtml(m_stderrHtml + QString::fromStdString(stderr_message) + m_endHtml);
+    m_history_edit->insertHtml(m_stderrHtml + QString::fromStdString(stderr_message).toHtmlEscaped() + m_endHtml);
     cursor.movePosition(QTextCursor::End);
     m_history_edit->setTextCursor(cursor);
 }
