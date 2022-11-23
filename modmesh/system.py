@@ -34,6 +34,7 @@ import builtins
 import sys
 import os
 import argparse
+import traceback
 
 import modmesh
 from . import view
@@ -113,6 +114,13 @@ def enter_main(argv):
     return ret
 
 
-def exec_code(code, redirectStdOutFile=None, redirectStdErrFile=None):
-    apputil.run_code(code, redirectStdOutFile, redirectStdErrFile)
+def exec_code(code):
+    try:
+        apputil.run_code(code)
+    except Exception as e:
+        sys.stdout.write("code:\n{}\n".format(code))
+        sys.stdout.write("{}: {}\n".format(type(e).__name__, str(e)))
+        sys.stdout.write("traceback:\n")
+        traceback.print_stack()
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
