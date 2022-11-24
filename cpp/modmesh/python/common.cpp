@@ -181,16 +181,20 @@ void Interpreter::exec_code(std::string const & code)
     }
 }
 
-PyStdErrOutStreamRedirect::PyStdErrOutStreamRedirect()
+PyStdErrOutStreamRedirect::PyStdErrOutStreamRedirect(bool disable)
+    : m_disable{disable}
 {
-    auto sys_module = pybind11::module::import("sys");
-    m_stdout = sys_module.attr("stdout");
-    m_stderr = sys_module.attr("stderr");
-    auto string_io = pybind11::module::import("io").attr("StringIO");
-    m_stdout_buffer = string_io(); // Other file like object can be used here as well, such as objects created by pybind11
-    m_stderr_buffer = string_io();
-    sys_module.attr("stdout") = m_stdout_buffer;
-    sys_module.attr("stderr") = m_stderr_buffer;
+    if (!m_disable)
+    {
+        auto sys_module = pybind11::module::import("sys");
+        m_stdout = sys_module.attr("stdout");
+        m_stderr = sys_module.attr("stderr");
+        auto string_io = pybind11::module::import("io").attr("StringIO");
+        m_stdout_buffer = string_io(); // Other file like object can be used here as well, such as objects created by pybind11
+        m_stderr_buffer = string_io();
+        sys_module.attr("stdout") = m_stdout_buffer;
+        sys_module.attr("stderr") = m_stderr_buffer;
+    }
 }
 
 std::string PyStdErrOutStreamRedirect::stdout_string()
@@ -207,15 +211,18 @@ std::string PyStdErrOutStreamRedirect::stderr_string()
 
 PyStdErrOutStreamRedirect::~PyStdErrOutStreamRedirect() noexcept(false)
 {
-    try
+    if (!m_disable)
     {
-        auto sys_module = pybind11::module::import("sys");
-        sys_module.attr("stdout") = m_stdout;
-        sys_module.attr("stderr") = m_stderr;
-    }
-    catch (const pybind11::error_already_set & e)
-    {
-        std::cerr << e.what() << std::endl;
+        try
+        {
+            auto sys_module = pybind11::module::import("sys");
+            sys_module.attr("stdout") = m_stdout;
+            sys_module.attr("stderr") = m_stderr;
+        }
+        catch (const pybind11::error_already_set & e)
+        {
+            std::cerr << e.what() << std::endl;
+        }
     }
 }
 

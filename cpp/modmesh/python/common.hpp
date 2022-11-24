@@ -509,12 +509,15 @@ class PyStdErrOutStreamRedirect
 {
 
 public:
-    PyStdErrOutStreamRedirect();
-    std::string stdout_string();
-    std::string stderr_string();
+    PyStdErrOutStreamRedirect(bool disable);
     ~PyStdErrOutStreamRedirect() noexcept(false);
 
+    std::string stdout_string();
+    std::string stderr_string();
+    bool check_disable() { return m_disable; }
+
 private:
+    bool m_disable;
     pybind11::object m_stdout;
     pybind11::object m_stderr;
     pybind11::object m_stdout_buffer;

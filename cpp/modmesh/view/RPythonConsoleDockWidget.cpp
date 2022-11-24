@@ -129,10 +129,19 @@ void RPythonConsoleDockWidget::executeCommand()
     m_command_string = "";
     m_current_command_index = static_cast<int>(m_past_command_strings.size());
     auto & interp = modmesh::python::Interpreter::instance();
-    modmesh::python::PyStdErrOutStreamRedirect pyOutputRedirect{};
+
+#ifdef DISABLE_REDIRECT
+    bool disable_redirect = true;
+#else
+    bool disable_redirect = false;
+#endif
+    modmesh::python::PyStdErrOutStreamRedirect pyOutputRedirect(disable_redirect);
     interp.exec_code(code);
-    printCommandStdout(pyOutputRedirect.stdout_string());
-    printCommandStderr(pyOutputRedirect.stderr_string());
+    if (!pyOutputRedirect.check_disable())
+    {
+        printCommandStdout(pyOutputRedirect.stdout_string());
+        printCommandStderr(pyOutputRedirect.stderr_string());
+    }
 }
 
 void RPythonConsoleDockWidget::printCommandHistory()
