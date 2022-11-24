@@ -205,7 +205,7 @@ std::string PyStdErrOutStreamRedirect::stderr_string()
     return pybind11::str(m_stderr_buffer.attr("read")());
 }
 
-PyStdErrOutStreamRedirect::~PyStdErrOutStreamRedirect() noexcept(true)
+PyStdErrOutStreamRedirect::~PyStdErrOutStreamRedirect() noexcept(false)
 {
     try
     {
