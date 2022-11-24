@@ -32,6 +32,8 @@
 
 #include <string>
 #include <deque>
+#include <stdexcept>
+#include <fstream>
 
 #include <Qt>
 #include <QDockWidget>
@@ -56,6 +58,19 @@ signals:
 
 }; /* end class RPythonCommandTextEdit */
 
+class RPythonHistoryTextEdit
+    : public QTextEdit
+{
+    Q_OBJECT
+
+    void doubleClickHistoryEdit();
+
+    void mouseDoubleClickEvent(QMouseEvent *) override
+    {
+        doubleClickHistoryEdit();
+    }
+}; /* end class RPythonHistoryTextEdit */
+
 class RPythonConsoleDockWidget
     : public QDockWidget
 {
@@ -79,13 +94,22 @@ public slots:
 private:
 
     void appendPastCommand(std::string const & code);
+    void printCommandOutput();
+    void printCommandHistory();
+    void printCommandStdout(const std::string & stdout_message);
+    void printCommandStderr(const std::string & stderr_message);
 
-    QTextEdit * m_history_edit = nullptr;
+    RPythonHistoryTextEdit * m_history_edit = nullptr;
     RPythonCommandTextEdit * m_command_edit = nullptr;
     std::string m_command_string;
     std::deque<std::string> m_past_command_strings;
     int m_current_command_index = 0;
     size_t m_past_limit = 1024;
+
+    QString m_commandHtml = "<p style=\"color:Black;white-space:pre\"><b>&#62;&#62;&#62;</b>";
+    QString m_stderrHtml = "<p style=\"color:Red;white-space:pre\">";
+    QString m_stdoutHtml = "<p style=\"color:Blue;white-space:pre\">";
+    QString m_endHtml = "</p><br>";
 
 }; /* end class RPythonConsoleDockWidget */
 

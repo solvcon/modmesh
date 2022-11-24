@@ -171,7 +171,52 @@ void Interpreter::exec_code(std::string const & code)
 {
     // NOLINTNEXTLINE(misc-const-correctness)
     pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
-    mod_sys.attr("exec_code")(code);
+    try
+    {
+        mod_sys.attr("exec_code")(code);
+    }
+    catch (const pybind11::error_already_set & e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+}
+
+PyStdErrOutStreamRedirect::PyStdErrOutStreamRedirect()
+{
+    auto sys_module = pybind11::module::import("sys");
+    m_stdout = sys_module.attr("stdout");
+    m_stderr = sys_module.attr("stderr");
+    auto string_io = pybind11::module::import("io").attr("StringIO");
+    m_stdout_buffer = string_io(); // Other file like object can be used here as well, such as objects created by pybind11
+    m_stderr_buffer = string_io();
+    sys_module.attr("stdout") = m_stdout_buffer;
+    sys_module.attr("stderr") = m_stderr_buffer;
+}
+
+std::string PyStdErrOutStreamRedirect::stdout_string()
+{
+    m_stdout_buffer.attr("seek")(0);
+    return pybind11::str(m_stdout_buffer.attr("read")());
+}
+
+std::string PyStdErrOutStreamRedirect::stderr_string()
+{
+    m_stderr_buffer.attr("seek")(0);
+    return pybind11::str(m_stderr_buffer.attr("read")());
+}
+
+PyStdErrOutStreamRedirect::~PyStdErrOutStreamRedirect() noexcept(false)
+{
+    try
+    {
+        auto sys_module = pybind11::module::import("sys");
+        sys_module.attr("stdout") = m_stdout;
+        sys_module.attr("stderr") = m_stderr;
+    }
+    catch (const pybind11::error_already_set & e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
 }
 
 } /* end namespace python */

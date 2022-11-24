@@ -45,9 +45,21 @@ void RPythonConsoleDockWidget::appendPastCommand(const std::string & code)
     }
 }
 
+void RPythonHistoryTextEdit::doubleClickHistoryEdit()
+{
+    // TODO: currently, it will select the whole content, could change the behavior
+    QTextCursor cursor = textCursor();
+    std::string text = toPlainText().toStdString();
+    int startPos = 0;
+    int endPos = static_cast<int>(text.size());
+    cursor.setPosition(startPos);
+    cursor.setPosition(endPos, QTextCursor::KeepAnchor);
+    setTextCursor(cursor);
+}
+
 void RPythonCommandTextEdit::keyPressEvent(QKeyEvent * event)
 {
-    if (Qt::Key_Return == event->key())
+    if (Qt::Key_Return == event->key() || Qt::Key_Enter == event->key())
     {
         execute();
     }
@@ -67,14 +79,14 @@ void RPythonCommandTextEdit::keyPressEvent(QKeyEvent * event)
 
 RPythonConsoleDockWidget::RPythonConsoleDockWidget(const QString & title, QWidget * parent, Qt::WindowFlags flags)
     : QDockWidget(title, parent, flags)
-    , m_history_edit(new QTextEdit)
+    , m_history_edit(new RPythonHistoryTextEdit)
     , m_command_edit(new RPythonCommandTextEdit)
 {
     setWidget(new QWidget);
     widget()->setLayout(new QVBoxLayout);
 
     m_history_edit->setFont(QFont("Courier New"));
-    m_history_edit->setPlainText(QString(""));
+    m_history_edit->setHtml(QString(""));
     m_history_edit->setReadOnly(true);
     widget()->layout()->addWidget(m_history_edit);
 
@@ -112,13 +124,45 @@ void RPythonConsoleDockWidget::executeCommand()
 {
     std::string const code = m_command_edit->toPlainText().toStdString();
     appendPastCommand(code);
-    m_history_edit->insertPlainText(m_command_edit->toPlainText());
-    m_history_edit->insertPlainText("\n");
+    printCommandHistory();
     m_command_edit->setPlainText("");
     m_command_string = "";
     m_current_command_index = static_cast<int>(m_past_command_strings.size());
     auto & interp = modmesh::python::Interpreter::instance();
+    modmesh::python::PyStdErrOutStreamRedirect pyOutputRedirect{};
     interp.exec_code(code);
+    printCommandStdout(pyOutputRedirect.stdout_string());
+    printCommandStderr(pyOutputRedirect.stderr_string());
+}
+
+void RPythonConsoleDockWidget::printCommandHistory()
+{
+    QTextCursor cursor = m_history_edit->textCursor();
+    cursor.movePosition(QTextCursor::End);
+    m_history_edit->setTextCursor(cursor);
+    m_history_edit->insertHtml(m_commandHtml + m_command_edit->toPlainText() + m_endHtml);
+    cursor.movePosition(QTextCursor::End);
+    m_history_edit->setTextCursor(cursor);
+}
+
+void RPythonConsoleDockWidget::printCommandStdout(const std::string & stdout_message)
+{
+    QTextCursor cursor = m_history_edit->textCursor();
+    cursor.movePosition(QTextCursor::End);
+    m_history_edit->setTextCursor(cursor);
+    m_history_edit->insertHtml(m_stdoutHtml + QString::fromStdString(stdout_message).toHtmlEscaped() + m_endHtml);
+    cursor.movePosition(QTextCursor::End);
+    m_history_edit->setTextCursor(cursor);
+}
+
+void RPythonConsoleDockWidget::printCommandStderr(const std::string & stderr_message)
+{
+    QTextCursor cursor = m_history_edit->textCursor();
+    cursor.movePosition(QTextCursor::End);
+    m_history_edit->setTextCursor(cursor);
+    m_history_edit->insertHtml(m_stderrHtml + QString::fromStdString(stderr_message).toHtmlEscaped() + m_endHtml);
+    cursor.movePosition(QTextCursor::End);
+    m_history_edit->setTextCursor(cursor);
 }
 
 void RPythonConsoleDockWidget::navigateCommand(int offset)

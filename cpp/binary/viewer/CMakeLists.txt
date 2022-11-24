@@ -35,6 +35,13 @@ target_link_libraries(
     pybind11::embed
     modmesh_primary
 )
+if(WIN32)
+    set_target_properties(
+        viewer
+        PROPERTIES
+        LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE" # open the console for debug mode
+    )
+endif(WIN32)
 
 qt_add_resources(
     viewer "app_icon"
