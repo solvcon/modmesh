@@ -205,7 +205,7 @@ std::string PyStdErrOutStreamRedirect::stderr_string()
     return pybind11::str(m_stderr_buffer.attr("read")());
 }
 
-PyStdErrOutStreamRedirect::~PyStdErrOutStreamRedirect()
+PyStdErrOutStreamRedirect::~PyStdErrOutStreamRedirect() noexcept(false)
 {
     auto sys_module = pybind11::module::import("sys");
     sys_module.attr("stdout") = m_stdout;
