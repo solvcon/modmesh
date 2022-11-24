@@ -500,6 +500,11 @@ private:
 
 }; /* end class Interpreter */
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+// Suppress the warning "greater visibility than the type of its field"
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
 class PyStdErrOutStreamRedirect
 {
 
@@ -515,7 +520,9 @@ private:
     pybind11::object m_stdout_buffer;
     pybind11::object m_stderr_buffer;
 }; /* end class PyStdErrOutStreamRedirect */
-
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 } /* end namespace python */
 
 } /* end namespace modmesh */
