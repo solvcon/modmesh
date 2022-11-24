@@ -205,11 +205,18 @@ std::string PyStdErrOutStreamRedirect::stderr_string()
     return pybind11::str(m_stderr_buffer.attr("read")());
 }
 
-PyStdErrOutStreamRedirect::~PyStdErrOutStreamRedirect() noexcept(false)
+PyStdErrOutStreamRedirect::~PyStdErrOutStreamRedirect() noexcept(true)
 {
-    auto sys_module = pybind11::module::import("sys");
-    sys_module.attr("stdout") = m_stdout;
-    sys_module.attr("stderr") = m_stderr;
+    try
+    {
+        auto sys_module = pybind11::module::import("sys");
+        sys_module.attr("stdout") = m_stdout;
+        sys_module.attr("stderr") = m_stderr;
+    }
+    catch (const pybind11::error_already_set & e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
 }
 
 } /* end namespace python */

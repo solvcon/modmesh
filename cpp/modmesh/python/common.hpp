@@ -512,7 +512,7 @@ public:
     PyStdErrOutStreamRedirect();
     std::string stdout_string();
     std::string stderr_string();
-    ~PyStdErrOutStreamRedirect() noexcept(false);
+    ~PyStdErrOutStreamRedirect() noexcept(true);
 
 private:
     pybind11::object m_stdout;

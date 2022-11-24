@@ -133,14 +133,6 @@ void RPythonConsoleDockWidget::executeCommand()
     interp.exec_code(code);
     printCommandStdout(pyOutputRedirect.stdout_string());
     printCommandStderr(pyOutputRedirect.stderr_string());
-    try
-    {
-        pyOutputRedirect.~pyOutputRedirect();
-    }
-    catch (...)
-    {
-        std::cerr << "Error occurs when pyOutputRedirect deconstructed.";
-    }
 }
 
 void RPythonConsoleDockWidget::printCommandHistory()
