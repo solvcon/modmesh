@@ -29,10 +29,40 @@
 #include <modmesh/view/RPythonConsoleDockWidget.hpp>
 #include <QVBoxLayout>
 #include <QKeyEvent>
-#include <fcntl.h>
 
 namespace modmesh
 {
+
+class PyStdErrOutStreamRedirect {
+    pybind11::object _stdout;
+    pybind11::object _stderr;
+    pybind11::object _stdout_buffer;
+    pybind11::object _stderr_buffer;
+public:
+    PyStdErrOutStreamRedirect() {
+        auto sysm = pybind11::module::import("sys");
+        _stdout = sysm.attr("stdout");
+        _stderr = sysm.attr("stderr");
+        auto stringio = pybind11::module::import("io").attr("StringIO");
+        _stdout_buffer = stringio();  // Other filelike object can be used here as well, such as objects created by pybind11
+        _stderr_buffer = stringio();
+        sysm.attr("stdout") = _stdout_buffer;
+        sysm.attr("stderr") = _stderr_buffer;
+    }
+    std::string stdoutString() {
+        _stdout_buffer.attr("seek")(0);
+        return pybind11::str(_stdout_buffer.attr("read")());
+    }
+    std::string stderrString() {
+        _stderr_buffer.attr("seek")(0);
+        return pybind11::str(_stderr_buffer.attr("read")());
+    }
+    ~PyStdErrOutStreamRedirect() {
+        auto sysm = pybind11::module::import("sys");
+        sysm.attr("stdout") = _stdout;
+        sysm.attr("stderr") = _stderr;
+    }
+};
 
 void RPythonConsoleDockWidget::appendPastCommand(const std::string & code)
 {
@@ -130,66 +160,10 @@ void RPythonConsoleDockWidget::executeCommand()
     m_command_string = "";
     m_current_command_index = static_cast<int>(m_past_command_strings.size());
     auto & interp = modmesh::python::Interpreter::instance();
-
-    int pipe_stdout_fd[2];
-    int pipe_stderr_fd[2];
-
-#ifdef _MSC_VER
-    /* Open a set of pipes */
-    if (_pipe(pipe_stdout_fd, 256, _O_BINARY) == -1)
-    {
-        throw "failed to open pipe";
-    }
-    if (_pipe(pipe_stderr_fd, 256, _O_BINARY) == -1)
-    {
-        throw "failed to open pipe";
-    }
-#endif
-
-    interp.exec_code(code, pipe_stdout_fd[0], pipe_stderr_fd[0]);
-
-    printCommandOutput(pipe_stdout_fd[1], pipe_stderr_fd[1]);
-    _close(pipe_stdout_fd[0]);
-    _close(pipe_stdout_fd[1]);
-    _close(pipe_stderr_fd[0]);
-    _close(pipe_stderr_fd[1]);
-}
-
-void RPythonConsoleDockWidget::printCommandOutput(int pipe_stdout_out_fd, int pipe_stderr_out_fd)
-{
-    std::string stdout_str;
-    std::string stderr_str;
-
-    {
-        Formatter formatter;
-        char buffer[256];
-        int number_read = 1;
-        while (number_read)
-        {
-            number_read = _read(pipe_stdout_out_fd,
-                             buffer,
-                             256);
-            formatter << buffer << "<br>";
-        }
-        stdout_str = formatter.str();
-    }
-
-    {
-        Formatter formatter;
-        char buffer[256];
-        int number_read;
-        while (number_read)
-        {
-            number_read = _read(pipe_stderr_out_fd,
-                             buffer,
-                             256);
-            formatter << buffer << "<br>";
-        }
-        stderr_str = formatter.str();
-    }
-
-    printCommandStdout(stdout_str);
-    printCommandStderr(stderr_str);
+    PyStdErrOutStreamRedirect pyOutputRedirect{};
+    interp.exec_code(code);
+    printCommandStdout(pyOutputRedirect.stdoutString());
+    printCommandStderr(pyOutputRedirect.stderrString());
 }
 
 void RPythonConsoleDockWidget::printCommandHistory()

@@ -94,7 +94,7 @@ public slots:
 private:
 
     void appendPastCommand(std::string const & code);
-    void printCommandOutput(int pipe_stdout_out_fd, int pipe_stderr_out_fd);
+    void printCommandOutput();
     void printCommandHistory();
     void printCommandStdout(const std::string & stdout_message);
     void printCommandStderr(const std::string & stderr_message);
@@ -106,10 +106,10 @@ private:
     int m_current_command_index = 0;
     size_t m_past_limit = 1024;
 
-    QString m_commandHtml = "<font color=\"Black\"> <b>&#62;&#62;&#62;</b> ";
-    QString m_stderrHtml = "<font color=\"Red\">";
-    QString m_stdoutHtml = "<font color=\"Blue\">";
-    QString m_endHtml = "</font><br>";
+    QString m_commandHtml = "<p style=\"color:Black;white-space:pre\"><b>&#62;&#62;&#62;</b>";
+    QString m_stderrHtml = "<p style=\"color:Red;white-space:pre\">";
+    QString m_stdoutHtml = "<p style=\"color:Blue;white-space:pre\">";
+    QString m_endHtml = "</p><br>";
 
 }; /* end class RPythonConsoleDockWidget */
 
