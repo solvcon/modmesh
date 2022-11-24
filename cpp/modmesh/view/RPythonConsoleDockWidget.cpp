@@ -33,31 +33,37 @@
 namespace modmesh
 {
 
-class PyStdErrOutStreamRedirect {
+class PyStdErrOutStreamRedirect
+{
     pybind11::object _stdout;
     pybind11::object _stderr;
     pybind11::object _stdout_buffer;
     pybind11::object _stderr_buffer;
+
 public:
-    PyStdErrOutStreamRedirect() {
+    PyStdErrOutStreamRedirect()
+    {
         auto sysm = pybind11::module::import("sys");
         _stdout = sysm.attr("stdout");
         _stderr = sysm.attr("stderr");
         auto stringio = pybind11::module::import("io").attr("StringIO");
-        _stdout_buffer = stringio();  // Other filelike object can be used here as well, such as objects created by pybind11
+        _stdout_buffer = stringio(); // Other filelike object can be used here as well, such as objects created by pybind11
         _stderr_buffer = stringio();
         sysm.attr("stdout") = _stdout_buffer;
         sysm.attr("stderr") = _stderr_buffer;
     }
-    std::string stdoutString() {
+    std::string stdoutString()
+    {
         _stdout_buffer.attr("seek")(0);
         return pybind11::str(_stdout_buffer.attr("read")());
     }
-    std::string stderrString() {
+    std::string stderrString()
+    {
         _stderr_buffer.attr("seek")(0);
         return pybind11::str(_stderr_buffer.attr("read")());
     }
-    ~PyStdErrOutStreamRedirect() {
+    ~PyStdErrOutStreamRedirect()
+    {
         auto sysm = pybind11::module::import("sys");
         sysm.attr("stdout") = _stdout;
         sysm.attr("stderr") = _stderr;
