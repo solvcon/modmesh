@@ -500,6 +500,22 @@ private:
 
 }; /* end class Interpreter */
 
+class PyStdErrOutStreamRedirect
+{
+
+public:
+    PyStdErrOutStreamRedirect();
+    std::string stdout_string();
+    std::string stderr_string();
+    ~PyStdErrOutStreamRedirect();
+
+private:
+    pybind11::object m_stdout;
+    pybind11::object m_stderr;
+    pybind11::object m_stdout_buffer;
+    pybind11::object m_stderr_buffer;
+}; /* end class PyStdErrOutStreamRedirect */
+
 } /* end namespace python */
 
 } /* end namespace modmesh */

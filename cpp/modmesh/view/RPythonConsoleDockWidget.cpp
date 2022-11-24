@@ -33,43 +33,6 @@
 namespace modmesh
 {
 
-class PyStdErrOutStreamRedirect
-{
-    pybind11::object _stdout;
-    pybind11::object _stderr;
-    pybind11::object _stdout_buffer;
-    pybind11::object _stderr_buffer;
-
-public:
-    PyStdErrOutStreamRedirect()
-    {
-        auto sysm = pybind11::module::import("sys");
-        _stdout = sysm.attr("stdout");
-        _stderr = sysm.attr("stderr");
-        auto stringio = pybind11::module::import("io").attr("StringIO");
-        _stdout_buffer = stringio(); // Other filelike object can be used here as well, such as objects created by pybind11
-        _stderr_buffer = stringio();
-        sysm.attr("stdout") = _stdout_buffer;
-        sysm.attr("stderr") = _stderr_buffer;
-    }
-    std::string stdoutString()
-    {
-        _stdout_buffer.attr("seek")(0);
-        return pybind11::str(_stdout_buffer.attr("read")());
-    }
-    std::string stderrString()
-    {
-        _stderr_buffer.attr("seek")(0);
-        return pybind11::str(_stderr_buffer.attr("read")());
-    }
-    ~PyStdErrOutStreamRedirect()
-    {
-        auto sysm = pybind11::module::import("sys");
-        sysm.attr("stdout") = _stdout;
-        sysm.attr("stderr") = _stderr;
-    }
-};
-
 void RPythonConsoleDockWidget::appendPastCommand(const std::string & code)
 {
     if (code.size() > 0)
@@ -166,10 +129,10 @@ void RPythonConsoleDockWidget::executeCommand()
     m_command_string = "";
     m_current_command_index = static_cast<int>(m_past_command_strings.size());
     auto & interp = modmesh::python::Interpreter::instance();
-    PyStdErrOutStreamRedirect pyOutputRedirect{};
+    modmesh::python::PyStdErrOutStreamRedirect pyOutputRedirect{};
     interp.exec_code(code);
-    printCommandStdout(pyOutputRedirect.stdoutString());
-    printCommandStderr(pyOutputRedirect.stderrString());
+    printCommandStdout(pyOutputRedirect.stdout_string());
+    printCommandStderr(pyOutputRedirect.stderr_string());
 }
 
 void RPythonConsoleDockWidget::printCommandHistory()
