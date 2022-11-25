@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Yung-Yu Chen <yyc@solvcon.net>
+# Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,37 +25,26 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import os
 import unittest
 
 import modmesh
+try:
+    from modmesh import view
+except ImportError:
+    view = None
 
 
-class ToggleTC(unittest.TestCase):
+@unittest.skipUnless(modmesh.HAS_VIEW, "Qt view is not built")
+class ViewTC(unittest.TestCase):
 
-    def test_instance(self):
-        self.assertTrue(hasattr(modmesh.Toggle.instance, "show_axis"))
+    def test_import(self):
+        self.assertTrue(hasattr(modmesh.view, "app"))
 
+    @unittest.skip("headless testing is not ready")
+    def test_pycon(self):
+        self.assertTrue(view.app.pycon.python_redirect)
+        view.app.pycon.python_redirect = False
+        self.assertFalse(view.app.pycon.python_redirect)
 
-class CommandLineInfoTC(unittest.TestCase):
-
-    def setUp(self):
-        self.cmdline = modmesh.ProcessInfo.instance.command_line
-
-    def test_populated(self):
-        if "viewer" in modmesh.clinfo.executable_basename:
-            self.assertTrue(self.cmdline.populated)
-            self.assertNotEqual(len(self.cmdline.populated_argv), 0)
-        else:
-            self.assertFalse(self.cmdline.populated)
-
-
-class MetalTC(unittest.TestCase):
-
-    # Github Actions macos-12 does not support GPU yet.
-    @unittest.skipUnless(modmesh.METAL_BUILT and "TEST_METAL" in os.environ,
-                         "Metal is not built")
-    def test_metal_status(self):
-        self.assertEqual(True, modmesh.metal_running())
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

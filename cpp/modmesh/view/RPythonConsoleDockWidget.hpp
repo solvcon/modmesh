@@ -85,6 +85,14 @@ public:
 
     QString command() const;
 
+    bool hasPythonRedirect() const { return m_python_redirect.is_enabled(); }
+
+    RPythonConsoleDockWidget & setPythonRedirect(bool enabled)
+    {
+        m_python_redirect.set_enabled(enabled);
+        return *this;
+    }
+
 public slots:
 
     void setCommand(QString const & value);
@@ -105,6 +113,8 @@ private:
     std::deque<std::string> m_past_command_strings;
     int m_current_command_index = 0;
     size_t m_past_limit = 1024;
+
+    python::PythonStreamRedirect m_python_redirect{/* enabled */ true};
 
     QString m_commandHtml = "<p style=\"color:Black;white-space:pre\"><b>&#62;&#62;&#62;</b> ";
     QString m_stderrHtml = "<p style=\"color:Red;white-space:pre\">";
