@@ -515,10 +515,8 @@ public:
     {
     }
 
-    ~PythonStreamRedirect() = default;
-
-    std::string stdout_string();
-    std::string stderr_string();
+    std::string stdout_string() const;
+    std::string stderr_string() const;
 
     PythonStreamRedirect & set_enabled(bool enabled)
     {

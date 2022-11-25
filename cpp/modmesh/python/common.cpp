@@ -200,8 +200,8 @@ PythonStreamRedirect & PythonStreamRedirect::activate()
 
         // Create string-IO objects. Other file-like object can be used here as
         // well, such as objects created by pybind11.
-        auto string_io = pybind11::module::import("io").attr("StringIO");
         {
+            auto string_io = pybind11::module::import("io").attr("StringIO");
             m_stdout_buffer = string_io();
             sys_module.attr("stdout") = m_stdout_buffer;
             m_stderr_buffer = string_io();
@@ -228,13 +228,13 @@ PythonStreamRedirect & PythonStreamRedirect::deactivate()
     return *this;
 }
 
-std::string PythonStreamRedirect::stdout_string()
+std::string PythonStreamRedirect::stdout_string() const
 {
     m_stdout_buffer.attr("seek")(0);
     return pybind11::str(m_stdout_buffer.attr("read")());
 }
 
-std::string PythonStreamRedirect::stderr_string()
+std::string PythonStreamRedirect::stderr_string() const
 {
     m_stderr_buffer.attr("seek")(0);
     return pybind11::str(m_stderr_buffer.attr("read")());
