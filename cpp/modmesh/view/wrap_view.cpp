@@ -132,6 +132,16 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRPythonConsoleDockWidget
                 {
                     return self.setCommand(QString::fromStdString(command));
                 })
+            .def_property(
+                "python_redirect",
+                [](wrapped_type const & self)
+                {
+                    return self.hasPythonRedirect();
+                },
+                [](wrapped_type & self, bool enabled)
+                {
+                    self.setPythonRedirect(enabled);
+                })
             //
             ;
     }

@@ -31,6 +31,8 @@
 
 #include <modmesh/toggle/toggle.hpp>
 
+#include <utility>
+
 #include <pybind11/numpy.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
@@ -181,49 +183,61 @@ void Interpreter::exec_code(std::string const & code)
     }
 }
 
-PyStdErrOutStreamRedirect::PyStdErrOutStreamRedirect(bool disable)
-    : m_disable{disable}
+PythonStreamRedirect & PythonStreamRedirect::activate()
 {
-    if (!m_disable)
+    if (m_enabled)
     {
         auto sys_module = pybind11::module::import("sys");
-        m_stdout = sys_module.attr("stdout");
-        m_stderr = sys_module.attr("stderr");
+        // Back up old streams.
+        if (!bool(m_stdout_backup))
+        {
+            m_stdout_backup = sys_module.attr("stdout");
+        }
+        if (!bool(m_stderr_backup))
+        {
+            m_stderr_backup = sys_module.attr("stderr");
+        }
+
+        // Create string-IO objects. Other file-like object can be used here as
+        // well, such as objects created by pybind11.
         auto string_io = pybind11::module::import("io").attr("StringIO");
-        m_stdout_buffer = string_io(); // Other file like object can be used here as well, such as objects created by pybind11
-        m_stderr_buffer = string_io();
-        sys_module.attr("stdout") = m_stdout_buffer;
-        sys_module.attr("stderr") = m_stderr_buffer;
+        {
+            m_stdout_buffer = string_io();
+            sys_module.attr("stdout") = m_stdout_buffer;
+            m_stderr_buffer = string_io();
+            sys_module.attr("stderr") = m_stderr_buffer;
+        }
     }
+
+    return *this;
 }
 
-std::string PyStdErrOutStreamRedirect::stdout_string()
+PythonStreamRedirect & PythonStreamRedirect::deactivate()
+{
+    auto sys_module = pybind11::module::import("sys");
+    if (bool(m_stdout_backup))
+    {
+        sys_module.attr("stdout") = m_stdout_backup;
+        m_stdout_backup.release().dec_ref();
+    }
+    if (bool(m_stderr_backup))
+    {
+        sys_module.attr("stderr") = m_stderr_backup;
+        m_stderr_backup.release().dec_ref();
+    }
+    return *this;
+}
+
+std::string PythonStreamRedirect::stdout_string()
 {
     m_stdout_buffer.attr("seek")(0);
     return pybind11::str(m_stdout_buffer.attr("read")());
 }
 
-std::string PyStdErrOutStreamRedirect::stderr_string()
+std::string PythonStreamRedirect::stderr_string()
 {
     m_stderr_buffer.attr("seek")(0);
     return pybind11::str(m_stderr_buffer.attr("read")());
-}
-
-PyStdErrOutStreamRedirect::~PyStdErrOutStreamRedirect() noexcept(false)
-{
-    if (!m_disable)
-    {
-        try
-        {
-            auto sys_module = pybind11::module::import("sys");
-            sys_module.attr("stdout") = m_stdout;
-            sys_module.attr("stderr") = m_stderr;
-        }
-        catch (const pybind11::error_already_set & e)
-        {
-            std::cerr << e.what() << std::endl;
-        }
-    }
 }
 
 } /* end namespace python */

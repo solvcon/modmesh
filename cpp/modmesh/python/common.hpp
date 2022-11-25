@@ -505,24 +505,45 @@ private:
 // Suppress the warning "greater visibility than the type of its field"
 #pragma GCC diagnostic ignored "-Wattributes"
 #endif
-class PyStdErrOutStreamRedirect
+class PythonStreamRedirect
 {
 
 public:
-    PyStdErrOutStreamRedirect(bool disable);
-    ~PyStdErrOutStreamRedirect() noexcept(false);
+
+    PythonStreamRedirect(bool enabled)
+        : m_enabled(enabled)
+    {
+    }
+
+    ~PythonStreamRedirect() = default;
 
     std::string stdout_string();
     std::string stderr_string();
-    bool check_disable() { return m_disable; }
+
+    PythonStreamRedirect & set_enabled(bool enabled)
+    {
+        m_enabled = enabled;
+        return *this;
+    }
+
+    bool is_enabled() const { return m_enabled; }
+    bool is_disabled() const { return !m_enabled; }
+
+    PythonStreamRedirect & activate();
+    PythonStreamRedirect & deactivate();
+
+    bool is_activated() const { return bool(m_stdout_backup) || bool(m_stderr_backup); }
+    bool is_deactivated() const { return !is_activated(); }
 
 private:
-    bool m_disable;
-    pybind11::object m_stdout;
-    pybind11::object m_stderr;
+
+    bool m_enabled;
+    pybind11::object m_stdout_backup;
+    pybind11::object m_stderr_backup;
     pybind11::object m_stdout_buffer;
     pybind11::object m_stderr_buffer;
-}; /* end class PyStdErrOutStreamRedirect */
+
+}; /* end class PythonStreamRedirect */
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif

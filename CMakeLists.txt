@@ -11,12 +11,6 @@ if(NOT SKIP_PYTHON_EXECUTABLE)
     message(STATUS "use PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}")
 endif()
 
-option(DISABLE_REDIRECT "Disable redirecting stdout and stderr to python console" OFF)
-message(STATUS "DISABLE_REDIRECT: ${DISABLE_REDIRECT}")
-if(DISABLE_REDIRECT)
-    add_definitions(-DDISABLE_REDIRECT)
-endif()
-
 option(BUILD_QT "build with QT" ON)
 message(STATUS "BUILD_QT: ${BUILD_QT}")
 
