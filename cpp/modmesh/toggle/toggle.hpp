@@ -43,6 +43,14 @@ class Toggle
 
 public:
 
+    static constexpr bool USE_PYSIDE =
+#ifdef MODMESH_USE_PYSIDE
+        true
+#else // MODMESH_USE_PYSIDE
+        false
+#endif // MODMESH_USE_PYSIDE
+        ;
+
     static Toggle & instance();
 
     Toggle(Toggle const &) = delete;
@@ -58,7 +66,7 @@ private:
 
     Toggle() = default;
 
-    bool m_show_axis;
+    bool m_show_axis = false;
 
 }; /* end class Toggle */
 

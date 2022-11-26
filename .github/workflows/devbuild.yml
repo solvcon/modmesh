@@ -57,6 +57,7 @@ jobs:
       run: |
         sudo pip3 install setuptools
         sudo pip3 install numpy pytest flake8
+        sudo pip3 install pyside6 shiboken6
 
     - name: dependency by manual script
       run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
@@ -167,6 +168,7 @@ jobs:
           python3 -m pip -v install --upgrade setuptools
           python3 -m pip -v install --upgrade pip
           python3 -m pip -v install --upgrade numpy pytest flake8
+          python3 -m pip -v install --upgrade pyside6 shiboken6
 
       - name: dependency by manual script
         run: |
