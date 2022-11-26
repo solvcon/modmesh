@@ -55,21 +55,7 @@ public:
     RPythonConsoleDockWidget * pycon() { return m_pycon; }
 
     template <typename... Args>
-    QMdiSubWindow * addSubWindow(Args &&... args)
-    {
-        QMdiSubWindow * subwin = nullptr;
-        if (m_mdiArea)
-        {
-            qDebug() << "YDEBUG mdiArea:" << m_mdiArea;
-            subwin = m_mdiArea->addSubWindow(args...);
-            subwin->show();
-            qDebug() << "YDEBUG sub window created:" << subwin;
-            m_mdiArea->setActiveSubWindow(subwin);
-            qDebug() << "YDEBUG active sub window:" << m_mdiArea->activeSubWindow();
-        }
-        qDebug() << "YDEBUG sub window to return:" << subwin;
-        return subwin;
-    }
+    QMdiSubWindow * addSubWindow(Args &&... args);
 
 public slots:
 
@@ -79,7 +65,7 @@ public slots:
 private:
 
     void setUpConsole();
-    void setUpViewer();
+    void setUpCentral();
     void setUpMenu();
 
     bool m_already_setup = false;
@@ -92,6 +78,19 @@ private:
     QMdiArea * m_mdiArea = nullptr;
 
 }; /* end class RPythonText */
+
+template <typename... Args>
+QMdiSubWindow * RMainWindow::addSubWindow(Args &&... args)
+{
+    QMdiSubWindow * subwin = nullptr;
+    if (m_mdiArea)
+    {
+        subwin = m_mdiArea->addSubWindow(std::forward<Args>(args)...);
+        subwin->show();
+        m_mdiArea->setActiveSubWindow(subwin);
+    }
+    return subwin;
+}
 
 } /* end namespace modmesh */
 

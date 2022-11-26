@@ -45,7 +45,7 @@ class RApplication
 
 public:
 
-    ~RApplication();
+    ~RApplication() override;
 
     RApplication & setUp();
 
@@ -61,7 +61,6 @@ private:
     RApplication(int & argc, char ** argv);
 
     RMainWindow * m_mainWindow = nullptr;
-    QList<R3DWidget *> m_3DWidgetList;
 }; /* end class RApplication */
 
 } /* end namespace modmesh */

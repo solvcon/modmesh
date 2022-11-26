@@ -57,7 +57,7 @@ void RMainWindow::setUp()
     }
 
     this->setUpConsole();
-    this->setUpViewer();
+    this->setUpCentral();
     this->setUpMenu();
 
     m_already_setup = true;
@@ -70,7 +70,7 @@ void RMainWindow::setUpConsole()
     addDockWidget(Qt::BottomDockWidgetArea, m_pycon);
 }
 
-void RMainWindow::setUpViewer()
+void RMainWindow::setUpCentral()
 {
     m_mdiArea = new QMdiArea(this);
     m_mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);

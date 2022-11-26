@@ -32,7 +32,10 @@
 
 #include <modmesh/view/view.hpp>
 
+#include <QPointer>
 #include <QClipboard>
+
+PYBIND11_DECLARE_HOLDER_TYPE(T, QPointer<T>);
 
 namespace modmesh
 {
@@ -41,7 +44,7 @@ namespace python
 {
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
-    : public WrapBase<WrapR3DWidget, R3DWidget>
+    : public WrapBase<WrapR3DWidget, R3DWidget, QPointer<R3DWidget>>
 {
 
     friend root_base_type;
@@ -178,6 +181,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRPythonConsoleDockWidget
         namespace py = pybind11;
 
         (*this)
+            .def("writeToHistory", &wrapped_type::writeToHistory)
             .def_property(
                 "command",
                 [](wrapped_type const & self)

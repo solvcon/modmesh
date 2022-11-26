@@ -93,6 +93,8 @@ public:
         return *this;
     }
 
+    void writeToHistory(std::string const & data);
+
 public slots:
 
     void setCommand(QString const & value);

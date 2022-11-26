@@ -29,14 +29,58 @@
 Show sample mesh
 """
 
-
 from .. import core
 from .. import view
+from .. import apputil
 
 
-def load_app():
-    cmd = "w = mm.app.sample_mesh.run()"
-    view.app.pycon.command = cmd
+def help_tri(set_command=False):
+    cmd = """
+# Open a sub window for a triangle:
+w_tri = add3DWidget()
+mh_tri = make_triangle()
+w_tri.updateMesh(mh_tri)
+w_tri.showMark()
+print("tri nedge:", mh_tri.nedge)
+"""
+    view.app.pycon.writeToHistory(cmd)
+    if set_command:
+        view.app.pycon.command = cmd.strip()
+
+
+def help_tet(set_command=False):
+    cmd = """
+# Open a sub window for a tetrahedron:
+w_tet = add3DWidget()
+mh_tet = make_tetrahedron()
+w_tet.updateMesh(mh_tet)
+w_tet.showMark()
+print("tet nedge:", mh_tet.nedge)
+"""
+    view.app.pycon.writeToHistory(cmd)
+    if set_command:
+        view.app.pycon.command = cmd.strip()
+
+
+def help_other(set_command=False):
+    cmd = """
+# Show triangle information:
+print("position:", w_tri.position)
+print("up_vector:", w_tri.up_vector)
+print("view_center:", w_tri.view_center)
+
+# Set view:
+w_tri.up_vector = (0, 1, 0)
+w_tri.position = (-10, -10, -20)
+w_tri.view_center = (0, 0, 0)
+
+# Outdated and may not work:
+# line = mm.view.RLine(-1, -1, -1, -2, -2, -2, 0, 128, 128)
+# print(line)
+"""
+    view.app.pycon.writeToHistory(cmd)
+    if set_command:
+        view.app.pycon.command = cmd.strip()
 
 
 def make_triangle():
@@ -61,27 +105,30 @@ def make_tetrahedron():
     return mh
 
 
-def run():
-
-    # Uncomment to set direction.
-    # view.app().mainWindow.viewer.up_vector = (0, 1, 0)
-    # view.app().mainWindow.viewer.position = (-10, -10, -20)
-    # view.app().mainWindow.viewer.view_center = (0, 0, 0)
-
-    w = view.app.add3DWidget()
-    mh = make_triangle()
-    # mh = make_tetrahedron()
-    w.showMark()
-    w.updateMesh(mh)
-
-    print("nedge:", mh.nedge)
-    print("position:", w.position)
-    print("up_vector:", w.up_vector)
-    print("view_center:", w.view_center)
-
-    # line = mm.view.RLine(-1, -1, -1, -2, -2, -2, 0, 128, 128)
-    # print(line)
-
-    return w
+def load_app():
+    aenv = apputil.get_current_appenv()
+    symbols = (
+        'help_tri',
+        'help_tet',
+        'help_other',
+        'make_triangle',
+        'make_tetrahedron',
+        ('add3DWidget', view.app.add3DWidget),
+    )
+    for k in symbols:
+        if isinstance(k, tuple):
+            k, o = k
+        else:
+            o = globals().get(k, None)
+            if o is None:
+                o = locals().get(k, None)
+        view.app.pycon.writeToHistory(f"Adding symbol {k}\n")
+        aenv.globals[k] = o
+    view.app.pycon.writeToHistory("""
+# Use the functions for more examples:
+help_tri(set_command=False)  # or True
+help_tet(set_command=False)  # or True
+help_other(set_command=False)  # or True
+""")
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
