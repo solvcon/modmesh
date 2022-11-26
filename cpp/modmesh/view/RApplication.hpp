@@ -54,11 +54,14 @@ public:
     static RApplication * initialize(int argc, char ** argv);
     static RApplication * instance();
 
+    R3DWidget * add3DWidget();
+
 private:
 
     RApplication(int & argc, char ** argv);
 
     RMainWindow * m_mainWindow = nullptr;
+    QList<R3DWidget *> m_3DWidgetList;
 }; /* end class RApplication */
 
 } /* end namespace modmesh */

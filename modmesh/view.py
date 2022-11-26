@@ -39,10 +39,6 @@ _from_impl = [  # noqa: F822
     'RPythonConsoleDockWidget',
     'RMainWindow',
     'RApplication',
-    'show',
-    'show_mark',
-    'clip_image',
-    'save_image',
     'app',
 ]
 

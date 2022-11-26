@@ -72,8 +72,10 @@ void RMainWindow::setUpConsole()
 
 void RMainWindow::setUpViewer()
 {
-    m_viewer = new R3DWidget();
-    setCentralWidget(m_viewer);
+    m_mdiArea = new QMdiArea(this);
+    m_mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_mdiArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    setCentralWidget(m_mdiArea);
 }
 
 void RMainWindow::setUpMenu()
@@ -117,14 +119,11 @@ void RMainWindow::setUpMenu()
         m_cameraMenu = this->menuBar()->addMenu(QString("Camera"));
 
         auto * use_orbit_camera = new RAction(
-            QString("Use Oribt Camera Controller"),
+            QString("Use Orbit Camera Controller"),
             QString("Use Oribt Camera Controller"),
             [this]()
             {
-                qDebug() << "Use Orbit Camera Controller";
-                auto * viewer = this->viewer();
-                viewer->scene()->setOrbitCameraController();
-                viewer->scene()->controller()->setCamera(viewer->camera());
+                qDebug() << "Use Orbit Camera Controller (menu demo)";
             });
 
         auto * use_fps_camera = new RAction(
@@ -132,10 +131,7 @@ void RMainWindow::setUpMenu()
             QString("Use First Person Camera Controller"),
             [this]()
             {
-                qDebug() << "Use First Person Camera Controller";
-                auto * viewer = this->viewer();
-                viewer->scene()->setFirstPersonCameraController();
-                viewer->scene()->controller()->setCamera(viewer->camera());
+                qDebug() << "Use First Person Camera Controller (menu demo)";
             });
 
         auto * cameraGroup = new QActionGroup(this);

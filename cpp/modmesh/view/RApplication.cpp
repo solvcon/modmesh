@@ -33,6 +33,7 @@
 #include <vector>
 
 #include <QActionGroup>
+#include <QMdiSubWindow>
 
 namespace modmesh
 {
@@ -77,6 +78,21 @@ RApplication::RApplication(int & argc, char ** argv)
 
 RApplication::~RApplication()
 {
+}
+
+R3DWidget * RApplication::add3DWidget()
+{
+    R3DWidget * viewer = nullptr;
+    if (m_mainWindow)
+    {
+        viewer = new R3DWidget();
+        viewer->setWindowTitle("3D viewer");
+        viewer->resize(viewer->maximumSize());
+        viewer->show();
+        m_mainWindow->addSubWindow(viewer);
+        m_3DWidgetList.append(viewer);
+    }
+    return viewer;
 }
 
 } /* end namespace modmesh */

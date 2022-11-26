@@ -52,6 +52,49 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
 
         namespace py = pybind11;
 
+        (*this)
+            .def_property_readonly("mesh", &wrapped_type::mesh)
+            .def("updateMesh", &wrapped_type::updateMesh, py::arg("mesh"))
+            .def("showMark", &wrapped_type::showMark)
+            .def(
+                "clipImage",
+                [](wrapped_type & self)
+                {
+                    QClipboard * clipboard = QGuiApplication::clipboard();
+                    clipboard->setPixmap(self.grabPixmap());
+                })
+            .def(
+                "saveImage",
+                [](wrapped_type & self, std::string const & filename)
+                {
+                    self.grabPixmap().save(filename.c_str());
+                },
+                py::arg("filename"))
+            .def(
+                "setCameraType",
+                [](wrapped_type & self, std::string const & name)
+                {
+                    if (name == "orbit")
+                    {
+                        qDebug() << "Use Orbit Camera Controller";
+                        self.scene()->setOrbitCameraController();
+                        self.scene()->controller()->setCamera(self.camera());
+                    }
+                    else if (name == "fps")
+                    {
+                        qDebug() << "Use First Person Camera (fps) Controller";
+                        self.scene()->setFirstPersonCameraController();
+                        self.scene()->controller()->setCamera(self.camera());
+                    }
+                    else
+                    {
+                        qDebug() << "name needs to be either orbit or fps";
+                    }
+                },
+                py::arg("name"))
+            //
+            ;
+
 #define DECL_QVECTOR3D_PROPERTY(NAME, GETTER, SETTER)          \
     .def_property(                                             \
         #NAME,                                                 \
@@ -79,6 +122,19 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
 #undef DECL_QVECTOR3D_PROPERTY
     }
 
+    static void updateMesh(wrapped_type & self, std::shared_ptr<StaticMesh> const & mesh)
+    {
+        RScene * scene = self.scene();
+        for (Qt3DCore::QNode * child : scene->childNodes())
+        {
+            if (typeid(*child) == typeid(RStaticMesh))
+            {
+                child->deleteLater();
+            }
+        }
+        new RStaticMesh(mesh, scene);
+    }
+
 }; /* end class WrapR3DWidget */
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRLine
@@ -95,9 +151,9 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRLine
         (*this)
             .def(
                 py::init(
-                    [](float x0, float y0, float z0, float x1, float y1, float z1, uint8_t color_r, uint8_t color_g, uint8_t color_b)
+                    [](R3DWidget & w, float x0, float y0, float z0, float x1, float y1, float z1, uint8_t color_r, uint8_t color_g, uint8_t color_b)
                     {
-                        auto * scene = RApplication::instance()->mainWindow()->viewer()->scene();
+                        auto * scene = w.scene();
                         QVector3D v0(x0, y0, z0);
                         QVector3D v1(x1, y1, z1);
                         QColor color(color_r, color_g, color_b, 255);
@@ -169,12 +225,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRMainWindow
                     self.addApplication(QString::fromStdString(name));
                 },
                 py::arg("name"))
-            .def_property_readonly(
-                "viewer",
-                [](wrapped_type & self)
-                {
-                    return self.viewer();
-                })
             .def_property_readonly(
                 "pycon",
                 [](wrapped_type & self)
@@ -248,6 +298,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
                 {
                     return self.mainWindow()->pycon();
                 })
+            .def(
+                "add3DWidget",
+                [](wrapped_type & self)
+                {
+                    return self.add3DWidget();
+                })
             .def("setUp", &RApplication::setUp)
             .def(
                 "exec",
@@ -291,37 +347,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplicationProxy
 
 }; /* end class WrapRApplicationProxy */
 
-namespace detail
-{
-
-static void show_mark()
-{
-    RScene * scene = RApplication::instance()->mainWindow()->viewer()->scene();
-    for (Qt3DCore::QNode * child : scene->childNodes())
-    {
-        if (typeid(*child) == typeid(RAxisMark))
-        {
-            child->deleteLater();
-        }
-    }
-    new RAxisMark(scene);
-}
-
-static void update_appmesh(std::shared_ptr<StaticMesh> const & mesh)
-{
-    RScene * scene = RApplication::instance()->mainWindow()->viewer()->scene();
-    for (Qt3DCore::QNode * child : scene->childNodes())
-    {
-        if (typeid(*child) == typeid(RStaticMesh))
-        {
-            child->deleteLater();
-        }
-    }
-    new RStaticMesh(mesh, scene);
-}
-
-} /* end namespace detail */
-
 void wrap_view(pybind11::module & mod)
 {
     namespace py = pybind11;
@@ -333,34 +358,7 @@ void wrap_view(pybind11::module & mod)
     WrapRApplication::commit(mod, "RApplication", "RApplication");
     WrapRApplicationProxy::commit(mod, "RApplicationProxy", "RApplicationProxy");
 
-    mod
-        .def("show", &modmesh::python::detail::update_appmesh, py::arg("mesh"))
-        .def("show_mark", &modmesh::python::detail::show_mark)
-        .def(
-            "clip_image",
-            []()
-            {
-                R3DWidget * viewer = RApplication::instance()->mainWindow()->viewer();
-                QClipboard * clipboard = QGuiApplication::clipboard();
-                clipboard->setPixmap(viewer->grabPixmap());
-            })
-        .def(
-            "save_image",
-            [](std::string const & filename)
-            {
-                R3DWidget * viewer = RApplication::instance()->mainWindow()->viewer();
-                viewer->grabPixmap().save(filename.c_str());
-            },
-            py::arg("filename"))
-        //
-        ;
-
     mod.attr("app") = RApplicationProxy();
-
-    if (Toggle::instance().get_show_axis())
-    {
-        detail::show_mark();
-    }
 }
 
 struct view_pymod_tag;

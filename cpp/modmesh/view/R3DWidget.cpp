@@ -27,6 +27,8 @@
  */
 
 #include <modmesh/view/R3DWidget.hpp> // Must be the first include.
+#include <modmesh/view/RAxisMark.hpp>
+#include <modmesh/view/RStaticMesh.hpp>
 
 namespace modmesh
 {
@@ -50,6 +52,36 @@ R3DWidget::R3DWidget(Qt3DExtras::Qt3DWindow * window, RScene * scene, QWidget * 
     control->setCamera(camera);
     control->setLinearSpeed(50.0f);
     control->setLookSpeed(180.0f);
+
+    if (Toggle::instance().get_show_axis())
+    {
+        showMark();
+    }
+}
+
+void R3DWidget::showMark()
+{
+    for (Qt3DCore::QNode * child : m_scene->childNodes())
+    {
+        if (typeid(*child) == typeid(RAxisMark))
+        {
+            child->deleteLater();
+        }
+    }
+    new RAxisMark(m_scene);
+}
+
+void R3DWidget::updateMesh(std::shared_ptr<StaticMesh> const & mesh)
+{
+    for (Qt3DCore::QNode * child : m_scene->childNodes())
+    {
+        if (typeid(*child) == typeid(RStaticMesh))
+        {
+            child->deleteLater();
+        }
+    }
+    new RStaticMesh(mesh, m_scene);
+    m_mesh = mesh;
 }
 
 void R3DWidget::resizeEvent(QResizeEvent * event)

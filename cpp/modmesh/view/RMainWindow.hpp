@@ -35,6 +35,8 @@
 
 #include <Qt>
 #include <QMainWindow>
+#include <QMdiArea>
+#include <QMdiSubWindow>
 
 namespace modmesh
 {
@@ -51,7 +53,23 @@ public:
     void setUp();
 
     RPythonConsoleDockWidget * pycon() { return m_pycon; }
-    R3DWidget * viewer() { return m_viewer; }
+
+    template <typename... Args>
+    QMdiSubWindow * addSubWindow(Args &&... args)
+    {
+        QMdiSubWindow * subwin = nullptr;
+        if (m_mdiArea)
+        {
+            qDebug() << "YDEBUG mdiArea:" << m_mdiArea;
+            subwin = m_mdiArea->addSubWindow(args...);
+            subwin->show();
+            qDebug() << "YDEBUG sub window created:" << subwin;
+            m_mdiArea->setActiveSubWindow(subwin);
+            qDebug() << "YDEBUG active sub window:" << m_mdiArea->activeSubWindow();
+        }
+        qDebug() << "YDEBUG sub window to return:" << subwin;
+        return subwin;
+    }
 
 public slots:
 
@@ -71,7 +89,7 @@ private:
     QMenu * m_cameraMenu = nullptr;
 
     RPythonConsoleDockWidget * m_pycon = nullptr;
-    R3DWidget * m_viewer = nullptr;
+    QMdiArea * m_mdiArea = nullptr;
 
 }; /* end class RPythonText */
 

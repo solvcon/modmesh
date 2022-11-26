@@ -35,7 +35,7 @@ from .. import view
 
 
 def load_app():
-    cmd = "mh = mm.app.sample_mesh.run()"
+    cmd = "w = mm.app.sample_mesh.run()"
     view.app.pycon.command = cmd
 
 
@@ -68,19 +68,20 @@ def run():
     # view.app().mainWindow.viewer.position = (-10, -10, -20)
     # view.app().mainWindow.viewer.view_center = (0, 0, 0)
 
+    w = view.app.add3DWidget()
     mh = make_triangle()
     # mh = make_tetrahedron()
-    view.show_mark()
-    view.show(mh)
+    w.showMark()
+    w.updateMesh(mh)
 
     print("nedge:", mh.nedge)
-    print("position:", view.app.mainWindow.viewer.position)
-    print("up_vector:", view.app.mainWindow.viewer.up_vector)
-    print("view_center:", view.app.mainWindow.viewer.view_center)
+    print("position:", w.position)
+    print("up_vector:", w.up_vector)
+    print("view_center:", w.view_center)
 
     # line = mm.view.RLine(-1, -1, -1, -2, -2, -2, 0, 128, 128)
     # print(line)
 
-    return mh
+    return w
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
