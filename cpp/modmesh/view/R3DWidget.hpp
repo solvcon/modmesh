@@ -112,11 +112,17 @@ public:
 
     QPixmap grabPixmap() const { return m_view->screen()->grabWindow(m_view->winId()); }
 
+    void showMark();
+    void updateMesh(std::shared_ptr<StaticMesh> const & mesh);
+
+    std::shared_ptr<StaticMesh> mesh() const { return m_mesh; }
+
 private:
 
     Qt3DExtras::Qt3DWindow * m_view = nullptr;
     RScene * m_scene = nullptr;
     QWidget * m_container = nullptr;
+    std::shared_ptr<StaticMesh> m_mesh;
 
 }; /* end class R3DWidget */
 

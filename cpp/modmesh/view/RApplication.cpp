@@ -79,6 +79,20 @@ RApplication::~RApplication()
 {
 }
 
+R3DWidget * RApplication::add3DWidget()
+{
+    R3DWidget * viewer = nullptr;
+    if (m_mainWindow)
+    {
+        viewer = new R3DWidget();
+        viewer->setWindowTitle("3D viewer");
+        viewer->show();
+        auto * subwin = m_mainWindow->addSubWindow(viewer);
+        subwin->resize(300, 200);
+    }
+    return viewer;
+}
+
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

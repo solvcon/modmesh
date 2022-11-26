@@ -39,6 +39,7 @@ import importlib
 __all__ = [
     'environ',
     'AppEnvironment',
+    'get_current_appenv',
     'run_code',
     'stop_code',
 ]
@@ -89,14 +90,18 @@ def get_appenv(name=None):
 get_appenv(name='master')
 
 
-def run_code(code):
+def get_current_appenv():
     has_key = False
     for k in reversed(environ):
         has_key = True
         break
     if not has_key:
         raise KeyError("No AppEnviron is available")
-    aenv = environ[k]
+    return environ[k]
+
+
+def run_code(code):
+    aenv = get_current_appenv()
     aenv.run_code(code)
 
 

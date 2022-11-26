@@ -220,6 +220,16 @@ void RPythonConsoleDockWidget::navigateCommand(int offset)
     }
 }
 
+void RPythonConsoleDockWidget::writeToHistory(const std::string & data)
+{
+    QTextCursor cursor = m_history_edit->textCursor();
+    cursor.movePosition(QTextCursor::End);
+    m_history_edit->setTextCursor(cursor);
+    m_history_edit->insertPlainText(QString::fromStdString(data));
+    cursor.movePosition(QTextCursor::End);
+    m_history_edit->setTextCursor(cursor);
+}
+
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

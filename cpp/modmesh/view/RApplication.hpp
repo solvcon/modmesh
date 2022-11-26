@@ -45,7 +45,7 @@ class RApplication
 
 public:
 
-    ~RApplication();
+    ~RApplication() override;
 
     RApplication & setUp();
 
@@ -53,6 +53,8 @@ public:
 
     static RApplication * initialize(int argc, char ** argv);
     static RApplication * instance();
+
+    R3DWidget * add3DWidget();
 
 private:
 
