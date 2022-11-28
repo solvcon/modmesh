@@ -90,10 +90,18 @@ RPythonConsoleDockWidget::RPythonConsoleDockWidget(const QString & title, QWidge
     m_history_edit->setReadOnly(true);
     widget()->layout()->addWidget(m_history_edit);
 
+    QPalette pal = QPalette();
+    pal.setColor(QPalette::Base, Qt::white);
+    pal.setColor(QPalette::Text, Qt::black);
+
     m_command_edit->setFont(QFont("Courier New"));
     m_command_edit->setPlainText(QString(""));
     m_command_edit->setFixedHeight(40);
+    m_command_edit->setPalette(pal);
     widget()->layout()->addWidget(m_command_edit);
+
+    widget()->setAutoFillBackground(true);
+    widget()->setPalette(pal);
 
     connect(m_command_edit, &RPythonCommandTextEdit::execute, this, &RPythonConsoleDockWidget::executeCommand);
     connect(m_command_edit, &RPythonCommandTextEdit::navigate, this, &RPythonConsoleDockWidget::navigateCommand);
