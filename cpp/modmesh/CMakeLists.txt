@@ -104,6 +104,14 @@ if (BUILD_QT)
         Qt::Core
         Qt::Gui
     )
+
+    if (MODMESH_USE_PYSIDE)
+        target_link_libraries(
+            modmesh_primary PUBLIC
+            ${PYSIDE6_LIBFILE}
+            ${SHIBOKEN6_LIBFILE}
+        )
+    endif () # MODMESH_USE_PYSIDE
 else () # BUILD_QT
     add_library(
         modmesh_primary

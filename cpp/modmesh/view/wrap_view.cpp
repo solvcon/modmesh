@@ -35,6 +35,103 @@
 #include <QPointer>
 #include <QClipboard>
 
+#ifdef MODMESH_USE_PYSIDE
+
+// Usually MODMESH_PYSIDE6_FULL is not defined unless for debugging.
+#ifdef MODMESH_PYSIDE6_FULL
+#include <pyside.h>
+#else // MODMESH_PYSIDE6_FULL
+#define PYSIDE_API MODMESH_PYTHON_WRAPPER_VISIBILITY
+namespace PySide
+{
+// The prototypes are taken from pyside.h
+PYSIDE_API PyTypeObject * getTypeForQObject(const QObject * cppSelf);
+PYSIDE_API PyObject * getWrapperForQObject(QObject * cppSelf, PyTypeObject * sbk_type);
+PYSIDE_API QObject * convertToQObject(PyObject * object, bool raiseError);
+} // end namespace PySide
+#endif // MODMESH_PYSIDE6_FULL
+
+namespace pybind11
+{
+
+namespace detail
+{
+
+template <typename type>
+struct qt_type_caster
+{
+    // Adapted from PYBIND11_TYPE_CASTER.
+protected:
+    type * value;
+
+public:
+    template <typename T_, enable_if_t<std::is_same<type, remove_cv_t<T_>>::value, int> = 0>
+    static handle cast(T_ * src, return_value_policy policy, handle parent)
+    {
+        if (!src)
+            return none().release();
+        if (policy == return_value_policy::take_ownership)
+        {
+            auto h = cast(std::move(*src), policy, parent);
+            delete src;
+            return h;
+        }
+        else
+        {
+            return cast(*src, policy, parent);
+        }
+    }
+    operator type *() { return value; } /* NOLINT(bugprone-macro-parentheses) */
+    operator type &() { return *value; } /* NOLINT(bugprone-macro-parentheses) */
+    // Disable: operator type &&() && { return std::move(*value); } /* NOLINT(bugprone-macro-parentheses) */
+    template <typename T_>
+    using cast_op_type = pybind11::detail::movable_cast_op_type<T_>;
+    // End adaptation from PYBIND11_TYPE_CASTER.
+
+    bool load(handle src, bool)
+    {
+        if (!src)
+        {
+            return false;
+        }
+
+        QObject * q = PySide::convertToQObject(src.ptr(), /* raiseError */ true);
+        if (!q)
+        {
+            return false;
+        }
+
+        value = qobject_cast<type *>(q);
+        return true;
+    }
+
+    static handle cast(type * src, return_value_policy /* policy */, handle /* parent */)
+    {
+        PyObject * p = nullptr;
+        PyTypeObject * to = PySide::getTypeForQObject(src);
+        if (to)
+        {
+            p = PySide::getWrapperForQObject(src, to);
+        }
+        return pybind11::handle(p);
+    }
+};
+
+#define QT_TYPE_CASTER(type, py_name)                      \
+    template <>                                            \
+    struct type_caster<type> : public qt_type_caster<type> \
+    {                                                      \
+        static constexpr auto name = py_name;              \
+    }
+
+QT_TYPE_CASTER(QWidget, _("QWidget"));
+QT_TYPE_CASTER(QMdiSubWindow, _("QMdiSubWindow"));
+
+} /* end namespace detail */
+
+} /* end namespace pybind11 */
+#endif // MODMESH_USE_PYSIDE
+
 PYBIND11_DECLARE_HOLDER_TYPE(T, QPointer<T>);
 
 namespace modmesh
@@ -253,6 +350,16 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRMainWindow
                 },
                 py::arg("w"),
                 py::arg("h"))
+            .def(
+                "addSubWindow",
+                [](wrapped_type & self, QWidget * widget)
+                {
+                    QMdiSubWindow * subwin = self.addSubWindow(widget);
+                    subwin->resize(300, 200);
+                    subwin->setAttribute(Qt::WA_DeleteOnClose);
+                    return subwin;
+                },
+                py::arg("widget"))
             .def_property(
                 "windowTitle",
                 [](wrapped_type const & self)
@@ -380,6 +487,11 @@ void initialize_view(pybind11::module & mod)
     {
         wrap_view(mod);
     };
+
+    if (Toggle::USE_PYSIDE)
+    {
+        pybind11::module::import("PySide6");
+    }
 
     OneTimeInitializer<view_pymod_tag>::me()(mod, initialize_impl);
 }

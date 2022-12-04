@@ -32,26 +32,31 @@ from matplotlib.backends.backend_qtagg import (
     FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.figure import Figure
 
+import modmesh as mm
 from .. import view
 from ..onedim import euler1d
 
 
 def load_app():
-    cmd = "win = mm.app.euler1d.run(animate=True, interval=10, max_steps=50)"
-    cmd += "; win.start()"
+    cmd = "plt = mm.app.euler1d.run(animate=True, interval=10, max_steps=50)"
+    cmd += "; plt.start()"
     view.app.pycon.command = cmd
 
 
-class ApplicationWindow(QtWidgets.QMainWindow):
-    def __init__(self, shocktube, max_steps):
+class Plotter:
+    def __init__(self, shocktube, max_steps, use_sub=None):
         if None is shocktube.gamma:
             raise ValueError("shocktube does not have constant built")
         if None is shocktube.svr:
             raise ValueError("shocktube does not have numerical solver built")
 
+        self.use_sub = mm.Toggle.USE_PYSIDE if use_sub is None else use_sub
+
         super().__init__()
         self._main = QtWidgets.QWidget()
-        self.setCentralWidget(self._main)
+        if self.use_sub:
+            self._subwin = view.app.mainWindow.addSubWindow(self._main)
+            self._subwin.resize(400, 300)
         layout = QtWidgets.QVBoxLayout(self._main)
 
         self.canvas = FigureCanvas(Figure(figsize=(15, 10)))
@@ -59,7 +64,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # incompatible between PyQt6 and other bindings, so we just add the
         # toolbar as a plain widget instead.
         layout.addWidget(self.canvas)
-        layout.addWidget(NavigationToolbar(self.canvas, self))
+        layout.addWidget(NavigationToolbar(self.canvas, self._main))
 
         self.max_steps = max_steps
         self.step = 0
@@ -73,6 +78,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.density_ana = None
         self.velocity_ana = None
         self.pressure_ana = None
+
+    def show(self):
+        self._main.show()
+        if self.use_sub:
+            self._subwin.show()
 
     def start(self):
         self.timer.start()
@@ -132,17 +142,16 @@ def run(animate, interval=10, max_steps=50):
                       density5=0.125)
     st.build_numerical(xmin=-10, xmax=10, ncoord=201, time_increment=0.05)
 
-    win = ApplicationWindow(shocktube=st, max_steps=max_steps)
-    win.show()
-    win.activateWindow()
+    plt = Plotter(shocktube=st, max_steps=max_steps)
+    plt.show()
 
     if animate:
-        win.setup_solver(interval)
+        plt.setup_solver(interval)
     else:
-        win.ax.plot(st.svr.xctr() / np.pi, st.svr.get_so0(0), '-')
+        plt.ax.plot(st.svr.xctr() / np.pi, st.svr.get_so0(0), '-')
         st.svr.march_alpha2(50)
-        win.ax.plot(st.svr.xctr() / np.pi, st.svr.get_so0(0), '+')
+        plt.ax.plot(st.svr.xctr() / np.pi, st.svr.get_so0(0), '+')
 
-    return win
+    return plt
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
