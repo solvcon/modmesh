@@ -37,11 +37,13 @@
 namespace modmesh
 {
 
-RApplication * RApplication::initialize(int argc, char ** argv)
+RApplication * RApplication::initialize(int & argc, char ** argv)
 {
     RApplication * ret = dynamic_cast<RApplication *>(QApplication::instance());
     if (nullptr == ret)
     {
+        // Be very careful that QApplication (where RApplication inherits from)
+        // needs int& argc!!
         ret = new RApplication(argc, argv);
     }
     return ret;
