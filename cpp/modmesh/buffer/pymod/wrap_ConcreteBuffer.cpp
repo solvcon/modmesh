@@ -81,7 +81,7 @@ WrapConcreteBuffer::WrapConcreteBuffer(pybind11::module & mod, char const * pyna
                 return py::buffer_info(
                     self.data(), /* Pointer to buffer */
                     sizeof(int8_t), /* Size of one scalar */
-                    py::format_descriptor<char>::format(), /* Python struct-style format descriptor */
+                    py::format_descriptor<int8_t>::format(), /* Python struct-style format descriptor */
                     1, /* Number of dimensions */
                     {self.size()}, /* Buffer dimensions */
                     {1} /* Strides (in bytes) for each index */
