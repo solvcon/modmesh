@@ -51,7 +51,7 @@ public:
 
     RMainWindow * mainWindow() { return m_mainWindow; }
 
-    static RApplication * initialize(int argc, char ** argv);
+    static RApplication * initialize(int & argc, char ** argv);
     static RApplication * instance();
 
     R3DWidget * add3DWidget();
