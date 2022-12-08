@@ -132,7 +132,7 @@ RLine::RLine(QVector3D const & v0, QVector3D const & v1, QColor const & color, Q
             vertices->setName(Qt3DCore::QAttribute::defaultPositionAttributeName());
             vertices->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
             vertices->setVertexBaseType(Qt3DCore::QAttribute::Float);
-            vertices->setVertexSize(3);
+            vertices->setVertexSize(5);
             vertices->setBuffer(buf);
             vertices->setByteStride(3 * sizeof(float));
             vertices->setCount(2);
