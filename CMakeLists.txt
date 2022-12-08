@@ -4,6 +4,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(modmesh)
 
+include(ExternalProject)
+include("${CMAKE_SOURCE_DIR}/cmake/rapidjson.cmake")
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
 
 if(NOT SKIP_PYTHON_EXECUTABLE)
@@ -85,6 +88,9 @@ include_directories(${pybind11_INCLUDE_DIRS})
 find_package(NumPy REQUIRED)
 message(STATUS "NUMPY_INCLUDE_DIR: ${NUMPY_INCLUDE_DIR}")
 include_directories(${NUMPY_INCLUDE_DIR})
+
+include_directories(${RAPIDJSON_INCLUDE_DIR})
+message(STATUS "RAPIDJSON_INCLUDE_DIR: ${RAPIDJSON_INCLUDE_DIR}")
 
 set(MODMESH_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/cpp" CACHE INTERNAL "")
 

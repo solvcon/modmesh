@@ -120,6 +120,8 @@ else () # BUILD_QT
     )
 endif () # BUILD_QT
 
+add_dependencies(modmesh_primary rapidjson)
+
 set_target_properties(modmesh_primary PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 if (CLANG_TIDY_EXE AND USE_CLANG_TIDY)
