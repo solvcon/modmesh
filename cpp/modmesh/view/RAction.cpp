@@ -54,9 +54,16 @@ RAppAction::RAppAction(const QString & text, const QString & tipText, const QStr
 void RAppAction::run()
 {
     namespace py = pybind11;
-    py::module_ appmod = py::module_::import(m_appName.toStdString().c_str());
-    appmod.reload();
-    appmod.attr("load_app")();
+    try
+    {
+        py::module_ appmod = py::module_::import(m_appName.toStdString().c_str());
+        appmod.reload();
+        appmod.attr("load_app")();
+    }
+    catch (const pybind11::error_already_set & e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
 }
 
 } /* end namespace modmesh */
