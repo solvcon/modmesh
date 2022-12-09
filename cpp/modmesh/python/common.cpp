@@ -163,7 +163,7 @@ void Interpreter::preload_module(std::string const & name)
     }
     catch (const py::error_already_set & e)
     {
-        if (std::string::npos == std::string(e.what()).find("ModuleNotFoundError"))
+        if (e.matches(PyExc_ModuleNotFoundError))
         {
             throw;
         }
