@@ -37,7 +37,7 @@ CMAKE_ARGS ?=
 VERBOSE ?=
 FORCE_CLANG_FORMAT ?=
 
-WHICH_PYTHON := $(shell which python)
+WHICH_PYTHON := $(shell which python3)
 REALPATH_PYTHON := $(shell realpath $(WHICH_PYTHON))
 DIRNAME_PYTHON := $(shell dirname $(REALPATH_PYTHON))
 
