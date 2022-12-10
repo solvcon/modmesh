@@ -37,7 +37,6 @@ _from_impl = [  # noqa: F822
     'R3DWidget',
     'RLine',
     'RPythonConsoleDockWidget',
-    'RMainWindow',
     'RApplication',
     'app',
 ]
@@ -84,7 +83,7 @@ def reset_applications():
 def launch(name="Modmesh Viewer", size=(1000, 600)):
     app = _vimpl.RApplication.instance
     app.setUp()
-    wm = app.manager
+    wm = app
     wm.windowTitle = name
     wm.resize(w=size[0], h=size[1])
     wm.show()

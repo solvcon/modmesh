@@ -308,85 +308,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRPythonConsoleDockWidget
 
 }; /* end class WrapRPythonConsoleDockWidget */
 
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRMainWindow
-    : public WrapBase<WrapRMainWindow, RMainWindow>
-{
-
-    friend root_base_type;
-
-    WrapRMainWindow(pybind11::module & mod, char const * pyname, char const * pydoc)
-        : root_base_type(mod, pyname, pydoc)
-    {
-        namespace py = pybind11;
-
-        (*this)
-            .wrap_basic_qt()
-            .def("clearApplications", &wrapped_type::clearApplications)
-            .def(
-                "addApplication",
-                [](wrapped_type & self, std::string const & name)
-                {
-                    self.addApplication(QString::fromStdString(name));
-                },
-                py::arg("name"))
-            .def_property_readonly(
-                "pycon",
-                [](wrapped_type & self)
-                {
-                    return self.pycon();
-                })
-            //
-            ;
-    }
-
-    wrapper_type & wrap_basic_qt()
-    {
-        namespace py = pybind11;
-
-        (*this)
-            .def(
-                "show",
-                [](wrapped_type & self)
-                {
-                    self.mainWindow()->show();
-                })
-            .def(
-                "resize",
-                [](wrapped_type & self, int w, int h)
-                {
-                    self.mainWindow()->resize(w, h);
-                },
-                py::arg("w"),
-                py::arg("h"))
-            .def(
-                "addSubWindow",
-                [](wrapped_type & self, QWidget * widget)
-                {
-                    QMdiSubWindow * subwin = self.addSubWindow(widget);
-                    subwin->resize(300, 200);
-                    subwin->setAttribute(Qt::WA_DeleteOnClose);
-                    return subwin;
-                },
-                py::arg("widget"))
-            .def_property_readonly("mainWindow", &wrapped_type::mainWindow)
-            .def_property(
-                "windowTitle",
-                [](wrapped_type & self)
-                {
-                    return self.mainWindow()->windowTitle().toStdString();
-                },
-                [](wrapped_type & self, std::string const & name)
-                {
-                    self.mainWindow()->setWindowTitle(QString::fromStdString(name));
-                })
-            //
-            ;
-
-        return *this;
-    }
-
-}; /* end class WrapRMainWindow */
-
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
     : public WrapBase<WrapRApplication, RApplication>
 {
@@ -412,30 +333,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
                 {
                     return RApplication::instance().core();
                 })
-            .def_property_readonly(
-                "manager",
-                [](wrapped_type & self)
-                {
-                    return self.manager();
-                })
-            .def_property_readonly(
-                "mainWindow",
-                [](wrapped_type & self) -> QMainWindow *
-                {
-                    return self.manager()->mainWindow();
-                })
-            .def_property_readonly(
-                "pycon",
-                [](wrapped_type & self)
-                {
-                    return self.manager()->pycon();
-                })
-            .def(
-                "add3DWidget",
-                [](wrapped_type & self)
-                {
-                    return self.add3DWidget();
-                })
             .def("setUp", &RApplication::setUp)
             .def(
                 "exec",
@@ -443,8 +340,105 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
                 {
                     return self.core()->exec();
                 })
+            .wrap_widget()
+            .wrap_app()
+            .wrap_mainWindow()
             //
             ;
+    }
+
+    wrapper_type & wrap_widget()
+    {
+        namespace py = pybind11;
+
+        (*this)
+            .def_property_readonly(
+                "pycon",
+                [](wrapped_type & self)
+                {
+                    return self.pycon();
+                })
+            .def(
+                "add3DWidget",
+                [](wrapped_type & self)
+                {
+                    return self.add3DWidget();
+                })
+            //
+            ;
+
+        return *this;
+    }
+
+    wrapper_type & wrap_app()
+    {
+        namespace py = pybind11;
+
+        (*this)
+            .wrap_mainWindow()
+            .def("clearApplications", &wrapped_type::clearApplications)
+            .def(
+                "addApplication",
+                [](wrapped_type & self, std::string const & name)
+                {
+                    self.addApplication(QString::fromStdString(name));
+                },
+                py::arg("name"))
+            //
+            ;
+
+        return *this;
+    }
+
+    wrapper_type & wrap_mainWindow()
+    {
+        namespace py = pybind11;
+
+        (*this)
+            .def_property_readonly(
+                "mainWindow",
+                [](wrapped_type & self) -> QMainWindow *
+                {
+                    return self.mainWindow();
+                })
+            .def(
+                "show",
+                [](wrapped_type & self)
+                {
+                    self.mainWindow()->show();
+                })
+            .def(
+                "resize",
+                [](wrapped_type & self, int w, int h)
+                {
+                    self.mainWindow()->resize(w, h);
+                },
+                py::arg("w"),
+                py::arg("h"))
+            .def(
+                "addSubWindow",
+                [](wrapped_type & self, QWidget * widget)
+                {
+                    QMdiSubWindow * subwin = self.addSubWindow(widget);
+                    subwin->resize(300, 200);
+                    subwin->setAttribute(Qt::WA_DeleteOnClose);
+                    return subwin;
+                },
+                py::arg("widget"))
+            .def_property(
+                "windowTitle",
+                [](wrapped_type & self)
+                {
+                    return self.mainWindow()->windowTitle().toStdString();
+                },
+                [](wrapped_type & self, std::string const & name)
+                {
+                    self.mainWindow()->setWindowTitle(QString::fromStdString(name));
+                })
+            //
+            ;
+
+        return *this;
     }
 
 }; /* end class WrapRApplication */
@@ -486,7 +480,6 @@ void wrap_view(pybind11::module & mod)
     WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
     WrapRLine::commit(mod, "RLine", "RLine");
     WrapRPythonConsoleDockWidget::commit(mod, "RPythonConsoleDockWidget", "RPythonConsoleDockWidget");
-    WrapRMainWindow::commit(mod, "RMainWindow", "RMainWindow");
     WrapRApplication::commit(mod, "RApplication", "RApplication");
     WrapRApplicationProxy::commit(mod, "RApplicationProxy", "RApplicationProxy");
 

@@ -7,7 +7,6 @@ set(MODMESH_VIEW_PYMODHEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/R3DWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RApplication.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAxisMark.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/RMainWindow.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RPythonConsoleDockWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RStaticMesh.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAction.hpp
@@ -20,7 +19,6 @@ set(MODMESH_VIEW_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/R3DWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RApplication.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAxisMark.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/RMainWindow.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RPythonConsoleDockWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RStaticMesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAction.cpp

@@ -30,11 +30,15 @@
 
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
 
-#include <modmesh/view/RMainWindow.hpp>
+#include <modmesh/view/RPythonConsoleDockWidget.hpp>
+#include <modmesh/view/R3DWidget.hpp>
 #include <modmesh/view/RAction.hpp>
 
-#include <Qt>
+#include <QMainWindow>
+#include <QMdiArea>
+#include <QMdiSubWindow>
 #include <QApplication>
+#include <Qt>
 
 namespace modmesh
 {
@@ -50,21 +54,58 @@ public:
 
     RApplication & setUp();
 
-    RMainWindow * manager() { return m_manager; }
-
     static RApplication & instance();
 
     QCoreApplication * core() { return m_core; }
 
     R3DWidget * add3DWidget();
 
+    RPythonConsoleDockWidget * pycon() { return m_pycon; }
+
+    template <typename... Args>
+    QMdiSubWindow * addSubWindow(Args &&... args);
+
+    QMainWindow * mainWindow() { return m_mainWindow; }
+
+public slots:
+
+    void clearApplications();
+    void addApplication(QString const & name);
+
 private:
 
     RApplication();
 
+    void setUpConsole();
+    void setUpCentral();
+    void setUpMenu();
+
+    bool m_already_setup = false;
+
     QCoreApplication * m_core = nullptr;
-    RMainWindow * m_manager = nullptr;
+
+    QMainWindow * m_mainWindow = nullptr;
+
+    QMenu * m_fileMenu = nullptr;
+    QMenu * m_appMenu = nullptr;
+    QMenu * m_cameraMenu = nullptr;
+
+    RPythonConsoleDockWidget * m_pycon = nullptr;
+    QMdiArea * m_mdiArea = nullptr;
 }; /* end class RApplication */
+
+template <typename... Args>
+QMdiSubWindow * RApplication::addSubWindow(Args &&... args)
+{
+    QMdiSubWindow * subwin = nullptr;
+    if (m_mdiArea)
+    {
+        subwin = m_mdiArea->addSubWindow(std::forward<Args>(args)...);
+        subwin->show();
+        m_mdiArea->setActiveSubWindow(subwin);
+    }
+    return subwin;
+}
 
 } /* end namespace modmesh */
 

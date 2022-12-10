@@ -113,12 +113,14 @@ class Controller:
         self.use_sub = mm.Toggle.USE_PYSIDE if use_sub is None else use_sub
         self._main = QtWidgets.QWidget()
         if self.use_sub:
-            # FIXME: sub window causes missing QWindow with the following error:
-            # RuntimeError: Internal C++ object (PySide6.QtGui.QWindow) already deleted.
+            # FIXME: sub window causes missing QWindow with the following
+            # error:
+            # RuntimeError:
+            # Internal C++ object (PySide6.QtGui.QWindow) already deleted.
             # It is probably because RMainWindow is not recognized by PySide6
             # and matplotlib.  We may consider to use composite for QMainWindow
             # instead of inheritance.
-            self._subwin = view.app.manager.addSubWindow(self._main)
+            self._subwin = view.app.addSubWindow(self._main)
             self._subwin.resize(400, 300)
 
         self.plt = Plot(figsize=(15, 10))

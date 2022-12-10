@@ -28,10 +28,13 @@
 
 #include <modmesh/view/RApplication.hpp> // Must be the first include.
 
-#include <modmesh/view/RMainWindow.hpp>
-
 #include <vector>
 
+#include <modmesh/view/RAction.hpp>
+#include <Qt>
+#include <QMenuBar>
+#include <QMenu>
+#include <QAction>
 #include <QActionGroup>
 
 namespace modmesh
@@ -44,6 +47,7 @@ RApplication & RApplication::instance()
 }
 
 RApplication::RApplication()
+    : QObject()
 {
     m_core = QApplication::instance();
     static int argc = 1;
@@ -53,14 +57,22 @@ RApplication::RApplication()
     {
         m_core = new QApplication(argc, argv);
     }
-    m_manager = new RMainWindow;
+
+    m_mainWindow = new QMainWindow;
+    m_mainWindow->setWindowIcon(QIcon(QString(":/icon.ico")));
+    // Do not call setUp() from the constructor.  Windows may crash with
+    // "exited with code -1073740791".  The reason is not yet clarified.
 }
 
 RApplication & RApplication::setUp()
 {
-    if (nullptr != m_manager)
+    if (!m_already_setup)
     {
-        m_manager->setUp();
+        this->setUpConsole();
+        this->setUpCentral();
+        this->setUpMenu();
+
+        m_already_setup = true;
     }
     return *this;
 }
@@ -72,15 +84,127 @@ RApplication::~RApplication()
 R3DWidget * RApplication::add3DWidget()
 {
     R3DWidget * viewer = nullptr;
-    if (m_manager)
+    if (m_mdiArea)
     {
         viewer = new R3DWidget();
         viewer->setWindowTitle("3D viewer");
         viewer->show();
-        auto * subwin = m_manager->addSubWindow(viewer);
+        auto * subwin = this->addSubWindow(viewer);
         subwin->resize(300, 200);
     }
     return viewer;
+}
+
+void RApplication::setUpConsole()
+{
+    m_pycon = new RPythonConsoleDockWidget(QString("Console"), m_mainWindow);
+    m_pycon->setAllowedAreas(Qt::AllDockWidgetAreas);
+    m_mainWindow->addDockWidget(Qt::BottomDockWidgetArea, m_pycon);
+}
+
+void RApplication::setUpCentral()
+{
+    m_mdiArea = new QMdiArea(m_mainWindow);
+    m_mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_mdiArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    m_mainWindow->setCentralWidget(m_mdiArea);
+}
+
+void RApplication::setUpMenu()
+{
+    m_mainWindow->setMenuBar(new QMenuBar(nullptr));
+    // NOTE: All menus need to be populated or Windows may crash with
+    // "exited with code -1073740791".  The reason is not yet clarified.
+
+    {
+        m_fileMenu = m_mainWindow->menuBar()->addMenu(QString("File"));
+
+        {
+            auto * action = new RAction(
+                QString("New file"),
+                QString("Create new file"),
+                []()
+                {
+                    qDebug() << "This is only a demo: Create new file!";
+                });
+            m_fileMenu->addAction(action);
+        }
+
+#ifndef Q_OS_MACOS
+        {
+            // Qt for mac merges "quit" or "exit" with the default quit item in the
+            // system menu:
+            // https://doc.qt.io/qt-6/qmenubar.html#qmenubar-as-a-global-menu-bar
+            auto * action = new RAction(
+                QString("Exit"),
+                QString("Exit the application"),
+                []()
+                {
+                    RApplication::instance().quit();
+                });
+            m_fileMenu->addAction(action);
+        }
+#endif
+    }
+
+    {
+        m_cameraMenu = m_mainWindow->menuBar()->addMenu(QString("Camera"));
+
+        auto * use_orbit_camera = new RAction(
+            QString("Use Orbit Camera Controller"),
+            QString("Use Oribt Camera Controller"),
+            []()
+            {
+                qDebug() << "Use Orbit Camera Controller (menu demo)";
+            });
+
+        auto * use_fps_camera = new RAction(
+            QString("Use First Person Camera Controller"),
+            QString("Use First Person Camera Controller"),
+            []()
+            {
+                qDebug() << "Use First Person Camera Controller (menu demo)";
+            });
+
+        auto * cameraGroup = new QActionGroup(m_mainWindow);
+        cameraGroup->addAction(use_orbit_camera);
+        cameraGroup->addAction(use_fps_camera);
+        use_orbit_camera->setCheckable(true);
+        use_fps_camera->setCheckable(true);
+        use_orbit_camera->setChecked(true);
+
+        m_cameraMenu->addAction(use_orbit_camera);
+        m_cameraMenu->addAction(use_fps_camera);
+    }
+
+    {
+        m_appMenu = m_mainWindow->menuBar()->addMenu(QString("App"));
+
+        this->addApplication(QString("sample_mesh"));
+        this->addApplication(QString("euler1d"));
+        this->addApplication(QString("linear_wave"));
+        this->addApplication(QString("bad_euler1d"));
+    }
+}
+
+void RApplication::clearApplications()
+{
+    for (QAction * a : this->m_appMenu->actions())
+    {
+        auto * p = dynamic_cast<RAppAction *>(a);
+        if (nullptr != p)
+        {
+            this->m_appMenu->removeAction(a);
+        }
+    }
+}
+
+void RApplication::addApplication(QString const & name)
+{
+    m_appMenu->addAction(new RAppAction(
+        QString("Load ") + name,
+        QString("Load ") + name,
+        QString("modmesh.app.") + name));
 }
 
 } /* end namespace modmesh */
