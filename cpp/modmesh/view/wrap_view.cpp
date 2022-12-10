@@ -490,7 +490,14 @@ void initialize_view(pybind11::module & mod)
 
     if (Toggle::USE_PYSIDE)
     {
-        pybind11::module::import("PySide6");
+        try
+        {
+            pybind11::module::import("PySide6");
+        }
+        catch (const pybind11::error_already_set & e)
+        {
+            std::cerr << e.what() << std::endl;
+        }
     }
 
     OneTimeInitializer<view_pymod_tag>::me()(mod, initialize_impl);

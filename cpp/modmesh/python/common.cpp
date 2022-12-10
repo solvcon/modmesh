@@ -105,26 +105,49 @@ Interpreter & Interpreter::setup_modmesh_path()
     if path:
         sys.path.insert(0, path)
 _set_modmesh_path())"""";
-    pybind11::exec(cmd);
+    try
+    {
+        pybind11::exec(cmd);
+    }
+    catch (const pybind11::error_already_set & e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
     return *this;
 }
 
 Interpreter & Interpreter::setup_process()
 {
-    // NOLINTNEXTLINE(misc-const-correctness)
-    pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
     CommandLineInfo const & cmdinfo = ProcessInfo::instance().command_line();
-    mod_sys.attr("setup_process")(cmdinfo.python_argv());
+    try
+    {
+        // NOLINTNEXTLINE(misc-const-correctness)
+        pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
+        mod_sys.attr("setup_process")(cmdinfo.python_argv());
+    }
+    catch (const pybind11::error_already_set & e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
     return *this;
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 int Interpreter::enter_main()
 {
-    // NOLINTNEXTLINE(misc-const-correctness)
-    pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
+    int ret = -1;
     CommandLineInfo const & cmdinfo = ProcessInfo::instance().command_line();
-    return pybind11::cast<int>(mod_sys.attr("enter_main")(cmdinfo.python_argv()));
+    try
+    {
+        // NOLINTNEXTLINE(misc-const-correctness)
+        pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
+        ret = pybind11::cast<int>(mod_sys.attr("enter_main")(cmdinfo.python_argv()));
+    }
+    catch (const pybind11::error_already_set & e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+    return ret;
 }
 
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static): implicitly requires m_interpreter
@@ -140,7 +163,7 @@ void Interpreter::preload_module(std::string const & name)
     }
     catch (const py::error_already_set & e)
     {
-        if (std::string::npos == std::string(e.what()).find("ModuleNotFoundError"))
+        if (e.matches(PyExc_ModuleNotFoundError))
         {
             throw;
         }
@@ -171,10 +194,10 @@ void Interpreter::preload_modules(std::vector<std::string> const & names)
 // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 void Interpreter::exec_code(std::string const & code)
 {
-    // NOLINTNEXTLINE(misc-const-correctness)
-    pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
     try
     {
+        // NOLINTNEXTLINE(misc-const-correctness)
+        pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
         mod_sys.attr("exec_code")(code);
     }
     catch (const pybind11::error_already_set & e)
