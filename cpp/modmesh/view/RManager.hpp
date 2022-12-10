@@ -43,18 +43,18 @@
 namespace modmesh
 {
 
-class RApplication
+class RManager
     : public QObject
 {
     Q_OBJECT
 
 public:
 
-    ~RApplication() override;
+    ~RManager() override;
 
-    RApplication & setUp();
+    RManager & setUp();
 
-    static RApplication & instance();
+    static RManager & instance();
 
     QCoreApplication * core() { return m_core; }
 
@@ -62,10 +62,12 @@ public:
 
     RPythonConsoleDockWidget * pycon() { return m_pycon; }
 
+    QMainWindow * mainWindow() { return m_mainWindow; }
+
     template <typename... Args>
     QMdiSubWindow * addSubWindow(Args &&... args);
 
-    QMainWindow * mainWindow() { return m_mainWindow; }
+    void quit() { m_core->quit(); }
 
 public slots:
 
@@ -74,7 +76,7 @@ public slots:
 
 private:
 
-    RApplication();
+    RManager();
 
     void setUpConsole();
     void setUpCentral();
@@ -92,10 +94,10 @@ private:
 
     RPythonConsoleDockWidget * m_pycon = nullptr;
     QMdiArea * m_mdiArea = nullptr;
-}; /* end class RApplication */
+}; /* end class RManager */
 
 template <typename... Args>
-QMdiSubWindow * RApplication::addSubWindow(Args &&... args)
+QMdiSubWindow * RManager::addSubWindow(Args &&... args)
 {
     QMdiSubWindow * subwin = nullptr;
     if (m_mdiArea)

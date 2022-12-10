@@ -37,8 +37,8 @@ _from_impl = [  # noqa: F822
     'R3DWidget',
     'RLine',
     'RPythonConsoleDockWidget',
-    'RApplication',
-    'app',
+    'RManager',
+    'mgr',
 ]
 
 __all__ = _from_impl + [  # noqa: F822
@@ -67,7 +67,7 @@ del _load
 
 
 def populate_applications():
-    mw = _vimpl.RApplication.instance.mainWindow
+    mw = _vimpl.RManager.instance.mainWindow
     mw.addApplication("sample_mesh")
     mw.addApplication("euler1d")
     mw.addApplication("linear_wave")
@@ -75,13 +75,13 @@ def populate_applications():
 
 
 def reset_applications():
-    mw = _vimpl.RApplication.instance.mainWindow
+    mw = _vimpl.RManager.instance.mainWindow
     mw.clearApplications()
     populate_applications()
 
 
 def launch(name="Modmesh Viewer", size=(1000, 600)):
-    app = _vimpl.RApplication.instance
+    app = _vimpl.RManager.instance
     app.setUp()
     wm = app
     wm.windowTitle = name

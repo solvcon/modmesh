@@ -42,13 +42,13 @@ from ..onedim import euler1d
 
 
 def load_app():
-    view.app.pycon.writeToHistory("""
+    view.mgr.pycon.writeToHistory("""
 # Use the functions for more examples:
 ctrl.start()  # Start the movie
 ctrl.step()  # Stepping the solution
 """)
     cmd = "ctrl = mm.app.euler1d.run(interval=10, max_steps=50)"
-    view.app.pycon.command = cmd
+    view.mgr.pycon.command = cmd
 
 
 @dataclass
@@ -120,7 +120,7 @@ class Controller:
             # It is probably because RMainWindow is not recognized by PySide6
             # and matplotlib.  We may consider to use composite for QMainWindow
             # instead of inheritance.
-            self._subwin = view.app.addSubWindow(self._main)
+            self._subwin = view.mgr.addSubWindow(self._main)
             self._subwin.resize(400, 300)
 
         self.plt = Plot(figsize=(15, 10))
@@ -171,8 +171,8 @@ class Controller:
     def log(msg):
         sys.stdout.write(msg)
         sys.stdout.write('\n')
-        view.app.pycon.writeToHistory(msg)
-        view.app.pycon.writeToHistory('\n')
+        view.mgr.pycon.writeToHistory(msg)
+        view.mgr.pycon.writeToHistory('\n')
 
 
 def run(interval=10, max_steps=50, **kw):

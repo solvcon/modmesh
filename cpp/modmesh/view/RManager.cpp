@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/RApplication.hpp> // Must be the first include.
+#include <modmesh/view/RManager.hpp> // Must be the first include.
 
 #include <vector>
 
@@ -40,13 +40,13 @@
 namespace modmesh
 {
 
-RApplication & RApplication::instance()
+RManager & RManager::instance()
 {
-    static RApplication ret;
+    static RManager ret;
     return ret;
 }
 
-RApplication::RApplication()
+RManager::RManager()
     : QObject()
 {
     m_core = QApplication::instance();
@@ -64,7 +64,7 @@ RApplication::RApplication()
     // "exited with code -1073740791".  The reason is not yet clarified.
 }
 
-RApplication & RApplication::setUp()
+RManager & RManager::setUp()
 {
     if (!m_already_setup)
     {
@@ -77,11 +77,11 @@ RApplication & RApplication::setUp()
     return *this;
 }
 
-RApplication::~RApplication()
+RManager::~RManager()
 {
 }
 
-R3DWidget * RApplication::add3DWidget()
+R3DWidget * RManager::add3DWidget()
 {
     R3DWidget * viewer = nullptr;
     if (m_mdiArea)
@@ -95,14 +95,14 @@ R3DWidget * RApplication::add3DWidget()
     return viewer;
 }
 
-void RApplication::setUpConsole()
+void RManager::setUpConsole()
 {
     m_pycon = new RPythonConsoleDockWidget(QString("Console"), m_mainWindow);
     m_pycon->setAllowedAreas(Qt::AllDockWidgetAreas);
     m_mainWindow->addDockWidget(Qt::BottomDockWidgetArea, m_pycon);
 }
 
-void RApplication::setUpCentral()
+void RManager::setUpCentral()
 {
     m_mdiArea = new QMdiArea(m_mainWindow);
     m_mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
@@ -110,7 +110,7 @@ void RApplication::setUpCentral()
     m_mainWindow->setCentralWidget(m_mdiArea);
 }
 
-void RApplication::setUpMenu()
+void RManager::setUpMenu()
 {
     m_mainWindow->setMenuBar(new QMenuBar(nullptr));
     // NOTE: All menus need to be populated or Windows may crash with
@@ -140,7 +140,7 @@ void RApplication::setUpMenu()
                 QString("Exit the application"),
                 []()
                 {
-                    RApplication::instance().quit();
+                    RManager::instance().quit();
                 });
             m_fileMenu->addAction(action);
         }
@@ -187,7 +187,7 @@ void RApplication::setUpMenu()
     }
 }
 
-void RApplication::clearApplications()
+void RManager::clearApplications()
 {
     for (QAction * a : this->m_appMenu->actions())
     {
@@ -199,7 +199,7 @@ void RApplication::clearApplications()
     }
 }
 
-void RApplication::addApplication(QString const & name)
+void RManager::addApplication(QString const & name)
 {
     m_appMenu->addAction(new RAppAction(
         QString("Load ") + name,

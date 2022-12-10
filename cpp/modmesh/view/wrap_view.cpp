@@ -308,13 +308,13 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRPythonConsoleDockWidget
 
 }; /* end class WrapRPythonConsoleDockWidget */
 
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
-    : public WrapBase<WrapRApplication, RApplication>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
+    : public WrapBase<WrapRManager, RManager>
 {
 
     friend root_base_type;
 
-    WrapRApplication(pybind11::module & mod, char const * pyname, char const * pydoc)
+    WrapRManager(pybind11::module & mod, char const * pyname, char const * pydoc)
         : root_base_type(mod, pyname, pydoc)
     {
 
@@ -325,15 +325,15 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
                 "instance",
                 [](py::object const &) -> wrapped_type &
                 {
-                    return RApplication::instance();
+                    return RManager::instance();
                 })
             .def_property_readonly_static(
                 "core",
                 [](py::object const &) -> QCoreApplication *
                 {
-                    return RApplication::instance().core();
+                    return RManager::instance().core();
                 })
-            .def("setUp", &RApplication::setUp)
+            .def("setUp", &RManager::setUp)
             .def(
                 "exec",
                 [](wrapped_type & self)
@@ -441,19 +441,19 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
         return *this;
     }
 
-}; /* end class WrapRApplication */
+}; /* end class WrapRManager */
 
-struct RApplicationProxy
+struct RManagerProxy
 {
 };
 
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplicationProxy
-    : public WrapBase<WrapRApplicationProxy, RApplicationProxy>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManagerProxy
+    : public WrapBase<WrapRManagerProxy, RManagerProxy>
 {
 
     friend root_base_type;
 
-    WrapRApplicationProxy(pybind11::module & mod, char const * pyname, char const * pydoc)
+    WrapRManagerProxy(pybind11::module & mod, char const * pyname, char const * pydoc)
         : root_base_type(mod, pyname, pydoc)
     {
         namespace py = pybind11;
@@ -463,7 +463,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplicationProxy
                 "__getattr__",
                 [](wrapped_type &, char const * name)
                 {
-                    py::object obj = py::cast(RApplication::instance());
+                    py::object obj = py::cast(RManager::instance());
                     obj = obj.attr(name);
                     return obj;
                 })
@@ -471,7 +471,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplicationProxy
             ;
     }
 
-}; /* end class WrapRApplicationProxy */
+}; /* end class WrapRManagerProxy */
 
 void wrap_view(pybind11::module & mod)
 {
@@ -480,10 +480,10 @@ void wrap_view(pybind11::module & mod)
     WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
     WrapRLine::commit(mod, "RLine", "RLine");
     WrapRPythonConsoleDockWidget::commit(mod, "RPythonConsoleDockWidget", "RPythonConsoleDockWidget");
-    WrapRApplication::commit(mod, "RApplication", "RApplication");
-    WrapRApplicationProxy::commit(mod, "RApplicationProxy", "RApplicationProxy");
+    WrapRManager::commit(mod, "RManager", "RManager");
+    WrapRManagerProxy::commit(mod, "RManagerProxy", "RManagerProxy");
 
-    mod.attr("app") = RApplicationProxy();
+    mod.attr("mgr") = RManagerProxy();
 }
 
 struct view_pymod_tag;

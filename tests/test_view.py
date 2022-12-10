@@ -38,13 +38,13 @@ except ImportError:
 class ViewTC(unittest.TestCase):
 
     def test_import(self):
-        self.assertTrue(hasattr(modmesh.view, "app"))
+        self.assertTrue(hasattr(modmesh.view, "mgr"))
 
     @unittest.skip("headless testing is not ready")
     def test_pycon(self):
-        self.assertTrue(view.app.pycon.python_redirect)
-        view.app.pycon.python_redirect = False
-        self.assertFalse(view.app.pycon.python_redirect)
+        self.assertTrue(view.mgr.pycon.python_redirect)
+        view.mgr.pycon.python_redirect = False
+        self.assertFalse(view.mgr.pycon.python_redirect)
 
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -43,9 +43,9 @@ w_tri.updateMesh(mh_tri)
 w_tri.showMark()
 print("tri nedge:", mh_tri.nedge)
 """
-    view.app.pycon.writeToHistory(cmd)
+    view.mgr.pycon.writeToHistory(cmd)
     if set_command:
-        view.app.pycon.command = cmd.strip()
+        view.mgr.pycon.command = cmd.strip()
 
 
 def help_tet(set_command=False):
@@ -57,9 +57,9 @@ w_tet.updateMesh(mh_tet)
 w_tet.showMark()
 print("tet nedge:", mh_tet.nedge)
 """
-    view.app.pycon.writeToHistory(cmd)
+    view.mgr.pycon.writeToHistory(cmd)
     if set_command:
-        view.app.pycon.command = cmd.strip()
+        view.mgr.pycon.command = cmd.strip()
 
 
 def help_other(set_command=False):
@@ -78,9 +78,9 @@ w_tri.view_center = (0, 0, 0)
 # line = mm.view.RLine(-1, -1, -1, -2, -2, -2, 0, 128, 128)
 # print(line)
 """
-    view.app.pycon.writeToHistory(cmd)
+    view.mgr.pycon.writeToHistory(cmd)
     if set_command:
-        view.app.pycon.command = cmd.strip()
+        view.mgr.pycon.command = cmd.strip()
 
 
 def make_triangle():
@@ -113,7 +113,7 @@ def load_app():
         'help_other',
         'make_triangle',
         'make_tetrahedron',
-        ('add3DWidget', view.app.add3DWidget),
+        ('add3DWidget', view.mgr.add3DWidget),
     )
     for k in symbols:
         if isinstance(k, tuple):
@@ -122,9 +122,9 @@ def load_app():
             o = globals().get(k, None)
             if o is None:
                 o = locals().get(k, None)
-        view.app.pycon.writeToHistory(f"Adding symbol {k}\n")
+        view.mgr.pycon.writeToHistory(f"Adding symbol {k}\n")
         aenv.globals[k] = o
-    view.app.pycon.writeToHistory("""
+    view.mgr.pycon.writeToHistory("""
 # Use the functions for more examples:
 help_tri(set_command=False)  # or True
 help_tet(set_command=False)  # or True
