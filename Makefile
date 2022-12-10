@@ -37,7 +37,11 @@ CMAKE_ARGS ?=
 VERBOSE ?=
 FORCE_CLANG_FORMAT ?=
 
-pyextsuffix := $(shell python3-config --extension-suffix)
+WHICH_PYTHON := $(shell which python)
+REALPATH_PYTHON := $(shell realpath $(WHICH_PYTHON))
+DIRNAME_PYTHON := $(shell dirname $(REALPATH_PYTHON))
+
+pyextsuffix := $(shell $(DIRNAME_PYTHON)/python3-config --extension-suffix)
 pyvminor := $(shell python3 -c 'import sys; print("%d%d" % sys.version_info[0:2])')
 
 ifeq ($(CMAKE_BUILD_TYPE), Debug)

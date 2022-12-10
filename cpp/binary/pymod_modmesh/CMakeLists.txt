@@ -34,7 +34,7 @@ if (CLANG_TIDY_EXE AND USE_CLANG_TIDY)
 endif ()
 
 execute_process(
-    COMMAND python3-config --extension-suffix
+    COMMAND $(dirname $(realpath $(which python)))/python3-config --extension-suffix
     OUTPUT_VARIABLE PYEXTSUFFIX
 )
 
