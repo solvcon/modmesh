@@ -55,7 +55,7 @@ void RStaticMesh::update_geometry_impl(StaticMesh const & mh, Qt3DCore::QGeometr
         vertices->setName(Qt3DCore::QAttribute::defaultPositionAttributeName());
         vertices->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
         vertices->setVertexBaseType(Qt3DCore::QAttribute::Float);
-        vertices->setVertexSize(5);
+        vertices->setVertexSize(3);
         auto * buf = new Qt3DCore::QBuffer(geom);
         {
             // Copy mesh node coordinates into the Qt buffer.
