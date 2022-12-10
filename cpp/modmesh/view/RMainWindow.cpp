@@ -42,9 +42,10 @@ namespace modmesh
 {
 
 RMainWindow::RMainWindow()
-    : QMainWindow()
+    : QObject()
+    , m_mainWindow(new QMainWindow)
 {
-    this->setWindowIcon(QIcon(QString(":/icon.ico")));
+    m_mainWindow->setWindowIcon(QIcon(QString(":/icon.ico")));
     // Do not call setUp() from the constructor.  Windows may crash with
     // "exited with code -1073740791".  The reason is not yet clarified.
 }
@@ -65,27 +66,27 @@ void RMainWindow::setUp()
 
 void RMainWindow::setUpConsole()
 {
-    m_pycon = new RPythonConsoleDockWidget(QString("Console"), this);
+    m_pycon = new RPythonConsoleDockWidget(QString("Console"), m_mainWindow);
     m_pycon->setAllowedAreas(Qt::AllDockWidgetAreas);
-    addDockWidget(Qt::BottomDockWidgetArea, m_pycon);
+    m_mainWindow->addDockWidget(Qt::BottomDockWidgetArea, m_pycon);
 }
 
 void RMainWindow::setUpCentral()
 {
-    m_mdiArea = new QMdiArea(this);
+    m_mdiArea = new QMdiArea(m_mainWindow);
     m_mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_mdiArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    setCentralWidget(m_mdiArea);
+    m_mainWindow->setCentralWidget(m_mdiArea);
 }
 
 void RMainWindow::setUpMenu()
 {
-    this->setMenuBar(new QMenuBar(nullptr));
+    m_mainWindow->setMenuBar(new QMenuBar(nullptr));
     // NOTE: All menus need to be populated or Windows may crash with
     // "exited with code -1073740791".  The reason is not yet clarified.
 
     {
-        m_fileMenu = this->menuBar()->addMenu(QString("File"));
+        m_fileMenu = m_mainWindow->menuBar()->addMenu(QString("File"));
 
         {
             auto * action = new RAction(
@@ -116,12 +117,12 @@ void RMainWindow::setUpMenu()
     }
 
     {
-        m_cameraMenu = this->menuBar()->addMenu(QString("Camera"));
+        m_cameraMenu = m_mainWindow->menuBar()->addMenu(QString("Camera"));
 
         auto * use_orbit_camera = new RAction(
             QString("Use Orbit Camera Controller"),
             QString("Use Oribt Camera Controller"),
-            [this]()
+            []()
             {
                 qDebug() << "Use Orbit Camera Controller (menu demo)";
             });
@@ -129,12 +130,12 @@ void RMainWindow::setUpMenu()
         auto * use_fps_camera = new RAction(
             QString("Use First Person Camera Controller"),
             QString("Use First Person Camera Controller"),
-            [this]()
+            []()
             {
                 qDebug() << "Use First Person Camera Controller (menu demo)";
             });
 
-        auto * cameraGroup = new QActionGroup(this);
+        auto * cameraGroup = new QActionGroup(m_mainWindow);
         cameraGroup->addAction(use_orbit_camera);
         cameraGroup->addAction(use_fps_camera);
         use_orbit_camera->setCheckable(true);
@@ -146,7 +147,7 @@ void RMainWindow::setUpMenu()
     }
 
     {
-        m_appMenu = this->menuBar()->addMenu(QString("App"));
+        m_appMenu = m_mainWindow->menuBar()->addMenu(QString("App"));
 
         this->addApplication(QString("sample_mesh"));
         this->addApplication(QString("euler1d"));

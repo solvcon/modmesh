@@ -125,6 +125,9 @@ public:
     }
 
 QT_TYPE_CASTER(QWidget, _("QWidget"));
+QT_TYPE_CASTER(QCoreApplication, _("QCoreApplication"));
+QT_TYPE_CASTER(QApplication, _("QApplication"));
+QT_TYPE_CASTER(QMainWindow, _("QMainWindow"));
 QT_TYPE_CASTER(QMdiSubWindow, _("QMdiSubWindow"));
 
 } /* end namespace detail */
@@ -341,12 +344,17 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRMainWindow
         namespace py = pybind11;
 
         (*this)
-            .def("show", &wrapped_type::show)
+            .def(
+                "show",
+                [](wrapped_type & self)
+                {
+                    self.mainWindow()->show();
+                })
             .def(
                 "resize",
                 [](wrapped_type & self, int w, int h)
                 {
-                    self.resize(w, h);
+                    self.mainWindow()->resize(w, h);
                 },
                 py::arg("w"),
                 py::arg("h"))
@@ -360,15 +368,16 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRMainWindow
                     return subwin;
                 },
                 py::arg("widget"))
+            .def_property_readonly("mainWindow", &wrapped_type::mainWindow)
             .def_property(
                 "windowTitle",
-                [](wrapped_type const & self)
+                [](wrapped_type & self)
                 {
-                    return self.windowTitle().toStdString();
+                    return self.mainWindow()->windowTitle().toStdString();
                 },
                 [](wrapped_type & self, std::string const & name)
                 {
-                    self.setWindowTitle(QString::fromStdString(name));
+                    self.mainWindow()->setWindowTitle(QString::fromStdString(name));
                 })
             //
             ;
@@ -393,21 +402,33 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
         (*this)
             .def_property_readonly_static(
                 "instance",
-                [](py::object const &)
+                [](py::object const &) -> wrapped_type &
                 {
                     return RApplication::instance();
                 })
+            .def_property_readonly_static(
+                "core",
+                [](py::object const &) -> QCoreApplication *
+                {
+                    return RApplication::instance().core();
+                })
             .def_property_readonly(
-                "mainWindow",
+                "manager",
                 [](wrapped_type & self)
                 {
-                    return self.mainWindow();
+                    return self.manager();
+                })
+            .def_property_readonly(
+                "mainWindow",
+                [](wrapped_type & self) -> QMainWindow *
+                {
+                    return self.manager()->mainWindow();
                 })
             .def_property_readonly(
                 "pycon",
                 [](wrapped_type & self)
                 {
-                    return self.mainWindow()->pycon();
+                    return self.manager()->pycon();
                 })
             .def(
                 "add3DWidget",
@@ -420,7 +441,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
                 "exec",
                 [](wrapped_type & self)
                 {
-                    return self.exec();
+                    return self.core()->exec();
                 })
             //
             ;

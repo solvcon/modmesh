@@ -40,8 +40,9 @@ namespace modmesh
 {
 
 class RApplication
-    : public QApplication
+    : public QObject
 {
+    Q_OBJECT
 
 public:
 
@@ -49,18 +50,20 @@ public:
 
     RApplication & setUp();
 
-    RMainWindow * mainWindow() { return m_mainWindow; }
+    RMainWindow * manager() { return m_manager; }
 
-    static RApplication * initialize(int & argc, char ** argv);
-    static RApplication * instance();
+    static RApplication & instance();
+
+    QCoreApplication * core() { return m_core; }
 
     R3DWidget * add3DWidget();
 
 private:
 
-    RApplication(int & argc, char ** argv);
+    RApplication();
 
-    RMainWindow * m_mainWindow = nullptr;
+    QCoreApplication * m_core = nullptr;
+    RMainWindow * m_manager = nullptr;
 }; /* end class RApplication */
 
 } /* end namespace modmesh */

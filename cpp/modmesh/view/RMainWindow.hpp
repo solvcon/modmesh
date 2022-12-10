@@ -42,7 +42,7 @@ namespace modmesh
 {
 
 class RMainWindow
-    : public QMainWindow
+    : public QObject
 {
     Q_OBJECT
 
@@ -57,6 +57,8 @@ public:
     template <typename... Args>
     QMdiSubWindow * addSubWindow(Args &&... args);
 
+    QMainWindow * mainWindow() { return m_mainWindow; }
+
 public slots:
 
     void clearApplications();
@@ -69,6 +71,8 @@ private:
     void setUpMenu();
 
     bool m_already_setup = false;
+
+    QMainWindow * m_mainWindow = nullptr;
 
     QMenu * m_fileMenu = nullptr;
     QMenu * m_appMenu = nullptr;

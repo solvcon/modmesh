@@ -102,9 +102,15 @@ class Controller:
         if None is shocktube.svr:
             raise ValueError("shocktube does not have numerical solver built")
 
-        self.use_sub = mm.Toggle.USE_PYSIDE if use_sub is None else use_sub
-
         super().__init__()
+
+        self.shocktube = shocktube
+
+        self.max_steps = max_steps
+        self.current_step = 0
+        self.timer = None
+
+        self.use_sub = mm.Toggle.USE_PYSIDE if use_sub is None else use_sub
         self._main = QtWidgets.QWidget()
         if self.use_sub:
             # FIXME: sub window causes missing QWindow with the following error:
@@ -112,7 +118,7 @@ class Controller:
             # It is probably because RMainWindow is not recognized by PySide6
             # and matplotlib.  We may consider to use composite for QMainWindow
             # instead of inheritance.
-            self._subwin = view.app.mainWindow.addSubWindow(self._main)
+            self._subwin = view.app.manager.addSubWindow(self._main)
             self._subwin.resize(400, 300)
 
         self.plt = Plot(figsize=(15, 10))
@@ -122,12 +128,6 @@ class Controller:
         layout = QtWidgets.QVBoxLayout(self._main)
         layout.addWidget(self.plt.canvas)
         layout.addWidget(NavigationToolbar(self.plt.canvas, self._main))
-
-        self.max_steps = max_steps
-        self.current_step = 0
-        self.timer = None
-
-        self.shocktube = shocktube
 
     def show(self):
         self._main.show()
@@ -151,7 +151,7 @@ class Controller:
         time_current = self.current_step * self.shocktube.svr.time_increment
         self.shocktube.build_field(t=time_current)
         cfl = self.shocktube.svr.cfl
-        self.log(f"CFL: min f{cfl.min()} max f{cfl.max()}")
+        self.log(f"CFL: min {cfl.min()} max {cfl.max()}")
         self.plt.update_lines(self.shocktube)
 
     def setup_solver(self, interval):
@@ -173,13 +173,13 @@ class Controller:
         view.app.pycon.writeToHistory('\n')
 
 
-def run(interval=10, max_steps=50):
+def run(interval=10, max_steps=50, **kw):
     st = euler1d.ShockTube()
     st.build_constant(gamma=1.4, pressure1=1.0, density1=1.0, pressure5=0.1,
                       density5=0.125)
     st.build_numerical(xmin=-10, xmax=10, ncoord=201, time_increment=0.05)
 
-    ctrl = Controller(shocktube=st, max_steps=max_steps)
+    ctrl = Controller(shocktube=st, max_steps=max_steps, **kw)
     ctrl.setup_solver(interval)
     ctrl.show()
 

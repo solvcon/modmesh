@@ -37,44 +37,32 @@
 namespace modmesh
 {
 
-RApplication * RApplication::initialize(int & argc, char ** argv)
+RApplication & RApplication::instance()
 {
-    RApplication * ret = dynamic_cast<RApplication *>(QApplication::instance());
-    if (nullptr == ret)
-    {
-        // Be very careful that QApplication (where RApplication inherits from)
-        // needs int& argc!!
-        ret = new RApplication(argc, argv);
-    }
+    static RApplication ret;
     return ret;
 }
 
-RApplication * RApplication::instance()
+RApplication::RApplication()
 {
-    RApplication * ret = dynamic_cast<RApplication *>(QApplication::instance());
+    m_core = QApplication::instance();
     static int argc = 1;
     static char exename[] = "viewer";
     static char * argv[] = {exename};
-    if (nullptr == ret)
+    if (nullptr == m_core)
     {
-        ret = initialize(argc, argv);
+        m_core = new QApplication(argc, argv);
     }
-    return ret;
+    m_manager = new RMainWindow;
 }
 
 RApplication & RApplication::setUp()
 {
-    if (nullptr != m_mainWindow)
+    if (nullptr != m_manager)
     {
-        m_mainWindow->setUp();
+        m_manager->setUp();
     }
     return *this;
-}
-
-RApplication::RApplication(int & argc, char ** argv)
-    : QApplication(argc, argv)
-    , m_mainWindow(new RMainWindow)
-{
 }
 
 RApplication::~RApplication()
@@ -84,12 +72,12 @@ RApplication::~RApplication()
 R3DWidget * RApplication::add3DWidget()
 {
     R3DWidget * viewer = nullptr;
-    if (m_mainWindow)
+    if (m_manager)
     {
         viewer = new R3DWidget();
         viewer->setWindowTitle("3D viewer");
         viewer->show();
-        auto * subwin = m_mainWindow->addSubWindow(viewer);
+        auto * subwin = m_manager->addSubWindow(viewer);
         subwin->resize(300, 200);
     }
     return viewer;
