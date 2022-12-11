@@ -18,6 +18,7 @@ set(MODMESH_MESH_PYMODHEADERS
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_MESH_PYMODSOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/mesh_pymod.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_StaticGrid.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_StaticMesh.cpp
     CACHE FILEPATH "" FORCE)

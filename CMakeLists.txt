@@ -154,4 +154,11 @@ endif()
 add_custom_target(flake8)
 flake8("flake8")
 
+set(USE_GOOGLETEST True CACHE BOOL "Build with googletest")
+message(STATUS "USE_GOOGLETEST: ${USE_GOOGLETEST}")
+
+if(USE_GOOGLETEST)
+add_subdirectory(gtests)
+endif() # USE_GOOGLETEST
+
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

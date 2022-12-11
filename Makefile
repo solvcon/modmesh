@@ -107,11 +107,15 @@ pytest: buildext
 viewer: cmake
 	cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)
 
+.PHONY: gtest
+gtest: cmake
+	cmake --build $(BUILD_PATH) --target run_gtest VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)
+
 .PHONY: run_viewer_pytest
 run_viewer_pytest: viewer
 	cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE)
 
-CFFILES = $(shell find cpp -type f -name '*.[ch]pp' | sort)
+CFFILES = $(shell find cpp gtests -type f -name '*.[ch]pp' | sort)
 ifeq ($(CFCMD),)
 	ifeq ($(FORCE_CLANG_FORMAT),)
 		CFCMD = clang-format --dry-run
