@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,11 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <pybind11/pybind11.h> // Must be the first include.
-#include <pybind11/stl.h>
-
-#include <modmesh/modmesh.hpp>
-#include <modmesh/python/common.hpp>
+#include <modmesh/toggle/pymod/toggle_pymod.hpp> // Must be the first include.
+#include <modmesh/buffer/pymod/buffer_pymod.hpp>
 
 namespace modmesh
 {
@@ -40,12 +35,28 @@ namespace modmesh
 namespace python
 {
 
-void initialize_buffer(pybind11::module & mod);
-void wrap_ConcreteBuffer(pybind11::module & mod);
-void wrap_SimpleArray(pybind11::module & mod);
+struct mesh_pymod_tag;
+
+template <>
+OneTimeInitializer<mesh_pymod_tag> & OneTimeInitializer<mesh_pymod_tag>::me()
+{
+    static OneTimeInitializer<mesh_pymod_tag> instance;
+    return instance;
+}
+
+void initialize_mesh(pybind11::module & mod)
+{
+    auto initialize_impl = [](pybind11::module & mod)
+    {
+        wrap_StaticGrid(mod);
+        wrap_StaticMesh(mod);
+    };
+
+    OneTimeInitializer<mesh_pymod_tag>::me()(mod, initialize_impl);
+}
 
 } /* end namespace python */
 
 } /* end namespace modmesh */
 
-// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
+// vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

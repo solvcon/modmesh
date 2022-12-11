@@ -22,6 +22,8 @@
 #include <modmesh/python/python.hpp> // Must be the first include.
 #include <modmesh/python/module.hpp>
 #include <modmesh/toggle/pymod/toggle_pymod.hpp>
+#include <modmesh/buffer/pymod/buffer_pymod.hpp>
+#include <modmesh/mesh/pymod/mesh_pymod.hpp>
 #include <modmesh/onedim/pymod/onedim_pymod.hpp>
 #include <modmesh/spacetime/pymod/spacetime_pymod.hpp>
 #ifdef QT_CORE_LIB
@@ -36,7 +38,9 @@ namespace python
 
 void initialize(pybind11::module_ mod)
 {
-    initialize_modmesh(mod);
+    initialize_toggle(mod);
+    initialize_buffer(mod);
+    initialize_mesh(mod);
     pybind11::module_ spacetime_mod = mod.def_submodule("spacetime", "spacetime");
     initialize_spacetime(spacetime_mod);
     pybind11::module_ onedim_mod = mod.def_submodule("onedim", "onedim");

@@ -40,7 +40,7 @@ namespace modmesh
 namespace python
 {
 
-void initialize_modmesh(pybind11::module & mod);
+void initialize_toggle(pybind11::module & mod);
 void wrap_profile(pybind11::module & mod);
 void wrap_StaticGrid(pybind11::module & mod);
 void wrap_StaticMesh(pybind11::module & mod);

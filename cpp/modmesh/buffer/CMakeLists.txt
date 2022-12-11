@@ -19,6 +19,7 @@ set(MODMESH_BUFFER_PYMODHEADERS
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_BUFFER_PYMODSOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/buffer_pymod.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_ConcreteBuffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_SimpleArray.cpp
     CACHE FILEPATH "" FORCE)

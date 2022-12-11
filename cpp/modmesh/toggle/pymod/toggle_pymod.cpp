@@ -35,30 +35,24 @@ namespace modmesh
 namespace python
 {
 
-struct modmesh_pymod_tag;
+struct toggle_pymod_tag;
 
 template <>
-OneTimeInitializer<modmesh_pymod_tag> & OneTimeInitializer<modmesh_pymod_tag>::me()
+OneTimeInitializer<toggle_pymod_tag> & OneTimeInitializer<toggle_pymod_tag>::me()
 {
-    static OneTimeInitializer<modmesh_pymod_tag> instance;
+    static OneTimeInitializer<toggle_pymod_tag> instance;
     return instance;
 }
 
-void initialize_modmesh(pybind11::module & mod)
+void initialize_toggle(pybind11::module & mod)
 {
     auto initialize_impl = [](pybind11::module & mod)
     {
-        import_numpy();
-
         wrap_profile(mod);
-        wrap_ConcreteBuffer(mod);
-        wrap_SimpleArray(mod);
-        wrap_StaticGrid(mod);
-        wrap_StaticMesh(mod);
         wrap_Toggle(mod);
     };
 
-    OneTimeInitializer<modmesh_pymod_tag>::me()(mod, initialize_impl);
+    OneTimeInitializer<toggle_pymod_tag>::me()(mod, initialize_impl);
 }
 
 } /* end namespace python */
