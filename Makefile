@@ -38,8 +38,8 @@ VERBOSE ?=
 FORCE_CLANG_FORMAT ?=
 
 WHICH_PYTHON := $(shell which python3)
-REALPATH_PYTHON := $(shell realpath $(WHICH_PYTHON))
-DIRNAME_PYTHON := $(shell dirname $(REALPATH_PYTHON))
+REALPATH_PYTHON := $(realpath $(WHICH_PYTHON))
+DIRNAME_PYTHON := $(dir dirname $(REALPATH_PYTHON))
 
 pyextsuffix := $(shell $(DIRNAME_PYTHON)/python3-config --extension-suffix)
 pyvminor := $(shell python3 -c 'import sys; print("%d%d" % sys.version_info[0:2])')
