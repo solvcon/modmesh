@@ -80,6 +80,12 @@ jobs:
         echo "flake8 path: $(which flake8)"
         echo "flake8 version: $(flake8 --version)"
 
+    - name: make gtest BUILD_QT=OFF
+      run: |
+        make gtest \
+          VERBOSE=1 USE_CLANG_TIDY=OFF \
+          BUILD_QT=OFF
+
     - name: make buildext BUILD_QT=OFF
       run: |
         rm -f build/*/Makefile
@@ -194,6 +200,12 @@ jobs:
           echo "clang-tidy version: $(clang-tidy -version)"
           echo "flake8 path: $(which flake8)"
           echo "flake8 version: $(flake8 --version)"
+
+      - name: make gtest BUILD_QT=OFF
+        run: |
+          make gtest \
+          VERBOSE=1 USE_CLANG_TIDY=OFF \
+          BUILD_QT=OFF
 
       - name: make buildext BUILD_QT=OFF
         run: |
@@ -312,6 +324,12 @@ jobs:
           cmake --build ${{ github.workspace }}/build `
             --config ${{ matrix.cmake_build_type }} `
             --target ALL_BUILD
+
+      - name: cmake run_gtest
+        run: |
+          cmake --build ${{ github.workspace }}/build `
+            --config ${{ matrix.cmake_build_type }} `
+            --target run_gtest
 
       - name: cmake run_viewer_pytest
         run: |
