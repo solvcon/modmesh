@@ -37,6 +37,14 @@ CMAKE_ARGS ?=
 VERBOSE ?=
 FORCE_CLANG_FORMAT ?=
 
+# !!! NOTE: USING ANY VENV IS STRONGLY DISCOURAGED IN DEVELOPING MODMESH !!!
+# This treatment is a "smarter" way to find python3-config executable.
+# In case Python is not system Python. For example. Python virtual environment
+# is used.
+# However, please note a Python virtual environment is strongly discouraged in
+# developing modmesh. We do not actively resolve bugs related to any virtual
+# env including venv or conda.
+# See https://github.com/solvcon/modmesh/pull/177 for more details.
 WHICH_PYTHON := $(shell which python3)
 REALPATH_PYTHON := $(realpath $(WHICH_PYTHON))
 DIRNAME_PYTHON := $(dir dirname $(REALPATH_PYTHON))
