@@ -33,8 +33,14 @@ if (CLANG_TIDY_EXE AND USE_CLANG_TIDY)
     )
 endif ()
 
+include(CMakePrintHelpers)
+get_filename_component(REALPATH_PYTHON "${PYTHON_EXECUTABLE}" REALPATH)
+get_filename_component(PYTHON_VENV_BIN "${REALPATH_PYTHON}" DIRECTORY)
+cmake_print_variables(REALPATH_PYTHON)
+cmake_print_variables(PYTHON_VENV_BIN)
+
 execute_process(
-    COMMAND $(dirname $(realpath $(which python)))/python3-config --extension-suffix
+    COMMAND ${PYTHON_VENV_BIN}/python3-config --extension-suffix
     OUTPUT_VARIABLE PYEXTSUFFIX
 )
 
