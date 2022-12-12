@@ -31,8 +31,7 @@
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
 
 #include <modmesh/view/R3DWidget.hpp>
-#include <modmesh/view/RApplication.hpp>
-#include <modmesh/view/RMainWindow.hpp>
+#include <modmesh/view/RManager.hpp>
 #include <modmesh/view/RPythonConsoleDockWidget.hpp>
 #include <modmesh/view/RStaticMesh.hpp>
 #include <modmesh/view/RAxisMark.hpp>

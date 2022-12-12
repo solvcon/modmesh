@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -26,73 +28,85 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/RApplication.hpp> // Must be the first include.
+#include <modmesh/view/common_detail.hpp> // Must be the first include.
 
-#include <modmesh/view/RMainWindow.hpp>
+#include <modmesh/view/RPythonConsoleDockWidget.hpp>
+#include <modmesh/view/R3DWidget.hpp>
+#include <modmesh/view/RAction.hpp>
 
-#include <vector>
-
-#include <QActionGroup>
+#include <QMainWindow>
+#include <QMdiArea>
+#include <QMdiSubWindow>
+#include <QApplication>
+#include <Qt>
 
 namespace modmesh
 {
 
-RApplication * RApplication::initialize(int & argc, char ** argv)
+class RManager
+    : public QObject
 {
-    RApplication * ret = dynamic_cast<RApplication *>(QApplication::instance());
-    if (nullptr == ret)
+    Q_OBJECT
+
+public:
+
+    ~RManager() override;
+
+    RManager & setUp();
+
+    static RManager & instance();
+
+    QCoreApplication * core() { return m_core; }
+
+    R3DWidget * add3DWidget();
+
+    RPythonConsoleDockWidget * pycon() { return m_pycon; }
+
+    QMainWindow * mainWindow() { return m_mainWindow; }
+
+    template <typename... Args>
+    QMdiSubWindow * addSubWindow(Args &&... args);
+
+    void quit() { m_core->quit(); }
+
+public slots:
+
+    void clearApplications();
+    void addApplication(QString const & name);
+
+private:
+
+    RManager();
+
+    void setUpConsole();
+    void setUpCentral();
+    void setUpMenu();
+
+    bool m_already_setup = false;
+
+    QCoreApplication * m_core = nullptr;
+
+    QMainWindow * m_mainWindow = nullptr;
+
+    QMenu * m_fileMenu = nullptr;
+    QMenu * m_appMenu = nullptr;
+    QMenu * m_cameraMenu = nullptr;
+
+    RPythonConsoleDockWidget * m_pycon = nullptr;
+    QMdiArea * m_mdiArea = nullptr;
+}; /* end class RManager */
+
+template <typename... Args>
+QMdiSubWindow * RManager::addSubWindow(Args &&... args)
+{
+    QMdiSubWindow * subwin = nullptr;
+    if (m_mdiArea)
     {
-        // Be very careful that QApplication (where RApplication inherits from)
-        // needs int& argc!!
-        ret = new RApplication(argc, argv);
+        subwin = m_mdiArea->addSubWindow(std::forward<Args>(args)...);
+        subwin->show();
+        m_mdiArea->setActiveSubWindow(subwin);
     }
-    return ret;
-}
-
-RApplication * RApplication::instance()
-{
-    RApplication * ret = dynamic_cast<RApplication *>(QApplication::instance());
-    static int argc = 1;
-    static char exename[] = "viewer";
-    static char * argv[] = {exename};
-    if (nullptr == ret)
-    {
-        ret = initialize(argc, argv);
-    }
-    return ret;
-}
-
-RApplication & RApplication::setUp()
-{
-    if (nullptr != m_mainWindow)
-    {
-        m_mainWindow->setUp();
-    }
-    return *this;
-}
-
-RApplication::RApplication(int & argc, char ** argv)
-    : QApplication(argc, argv)
-    , m_mainWindow(new RMainWindow)
-{
-}
-
-RApplication::~RApplication()
-{
-}
-
-R3DWidget * RApplication::add3DWidget()
-{
-    R3DWidget * viewer = nullptr;
-    if (m_mainWindow)
-    {
-        viewer = new R3DWidget();
-        viewer->setWindowTitle("3D viewer");
-        viewer->show();
-        auto * subwin = m_mainWindow->addSubWindow(viewer);
-        subwin->resize(300, 200);
-    }
-    return viewer;
+    return subwin;
 }
 
 } /* end namespace modmesh */

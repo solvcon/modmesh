@@ -38,7 +38,7 @@ from .. import spacetime as libst
 
 def load_app():
     cmd = "win, svr = mm.app.linear_wave.run_linear(animate=True, interval=10)"
-    view.app.pycon.command = cmd
+    view.mgr.pycon.command = cmd
 
 
 class ApplicationWindow(QtWidgets.QMainWindow):

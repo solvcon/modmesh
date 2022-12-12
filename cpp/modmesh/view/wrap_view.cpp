@@ -125,6 +125,9 @@ public:
     }
 
 QT_TYPE_CASTER(QWidget, _("QWidget"));
+QT_TYPE_CASTER(QCoreApplication, _("QCoreApplication"));
+QT_TYPE_CASTER(QApplication, _("QApplication"));
+QT_TYPE_CASTER(QMainWindow, _("QMainWindow"));
 QT_TYPE_CASTER(QMdiSubWindow, _("QMdiSubWindow"));
 
 } /* end namespace detail */
@@ -305,19 +308,74 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRPythonConsoleDockWidget
 
 }; /* end class WrapRPythonConsoleDockWidget */
 
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRMainWindow
-    : public WrapBase<WrapRMainWindow, RMainWindow>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
+    : public WrapBase<WrapRManager, RManager>
 {
 
     friend root_base_type;
 
-    WrapRMainWindow(pybind11::module & mod, char const * pyname, char const * pydoc)
+    WrapRManager(pybind11::module & mod, char const * pyname, char const * pydoc)
         : root_base_type(mod, pyname, pydoc)
+    {
+
+        namespace py = pybind11;
+
+        (*this)
+            .def_property_readonly_static(
+                "instance",
+                [](py::object const &) -> wrapped_type &
+                {
+                    return RManager::instance();
+                })
+            .def_property_readonly_static(
+                "core",
+                [](py::object const &) -> QCoreApplication *
+                {
+                    return RManager::instance().core();
+                })
+            .def("setUp", &RManager::setUp)
+            .def(
+                "exec",
+                [](wrapped_type & self)
+                {
+                    return self.core()->exec();
+                })
+            .wrap_widget()
+            .wrap_app()
+            .wrap_mainWindow()
+            //
+            ;
+    }
+
+    wrapper_type & wrap_widget()
     {
         namespace py = pybind11;
 
         (*this)
-            .wrap_basic_qt()
+            .def_property_readonly(
+                "pycon",
+                [](wrapped_type & self)
+                {
+                    return self.pycon();
+                })
+            .def(
+                "add3DWidget",
+                [](wrapped_type & self)
+                {
+                    return self.add3DWidget();
+                })
+            //
+            ;
+
+        return *this;
+    }
+
+    wrapper_type & wrap_app()
+    {
+        namespace py = pybind11;
+
+        (*this)
+            .wrap_mainWindow()
             .def("clearApplications", &wrapped_type::clearApplications)
             .def(
                 "addApplication",
@@ -326,27 +384,34 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRMainWindow
                     self.addApplication(QString::fromStdString(name));
                 },
                 py::arg("name"))
-            .def_property_readonly(
-                "pycon",
-                [](wrapped_type & self)
-                {
-                    return self.pycon();
-                })
             //
             ;
+
+        return *this;
     }
 
-    wrapper_type & wrap_basic_qt()
+    wrapper_type & wrap_mainWindow()
     {
         namespace py = pybind11;
 
         (*this)
-            .def("show", &wrapped_type::show)
+            .def_property_readonly(
+                "mainWindow",
+                [](wrapped_type & self) -> QMainWindow *
+                {
+                    return self.mainWindow();
+                })
+            .def(
+                "show",
+                [](wrapped_type & self)
+                {
+                    self.mainWindow()->show();
+                })
             .def(
                 "resize",
                 [](wrapped_type & self, int w, int h)
                 {
-                    self.resize(w, h);
+                    self.mainWindow()->resize(w, h);
                 },
                 py::arg("w"),
                 py::arg("h"))
@@ -362,13 +427,13 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRMainWindow
                 py::arg("widget"))
             .def_property(
                 "windowTitle",
-                [](wrapped_type const & self)
+                [](wrapped_type & self)
                 {
-                    return self.windowTitle().toStdString();
+                    return self.mainWindow()->windowTitle().toStdString();
                 },
                 [](wrapped_type & self, std::string const & name)
                 {
-                    self.setWindowTitle(QString::fromStdString(name));
+                    self.mainWindow()->setWindowTitle(QString::fromStdString(name));
                 })
             //
             ;
@@ -376,69 +441,19 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRMainWindow
         return *this;
     }
 
-}; /* end class WrapRMainWindow */
+}; /* end class WrapRManager */
 
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplication
-    : public WrapBase<WrapRApplication, RApplication>
-{
-
-    friend root_base_type;
-
-    WrapRApplication(pybind11::module & mod, char const * pyname, char const * pydoc)
-        : root_base_type(mod, pyname, pydoc)
-    {
-
-        namespace py = pybind11;
-
-        (*this)
-            .def_property_readonly_static(
-                "instance",
-                [](py::object const &)
-                {
-                    return RApplication::instance();
-                })
-            .def_property_readonly(
-                "mainWindow",
-                [](wrapped_type & self)
-                {
-                    return self.mainWindow();
-                })
-            .def_property_readonly(
-                "pycon",
-                [](wrapped_type & self)
-                {
-                    return self.mainWindow()->pycon();
-                })
-            .def(
-                "add3DWidget",
-                [](wrapped_type & self)
-                {
-                    return self.add3DWidget();
-                })
-            .def("setUp", &RApplication::setUp)
-            .def(
-                "exec",
-                [](wrapped_type & self)
-                {
-                    return self.exec();
-                })
-            //
-            ;
-    }
-
-}; /* end class WrapRApplication */
-
-struct RApplicationProxy
+struct RManagerProxy
 {
 };
 
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplicationProxy
-    : public WrapBase<WrapRApplicationProxy, RApplicationProxy>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManagerProxy
+    : public WrapBase<WrapRManagerProxy, RManagerProxy>
 {
 
     friend root_base_type;
 
-    WrapRApplicationProxy(pybind11::module & mod, char const * pyname, char const * pydoc)
+    WrapRManagerProxy(pybind11::module & mod, char const * pyname, char const * pydoc)
         : root_base_type(mod, pyname, pydoc)
     {
         namespace py = pybind11;
@@ -448,7 +463,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplicationProxy
                 "__getattr__",
                 [](wrapped_type &, char const * name)
                 {
-                    py::object obj = py::cast(RApplication::instance());
+                    py::object obj = py::cast(RManager::instance());
                     obj = obj.attr(name);
                     return obj;
                 })
@@ -456,7 +471,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRApplicationProxy
             ;
     }
 
-}; /* end class WrapRApplicationProxy */
+}; /* end class WrapRManagerProxy */
 
 void wrap_view(pybind11::module & mod)
 {
@@ -465,11 +480,10 @@ void wrap_view(pybind11::module & mod)
     WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
     WrapRLine::commit(mod, "RLine", "RLine");
     WrapRPythonConsoleDockWidget::commit(mod, "RPythonConsoleDockWidget", "RPythonConsoleDockWidget");
-    WrapRMainWindow::commit(mod, "RMainWindow", "RMainWindow");
-    WrapRApplication::commit(mod, "RApplication", "RApplication");
-    WrapRApplicationProxy::commit(mod, "RApplicationProxy", "RApplicationProxy");
+    WrapRManager::commit(mod, "RManager", "RManager");
+    WrapRManagerProxy::commit(mod, "RManagerProxy", "RManagerProxy");
 
-    mod.attr("app") = RApplicationProxy();
+    mod.attr("mgr") = RManagerProxy();
 }
 
 struct view_pymod_tag;

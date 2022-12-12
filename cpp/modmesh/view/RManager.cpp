@@ -26,12 +26,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/RMainWindow.hpp> // Must be the first include.
+#include <modmesh/view/RManager.hpp> // Must be the first include.
 
-#include <modmesh/view/R3DWidget.hpp>
+#include <vector>
 
 #include <modmesh/view/RAction.hpp>
-#include <modmesh/view/RApplication.hpp>
 #include <Qt>
 #include <QMenuBar>
 #include <QMenu>
@@ -41,51 +40,84 @@
 namespace modmesh
 {
 
-RMainWindow::RMainWindow()
-    : QMainWindow()
+RManager & RManager::instance()
 {
-    this->setWindowIcon(QIcon(QString(":/icon.ico")));
+    static RManager ret;
+    return ret;
+}
+
+RManager::RManager()
+    : QObject()
+{
+    m_core = QApplication::instance();
+    static int argc = 1;
+    static char exename[] = "viewer";
+    static char * argv[] = {exename};
+    if (nullptr == m_core)
+    {
+        m_core = new QApplication(argc, argv);
+    }
+
+    m_mainWindow = new QMainWindow;
+    m_mainWindow->setWindowIcon(QIcon(QString(":/icon.ico")));
     // Do not call setUp() from the constructor.  Windows may crash with
     // "exited with code -1073740791".  The reason is not yet clarified.
 }
 
-void RMainWindow::setUp()
+RManager & RManager::setUp()
 {
-    if (m_already_setup)
+    if (!m_already_setup)
     {
-        return;
+        this->setUpConsole();
+        this->setUpCentral();
+        this->setUpMenu();
+
+        m_already_setup = true;
     }
-
-    this->setUpConsole();
-    this->setUpCentral();
-    this->setUpMenu();
-
-    m_already_setup = true;
+    return *this;
 }
 
-void RMainWindow::setUpConsole()
+RManager::~RManager()
 {
-    m_pycon = new RPythonConsoleDockWidget(QString("Console"), this);
+}
+
+R3DWidget * RManager::add3DWidget()
+{
+    R3DWidget * viewer = nullptr;
+    if (m_mdiArea)
+    {
+        viewer = new R3DWidget();
+        viewer->setWindowTitle("3D viewer");
+        viewer->show();
+        auto * subwin = this->addSubWindow(viewer);
+        subwin->resize(300, 200);
+    }
+    return viewer;
+}
+
+void RManager::setUpConsole()
+{
+    m_pycon = new RPythonConsoleDockWidget(QString("Console"), m_mainWindow);
     m_pycon->setAllowedAreas(Qt::AllDockWidgetAreas);
-    addDockWidget(Qt::BottomDockWidgetArea, m_pycon);
+    m_mainWindow->addDockWidget(Qt::BottomDockWidgetArea, m_pycon);
 }
 
-void RMainWindow::setUpCentral()
+void RManager::setUpCentral()
 {
-    m_mdiArea = new QMdiArea(this);
+    m_mdiArea = new QMdiArea(m_mainWindow);
     m_mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_mdiArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    setCentralWidget(m_mdiArea);
+    m_mainWindow->setCentralWidget(m_mdiArea);
 }
 
-void RMainWindow::setUpMenu()
+void RManager::setUpMenu()
 {
-    this->setMenuBar(new QMenuBar(nullptr));
+    m_mainWindow->setMenuBar(new QMenuBar(nullptr));
     // NOTE: All menus need to be populated or Windows may crash with
     // "exited with code -1073740791".  The reason is not yet clarified.
 
     {
-        m_fileMenu = this->menuBar()->addMenu(QString("File"));
+        m_fileMenu = m_mainWindow->menuBar()->addMenu(QString("File"));
 
         {
             auto * action = new RAction(
@@ -108,7 +140,7 @@ void RMainWindow::setUpMenu()
                 QString("Exit the application"),
                 []()
                 {
-                    RApplication::instance()->quit();
+                    RManager::instance().quit();
                 });
             m_fileMenu->addAction(action);
         }
@@ -116,12 +148,12 @@ void RMainWindow::setUpMenu()
     }
 
     {
-        m_cameraMenu = this->menuBar()->addMenu(QString("Camera"));
+        m_cameraMenu = m_mainWindow->menuBar()->addMenu(QString("Camera"));
 
         auto * use_orbit_camera = new RAction(
             QString("Use Orbit Camera Controller"),
             QString("Use Oribt Camera Controller"),
-            [this]()
+            []()
             {
                 qDebug() << "Use Orbit Camera Controller (menu demo)";
             });
@@ -129,12 +161,12 @@ void RMainWindow::setUpMenu()
         auto * use_fps_camera = new RAction(
             QString("Use First Person Camera Controller"),
             QString("Use First Person Camera Controller"),
-            [this]()
+            []()
             {
                 qDebug() << "Use First Person Camera Controller (menu demo)";
             });
 
-        auto * cameraGroup = new QActionGroup(this);
+        auto * cameraGroup = new QActionGroup(m_mainWindow);
         cameraGroup->addAction(use_orbit_camera);
         cameraGroup->addAction(use_fps_camera);
         use_orbit_camera->setCheckable(true);
@@ -146,7 +178,7 @@ void RMainWindow::setUpMenu()
     }
 
     {
-        m_appMenu = this->menuBar()->addMenu(QString("App"));
+        m_appMenu = m_mainWindow->menuBar()->addMenu(QString("App"));
 
         this->addApplication(QString("sample_mesh"));
         this->addApplication(QString("euler1d"));
@@ -155,7 +187,7 @@ void RMainWindow::setUpMenu()
     }
 }
 
-void RMainWindow::clearApplications()
+void RManager::clearApplications()
 {
     for (QAction * a : this->m_appMenu->actions())
     {
@@ -167,7 +199,7 @@ void RMainWindow::clearApplications()
     }
 }
 
-void RMainWindow::addApplication(QString const & name)
+void RManager::addApplication(QString const & name)
 {
     m_appMenu->addAction(new RAppAction(
         QString("Load ") + name,
