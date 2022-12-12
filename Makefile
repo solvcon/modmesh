@@ -47,7 +47,7 @@ FORCE_CLANG_FORMAT ?=
 # See https://github.com/solvcon/modmesh/pull/177 for more details.
 WHICH_PYTHON := $(shell which python3)
 REALPATH_PYTHON := $(realpath $(WHICH_PYTHON))
-DIRNAME_PYTHON := $(dir dirname $(REALPATH_PYTHON))
+DIRNAME_PYTHON := $(dir $(REALPATH_PYTHON))
 
 pyextsuffix := $(shell $(DIRNAME_PYTHON)/python3-config --extension-suffix)
 pyvminor := $(shell python3 -c 'import sys; print("%d%d" % sys.version_info[0:2])')
