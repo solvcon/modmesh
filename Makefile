@@ -47,7 +47,7 @@ FORCE_CLANG_FORMAT ?=
 # See https://github.com/solvcon/modmesh/pull/177 for more details.
 WHICH_PYTHON := $(shell which python3)
 REALPATH_PYTHON := $(realpath $(WHICH_PYTHON))
-DIRNAME_PYTHON := $(dir $(REALPATH_PYTHON))
+export DIRNAME_PYTHON := $(dir $(REALPATH_PYTHON))
 
 pyextsuffix := $(shell $(DIRNAME_PYTHON)/python3-config --extension-suffix)
 pyvminor := $(shell python3 -c 'import sys; print("%d%d" % sys.version_info[0:2])')
@@ -57,6 +57,7 @@ ifeq ($(CMAKE_BUILD_TYPE), Debug)
 else
 	BUILD_PATH ?= build/dev$(pyvminor)
 endif
+export BUILD_PATH
 
 PYTEST ?= $(shell which py.test-3)
 ifeq ($(PYTEST),)
@@ -126,6 +127,15 @@ gtest: cmake
 .PHONY: run_viewer_pytest
 run_viewer_pytest: viewer
 	cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE)
+
+.PHONY: standalone_buffer_setup
+standalone_buffer_setup:
+	$(MAKE) -C contrib/standalone_buffer copy
+
+.PHONY: standalone_buffer
+standalone_buffer:
+	$(MAKE) -C contrib/standalone_buffer build
+	$(MAKE) -C contrib/standalone_buffer run
 
 CFFILES = $(shell find cpp gtests -type f -name '*.[ch]pp' | sort)
 ifeq ($(CFCMD),)

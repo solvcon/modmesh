@@ -35,7 +35,7 @@
 
 #include <atomic>
 
-#include <modmesh/modmesh.hpp>
+#include <modmesh/toggle/toggle.hpp>
 
 #ifdef __GNUG__
 #define MODMESH_PYTHON_WRAPPER_VISIBILITY __attribute__((visibility("hidden")))
