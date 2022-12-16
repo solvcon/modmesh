@@ -31,6 +31,7 @@
 #include <modmesh/buffer/ConcreteBuffer.hpp>
 
 #include <stdexcept>
+#include <limits>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -81,6 +82,114 @@ inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<si
     return offset;
 }
 
+namespace detail
+{
+
+template <typename T>
+struct SimpleArrayInternalTypes
+{
+    using value_type = T;
+    using shape_type = small_vector<size_t>;
+    using sshape_type = small_vector<ssize_t>;
+    using buffer_type = ConcreteBuffer;
+}; /* end class SimpleArrayInternalType */
+
+template <typename A, typename T>
+class SimpleArrayMixinModifiers
+{
+
+private:
+
+    using internal_types = detail::SimpleArrayInternalTypes<T>;
+
+public:
+
+    using value_type = typename internal_types::value_type;
+
+    A & fill(value_type const & value)
+    {
+        auto athis = static_cast<A *>(this);
+        std::fill(athis->begin(), athis->end(), value);
+        return *athis;
+    }
+
+}; /* end class SimpleArrayMixinModifiers */
+
+template <typename A, typename T>
+class SimpleArrayMixinCalculators
+{
+
+private:
+
+    using internal_types = detail::SimpleArrayInternalTypes<T>;
+
+public:
+
+    using value_type = typename internal_types::value_type;
+
+    value_type min(value_type initial = std::numeric_limits<value_type>::max()) const
+    {
+        auto athis = static_cast<A const *>(this);
+        for (size_t i = 0; i < athis->size(); ++i)
+        {
+            if (athis->data(i) < initial)
+            {
+                initial = athis->data(i);
+            }
+        }
+        return initial;
+    }
+
+    value_type max(value_type initial = std::numeric_limits<value_type>::lowest()) const
+    {
+        auto athis = static_cast<A const *>(this);
+        for (size_t i = 0; i < athis->size(); ++i)
+        {
+            if (athis->data(i) > initial)
+            {
+                initial = athis->data(i);
+            }
+        }
+        return initial;
+    }
+
+    value_type sum(value_type initial = 0) const
+    {
+        auto athis = static_cast<A const *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            for (size_t i = 0; i < athis->size(); ++i)
+            {
+                initial += athis->data(i);
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < athis->size(); ++i)
+            {
+                initial |= athis->data(i);
+            }
+        }
+        return initial;
+    }
+
+    A abs() const
+    {
+        auto athis = static_cast<A const *>(this);
+        A ret(*athis);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>> && std::is_signed_v<value_type>)
+        {
+            for (size_t i = 0; i < athis->size(); ++i)
+            {
+                ret.data(i) = std::abs(athis->data(i));
+            }
+        }
+        return ret;
+    }
+}; /* end class SimpleArrayMixinCalculators */
+
+} /* end namespace detail */
+
 /**
  * Simple array type for contiguous memory storage. Size does not change. The
  * copy semantics performs data copy. The move semantics invalidates the
@@ -88,14 +197,20 @@ inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<si
  */
 template <typename T>
 class SimpleArray
+    : public detail::SimpleArrayMixinModifiers<SimpleArray<T>, T>
+    , public detail::SimpleArrayMixinCalculators<SimpleArray<T>, T>
 {
+
+private:
+
+    using internal_types = detail::SimpleArrayInternalTypes<T>;
 
 public:
 
-    using value_type = T;
-    using shape_type = small_vector<size_t>;
-    using sshape_type = small_vector<ssize_t>;
-    using buffer_type = ConcreteBuffer;
+    using value_type = typename internal_types::value_type;
+    using shape_type = typename internal_types::shape_type;
+    using sshape_type = typename internal_types::sshape_type;
+    using buffer_type = typename internal_types::buffer_type;
 
     static constexpr size_t ITEMSIZE = sizeof(value_type);
 
@@ -105,7 +220,7 @@ public:
         : m_buffer(buffer_type::construct(length * ITEMSIZE))
         , m_shape{length}
         , m_stride{1}
-        , m_body(m_buffer->data<T>())
+        , m_body(m_buffer->template data<T>())
     {
     }
 
@@ -124,7 +239,7 @@ public:
         if (!m_shape.empty())
         {
             m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE);
-            m_body = m_buffer->data<T>();
+            m_body = m_buffer->template data<T>();
         }
     }
 
@@ -142,7 +257,7 @@ public:
         if (!m_shape.empty())
         {
             m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE);
-            m_body = m_buffer->data<T>();
+            m_body = m_buffer->template data<T>();
         }
     }
 
@@ -164,7 +279,7 @@ public:
             m_shape = shape_type{nitem};
             m_stride = shape_type{1};
             m_buffer = buffer;
-            m_body = m_buffer->data<T>();
+            m_body = m_buffer->template data<T>();
         }
         else
         {
@@ -205,7 +320,7 @@ public:
         , m_shape(other.m_shape)
         , m_stride(other.m_stride)
         , m_nghost(other.m_nghost)
-        , m_body(calc_body(m_buffer->data<T>(), m_stride, other.m_nghost))
+        , m_body(calc_body(m_buffer->template data<T>(), m_stride, other.m_nghost))
     {
     }
 
@@ -226,7 +341,7 @@ public:
             m_shape = other.m_shape;
             m_stride = other.m_stride;
             m_nghost = other.m_nghost;
-            m_body = calc_body(m_buffer->data<T>(), m_stride, other.m_nghost);
+            m_body = calc_body(m_buffer->template data<T>(), m_stride, other.m_nghost);
         }
         return *this;
     }
@@ -391,7 +506,7 @@ public:
         m_nghost = nghost;
         if (bool(*this))
         {
-            m_body = calc_body(m_buffer->data<T>(), m_stride, m_nghost);
+            m_body = calc_body(m_buffer->template data<T>(), m_stride, m_nghost);
         }
     }
 

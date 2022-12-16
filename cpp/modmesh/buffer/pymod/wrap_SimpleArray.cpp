@@ -43,6 +43,8 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
 
     using root_base_type = WrapBase<WrapSimpleArray<T>, SimpleArray<T>>;
     using wrapped_type = typename root_base_type::wrapped_type;
+    using wrapper_type = typename root_base_type::wrapper_type;
+    using value_type = typename wrapped_type::value_type;
     using shape_type = typename wrapped_type::shape_type;
     using slice_type = small_vector<int>;
 
@@ -59,6 +61,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                     [](py::object const & shape)
                     { return wrapped_type(make_shape(shape)); }),
                 py::arg("shape"))
+            .def_timed(
+                py::init(
+                    [](py::object const & shape, value_type const & value)
+                    { return wrapped_type(make_shape(shape), value); }),
+                py::arg("shape"),
+                py::arg("value"))
             .def(
                 py::init(
                     [](py::array & arr_in)
@@ -148,8 +156,37 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def_property_readonly("has_ghost", &wrapped_type::has_ghost)
             .def_property("nghost", &wrapped_type::nghost, &wrapped_type::set_nghost)
             .def_property_readonly("nbody", &wrapped_type::nbody)
+            .wrap_modifiers()
+            .wrap_calculators()
             //
             ;
+    }
+
+    wrapper_type & wrap_modifiers()
+    {
+        namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
+
+        (*this)
+            .def("fill", &wrapped_type::fill, py::arg("value"))
+            //
+            ;
+
+        return *this;
+    }
+
+    wrapper_type & wrap_calculators()
+    {
+        namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
+
+        (*this)
+            .def("min", &wrapped_type::min, py::arg("initial") = std::numeric_limits<value_type>::max())
+            .def("max", &wrapped_type::max, py::arg("initial") = std::numeric_limits<value_type>::lowest())
+            .def("sum", &wrapped_type::sum, py::arg("initial") = 0)
+            .def("abs", &wrapped_type::abs)
+            //
+            ;
+
+        return *this;
     }
 
     static void setitem_parser(wrapped_type & arr_out, pybind11::args const & args)
