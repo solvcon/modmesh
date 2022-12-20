@@ -1,7 +1,7 @@
 # Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
 # BSD-style license; see COPYING
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.24)
 
 # See https://google.github.io/googletest/quickstart-cmake.html for the
 # recommended cmake configuration
