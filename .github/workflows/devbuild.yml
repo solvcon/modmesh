@@ -340,7 +340,7 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 1
 
@@ -360,8 +360,11 @@ jobs:
           arch: 'win64_msvc2019_64'
           modules: 'qt3d'
 
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' 
+
       - name: dependency by pip
-        if: ${{ startsWith(matrix.os, 'windows') }}
         run: pip3 install -U numpy pytest flake8 pybind11
 
       - name: show dependency
