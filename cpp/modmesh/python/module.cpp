@@ -29,6 +29,7 @@
 #ifdef QT_CORE_LIB
 #include <modmesh/view/wrap_view.hpp>
 #endif // QT_CORE_LIB
+#include <modmesh/python/wrap_config.hpp>
 
 namespace modmesh
 {
@@ -52,6 +53,7 @@ void initialize(pybind11::module_ mod)
 #else // QT_CORE_LIB
     mod.attr("HAS_VIEW") = false;
 #endif // QT_CORE_LIB
+    wrap_Config(mod);
 }
 
 int program_entrance(int argc, char ** argv)
@@ -64,6 +66,10 @@ int program_entrance(int argc, char ** argv)
         .initialize()
         .setup_modmesh_path()
         .setup_process();
+
+    // must behind the interpreter construction
+    auto & config = Config::instance();
+    config.initialize_from_file("config.json"); // TODO: tiger: get a default path from the argument parser
 
     int ret = 0;
 

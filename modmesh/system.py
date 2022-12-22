@@ -45,6 +45,7 @@ __all__ = [
     'setup_process',
     'enter_main',
     'exec_code',
+    'load_json_from_file,'
 ]
 
 
@@ -68,6 +69,9 @@ def _parse_command_line(argv):
                         default='viewer',
                         choices=['viewer', 'python', 'pytest'],
                         help='mode selection (default = %(default)s)')
+    parser.add_argument('--config-path', action='store',
+                        default='config.json',
+                        help='the path of configuration file')
     args = parser.parse_args(argv[1:])
     if parser.exited:
         args.exit = (parser.exited_status, parser.exited_message)
@@ -89,6 +93,19 @@ def _run_pytest():
     mmpath = os.path.abspath(mmpath)
     return pytest.main(['-v', '-x', mmpath])
 
+
+def load_json_from_file(file_path):
+    import json
+
+    if not os.path.exists(file_path):
+        raise ValueError(f"json file `{os.path.abspath(file_path)}` does not exists.")
+
+    with open(file_path) as f:
+        try:
+            loaded_json = json.load(f) 
+        except Exception as e:
+            raise e
+    return loaded_json
 
 def setup_process(argv):
     """Set up the runtime environment for the process."""

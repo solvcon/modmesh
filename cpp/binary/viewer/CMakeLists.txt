@@ -97,6 +97,8 @@ endif()
 
 add_custom_target(run_viewer_pytest $<TARGET_FILE:viewer> --mode=pytest)
 
+file(COPY ${PROJECT_ROOT_DIR}/config.json DESTINATION ${viewer_BINARY_DIR})
+
 install(TARGETS viewer
     RUNTIME DESTINATION "${INSTALL_VIEWERDIR}"
     BUNDLE DESTINATION "${INSTALL_VIEWERDIR}"

@@ -263,6 +263,44 @@ std::string PythonStreamRedirect::stderr_string() const
     return pybind11::str(m_stderr_buffer.attr("read")());
 }
 
+Config & Config::instance()
+{
+    static Config o;
+    return o;
+}
+
+void Config::initialize_from_file(const char * file_path)
+{
+    try
+    {
+        // NOLINTNEXTLINE(misc-const-correctness)
+        pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
+        m_data = new pybind11::dict();
+        *m_data = pybind11::cast<pybind11::dict>(mod_sys.attr("load_json_from_file")(file_path));
+    }
+    catch (const pybind11::error_already_set & e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+}
+
+pybind11::object Config::get(const char * key) { return (*m_data)[key]; };
+pybind11::object Config::get(const std::vector<const char *> keys)
+{
+    pybind11::object data = *m_data;
+    for (auto i = 0; i < keys.size(); i++)
+    {
+        data = data[keys[i]];
+    }
+    return data;
+};
+
+void Config::set(const char * key, const int value) { (*m_data)[key] = value; }
+
+void Config::set(const char * key, const float value) { (*m_data)[key] = value; }
+
+void Config::set(const char * key, const char * value) { (*m_data)[key] = value; }
+
 } /* end namespace python */
 
 } /* end namespace modmesh */

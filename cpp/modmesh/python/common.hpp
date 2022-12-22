@@ -545,6 +545,49 @@ private:
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
+
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+// Suppress the warning "greater visibility than the type of its field"
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+class Config
+{
+public:
+
+    static Config & instance();
+
+    Config(Config const &) = delete;
+    Config(Config &&) = delete;
+    Config & operator=(Config const &) = delete;
+    Config & operator=(Config &&) = delete;
+    ~Config() { delete m_data; };
+
+    void initialize() { m_data = new pybind11::dict(); }
+    void initialize_from_file(const char * file_path);
+
+    pybind11::object get(const char * key);
+    pybind11::object get(const std::vector<const char *> keys);
+
+    void set(const char * key, const int value);
+    // void set(const std::vector<const char *> keys, const int value); // TODO
+
+    // In Python, "number" is analogous to the float type.
+    void set(const char * key, const float value);
+    // void set(const std::vector<const char *> keys, const float value); // TODO
+
+    void set(const char * key, const char * value);
+    // void set(const std::vector<const char *> keys, const char * value); // TODO
+
+private:
+    Config() = default;
+    // need to be initialized after `Interpreter` is initialized
+    pybind11::dict * m_data;
+}; /* end class Config */
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
 } /* end namespace python */
 
 } /* end namespace modmesh */
