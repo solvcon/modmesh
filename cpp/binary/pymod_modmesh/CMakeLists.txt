@@ -9,10 +9,15 @@ pybind11_add_module(
     module.cpp
 )
 
+# CMAKE_PREFIX_PATH should be set to:
+# <easy_profiler-release_dir>/lib/cmake/easy_profiler
+find_package(easy_profiler REQUIRED)
+
 target_link_libraries(
     _modmesh PUBLIC
     pybind11::module
     modmesh_primary
+    easy_profiler
 )
 
 if (HIDE_SYMBOL)
