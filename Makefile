@@ -171,9 +171,11 @@ lint: cformat cinclude flake8
 .PHONY: clean
 clean:
 	rm -f $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
+	rm -f $(MODMESH_ROOT)/_modmesh$(pyextsuffix)
 	make -C $(BUILD_PATH) clean
 
 .PHONY: cmakeclean
 cmakeclean:
 	rm -f $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
+	rm -f $(MODMESH_ROOT)/_modmesh$(pyextsuffix)
 	rm -rf $(BUILD_PATH)
