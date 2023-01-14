@@ -32,6 +32,7 @@
 #include <modmesh/base.hpp>
 #include <modmesh/math.hpp>
 #include <modmesh/buffer/buffer.hpp>
+#include <modmesh/toggle/profile.hpp>
 #include <memory>
 
 namespace modmesh
@@ -182,6 +183,8 @@ struct Euler1DKernel
 
     Euler1DKernel & derive()
     {
+        MODMESH_TIME("Euler1DKernel::derive");
+
         // TODO: reduce numerical calculation.
         jac[0][0] = 0.0;
         jac[0][1] = 1.0;
