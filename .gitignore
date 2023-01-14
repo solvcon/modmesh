@@ -19,3 +19,4 @@ setup.mk
 *.tlog
 *.obj
 *.pdb
+*.env
