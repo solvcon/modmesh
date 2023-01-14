@@ -27,7 +27,7 @@
  */
 
 #include <modmesh/onedim/Euler1DCore.hpp>
-#include <modmesh/toggle/toggle.hpp>
+#include <modmesh/toggle/profile.hpp>
 #include <cmath>
 
 namespace modmesh
