@@ -46,6 +46,9 @@ def load_app():
 # Use the functions for more examples:
 ctrl.start()  # Start the movie
 ctrl.step()  # Stepping the solution
+
+# Note: you can enable profiling info by "profiling" option
+ctrl = mm.app.euler1d.run(interval=10, max_steps=50, profiling=True) # enable profiling info
 """)
     cmd = "ctrl = mm.app.euler1d.run(interval=10, max_steps=50)"
     view.mgr.pycon.command = cmd
@@ -96,7 +99,7 @@ class Plot:
 
 
 class Controller:
-    def __init__(self, shocktube, max_steps, use_sub=None):
+    def __init__(self, shocktube, max_steps, use_sub=None, profiling=False):
         if None is shocktube.gamma:
             raise ValueError("shocktube does not have constant built")
         if None is shocktube.svr:
@@ -131,6 +134,8 @@ class Controller:
         layout.addWidget(self.plt.canvas)
         layout.addWidget(NavigationToolbar(self.plt.canvas, self._main))
 
+        self.profiling = profiling
+
     def show(self):
         self._main.show()
         if self.use_sub:
@@ -154,6 +159,8 @@ class Controller:
         self.shocktube.build_field(t=time_current)
         cfl = self.shocktube.svr.cfl
         self.log(f"CFL: min {cfl.min()} max {cfl.max()}")
+        if self.profiling:
+            self.log(mm.time_registry.report())
         self.plt.update_lines(self.shocktube)
 
     def setup_solver(self, interval):
