@@ -214,19 +214,25 @@ def run(interval=10, max_steps=50, no_view_mgr=False, **kw):
 
 if __name__ == "__main__":
     import sys
-    from PySide6.QtCore import QTimer
-    from PySide6.QtWidgets import QApplication
-    app = QApplication()
+    try:
+        from PySide6.QtCore import QTimer
+        from PySide6.QtWidgets import QApplication
+        app = QApplication()
 
-    ctrl = run(interval=10, max_steps=50, no_view_mgr=True, profiling=True)
-    ctrl.start()
+        ctrl = run(interval=10, max_steps=50, no_view_mgr=True, profiling=True)
+        ctrl.start()
 
-    # The trick to close the event loop of app automatically
-    # The timer will emit a closeAllWindows event after 20 seconds
-    # after the app is executed.
-    QTimer.singleShot(20000, app.closeAllWindows)
+        # The trick to close the event loop of app automatically
+        # The timer will emit a closeAllWindows event after 20 seconds
+        # after the app is executed.
+        QTimer.singleShot(20000, app.closeAllWindows)
 
-    sys.exit(app.exec())
+        sys.exit(app.exec())
+
+    except ImportError:
+        print("Something wrong when importing PySide6.")
+        print("Do you install PySide6?")
+        sys.exit(1)
 
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
