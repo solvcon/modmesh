@@ -51,7 +51,7 @@ ctrl.start()  # Start the movie
 ctrl.step()  # Stepping the solution
 
 # Note: you can enable profiling info by "profiling" option
-ctrl = mm.app.euler1d.run(interval=10, max_steps=50, profiling=True) # enable profiling info
+ctrl = mm.app.euler1d.run(interval=10, max_steps=50, profiling=True)
 """)
     cmd = "ctrl = mm.app.euler1d.run(interval=10, max_steps=50)"
     view.mgr.pycon.command = cmd
@@ -188,7 +188,10 @@ class Controller:
 class ControllerNoViewMgr(Controller):
     def __init__(self, shocktube, max_steps, use_sub=None, profiling=False):
 
-        super().__init__(shocktube, max_steps, use_sub=None, profiling=profiling)
+        super().__init__(shocktube,
+                         max_steps,
+                         use_sub=None,
+                         profiling=profiling)
 
     @staticmethod
     def log(msg):
@@ -213,7 +216,6 @@ def run(interval=10, max_steps=50, no_view_mgr=False, **kw):
 
 
 if __name__ == "__main__":
-    import sys
     try:
         from PySide6.QtCore import QTimer
         from PySide6.QtWidgets import QApplication
