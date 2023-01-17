@@ -25,8 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+# This is a hack to make this file runs directly from command line.
 __package__ = "modmesh.app"
-
 
 import sys
 from dataclasses import dataclass
@@ -187,7 +187,6 @@ class Controller:
 
 class ControllerNoViewMgr(Controller):
     def __init__(self, shocktube, max_steps, use_sub=None, profiling=False):
-
         super().__init__(shocktube,
                          max_steps,
                          use_sub=None,
@@ -219,6 +218,7 @@ if __name__ == "__main__":
     try:
         from PySide6.QtCore import QTimer
         from PySide6.QtWidgets import QApplication
+
         app = QApplication()
 
         ctrl = run(interval=10, max_steps=50, no_view_mgr=True, profiling=True)
@@ -235,6 +235,5 @@ if __name__ == "__main__":
         print("Something wrong when importing PySide6.")
         print("Do you install PySide6?")
         sys.exit(1)
-
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
