@@ -25,6 +25,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+# This is a hack to make this file runs directly from command line.
+__package__ = "modmesh.app"
+
 import sys
 from dataclasses import dataclass
 
@@ -46,6 +49,9 @@ def load_app():
 # Use the functions for more examples:
 ctrl.start()  # Start the movie
 ctrl.step()  # Stepping the solution
+
+# Note: you can enable profiling info by "profiling" option
+ctrl = mm.app.euler1d.run(interval=10, max_steps=50, profiling=True)
 """)
     cmd = "ctrl = mm.app.euler1d.run(interval=10, max_steps=50)"
     view.mgr.pycon.command = cmd
@@ -96,7 +102,7 @@ class Plot:
 
 
 class Controller:
-    def __init__(self, shocktube, max_steps, use_sub=None):
+    def __init__(self, shocktube, max_steps, use_sub=None, profiling=False):
         if None is shocktube.gamma:
             raise ValueError("shocktube does not have constant built")
         if None is shocktube.svr:
@@ -131,6 +137,8 @@ class Controller:
         layout.addWidget(self.plt.canvas)
         layout.addWidget(NavigationToolbar(self.plt.canvas, self._main))
 
+        self.profiling = profiling
+
     def show(self):
         self._main.show()
         if self.use_sub:
@@ -154,6 +162,8 @@ class Controller:
         self.shocktube.build_field(t=time_current)
         cfl = self.shocktube.svr.cfl
         self.log(f"CFL: min {cfl.min()} max {cfl.max()}")
+        if self.profiling:
+            self.log(mm.time_registry.report())
         self.plt.update_lines(self.shocktube)
 
     def setup_solver(self, interval):
@@ -175,16 +185,55 @@ class Controller:
         view.mgr.pycon.writeToHistory('\n')
 
 
-def run(interval=10, max_steps=50, **kw):
+class ControllerNoViewMgr(Controller):
+    def __init__(self, shocktube, max_steps, use_sub=None, profiling=False):
+        super().__init__(shocktube,
+                         max_steps,
+                         use_sub=None,
+                         profiling=profiling)
+
+    @staticmethod
+    def log(msg):
+        sys.stdout.write(msg)
+        sys.stdout.write("\n")
+
+
+def run(interval=10, max_steps=50, no_view_mgr=False, **kw):
     st = euler1d.ShockTube()
     st.build_constant(gamma=1.4, pressure1=1.0, density1=1.0, pressure5=0.1,
                       density5=0.125)
     st.build_numerical(xmin=-10, xmax=10, ncoord=201, time_increment=0.05)
 
-    ctrl = Controller(shocktube=st, max_steps=max_steps, **kw)
+    if no_view_mgr:
+        ctrl = ControllerNoViewMgr(shocktube=st, max_steps=max_steps, **kw)
+    else:
+        ctrl = Controller(shocktube=st, max_steps=max_steps, **kw)
     ctrl.setup_solver(interval)
     ctrl.show()
 
     return ctrl
+
+
+if __name__ == "__main__":
+    try:
+        from PySide6.QtCore import QTimer
+        from PySide6.QtWidgets import QApplication
+
+        app = QApplication()
+
+        ctrl = run(interval=10, max_steps=50, no_view_mgr=True, profiling=True)
+        ctrl.start()
+
+        # The trick to close the event loop of app automatically
+        # The timer will emit a closeAllWindows event after 20 seconds
+        # after the app is executed.
+        QTimer.singleShot(20000, app.closeAllWindows)
+
+        sys.exit(app.exec())
+
+    except ImportError:
+        print("Something wrong when importing PySide6.")
+        print("Do you install PySide6?")
+        sys.exit(1)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

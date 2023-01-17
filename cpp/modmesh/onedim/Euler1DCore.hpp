@@ -32,6 +32,7 @@
 #include <modmesh/base.hpp>
 #include <modmesh/math.hpp>
 #include <modmesh/buffer/buffer.hpp>
+#include <modmesh/toggle/profile.hpp>
 #include <memory>
 
 namespace modmesh
@@ -182,6 +183,8 @@ struct Euler1DKernel
 
     Euler1DKernel & derive()
     {
+        MODMESH_TIME("Euler1DKernel::derive");
+
         // TODO: reduce numerical calculation.
         jac[0][0] = 0.0;
         jac[0][1] = 1.0;
@@ -255,6 +258,8 @@ struct Euler1DKernel
 template <size_t ALPHA>
 inline void Euler1DCore::march_half_so1_alpha(bool odd_plane)
 {
+    MODMESH_TIME("Euler1DKernel::march_half_so1_alpha");
+
     const int_type start = BOUND_COUNT - (odd_plane ? 1 : 0);
     const int_type stop = static_cast<int_type>(ncoord() - BOUND_COUNT - (odd_plane ? 0 : 1));
     // Kernal at xneg solution element.
