@@ -58,6 +58,7 @@ copy:
 	@echo "standalone buffer root": $(SETUPROOT)
 	rm -rf $(SETUPROOT)/modmesh
 	mkdir -p $(SETUPROOT)/modmesh
+	cp $(MMROOT)/cpp/modmesh/base.hpp $(SETUPROOT)/modmesh/base.hpp
 	cp -a $(MMROOT)/cpp/modmesh/buffer $(SETUPROOT)/modmesh/buffer
 	mkdir -p $(SETUPROOT)/modmesh/python
 	cp $(MMROOT)/cpp/modmesh/python/common.hpp $(SETUPROOT)/modmesh/python/common.hpp

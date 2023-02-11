@@ -28,6 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <modmesh/base.hpp>
 #include <modmesh/buffer/small_vector.hpp>
 
 #include <stdexcept>
@@ -277,9 +278,7 @@ public:
     {
         if (it >= size())
         {
-            std::ostringstream ms;
-            ms << "ConcreteBuffer: index " << it << " is out of bounds with size " << size();
-            throw std::out_of_range(ms.str());
+            throw std::out_of_range(Formatter() << "ConcreteBuffer: index " << it << " is out of bounds with size " << size());
         }
     }
 

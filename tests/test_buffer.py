@@ -49,18 +49,18 @@ class ConcreteBufferBasicTC(unittest.TestCase):
         self.assertEqual(np.int8, ndarr.dtype)
 
         with self.assertRaisesRegex(
-            IndexError,
-            "ConcreteBuffer: index 10 is out of bounds with size 10"
+                IndexError,
+                "ConcreteBuffer: index 10 is out of bounds with size 10"
         ):
             buf[10]
         with self.assertRaisesRegex(
-            IndexError, "index 10 is out of bounds for axis 0 with size 10"
+                IndexError, "index 10 is out of bounds for axis 0 with size 10"
         ):
             ndarr[10]
 
         buf2 = buf.clone()
         for it in range(len(buf)):
-            buf[it] = 100+it
+            buf[it] = 100 + it
         self.assertEqual(list(buf), ndarr.tolist())
         self.assertEqual(list(range(100, 110)), ndarr.tolist())
         self.assertEqual(list(range(10)), list(buf2))
@@ -93,7 +93,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
         ndarr = np.array(sarr, copy=False)
 
-        self.assertEqual(2*3*4*8, sarr.nbytes)
+        self.assertEqual(2 * 3 * 4 * 8, sarr.nbytes)
         self.assertEqual((2, 3, 4), sarr.shape)
         self.assertEqual((12, 4, 1), sarr.stride)  # number of skip elements
 
@@ -118,8 +118,8 @@ class SimpleArrayBasicTC(unittest.TestCase):
                     v += 1
 
         with self.assertRaisesRegex(
-            RuntimeError,
-            "SimpleArray: shape byte count 184 differs from buffer 192"
+                RuntimeError,
+                "SimpleArray: shape byte count 184 differs from buffer 192"
         ):
             sarr.reshape(23)
 
@@ -154,15 +154,16 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         # Test out-of-bound ghost setting.
         with self.assertRaisesRegex(
-            IndexError, r"SimpleArray: cannot set nghost 11 > shape\(0\) 10"
+                IndexError,
+                r"SimpleArray: cannot set nghost 11 > shape\(0\) 10"
         ):
             out_of_bound_ghost_sarr = modmesh.SimpleArrayInt8(10)
             out_of_bound_ghost_sarr.nghost = 11
 
         # Test empty array ghost setting.
         with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray: cannot set nghost 1 > 0 to an empty array"
+                IndexError,
+                r"SimpleArray: cannot set nghost 1 > 0 to an empty array"
         ):
             empty_sarr = modmesh.SimpleArrayInt8(())
             empty_sarr.nghost = 1
@@ -180,25 +181,25 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         # Test out-of-bound index for getitem.
         with self.assertRaisesRegex(
-            IndexError, r"SimpleArray: index -11 < -nghost: -10"
+                IndexError, r"SimpleArray: index -11 < -nghost: -10"
         ):
             sarr[-11]
 
         with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray: index 14 >= 14 \(size: 24 - nghost: 10\)"
+                IndexError,
+                r"SimpleArray: index 14 >= 14 \(size: 24 - nghost: 10\)"
         ):
             sarr[14]
 
         # Test out-of-bound index for setitem.
         with self.assertRaisesRegex(
-            IndexError, r"SimpleArray: index -11 < -nghost: -10"
+                IndexError, r"SimpleArray: index -11 < -nghost: -10"
         ):
             sarr[-11] = 1
 
         with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray: index 14 >= 14 \(size: 24 - nghost: 10\)"
+                IndexError,
+                r"SimpleArray: index 14 >= 14 \(size: 24 - nghost: 10\)"
         ):
             sarr[14] = 1
 
@@ -233,75 +234,75 @@ class SimpleArrayBasicTC(unittest.TestCase):
                     v += 1
 
         with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray::validate_range\(\): cannot handle 3-dimensional "
-            r"\(more than 1\) array with non-zero nghost: 1"
+                IndexError,
+                r"SimpleArray::validate_range\(\): cannot handle "
+                r"3-dimensional \(more than 1\) array with non-zero nghost: 1"
         ):
             sarr[-1]
 
         # Test out-of-bound index for getitem.
         with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray::validate_shape\(\): empty index"
+                IndexError,
+                r"SimpleArray::validate_shape\(\): empty index"
         ):
             invalid_empty_idx = ()
             sarr[invalid_empty_idx]
 
         with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray: dim 0 in \[-2, 0, 0\] < -nghost: -1"
+                IndexError,
+                r"SimpleArray: dim 0 in \[-2, 0, 0\] < -nghost: -1"
         ):
             sarr[-2, 0, 0]
 
         with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray: dim 0 in \[3, 0, 0\] >= nbody: 3 "
-            r"\(shape\[0\]: 4 - nghost: 1\)"
+                IndexError,
+                r"SimpleArray: dim 0 in \[3, 0, 0\] >= nbody: 3 "
+                r"\(shape\[0\]: 4 - nghost: 1\)"
         ):
             sarr[3, 0, 0]
 
         with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray: dim 1 in \[0, -1, 0\] < 0"
+                IndexError,
+                r"SimpleArray: dim 1 in \[0, -1, 0\] < 0"
         ):
             sarr[0, -1, 0]
 
         with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray: dim 2 in \[0, 2, 2\] >= shape\[2\]: 2"
+                IndexError,
+                r"SimpleArray: dim 2 in \[0, 2, 2\] >= shape\[2\]: 2"
         ):
             sarr[0, 2, 2]
 
         # Test out-of-bound index for setitem.
         with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray::validate_shape\(\): empty index"
+                IndexError,
+                r"SimpleArray::validate_shape\(\): empty index"
         ):
             invalid_empty_idx = ()
             sarr[invalid_empty_idx] = 1
 
         with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray: dim 0 in \[-2, 0, 0\] < -nghost: -1"
+                IndexError,
+                r"SimpleArray: dim 0 in \[-2, 0, 0\] < -nghost: -1"
         ):
             sarr[-2, 0, 0] = 1
 
         with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray: dim 0 in \[3, 0, 0\] >= nbody: 3 "
-            r"\(shape\[0\]: 4 - nghost: 1\)"
+                IndexError,
+                r"SimpleArray: dim 0 in \[3, 0, 0\] >= nbody: 3 "
+                r"\(shape\[0\]: 4 - nghost: 1\)"
         ):
             sarr[3, 0, 0] = 1
 
         with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray: dim 1 in \[0, -1, 0\] < 0"
+                IndexError,
+                r"SimpleArray: dim 1 in \[0, -1, 0\] < 0"
         ):
             sarr[0, -1, 0] = 1
 
         with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray: dim 2 in \[0, 2, 2\] >= shape\[2\]: 2"
+                IndexError,
+                r"SimpleArray: dim 2 in \[0, 2, 2\] >= shape\[2\]: 2"
         ):
             sarr[0, 2, 2] = 1
 
@@ -325,12 +326,14 @@ class SimpleArrayBasicTC(unittest.TestCase):
         _check(modmesh.SimpleArrayUint16((3, 5)), 30, 'uint16')
         _check(modmesh.SimpleArrayInt32(7), 28, 'int32')
         _check(modmesh.SimpleArrayUint32(7), 28, 'uint32')
-        _check(modmesh.SimpleArrayInt64((2, 3, 4)), 2*3*4*8, 'int64')
-        _check(modmesh.SimpleArrayUint64((2, 3, 4)), 2*3*4*8, 'uint64')
+        _check(modmesh.SimpleArrayInt64((2, 3, 4)), 2 * 3 * 4 * 8, 'int64')
+        _check(modmesh.SimpleArrayUint64((2, 3, 4)), 2 * 3 * 4 * 8, 'uint64')
 
         # Real-number types.
-        _check(modmesh.SimpleArrayFloat32((2, 3, 4, 5)), 2*3*4*5*4, 'float32')
-        _check(modmesh.SimpleArrayFloat64((2, 3, 4, 5)), 2*3*4*5*8, 'float64')
+        _check(modmesh.SimpleArrayFloat32((2, 3, 4, 5)), 2 * 3 * 4 * 5 * 4,
+               'float32')
+        _check(modmesh.SimpleArrayFloat64((2, 3, 4, 5)), 2 * 3 * 4 * 5 * 8,
+               'float64')
 
     def test_SimpleArray_from_ndarray(self):
 
@@ -365,7 +368,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
     def test_SimpleArray_broadcast_ellipsis_shape(self):
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
-        ndarr = np.arange(2*3*4, dtype='float64').reshape((2, 3, 4))
+        ndarr = np.arange(2 * 3 * 4, dtype='float64').reshape((2, 3, 4))
         sarr[...] = ndarr[...]
         v = 0
         for i in range(2):
@@ -374,18 +377,19 @@ class SimpleArrayBasicTC(unittest.TestCase):
                     self.assertEqual(v, sarr[i, j, k])
                     v += 1
 
-        ndarr = np.arange(2*3, dtype='float64').reshape((2, 3))
+        ndarr = np.arange(2 * 3, dtype='float64').reshape((2, 3))
         with self.assertRaisesRegex(
-            RuntimeError,
-            r"Broadcast input array from shape\(2, 3\) into shape\(2, 3, 4\)"
+                RuntimeError,
+                r"Broadcast input array from shape\(2, 3\) "
+                r"into shape\(2, 3, 4\)"
         ):
             sarr[...] = ndarr[...]
 
-        ndarr = np.arange(2*4*3, dtype='float64').reshape((2, 4, 3))
+        ndarr = np.arange(2 * 4 * 3, dtype='float64').reshape((2, 4, 3))
         with self.assertRaisesRegex(
-            RuntimeError,
-            r"Broadcast input array from shape\(2, 4, 3\) "
-            r"into shape\(2, 3, 4\)"
+                RuntimeError,
+                r"Broadcast input array from shape\(2, 4, 3\) "
+                r"into shape\(2, 3, 4\)"
         ):
             sarr[...] = ndarr[...]
 
@@ -401,7 +405,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         sarr[...] = ndarr[...]
 
         v = 0
-        for i in range(-G, N-G):
+        for i in range(-G, N - G):
             self.assertEqual(v, sarr[i])
             v += 1
 
@@ -410,13 +414,13 @@ class SimpleArrayBasicTC(unittest.TestCase):
         G = 2
 
         sarr = modmesh.SimpleArrayFloat64((5, 3, 4))
-        ndarr = np.arange(5*3*4, dtype='float64').reshape((5, 3, 4))
+        ndarr = np.arange(5 * 3 * 4, dtype='float64').reshape((5, 3, 4))
         sarr.nghost = G
 
         sarr[...] = ndarr[...]
 
         v = 0
-        for i in range(-G, N-G):
+        for i in range(-G, N - G):
             for j in range(3):
                 for k in range(4):
                     self.assertEqual(v, sarr[i, j, k])
@@ -426,7 +430,8 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
         ndarr = np.arange(
-            (4*2) * (3*3) * (2*4), dtype='float64').reshape((4*2, 3*3, 2*4))
+            (4 * 2) * (3 * 3) * (2 * 4), dtype='float64').reshape(
+            (4 * 2, 3 * 3, 2 * 4))
 
         stride_arr = ndarr[::4, ::3, ::2]
 
@@ -443,7 +448,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
     def test_SimpleArray_broadcast_ellipsis_dtype(self):
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
-        ndarr = np.arange(2*3*4, dtype='int32').reshape((2, 3, 4))
+        ndarr = np.arange(2 * 3 * 4, dtype='int32').reshape((2, 3, 4))
         sarr[...] = ndarr[...]
         v = 0
         for i in range(2):
@@ -453,7 +458,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
                     v += 1
 
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
-        ndarr = np.arange(2*3*4, dtype='float32').reshape((2, 3, 4))
+        ndarr = np.arange(2 * 3 * 4, dtype='float32').reshape((2, 3, 4))
         sarr[...] = ndarr[...]
         v = 0
         for i in range(2):
@@ -464,7 +469,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
     def test_SimpleArray_broadcast_slice_basic(self):
         ndarr_input = np.arange(
-            1*2*3*4*5, dtype='float64').reshape((1, 2, 3, 4, 5))
+            1 * 2 * 3 * 4 * 5, dtype='float64').reshape((1, 2, 3, 4, 5))
         ndarr_input += 999  # just a magic number
 
         def init(sarr):
@@ -488,14 +493,16 @@ class SimpleArrayBasicTC(unittest.TestCase):
                                     sarr[x1, x2, x3, x4, x5])
 
         sarr = modmesh.SimpleArrayFloat64((2, 2, 3, 4, 5))
-        ndarr = np.arange(2*2*3*4*5, dtype='float64').reshape((2, 2, 3, 4, 5))
+        ndarr = np.arange(2 * 2 * 3 * 4 * 5, dtype='float64').reshape(
+            (2, 2, 3, 4, 5))
         init(sarr)
         sarr[::2, ...] = ndarr_input[...]
         ndarr[::2, ...] = ndarr_input[...]
         check(sarr, ndarr)
 
         sarr = modmesh.SimpleArrayFloat64((2, 4, 3, 4, 5))
-        ndarr = np.arange(2*4*3*4*5, dtype='float64').reshape((2, 4, 3, 4, 5))
+        ndarr = np.arange(2 * 4 * 3 * 4 * 5, dtype='float64').reshape(
+            (2, 4, 3, 4, 5))
         init(sarr)
         sarr[::2, ::2, ...] = ndarr_input[...]
         ndarr[::2, ::2, ...] = ndarr_input[...]
@@ -503,7 +510,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         sarr = modmesh.SimpleArrayFloat64((2, 2, 3, 8, 10))
         ndarr = np.arange(
-            2*2*3*8*10, dtype='float64').reshape((2, 2, 3, 8, 10))
+            2 * 2 * 3 * 8 * 10, dtype='float64').reshape((2, 2, 3, 8, 10))
         init(sarr)
         sarr[::2, ..., ::2, ::2] = ndarr_input[...]
         ndarr[::2, ..., ::2, ::2] = ndarr_input[...]
@@ -511,7 +518,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         sarr = modmesh.SimpleArrayFloat64((1, 2, 3, 8, 10))
         ndarr = np.arange(
-            1*2*3*8*10, dtype='float64').reshape((1, 2, 3, 8, 10))
+            1 * 2 * 3 * 8 * 10, dtype='float64').reshape((1, 2, 3, 8, 10))
         init(sarr)
         sarr[..., ::2, ::2] = ndarr_input[...]
         ndarr[..., ::2, ::2] = ndarr_input[...]
@@ -519,7 +526,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         sarr = modmesh.SimpleArrayFloat64((2, 4, 6, 8, 10))
         ndarr = np.arange(
-            2*4*6*8*10, dtype='float64').reshape((2, 4, 6, 8, 10))
+            2 * 4 * 6 * 8 * 10, dtype='float64').reshape((2, 4, 6, 8, 10))
         init(sarr)
         sarr[::2, ::2, ::2, ::2, ::2] = ndarr_input[...]
         ndarr[::2, ::2, ::2, ::2, ::2] = ndarr_input[...]
@@ -527,7 +534,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         sarr = modmesh.SimpleArrayFloat64((2, 6, 3, 4, 5))
         ndarr = np.arange(
-            2*6*3*4*5, dtype='float64').reshape((2, 6, 3, 4, 5))
+            2 * 6 * 3 * 4 * 5, dtype='float64').reshape((2, 6, 3, 4, 5))
         init(sarr)
         sarr[::2, ::3, ::, :, ::1] = ndarr_input[...]
         ndarr[::2, ::3, ::, :, ::1] = ndarr_input[...]
@@ -538,17 +545,17 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         sarr = modmesh.SimpleArrayFloat64((4, 6, 8))
         with self.assertRaisesRegex(
-            RuntimeError,
-            r"Broadcast input array from shape\(2, 3, 4\) "
-            r"into shape\(2, 2, 2\)"
+                RuntimeError,
+                r"Broadcast input array from shape\(2, 3, 4\) "
+                r"into shape\(2, 2, 2\)"
         ):
             sarr[::2, ::3, ::4] = ndarr[...]
 
         sarr = modmesh.SimpleArrayFloat64((4, 6, 8))
         with self.assertRaisesRegex(
-            RuntimeError,
-            r"Broadcast input array from shape\(2, 3, 4\) "
-            r"into shape\(2, 6, 8\)"
+                RuntimeError,
+                r"Broadcast input array from shape\(2, 3, 4\) "
+                r"into shape\(2, 6, 8\)"
         ):
             sarr[::2, ::1, ...] = ndarr[...]
 
@@ -559,7 +566,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         STEP = 3
 
         sarr = modmesh.SimpleArrayFloat64(N)
-        ndarr = np.arange(math.ceil(N/STEP), dtype='float64')
+        ndarr = np.arange(math.ceil(N / STEP), dtype='float64')
         ndarr2 = np.arange(N, dtype='float64')
         sarr.nghost = G
 
@@ -578,9 +585,9 @@ class SimpleArrayBasicTC(unittest.TestCase):
         STEP = 2
 
         sarr = modmesh.SimpleArrayFloat64((N, 3, 4))
-        ndarr = np.arange(math.ceil(N/STEP)*3*4, dtype='float64') \
-            .reshape((math.ceil(N/STEP), 3, 4))
-        ndarr2 = np.arange(N*3*4, dtype='float64').reshape((N, 3, 4))
+        ndarr = np.arange(math.ceil(N / STEP) * 3 * 4, dtype='float64') \
+            .reshape((math.ceil(N / STEP), 3, 4))
+        ndarr2 = np.arange(N * 3 * 4, dtype='float64').reshape((N, 3, 4))
         sarr.nghost = G
 
         sarr[::STEP, ...] = ndarr[...]
@@ -590,5 +597,41 @@ class SimpleArrayBasicTC(unittest.TestCase):
             for j in range(3):
                 for k in range(4):
                     self.assertEqual(ndarr2[i, j, k], sarr[i - G, j, k])
+
+
+class SimpleArrayCalculatorsTC(unittest.TestCase):
+
+    def test_minmaxsum(self):
+        sarr = modmesh.SimpleArrayFloat64(shape=(2, 4), value=10.0)
+
+        self.assertEqual(sarr.sum(), 10.0 * 2 * 4)
+        self.assertEqual(sarr.min(), 10.0)
+        self.assertEqual(sarr.max(), 10.0)
+        sarr.fill(1.0)
+        self.assertEqual(sarr.sum(), 1.0 * 2 * 4)
+        self.assertEqual(sarr.min(), 1.0)
+        self.assertEqual(sarr.max(), 1.0)
+        sarr[1, 0] = 9.2
+        sarr[0, 3] = -2.3
+        self.assertEqual(sarr.min(), -2.3)
+        self.assertEqual(sarr.max(), 9.2)
+
+    def test_abs(self):
+        sarr = modmesh.SimpleArrayInt64(shape=(3, 2), value=-2)
+        self.assertEqual(sarr.sum(), -2 * 3 * 2)
+        sarr = sarr.abs()
+        self.assertEqual(sarr.sum(), 2 * 3 * 2)
+
+        # Taking absolute value of unsigned type simply copies the data.
+        sarr = modmesh.SimpleArrayInt8(shape=(3, 2), value=2)
+        self.assertEqual(sarr.sum(), 2 * 3 * 2)
+        sarr = sarr.abs()
+        self.assertEqual(sarr.sum(), 2 * 3 * 2)
+
+        # Absolute value of Boolean is special.
+        sarr = modmesh.SimpleArrayBool(shape=(3, 2), value=1)
+        self.assertEqual(sarr.sum(), True)
+        sarr = sarr.abs()
+        self.assertEqual(sarr.sum(), True)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

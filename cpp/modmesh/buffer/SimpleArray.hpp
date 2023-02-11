@@ -31,6 +31,7 @@
 #include <modmesh/buffer/ConcreteBuffer.hpp>
 
 #include <stdexcept>
+#include <limits>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -67,11 +68,8 @@ inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<si
 {
     if (stride.size() != idx.size())
     {
-        std::ostringstream ms;
-        // clang-format off
-        ms << "stride size " << stride.size() << " != " << "index size " << idx.size();
-        // clang-format on
-        throw std::out_of_range(ms.str());
+        throw std::out_of_range(Formatter() << "stride size " << stride.size() << " != "
+                                            << "index size " << idx.size());
     }
     size_t offset = 0;
     for (size_t it = 0; it < stride.size(); ++it)
@@ -81,6 +79,114 @@ inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<si
     return offset;
 }
 
+namespace detail
+{
+
+template <typename T>
+struct SimpleArrayInternalTypes
+{
+    using value_type = T;
+    using shape_type = small_vector<size_t>;
+    using sshape_type = small_vector<ssize_t>;
+    using buffer_type = ConcreteBuffer;
+}; /* end class SimpleArrayInternalType */
+
+template <typename A, typename T>
+class SimpleArrayMixinModifiers
+{
+
+private:
+
+    using internal_types = detail::SimpleArrayInternalTypes<T>;
+
+public:
+
+    using value_type = typename internal_types::value_type;
+
+    A & fill(value_type const & value)
+    {
+        auto athis = static_cast<A *>(this);
+        std::fill(athis->begin(), athis->end(), value);
+        return *athis;
+    }
+
+}; /* end class SimpleArrayMixinModifiers */
+
+template <typename A, typename T>
+class SimpleArrayMixinCalculators
+{
+
+private:
+
+    using internal_types = detail::SimpleArrayInternalTypes<T>;
+
+public:
+
+    using value_type = typename internal_types::value_type;
+
+    value_type min(value_type initial = std::numeric_limits<value_type>::max()) const
+    {
+        auto athis = static_cast<A const *>(this);
+        for (size_t i = 0; i < athis->size(); ++i)
+        {
+            if (athis->data(i) < initial)
+            {
+                initial = athis->data(i);
+            }
+        }
+        return initial;
+    }
+
+    value_type max(value_type initial = std::numeric_limits<value_type>::lowest()) const
+    {
+        auto athis = static_cast<A const *>(this);
+        for (size_t i = 0; i < athis->size(); ++i)
+        {
+            if (athis->data(i) > initial)
+            {
+                initial = athis->data(i);
+            }
+        }
+        return initial;
+    }
+
+    value_type sum(value_type initial = 0) const
+    {
+        auto athis = static_cast<A const *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            for (size_t i = 0; i < athis->size(); ++i)
+            {
+                initial += athis->data(i);
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < athis->size(); ++i)
+            {
+                initial |= athis->data(i);
+            }
+        }
+        return initial;
+    }
+
+    A abs() const
+    {
+        auto athis = static_cast<A const *>(this);
+        A ret(*athis);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>> && std::is_signed_v<value_type>)
+        {
+            for (size_t i = 0; i < athis->size(); ++i)
+            {
+                ret.data(i) = std::abs(athis->data(i));
+            }
+        }
+        return ret;
+    }
+}; /* end class SimpleArrayMixinCalculators */
+
+} /* end namespace detail */
+
 /**
  * Simple array type for contiguous memory storage. Size does not change. The
  * copy semantics performs data copy. The move semantics invalidates the
@@ -88,14 +194,20 @@ inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<si
  */
 template <typename T>
 class SimpleArray
+    : public detail::SimpleArrayMixinModifiers<SimpleArray<T>, T>
+    , public detail::SimpleArrayMixinCalculators<SimpleArray<T>, T>
 {
+
+private:
+
+    using internal_types = detail::SimpleArrayInternalTypes<T>;
 
 public:
 
-    using value_type = T;
-    using shape_type = small_vector<size_t>;
-    using sshape_type = small_vector<ssize_t>;
-    using buffer_type = ConcreteBuffer;
+    using value_type = typename internal_types::value_type;
+    using shape_type = typename internal_types::shape_type;
+    using sshape_type = typename internal_types::sshape_type;
+    using buffer_type = typename internal_types::buffer_type;
 
     static constexpr size_t ITEMSIZE = sizeof(value_type);
 
@@ -105,7 +217,7 @@ public:
         : m_buffer(buffer_type::construct(length * ITEMSIZE))
         , m_shape{length}
         , m_stride{1}
-        , m_body(m_buffer->data<T>())
+        , m_body(m_buffer->template data<T>())
     {
     }
 
@@ -124,7 +236,7 @@ public:
         if (!m_shape.empty())
         {
             m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE);
-            m_body = m_buffer->data<T>();
+            m_body = m_buffer->template data<T>();
         }
     }
 
@@ -142,7 +254,7 @@ public:
         if (!m_shape.empty())
         {
             m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE);
-            m_body = m_buffer->data<T>();
+            m_body = m_buffer->template data<T>();
         }
     }
 
@@ -164,7 +276,7 @@ public:
             m_shape = shape_type{nitem};
             m_stride = shape_type{1};
             m_buffer = buffer;
-            m_body = m_buffer->data<T>();
+            m_body = m_buffer->template data<T>();
         }
         else
         {
@@ -182,9 +294,8 @@ public:
             const size_t nbytes = m_shape[0] * m_stride[0] * ITEMSIZE;
             if (nbytes != buffer->nbytes())
             {
-                std::ostringstream ms;
-                ms << "SimpleArray: shape byte count " << nbytes << " differs from buffer " << buffer->nbytes();
-                throw std::runtime_error(ms.str());
+                throw std::runtime_error(Formatter() << "SimpleArray: shape byte count " << nbytes
+                                                     << " differs from buffer " << buffer->nbytes());
             }
         }
     }
@@ -205,7 +316,7 @@ public:
         , m_shape(other.m_shape)
         , m_stride(other.m_stride)
         , m_nghost(other.m_nghost)
-        , m_body(calc_body(m_buffer->data<T>(), m_stride, other.m_nghost))
+        , m_body(calc_body(m_buffer->template data<T>(), m_stride, other.m_nghost))
     {
     }
 
@@ -226,7 +337,7 @@ public:
             m_shape = other.m_shape;
             m_stride = other.m_stride;
             m_nghost = other.m_nghost;
-            m_body = calc_body(m_buffer->data<T>(), m_stride, other.m_nghost);
+            m_body = calc_body(m_buffer->template data<T>(), m_stride, other.m_nghost);
         }
         return *this;
     }
@@ -377,21 +488,19 @@ public:
         {
             if (0 == ndim())
             {
-                std::ostringstream ms;
-                ms << "SimpleArray: cannot set nghost " << nghost << " > 0 to an empty array";
-                throw std::out_of_range(ms.str());
+                throw std::out_of_range(
+                    Formatter() << "SimpleArray: cannot set nghost " << nghost << " > 0 to an empty array");
             }
             if (nghost > shape(0))
             {
-                std::ostringstream ms;
-                ms << "SimpleArray: cannot set nghost " << nghost << " > shape(0) " << shape(0);
-                throw std::out_of_range(ms.str());
+                throw std::out_of_range(
+                    Formatter() << "SimpleArray: cannot set nghost " << nghost << " > shape(0) " << shape(0));
             }
         }
         m_nghost = nghost;
         if (bool(*this))
         {
-            m_body = calc_body(m_buffer->data<T>(), m_stride, m_nghost);
+            m_body = calc_body(m_buffer->template data<T>(), m_stride, m_nghost);
         }
     }
 
@@ -451,23 +560,19 @@ private:
     {
         if (m_nghost != 0 && ndim() != 1)
         {
-            std::ostringstream ms;
-            ms << "SimpleArray::validate_range(): cannot handle "
-               << ndim() << "-dimensional (more than 1) array with non-zero nghost: " << m_nghost;
-            throw std::out_of_range(ms.str());
+            throw std::out_of_range(
+                Formatter() << "SimpleArray::validate_range(): cannot handle "
+                            << ndim() << "-dimensional (more than 1) array with non-zero nghost: " << m_nghost);
         }
         if (it < -static_cast<ssize_t>(m_nghost))
         {
-            std::ostringstream ms;
-            ms << "SimpleArray: index " << it << " < -nghost: " << -static_cast<ssize_t>(m_nghost);
-            throw std::out_of_range(ms.str());
+            throw std::out_of_range(Formatter() << "SimpleArray: index " << it << " < -nghost: " << -static_cast<ssize_t>(m_nghost));
         }
         if (it >= static_cast<ssize_t>(size() - m_nghost))
         {
-            std::ostringstream ms;
-            ms << "SimpleArray: index " << it << " >= " << size() - m_nghost
-               << " (size: " << size() << " - nghost: " << m_nghost << ")";
-            throw std::out_of_range(ms.str());
+            throw std::out_of_range(
+                Formatter() << "SimpleArray: index " << it << " >= " << size() - m_nghost
+                            << " (size: " << size() << " - nghost: " << m_nghost << ")");
         }
     }
 
@@ -475,7 +580,7 @@ private:
     {
         auto index2string = [&idx]()
         {
-            std::ostringstream ms;
+            Formatter ms;
             ms << "[";
             for (size_t it = 0; it < idx.size(); ++it)
             {
@@ -496,26 +601,20 @@ private:
         }
         if (idx.size() != m_shape.size())
         {
-            std::ostringstream ms;
-            ms << "SimpleArray: dimension of input indices " << index2string() << " != array dimension " << m_shape.size();
-            throw std::out_of_range(ms.str());
+            throw std::out_of_range(Formatter() << "SimpleArray: dimension of input indices " << index2string()
+                                                << " != array dimension " << m_shape.size());
         }
 
         // Test the first dimension.
         if (idx[0] < -static_cast<ssize_t>(m_nghost))
         {
-            std::ostringstream ms;
-            ms << "SimpleArray: dim 0 in " << index2string() << " < -nghost: " << -static_cast<ssize_t>(m_nghost);
-            throw std::out_of_range(ms.str());
+            throw std::out_of_range(Formatter() << "SimpleArray: dim 0 in " << index2string()
+                                                << " < -nghost: " << -static_cast<ssize_t>(m_nghost));
         }
         if (idx[0] >= static_cast<ssize_t>(nbody()))
         {
-            std::ostringstream ms;
-            // clang-format off
-            ms << "SimpleArray: dim 0 in " << index2string() << " >= nbody: " << nbody()
-                << " (shape[0]: " << m_shape[0] << " - nghost: " << nghost() << ")";
-            // clang-format on
-            throw std::out_of_range(ms.str());
+            throw std::out_of_range(Formatter() << "SimpleArray: dim 0 in " << index2string() << " >= nbody: " << nbody()
+                                                << " (shape[0]: " << m_shape[0] << " - nghost: " << nghost() << ")");
         }
 
         // Test the rest of the dimensions.
@@ -523,16 +622,12 @@ private:
         {
             if (idx[it] < 0)
             {
-                std::ostringstream ms;
-                ms << "SimpleArray: dim " << it << " in " << index2string() << " < 0";
-                throw std::out_of_range(ms.str());
+                throw std::out_of_range(Formatter() << "SimpleArray: dim " << it << " in " << index2string() << " < 0");
             }
             if (idx[it] >= static_cast<ssize_t>(m_shape[it]))
             {
-                std::ostringstream ms;
-                ms << "SimpleArray: dim " << it << " in " << index2string()
-                   << " >= shape[" << it << "]: " << m_shape[it];
-                throw std::out_of_range(ms.str());
+                throw std::out_of_range(Formatter() << "SimpleArray: dim " << it << " in " << index2string()
+                                                    << " >= shape[" << it << "]: " << m_shape[it]);
             }
         }
     }
