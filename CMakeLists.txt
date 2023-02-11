@@ -23,6 +23,11 @@ endif()
 option(USE_CLANG_TIDY "use clang-tidy" OFF)
 option(LINT_AS_ERRORS "clang-tidy warnings as errors" OFF)
 
+if(BUILD_QT)
+    option(QT3D_USE_RHI "Qt use RHI" OFF)
+    message(STATUS "QT3D_USE_RHI: ${QT3D_USE_RHI}")
+endif()
+
 find_program(
     CLANG_TIDY_EXE
     NAMES "clang-tidy"
@@ -149,8 +154,6 @@ endif()
 add_subdirectory(cpp/binary/pymod_modmesh)
 if(BUILD_QT)
 add_subdirectory(cpp/binary/viewer)
-set(ENV{QT3D_RENDERER} ${QT3D_RENDERER})
-message(STATUS "QT3D_RENDERER: " $ENV{QT3D_RENDERER})
 endif()
 
 add_custom_target(flake8)
