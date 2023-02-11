@@ -23,6 +23,11 @@ endif()
 option(USE_CLANG_TIDY "use clang-tidy" OFF)
 option(LINT_AS_ERRORS "clang-tidy warnings as errors" OFF)
 
+if(BUILD_QT)
+    option(QT3D_USE_RHI "Qt use RHI" OFF)
+    message(STATUS "QT3D_USE_RHI: ${QT3D_USE_RHI}")
+endif()
+
 find_program(
     CLANG_TIDY_EXE
     NAMES "clang-tidy"
