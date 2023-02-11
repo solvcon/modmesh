@@ -498,6 +498,8 @@ OneTimeInitializer<view_pymod_tag> & OneTimeInitializer<view_pymod_tag>::me()
 void initialize_view(pybind11::module & mod)
 {
 // TODO: There is some bug in QT RHI, this is a workaround to force QT use opengl directly
+// see: https://doc.qt.io/qtforpython/overviews/qt3drender-porting-to-rhi.html
+// for more detail
 #if defined(QT3D_USE_RHI)
     qputenv("QT3D_RENDERER", "rhi");
 #else
