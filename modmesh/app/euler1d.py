@@ -62,6 +62,7 @@ class QuantityLine:
     ana: matplotlib.lines.Line2D = None
     num: matplotlib.lines.Line2D = None
     name: str = ""
+    unit: str = ""
 
     def update(self, adata, ndata):
         self.ana.set_ydata(adata.copy())
@@ -78,9 +79,9 @@ class Plot:
         self.ax.set_ylim(-0.2, 1.2)
         self.ax.grid()
 
-        self.density = QuantityLine(name="density")
-        self.velocity = QuantityLine(name="velocity")
-        self.pressure = QuantityLine(name="pressure")
+        self.density = QuantityLine(name="density", unit="kg/m^3")
+        self.velocity = QuantityLine(name="velocity", unit="m/s")
+        self.pressure = QuantityLine(name="pressure", unit="pa")
 
     def build_lines(self, x):
         self.ax.set_xlim(x[0], x[-1])
@@ -89,8 +90,13 @@ class Plot:
                 (self.velocity, 'g'),
                 (self.pressure, 'b'),
         ):
-            data.ana, = self.ax.plot(x.copy(), np.zeros_like(x), f'{color}-')
-            data.num, = self.ax.plot(x.copy(), np.zeros_like(x), f'{color}x')
+            data.ana, = self.ax.plot(x.copy(), np.zeros_like(x), f'{color}-',
+                                     label=f'{data.name}_ana ({data.unit})')
+            data.num, = self.ax.plot(x.copy(), np.zeros_like(x), f'{color}x',
+                                     label=f'{data.name}_num ({data.unit})')
+
+        self.ax.legend()
+        self.ax.set_xlabel("distance (m)")
 
     def update_lines(self, shocktube):
         self.density.update(adata=shocktube.density_field,
