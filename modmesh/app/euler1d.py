@@ -85,17 +85,36 @@ class Plot:
 
     def build_lines(self, x):
         self.ax.set_xlim(x[0], x[-1])
-        for data, color in (
+        lines = []
+        for i, (data, color) in enumerate((
                 (self.density, 'r'),
                 (self.velocity, 'g'),
                 (self.pressure, 'b'),
-        ):
-            data.ana, = self.ax.plot(x.copy(), np.zeros_like(x), f'{color}-',
-                                     label=f'{data.name}_ana ({data.unit})')
-            data.num, = self.ax.plot(x.copy(), np.zeros_like(x), f'{color}x',
-                                     label=f'{data.name}_num ({data.unit})')
+        )):
+            if i == 0:
+                data.ana, = self.ax.plot(x.copy(), np.zeros_like(x),
+                                         f'{color}-',
+                                         label=f'{data.name}_ana')
+                data.num, = self.ax.plot(x.copy(), np.zeros_like(x),
+                                         f'{color}x',
+                                         label=f'{data.name}_num')
+                self.ax.set_ylabel(f'{data.name} ({data.unit})')
+            else:
+                ax_new = self.ax.twinx()
+                data.ana, = ax_new.plot(x.copy(), np.zeros_like(x),
+                                        f'{color}-',
+                                        label=f'{data.name}_ana')
+                data.num, = ax_new.plot(x.copy(), np.zeros_like(x),
+                                        f'{color}x',
+                                        label=f'{data.name}_num')
+                ax_new.spines.right.set_position(("axes", 1 + (i - 1) * 0.07))
+                ax_new.set_ylim(self.ax.get_ylim())
+                ax_new.set_ylabel(f'{data.name} ({data.unit})')
 
-        self.ax.legend()
+            lines.append(data.ana)
+            lines.append(data.num)
+
+        self.ax.legend(lines, [line.get_label() for line in lines])
         self.ax.set_xlabel("distance (m)")
 
     def update_lines(self, shocktube):
