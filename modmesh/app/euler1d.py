@@ -79,9 +79,11 @@ class Plot:
         self.ax.set_ylim(-0.2, 1.2)
         self.ax.grid()
 
-        self.density = QuantityLine(name="density", unit="kg/m^3")
-        self.velocity = QuantityLine(name="velocity", unit="m/s")
-        self.pressure = QuantityLine(name="pressure", unit="pa")
+        self.density = QuantityLine(name="density",
+                                    unit=r"$\mathrm{kg}/\mathrm{m}^3$")
+        self.velocity = QuantityLine(name="velocity",
+                                     unit=r"$\mathrm{m}/\mathrm{s}$")
+        self.pressure = QuantityLine(name="pressure", unit=r"$\mathrm{Pa}$")
 
     def build_lines(self, x):
         self.ax.set_xlim(x[0], x[-1])
@@ -91,6 +93,8 @@ class Plot:
                 (self.velocity, 'g'),
                 (self.pressure, 'b'),
         )):
+            # Plot multiple data line with same X axis, it need to plot a
+            # data line on main axis first
             if i == 0:
                 data.ana, = self.ax.plot(x.copy(), np.zeros_like(x),
                                          f'{color}-',
