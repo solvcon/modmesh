@@ -62,6 +62,7 @@ class QuantityLine:
     ana: matplotlib.lines.Line2D = None
     num: matplotlib.lines.Line2D = None
     name: str = ""
+    unit: str = ""
 
     def update(self, adata, ndata):
         self.ana.set_ydata(adata.copy())
@@ -78,19 +79,47 @@ class Plot:
         self.ax.set_ylim(-0.2, 1.2)
         self.ax.grid()
 
-        self.density = QuantityLine(name="density")
-        self.velocity = QuantityLine(name="velocity")
-        self.pressure = QuantityLine(name="pressure")
+        self.density = QuantityLine(name="density",
+                                    unit=r"$\mathrm{kg}/\mathrm{m}^3$")
+        self.velocity = QuantityLine(name="velocity",
+                                     unit=r"$\mathrm{m}/\mathrm{s}$")
+        self.pressure = QuantityLine(name="pressure", unit=r"$\mathrm{Pa}$")
 
     def build_lines(self, x):
         self.ax.set_xlim(x[0], x[-1])
-        for data, color in (
+        lines = []
+        for i, (data, color) in enumerate((
                 (self.density, 'r'),
                 (self.velocity, 'g'),
                 (self.pressure, 'b'),
-        ):
-            data.ana, = self.ax.plot(x.copy(), np.zeros_like(x), f'{color}-')
-            data.num, = self.ax.plot(x.copy(), np.zeros_like(x), f'{color}x')
+        )):
+            # Plot multiple data line with same X axis, it need to plot a
+            # data line on main axis first
+            if i == 0:
+                data.ana, = self.ax.plot(x.copy(), np.zeros_like(x),
+                                         f'{color}-',
+                                         label=f'{data.name}_ana')
+                data.num, = self.ax.plot(x.copy(), np.zeros_like(x),
+                                         f'{color}x',
+                                         label=f'{data.name}_num')
+                self.ax.set_ylabel(f'{data.name} ({data.unit})')
+            else:
+                ax_new = self.ax.twinx()
+                data.ana, = ax_new.plot(x.copy(), np.zeros_like(x),
+                                        f'{color}-',
+                                        label=f'{data.name}_ana')
+                data.num, = ax_new.plot(x.copy(), np.zeros_like(x),
+                                        f'{color}x',
+                                        label=f'{data.name}_num')
+                ax_new.spines.right.set_position(("axes", 1 + (i - 1) * 0.07))
+                ax_new.set_ylim(self.ax.get_ylim())
+                ax_new.set_ylabel(f'{data.name} ({data.unit})')
+
+            lines.append(data.ana)
+            lines.append(data.num)
+
+        self.ax.legend(lines, [line.get_label() for line in lines])
+        self.ax.set_xlabel("distance (m)")
 
     def update_lines(self, shocktube):
         self.density.update(adata=shocktube.density_field,
