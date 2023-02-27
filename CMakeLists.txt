@@ -159,7 +159,7 @@ endif()
 add_custom_target(flake8)
 flake8("flake8")
 
-set(USE_GOOGLETEST True CACHE BOOL "Build with googletest")
+option(USE_GOOGLETEST "build with googletest" ON)
 message(STATUS "USE_GOOGLETEST: ${USE_GOOGLETEST}")
 
 if(USE_GOOGLETEST)

@@ -115,7 +115,7 @@ if (BUILD_QT)
 else () # BUILD_QT
     add_library(
         modmesh_primary
-        STATIC
+        SHARED
         ${MODMESH_TERMINAL_FILES}
     )
 endif () # BUILD_QT
