@@ -115,13 +115,6 @@ jobs:
         run: |
           echo "github.event_name: ${{ github.event_name }}"
 
-      - name: dependency by homebrew
-        run: |
-          # brew update  # No update because it is slow
-          # Force using python 3.10 from homebrew
-          brew unlink python
-          brew link --force --overwrite python@3.10
-
       - name: dependency by pip
         run: |
           echo "which python3: $(which python3)"
@@ -153,9 +146,11 @@ jobs:
 
       - name: setup.py install build_ext
         run: |
-          python3 setup.py install build_ext \
-            --cmake-args="${JOB_CMAKE_ARGS} -DPYTHON_EXECUTABLE=$(which python3)" \
-            --make-args="VERBOSE=1"
+          # Using pip install instead of legacy install
+          # ref: https://stackoverflow.com/questions/52375693/troubleshooting-pkg-resources-distributionnotfound-error
+          python3 -m pip install -v . --global-option=build_ext \
+            --global-option="--cmake-args=${JOB_CMAKE_ARGS} -DPYTHON_EXECUTABLE=$(which python3)" \
+            --global-option="--make-args="VERBOSE=1""
 
       - name: pytest
         run: |
