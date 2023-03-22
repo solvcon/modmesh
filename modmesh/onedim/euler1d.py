@@ -61,6 +61,8 @@ class ShockTube:
     Historical Perspective, 3/e, 2003, by J D Anderson. ISBN 0-07-242443-5.
     """
 
+    R = 8.31446261815324
+
     def __init__(self):
         self.gamma = None
 
@@ -68,16 +70,25 @@ class ShockTube:
         self.velocity1 = None
         self.pressure1 = None
         self.density1 = None
+        self.temperature1 = None
+        self.internal_energy1 = None
+        self.entropy1 = None
         self.speedofsound1 = None
         self.velocity5 = None
         self.pressure5 = None
         self.density5 = None
+        self.temperature5 = None
+        self.internal_energy5 = None
+        self.entropy5 = None
         self.speedofsound5 = None
 
         # Zone 4 is calculated by using the normal shock wave.
         self.velocity4 = None
         self.pressure4 = None
         self.density4 = None
+        self.temperature4 = None
+        self.internal_energy4 = None
+        self.entropy4 = None
         self.speedofsound4 = None
 
         self.velocity_shock = None
@@ -87,6 +98,9 @@ class ShockTube:
         self.velocity3 = None
         self.pressure3 = None
         self.density3 = None
+        self.temperature3 = None
+        self.internal_energy3 = None
+        self.entropy3 = None
         self.speedofsound3 = None
 
         # Field data of the analytical solution.
@@ -94,6 +108,9 @@ class ShockTube:
         self.density_field = None
         self.velocity_field = None
         self.pressure_field = None
+        self.temperature_field = None
+        self.internal_energy_field = None
+        self.entropy_field = None
 
         # Numerical solver (Euler1DSolver).
         self.svr = None
@@ -149,13 +166,22 @@ class ShockTube:
         self.velocity1 = 0.0
         self.pressure1 = pressure1
         self.density1 = density1
+        self.temperature1 = pressure1 / (density1 * self.R)
         self.speedofsound1 = self.calc_speedofsound(
             pressure=pressure1, density=density1)
+        self.internal_energy1 = self.calc_internal_energy(self.pressure1,
+                                                          self.density1)
+        self.entropy1 = self.calc_entropy(self.pressure1, self.density1)
+
         self.velocity5 = 0.0
         self.pressure5 = pressure5
         self.density5 = density5
+        self.temperature5 = pressure5 / (density5 * self.R)
         self.speedofsound5 = self.calc_speedofsound(
             pressure=pressure5, density=density5)
+        self.internal_energy5 = self.calc_internal_energy(self.pressure5,
+                                                          self.density5)
+        self.entropy5 = self.calc_entropy(self.pressure5, self.density5)
 
         # Use the given value to determine the shock strength (between zones 4
         # and 5).
@@ -165,8 +191,12 @@ class ShockTube:
         self.velocity4 = self.calc_velocity4(pressure45=p45)
         self.pressure4 = p45 * self.pressure5
         self.density4 = self.calc_density45(pressure45=p45) * self.density5
+        self.temperature4 = self.calc_temperature45(p45) * self.temperature5
         self.speedofsound4 = self.calc_speedofsound(
             pressure=self.pressure4, density=self.density4)
+        self.internal_energy4 = self.calc_internal_energy(self.pressure4,
+                                                          self.density4)
+        self.entropy4 = self.calc_entropy(self.pressure4, self.density4)
 
         _ = np.sqrt((gamma + 1) / (2 * gamma) * (p45 - 1) + 1)
         self.velocity_shock = self.speedofsound5 * _
@@ -178,6 +208,12 @@ class ShockTube:
 
         # Use the expansion wave for density in zone 3.
         self.density3 = self.calc_density2(x=0, t=0, velocity2=self.velocity3)
+        self.temperature3 = self.calc_temperature2(x=0, t=0,
+                                                   velocity2=self.velocity3)
+        self.internal_energy3 = self.calc_internal_energy(self.pressure3,
+                                                          self.density3)
+        self.entropy3 = self.calc_entropy(self.pressure3, self.density3)
+
         self.speedofsound3 = self.calc_speedofsound(
             pressure=self.pressure3, density=self.density3)
 
@@ -223,6 +259,11 @@ class ShockTube:
         rho45 = (1 + gpn1 * pressure45) / (gpn1 + pressure45)
         return rho45
 
+    def calc_temperature45(self, pressure45):
+        gpn1 = (self.gamma + 1) / (self.gamma - 1)
+        temp45 = pressure45 * ((gpn1 + pressure45) / (1 + gpn1 * pressure45))
+        return temp45
+
     def calc_velocity4(self, pressure45):
         c = self.speedofsound5 / self.gamma
         nume = 2 * self.gamma / (self.gamma + 1)
@@ -248,8 +289,18 @@ class ShockTube:
         c2 = 2 / (self.gamma - 1)
         return self.density1 * (c1 ** c2)
 
+    def calc_temperature2(self, x, t, velocity2=None):
+        return self.temperature1 * (self.calc_speedofsound2_ratio(
+                                        x, t, velocity2=velocity2)) ** 2
+
     def calc_speedofsound(self, pressure, density):
         return np.sqrt(self.gamma * pressure / density)
+
+    def calc_internal_energy(self, pressure, density):
+        return pressure / (density * (self.gamma - 1))
+
+    def calc_entropy(self, pressure, density):
+        return pressure / (density ** self.gamma)
 
     def build_field(self, t, coord=None):
         """
@@ -275,17 +326,29 @@ class ShockTube:
         self.density_field = np.zeros(self.coord.shape, dtype='float64')
         self.velocity_field = np.zeros(self.coord.shape, dtype='float64')
         self.pressure_field = np.zeros(self.coord.shape, dtype='float64')
+        self.temperature_field = np.zeros(self.coord.shape, dtype='float64')
+        self.internal_energy_field = np.zeros(self.coord.shape,
+                                              dtype='float64')
+        self.entropy_field = np.zeros(self.coord.shape, dtype='float64')
 
         # Set value in the zones whose value is constant.
-        def _set_zone(slct, zone_density, zone_velocity, zone_pressure):
+        def _set_zone(slct, zone_density, zone_velocity, zone_pressure,
+                      zone_temperature, zone_int_energy, zone_entropy):
             self.density_field[slct] = zone_density
             self.velocity_field[slct] = zone_velocity
             self.pressure_field[slct] = zone_pressure
+            self.temperature_field[slct] = zone_temperature
+            self.internal_energy_field[slct] = zone_int_energy
+            self.entropy_field[slct] = zone_entropy
 
-        _set_zone(slct1, self.density1, self.velocity1, self.pressure1)
-        _set_zone(slct3, self.density3, self.velocity3, self.pressure3)
-        _set_zone(slct4, self.density4, self.velocity4, self.pressure4)
-        _set_zone(slct5, self.density5, self.velocity5, self.pressure5)
+        _set_zone(slct1, self.density1, self.velocity1, self.pressure1,
+                  self.temperature1, self.internal_energy1, self.entropy1)
+        _set_zone(slct3, self.density3, self.velocity3, self.pressure3,
+                  self.temperature3, self.internal_energy3, self.entropy3)
+        _set_zone(slct4, self.density4, self.velocity4, self.pressure4,
+                  self.temperature4, self.internal_energy4, self.entropy4)
+        _set_zone(slct5, self.density5, self.velocity5, self.pressure5,
+                  self.temperature5, self.internal_energy5, self.entropy5)
 
         # Expansion wave in zone 2 needs an explicit loop.
         xidx = np.arange(len(coord), dtype='uint64')
@@ -293,6 +356,13 @@ class ShockTube:
             self.density_field[_idx] = self.calc_density2(_x, t)
             self.velocity_field[_idx] = self.calc_velocity2(_x, t)
             self.pressure_field[_idx] = self.calc_pressure2(_x, t)
+            self.temperature_field[_idx] = self.calc_temperature2(
+                _x, t, self.velocity_field[_idx])
+            self.internal_energy_field[_idx] = self.calc_internal_energy(
+                self.pressure_field[_idx], self.density_field[_idx])
+            self.entropy_field[_idx] = self.calc_entropy(
+                    self.pressure_field[_idx],
+                    self.density_field[_idx])
 
     def calc_locations(self, t):
         """
