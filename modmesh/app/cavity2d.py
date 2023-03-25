@@ -1,3 +1,4 @@
+# flake8: noqa
 __package__ = "modmesh.app"
 
 import sys

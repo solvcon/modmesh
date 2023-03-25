@@ -1,3 +1,5 @@
+# flake8: noqa
+
 import matplotlib.pyplot as plt
 import numpy as np
 from IPython.display import clear_output
