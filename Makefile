@@ -32,7 +32,7 @@ CMAKE_INSTALL_PREFIX ?= $(MODMESH_ROOT)/build/fakeinstall
 CMAKE_LIBRARY_OUTPUT_DIRECTORY ?= $(MODMESH_ROOT)/modmesh
 # Use CMAKE_PREFIX_PATH to make it easier to build with Qt, e.g.,
 # CMAKE_PREFIX_PATH=/path/to/qt/6.2.3/macos
-CMAKE_PREFIX_PATH ?=
+CMAKE_PREFIX_PATH ?=/usr/local/Qt-6.3.1
 CMAKE_ARGS ?=
 VERBOSE ?=
 FORCE_CLANG_FORMAT ?=
