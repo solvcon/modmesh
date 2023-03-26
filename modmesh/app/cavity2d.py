@@ -72,7 +72,6 @@ def meet_poisson():
       residual+=abs(poisson_LHP-poisson_RHP)
 
   #clear_output(wait=True)
-#   print("[meet Poisson]residual: ", residual)
   log(f"[meet Poisson]residual:  {residual}")
   if(residual<tol_p):
     return True
@@ -94,7 +93,6 @@ def is_steady():
             U_prev[i,j]=U[i,j]
             V_prev[i,j]=V[i,j]
 
-    # print("[is_steady] velocity deviation: ",vt)
     log(f"[is_steady] velocity deviation: {vt}")
 
     if(vt<tol_v):
@@ -296,9 +294,6 @@ def projection():
 
 ###############################################################################
 
-
-
-
 test=np.random.rand(31,31)
 class Plot:
     def __init__(self, figsize=(5, 5), N=31):
@@ -333,7 +328,6 @@ class Controller:
 
     def stop(self):
         self.timer.stop()
-
 
 
 def run(interval=10, max_steps=50, no_view_mgr=False, **kw):
