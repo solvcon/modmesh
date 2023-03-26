@@ -19,10 +19,11 @@ from .. import view
 def load_app():
     view.mgr.pycon.writeToHistory("""
 # Use the functions for more examples:
-ctrl.start()  # Start the movie
-ctrl.step()  # Stepping the solution
+ctrl.start()  # Start the computation. Multiple blank windows will appear, and the 
+results will be displayed once the execution is terminated.
+<ctrl> + C # Terminate in terminal
 
-# Note: you can enable profiling info by "profiling" option
+
 ctrl = mm.app.cavity2d.run(interval=10, max_steps=50, profiling=True)
 """)
     cmd = "ctrl = mm.app.cavity2d.run(interval=10, max_steps=50)"
