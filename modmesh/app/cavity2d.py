@@ -31,7 +31,7 @@ ctrl = mm.app.cavity2d.run(interval=10, max_steps=50, profiling=True)
 ###############################################################################
 N=81
 dt=0.001
-tol_p=1e-0
+tol_p=1e2
 tol_v=1e-10
 Re=100
 dx=1.0/(N-1)
@@ -107,7 +107,7 @@ def collocate():
             VC[i,j]=0.5*(V[i,j]+V[i+1,j])
             PC[i,j]=(P[i,j]+P[i+1,j]+P[i,j+1]+P[i+1,j+1])*0.25
 
-def moniter():
+def moniter(timestep):
 #   clear_output(wait=True)
   print("Timestep: ", timestep)
   fig, ax = plt.subplots(1, 3, figsize=(17,5))
@@ -275,23 +275,24 @@ def projection():
         step_1(1)
         step_1(2)
 
-    step_2(1)
-    step_2(2)
+        step_2(1)
+        step_2(2)
 
-    set_BC(1)
-    set_BC(2)
+        set_BC(1)
+        set_BC(2)
 
-    step_3(0)
-    set_BC(0)
+        step_3(0)
+        set_BC(0)
 
-    step_4(1)
-    step_4(2)
-    set_BC(1)
-    set_BC(2)
+        step_4(1)
+        step_4(2)
+        set_BC(1)
+        set_BC(2)
 
-    collocate()
-    moniter()
+        collocate()
+        moniter(timestep)
 
+# projection()
 ###############################################################################
 
 test=np.random.rand(31,31)
