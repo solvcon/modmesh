@@ -71,7 +71,7 @@ def meet_poisson():
 
     # clear_output(wait=True)
     log(f"[meet Poisson]residual:  {residual}")
-    if(residual < tol_p):
+    if residual < tol_p:
         return True
 
     return False
@@ -95,7 +95,7 @@ def is_steady():
 
     log(f"[is_steady] velocity deviation: {vt}")
 
-    if(vt < tol_v):
+    if vt < tol_v:
         return True
 
     return False
@@ -285,7 +285,7 @@ def step_4(option):
 def projection():
     timestep = 0
     set_BC()
-    while((timestep == 0) | (is_steady() == False)):  # noqa: E712
+    while ((timestep == 0) | (is_steady() == False)):  # noqa: E712
 
         timestep += 1
 
