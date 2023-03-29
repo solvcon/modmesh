@@ -34,6 +34,7 @@ class var:
     tol_v = 1e-10
     Re = 100
 
+
 class grid:
     N = var.N
     dx = 1.0 / (N - 1)
@@ -46,11 +47,13 @@ class grid:
     U_2 = np.zeros((N + 1, N + 1))
     V_2 = np.zeros((N + 1, N + 1))
 
+
 class prev:
     N = grid.N
     U = np.zeros((N + 1, N + 1))
     V = np.zeros((N + 1, N + 1))
     P = np.zeros((N + 1, N + 1))
+
 
 class col:
     N = grid.N
@@ -89,7 +92,7 @@ def meet_poisson():
 
     # clear_output(wait=True)
     log(f"[meet Poisson]residual:  {residual}")
-    if residual <  var.tol_p:
+    if residual < var.tol_p:
         return True
 
     return False
@@ -113,7 +116,7 @@ def is_steady():
 
     log(f"[is_steady] velocity deviation: {vt}")
 
-    if vt <  var.tol_v:
+    if vt < var.tol_v:
         return True
 
     return False
@@ -134,7 +137,7 @@ def moniter(timestep):
     fig, ax = plt.subplots(1, 3, figsize=(17, 5))
     U_mid = np.transpose(col.U)[:, int((grid.N + 1) / 2)]
     V_mid = np.transpose(col.V)[int((grid.N + 1) / 2)]
-    velocity = np.transpose(np.sqrt(np.multiply(col.U, col.U) + np.multiply(col.V, col.V)))
+    velocity = np.transpose(np.sqrt(np.multiply(col.U, col.U) + np.multiply(col.V, col.V)))  # noqa: E501
     ax[0].plot(bm.Re_100_u, bm.y_b, 'bo', U_mid, bm.pt)
     ax[0].set(ylim=(0, 1))
     ax[1].plot(bm.x_b, bm.Re_100_v, 'bo', bm.pt, V_mid)
@@ -146,7 +149,7 @@ def moniter(timestep):
 
 # Computation-1
 def setBC(option):
-    N=grid.N
+    N = grid.N
     if option == 'P':
         grid.P[0, :] = grid.P[1, :]  # west
         grid.P[N, :] = grid.P[N - 1, :]  # east
@@ -190,11 +193,11 @@ def solve_U1():
     for i in range(1, grid.N - 1):
         for j in range(1, grid.N):
             u = grid.U[i, j]
-            v = (grid.V[i, j] + grid.V[i + 1, j] + grid.V[i, j - 1] + grid.V[i + 1, j - 1]) / 4
+            v = (grid.V[i, j] + grid.V[i + 1, j] + grid.V[i, j - 1] + grid.V[i + 1, j - 1]) / 4  # noqa: E501
             ux = (grid.U[i + 1, j] - grid.U[i - 1, j]) / (2 * grid.dx)
             uy = (grid.U[i, j + 1] - grid.U[i, j - 1]) / (2 * grid.dy)
-            u2x = (grid.U[i + 1, j] + grid.U[i - 1, j] - 2 * grid.U[i, j]) / (grid.dx * grid.dx)
-            u2y = (grid.U[i, j + 1] + grid.U[i, j - 1] - 2 * grid.U[i, j]) / (grid.dy * grid.dy)
+            u2x = (grid.U[i + 1, j] + grid.U[i - 1, j] - 2 * grid.U[i, j]) / (grid.dx * grid.dx)  # noqa: E501
+            u2y = (grid.U[i, j + 1] + grid.U[i, j - 1] - 2 * grid.U[i, j]) / (grid.dy * grid.dy)  # noqa: E501
 
             C = u * ux + v * uy
             D = (u2x + u2y) / var.Re
@@ -206,12 +209,12 @@ def solve_U1():
 def solve_V1():
     for i in range(1, grid.N):
         for j in range(1, grid.N - 1):
-            u = (grid.U[i - 1, j + 1] + grid.U[i, j + 1] + grid.U[i - 1, j] + grid.U[i, j]) / 4.0
+            u = (grid.U[i - 1, j + 1] + grid.U[i, j + 1] + grid.U[i - 1, j] + grid.U[i, j]) / 4.0  # noqa: E501
             v = grid.V[i, j]
             vx = (grid.V[i + 1, j] - grid.V[i - 1, j]) / (2 * grid.dx)
             vy = (grid.V[i, j + 1] - grid.V[i, j - 1]) / (2 * grid.dy)
-            v2x = (grid.V[i + 1, j] + grid.V[i - 1, j] - 2 * grid.V[i, j]) / (grid.dx * grid.dx)
-            v2y = (grid.V[i, j + 1] + grid.V[i, j - 1] - 2 * grid.V[i, j]) / (grid.dy * grid.dy)
+            v2x = (grid.V[i + 1, j] + grid.V[i - 1, j] - 2 * grid.V[i, j]) / (grid.dx * grid.dx)  # noqa: E501
+            v2y = (grid.V[i, j + 1] + grid.V[i, j - 1] - 2 * grid.V[i, j]) / (grid.dy * grid.dy)  # noqa: E501
 
             C = u * vx + v * vy
             D = (v2x + v2y) / var.Re
