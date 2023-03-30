@@ -34,6 +34,26 @@
 namespace modmesh
 {
 
+int setenv(const char * name, const char * value, int overwrite)
+{
+#ifdef _WIN32
+    int errcode = 0;
+    if (!overwrite)
+    {
+        size_t envsize = 0;
+        errcode = getenv_s(&envsize, NULL, 0, name);
+        if (errcode || envsize)
+        {
+            return errcode;
+        }
+    }
+    return _putenv_s(name, value);
+#else // _WIN32
+    // NOLINTNEXTLINE(concurrency-mt-unsafe) TODO: make the wrapper thread safe.
+    return ::setenv(name, value, overwrite);
+#endif // _WIN32
+}
+
 Toggle & Toggle::instance()
 {
     static Toggle o;
@@ -46,6 +66,21 @@ ProcessInfo::ProcessInfo()
 #ifdef MODMESH_METAL
     modmesh::device::MetalManager::instance();
 #endif // MODMESH_METAL
+}
+
+ProcessInfo & ProcessInfo::set_environment_variables()
+{
+// TODO: Use Qt RHI when it stablizes.
+// At the time of testing (Qt 6.4), RHI is not stable.  A workaround is to use
+// OpenGL instead of RHI.  See more detail at
+// https://doc.qt.io/qtforpython/overviews/qt3drender-porting-to-rhi.html
+#if defined(QT3D_USE_RHI)
+    setenv("QT3D_RENDERER", "rhi", 1);
+#else
+    setenv("QT3D_RENDERER", "opengl", 1);
+#endif // QT3D_USE_RHI
+
+    return *this;
 }
 
 ProcessInfo & ProcessInfo::instance()
