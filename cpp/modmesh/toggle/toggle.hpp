@@ -34,9 +34,12 @@
 
 #include <string>
 #include <vector>
+#include <cstdlib>
 
 namespace modmesh
 {
+
+int setenv(const char * name, const char * value, int overwrite);
 
 class Toggle
 {
@@ -147,6 +150,8 @@ public:
         m_command_line.populate(argc, argv, CommandLineInfo::PopulatePasskey{});
         return *this;
     }
+
+    ProcessInfo & set_environment_variables();
 
     CommandLineInfo const & command_line() const { return m_command_line; }
     CommandLineInfo & command_line() { return m_command_line; }

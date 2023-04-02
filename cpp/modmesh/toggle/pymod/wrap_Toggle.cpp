@@ -151,6 +151,12 @@ WrapProcessInfo::WrapProcessInfo(pybind11::module & mod, char const * pyname, ch
             [](py::object const &) -> auto & {
                 return wrapped_type::instance();
             })
+        .def(
+            "set_environment_variables",
+            [](wrapped_type & self) -> auto & {
+                return self.set_environment_variables();
+            },
+            py::return_value_policy::reference_internal)
         .def_property_readonly(
             "command_line",
             [](wrapped_type & self) -> auto & {

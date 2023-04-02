@@ -57,6 +57,7 @@ void initialize(pybind11::module_ mod)
 int program_entrance(int argc, char ** argv)
 {
     ProcessInfo::instance().populate_command_line(argc, argv);
+    ProcessInfo::instance().set_environment_variables();
     auto & clinfo = ProcessInfo::instance().command_line();
 
     // Initialize the Python interpreter.
