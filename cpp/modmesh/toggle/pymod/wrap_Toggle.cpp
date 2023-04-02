@@ -72,7 +72,8 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
     (*this)
         .def_property_readonly_static(
             "instance",
-            [](py::object const &) -> auto & { return wrapped_type::instance(); })
+            [](py::object const &) -> auto &
+            { return wrapped_type::instance(); })
         .def_property_readonly_static(
             "USE_PYSIDE",
             [](py::handle const &)
@@ -148,18 +149,21 @@ WrapProcessInfo::WrapProcessInfo(pybind11::module & mod, char const * pyname, ch
     (*this)
         .def_property_readonly_static(
             "instance",
-            [](py::object const &) -> auto & {
+            [](py::object const &) -> auto &
+            {
                 return wrapped_type::instance();
             })
         .def(
             "set_environment_variables",
-            [](wrapped_type & self) -> auto & {
+            [](wrapped_type & self) -> auto &
+            {
                 return self.set_environment_variables();
             },
             py::return_value_policy::reference_internal)
         .def_property_readonly(
             "command_line",
-            [](wrapped_type & self) -> auto & {
+            [](wrapped_type & self) -> auto &
+            {
                 return self.command_line();
             },
             py::return_value_policy::reference_internal);

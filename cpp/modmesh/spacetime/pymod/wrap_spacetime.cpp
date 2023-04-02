@@ -356,7 +356,9 @@ protected:
                 [](wrapped_type & self)
                 { return self.grid().shared_from_this(); })
             .def_property_readonly(
-                "field", [](wrapped_type & self) -> auto & { return self.field(); });
+                "field",
+                [](wrapped_type & self) -> auto &
+                { return self.field(); });
 
         (*this)
             .def_group_array_getter()
