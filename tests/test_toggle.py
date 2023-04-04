@@ -39,8 +39,8 @@ class ToggleTC(unittest.TestCase):
             "Toggle: USE_PYSIDE=" in modmesh.Toggle.instance.report())
 
     def test_instance(self):
-        self.assertTrue(hasattr(modmesh.Toggle.instance, "use_pyside"))
-        self.assertTrue(hasattr(modmesh.Toggle.instance, "show_axis"))
+        self.assertTrue(hasattr(modmesh.Toggle.fixed, "use_pyside"))
+        self.assertTrue(hasattr(modmesh.Toggle.fixed, "show_axis"))
 
 
 class ToggleDynamicTC(unittest.TestCase):

@@ -145,7 +145,9 @@ class Controller:
         self.current_step = 0
         self.timer = None
 
-        self.use_sub = mm.Toggle.USE_PYSIDE if use_sub is None else use_sub
+        self.use_sub = use_sub
+        if self.use_sub is None:
+            self.use_sub = mm.Toggle.fixed.use_pyside
         self._main = QtWidgets.QWidget()
         if self.use_sub:
             # FIXME: sub window causes missing QWindow with the following

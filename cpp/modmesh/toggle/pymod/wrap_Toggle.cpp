@@ -39,6 +39,41 @@ namespace modmesh
 namespace python
 {
 
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapFixedToggle
+    : public WrapBase<WrapFixedToggle, FixedToggle>
+{
+
+public:
+
+    using base_type = WrapBase<WrapFixedToggle, FixedToggle>;
+    using wrapped_type = typename base_type::wrapped_type;
+
+    friend root_base_type;
+
+protected:
+
+    WrapFixedToggle(pybind11::module & mod, char const * pyname, char const * pydoc);
+};
+
+WrapFixedToggle::WrapFixedToggle(pybind11::module & mod, const char * pyname, const char * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    // Instance properties.
+    (*this)
+        .def_property_readonly(
+            "use_pyside",
+            [](wrapped_type const & self)
+            { return self.get_use_pyside(); })
+        .def_property(
+            "show_axis",
+            [](wrapped_type const & self)
+            { return self.get_show_axis(); },
+            [](wrapped_type & self, bool v)
+            { self.set_show_axis(v); })
+        //
+        ;
+}
+
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapToggle
     : public WrapBase<WrapToggle, Toggle>
 {
@@ -177,21 +212,15 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
             "instance",
             [](py::object const &) -> auto &
             { return wrapped_type::instance(); })
+        .def_property_readonly_static(
+            "fixed",
+            [](py::object const &) -> auto &
+            { return wrapped_type::instance().fixed(); })
         //
         ;
 
     // Instance properties.
     (*this)
-        .def_property_readonly(
-            "use_pyside",
-            [](wrapped_type const & self)
-            { return self.fixed().get_use_pyside(); })
-        .def_property(
-            "show_axis",
-            [](wrapped_type const & self)
-            { return self.fixed().get_show_axis(); },
-            [](wrapped_type & self, bool v)
-            { self.fixed().set_show_axis(v); })
         //
         ;
 }
@@ -279,6 +308,7 @@ WrapProcessInfo::WrapProcessInfo(pybind11::module & mod, char const * pyname, ch
 
 void wrap_Toggle(pybind11::module & mod)
 {
+    WrapFixedToggle::commit(mod, "FixedToggle", "FixedToggle");
     WrapToggle::commit(mod, "Toggle", "Toggle");
     WrapCommandLineInfo::commit(mod, "CommandLineInfo", "CommandLineInfo");
     WrapProcessInfo::commit(mod, "ProcessInfo", "ProcessInfo");
