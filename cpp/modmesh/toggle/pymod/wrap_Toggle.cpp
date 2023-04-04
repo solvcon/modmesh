@@ -82,9 +82,7 @@ protected:
     WrapToggle(pybind11::module & mod, char const * pyname, char const * pydoc);
 
     static std::string report(wrapped_type const & self);
-
     static pybind11::object getattr(wrapped_type const & self, std::string const & key);
-
     static void setattr(wrapped_type & self, std::string const & key, pybind11::object & value);
 
 }; /* end class WrapToggle */
@@ -144,10 +142,7 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
 
 std::string WrapToggle::report(WrapToggle::wrapped_type const & self)
 {
-    Formatter ret;
-    ret << "Toggle: "
-        << "USE_PYSIDE=" << self.fixed().get_use_pyside();
-    return ret >> Formatter::to_str;
+    return Formatter() << "Toggle: USE_PYSIDE=" << self.fixed().get_use_pyside();
 }
 
 pybind11::object WrapToggle::getattr(wrapped_type const & self, std::string const & key)
