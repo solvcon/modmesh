@@ -63,6 +63,17 @@ Toggle & Toggle::instance()
     return o;
 }
 
+FixedToggle::FixedToggle()
+{
+    set_use_pyside(
+#ifdef MODMESH_USE_PYSIDE
+        true
+#else
+        false
+#endif
+    );
+}
+
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects,readability-redundant-string-init,cert-err58-cpp)
 std::string const DynamicToggleTable::sentinel_string = "";
 

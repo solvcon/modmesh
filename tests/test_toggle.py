@@ -38,11 +38,8 @@ class ToggleTC(unittest.TestCase):
         self.assertTrue(
             "Toggle: USE_PYSIDE=" in modmesh.Toggle.instance.report())
 
-    def test_static_constexpr(self):
-        self.assertTrue(hasattr(modmesh.Toggle, "USE_PYSIDE"))
-        self.assertTrue(hasattr(modmesh.Toggle.instance, "USE_PYSIDE"))
-
     def test_instance(self):
+        self.assertTrue(hasattr(modmesh.Toggle.instance, "use_pyside"))
         self.assertTrue(hasattr(modmesh.Toggle.instance, "show_axis"))
 
 

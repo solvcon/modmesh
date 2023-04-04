@@ -177,25 +177,30 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
             "instance",
             [](py::object const &) -> auto &
             { return wrapped_type::instance(); })
-        .def_property_readonly_static(
-            "USE_PYSIDE",
-            [](py::handle const &)
-            { return bool(wrapped_type::USE_PYSIDE); })
         //
         ;
 
     // Instance properties.
     (*this)
-        .def_property("show_axis", &wrapped_type::get_show_axis, &wrapped_type::set_show_axis)
+        .def_property_readonly(
+            "use_pyside",
+            [](wrapped_type const & self)
+            { return self.fixed().get_use_pyside(); })
+        .def_property(
+            "show_axis",
+            [](wrapped_type const & self)
+            { return self.fixed().get_show_axis(); },
+            [](wrapped_type & self, bool v)
+            { self.fixed().set_show_axis(v); })
         //
         ;
 }
 
-std::string WrapToggle::report(WrapToggle::wrapped_type const &)
+std::string WrapToggle::report(WrapToggle::wrapped_type const & self)
 {
     Formatter ret;
     ret << "Toggle: "
-        << "USE_PYSIDE=" << bool(wrapped_type::USE_PYSIDE);
+        << "USE_PYSIDE=" << self.fixed().get_use_pyside();
     return ret >> Formatter::to_str;
 }
 

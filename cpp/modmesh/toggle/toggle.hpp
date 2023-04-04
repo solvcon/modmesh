@@ -36,8 +36,13 @@
 #include <vector>
 #include <unordered_map>
 
-#define MM_TOGGLE_CONSTEXPR_BOOL(NAME, VALUE) \
-    static constexpr bool NAME = VALUE
+#define MM_TOGGLE_STATIC_BOOL(NAME, DEFAULT)     \
+public:                                          \
+    bool get_##NAME() const { return m_##NAME; } \
+    void set_##NAME(bool v) { m_##NAME = v; }    \
+                                                 \
+private:                                         \
+    bool m_##NAME = DEFAULT;
 
 namespace modmesh
 {
@@ -120,16 +125,20 @@ private:
 
 }; /* end class DynamicToggleTable */
 
+class FixedToggle
+{
+public:
+    FixedToggle();
+
+    MM_TOGGLE_STATIC_BOOL(use_pyside, true)
+    MM_TOGGLE_STATIC_BOOL(show_axis, false)
+}; /* end class FixedToggle */
+
 class Toggle
 {
 
 public:
 
-#ifdef MODMESH_USE_PYSIDE
-    MM_TOGGLE_CONSTEXPR_BOOL(USE_PYSIDE, true);
-#else
-    MM_TOGGLE_CONSTEXPR_BOOL(USE_PYSIDE, false);
-#endif
     static Toggle & instance();
 
     Toggle(Toggle const &) = delete;
@@ -138,8 +147,8 @@ public:
     Toggle & operator=(Toggle &&) = delete;
     ~Toggle() = default;
 
-    bool get_show_axis() const { return m_show_axis; }
-    void set_show_axis(bool v) { m_show_axis = v; }
+    FixedToggle const & fixed() const { return m_fixed; }
+    FixedToggle & fixed() { return m_fixed; }
 
     std::vector<std::string> dynamic_keys() const { return m_dynamic_table.keys(); }
     void dynamic_clear() { m_dynamic_table.clear(); }
@@ -164,7 +173,7 @@ private:
 
     Toggle() = default;
 
-    bool m_show_axis = false;
+    FixedToggle m_fixed;
     DynamicToggleTable m_dynamic_table;
 
 }; /* end class Toggle */
