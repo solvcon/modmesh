@@ -81,7 +81,7 @@ std::string const DynamicToggleTable::sentinel_string = "";
         }                                                                \
         return SENTINEL;                                                 \
     }
-MM_DECL_DYNGET(bool, bool, 0)
+MM_DECL_DYNGET(bool, bool, false)
 MM_DECL_DYNGET(int8_t, int8, 0)
 MM_DECL_DYNGET(int16_t, int16, 0)
 MM_DECL_DYNGET(int32_t, int32, 0)
