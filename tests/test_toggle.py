@@ -27,6 +27,7 @@
 
 import os
 import unittest
+import math
 
 import modmesh
 
@@ -43,6 +44,139 @@ class ToggleTC(unittest.TestCase):
 
     def test_instance(self):
         self.assertTrue(hasattr(modmesh.Toggle.instance, "show_axis"))
+
+
+class ToggleDynamicTC(unittest.TestCase):
+
+    def test_all_types(self):
+        tg = modmesh.Toggle.instance
+        tg.dynamic_clear()
+        self.assertEqual(tg.dynamic_keys(), [])
+
+        # Add a key of Boolean.
+        tg.set_bool("test_bool", True)
+        self.assertTrue(tg.get_bool("test_bool"))
+        # Make sure the key appears.
+        self.assertEqual(tg.dynamic_keys(), ["test_bool"])
+        # Test sentinel.
+        self.assertEqual(tg.get_bool("test_no_bool"), False)
+
+        # Add a key of int8.
+        tg.set_int8("test_int8", 23)
+        self.assertEqual(tg.get_int8("test_int8"), 23)
+        # Make sure the key appears
+        self.assertEqual(sorted(tg.dynamic_keys()),
+                         ["test_bool", "test_int8"])
+        # Test sentinel.
+        self.assertEqual(tg.get_int8("test_no_int8"), 0)
+
+        # Add a key of int16.
+        tg.set_int16("test_int16", -46)
+        self.assertEqual(tg.get_int16("test_int16"), -46)
+        # Make sure the key appears
+        self.assertEqual(sorted(tg.dynamic_keys()),
+                         ["test_bool", "test_int16", "test_int8"])
+        # Test sentinel.
+        self.assertEqual(tg.get_int16("test_no_int16"), 0)
+
+        # Add a key of int32.
+        tg.set_int32("test_int32", 842)
+        self.assertEqual(tg.get_int32("test_int32"), 842)
+        # Make sure the key appears
+        self.assertEqual(sorted(tg.dynamic_keys()),
+                         ["test_bool", "test_int16", "test_int32",
+                          "test_int8"])
+        # Test sentinel.
+        self.assertEqual(tg.get_int32("test_no_int32"), 0)
+
+        # Add a key of int64.
+        tg.set_int64("test_int64", -9912)
+        self.assertEqual(tg.get_int64("test_int64"), -9912)
+        # Make sure the key appears
+        self.assertEqual(sorted(tg.dynamic_keys()),
+                         ["test_bool", "test_int16", "test_int32",
+                          "test_int64", "test_int8"])
+        # Test sentinel.
+        self.assertEqual(tg.get_int64("test_no_int64"), 0)
+
+        # Clear dynamic keys (and the values).
+        tg.dynamic_clear()
+        self.assertEqual(tg.dynamic_keys(), [])
+
+        # Add a key of real.
+        tg.set_real("test_real", 2.87)
+        self.assertEqual(tg.get_real("test_real"), 2.87)
+        # Make sure the key appears
+        self.assertEqual(sorted(tg.dynamic_keys()), ["test_real"])
+        # Test sentinel.
+        self.assertTrue(math.isnan(tg.get_real("test_no_real")))
+
+        # Add a key of string.
+        tg.set_string("test_string", "a random line")
+        self.assertEqual(tg.get_string("test_string"), "a random line")
+        # Make sure the key appears
+        self.assertEqual(sorted(tg.dynamic_keys()),
+                         ["test_real", "test_string"])
+        # Test sentinel.
+        self.assertEqual(tg.get_string("test_no_string"), "")
+
+        # Clear dynamic keys (and the values) the second time.
+        tg.dynamic_clear()
+        self.assertEqual(tg.dynamic_keys(), [])
+
+    def test_fatigue(self):
+        tg = modmesh.Toggle.instance
+        tg.dynamic_clear()
+        self.assertEqual(tg.dynamic_keys(), [])
+
+        # Test sentinel.
+        self.assertEqual(tg.get_bool("test_bool"), False)
+
+        # Add a key of Boolean.
+        tg.set_bool("test_bool", True)
+        self.assertTrue(tg.get_bool("test_bool"))
+        # Make sure the key appears.
+        self.assertEqual(tg.dynamic_keys(), ["test_bool"])
+
+        # Fatigue test.
+        tg.set_bool("test_bool", False)
+        self.assertFalse(tg.get_bool("test_bool"))
+        tg.set_bool("test_bool", True)
+        self.assertTrue(tg.get_bool("test_bool"))
+        tg.set_bool("test_bool", False)
+        self.assertFalse(tg.get_bool("test_bool"))
+        tg.set_bool("test_bool", True)
+        self.assertTrue(tg.get_bool("test_bool"))
+
+        tg.dynamic_clear()
+
+    def test_dunder_has_get_set(self):
+        tg = modmesh.Toggle.instance
+        tg.dynamic_clear()
+        self.assertEqual(tg.dynamic_keys(), [])
+
+        # Raise IndexError when the key to be got is not available.
+        with self.assertRaisesRegex(
+                AttributeError,
+                r'Cannt get non-existing key "dunder_nonexist"'
+        ):
+            tg.dunder_nonexist
+
+        # Need to use set_TYPE() to create the dynamic key-value pair.
+        tg.set_int32("dunder_int32", 632)
+        self.assertEqual(tg.dunder_int32, 632)
+
+        # Check for key existence.
+        self.assertTrue(hasattr(tg, "dunder_int32"))
+        self.assertFalse(hasattr(tg, "dunder_nonexist"))
+
+        # Raise IndexError when the key to be set is not available.
+        with self.assertRaisesRegex(
+                AttributeError,
+                r'Cannot set non-existing key "dunder_nonexist_real"; '
+                r'use set_TYPE\(\) instead'
+        ):
+            tg.dunder_nonexist_real = 12.4
 
 
 class CommandLineInfoTC(unittest.TestCase):

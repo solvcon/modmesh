@@ -31,6 +31,9 @@
 #include <modmesh/device/metal/metal.hpp>
 #endif // MODMESH_METAL
 
+#include <cstdlib>
+#include <cmath>
+
 namespace modmesh
 {
 
@@ -58,6 +61,90 @@ Toggle & Toggle::instance()
 {
     static Toggle o;
     return o;
+}
+
+// NOLINTNEXTLINE(fuchsia-statically-constructed-objects,readability-redundant-string-init,cert-err58-cpp)
+std::string const DynamicToggleTable::sentinel_string = "";
+
+/* The macro gives debuggers a hard time. Manually expand it if you need to
+ * step in a debugger. */
+#define MM_DECL_DYNGET(CTYPE, MTYPE, SENTINEL)                           \
+    CTYPE DynamicToggleTable::get_##MTYPE(std::string const & key) const \
+    {                                                                    \
+        auto it = m_key2index.find(key);                                 \
+        if (it != m_key2index.end())                                     \
+        {                                                                \
+            if (it->second.is_##MTYPE())                                 \
+            {                                                            \
+                return m_vector_##MTYPE.at(it->second.index);            \
+            }                                                            \
+        }                                                                \
+        return SENTINEL;                                                 \
+    }
+MM_DECL_DYNGET(bool, bool, 0)
+MM_DECL_DYNGET(int8_t, int8, 0)
+MM_DECL_DYNGET(int16_t, int16, 0)
+MM_DECL_DYNGET(int32_t, int32, 0)
+MM_DECL_DYNGET(int64_t, int64, 0)
+MM_DECL_DYNGET(double, real, std::nan("0"))
+MM_DECL_DYNGET(std::string const &, string, sentinel_string)
+#undef MM_DECL_DYNGET
+
+/* The macro gives debuggers a hard time. Manually expand it if you need to
+ * step in a debugger. */
+#define MM_DECL_DYNSET(CTYPE, MTYPE, MTYPEC)                                                                                   \
+    /* NOLINTNEXTLINE(bugprone-easily-swappable-parameters) */                                                                 \
+    void DynamicToggleTable::set_##MTYPE(std::string const & key, CTYPE value)                                                 \
+    {                                                                                                                          \
+        auto it = m_key2index.find(key);                                                                                       \
+        if (it != m_key2index.end())                                                                                           \
+        {                                                                                                                      \
+            if (it->second.is_##MTYPE())                                                                                       \
+            {                                                                                                                  \
+                m_vector_##MTYPE.at(it->second.index) = value;                                                                 \
+            }                                                                                                                  \
+            else                                                                                                               \
+            {                                                                                                                  \
+                /* do nothing */                                                                                               \
+            }                                                                                                                  \
+        }                                                                                                                      \
+        else                                                                                                                   \
+        {                                                                                                                      \
+            DynamicToggleIndex const index{static_cast<uint32_t>(m_vector_##MTYPE.size()), DynamicToggleIndex::TYPE_##MTYPEC}; \
+            m_key2index.insert({key, index});                                                                                  \
+            m_vector_##MTYPE.push_back(value);                                                                                 \
+        }                                                                                                                      \
+    }
+MM_DECL_DYNSET(bool, bool, BOOL)
+MM_DECL_DYNSET(int8_t, int8, INT8)
+MM_DECL_DYNSET(int16_t, int16, INT16)
+MM_DECL_DYNSET(int32_t, int32, INT32)
+MM_DECL_DYNSET(int64_t, int64, INT64)
+MM_DECL_DYNSET(double, real, REAL)
+MM_DECL_DYNSET(std::string const &, string, STRING)
+#undef MM_DECL_DYNSET
+
+std::vector<std::string> DynamicToggleTable::keys() const
+{
+    std::vector<std::string> ret;
+    ret.reserve(m_key2index.size());
+    for (auto const & it : m_key2index)
+    {
+        ret.push_back(it.first);
+    }
+    return ret;
+}
+
+void DynamicToggleTable::clear()
+{
+    m_key2index.clear();
+    m_vector_bool.clear();
+    m_vector_int8.clear();
+    m_vector_int16.clear();
+    m_vector_int32.clear();
+    m_vector_int64.clear();
+    m_vector_real.clear();
+    m_vector_string.clear();
 }
 
 // NOLINTNEXTLINE(modernize-use-equals-default) lack of MODMESH_METAL

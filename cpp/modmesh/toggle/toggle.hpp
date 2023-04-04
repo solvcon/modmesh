@@ -34,26 +34,102 @@
 
 #include <string>
 #include <vector>
-#include <cstdlib>
+#include <unordered_map>
+
+#define MM_TOGGLE_CONSTEXPR_BOOL(NAME, VALUE) \
+    static constexpr bool NAME = VALUE
 
 namespace modmesh
 {
 
 int setenv(const char * name, const char * value, int overwrite);
 
+struct DynamicToggleIndex
+{
+
+    enum Type : uint8_t
+    {
+        TYPE_NONE, // 0
+        TYPE_BOOL,
+        TYPE_INT8,
+        TYPE_INT16,
+        TYPE_INT32,
+        TYPE_INT64,
+        TYPE_REAL,
+        TYPE_STRING
+    };
+
+    operator bool() const { return type != TYPE_NONE; }
+    bool is_bool() const { return type == TYPE_BOOL; }
+    bool is_int8() const { return type == TYPE_INT8; }
+    bool is_int16() const { return type == TYPE_INT16; }
+    bool is_int32() const { return type == TYPE_INT32; }
+    bool is_int64() const { return type == TYPE_INT64; }
+    bool is_real() const { return type == TYPE_REAL; }
+    bool is_string() const { return type == TYPE_STRING; }
+
+    // Index upper bound 2**32 is more than sufficient.  2**16 (65536) may be
+    // too little.
+    uint32_t index = 0;
+    Type type = TYPE_NONE;
+
+}; /* end struct DynamicToggleIndex */
+
+class DynamicToggleTable
+{
+
+public:
+
+    using keymap_type = std::unordered_map<std::string, DynamicToggleIndex>;
+
+    static std::string const sentinel_string;
+
+    bool get_bool(std::string const & key) const;
+    void set_bool(std::string const & key, bool value);
+    int8_t get_int8(std::string const & key) const;
+    void set_int8(std::string const & key, int8_t value);
+    int16_t get_int16(std::string const & key) const;
+    void set_int16(std::string const & key, int16_t value);
+    int32_t get_int32(std::string const & key) const;
+    void set_int32(std::string const & key, int32_t value);
+    int64_t get_int64(std::string const & key) const;
+    void set_int64(std::string const & key, int64_t value);
+    double get_real(std::string const & key) const;
+    void set_real(std::string const & key, double value);
+    std::string const & get_string(std::string const & key) const;
+    void set_string(std::string const & key, std::string const & value);
+
+    DynamicToggleIndex get_index(std::string const & key) const
+    {
+        auto it = m_key2index.find(key);
+        return (it != m_key2index.end()) ? it->second : DynamicToggleIndex{0, DynamicToggleIndex::TYPE_NONE};
+    }
+    std::vector<std::string> keys() const;
+    void clear();
+
+private:
+
+    keymap_type m_key2index;
+    std::vector<bool> m_vector_bool;
+    std::vector<int8_t> m_vector_int8;
+    std::vector<int16_t> m_vector_int16;
+    std::vector<int32_t> m_vector_int32;
+    std::vector<int64_t> m_vector_int64;
+    std::vector<double> m_vector_real;
+    std::vector<std::string> m_vector_string;
+
+}; /* end class DynamicToggleTable */
+
 class Toggle
 {
 
 public:
 
-    static constexpr bool USE_PYSIDE =
 #ifdef MODMESH_USE_PYSIDE
-        true
-#else // MODMESH_USE_PYSIDE
-        false
-#endif // MODMESH_USE_PYSIDE
-        ;
-
+    MM_TOGGLE_CONSTEXPR_BOOL(USE_PYSIDE, true);
+#else
+    MM_TOGGLE_CONSTEXPR_BOOL(USE_PYSIDE, false);
+#endif
     static Toggle & instance();
 
     Toggle(Toggle const &) = delete;
@@ -65,11 +141,31 @@ public:
     bool get_show_axis() const { return m_show_axis; }
     void set_show_axis(bool v) { m_show_axis = v; }
 
+    std::vector<std::string> dynamic_keys() const { return m_dynamic_table.keys(); }
+    void dynamic_clear() { m_dynamic_table.clear(); }
+    DynamicToggleIndex get_dynamic_index(std::string const & key) const { return m_dynamic_table.get_index(key); }
+
+    bool get_bool(std::string const & key) const { return m_dynamic_table.get_bool(key); }
+    void set_bool(std::string const & key, bool value) { m_dynamic_table.set_bool(key, value); }
+    int8_t get_int8(std::string const & key) const { return m_dynamic_table.get_int8(key); }
+    void set_int8(std::string const & key, int8_t value) { m_dynamic_table.set_int8(key, value); }
+    int16_t get_int16(std::string const & key) const { return m_dynamic_table.get_int16(key); }
+    void set_int16(std::string const & key, int16_t value) { m_dynamic_table.set_int16(key, value); }
+    int32_t get_int32(std::string const & key) const { return m_dynamic_table.get_int32(key); }
+    void set_int32(std::string const & key, int32_t value) { m_dynamic_table.set_int32(key, value); }
+    int64_t get_int64(std::string const & key) const { return m_dynamic_table.get_int64(key); }
+    void set_int64(std::string const & key, int64_t value) { m_dynamic_table.set_int64(key, value); }
+    double get_real(std::string const & key) const { return m_dynamic_table.get_real(key); }
+    void set_real(std::string const & key, double value) { m_dynamic_table.set_real(key, value); }
+    std::string const & get_string(std::string const & key) const { return m_dynamic_table.get_string(key); }
+    void set_string(std::string const & key, std::string const & value) { m_dynamic_table.set_string(key, value); }
+
 private:
 
     Toggle() = default;
 
     bool m_show_axis = false;
+    DynamicToggleTable m_dynamic_table;
 
 }; /* end class Toggle */
 
