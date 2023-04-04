@@ -36,9 +36,6 @@
 #include <vector>
 #include <unordered_map>
 
-#define MM_TOGGLE_CONSTEXPR_BOOL(NAME, VALUE) \
-    static constexpr bool NAME = VALUE
-
 namespace modmesh
 {
 
@@ -56,7 +53,8 @@ struct DynamicToggleIndex
         TYPE_INT32,
         TYPE_INT64,
         TYPE_REAL,
-        TYPE_STRING
+        TYPE_STRING,
+        TYPE_SUBKEY
     };
 
     operator bool() const { return type != TYPE_NONE; }
@@ -67,6 +65,7 @@ struct DynamicToggleIndex
     bool is_int64() const { return type == TYPE_INT64; }
     bool is_real() const { return type == TYPE_REAL; }
     bool is_string() const { return type == TYPE_STRING; }
+    bool is_subkey() const { return type == TYPE_SUBKEY; }
 
     // Index upper bound 2**32 is more than sufficient.  2**16 (65536) may be
     // too little.
@@ -74,6 +73,56 @@ struct DynamicToggleIndex
     Type type = TYPE_NONE;
 
 }; /* end struct DynamicToggleIndex */
+
+class DynamicToggleTable;
+
+class HierarchicalToggleAccess
+{
+
+public:
+
+    explicit HierarchicalToggleAccess(DynamicToggleTable & table)
+        : m_table(&table)
+    {
+    }
+
+    HierarchicalToggleAccess(DynamicToggleTable & table, std::string base)
+        : m_table(&table)
+        , m_base(std::move(base))
+    {
+    }
+
+    bool get_bool(std::string const & key) const;
+    void set_bool(std::string const & key, bool value);
+    int8_t get_int8(std::string const & key) const;
+    void set_int8(std::string const & key, int8_t value);
+    int16_t get_int16(std::string const & key) const;
+    void set_int16(std::string const & key, int16_t value);
+    int32_t get_int32(std::string const & key) const;
+    void set_int32(std::string const & key, int32_t value);
+    int64_t get_int64(std::string const & key) const;
+    void set_int64(std::string const & key, int64_t value);
+    double get_real(std::string const & key) const;
+    void set_real(std::string const & key, double value);
+    std::string const & get_string(std::string const & key) const;
+    void set_string(std::string const & key, std::string const & value);
+
+    HierarchicalToggleAccess get_subkey(std::string const & key);
+    void add_subkey(std::string const & key);
+
+    DynamicToggleIndex get_index(std::string const & key) const;
+
+    std::string rekey(std::string const & key) const
+    {
+        return m_base.empty() ? key : (Formatter() << m_base << "." << key);
+    }
+
+private:
+
+    DynamicToggleTable * m_table = nullptr;
+    std::string m_base;
+
+}; /* end class HierarchicalToggleAccess */
 
 class DynamicToggleTable
 {
@@ -99,6 +148,12 @@ public:
     std::string const & get_string(std::string const & key) const;
     void set_string(std::string const & key, std::string const & value);
 
+    HierarchicalToggleAccess get_subkey(std::string const & key)
+    {
+        return HierarchicalToggleAccess(*this, key);
+    }
+    void add_subkey(std::string const & key);
+
     DynamicToggleIndex get_index(std::string const & key) const
     {
         auto it = m_key2index.find(key);
@@ -120,26 +175,47 @@ private:
 
 }; /* end class DynamicToggleTable */
 
+inline DynamicToggleIndex HierarchicalToggleAccess::get_index(std::string const & key) const
+{
+    return m_table->get_index(rekey(key));
+}
+
+#define MM_TOGGLE_STATIC_BOOL(NAME, DEFAULT)     \
+public:                                          \
+    bool get_##NAME() const { return m_##NAME; } \
+    void set_##NAME(bool v) { m_##NAME = v; }    \
+                                                 \
+private:                                         \
+    bool m_##NAME = DEFAULT;
+
+class FixedToggle
+{
+
+public:
+
+    FixedToggle();
+
+    MM_TOGGLE_STATIC_BOOL(use_pyside, true)
+    MM_TOGGLE_STATIC_BOOL(show_axis, false)
+
+}; /* end class FixedToggle */
+
 class Toggle
 {
 
 public:
 
-#ifdef MODMESH_USE_PYSIDE
-    MM_TOGGLE_CONSTEXPR_BOOL(USE_PYSIDE, true);
-#else
-    MM_TOGGLE_CONSTEXPR_BOOL(USE_PYSIDE, false);
-#endif
     static Toggle & instance();
 
-    Toggle(Toggle const &) = delete;
-    Toggle(Toggle &&) = delete;
-    Toggle & operator=(Toggle const &) = delete;
-    Toggle & operator=(Toggle &&) = delete;
+    Toggle * clone() const { return new Toggle(*this); }
+
     ~Toggle() = default;
 
-    bool get_show_axis() const { return m_show_axis; }
-    void set_show_axis(bool v) { m_show_axis = v; }
+    FixedToggle const & fixed() const { return m_fixed; }
+    FixedToggle & fixed() { return m_fixed; }
+
+    DynamicToggleTable const & dynamic() const { return m_dynamic_table; }
+    DynamicToggleTable & dynamic() { return m_dynamic_table; }
 
     std::vector<std::string> dynamic_keys() const { return m_dynamic_table.keys(); }
     void dynamic_clear() { m_dynamic_table.clear(); }
@@ -159,12 +235,18 @@ public:
     void set_real(std::string const & key, double value) { m_dynamic_table.set_real(key, value); }
     std::string const & get_string(std::string const & key) const { return m_dynamic_table.get_string(key); }
     void set_string(std::string const & key, std::string const & value) { m_dynamic_table.set_string(key, value); }
+    HierarchicalToggleAccess get_subkey(std::string const & key) { return m_dynamic_table.get_subkey(key); }
+    void add_subkey(std::string const & key) { m_dynamic_table.add_subkey(key); }
 
 private:
 
     Toggle() = default;
+    Toggle(Toggle const &) = default;
+    Toggle(Toggle &&) = default;
+    Toggle & operator=(Toggle const &) = default;
+    Toggle & operator=(Toggle &&) = default;
 
-    bool m_show_axis = false;
+    FixedToggle m_fixed;
     DynamicToggleTable m_dynamic_table;
 
 }; /* end class Toggle */

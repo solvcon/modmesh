@@ -63,23 +63,38 @@ Toggle & Toggle::instance()
     return o;
 }
 
+FixedToggle::FixedToggle()
+{
+    set_use_pyside(
+#ifdef MODMESH_USE_PYSIDE
+        true
+#else
+        false
+#endif
+    );
+}
+
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects,readability-redundant-string-init,cert-err58-cpp)
 std::string const DynamicToggleTable::sentinel_string = "";
 
 /* The macro gives debuggers a hard time. Manually expand it if you need to
  * step in a debugger. */
-#define MM_DECL_DYNGET(CTYPE, MTYPE, SENTINEL)                           \
-    CTYPE DynamicToggleTable::get_##MTYPE(std::string const & key) const \
-    {                                                                    \
-        auto it = m_key2index.find(key);                                 \
-        if (it != m_key2index.end())                                     \
-        {                                                                \
-            if (it->second.is_##MTYPE())                                 \
-            {                                                            \
-                return m_vector_##MTYPE.at(it->second.index);            \
-            }                                                            \
-        }                                                                \
-        return SENTINEL;                                                 \
+#define MM_DECL_DYNGET(CTYPE, MTYPE, SENTINEL)                                 \
+    CTYPE DynamicToggleTable::get_##MTYPE(std::string const & key) const       \
+    {                                                                          \
+        auto it = m_key2index.find(key);                                       \
+        if (it != m_key2index.end())                                           \
+        {                                                                      \
+            if (it->second.is_##MTYPE())                                       \
+            {                                                                  \
+                return m_vector_##MTYPE.at(it->second.index);                  \
+            }                                                                  \
+        }                                                                      \
+        return SENTINEL;                                                       \
+    }                                                                          \
+    CTYPE HierarchicalToggleAccess::get_##MTYPE(std::string const & key) const \
+    {                                                                          \
+        return m_table->get_##MTYPE(rekey(key));                               \
     }
 MM_DECL_DYNGET(bool, bool, false)
 MM_DECL_DYNGET(int8_t, int8, 0)
@@ -114,6 +129,10 @@ MM_DECL_DYNGET(std::string const &, string, sentinel_string)
             m_key2index.insert({key, index});                                                                                  \
             m_vector_##MTYPE.push_back(value);                                                                                 \
         }                                                                                                                      \
+    }                                                                                                                          \
+    void HierarchicalToggleAccess::set_##MTYPE(std::string const & key, CTYPE value)                                           \
+    {                                                                                                                          \
+        m_table->set_##MTYPE(rekey(key), value);                                                                               \
     }
 MM_DECL_DYNSET(bool, bool, BOOL)
 MM_DECL_DYNSET(int8_t, int8, INT8)
@@ -124,6 +143,25 @@ MM_DECL_DYNSET(double, real, REAL)
 MM_DECL_DYNSET(std::string const &, string, STRING)
 #undef MM_DECL_DYNSET
 
+HierarchicalToggleAccess HierarchicalToggleAccess::get_subkey(const std::string & key)
+{
+    return m_table->get_subkey(rekey(key));
+}
+
+void HierarchicalToggleAccess::add_subkey(const std::string & key)
+{
+    return m_table->add_subkey(rekey(key));
+}
+
+void DynamicToggleTable::add_subkey(std::string const & key)
+{
+    auto it = m_key2index.find(key);
+    if (it == m_key2index.end())
+    {
+        DynamicToggleIndex const index{0, DynamicToggleIndex::TYPE_SUBKEY};
+        m_key2index.insert({key, index});
+    }
+}
 std::vector<std::string> DynamicToggleTable::keys() const
 {
     std::vector<std::string> ret;

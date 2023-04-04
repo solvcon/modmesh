@@ -53,7 +53,7 @@ R3DWidget::R3DWidget(Qt3DExtras::Qt3DWindow * window, RScene * scene, QWidget * 
     control->setLinearSpeed(50.0f);
     control->setLookSpeed(180.0f);
 
-    if (Toggle::instance().get_show_axis())
+    if (Toggle::instance().fixed().get_show_axis())
     {
         showMark();
     }
