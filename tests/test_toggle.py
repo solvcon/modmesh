@@ -204,6 +204,44 @@ class ToggleDynamicTC(unittest.TestCase):
             tg.dunder_nonexist_real = 12.4
 
 
+class ToggleHierarchicalTC(unittest.TestCase):
+
+    def test_multi_level(self):
+        tg = modmesh.Toggle.instance.clone()
+        tg.dynamic_clear()
+        self.assertEqual(tg.dynamic_keys(), [])
+
+        tg.set_int8("test_int8", 21)
+        self.assertEqual(tg.test_int8, 21)
+        self.assertEqual(sorted(tg.dynamic_keys()), ["test_int8"])
+        tg.add_subkey("level1")
+        self.assertIsInstance(tg.level1, modmesh.HierarchicalToggleAccess)
+        self.assertEqual(sorted(tg.dynamic_keys()), ["level1", "test_int8"])
+
+        tg.set_real("level1.test_real", 9.42)
+        self.assertEqual(tg.level1.test_real, 9.42)
+        self.assertEqual(sorted(tg.dynamic_keys()),
+                         ["level1", "level1.test_real", "test_int8"])
+
+        # Add second-level subkeys.
+        tg.add_subkey("level1.level2")
+        self.assertIsInstance(tg.level1.level2,
+                              modmesh.HierarchicalToggleAccess)
+        tg.add_subkey("level1p")
+        tg.level1p.add_subkey("level2p")
+        self.assertIsInstance(tg.level1p.level2p,
+                              modmesh.HierarchicalToggleAccess)
+        tg.level1p.set_bool("test_bool", True)
+        self.assertEqual(tg.get_bool('level1p.test_bool'), True)
+        tg.set_int32('level1p.level2p.test_int32', -2132)
+        self.assertEqual(tg.level1p.level2p.test_int32, -2132)
+        self.assertEqual(sorted(tg.dynamic_keys()),
+                         ['level1', 'level1.level2', 'level1.test_real',
+                          'level1p', 'level1p.level2p',
+                          'level1p.level2p.test_int32',
+                          'level1p.test_bool', 'test_int8'])
+
+
 class CommandLineInfoTC(unittest.TestCase):
 
     def setUp(self):

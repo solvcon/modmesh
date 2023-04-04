@@ -57,6 +57,7 @@ __all__ = [  # noqa: F822
     'StaticGrid2d',
     'StaticGrid3d',
     'StaticMesh',
+    'HierarchicalToggleAccess',
     'Toggle',
     'CommandLineInfo',
     'ProcessInfo',
