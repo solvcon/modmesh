@@ -208,9 +208,8 @@ jobs:
 
     strategy:
       matrix:
-        # https://github.com/actions/runner-images/blob/main/images/macos/macos-11-Readme.md
         # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
-        os: [macos-11, macos-12]
+        os: [macos-12]
         cmake_build_type: [Release]
 
       fail-fast: false
