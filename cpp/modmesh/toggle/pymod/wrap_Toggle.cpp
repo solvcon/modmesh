@@ -60,16 +60,8 @@ WrapFixedToggle::WrapFixedToggle(pybind11::module & mod, const char * pyname, co
 {
     // Instance properties.
     (*this)
-        .def_property_readonly(
-            "use_pyside",
-            [](wrapped_type const & self)
-            { return self.get_use_pyside(); })
-        .def_property(
-            "show_axis",
-            [](wrapped_type const & self)
-            { return self.get_show_axis(); },
-            [](wrapped_type & self, bool v)
-            { self.set_show_axis(v); })
+        .def_property_readonly("use_pyside", &wrapped_type::get_use_pyside)
+        .def_property("show_axis", &wrapped_type::get_show_axis, &wrapped_type::set_show_axis)
         //
         ;
 }
@@ -91,84 +83,9 @@ protected:
 
     static std::string report(wrapped_type const & self);
 
-    static pybind11::object getattr(wrapped_type const & self, std::string const & key)
-    {
-        namespace py = pybind11;
+    static pybind11::object getattr(wrapped_type const & self, std::string const & key);
 
-        DynamicToggleIndex const index = self.get_dynamic_index(key);
-        switch (index.type)
-        {
-        case DynamicToggleIndex::TYPE_NONE:
-            throw py::attribute_error(Formatter() << "Cannt get non-existing key \"" << key << "\"");
-            break;
-        case DynamicToggleIndex::TYPE_BOOL:
-            return py::cast(self.get_bool(key));
-            break;
-        case DynamicToggleIndex::TYPE_INT8:
-            return py::cast(self.get_int8(key));
-            break;
-        case DynamicToggleIndex::TYPE_INT16:
-            return py::cast(self.get_int16(key));
-            break;
-        case DynamicToggleIndex::TYPE_INT32:
-            return py::cast(self.get_int32(key));
-            break;
-        case DynamicToggleIndex::TYPE_INT64:
-            return py::cast(self.get_int64(key));
-            break;
-        case DynamicToggleIndex::TYPE_REAL:
-            return py::cast(self.get_real(key));
-            break;
-        case DynamicToggleIndex::TYPE_STRING:
-            return py::cast(self.get_string(key));
-            break;
-        default:
-            return py::none();
-            break;
-        }
-    }
-
-    static void setattr(wrapped_type & self, std::string const & key, pybind11::object & value)
-    {
-        namespace py = pybind11;
-
-        DynamicToggleIndex const index = self.get_dynamic_index(key);
-        switch (index.type)
-        {
-        case DynamicToggleIndex::TYPE_NONE:
-            /* It is intentional to throw an exception when the key does not
-             * exist.  Key-value pairs in the toggle object are supposed to be
-             * added using the set_TYPE() functions, not the Pythonic
-             * __setattr__().
-             *
-             * Do not try to "fix" the exception using RTTI. */
-            throw pybind11::attribute_error(Formatter() << "Cannot set non-existing key \"" << key << "\"; use set_TYPE() instead");
-            break;
-        case DynamicToggleIndex::TYPE_BOOL:
-            self.set_bool(key, py::cast<bool>(value));
-            break;
-        case DynamicToggleIndex::TYPE_INT8:
-            self.set_int8(key, py::cast<int8_t>(value));
-            break;
-        case DynamicToggleIndex::TYPE_INT16:
-            self.set_int16(key, py::cast<int16_t>(value));
-            break;
-        case DynamicToggleIndex::TYPE_INT32:
-            self.set_int32(key, py::cast<int32_t>(value));
-            break;
-        case DynamicToggleIndex::TYPE_INT64:
-            self.set_int64(key, py::cast<int64_t>(value));
-            break;
-        case DynamicToggleIndex::TYPE_REAL:
-            self.set_real(key, py::cast<double>(value));
-            break;
-        case DynamicToggleIndex::TYPE_STRING:
-            self.set_string(key, py::cast<std::string>(value));
-            break;
-        default:
-            break;
-        }
-    }
+    static void setattr(wrapped_type & self, std::string const & key, pybind11::object & value);
 
 }; /* end class WrapToggle */
 
@@ -231,6 +148,88 @@ std::string WrapToggle::report(WrapToggle::wrapped_type const & self)
     ret << "Toggle: "
         << "USE_PYSIDE=" << self.fixed().get_use_pyside();
     return ret >> Formatter::to_str;
+}
+
+pybind11::object WrapToggle::getattr(wrapped_type const & self, std::string const & key)
+{
+    namespace py = pybind11;
+
+    DynamicToggleIndex const index = self.get_dynamic_index(key);
+    switch (index.type)
+    {
+    case DynamicToggleIndex::TYPE_NONE:
+        throw py::attribute_error(
+            Formatter() << "Cannt get non-existing key \"" << key << "\"");
+        break;
+    case DynamicToggleIndex::TYPE_BOOL:
+        return py::cast(self.get_bool(key));
+        break;
+    case DynamicToggleIndex::TYPE_INT8:
+        return py::cast(self.get_int8(key));
+        break;
+    case DynamicToggleIndex::TYPE_INT16:
+        return py::cast(self.get_int16(key));
+        break;
+    case DynamicToggleIndex::TYPE_INT32:
+        return py::cast(self.get_int32(key));
+        break;
+    case DynamicToggleIndex::TYPE_INT64:
+        return py::cast(self.get_int64(key));
+        break;
+    case DynamicToggleIndex::TYPE_REAL:
+        return py::cast(self.get_real(key));
+        break;
+    case DynamicToggleIndex::TYPE_STRING:
+        return py::cast(self.get_string(key));
+        break;
+    default:
+        return py::none();
+        break;
+    }
+}
+
+void WrapToggle::setattr(wrapped_type & self, std::string const & key, pybind11::object & value)
+{
+    namespace py = pybind11;
+
+    DynamicToggleIndex const index = self.get_dynamic_index(key);
+    switch (index.type)
+    {
+    case DynamicToggleIndex::TYPE_NONE:
+        /* It is intentional to throw an exception when the key does not
+         * exist.  Key-value pairs in the toggle object are supposed to be
+         * added using the set_TYPE() functions, not the Pythonic
+         * __setattr__().
+         *
+         * Do not try to "fix" the exception using RTTI. */
+        throw pybind11::attribute_error(
+            Formatter() << "Cannot set non-existing key \"" << key << "\"; "
+                        << "use set_TYPE() instead");
+        break;
+    case DynamicToggleIndex::TYPE_BOOL:
+        self.set_bool(key, py::cast<bool>(value));
+        break;
+    case DynamicToggleIndex::TYPE_INT8:
+        self.set_int8(key, py::cast<int8_t>(value));
+        break;
+    case DynamicToggleIndex::TYPE_INT16:
+        self.set_int16(key, py::cast<int16_t>(value));
+        break;
+    case DynamicToggleIndex::TYPE_INT32:
+        self.set_int32(key, py::cast<int32_t>(value));
+        break;
+    case DynamicToggleIndex::TYPE_INT64:
+        self.set_int64(key, py::cast<int64_t>(value));
+        break;
+    case DynamicToggleIndex::TYPE_REAL:
+        self.set_real(key, py::cast<double>(value));
+        break;
+    case DynamicToggleIndex::TYPE_STRING:
+        self.set_string(key, py::cast<std::string>(value));
+        break;
+    default:
+        break;
+    }
 }
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapCommandLineInfo
