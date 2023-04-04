@@ -101,6 +101,12 @@ protected:
         switch (index.type)
         {
         case DynamicToggleIndex::TYPE_NONE:
+            /* It is intentional to throw an exception when the key does not
+             * exist.  Key-value pairs in the toggle object are supposed to be
+             * added using the set_TYPE() functions, not the Pythonic
+             * __setattr__().
+             *
+             * Do not try to "fix" the exception using RTTI. */
             throw pybind11::attribute_error(Formatter() << "Cannot set non-existing key \"" << key << "\"; use set_TYPE() instead");
             break;
         case DynamicToggleIndex::TYPE_BOOL:

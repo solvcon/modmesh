@@ -155,7 +155,8 @@ class ToggleDynamicTC(unittest.TestCase):
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
-        # Raise IndexError when the key to be got is not available.
+        # Raise exception when the requested key is not available (no need to
+        # test for all types).
         with self.assertRaisesRegex(
                 AttributeError,
                 r'Cannt get non-existing key "dunder_nonexist"'
@@ -163,14 +164,28 @@ class ToggleDynamicTC(unittest.TestCase):
             tg.dunder_nonexist
 
         # Need to use set_TYPE() to create the dynamic key-value pair.
+        # (Make sure all supported types are tested.)
+        tg.set_bool("dunder_bool", True)
+        self.assertEqual(tg.dunder_bool, True)
+        tg.set_int8("dunder_int8", 12)
+        self.assertEqual(tg.dunder_int8, 12)
+        tg.set_int16("dunder_int16", -23634)
+        self.assertEqual(tg.dunder_int16, -23634)
         tg.set_int32("dunder_int32", 632)
         self.assertEqual(tg.dunder_int32, 632)
+        tg.set_int64("dunder_int64", 764)
+        self.assertEqual(tg.dunder_int64, 764)
+        tg.set_real("dunder_real", -232.1228)
+        self.assertEqual(tg.dunder_real, -232.1228)
+        tg.set_string("dunder_string", "a line")
+        self.assertEqual(tg.dunder_string, "a line")
 
-        # Check for key existence.
+        # Check for key existence (no need to test for all types).
         self.assertTrue(hasattr(tg, "dunder_int32"))
         self.assertFalse(hasattr(tg, "dunder_nonexist"))
 
-        # Raise IndexError when the key to be set is not available.
+        # Raise exception when the key to be set is not available (no need to
+        # test for all types).
         with self.assertRaisesRegex(
                 AttributeError,
                 r'Cannot set non-existing key "dunder_nonexist_real"; '
