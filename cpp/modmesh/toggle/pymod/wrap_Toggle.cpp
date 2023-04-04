@@ -56,6 +56,85 @@ protected:
 
     static std::string report(wrapped_type const & self);
 
+    static pybind11::object getattr(wrapped_type const & self, std::string const & key)
+    {
+        namespace py = pybind11;
+
+        DynamicToggleIndex const index = self.get_dynamic_index(key);
+        switch (index.type)
+        {
+        case DynamicToggleIndex::TYPE_NONE:
+            throw py::attribute_error(Formatter() << "Cannt get non-existing key \"" << key << "\"");
+            break;
+        case DynamicToggleIndex::TYPE_BOOL:
+            return py::cast(self.get_bool(key));
+            break;
+        case DynamicToggleIndex::TYPE_INT8:
+            return py::cast(self.get_int8(key));
+            break;
+        case DynamicToggleIndex::TYPE_INT16:
+            return py::cast(self.get_int16(key));
+            break;
+        case DynamicToggleIndex::TYPE_INT32:
+            return py::cast(self.get_int32(key));
+            break;
+        case DynamicToggleIndex::TYPE_INT64:
+            return py::cast(self.get_int64(key));
+            break;
+        case DynamicToggleIndex::TYPE_REAL:
+            return py::cast(self.get_real(key));
+            break;
+        case DynamicToggleIndex::TYPE_STRING:
+            return py::cast(self.get_string(key));
+            break;
+        default:
+            return py::none();
+            break;
+        }
+    }
+
+    static void setattr(wrapped_type & self, std::string const & key, pybind11::object & value)
+    {
+        namespace py = pybind11;
+
+        DynamicToggleIndex const index = self.get_dynamic_index(key);
+        switch (index.type)
+        {
+        case DynamicToggleIndex::TYPE_NONE:
+            /* It is intentional to throw an exception when the key does not
+             * exist.  Key-value pairs in the toggle object are supposed to be
+             * added using the set_TYPE() functions, not the Pythonic
+             * __setattr__().
+             *
+             * Do not try to "fix" the exception using RTTI. */
+            throw pybind11::attribute_error(Formatter() << "Cannot set non-existing key \"" << key << "\"; use set_TYPE() instead");
+            break;
+        case DynamicToggleIndex::TYPE_BOOL:
+            self.set_bool(key, py::cast<bool>(value));
+            break;
+        case DynamicToggleIndex::TYPE_INT8:
+            self.set_int8(key, py::cast<int8_t>(value));
+            break;
+        case DynamicToggleIndex::TYPE_INT16:
+            self.set_int16(key, py::cast<int16_t>(value));
+            break;
+        case DynamicToggleIndex::TYPE_INT32:
+            self.set_int32(key, py::cast<int32_t>(value));
+            break;
+        case DynamicToggleIndex::TYPE_INT64:
+            self.set_int64(key, py::cast<int64_t>(value));
+            break;
+        case DynamicToggleIndex::TYPE_REAL:
+            self.set_real(key, py::cast<double>(value));
+            break;
+        case DynamicToggleIndex::TYPE_STRING:
+            self.set_string(key, py::cast<std::string>(value));
+            break;
+        default:
+            break;
+        }
+    }
+
 }; /* end class WrapToggle */
 
 WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const * pydoc)
@@ -65,6 +144,30 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
 
     (*this)
         .def("report", &report)
+        //
+        ;
+
+    // Dynamic properties.  Number of the properties can be freely changed
+    // during runtime.
+    (*this)
+        .def("__getattr__", getattr)
+        .def("__setattr__", setattr)
+        .def("dynamic_keys", &wrapped_type::dynamic_keys)
+        .def("dynamic_clear", &wrapped_type::dynamic_clear)
+        .def("get_bool", &wrapped_type::get_bool, py::arg("key"))
+        .def("set_bool", &wrapped_type::set_bool, py::arg("key"), py::arg("value"))
+        .def("get_int8", &wrapped_type::get_int8, py::arg("key"))
+        .def("set_int8", &wrapped_type::set_int8, py::arg("key"), py::arg("value"))
+        .def("get_int16", &wrapped_type::get_int16, py::arg("key"))
+        .def("set_int16", &wrapped_type::set_int16, py::arg("key"), py::arg("value"))
+        .def("get_int32", &wrapped_type::get_int32, py::arg("key"))
+        .def("set_int32", &wrapped_type::set_int32, py::arg("key"), py::arg("value"))
+        .def("get_int64", &wrapped_type::get_int64, py::arg("key"))
+        .def("set_int64", &wrapped_type::set_int64, py::arg("key"), py::arg("value"))
+        .def("get_real", &wrapped_type::get_real, py::arg("key"))
+        .def("set_real", &wrapped_type::set_real, py::arg("key"), py::arg("value"))
+        .def("get_string", &wrapped_type::get_string, py::arg("key"))
+        .def("set_string", &wrapped_type::set_string, py::arg("key"), py::arg("value"))
         //
         ;
 
