@@ -42,11 +42,24 @@ class ToggleTC(unittest.TestCase):
         self.assertTrue(hasattr(modmesh.Toggle.fixed, "use_pyside"))
         self.assertTrue(hasattr(modmesh.Toggle.fixed, "show_axis"))
 
+    def test_clone(self):
+        tg = modmesh.Toggle.instance.clone()
+        tg.dynamic_clear()
+        self.assertEqual(tg.dynamic_keys(), [])
+
+        tg.set_bool("test_bool", True)
+        self.assertTrue(tg.get_bool("test_bool"))
+        self.assertEqual(tg.dynamic_keys(), ["test_bool"])
+
+        tg1 = tg.clone()
+        self.assertEqual(tg.dynamic_keys(), tg1.dynamic_keys())
+        self.assertEqual(tg.get_bool("test_bool"), tg1.get_bool("test_bool"))
+
 
 class ToggleDynamicTC(unittest.TestCase):
 
     def test_all_types(self):
-        tg = modmesh.Toggle.instance
+        tg = modmesh.Toggle.instance.clone()
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
@@ -122,7 +135,7 @@ class ToggleDynamicTC(unittest.TestCase):
         self.assertEqual(tg.dynamic_keys(), [])
 
     def test_fatigue(self):
-        tg = modmesh.Toggle.instance
+        tg = modmesh.Toggle.instance.clone()
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
@@ -148,7 +161,7 @@ class ToggleDynamicTC(unittest.TestCase):
         tg.dynamic_clear()
 
     def test_dunder_has_get_set(self):
-        tg = modmesh.Toggle.instance
+        tg = modmesh.Toggle.instance.clone()
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 

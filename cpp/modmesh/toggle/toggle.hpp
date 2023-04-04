@@ -141,10 +141,8 @@ public:
 
     static Toggle & instance();
 
-    Toggle(Toggle const &) = delete;
-    Toggle(Toggle &&) = delete;
-    Toggle & operator=(Toggle const &) = delete;
-    Toggle & operator=(Toggle &&) = delete;
+    Toggle * clone() const { return new Toggle(*this); }
+
     ~Toggle() = default;
 
     FixedToggle const & fixed() const { return m_fixed; }
@@ -172,6 +170,10 @@ public:
 private:
 
     Toggle() = default;
+    Toggle(Toggle const &) = default;
+    Toggle(Toggle &&) = default;
+    Toggle & operator=(Toggle const &) = default;
+    Toggle & operator=(Toggle &&) = default;
 
     FixedToggle m_fixed;
     DynamicToggleTable m_dynamic_table;

@@ -93,6 +93,7 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
     namespace py = pybind11;
 
     (*this)
+        .def("clone", &wrapped_type::clone, py::return_value_policy::take_ownership)
         .def("report", &report)
         //
         ;
