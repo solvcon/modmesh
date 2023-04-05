@@ -28,6 +28,7 @@
 import os
 import unittest
 import math
+import json
 
 import modmesh
 
@@ -240,6 +241,24 @@ class ToggleHierarchicalTC(unittest.TestCase):
                           'level1p', 'level1p.level2p',
                           'level1p.level2p.test_int32',
                           'level1p.test_bool', 'test_int8'])
+
+
+class ToggleSerializationTC(unittest.TestCase):
+
+    def test_to_json(self):
+        tg = modmesh.Toggle.instance.clone()
+        tg.dynamic_clear()
+        self.assertEqual(tg.dynamic_keys(), [])
+
+        tg.set_bool("kbool", True)
+        tg.add_subkey("k1")
+        tg.set_real("k1.kreal", -2.12)
+
+        golden = {'k1': {'kreal': -2.12}, 'kbool': True}
+        data = tg.dynamic_as_dict()
+        self.assertEqual(data, golden)
+        # JSON string differs by platform, use back-n-force conversion to test
+        self.assertEqual(json.loads(json.dumps(data)), golden)
 
 
 class CommandLineInfoTC(unittest.TestCase):

@@ -220,6 +220,85 @@ protected:
 
 }; /* end class WrapToggle */
 
+namespace detail
+{
+
+struct DynamicToggleTable2Dict
+{
+    explicit DynamicToggleTable2Dict(DynamicToggleTable & table)
+        : m_table(table)
+    {
+    }
+
+    static pybind11::dict load(DynamicToggleTable & table)
+    {
+        DynamicToggleTable2Dict o(table);
+        pybind11::dict d = o.load();
+        return d;
+    }
+
+    static std::vector<std::string> split(std::string const & input, char c = '.')
+    {
+        char const * str = input.c_str();
+        std::vector<std::string> result;
+        do
+        {
+            const char * begin = str;
+            while (*str != c && *str)
+            {
+                str++;
+            }
+            result.emplace_back(begin, str);
+        } while (0 != *str++);
+        return result;
+    }
+
+    pybind11::dict load()
+    {
+        namespace py = pybind11;
+        std::vector<std::string> const keys = m_table.keys();
+        HierarchicalToggleAccess access(m_table);
+        py::dict ret;
+
+        for (auto const & fk : keys)
+        {
+            std::vector<std::string> const hk = split(fk);
+            DynamicToggleIndex const index = m_table.get_index(fk);
+            py::dict d = ret;
+            for (size_t i = 0; i < hk.size(); ++i)
+            {
+                auto const & k = hk[i];
+                if (!d.contains(k))
+                {
+                    if ((hk.size() > 1 && i != (hk.size() - 1)) ||
+                        (index.type == DynamicToggleIndex::TYPE_SUBKEY))
+                    {
+                        d[k.c_str()] = py::dict();
+                    }
+                    else
+                    {
+                        d[k.c_str()] = WrapHierarchicalToggleAccess::getattr(access, fk);
+                    }
+                }
+                else
+                {
+                    // do nothing if the key is already there
+                }
+                if (i != (hk.size() - 1))
+                {
+                    d = d[k.c_str()];
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    DynamicToggleTable & m_table;
+}; /* end struct DynamicToggleTable2Dict */
+
+} /* end namespace detail */
+
 WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const * pydoc)
     : base_type(mod, pyname, pydoc)
 {
@@ -234,6 +313,13 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
     // Dynamic properties.  Number of the properties can be freely changed
     // during runtime.
     (*this)
+        .def(
+            "get_value",
+            [](wrapped_type & self, std::string const & key)
+            {
+                HierarchicalToggleAccess access(self.dynamic());
+                return WrapHierarchicalToggleAccess::getattr(access, key);
+            })
         .def(
             "__getattr__",
             [](wrapped_type & self, std::string const & key)
@@ -250,6 +336,12 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
             })
         .def("dynamic_keys", &wrapped_type::dynamic_keys)
         .def("dynamic_clear", &wrapped_type::dynamic_clear)
+        .def(
+            "dynamic_as_dict",
+            [](wrapped_type & self)
+            {
+                return detail::DynamicToggleTable2Dict::load(self.dynamic());
+            })
         .def("get_bool", &wrapped_type::get_bool, py::arg("key"))
         .def("set_bool", &wrapped_type::set_bool, py::arg("key"), py::arg("value"))
         .def("get_int8", &wrapped_type::get_int8, py::arg("key"))
