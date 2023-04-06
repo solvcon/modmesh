@@ -180,7 +180,25 @@ inline DynamicToggleIndex HierarchicalToggleAccess::get_index(std::string const 
     return m_table->get_index(rekey(key));
 }
 
-#define MM_TOGGLE_STATIC_BOOL(NAME, DEFAULT)     \
+#define MM_TOGGLE_SOLID_BOOL(NAME)         \
+public:                                    \
+    bool NAME() const { return m_##NAME; } \
+                                           \
+private:                                   \
+    bool m_##NAME;
+
+class SolidToggle
+{
+
+public:
+
+    SolidToggle();
+
+    MM_TOGGLE_SOLID_BOOL(use_pyside)
+
+}; /* end class SolidToggle */
+
+#define MM_TOGGLE_FIXED_BOOL(NAME, DEFAULT)      \
 public:                                          \
     bool get_##NAME() const { return m_##NAME; } \
     void set_##NAME(bool v) { m_##NAME = v; }    \
@@ -193,10 +211,7 @@ class FixedToggle
 
 public:
 
-    FixedToggle();
-
-    MM_TOGGLE_STATIC_BOOL(use_pyside, true)
-    MM_TOGGLE_STATIC_BOOL(show_axis, false)
+    MM_TOGGLE_FIXED_BOOL(show_axis, false)
 
 }; /* end class FixedToggle */
 
@@ -210,6 +225,8 @@ public:
     Toggle * clone() const { return new Toggle(*this); }
 
     ~Toggle() = default;
+
+    SolidToggle const & solid() const { return m_solid; }
 
     FixedToggle const & fixed() const { return m_fixed; }
     FixedToggle & fixed() { return m_fixed; }
@@ -246,6 +263,7 @@ private:
     Toggle & operator=(Toggle const &) = default;
     Toggle & operator=(Toggle &&) = default;
 
+    SolidToggle m_solid;
     FixedToggle m_fixed;
     DynamicToggleTable m_dynamic_table;
 

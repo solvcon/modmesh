@@ -63,15 +63,15 @@ Toggle & Toggle::instance()
     return o;
 }
 
-FixedToggle::FixedToggle()
-{
-    set_use_pyside(
+SolidToggle::SolidToggle()
+    : m_use_pyside(
 #ifdef MODMESH_USE_PYSIDE
-        true
+          true
 #else
-        false
+          false
 #endif
-    );
+      )
+{
 }
 
 // NOLINTNEXTLINE(fuchsia-statically-constructed-objects,readability-redundant-string-init,cert-err58-cpp)
@@ -162,6 +162,7 @@ void DynamicToggleTable::add_subkey(std::string const & key)
         m_key2index.insert({key, index});
     }
 }
+
 std::vector<std::string> DynamicToggleTable::keys() const
 {
     std::vector<std::string> ret;

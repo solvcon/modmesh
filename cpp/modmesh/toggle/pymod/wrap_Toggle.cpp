@@ -39,6 +39,33 @@ namespace modmesh
 namespace python
 {
 
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSolidToggle
+    : public WrapBase<WrapSolidToggle, SolidToggle>
+{
+
+public:
+
+    using base_type = WrapBase<WrapSolidToggle, SolidToggle>;
+    using wrapped_type = typename base_type::wrapped_type;
+
+    friend root_base_type;
+
+protected:
+
+    WrapSolidToggle(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+}; /* end class WrapSolidToggle */
+
+WrapSolidToggle::WrapSolidToggle(pybind11::module & mod, const char * pyname, const char * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    // Instance properties.
+    (*this)
+        .def_property_readonly("use_pyside", &wrapped_type::use_pyside)
+        //
+        ;
+}
+
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapFixedToggle
     : public WrapBase<WrapFixedToggle, FixedToggle>
 {
@@ -53,14 +80,14 @@ public:
 protected:
 
     WrapFixedToggle(pybind11::module & mod, char const * pyname, char const * pydoc);
-};
+
+}; /* end class WrapFixedToggle */
 
 WrapFixedToggle::WrapFixedToggle(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
 {
     // Instance properties.
     (*this)
-        .def_property_readonly("use_pyside", &wrapped_type::get_use_pyside)
         .def_property("show_axis", &wrapped_type::get_show_axis, &wrapped_type::set_show_axis)
         //
         ;
@@ -234,7 +261,12 @@ struct Toggle2Python
     static pybind11::object from_toggle(Toggle & toggle, std::string const & type)
     {
         pybind11::object r;
-        if (type == "fixed")
+        if (type == "solid")
+        {
+            Toggle2Python const o(toggle);
+            r = o.load_solid();
+        }
+        else if (type == "fixed")
         {
             Toggle2Python const o(toggle);
             r = o.load_fixed();
@@ -270,12 +302,20 @@ struct Toggle2Python
         return ret;
     }
 
+    pybind11::dict load_solid() const
+    {
+        namespace py = pybind11;
+        SolidToggle const & solid = m_toggle.solid();
+        py::dict ret;
+        ret["use_pyside"] = solid.use_pyside();
+        return ret;
+    }
+
     pybind11::dict load_fixed() const
     {
         namespace py = pybind11;
         FixedToggle const & fixed = m_toggle.fixed();
         py::dict ret;
-        ret["use_pyside"] = fixed.get_use_pyside();
         ret["show_axis"] = fixed.get_show_axis();
         return ret;
     }
@@ -359,7 +399,7 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
 
     // Conversion.
     (*this)
-        .def("to_python", detail::Toggle2Python::from_toggle, py::arg("type")="")
+        .def("to_python", detail::Toggle2Python::from_toggle, py::arg("type") = "")
         //
         ;
 
@@ -415,6 +455,10 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
             [](py::object const &) -> auto &
             { return wrapped_type::instance(); })
         .def_property_readonly_static(
+            "solid",
+            [](py::object const &) -> auto &
+            { return wrapped_type::instance().solid(); })
+        .def_property_readonly_static(
             "fixed",
             [](py::object const &) -> auto &
             { return wrapped_type::instance().fixed(); })
@@ -429,7 +473,7 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
 
 std::string WrapToggle::report(WrapToggle::wrapped_type const & self)
 {
-    return Formatter() << "Toggle: USE_PYSIDE=" << self.fixed().get_use_pyside();
+    return Formatter() << "Toggle: USE_PYSIDE=" << self.solid().use_pyside();
 }
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapCommandLineInfo
@@ -507,6 +551,7 @@ WrapProcessInfo::WrapProcessInfo(pybind11::module & mod, char const * pyname, ch
 
 void wrap_Toggle(pybind11::module & mod)
 {
+    WrapSolidToggle::commit(mod, "SolidToggle", "SolidToggle");
     WrapFixedToggle::commit(mod, "FixedToggle", "FixedToggle");
     WrapHierarchicalToggleAccess::commit(mod, "HierarchicalToggleAccess", "HierarchicalToggleAccess");
     WrapToggle::commit(mod, "Toggle", "Toggle");
