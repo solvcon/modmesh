@@ -245,7 +245,37 @@ class ToggleHierarchicalTC(unittest.TestCase):
 
 class ToggleSerializationTC(unittest.TestCase):
 
+    USE_PYSIDE = modmesh.Toggle.instance.fixed.use_pyside
+
     def test_to_json(self):
+        tg = modmesh.Toggle.instance.clone()
+        tg.dynamic_clear()
+        self.assertEqual(tg.dynamic_keys(), [])
+
+        tg.set_bool("kbool", True)
+        tg.add_subkey("k1")
+        tg.set_real("k1.kreal", -2.12)
+
+        golden = [{'fixed': {'use_pyside': self.USE_PYSIDE,
+                             'show_axis': False}},
+                  {'dynamic': {'k1': {'kreal': -2.12}, 'kbool': True}}]
+        data = tg.as_dict()
+        self.assertEqual(data, golden)
+        # JSON string differs by platform, use back-n-force conversion to test
+        self.assertEqual(json.loads(json.dumps(data)), golden)
+
+    def test_fixed_to_json(self):
+        tg = modmesh.Toggle.instance.clone()
+        tg.dynamic_clear()
+        self.assertEqual(tg.dynamic_keys(), [])
+
+        golden = {'show_axis': False, 'use_pyside': self.USE_PYSIDE}
+        data = tg.fixed_as_dict()
+        self.assertEqual(data, golden)
+        # JSON string differs by platform, use back-n-force conversion to test
+        self.assertEqual(json.loads(json.dumps(data)), golden)
+
+    def test_dynamic_to_json(self):
         tg = modmesh.Toggle.instance.clone()
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])

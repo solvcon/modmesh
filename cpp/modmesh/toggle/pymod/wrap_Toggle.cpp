@@ -223,47 +223,74 @@ protected:
 namespace detail
 {
 
-struct DynamicToggleTable2Dict
+struct Toggle2Dict
 {
-    explicit DynamicToggleTable2Dict(DynamicToggleTable & table)
-        : m_table(table)
+
+    explicit Toggle2Dict(Toggle & toggle)
+        : m_toggle(toggle)
     {
     }
 
-    static pybind11::dict load(DynamicToggleTable & table)
+    static pybind11::list from_toggle(Toggle & toggle)
     {
-        DynamicToggleTable2Dict o(table);
-        pybind11::dict d = o.load();
+        Toggle2Dict o(toggle);
+        pybind11::list l = o.load();
+        return l;
+    }
+
+    static pybind11::dict fixed_from_toggle(Toggle & toggle)
+    {
+        Toggle2Dict const o(toggle);
+        pybind11::dict d = o.load_fixed();
         return d;
     }
 
-    static std::vector<std::string> split(std::string const & input, char c = '.')
+    static pybind11::dict dynamic_from_toggle(Toggle & toggle)
     {
-        char const * str = input.c_str();
-        std::vector<std::string> result;
-        do
-        {
-            const char * begin = str;
-            while (*str != c && *str)
-            {
-                str++;
-            }
-            result.emplace_back(begin, str);
-        } while (0 != *str++);
-        return result;
+        Toggle2Dict o(toggle);
+        pybind11::dict d = o.load_dynamic();
+        return d;
     }
 
-    pybind11::dict load()
+    pybind11::list load()
     {
         namespace py = pybind11;
-        std::vector<std::string> const keys = m_table.keys();
-        HierarchicalToggleAccess access(m_table);
+        py::list ret;
+        {
+            py::dict d;
+            d["fixed"] = load_fixed();
+            ret.append(d);
+        }
+        {
+            py::dict d;
+            d["dynamic"] = load_dynamic();
+            ret.append(d);
+        }
+        return ret;
+    }
+
+    pybind11::dict load_fixed() const
+    {
+        namespace py = pybind11;
+        FixedToggle const & fixed = m_toggle.fixed();
+        py::dict ret;
+        ret["use_pyside"] = fixed.get_use_pyside();
+        ret["show_axis"] = fixed.get_show_axis();
+        return ret;
+    }
+
+    pybind11::dict load_dynamic()
+    {
+        namespace py = pybind11;
+        DynamicToggleTable & table = m_toggle.dynamic();
+        std::vector<std::string> const keys = table.keys();
+        HierarchicalToggleAccess access(table);
         py::dict ret;
 
         for (auto const & fk : keys)
         {
             std::vector<std::string> const hk = split(fk);
-            DynamicToggleIndex const index = m_table.get_index(fk);
+            DynamicToggleIndex const index = table.get_index(fk);
             py::dict d = ret;
             for (size_t i = 0; i < hk.size(); ++i)
             {
@@ -294,8 +321,27 @@ struct DynamicToggleTable2Dict
         return ret;
     }
 
-    DynamicToggleTable & m_table;
-}; /* end struct DynamicToggleTable2Dict */
+    Toggle & m_toggle;
+
+private:
+
+    static std::vector<std::string> split(std::string const & input, char c = '.')
+    {
+        char const * str = input.c_str();
+        std::vector<std::string> result;
+        do
+        {
+            const char * begin = str;
+            while (*str != c && *str)
+            {
+                str++;
+            }
+            result.emplace_back(begin, str);
+        } while (0 != *str++);
+        return result;
+    }
+
+}; /* end struct Toggle2Dict */
 
 } /* end namespace detail */
 
@@ -310,8 +356,16 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
         //
         ;
 
-    // Dynamic properties.  Number of the properties can be freely changed
-    // during runtime.
+    // Conversion.
+    (*this)
+        .def("as_dict", detail::Toggle2Dict::from_toggle)
+        .def("fixed_as_dict", detail::Toggle2Dict::fixed_from_toggle)
+        .def("dynamic_as_dict", detail::Toggle2Dict::dynamic_from_toggle)
+        //
+        ;
+
+    // Accssors to dynamic properties.  Number of the properties can be freely
+    // changed during runtime.
     (*this)
         .def(
             "get_value",
@@ -336,12 +390,6 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
             })
         .def("dynamic_keys", &wrapped_type::dynamic_keys)
         .def("dynamic_clear", &wrapped_type::dynamic_clear)
-        .def(
-            "dynamic_as_dict",
-            [](wrapped_type & self)
-            {
-                return detail::DynamicToggleTable2Dict::load(self.dynamic());
-            })
         .def("get_bool", &wrapped_type::get_bool, py::arg("key"))
         .def("set_bool", &wrapped_type::set_bool, py::arg("key"), py::arg("value"))
         .def("get_int8", &wrapped_type::get_int8, py::arg("key"))
@@ -361,7 +409,7 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
         //
         ;
 
-    // Static properties.
+    // Accessors to static properties.
     (*this)
         .def_property_readonly_static(
             "instance",
