@@ -223,33 +223,34 @@ protected:
 namespace detail
 {
 
-struct Toggle2Dict
+struct Toggle2Python
 {
 
-    explicit Toggle2Dict(Toggle & toggle)
+    explicit Toggle2Python(Toggle & toggle)
         : m_toggle(toggle)
     {
     }
 
-    static pybind11::list from_toggle(Toggle & toggle)
+    static pybind11::object from_toggle(Toggle & toggle, std::string const & type)
     {
-        Toggle2Dict o(toggle);
-        pybind11::list l = o.load();
-        return l;
-    }
-
-    static pybind11::dict fixed_from_toggle(Toggle & toggle)
-    {
-        Toggle2Dict const o(toggle);
-        pybind11::dict d = o.load_fixed();
-        return d;
-    }
-
-    static pybind11::dict dynamic_from_toggle(Toggle & toggle)
-    {
-        Toggle2Dict o(toggle);
-        pybind11::dict d = o.load_dynamic();
-        return d;
+        pybind11::object r;
+        if (type == "fixed")
+        {
+            Toggle2Python const o(toggle);
+            r = o.load_fixed();
+        }
+        else if (type == "dynamic")
+        {
+            Toggle2Python o(toggle);
+            pybind11::dict d = o.load_dynamic();
+            return d;
+        }
+        else
+        {
+            Toggle2Python o(toggle);
+            r = o.load();
+        }
+        return r;
     }
 
     pybind11::list load()
@@ -341,7 +342,7 @@ private:
         return result;
     }
 
-}; /* end struct Toggle2Dict */
+}; /* end struct Toggle2Python */
 
 } /* end namespace detail */
 
@@ -358,9 +359,7 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
 
     // Conversion.
     (*this)
-        .def("as_dict", detail::Toggle2Dict::from_toggle)
-        .def("fixed_as_dict", detail::Toggle2Dict::fixed_from_toggle)
-        .def("dynamic_as_dict", detail::Toggle2Dict::dynamic_from_toggle)
+        .def("to_python", detail::Toggle2Python::from_toggle, py::arg("type")="")
         //
         ;
 

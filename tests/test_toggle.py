@@ -259,7 +259,8 @@ class ToggleSerializationTC(unittest.TestCase):
         golden = [{'fixed': {'use_pyside': self.USE_PYSIDE,
                              'show_axis': False}},
                   {'dynamic': {'k1': {'kreal': -2.12}, 'kbool': True}}]
-        data = tg.as_dict()
+        data = tg.to_python()
+        self.assertIsInstance(data, list)  # return a list of dict
         self.assertEqual(data, golden)
         # JSON string differs by platform, use back-n-force conversion to test
         self.assertEqual(json.loads(json.dumps(data)), golden)
@@ -270,7 +271,8 @@ class ToggleSerializationTC(unittest.TestCase):
         self.assertEqual(tg.dynamic_keys(), [])
 
         golden = {'show_axis': False, 'use_pyside': self.USE_PYSIDE}
-        data = tg.fixed_as_dict()
+        data = tg.to_python(type="fixed")
+        self.assertIsInstance(data, dict)
         self.assertEqual(data, golden)
         # JSON string differs by platform, use back-n-force conversion to test
         self.assertEqual(json.loads(json.dumps(data)), golden)
@@ -285,7 +287,8 @@ class ToggleSerializationTC(unittest.TestCase):
         tg.set_real("k1.kreal", -2.12)
 
         golden = {'k1': {'kreal': -2.12}, 'kbool': True}
-        data = tg.dynamic_as_dict()
+        data = tg.to_python(type="dynamic")
+        self.assertIsInstance(data, dict)
         self.assertEqual(data, golden)
         # JSON string differs by platform, use back-n-force conversion to test
         self.assertEqual(json.loads(json.dumps(data)), golden)
