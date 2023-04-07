@@ -59,6 +59,22 @@ protected:
 WrapSolidToggle::WrapSolidToggle(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
 {
+    namespace py = pybind11;
+
+    (*this)
+        .def(
+            "get_names",
+            [](wrapped_type const &)
+            {
+                // Hardcoding the property names in a lambda does not scale,
+                // but I have only 1 property at the moment.
+                py::list r;
+                r.append("use_pyside");
+                return r;
+            })
+        //
+        ;
+
     // Instance properties.
     (*this)
         .def_property_readonly("use_pyside", &wrapped_type::use_pyside)
@@ -86,6 +102,22 @@ protected:
 WrapFixedToggle::WrapFixedToggle(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
 {
+    namespace py = pybind11;
+
+    (*this)
+        .def(
+            "get_names",
+            [](wrapped_type const &)
+            {
+                // Hardcoding the property names in a lambda does not scale,
+                // but I have only 1 property at the moment.
+                py::list r;
+                r.append("show_axis");
+                return r;
+            })
+        //
+        ;
+
     // Instance properties.
     (*this)
         .def_property("show_axis", &wrapped_type::get_show_axis, &wrapped_type::set_show_axis)

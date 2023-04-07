@@ -39,9 +39,30 @@ class ToggleTC(unittest.TestCase):
         self.assertTrue(
             "Toggle: USE_PYSIDE=" in modmesh.Toggle.instance.report())
 
-    def test_instance(self):
-        self.assertTrue(hasattr(modmesh.Toggle.solid, "use_pyside"))
-        self.assertEqual(modmesh.Toggle.fixed.show_axis, False)
+    def test_solid_names(self):
+        solid = modmesh.Toggle.solid
+
+        # Test names
+        golden = ["use_pyside"]
+        self.assertEqual(sorted(solid.get_names()), golden)
+
+        # Test key existence
+        for n in sorted(solid.get_names()):
+            self.assertTrue(hasattr(solid, n))
+
+    def test_fixed_defaults(self):
+        fixed = modmesh.Toggle.fixed
+
+        # Hardcoding the property names and default values does not scale, but
+        # I have only one property at the momemnt.  A better way for testing
+        # should be implmented in the future.
+
+        # Test names
+        golden = ["show_axis"]
+        self.assertEqual(sorted(fixed.get_names()), golden)
+
+        # Test property defaults
+        self.assertEqual(fixed.show_axis, False)
 
     def test_clone(self):
         tg = modmesh.Toggle.instance.clone()
