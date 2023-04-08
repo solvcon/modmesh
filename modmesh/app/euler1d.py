@@ -147,7 +147,7 @@ class Controller:
 
         self.use_sub = use_sub
         if self.use_sub is None:
-            self.use_sub = mm.Toggle.fixed.use_pyside
+            self.use_sub = mm.Toggle.instance.solid.use_pyside
         self._main = QtWidgets.QWidget()
         if self.use_sub:
             # FIXME: sub window causes missing QWindow with the following

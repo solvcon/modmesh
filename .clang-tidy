@@ -10,6 +10,8 @@ Checks: >
     -modernize-loop-convert,
     -modernize-use-nodiscard,
     -modernize-use-trailing-return-type,
+    -cppcoreguidelines-avoid-const-or-ref-data-members,
+    -cppcoreguidelines-avoid-do-while,
     -cppcoreguidelines-avoid-magic-numbers,
     -cppcoreguidelines-non-private-member-variables-in-classes,
     -cppcoreguidelines-macro-usage,

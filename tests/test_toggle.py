@@ -28,6 +28,7 @@
 import os
 import unittest
 import math
+import json
 
 import modmesh
 
@@ -38,9 +39,30 @@ class ToggleTC(unittest.TestCase):
         self.assertTrue(
             "Toggle: USE_PYSIDE=" in modmesh.Toggle.instance.report())
 
-    def test_instance(self):
-        self.assertTrue(hasattr(modmesh.Toggle.fixed, "use_pyside"))
-        self.assertTrue(hasattr(modmesh.Toggle.fixed, "show_axis"))
+    def test_solid_names(self):
+        solid = modmesh.Toggle.instance.solid
+
+        # Test names
+        golden = ["use_pyside"]
+        self.assertEqual(sorted(solid.get_names()), golden)
+
+        # Test key existence
+        for n in sorted(solid.get_names()):
+            self.assertTrue(hasattr(solid, n))
+
+    def test_fixed_defaults(self):
+        fixed = modmesh.Toggle.instance.fixed
+
+        # Hardcoding the property names and default values does not scale, but
+        # I have only one property at the momemnt.  A better way for testing
+        # should be implmented in the future.
+
+        # Test names
+        golden = ["show_axis"]
+        self.assertEqual(sorted(fixed.get_names()), golden)
+
+        # Test property defaults
+        self.assertEqual(fixed.show_axis, False)
 
     def test_clone(self):
         tg = modmesh.Toggle.instance.clone()
@@ -165,11 +187,17 @@ class ToggleDynamicTC(unittest.TestCase):
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
-        # Raise exception when the requested key is not available (no need to
-        # test for all types).
+        # Raise exception when the requested key is not available with the
+        # dynamic getter (no need to test for all types).
         with self.assertRaisesRegex(
                 AttributeError,
-                r'Cannt get non-existing key "dunder_nonexist"'
+                r'Cannot get non-existing key "dunder_nonexist"'
+        ):
+            tg.dynamic.dunder_nonexist
+        # Overall getter has a different message
+        with self.assertRaisesRegex(
+                AttributeError,
+                r'Cannot get by key "dunder_nonexist'
         ):
             tg.dunder_nonexist
 
@@ -194,12 +222,18 @@ class ToggleDynamicTC(unittest.TestCase):
         self.assertTrue(hasattr(tg, "dunder_int32"))
         self.assertFalse(hasattr(tg, "dunder_nonexist"))
 
-        # Raise exception when the key to be set is not available (no need to
-        # test for all types).
+        # Raise exception when the key to be set is not available with the
+        # dynamic setter (no need to test for all types).
         with self.assertRaisesRegex(
                 AttributeError,
                 r'Cannot set non-existing key "dunder_nonexist_real"; '
                 r'use set_TYPE\(\) instead'
+        ):
+            tg.dynamic.dunder_nonexist_real = 12.4
+        # Overall setter has a different message
+        with self.assertRaisesRegex(
+                AttributeError,
+                r'Cannot set by key "dunder_nonexist_real"'
         ):
             tg.dunder_nonexist_real = 12.4
 
@@ -240,6 +274,66 @@ class ToggleHierarchicalTC(unittest.TestCase):
                           'level1p', 'level1p.level2p',
                           'level1p.level2p.test_int32',
                           'level1p.test_bool', 'test_int8'])
+
+
+class ToggleSerializationTC(unittest.TestCase):
+
+    def test_to_json(self):
+        tg = modmesh.Toggle.instance.clone()
+        tg.dynamic_clear()
+        self.assertEqual(tg.dynamic_keys(), [])
+
+        tg.set_bool("kbool", True)
+        tg.add_subkey("k1")
+        tg.set_real("k1.kreal", -2.12)
+
+        golden = [{'fixed': {'show_axis': False}},
+                  {'dynamic': {'k1': {'kreal': -2.12}, 'kbool': True}}]
+        data = tg.to_python()
+        self.assertIsInstance(data, list)  # return a list of dict
+        self.assertEqual(data, golden)
+        # JSON string differs by platform, use back-n-force conversion to test
+        self.assertEqual(json.loads(json.dumps(data)), golden)
+
+    def test_solid_to_json(self):
+        tg = modmesh.Toggle.instance.clone()
+        tg.dynamic_clear()
+        self.assertEqual(tg.dynamic_keys(), [])
+
+        golden = {'use_pyside': tg.solid.use_pyside}
+        data = tg.to_python(type="solid")
+        self.assertIsInstance(data, dict)
+        self.assertEqual(data, golden)
+        # JSON string differs by platform, use back-n-force conversion to test
+        self.assertEqual(json.loads(json.dumps(data)), golden)
+
+    def test_fixed_to_json(self):
+        tg = modmesh.Toggle.instance.clone()
+        tg.dynamic_clear()
+        self.assertEqual(tg.dynamic_keys(), [])
+
+        golden = {'show_axis': False}
+        data = tg.to_python(type="fixed")
+        self.assertIsInstance(data, dict)
+        self.assertEqual(data, golden)
+        # JSON string differs by platform, use back-n-force conversion to test
+        self.assertEqual(json.loads(json.dumps(data)), golden)
+
+    def test_dynamic_to_json(self):
+        tg = modmesh.Toggle.instance.clone()
+        tg.dynamic_clear()
+        self.assertEqual(tg.dynamic_keys(), [])
+
+        tg.set_bool("kbool", True)
+        tg.add_subkey("k1")
+        tg.set_real("k1.kreal", -2.12)
+
+        golden = {'k1': {'kreal': -2.12}, 'kbool': True}
+        data = tg.to_python(type="dynamic")
+        self.assertIsInstance(data, dict)
+        self.assertEqual(data, golden)
+        # JSON string differs by platform, use back-n-force conversion to test
+        self.assertEqual(json.loads(json.dumps(data)), golden)
 
 
 class CommandLineInfoTC(unittest.TestCase):

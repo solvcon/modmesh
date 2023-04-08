@@ -502,7 +502,7 @@ void initialize_view(pybind11::module & mod)
         wrap_view(mod);
     };
 
-    if (Toggle::instance().fixed().get_use_pyside())
+    if (Toggle::instance().solid().use_pyside())
     {
         try
         {

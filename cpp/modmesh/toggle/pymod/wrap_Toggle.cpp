@@ -39,6 +39,49 @@ namespace modmesh
 namespace python
 {
 
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSolidToggle
+    : public WrapBase<WrapSolidToggle, SolidToggle>
+{
+
+public:
+
+    using base_type = WrapBase<WrapSolidToggle, SolidToggle>;
+    using wrapped_type = typename base_type::wrapped_type;
+
+    friend root_base_type;
+
+protected:
+
+    WrapSolidToggle(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+}; /* end class WrapSolidToggle */
+
+WrapSolidToggle::WrapSolidToggle(pybind11::module & mod, const char * pyname, const char * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def(
+            "get_names",
+            [](wrapped_type const &)
+            {
+                // Hardcoding the property names in a lambda does not scale,
+                // but I have only 1 property at the moment.
+                py::list r;
+                r.append("use_pyside");
+                return r;
+            })
+        //
+        ;
+
+    // Instance properties.
+    (*this)
+        .def_property_readonly("use_pyside", &wrapped_type::use_pyside)
+        //
+        ;
+}
+
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapFixedToggle
     : public WrapBase<WrapFixedToggle, FixedToggle>
 {
@@ -53,14 +96,30 @@ public:
 protected:
 
     WrapFixedToggle(pybind11::module & mod, char const * pyname, char const * pydoc);
-};
+
+}; /* end class WrapFixedToggle */
 
 WrapFixedToggle::WrapFixedToggle(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
 {
+    namespace py = pybind11;
+
+    (*this)
+        .def(
+            "get_names",
+            [](wrapped_type const &)
+            {
+                // Hardcoding the property names in a lambda does not scale,
+                // but I have only 1 property at the moment.
+                py::list r;
+                r.append("show_axis");
+                return r;
+            })
+        //
+        ;
+
     // Instance properties.
     (*this)
-        .def_property_readonly("use_pyside", &wrapped_type::get_use_pyside)
         .def_property("show_axis", &wrapped_type::get_show_axis, &wrapped_type::set_show_axis)
         //
         ;
@@ -125,7 +184,7 @@ pybind11::object WrapHierarchicalToggleAccess::getattr(wrapped_type & self, std:
     {
     case DynamicToggleIndex::TYPE_NONE:
         throw py::attribute_error(
-            Formatter() << "Cannt get non-existing key \"" << self.rekey(key) << "\"");
+            Formatter() << "Cannot get non-existing key \"" << self.rekey(key) << "\"");
         break;
     case DynamicToggleIndex::TYPE_BOOL:
         return py::cast(self.get_bool(key));
@@ -220,6 +279,145 @@ protected:
 
 }; /* end class WrapToggle */
 
+namespace detail
+{
+
+struct Toggle2Python
+{
+
+    explicit Toggle2Python(Toggle & toggle)
+        : m_toggle(toggle)
+    {
+    }
+
+    static pybind11::object from_toggle(Toggle & toggle, std::string const & type)
+    {
+        pybind11::object r;
+        if (type == "solid")
+        {
+            Toggle2Python const o(toggle);
+            r = o.load_solid();
+        }
+        else if (type == "fixed")
+        {
+            Toggle2Python const o(toggle);
+            r = o.load_fixed();
+        }
+        else if (type == "dynamic")
+        {
+            Toggle2Python o(toggle);
+            pybind11::dict d = o.load_dynamic();
+            return d;
+        }
+        else
+        {
+            Toggle2Python o(toggle);
+            r = o.load();
+        }
+        return r;
+    }
+
+    pybind11::list load()
+    {
+        namespace py = pybind11;
+        py::list ret;
+        {
+            py::dict d;
+            d["fixed"] = load_fixed();
+            ret.append(d);
+        }
+        {
+            py::dict d;
+            d["dynamic"] = load_dynamic();
+            ret.append(d);
+        }
+        return ret;
+    }
+
+    pybind11::dict load_solid() const
+    {
+        namespace py = pybind11;
+        SolidToggle const & solid = m_toggle.solid();
+        py::dict ret;
+        ret["use_pyside"] = solid.use_pyside();
+        return ret;
+    }
+
+    pybind11::dict load_fixed() const
+    {
+        namespace py = pybind11;
+        FixedToggle const & fixed = m_toggle.fixed();
+        py::dict ret;
+        ret["show_axis"] = fixed.get_show_axis();
+        return ret;
+    }
+
+    pybind11::dict load_dynamic()
+    {
+        namespace py = pybind11;
+        DynamicToggleTable & table = m_toggle.dynamic();
+        std::vector<std::string> const keys = table.keys();
+        HierarchicalToggleAccess access(table);
+        py::dict ret;
+
+        for (auto const & fk : keys)
+        {
+            std::vector<std::string> const hk = split(fk);
+            DynamicToggleIndex const index = table.get_index(fk);
+            py::dict d = ret;
+            for (size_t i = 0; i < hk.size(); ++i)
+            {
+                auto const & k = hk[i];
+                if (!d.contains(k))
+                {
+                    if ((hk.size() > 1 && i != (hk.size() - 1)) ||
+                        (index.type == DynamicToggleIndex::TYPE_SUBKEY))
+                    {
+                        d[k.c_str()] = py::dict();
+                    }
+                    else
+                    {
+                        d[k.c_str()] = WrapHierarchicalToggleAccess::getattr(access, fk);
+                    }
+                }
+                else
+                {
+                    // do nothing if the key is already there
+                }
+                if (i != (hk.size() - 1))
+                {
+                    d = d[k.c_str()];
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    Toggle & m_toggle;
+
+private:
+
+    static std::vector<std::string> split(std::string const & input, char c = '.')
+    {
+        char const * str = input.c_str();
+        std::vector<std::string> result;
+        do
+        {
+            const char * begin = str;
+            while (*str != c && *str)
+            {
+                str++;
+            }
+            result.emplace_back(begin, str);
+        } while (0 != *str++);
+        return result;
+    }
+
+}; /* end struct Toggle2Python */
+
+} /* end namespace detail */
+
 WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const * pydoc)
     : base_type(mod, pyname, pydoc)
 {
@@ -228,25 +426,63 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
     (*this)
         .def("clone", &wrapped_type::clone, py::return_value_policy::take_ownership)
         .def("report", &report)
+        .def("to_python", detail::Toggle2Python::from_toggle, py::arg("type") = "")
         //
         ;
 
-    // Dynamic properties.  Number of the properties can be freely changed
-    // during runtime.
+    // Accssors to dynamic properties.  Number of the properties can be freely
+    // changed during runtime.
     (*this)
         .def(
-            "__getattr__",
+            "get_value",
             [](wrapped_type & self, std::string const & key)
             {
                 HierarchicalToggleAccess access(self.dynamic());
                 return WrapHierarchicalToggleAccess::getattr(access, key);
             })
         .def(
+            "__getattr__",
+            [](wrapped_type & self, std::string const & key)
+            {
+                HierarchicalToggleAccess access(self.dynamic());
+                py::object ret;
+                if (access.get_index(key).type != DynamicToggleIndex::TYPE_NONE) // dynamic
+                {
+                    ret = WrapHierarchicalToggleAccess::getattr(access, key);
+                }
+                else if (key == "show_axis") // fixed
+                {
+                    ret = py::cast(self.fixed().get_show_axis());
+                }
+                else if (key == "use_pyside") // solid
+                {
+                    ret = py::cast(self.solid().use_pyside());
+                }
+                else
+                {
+                    throw py::attribute_error(Formatter() << "Cannot get by key \"" << key << "\"");
+                }
+                return ret;
+            })
+        .def(
             "__setattr__",
             [](wrapped_type & self, std::string const & key, pybind11::object & value)
             {
                 HierarchicalToggleAccess access(self.dynamic());
-                WrapHierarchicalToggleAccess::setattr(access, key, value);
+                if (access.get_index(key).type != DynamicToggleIndex::TYPE_NONE) // dynamic
+                {
+                    // This call only sets an existing key.
+                    WrapHierarchicalToggleAccess::setattr(access, key, value);
+                }
+                else if (key == "show_axis") // fixed
+                {
+                    self.fixed().set_show_axis(py::cast<bool>(value));
+                }
+                /* solid toggle is not settable */
+                else
+                {
+                    throw py::attribute_error(Formatter() << "Cannot set by key \"" << key << "\"");
+                }
             })
         .def("dynamic_keys", &wrapped_type::dynamic_keys)
         .def("dynamic_clear", &wrapped_type::dynamic_clear)
@@ -275,22 +511,36 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
             "instance",
             [](py::object const &) -> auto &
             { return wrapped_type::instance(); })
-        .def_property_readonly_static(
-            "fixed",
-            [](py::object const &) -> auto &
-            { return wrapped_type::instance().fixed(); })
         //
         ;
 
     // Instance properties.
     (*this)
+        .def_property_readonly(
+            "solid",
+            [](wrapped_type & self) -> auto &
+            {
+                return self.solid();
+            })
+        .def_property_readonly(
+            "fixed",
+            [](wrapped_type & self) -> auto &
+            {
+                return self.fixed();
+            })
+        .def_property_readonly(
+            "dynamic",
+            [](wrapped_type & self)
+            {
+                return HierarchicalToggleAccess(self.dynamic());
+            })
         //
         ;
 }
 
 std::string WrapToggle::report(WrapToggle::wrapped_type const & self)
 {
-    return Formatter() << "Toggle: USE_PYSIDE=" << self.fixed().get_use_pyside();
+    return Formatter() << "Toggle: USE_PYSIDE=" << self.solid().use_pyside();
 }
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapCommandLineInfo
@@ -368,6 +618,7 @@ WrapProcessInfo::WrapProcessInfo(pybind11::module & mod, char const * pyname, ch
 
 void wrap_Toggle(pybind11::module & mod)
 {
+    WrapSolidToggle::commit(mod, "SolidToggle", "SolidToggle");
     WrapFixedToggle::commit(mod, "FixedToggle", "FixedToggle");
     WrapHierarchicalToggleAccess::commit(mod, "HierarchicalToggleAccess", "HierarchicalToggleAccess");
     WrapToggle::commit(mod, "Toggle", "Toggle");
