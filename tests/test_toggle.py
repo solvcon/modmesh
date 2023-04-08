@@ -40,7 +40,7 @@ class ToggleTC(unittest.TestCase):
             "Toggle: USE_PYSIDE=" in modmesh.Toggle.instance.report())
 
     def test_solid_names(self):
-        solid = modmesh.Toggle.solid
+        solid = modmesh.Toggle.instance.solid
 
         # Test names
         golden = ["use_pyside"]
@@ -51,7 +51,7 @@ class ToggleTC(unittest.TestCase):
             self.assertTrue(hasattr(solid, n))
 
     def test_fixed_defaults(self):
-        fixed = modmesh.Toggle.fixed
+        fixed = modmesh.Toggle.instance.fixed
 
         # Hardcoding the property names and default values does not scale, but
         # I have only one property at the momemnt.  A better way for testing
@@ -187,11 +187,17 @@ class ToggleDynamicTC(unittest.TestCase):
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
-        # Raise exception when the requested key is not available (no need to
-        # test for all types).
+        # Raise exception when the requested key is not available with the
+        # dynamic getter (no need to test for all types).
         with self.assertRaisesRegex(
                 AttributeError,
-                r'Cannt get non-existing key "dunder_nonexist"'
+                r'Cannot get non-existing key "dunder_nonexist"'
+        ):
+            tg.dynamic.dunder_nonexist
+        # Overall getter has a different message
+        with self.assertRaisesRegex(
+                AttributeError,
+                r'Cannot get by key "dunder_nonexist'
         ):
             tg.dunder_nonexist
 
@@ -216,12 +222,18 @@ class ToggleDynamicTC(unittest.TestCase):
         self.assertTrue(hasattr(tg, "dunder_int32"))
         self.assertFalse(hasattr(tg, "dunder_nonexist"))
 
-        # Raise exception when the key to be set is not available (no need to
-        # test for all types).
+        # Raise exception when the key to be set is not available with the
+        # dynamic setter (no need to test for all types).
         with self.assertRaisesRegex(
                 AttributeError,
                 r'Cannot set non-existing key "dunder_nonexist_real"; '
                 r'use set_TYPE\(\) instead'
+        ):
+            tg.dynamic.dunder_nonexist_real = 12.4
+        # Overall setter has a different message
+        with self.assertRaisesRegex(
+                AttributeError,
+                r'Cannot set by key "dunder_nonexist_real"'
         ):
             tg.dunder_nonexist_real = 12.4
 

@@ -184,7 +184,7 @@ pybind11::object WrapHierarchicalToggleAccess::getattr(wrapped_type & self, std:
     {
     case DynamicToggleIndex::TYPE_NONE:
         throw py::attribute_error(
-            Formatter() << "Cannt get non-existing key \"" << self.rekey(key) << "\"");
+            Formatter() << "Cannot get non-existing key \"" << self.rekey(key) << "\"");
         break;
     case DynamicToggleIndex::TYPE_BOOL:
         return py::cast(self.get_bool(key));
@@ -426,11 +426,6 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
     (*this)
         .def("clone", &wrapped_type::clone, py::return_value_policy::take_ownership)
         .def("report", &report)
-        //
-        ;
-
-    // Conversion.
-    (*this)
         .def("to_python", detail::Toggle2Python::from_toggle, py::arg("type") = "")
         //
         ;
@@ -450,14 +445,44 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
             [](wrapped_type & self, std::string const & key)
             {
                 HierarchicalToggleAccess access(self.dynamic());
-                return WrapHierarchicalToggleAccess::getattr(access, key);
+                py::object ret;
+                if (access.get_index(key).type != DynamicToggleIndex::TYPE_NONE) // dynamic
+                {
+                    ret = WrapHierarchicalToggleAccess::getattr(access, key);
+                }
+                else if (key == "show_axis") // fixed
+                {
+                    ret = py::cast(self.fixed().get_show_axis());
+                }
+                else if (key == "use_pyside") // solid
+                {
+                    ret = py::cast(self.solid().use_pyside());
+                }
+                else
+                {
+                    throw py::attribute_error(Formatter() << "Cannot get by key \"" << key << "\"");
+                }
+                return ret;
             })
         .def(
             "__setattr__",
             [](wrapped_type & self, std::string const & key, pybind11::object & value)
             {
                 HierarchicalToggleAccess access(self.dynamic());
-                WrapHierarchicalToggleAccess::setattr(access, key, value);
+                if (access.get_index(key).type != DynamicToggleIndex::TYPE_NONE) // dynamic
+                {
+                    // This call only sets an existing key.
+                    WrapHierarchicalToggleAccess::setattr(access, key, value);
+                }
+                else if (key == "show_axis") // fixed
+                {
+                    self.fixed().set_show_axis(py::cast<bool>(value));
+                }
+                /* solid toggle is not settable */
+                else
+                {
+                    throw py::attribute_error(Formatter() << "Cannot set by key \"" << key << "\"");
+                }
             })
         .def("dynamic_keys", &wrapped_type::dynamic_keys)
         .def("dynamic_clear", &wrapped_type::dynamic_clear)
@@ -480,25 +505,35 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
         //
         ;
 
-    // Accessors to static properties.
+    // Static properties.
     (*this)
         .def_property_readonly_static(
             "instance",
             [](py::object const &) -> auto &
             { return wrapped_type::instance(); })
-        .def_property_readonly_static(
-            "solid",
-            [](py::object const &) -> auto &
-            { return wrapped_type::instance().solid(); })
-        .def_property_readonly_static(
-            "fixed",
-            [](py::object const &) -> auto &
-            { return wrapped_type::instance().fixed(); })
         //
         ;
 
     // Instance properties.
     (*this)
+        .def_property_readonly(
+            "solid",
+            [](wrapped_type & self) -> auto &
+            {
+                return self.solid();
+            })
+        .def_property_readonly(
+            "fixed",
+            [](wrapped_type & self) -> auto &
+            {
+                return self.fixed();
+            })
+        .def_property_readonly(
+            "dynamic",
+            [](wrapped_type & self)
+            {
+                return HierarchicalToggleAccess(self.dynamic());
+            })
         //
         ;
 }
