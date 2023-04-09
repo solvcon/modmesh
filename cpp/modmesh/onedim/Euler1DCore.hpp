@@ -50,6 +50,7 @@ public:
     constexpr static size_t BOUND_COUNT = 2;
     static constexpr uint8_t NVAR = 3;
     static constexpr double TINY = 1.e-100;
+    static constexpr double R = 8.31446261815324;
 
 private:
 
@@ -113,6 +114,12 @@ public:
     SimpleArray<double> velocity() const;
     double pressure(size_t it) const;
     SimpleArray<double> pressure() const;
+    double temperature(size_t it) const;
+    SimpleArray<double> temperature() const;
+    double internal_energy(size_t it) const;
+    SimpleArray<double> internal_energy() const;
+    double entropy(size_t it) const { return pressure(it) / std::pow(density(it), m_gamma(it)); }
+    SimpleArray<double> entropy() const;
 
     void update_cfl(bool odd_plane);
     void march_half_so0(bool odd_plane);
@@ -148,6 +155,20 @@ inline double Euler1DCore::pressure(size_t it) const
     ret /= 2.0 * m_so0(it, 0) + TINY;
     ret = m_so0(it, 2) - ret;
     ret *= m_gamma(it) - 1.0;
+    return ret;
+}
+
+inline double Euler1DCore::temperature(size_t it) const
+{
+    double ret = (m_gamma(it) - 1.0) / R;
+    ret *= m_so0(it, 2) / m_so0(it, 0) - 0.5 * pow<2>(m_so0(it, 1)) / pow<2>(m_so0(it, 0));
+    return ret;
+}
+
+inline double Euler1DCore::internal_energy(size_t it) const
+{
+    double ret = m_so0(it, 2) / m_so0(it, 0);
+    ret -= 0.5 * (pow<2>(m_so0(it, 1)) / pow<2>(m_so0(it, 0)));
     return ret;
 }
 

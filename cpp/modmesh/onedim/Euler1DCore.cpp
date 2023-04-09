@@ -189,5 +189,38 @@ void Euler1DCore::treat_boundary_so1()
     }
 }
 
+SimpleArray<double> Euler1DCore::temperature() const
+{
+    MODMESH_TIME("Euler1DCore::temperature");
+    SimpleArray<double> ret(ncoord());
+    for (size_t it = 0; it < ncoord(); ++it)
+    {
+        ret(it) = temperature(it);
+    }
+    return ret;
+}
+
+SimpleArray<double> Euler1DCore::internal_energy() const
+{
+    MODMESH_TIME("Euler1DCore::internal_energy");
+    SimpleArray<double> ret(ncoord());
+    for (size_t it = 0; it < ncoord(); ++it)
+    {
+        ret(it) = internal_energy(it);
+    }
+    return ret;
+}
+
+SimpleArray<double> Euler1DCore::entropy() const
+{
+    MODMESH_TIME("Euler1DCore::entropy");
+    SimpleArray<double> ret(ncoord());
+    for (size_t it = 0; it < ncoord(); ++it)
+    {
+        ret(it) = entropy(it);
+    }
+    return ret;
+}
+
 } /* end namespace onedim */
 } /* end namespace modmesh */

@@ -88,7 +88,19 @@ protected:
             .def_property_readonly(
                 "pressure",
                 [](wrapped_type & self)
-                { return to_ndarray(self.pressure()); });
+                { return to_ndarray(self.pressure()); })
+            .def_property_readonly(
+                "temperature",
+                [](wrapped_type & self)
+                { return to_ndarray(self.temperature()); })
+            .def_property_readonly(
+                "internal_energy",
+                [](wrapped_type & self)
+                { return to_ndarray(self.internal_energy()); })
+            .def_property_readonly(
+                "entropy",
+                [](wrapped_type & self)
+                { return to_ndarray(self.entropy()); });
 
         (*this)
             .def_property_readonly(
