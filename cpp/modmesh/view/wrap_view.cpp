@@ -41,13 +41,12 @@
 #ifdef MODMESH_PYSIDE6_FULL
 #include <pyside.h>
 #else // MODMESH_PYSIDE6_FULL
-#define PYSIDE_API MODMESH_PYTHON_WRAPPER_VISIBILITY
 namespace PySide
 {
 // The prototypes are taken from pyside.h
-PYSIDE_API PyTypeObject * getTypeForQObject(const QObject * cppSelf);
-PYSIDE_API PyObject * getWrapperForQObject(QObject * cppSelf, PyTypeObject * sbk_type);
-PYSIDE_API QObject * convertToQObject(PyObject * object, bool raiseError);
+PyTypeObject * getTypeForQObject(const QObject * cppSelf);
+PyObject * getWrapperForQObject(QObject * cppSelf, PyTypeObject * sbk_type);
+QObject * convertToQObject(PyObject * object, bool raiseError);
 } // end namespace PySide
 #endif // MODMESH_PYSIDE6_FULL
 
