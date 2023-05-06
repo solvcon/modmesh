@@ -52,6 +52,8 @@ enable = False
 try:
     from _modmesh import view as _vimpl  # noqa: F401
     enable = True
+    from PySide6.QtWidgets import QMainWindow
+    _main_window = _vimpl.RManager.instance.mainWindow
 except ImportError:
     pass
 
