@@ -52,6 +52,13 @@ enable = False
 try:
     from _modmesh import view as _vimpl  # noqa: F401
     enable = True
+    # Before using _modmesh mianWindow api, the QMainWindow signature need
+    # to be imported or will get type error:
+    # TypeError: Unable to convert function return value to a Python type!
+    # Creating variable to handle Qt MainWindow which is created by c++ and
+    # registered it to Shiboken6 to prevent runtime error occured:
+    # RuntimeError:
+    # Internal C++ object (PySide6.QtGui.QWindow) already deleted.
     from PySide6.QtWidgets import QMainWindow
     _main_window = _vimpl.RManager.instance.mainWindow
 except ImportError:
