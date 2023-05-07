@@ -59,7 +59,7 @@ try:
     # registered it to Shiboken6 to prevent runtime error occured:
     # RuntimeError:
     # Internal C++ object (PySide6.QtGui.QWindow) already deleted.
-    from PySide6.QtWidgets import QMainWindow
+    from PySide6.QtWidgets import QMainWindow  # noqa: F401
     _main_window = _vimpl.RManager.instance.mainWindow
 except ImportError:
     pass
