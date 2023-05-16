@@ -35,7 +35,6 @@
 #include <QPointer>
 #include <QClipboard>
 
-
 // Usually MODMESH_PYSIDE6_FULL is not defined unless for debugging.
 #ifdef MODMESH_PYSIDE6_FULL
 #include <pyside.h>
