@@ -64,13 +64,7 @@ Toggle & Toggle::instance()
 }
 
 SolidToggle::SolidToggle()
-    : m_use_pyside(
-#ifdef MODMESH_USE_PYSIDE
-          true
-#else
-          false
-#endif
-      )
+    : m_use_pyside(true)
 {
 }
 

@@ -95,13 +95,6 @@ set(MODMESH_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/cpp" CACHE INTERNAL "")
 
 include_directories(${MODMESH_INCLUDE_DIR})
 
-set(MODMESH_USE_PYSIDE False CACHE BOOL "Choose to build with pyside or not")
-message(STATUS "MODMESH_USE_PYSIDE: ${MODMESH_USE_PYSIDE}")
-
-if (MODMESH_USE_PYSIDE)
-    add_compile_definitions(MODMESH_USE_PYSIDE)
-endif () # MODMESH_USE_PYSIDE
-
 execute_process(
     COMMAND python3 -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))"
     OUTPUT_VARIABLE PYSIDE6_PYTHON_PACKAGE_PATH
