@@ -215,6 +215,49 @@ public:
 
 }; /* end class FixedToggle */
 
+/**
+ * The toggle system for modmesh. There are 3 types of toggles:
+ *
+ * 1. solid toggles: managed by SolidToggle class. It is the toggles whose value
+ *    is determined during compile time. The value is read-only (const) through
+ *    out the program lifecycle (the process).
+ *
+ *    The solid toggles have address and can be referenced. They cannot be
+ *    optimized out (unlike macros and constexpr). It could add overhead when
+ *    used in tight loops. The overhead may usually be too low to be noticed,
+ *    but sometimes one needs to be careful about it.
+ *
+ * 2. fixed toggles: managed by FixedToggle class. It is the toggles whose name
+ *    is determined during compile time. The value can be changed during
+ *    runtime.
+ *
+ *    Because the names are determined during compile time, when accessing the
+ *    toggles, no table lookup is needed. The address of the toggle variables
+ *    has been determined by the compiler and linker.
+ *
+ *    The runtime cost of fixed toggles is the same as solid toggles. It may
+ *    be used in tight loops. Just becareful about the potential runtime
+ *    overhead.
+ *
+ * 3. dynamic toggles: managed by DynamicToggleTable. The toggles are
+ *    hierarchical and the names and values can be added, removed, and modified
+ *    during runtime. The value needs to use limited data types: bool, int8,
+ *    int16, int32, int64, real, and string. It is intentional not to support
+ *    unsigned integers.
+ *
+ *    Accessing dynamic toggles requires table lookup and string comparison. It
+ *    is slow but flexible.
+ *
+ *    To access the dynamic toggles from C++, the data type of the toggle
+ *    The hierarchical access (from C++) uses ".", like:
+ *
+ *      tg.get_int8("top_level.second_level.key_name")
+ *
+ *    In Python, the wrapper can determine the type dynamically, and the
+ *    hierarchical access may use attribute syntax:
+ *
+ *      tg.top_level.second_level.key_name = value
+ */
 class Toggle
 {
 
