@@ -120,6 +120,7 @@ jobs:
           echo "which python3: $(which python3)"
           ls -al $(which python3)
           python3 -m pip -v install --upgrade setuptools
+          python3 -m pip -v install --upgrade wheel # required by "--no-use-pep517"
           # TODO:
           # This issue was linked to #213
           # temporary remove pip upgrade, due to latest pip will let cmake
@@ -152,7 +153,7 @@ jobs:
         run: |
           # Using pip install instead of legacy install
           # ref: https://stackoverflow.com/questions/52375693/troubleshooting-pkg-resources-distributionnotfound-error
-          python3 -m pip install -v . --global-option=build_ext \
+          python3 -m pip install -v . --no-use-pep517 --global-option=build_ext \
             --global-option="--cmake-args=${JOB_CMAKE_ARGS} -DPYTHON_EXECUTABLE=$(which python3)" \
             --global-option="--make-args="VERBOSE=1""
 
