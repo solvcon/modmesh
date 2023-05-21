@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+# Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -26,24 +26,39 @@
 
 
 """
-modmesh: the description of the package is intentionally left blank
+High-level control of toggles.
 """
 
 
-# Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
-
+import json
 
 from . import core
-from .core import *  # noqa: F401, F403
-from . import apputil  # noqa: F401
-from . import view  # noqa: F401
-from . import spacetime  # noqa: F401
-from . import onedim  # noqa: F401
-from . import system  # noqa: F401
-from . import toggle  # noqa: F401
 
 
-clinfo = core.ProcessInfo.instance.command_line
+def load(data, toggle_instance=None):
+    tg = toggle_instance
+    if tg is None:
+        tg = core.Toggle.instance
+
+    # Parse the input JSON data
+    pdata = json.loads(data)
+    if len(pdata) != 2:
+        raise ValueError("input data must be 2 but get %d" % len(pdata))
+    # pfixed = pdata[0].get('fixed', {})
+    pdynamic = pdata[1].get('dynamic', {})
+
+    # Get the apps sub-section
+    papps = pdynamic.get('apps', {})
+    tg.add_subkey('apps')
+    ta = tg.apps
+
+    # App euler1d
+    ta.add_subkey('euler1d')
+    thisapp = ta.euler1d
+    thispdata = papps.get('euler1d', {})
+    thisapp.set_bool('use_sub', thispdata.get('use_sub', False))
+
+    return tg
 
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

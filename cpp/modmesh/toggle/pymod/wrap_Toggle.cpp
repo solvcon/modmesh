@@ -439,7 +439,26 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
             {
                 HierarchicalToggleAccess access(self.dynamic());
                 return WrapHierarchicalToggleAccess::getattr(access, key);
-            })
+            },
+            py::arg("key"))
+        .def(
+            "get_value",
+            [](wrapped_type & self, std::string const & key, py::object & obj)
+            {
+                HierarchicalToggleAccess access(self.dynamic());
+                py::object ret;
+                if (access.get_index(key).type != DynamicToggleIndex::TYPE_NONE)
+                {
+                    ret = WrapHierarchicalToggleAccess::getattr(access, key);
+                }
+                else
+                {
+                    ret = obj;
+                }
+                return ret;
+            },
+            py::arg("key"),
+            py::arg("default"))
         .def(
             "__getattr__",
             [](wrapped_type & self, std::string const & key)
