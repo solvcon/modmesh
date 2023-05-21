@@ -35,8 +35,6 @@
 #include <QPointer>
 #include <QClipboard>
 
-#ifdef MODMESH_USE_PYSIDE
-
 // Usually MODMESH_PYSIDE6_FULL is not defined unless for debugging.
 #ifdef MODMESH_PYSIDE6_FULL
 #include <pyside.h>
@@ -132,7 +130,6 @@ QT_TYPE_CASTER(QMdiSubWindow, _("QMdiSubWindow"));
 } /* end namespace detail */
 
 } /* end namespace pybind11 */
-#endif // MODMESH_USE_PYSIDE
 
 PYBIND11_DECLARE_HOLDER_TYPE(T, QPointer<T>);
 

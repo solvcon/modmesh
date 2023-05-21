@@ -87,7 +87,7 @@ jobs:
     - name: dependency by pip
       run: |
         sudo pip3 install setuptools
-        sudo pip3 install numpy pytest flake8
+        sudo pip3 install numpy pytest flake8 pyside6==$(qmake6 -query QT_VERSION)
 
     - name: dependency (manual)
       run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
@@ -122,6 +122,7 @@ jobs:
 
     - name: make run_viewer_pytest
       run: |
+        export LD_LIBRARY_PATH=$(python3 -c "import sys, os, shiboken6; sys.stdout.write(os.path.dirname(shiboken6.__file__))")
         make run_viewer_pytest \
           ${JOB_MAKE_ARGS} \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
@@ -178,7 +179,7 @@ jobs:
           ls -al $(which python3)
           python3 -m pip -v install --upgrade setuptools
           python3 -m pip -v install --upgrade pip
-          python3 -m pip -v install --upgrade numpy pytest flake8
+          python3 -m pip -v install --upgrade numpy pytest flake8 pyside6==$(qmake -query QT_VERSION)
 
       - name: dependency (manual)
         run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
@@ -213,6 +214,10 @@ jobs:
 
       - name: make run_viewer_pytest
         run: |
+          # PySide6 installed by pip will bundle with a prebuilt Qt,
+          # this will cause duplicated symbol.
+          # Solve this issue by removed PySide6 prebuilt Qt library
+          rm -rf $(python3 -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))")/Qt/lib/*.framework
           make run_viewer_pytest \
             ${JOB_MAKE_ARGS} \
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
