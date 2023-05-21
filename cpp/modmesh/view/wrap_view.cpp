@@ -480,6 +480,21 @@ void wrap_view(pybind11::module & mod)
     WrapRManagerProxy::commit(mod, "RManagerProxy", "RManagerProxy");
 
     mod.attr("mgr") = RManagerProxy();
+
+    try
+    {
+        // Creating module level variable to handle Qt MainWindow which is
+        // created by c++ and registered it to Shiboken6 to prevent runtime
+        // error occured.
+        // RuntimeError:
+        // Internal C++ object (PySide6.QtGui.QWindow) already deleted.
+        // py::module::import("PySide6.QtWidgets");
+        py::globals()["_mainWindow"] = RManager::instance().mainWindow();
+    }
+    catch (const pybind11::error_already_set & e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
 }
 
 struct view_pymod_tag;
@@ -502,7 +517,10 @@ void initialize_view(pybind11::module & mod)
     {
         try
         {
-            pybind11::module::import("PySide6");
+            // Before using PySide6 api, the function signature need
+            // to be imported or will get type error:
+            // TypeError: Unable to convert function return value to a Python type!
+            pybind11::module::import("PySide6.QtWidgets");
         }
         catch (const pybind11::error_already_set & e)
         {
