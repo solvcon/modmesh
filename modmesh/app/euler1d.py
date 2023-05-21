@@ -392,7 +392,8 @@ class Controller:
         self.current_step = 0
         self.timer = None
 
-        self.use_sub = use_sub
+        self.use_sub = mm.Toggle.instance.get_value('apps.euler1d.use_sub',
+                                                    False)
         if self.use_sub is None:
             self.use_sub = mm.Toggle.instance.solid.use_pyside
         self._main = QWidget()

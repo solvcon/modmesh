@@ -275,6 +275,28 @@ class ToggleHierarchicalTC(unittest.TestCase):
                           'level1p.level2p.test_int32',
                           'level1p.test_bool', 'test_int8'])
 
+    def test_get_value(self):
+        tg = modmesh.Toggle.instance.clone()
+        tg.dynamic_clear()
+
+        tg.add_subkey("level1")
+        tg.set_int8("level1.test_int8", 21)
+        self.assertEqual(tg.level1.test_int8, 21)
+        self.assertEqual(tg.get_value('level1.test_int8'), 21)
+        self.assertEqual(tg.get_value(key='level1.test_int8'), 21)
+        self.assertEqual(tg.get_value('level1.test_int8', 22), 21)
+        self.assertEqual(tg.get_value('level1.test_int8', default=22), 21)
+        self.assertEqual(tg.get_value(key='level1.test_int8', default=22), 21)
+
+        self.assertEqual(tg.get_value('level1.non_exist', 22), 22)
+        self.assertEqual(tg.get_value('level1.non_exist', default=22), 22)
+        self.assertEqual(tg.get_value(key='level1.non_exist', default=22), 22)
+        with self.assertRaisesRegex(
+                AttributeError,
+                r'Cannot get non-existing key "level1.non_exist"'
+        ):
+            self.assertEqual(tg.level1.non_exist, 21)
+
 
 class ToggleSerializationTC(unittest.TestCase):
 
@@ -334,6 +356,38 @@ class ToggleSerializationTC(unittest.TestCase):
         self.assertEqual(data, golden)
         # JSON string differs by platform, use back-n-force conversion to test
         self.assertEqual(json.loads(json.dumps(data)), golden)
+
+
+class ToggleLoadTC(unittest.TestCase):
+
+    def test_load(self):
+        fixture = '''[{"fixed": {"show_axis": false}},
+{"dynamic": {"apps": {"euler1d": {"use_sub": false}}}}]'''
+        tg = modmesh.toggle.load(
+            fixture,
+            toggle_instance=modmesh.Toggle.instance.clone())
+        self.assertEqual(tg.apps.euler1d.use_sub, False)
+
+        fixture = '''[{"fixed": {"show_axis": false}},
+{"dynamic": {"apps": {"euler1d": {"use_sub": true}}}}]'''
+        tg = modmesh.toggle.load(
+            fixture,
+            toggle_instance=modmesh.Toggle.instance.clone())
+        self.assertEqual(tg.apps.euler1d.use_sub, True)
+
+    @unittest.skip("the lifecycle issue may cause segfault")
+    def test_load_bad_lifecycle(self):
+        fixture = '''[{"fixed": {"show_axis": false}},
+{"dynamic": {"apps": {"euler1d": {"use_sub": false}}}}]'''
+        # TODO: Need to fix this later. It may be wrong lifecycle handling with
+        # WrapHierarchicalToggleAccess.
+        with self.assertRaisesRegex(
+                AttributeError,
+                r'Cannot get non-existing key "apps.euler1d"'
+        ):
+            modmesh.toggle.load(
+                fixture,
+                toggle_instance=modmesh.Toggle.instance.clone()).apps.euler1d
 
 
 class CommandLineInfoTC(unittest.TestCase):
