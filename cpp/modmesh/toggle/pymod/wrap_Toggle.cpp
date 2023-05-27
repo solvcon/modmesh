@@ -121,6 +121,7 @@ WrapFixedToggle::WrapFixedToggle(pybind11::module & mod, const char * pyname, co
     // Instance properties.
     (*this)
         .def_property("show_axis", &wrapped_type::get_show_axis, &wrapped_type::set_show_axis)
+        .def_property("python_redirect", &wrapped_type::get_python_redirect, &wrapped_type::set_python_redirect)
         //
         ;
 }

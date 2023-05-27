@@ -208,7 +208,7 @@ void Interpreter::exec_code(std::string const & code)
 
 PythonStreamRedirect & PythonStreamRedirect::activate()
 {
-    if (m_enabled)
+    if (is_enabled())
     {
         auto sys_module = pybind11::module::import("sys");
         // Back up old streams.
