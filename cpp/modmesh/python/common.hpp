@@ -511,8 +511,8 @@ class PythonStreamRedirect
 public:
 
     PythonStreamRedirect(bool enabled)
-        : m_enabled(enabled)
     {
+        set_enabled(enabled);
     }
 
     std::string stdout_string() const;
@@ -520,12 +520,12 @@ public:
 
     PythonStreamRedirect & set_enabled(bool enabled)
     {
-        m_enabled = enabled;
+        Toggle::instance().fixed().set_python_redirect(enabled);
         return *this;
     }
 
-    bool is_enabled() const { return m_enabled; }
-    bool is_disabled() const { return !m_enabled; }
+    bool is_enabled() const { return Toggle::instance().fixed().get_python_redirect(); }
+    bool is_disabled() const { return !is_enabled(); }
 
     PythonStreamRedirect & activate();
     PythonStreamRedirect & deactivate();
@@ -535,7 +535,6 @@ public:
 
 private:
 
-    bool m_enabled;
     pybind11::object m_stdout_backup;
     pybind11::object m_stderr_backup;
     pybind11::object m_stdout_buffer;
