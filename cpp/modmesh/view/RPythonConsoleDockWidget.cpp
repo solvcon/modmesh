@@ -133,6 +133,7 @@ void RPythonConsoleDockWidget::executeCommand()
 {
     std::string const code = m_command_edit->toPlainText().toStdString();
     appendPastCommand(code);
+    ++m_last_command_serial;
     printCommandHistory();
     m_command_edit->setPlainText("");
     m_command_string = "";
@@ -154,7 +155,18 @@ void RPythonConsoleDockWidget::printCommandHistory()
     QTextCursor cursor = m_history_edit->textCursor();
     cursor.movePosition(QTextCursor::End);
     m_history_edit->setTextCursor(cursor);
-    m_history_edit->insertHtml(m_commandHtml + m_command_edit->toPlainText() + m_endHtml);
+    std::string lead;
+    if (m_past_command_strings.size() > 1)
+    {
+        lead = Formatter() << "\n[";
+    }
+    else
+    {
+        lead = Formatter() << "[";
+    }
+    m_history_edit->insertPlainText(QString::fromStdString(
+        Formatter() << lead << m_last_command_serial << "] "
+                    << m_command_edit->toPlainText().toStdString() << "\n"));
     cursor.movePosition(QTextCursor::End);
     m_history_edit->setTextCursor(cursor);
 }
@@ -164,7 +176,7 @@ void RPythonConsoleDockWidget::printCommandStdout(const std::string & stdout_mes
     QTextCursor cursor = m_history_edit->textCursor();
     cursor.movePosition(QTextCursor::End);
     m_history_edit->setTextCursor(cursor);
-    m_history_edit->insertHtml(m_stdoutHtml + QString::fromStdString(stdout_message).toHtmlEscaped() + m_endHtml);
+    m_history_edit->insertPlainText(QString::fromStdString(stdout_message));
     cursor.movePosition(QTextCursor::End);
     m_history_edit->setTextCursor(cursor);
 }
@@ -174,7 +186,7 @@ void RPythonConsoleDockWidget::printCommandStderr(const std::string & stderr_mes
     QTextCursor cursor = m_history_edit->textCursor();
     cursor.movePosition(QTextCursor::End);
     m_history_edit->setTextCursor(cursor);
-    m_history_edit->insertHtml(m_stderrHtml + QString::fromStdString(stderr_message).toHtmlEscaped() + m_endHtml);
+    m_history_edit->insertPlainText(QString::fromStdString(stderr_message));
     cursor.movePosition(QTextCursor::End);
     m_history_edit->setTextCursor(cursor);
 }

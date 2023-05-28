@@ -115,14 +115,9 @@ private:
     std::deque<std::string> m_past_command_strings;
     int m_current_command_index = 0;
     size_t m_past_limit = 1024;
+    int m_last_command_serial = 0;
 
     python::PythonStreamRedirect m_python_redirect;
-
-    QString m_commandHtml = "<p style=\"color:Black;white-space:pre\"><b>&#62;&#62;&#62;</b> ";
-    QString m_stderrHtml = "<p style=\"color:Red;white-space:pre\">";
-    QString m_stdoutHtml = "<p style=\"color:Blue;white-space:pre\">";
-    QString m_endHtml = "</p><br>";
-
 }; /* end class RPythonConsoleDockWidget */
 
 } /* end namespace modmesh */
