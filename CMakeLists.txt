@@ -123,6 +123,8 @@ if(NOT "${SHIBOKEN6_PYTHON_PACKAGE_PATH}" STREQUAL "")
     link_directories("${SHIBOKEN6_PYTHON_PACKAGE_PATH}")
 endif()
 
+# PySide6 and Shiboken6 library name are different in Windows and Unix-like OS
+# therefore needs sperate in different cases
 if(MSVC)
     file(GLOB PYSIDE6_LIBFILE LIST_DIRECTORIES false "${PYSIDE6_PYTHON_PACKAGE_PATH}/pyside6.*.lib")
     file(GLOB SHIBOKEN6_LIBFILE LIST_DIRECTORIES false "${SHIBOKEN6_PYTHON_PACKAGE_PATH}/shiboken6.*.lib")

@@ -372,7 +372,18 @@ jobs:
           python-version: '3.10' 
 
       - name: dependency by pip
-        run: pip3 install -U numpy pytest flake8 pybind11 pyside6==$(qmake -query QT_VERSION)
+        run: |
+          pip3 install -U numpy pytest flake8 pybind11 pyside6==$(qmake -query QT_VERSION)
+          # Add PySide6 and Shiboken6 path into system path, that allow exe file can find
+          # dll during runtime
+          # If user needs to modified system path in github actions container
+          # user should use GITHUB_PATH
+          # ref: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-system-path
+          # But the way of update GITHUB_PATH in github action document does not work, there is a other way to update it.
+          # ref: https://stackoverflow.com/questions/60169752/how-to-update-the-path-in-a-github-action-workflow-file-for-a-windows-latest-hos
+          $pyside6_path = $(python3 -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))")
+          $shiboken6_path = $(python3 -c "import sys, os, shiboken6; sys.stdout.write(os.path.dirname(shiboken6.__file__))")
+          echo "$pyside6_path;$shiboken6_path" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: show dependency
         run: |
@@ -406,9 +417,6 @@ jobs:
 
       - name: cmake run_viewer_pytest
         run: |
-          $pyside6_path = $(python3 -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))")
-          $shiboken6_path = $(python3 -c "import sys, os, shiboken6; sys.stdout.write(os.path.dirname(shiboken6.__file__))")
-          $env:PATH = "$shiboken6_path;$pyside6_path;$env:PATH"
           cmake --build ${{ github.workspace }}/build `
             --config ${{ matrix.cmake_build_type }} `
             --target run_viewer_pytest
