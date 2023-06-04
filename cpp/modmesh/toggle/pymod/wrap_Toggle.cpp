@@ -107,23 +107,27 @@ WrapFixedToggle::WrapFixedToggle(pybind11::module & mod, const char * pyname, co
     (*this)
         .def(
             "get_names",
-            [](wrapped_type const &)
+            [](py::object const & self)
             {
-                // Hardcoding the property names in a lambda does not scale,
-                // but I have only 1 property at the moment.
-                py::list r;
-                r.append("show_axis");
-                return r;
-            })
-        //
-        ;
+                return self.attr("NAMES");
+            });
+
+    std::list<std::string> names;
+
+#define MM_PYTHON_TOGGLE_FIXED(NAME)                                                   \
+    (*this).def_property(#NAME, &wrapped_type::get_##NAME, &wrapped_type::set_##NAME); \
+    names.emplace_back(#NAME);
 
     // Instance properties.
-    (*this)
-        .def_property("show_axis", &wrapped_type::get_show_axis, &wrapped_type::set_show_axis)
-        .def_property("python_redirect", &wrapped_type::get_python_redirect, &wrapped_type::set_python_redirect)
-        //
-        ;
+    // clang-format off
+    MM_PYTHON_TOGGLE_FIXED(python_redirect)
+    MM_PYTHON_TOGGLE_FIXED(show_axis)
+    // clang-format on
+
+    names.sort();
+    cls().attr("NAMES") = names;
+
+#undef MM_PYTHON_TOGGLE_FIXED
 }
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapHierarchicalToggleAccess
@@ -348,8 +352,12 @@ struct Toggle2Python
     {
         namespace py = pybind11;
         FixedToggle const & fixed = m_toggle.fixed();
+        py::object const pfixed = py::cast(fixed);
         py::dict ret;
-        ret["show_axis"] = fixed.get_show_axis();
+        for (py::handle const name : pfixed.attr("NAMES"))
+        {
+            ret[name] = pfixed.attr(name);
+        }
         return ret;
     }
 
