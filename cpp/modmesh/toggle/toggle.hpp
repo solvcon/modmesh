@@ -211,8 +211,8 @@ class FixedToggle
 
 public:
 
-    MM_TOGGLE_FIXED_BOOL(show_axis, false)
     MM_TOGGLE_FIXED_BOOL(python_redirect, true)
+    MM_TOGGLE_FIXED_BOOL(show_axis, false)
 
 }; /* end class FixedToggle */
 

@@ -54,14 +54,16 @@ class ToggleTC(unittest.TestCase):
         fixed = modmesh.Toggle.instance.fixed
 
         # Hardcoding the property names and default values does not scale, but
-        # I have only one property at the momemnt.  A better way for testing
+        # I have only few properties at the momemnt.  A better way for testing
         # should be implmented in the future.
 
         # Test names
-        golden = ["show_axis"]
+        golden = ["python_redirect", "show_axis"]
+        self.assertEqual(fixed.NAMES, golden)
         self.assertEqual(sorted(fixed.get_names()), golden)
 
         # Test property defaults
+        self.assertEqual(fixed.python_redirect, True)
         self.assertEqual(fixed.show_axis, False)
 
     def test_clone(self):
@@ -309,7 +311,7 @@ class ToggleSerializationTC(unittest.TestCase):
         tg.add_subkey("k1")
         tg.set_real("k1.kreal", -2.12)
 
-        golden = [{'fixed': {'show_axis': False}},
+        golden = [{'fixed': {'python_redirect': True, 'show_axis': False}},
                   {'dynamic': {'k1': {'kreal': -2.12}, 'kbool': True}}]
         data = tg.to_python()
         self.assertIsInstance(data, list)  # return a list of dict
@@ -334,7 +336,7 @@ class ToggleSerializationTC(unittest.TestCase):
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
-        golden = {'show_axis': False}
+        golden = {'python_redirect': True, 'show_axis': False}
         data = tg.to_python(type="fixed")
         self.assertIsInstance(data, dict)
         self.assertEqual(data, golden)

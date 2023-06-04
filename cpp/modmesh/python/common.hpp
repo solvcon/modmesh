@@ -268,12 +268,6 @@ public:
     >;
     // clang-format on
 
-    static wrapper_type & commit(pybind11::module & mod)
-    {
-        static wrapper_type derived(mod);
-        return derived;
-    }
-
     static wrapper_type & commit(pybind11::module & mod, char const * pyname, char const * pydoc)
     {
         static wrapper_type derived(mod, pyname, pydoc);
