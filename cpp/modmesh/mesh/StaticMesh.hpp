@@ -92,7 +92,15 @@ struct CellType : NumberBase<int32_t, double>
     uint8_t nedge() const { return m_nedge; }
     uint8_t nsurface() const { return m_nsurface; }
 
-    uint8_t nface() const { return 2 == m_ndim ? nedge() : nsurface(); }
+    uint8_t nface() const
+    {
+        switch (m_ndim)
+        {
+        case 1: return nnode(); break;
+        case 2: return nedge(); break;
+        default: return nsurface(); break;
+        }
+    }
 
     const char * name() const
     {
