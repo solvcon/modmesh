@@ -225,4 +225,6 @@ class StaticMeshTC(unittest.TestCase):
 
         # _do_metric do nothing due to dim == 1
         self._check_metric_trivial(mh)
+        # TODO: Need to add build_boundary and build_ghost to make sure
+        #       Line type behavior.
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
