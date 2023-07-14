@@ -75,10 +75,8 @@ struct CellType : NumberBase<int32_t, double>
     CellType(uint8_t id_in, uint8_t ndim_in, uint8_t nnode_in, uint8_t nedge_in, uint8_t nsurface_in)
         : m_id(id_in)
         , m_ndim(ndim_in)
+        , m_attrs{nnode_in, nedge_in, nsurface_in}
     {
-        m_attrs[NNODE_IDX] = nnode_in;
-        m_attrs[NEDGE_IDX] = nedge_in;
-        m_attrs[NSURFACE_IDX] = nsurface_in;
     }
 
     CellType()
@@ -91,7 +89,7 @@ struct CellType : NumberBase<int32_t, double>
     uint8_t nnode() const { return m_attrs[NNODE_IDX]; }
     uint8_t nedge() const { return m_attrs[NEDGE_IDX]; }
     uint8_t nsurface() const { return m_attrs[NSURFACE_IDX]; }
-    uint8_t nface() const { return m_attrs[m_ndim % 3]; } // Using mod can prevent idx out-of-boundary occurs.
+    uint8_t nface() const { return m_attrs[m_ndim - 1]; }
 
     const char * name() const
     {
@@ -111,13 +109,13 @@ struct CellType : NumberBase<int32_t, double>
     }
 
 private:
-    static constexpr const uint8_t NNODE_IDX = 1;
-    static constexpr const uint8_t NEDGE_IDX = 2;
-    static constexpr const uint8_t NSURFACE_IDX = 0;
+    static constexpr const uint8_t NNODE_IDX = 0;
+    static constexpr const uint8_t NEDGE_IDX = 1;
+    static constexpr const uint8_t NSURFACE_IDX = 2;
 
     uint8_t m_id : 6;
     uint8_t m_ndim : 2;
-    uint8_t m_attrs[3] = {0};
+    uint8_t m_attrs[3] = {0, 0, 0};
 
 }; /* end struct CellType */
 
