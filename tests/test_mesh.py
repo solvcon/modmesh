@@ -201,4 +201,30 @@ class StaticMeshTC(unittest.TestCase):
                           nbound=4, ngstnode=4, ngstface=12, ngstcell=4,
                           nedge=6)
 
+    def test_1d_single_line(self):
+        mh = modmesh.StaticMesh(ndim=1, nnode=2, nface=0, ncell=1)
+        mh.ndcrd.ndarray[:] = [[0], [1]]
+        mh.cltpn.ndarray[:] = modmesh.StaticMesh.LINE
+        mh.clnds.ndarray[:, :3] = [(2, 0, 1)]
+
+        self._check_shape(mh, ndim=1, nnode=2, nface=0, ncell=1,
+                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
+                          nedge=0)
+        self._check_metric_trivial(mh)
+
+        mh.build_interior(_do_metric=False, _build_edge=False)
+        self._check_shape(mh, ndim=1, nnode=2, nface=2, ncell=1,
+                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
+                          nedge=0)
+        self._check_metric_trivial(mh)
+
+        mh.build_interior()  # _do_metric=True, _build_edge=True
+        self._check_shape(mh, ndim=1, nnode=2, nface=2, ncell=1,
+                          nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
+                          nedge=2)
+
+        # _do_metric do nothing due to dim == 1
+        self._check_metric_trivial(mh)
+        # TODO: Need to add build_boundary and build_ghost to make sure
+        #       Line type behavior.
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
