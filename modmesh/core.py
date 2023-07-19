@@ -64,6 +64,7 @@ __all__ = [  # noqa: F822
     'METAL_BUILT',
     'metal_running',
     'HAS_VIEW',
+    'Gmsh',
 ]
 
 

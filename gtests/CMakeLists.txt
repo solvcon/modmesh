@@ -21,10 +21,12 @@ add_executable(
     test_nopython
     test_nopython_buffer.cpp
     test_nopython_modmesh.cpp
+    test_nopython_io.cpp
 )
 target_link_libraries(
     test_nopython
     GTest::gtest_main
+    GTest::gmock_main
 )
 
 include(GoogleTest)

@@ -83,6 +83,25 @@ w_tri.view_center = (0, 0, 0)
         view.mgr.pycon.command = cmd.strip()
 
 
+def help_mesh_viewer(path, set_command=False):
+    cmd = f"""
+# Open a sub window for the mesh viewer:
+w_mh_viewer = add3DWidget()
+mh_viewer = make_mesh_viewer("{path}")
+w_mh_viewer.updateMesh(mh_viewer)
+w_mh_viewer.showMark()
+"""
+    view.mgr.pycon.writeToHistory(cmd)
+    if set_command:
+        view.mgr.pycon.command = cmd.strip()
+
+
+def make_mesh_viewer(path):
+    gm = core.Gmsh(path)
+    mh = gm.toblock()
+    return mh
+
+
 def make_triangle():
     mh = core.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
     mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
@@ -110,9 +129,11 @@ def load_app():
     symbols = (
         'help_tri',
         'help_tet',
+        'help_mesh_viewer',
         'help_other',
         'make_triangle',
         'make_tetrahedron',
+        'make_mesh_viewer',
         ('add3DWidget', view.mgr.add3DWidget),
     )
     for k in symbols:
@@ -129,6 +150,7 @@ def load_app():
 help_tri(set_command=False)  # or True
 help_tet(set_command=False)  # or True
 help_other(set_command=False)  # or True
+help_mesh_viewer(path, set_command=False)  # or True
 """)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
