@@ -42,6 +42,7 @@ __all__ = [  # noqa: F822
     'TimeRegistry',
     'time_registry',
     'ConcreteBuffer',
+    'Gmsh',
     'SimpleArrayBool',
     'SimpleArrayInt8',
     'SimpleArrayInt16',
@@ -64,7 +65,6 @@ __all__ = [  # noqa: F822
     'METAL_BUILT',
     'metal_running',
     'HAS_VIEW',
-    'Gmsh',
 ]
 
 

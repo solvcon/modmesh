@@ -5,7 +5,7 @@
 
 #include <modmesh/modmesh.hpp>
 #include <modmesh/python/common.hpp>
-#include <modmesh/io/io.hpp>
+#include <modmesh/inout/inout.hpp>
 
 namespace modmesh
 {
@@ -13,7 +13,7 @@ namespace modmesh
 namespace python
 {
 
-void initialize_io(pybind11::module & mod);
+void initialize_inout(pybind11::module & mod);
 void wrap_Gmsh(pybind11::module & mod);
 
 } /* end namespace python */

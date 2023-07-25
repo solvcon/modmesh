@@ -21,7 +21,7 @@ add_executable(
     test_nopython
     test_nopython_buffer.cpp
     test_nopython_modmesh.cpp
-    test_nopython_io.cpp
+    test_nopython_inout.cpp
 )
 target_link_libraries(
     test_nopython

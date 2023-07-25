@@ -97,7 +97,8 @@ w_mh_viewer.showMark()
 
 
 def make_mesh_viewer(path):
-    gm = core.Gmsh(path)
+    data = open(path, 'rb').read()
+    gm = core.Gmsh(data)
     mh = gm.toblock()
     return mh
 

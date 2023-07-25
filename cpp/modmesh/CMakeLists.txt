@@ -37,7 +37,7 @@ add_subdirectory(onedim)
 add_subdirectory(python)
 add_subdirectory(spacetime)
 add_subdirectory(view)
-add_subdirectory(io)
+add_subdirectory(inout)
 
 set(MODMESH_ROOT_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/modmesh.hpp
@@ -81,7 +81,7 @@ set(MODMESH_TERMINAL_FILES
     ${MODMESH_ONEDIM_FILES}
     ${MODMESH_SPACETIME_FILES}
     ${MODMESH_PYTHON_FILES}
-    ${MODMESH_IO_FILES}
+    ${MODMESH_INOUT_FILES}
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_GRAPHIC_FILES
