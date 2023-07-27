@@ -11,10 +11,9 @@ class GmshTC(unittest.TestCase):
 
     def test_gmsh_parsing(self):
         path = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                            "data/gmsh_triangle.msh")
+                            "data", "gmsh_triangle.msh")
 
         data = open(path, 'rb').read()
-
         gmsh_instance = modmesh.core.Gmsh(data)
         blk = gmsh_instance.toblock()
 

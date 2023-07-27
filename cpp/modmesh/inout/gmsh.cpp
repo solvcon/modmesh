@@ -1,5 +1,7 @@
 #include <modmesh/inout/gmsh.hpp>
-
+#ifdef _WIN32
+#include <algorithm>
+#endif // _WIN32
 namespace modmesh
 {
 namespace inout
@@ -17,7 +19,18 @@ Gmsh::Gmsh(const std::string & data)
         {"$PhysicalNames", [this]() { load_physical(); }}};
     // clang-format on
 
+    // String stream on windows need to remove \r for keyword comparison.
+    // DOS file newline character is CRLF, std::getline default using LF as delimeter
+    // therefore string seperated by std::getline will contain \r, it will cause
+    // keyword compare failed.
+    // TODO: Keyword comparison can use regular expression.
+#ifdef _WIN32
+    std::string data_copy = data;
+    data_copy.erase(std::remove(data_copy.begin(), data_copy.end(), '\r'), data_copy.end());
+    stream << data_copy;
+#else // _WIN32
     stream << data;
+#endif // _WIN32
 
     std::string line;
     while (std::getline(stream, line))
