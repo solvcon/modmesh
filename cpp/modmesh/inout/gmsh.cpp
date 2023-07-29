@@ -42,7 +42,7 @@ Gmsh::Gmsh(const std::string & data)
             auto it = keyword_handler.find(line);
             if (it != keyword_handler.end())
             {
-                if (isValidTransition(it->first))
+                if (is_valid_transition(it->first))
                 {
                     it->second();
                 }
@@ -67,7 +67,7 @@ Gmsh::Gmsh(const std::string & data)
     }
 }
 
-std::shared_ptr<StaticMesh> Gmsh::toblock()
+std::shared_ptr<StaticMesh> Gmsh::to_block()
 {
     std::shared_ptr<StaticMesh> block = StaticMesh::construct(m_eldim.max(), m_nds.shape(0), 0, m_elems.size());
     build_interior(block);

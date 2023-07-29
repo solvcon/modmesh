@@ -64,7 +64,7 @@ public:
     Gmsh & operator=(Gmsh const & other) = delete;
     Gmsh & operator=(Gmsh && other) = delete;
 
-    std::shared_ptr<StaticMesh> toblock(void);
+    std::shared_ptr<StaticMesh> to_block(void);
 
 private:
     enum class FormatState
@@ -77,7 +77,7 @@ private:
     };
 
     // Check the finite state machine state transition is valid or not to check msh file format is correct
-    bool isValidTransition(const std::string s)
+    bool is_valid_transition(const std::string s)
     {
         if (last_fmt_state == FormatState::BEGIN)
         {
