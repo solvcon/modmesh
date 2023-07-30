@@ -99,7 +99,7 @@ w_mh_viewer.showMark()
 def make_mesh_viewer(path):
     data = open(path, 'rb').read()
     gm = core.Gmsh(data)
-    mh = gm.toblock()
+    mh = gm.to_block()
     return mh
 
 

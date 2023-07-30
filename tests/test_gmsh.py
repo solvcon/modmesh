@@ -15,7 +15,7 @@ class GmshTC(unittest.TestCase):
 
         data = open(path, 'rb').read()
         gmsh_instance = modmesh.core.Gmsh(data)
-        blk = gmsh_instance.toblock()
+        blk = gmsh_instance.to_block()
 
         # Check nodes information
         self.assertEqual(blk.nnode, 4)

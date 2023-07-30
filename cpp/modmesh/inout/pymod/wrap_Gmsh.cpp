@@ -30,7 +30,7 @@ protected:
                     [](const py::bytes & data)
                     { return std::make_shared<inout::Gmsh>(data); }),
                 py::arg("data"))
-            .def("toblock", &wrapped_type::to_block);
+            .def("to_block", &wrapped_type::to_block);
         ;
     }
 
