@@ -261,7 +261,7 @@ inline void StaticMesh::fill_ghost()
                 }
                 for (size_t idm = 0; idm < m_ndim; ++idm)
                 {
-                    m_ndcrd(igcl, idm) = m_ndcrd(icl, idm) + 2 * dist * m_fcnml(ibfc, idm);
+                    m_ndcrd(ignd, idm) = m_ndcrd(ind, idm) + 2 * dist * m_fcnml(ibfc, idm);
                 }
                 // decrement ghost node counter.
                 ignd -= 1;

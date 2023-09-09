@@ -46,6 +46,21 @@ struct FaceBuilder
     using uint_type = typename number_base::uint_type;
     using real_type = typename number_base::real_type;
 
+    size_t add_point(int_type icl, int_type ifc)
+    {
+        constexpr const size_t NFACE = 1;
+        clfcs(icl, 0) = NFACE;
+        for (size_t i = 0; i < NFACE; ++i)
+        {
+            fctpn(ifc + i) = CellType::NONCELLTYPE;
+            fcnds(ifc + i, 0) = 0; // number of nodes per face.
+        }
+        // face 1.
+        clfcs(icl, 1) = ifc;
+        fcnds(ifc, 1) = clnds(icl, 1);
+        return NFACE;
+    }
+
     size_t add_line(int_type icl, int_type ifc)
     {
         constexpr const size_t NFACE = 2;
@@ -361,6 +376,9 @@ struct FaceBuilder
         {
             switch (cltpn(icl))
             {
+            case CellType::POINT:
+                ifc += static_cast<int_type>(add_point(icl, ifc));
+                break;
             case CellType::LINE:
                 ifc += static_cast<int_type>(add_line(icl, ifc));
                 break;
