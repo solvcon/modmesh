@@ -407,10 +407,136 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         return shape;
     }
 
+public:
+    static SimpleArray<T> init_array(pybind11::array arr_in)
+    {
+        if (!dtype_is_type<T>(arr_in))
+        {
+            throw std::runtime_error("dtype mismatch");
+        }
+        shape_type shape;
+        for (ssize_t i = 0; i < arr_in.ndim(); ++i)
+        {
+            shape.push_back(arr_in.shape(i));
+        }
+        std::shared_ptr<ConcreteBuffer> const buffer = ConcreteBuffer::construct(
+            arr_in.nbytes(),
+            arr_in.mutable_data(),
+            std::make_unique<ConcreteBufferNdarrayRemover>(arr_in));
+        return wrapped_type(shape, buffer);
+    }
+    static SimpleArray<T> init_shape(pybind11::tuple const & shape)
+    {
+        return wrapped_type(make_shape(shape));
+    }
+    static SimpleArray<T> init_value(pybind11::tuple const & shape, T const & value)
+    {
+        return wrapped_type(make_shape(shape), value);
+    }
 }; /* end class WrapSimpleArray */
+
+pybind11::object createSimpleArray(pybind11::args args, const pybind11::kwargs & kwargs)
+{
+    namespace py = pybind11;
+
+    int argc = args.size();
+    int arg_len = args.size() + kwargs.size();
+    if (arg_len < 1 || arg_len > 3)
+        throw std::runtime_error("Invalid number of arguments.");
+
+    // get type
+    std::string type;
+    if (kwargs.contains("type"))
+        type = kwargs["type"].cast<std::string>();
+    else if (py::isinstance<py::str>(args[argc - 1]))
+        type = args[argc - 1].cast<std::string>();
+    else if (py::isinstance<py::array>(args[0]))
+        type = std::string(py::str(args[0].cast<py::array>().dtype()));
+    else
+        throw std::runtime_error("type is required.");
+
+    // base on arg's instance and lengh return to corresponding constructor
+    if (arg_len == 1 || arg_len == 2 && py::isinstance<py::array>(args[0]))
+    {
+        if (type == "bool")
+            return py::cast(WrapSimpleArray<bool>::init_array(args[0].cast<py::array>()));
+        if (type == "int8")
+            return py::cast(WrapSimpleArray<int8_t>::init_array(args[0].cast<py::array>()));
+        if (type == "int16")
+            return py::cast(WrapSimpleArray<int16_t>::init_array(args[0].cast<py::array>()));
+        if (type == "int32")
+            return py::cast(WrapSimpleArray<int32_t>::init_array(args[0].cast<py::array>()));
+        if (type == "int64")
+            return py::cast(WrapSimpleArray<int64_t>::init_array(args[0].cast<py::array>()));
+        if (type == "uint8")
+            return py::cast(WrapSimpleArray<uint8_t>::init_array(args[0].cast<py::array>()));
+        if (type == "uint16")
+            return py::cast(WrapSimpleArray<uint16_t>::init_array(args[0].cast<py::array>()));
+        if (type == "uint32")
+            return py::cast(WrapSimpleArray<uint32_t>::init_array(args[0].cast<py::array>()));
+        if (type == "uint64")
+            return py::cast(WrapSimpleArray<uint64_t>::init_array(args[0].cast<py::array>()));
+        if (type == "float32")
+            return py::cast(WrapSimpleArray<float>::init_array(args[0].cast<py::array>()));
+        if (type == "float64")
+            return py::cast(WrapSimpleArray<double>::init_array(args[0].cast<py::array>()));
+    }
+    else if (arg_len == 2 && py::isinstance<py::tuple>(args[0]))
+    {
+        if (type == "bool")
+            return py::cast(WrapSimpleArray<bool>::init_shape(args[0].cast<py::tuple>()));
+        if (type == "int8")
+            return py::cast(WrapSimpleArray<int8_t>::init_shape(args[0].cast<py::tuple>()));
+        if (type == "int16")
+            return py::cast(WrapSimpleArray<int16_t>::init_shape(args[0].cast<py::tuple>()));
+        if (type == "int32")
+            return py::cast(WrapSimpleArray<int32_t>::init_shape(args[0].cast<py::tuple>()));
+        if (type == "int64")
+            return py::cast(WrapSimpleArray<int64_t>::init_shape(args[0].cast<py::tuple>()));
+        if (type == "uint8")
+            return py::cast(WrapSimpleArray<uint8_t>::init_shape(args[0].cast<py::tuple>()));
+        if (type == "uint16")
+            return py::cast(WrapSimpleArray<uint16_t>::init_shape(args[0].cast<py::tuple>()));
+        if (type == "uint32")
+            return py::cast(WrapSimpleArray<uint32_t>::init_shape(args[0].cast<py::tuple>()));
+        if (type == "uint64")
+            return py::cast(WrapSimpleArray<uint64_t>::init_shape(args[0].cast<py::tuple>()));
+        if (type == "float32")
+            return py::cast(WrapSimpleArray<float>::init_shape(args[0].cast<py::tuple>()));
+        if (type == "float64")
+            return py::cast(WrapSimpleArray<double>::init_shape(args[0].cast<py::tuple>()));
+    }
+    else if (arg_len == 3 && py::isinstance<py::tuple>(args[0]))
+    {
+        if (type == "bool")
+            return py::cast(WrapSimpleArray<bool>::init_value(args[0].cast<py::tuple>(), args[1].cast<bool>()));
+        if (type == "int8")
+            return py::cast(WrapSimpleArray<int8_t>::init_value(args[0].cast<py::tuple>(), args[1].cast<int8_t>()));
+        if (type == "int16")
+            return py::cast(WrapSimpleArray<int16_t>::init_value(args[0].cast<py::tuple>(), args[1].cast<int16_t>()));
+        if (type == "int32")
+            return py::cast(WrapSimpleArray<int32_t>::init_value(args[0].cast<py::tuple>(), args[1].cast<int32_t>()));
+        if (type == "int64")
+            return py::cast(WrapSimpleArray<int64_t>::init_value(args[0].cast<py::tuple>(), args[1].cast<int64_t>()));
+        if (type == "uint8")
+            return py::cast(WrapSimpleArray<uint8_t>::init_value(args[0].cast<py::tuple>(), args[1].cast<uint8_t>()));
+        if (type == "uint16")
+            return py::cast(WrapSimpleArray<uint16_t>::init_value(args[0].cast<py::tuple>(), args[1].cast<uint16_t>()));
+        if (type == "uint32")
+            return py::cast(WrapSimpleArray<uint32_t>::init_value(args[0].cast<py::tuple>(), args[1].cast<uint32_t>()));
+        if (type == "uint64")
+            return py::cast(WrapSimpleArray<uint64_t>::init_value(args[0].cast<py::tuple>(), args[1].cast<uint64_t>()));
+        if (type == "float32")
+            return py::cast(WrapSimpleArray<float>::init_value(args[0].cast<py::tuple>(), args[1].cast<float>()));
+        if (type == "float64")
+            return py::cast(WrapSimpleArray<double>::init_value(args[0].cast<py::tuple>(), args[1].cast<double>()));
+    }
+    throw std::runtime_error("unsupported type.");
+}
 
 void wrap_SimpleArray(pybind11::module & mod)
 {
+    mod.def("SimpleArray", &createSimpleArray);
     WrapSimpleArray<bool>::commit(mod, "SimpleArrayBool", "SimpleArrayBool");
     WrapSimpleArray<int8_t>::commit(mod, "SimpleArrayInt8", "SimpleArrayInt8");
     WrapSimpleArray<int16_t>::commit(mod, "SimpleArrayInt16", "SimpleArrayInt16");

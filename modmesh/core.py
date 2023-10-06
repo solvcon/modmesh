@@ -43,6 +43,7 @@ __all__ = [  # noqa: F822
     'time_registry',
     'ConcreteBuffer',
     'Gmsh',
+    'SimpleArray', # createSimpleArray
     'SimpleArrayBool',
     'SimpleArrayInt8',
     'SimpleArrayInt16',
