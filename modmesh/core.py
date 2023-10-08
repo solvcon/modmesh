@@ -67,6 +67,10 @@ __all__ = [  # noqa: F822
     'HAS_VIEW',
     'calc_bernstein_polynomial',
     'interpolate_bernstein',
+    'Vector3dFp32',
+    'Vector3dFp64',
+    'Bezier3dFp32',
+    'Bezier3dFp64',
 ]
 
 

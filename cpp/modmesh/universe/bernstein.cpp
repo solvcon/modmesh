@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/bernstein/bernstein.hpp>
+#include <modmesh/universe/bernstein.hpp>
 
 namespace modmesh
 {
@@ -62,7 +62,7 @@ double interpolate_bernstein(double t, std::vector<double> const & values, size_
     double ret = 0.0;
     for (size_t it = 0; it <= n; ++it)
     {
-        double v = (values.size() <= it) ? 1.0 : values[it];
+        double v = (it >= values.size()) ? 1.0 : values[it];
         v *= calc_bernstein_polynomial(t, it, n);
         ret += v;
     }

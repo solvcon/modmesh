@@ -33,7 +33,7 @@ endif () # BUILD_QT
 add_subdirectory(buffer)
 add_subdirectory(mesh)
 add_subdirectory(toggle)
-add_subdirectory(bernstein)
+add_subdirectory(universe)
 add_subdirectory(onedim)
 add_subdirectory(python)
 add_subdirectory(spacetime)
@@ -77,7 +77,7 @@ set(MODMESH_TERMINAL_FILES
     ${MODMESH_ROOT_SOURCES}
     ${MODMESH_BUFFER_FILES}
     ${MODMESH_TOGGLE_FILES}
-    ${MODMESH_BERNSTEIN_FILES}
+    ${MODMESH_UNIVERSE_FILES}
     ${MODMESH_MESH_FILES}
     ${MODMESH_DEVICE_FILES}
     ${MODMESH_ONEDIM_FILES}

@@ -26,22 +26,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/bernstein/pymod/bernstein_pymod.hpp> // Must be the first include.
+#include <modmesh/universe/pymod/universe_pymod.hpp> // Must be the first include.
 
 namespace modmesh
 {
 
 namespace python
 {
-
-struct bernstein_pymod_tag;
-
-template <>
-OneTimeInitializer<bernstein_pymod_tag> & OneTimeInitializer<bernstein_pymod_tag>::me()
-{
-    static OneTimeInitializer<bernstein_pymod_tag> instance;
-    return instance;
-}
 
 void wrap_bernstein(pybind11::module & mod)
 {
@@ -52,16 +43,6 @@ void wrap_bernstein(pybind11::module & mod)
         .def("interpolate_bernstein", interpolate_bernstein, py::arg("t"), py::arg("values"), py::arg("n"))
         //
         ;
-}
-
-void initialize_bernstein(pybind11::module & mod)
-{
-    auto initialize_impl = [](pybind11::module & mod)
-    {
-        wrap_bernstein(mod);
-    };
-
-    OneTimeInitializer<bernstein_pymod_tag>::me()(mod, initialize_impl);
 }
 
 } /* end namespace python */

@@ -28,21 +28,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <pybind11/pybind11.h> // Must be the first include.
-#include <pybind11/stl.h>
-
-#include <modmesh/python/common.hpp>
-#include <modmesh/bernstein/bernstein.hpp>
+#include <modmesh/universe/bernstein.hpp>
+#include <modmesh/universe/World.hpp>
 
 namespace modmesh
 {
-
-namespace python
-{
-
-void initialize_bernstein(pybind11::module & mod);
-
-} /* end namespace python */
 
 } /* end namespace modmesh */
 
