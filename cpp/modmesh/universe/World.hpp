@@ -31,6 +31,8 @@
 #include <modmesh/base.hpp>
 #include <modmesh/universe/bernstein.hpp>
 
+#include <deque>
+
 namespace modmesh
 {
 
@@ -208,15 +210,63 @@ using Bezier3dFp32 = Bezier3d<float>;
 using Bezier3dFp64 = Bezier3d<double>;
 
 /**
- * Placeholder class for all geometry entities.
+ * Placeholder class template for all geometry entities.
  */
+template <typename T>
 class World
 {
 
 public:
+
+    using real_type = T;
+    using value_type = T;
+    using vector_type = Vector3d<T>;
+    using bezier_type = Bezier3d<T>;
+
+    World() = default;
+    World(World const &) = default;
+    World(World &&) = default;
+    World & operator=(World const &) = default;
+    World & operator=(World &&) = default;
+    ~World() = default;
+
+    void add_bezier(std::vector<vector_type> const & controls);
+    size_t nbezier() const { return m_beziers.size(); }
+    bezier_type const & bezier(size_t i) const { return m_beziers[i]; }
+    bezier_type & bezier(size_t i) { return m_beziers[i]; }
+    bezier_type const & bezier_at(size_t i) const
+    {
+        check_size(i, m_beziers.size(), "bezier");
+        return m_beziers[i];
+    }
+    bezier_type & bezier_at(size_t i)
+    {
+        check_size(i, m_beziers.size(), "bezier");
+        return m_beziers[i];
+    }
+
 private:
 
+    void check_size(size_t i, size_t s, char const * msg) const
+    {
+        if (i >= s)
+        {
+            throw std::out_of_range(Formatter() << "World: (" << msg << ") i " << i << " >= size " << s);
+        }
+    }
+
+    std::deque<Bezier3d<T>> m_beziers;
+
 }; /* end class World */
+
+template <typename T>
+void World<T>::add_bezier(std::vector<vector_type> const & controls)
+{
+    m_beziers.emplace_back(controls);
+}
+
+using WorldFp32 = World<float>;
+using WorldFp64 = World<double>;
 
 } /* end namespace modmesh */
 

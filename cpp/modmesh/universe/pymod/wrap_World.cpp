@@ -41,9 +41,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapVector3d
 
 public:
 
-    using value_type = T;
     using base_type = WrapBase<WrapVector3d<T>, Vector3d<T>>;
     using wrapped_type = typename base_type::wrapped_type;
+
+    using value_type = typename base_type::wrapped_type::value_type;
 
     friend typename base_type::root_base_type;
 
@@ -102,7 +103,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapBezier3d
 
 public:
 
-    using vector_type = Vector3d<T>;
     using base_type = WrapBase<WrapBezier3d<T>, Bezier3d<T>>;
     using wrapped_type = typename base_type::wrapped_type;
 
@@ -112,7 +112,7 @@ protected:
 
     WrapBezier3d(pybind11::module & mod, char const * pyname, char const * pydoc);
 };
-/* end class WrapBezier3dF32 */
+/* end class WrapBezier3d */
 
 template <typename T>
 WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const char * pydoc)
@@ -183,12 +183,57 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
         ;
 }
 
+template <typename T>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapWorld
+    : public WrapBase<WrapWorld<T>, World<T>>
+{
+
+public:
+
+    using base_type = WrapBase<WrapWorld<T>, World<T>>;
+    using wrapped_type = typename base_type::wrapped_type;
+
+    friend typename base_type::root_base_type;
+
+protected:
+
+    WrapWorld(pybind11::module & mod, char const * pyname, char const * pydoc);
+};
+/* end class WrapWorld */
+
+template <typename T>
+WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def(py::init<>())
+        //
+        ;
+
+    // Bezier curves
+    (*this)
+        .def("add_bezier", &wrapped_type::add_bezier, py::arg("vectors"))
+        .def_property_readonly("nbezier", &wrapped_type::nbezier)
+        .def(
+            "bezier",
+            [](wrapped_type & self, size_t i) -> auto &
+            {
+                return self.bezier_at(i);
+            })
+        //
+        ;
+}
+
 void wrap_World(pybind11::module & mod)
 {
     WrapVector3d<float>::commit(mod, "Vector3dFp32", "Vector3dFp32");
     WrapVector3d<double>::commit(mod, "Vector3dFp64", "Vector3dFp64");
     WrapBezier3d<float>::commit(mod, "Bezier3dFp32", "Bezier3dFp32");
     WrapBezier3d<double>::commit(mod, "Bezier3dFp64", "Bezier3dFp64");
+    WrapWorld<float>::commit(mod, "WorldFp32", "WorldFp32");
+    WrapWorld<double>::commit(mod, "WorldFp64", "WorldFp64");
 }
 
 } /* end namespace python */

@@ -332,4 +332,75 @@ class Bezier3dFp64TC(Bezier3dTB, unittest.TestCase):
             kw['rtol'] = 1.e-15
         return super().assert_allclose(*args, **kw)
 
+
+class WorldTB(ModMeshTB):
+
+    def test_bezier(self):
+        Vector3d = self.vkls
+        World = self.wkls
+
+        w = World()
+
+        # Empty
+        self.assertEqual(w.nbezier, 0)
+        with self.assertRaisesRegex(
+                IndexError, "World: \\(bezier\\) i 0 >= size 0"):
+            w.bezier(0)
+
+        # Add Bezier curve
+        w.add_bezier(
+            [Vector3d(0, 0, 0), Vector3d(1, 1, 0), Vector3d(3, 1, 0),
+             Vector3d(4, 0, 0)])
+        self.assertEqual(w.nbezier, 1)
+        with self.assertRaisesRegex(
+                IndexError, "World: \\(bezier\\) i 1 >= size 1"):
+            w.bezier(1)
+
+        # Check control points
+        b = w.bezier(0)
+        self.assertEqual(len(b), 4)
+        self.assertEqual(list(b[0]), [0, 0, 0])
+        self.assertEqual(list(b[1]), [1, 1, 0])
+        self.assertEqual(list(b[2]), [3, 1, 0])
+        self.assertEqual(list(b[3]), [4, 0, 0])
+
+        # Check locus points
+        self.assertEqual(len(b.locus_points), 0)
+        b.sample(5)
+        self.assertEqual(len(b.locus_points), 5)
+        self.assert_allclose([list(p) for p in b.locus_points],
+                             [[0.0, 0.0, 0.0], [0.90625, 0.5625, 0.0],
+                              [2.0, 0.75, 0.0], [3.09375, 0.5625, 0.0],
+                              [4.0, 0.0, 0.0]])
+
+
+class WorldFp32TC(WorldTB, unittest.TestCase):
+
+    def setUp(self):
+        self.vkls = modmesh.Vector3dFp32
+        self.wkls = modmesh.WorldFp32
+
+    def assert_allclose(self, *args, **kw):
+        if 'rtol' not in kw:
+            kw['rtol'] = 1.e-7
+        return super().assert_allclose(*args, **kw)
+
+    def test_type(self):
+        self.assertIs(modmesh.WorldFp32, self.wkls)
+
+
+class WorldFp64TC(WorldTB, unittest.TestCase):
+
+    def setUp(self):
+        self.vkls = modmesh.Vector3dFp64
+        self.wkls = modmesh.WorldFp64
+
+    def assert_allclose(self, *args, **kw):
+        if 'rtol' not in kw:
+            kw['rtol'] = 1.e-15
+        return super().assert_allclose(*args, **kw)
+
+    def test_type(self):
+        self.assertIs(modmesh.WorldFp64, self.wkls)
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
