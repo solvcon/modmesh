@@ -210,11 +210,18 @@ using Bezier3dFp32 = Bezier3d<float>;
 using Bezier3dFp64 = Bezier3d<double>;
 
 /**
- * Placeholder class template for all geometry entities.
+ * Manage all geometry entities.
  */
 template <typename T>
 class World
+    : public std::enable_shared_from_this<World<T>>
 {
+
+private:
+
+    class ctor_passkey
+    {
+    };
 
 public:
 
@@ -223,11 +230,19 @@ public:
     using vector_type = Vector3d<T>;
     using bezier_type = Bezier3d<T>;
 
-    World() = default;
-    World(World const &) = default;
-    World(World &&) = default;
-    World & operator=(World const &) = default;
-    World & operator=(World &&) = default;
+    template <typename... Args>
+    static std::shared_ptr<World<T>> construct(Args &&... args)
+    {
+        return std::make_shared<World<T>>(std::forward<Args>(args)..., ctor_passkey());
+    }
+
+    World(ctor_passkey const &) {}
+
+    World() = delete;
+    World(World const &) = delete;
+    World(World &&) = delete;
+    World & operator=(World const &) = delete;
+    World & operator=(World &&) = delete;
     ~World() = default;
 
     void add_bezier(std::vector<vector_type> const & controls);

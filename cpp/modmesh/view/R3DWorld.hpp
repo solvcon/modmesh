@@ -28,25 +28,53 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <modmesh/view/common_detail.hpp> // Must be the first include.
+
+#include <modmesh/universe/universe.hpp>
+
+#include <Qt>
+#include <QWidget>
+#include <Qt3DWindow>
+
+#include <QByteArray>
+#include <QGeometryRenderer>
+
+#include <Qt3DCore/QBuffer>
+#include <Qt3DCore/QEntity>
+#include <Qt3DCore/QGeometry>
+#include <Qt3DCore/QAttribute>
+#include <Qt3DCore/QTransform>
+
+#include <Qt3DExtras/QDiffuseSpecularMaterial>
+
 namespace modmesh
 {
 
 /**
- * Placeholder class for all World entities in the viewer.
+ * Make a world viewable.
  */
 class R3DWorld
+    : public Qt3DCore::QEntity
 {
 
 public:
 
-    R3DWorld() = default;
-    R3DWorld(R3DWorld const &) = default;
-    R3DWorld(R3DWorld &&) = default;
-    R3DWorld & operator=(R3DWorld const &) = default;
-    R3DWorld & operator=(R3DWorld &&) = default;
-    ~R3DWorld() = default;
+    R3DWorld(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * parent = nullptr);
+
+    void set_world(std::shared_ptr<WorldFp64> const & world) { m_world = world; }
+    bool has_world() const { return bool(m_world); }
+    WorldFp64 const & world() const { return *m_world; }
+    WorldFp64 & world() { return *m_world; }
+
+    void update_geometry();
 
 private:
+
+    std::shared_ptr<WorldFp64> m_world;
+
+    Qt3DCore::QGeometry * m_geometry = nullptr;
+    Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
+    Qt3DRender::QMaterial * m_material = nullptr;
 
 }; /* end class R3DWorld */
 

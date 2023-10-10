@@ -154,6 +154,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
         (*this)
             .def_property_readonly("mesh", &wrapped_type::mesh)
             .def("updateMesh", &wrapped_type::updateMesh, py::arg("mesh"))
+            .def("updateWorld", &wrapped_type::updateWorld, py::arg("world"))
             .def("showMark", &wrapped_type::showMark)
             .def(
                 "clipImage",
@@ -219,19 +220,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
             ;
 
 #undef DECL_QVECTOR3D_PROPERTY
-    }
-
-    static void updateMesh(wrapped_type & self, std::shared_ptr<StaticMesh> const & mesh)
-    {
-        RScene * scene = self.scene();
-        for (Qt3DCore::QNode * child : scene->childNodes())
-        {
-            if (typeid(*child) == typeid(RStaticMesh))
-            {
-                child->deleteLater();
-            }
-        }
-        new RStaticMesh(mesh, scene);
     }
 
 }; /* end class WrapR3DWidget */

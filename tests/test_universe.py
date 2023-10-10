@@ -289,9 +289,11 @@ class Bezier3dTB(ModMeshTB):
             [Vector3d(0, 0, 0), Vector3d(1, 1, 0), Vector3d(3, 1, 0),
              Vector3d(4, 0, 0)])
         self.assertEqual(len(b.control_points), 4)
+        self.assertEqual(b.nlocus, 0)
         self.assertEqual(len(b.locus_points), 0)
 
         b.sample(5)
+        self.assertEqual(b.nlocus, 5)
         self.assertEqual(len(b.locus_points), 5)
         self.assert_allclose([list(p) for p in b.locus_points],
                              [[0.0, 0.0, 0.0], [0.90625, 0.5625, 0.0],
@@ -299,6 +301,7 @@ class Bezier3dTB(ModMeshTB):
                               [4.0, 0.0, 0.0]])
 
         b.sample(9)
+        self.assertEqual(b.nlocus, 9)
         self.assertEqual(len(b.locus_points), 9)
         self.assert_allclose([list(p) for p in b.locus_points],
                              [[0.0, 0.0, 0.0], [0.41796875, 0.328125, 0.0],
@@ -348,7 +351,7 @@ class WorldTB(ModMeshTB):
             w.bezier(0)
 
         # Add Bezier curve
-        w.add_bezier(
+        b = w.add_bezier(
             [Vector3d(0, 0, 0), Vector3d(1, 1, 0), Vector3d(3, 1, 0),
              Vector3d(4, 0, 0)])
         self.assertEqual(w.nbezier, 1)
@@ -357,7 +360,6 @@ class WorldTB(ModMeshTB):
             w.bezier(1)
 
         # Check control points
-        b = w.bezier(0)
         self.assertEqual(len(b), 4)
         self.assertEqual(list(b[0]), [0, 0, 0])
         self.assertEqual(list(b[1]), [1, 1, 0])
@@ -365,13 +367,18 @@ class WorldTB(ModMeshTB):
         self.assertEqual(list(b[3]), [4, 0, 0])
 
         # Check locus points
+        self.assertEqual(b.nlocus, 0)
         self.assertEqual(len(b.locus_points), 0)
         b.sample(5)
+        self.assertEqual(b.nlocus, 5)
         self.assertEqual(len(b.locus_points), 5)
         self.assert_allclose([list(p) for p in b.locus_points],
                              [[0.0, 0.0, 0.0], [0.90625, 0.5625, 0.0],
                               [2.0, 0.75, 0.0], [3.09375, 0.5625, 0.0],
                               [4.0, 0.0, 0.0]])
+
+        # Confirm we worked on the internal instead of copy
+        self.assertEqual(w.bezier(0).nlocus, 5)
 
 
 class WorldFp32TC(WorldTB, unittest.TestCase):

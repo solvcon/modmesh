@@ -31,15 +31,19 @@
 namespace modmesh
 {
 
-double calc_bernstein_polynomial(double t, size_t i, size_t n)
+namespace detail
 {
-    double ret = 1.0;
+
+template <typename T>
+T calc_bernstein_polynomial_impl(T t, size_t i, size_t n)
+{
+    T ret = 1.0;
     {
-        double const v = (i > 0) ? std::pow(t, i) : 1.0;
+        T const v = (i > 0) ? std::pow(t, i) : 1.0;
         ret *= v;
     }
     {
-        double const v = (n > i) ? std::pow(1.0 - t, n - i) : 1.0;
+        T const v = (n > i) ? std::pow(1.0 - t, n - i) : 1.0;
         ret *= v;
     }
     for (size_t it = n; it > 1; --it)
@@ -57,16 +61,29 @@ double calc_bernstein_polynomial(double t, size_t i, size_t n)
     return ret;
 }
 
-double interpolate_bernstein(double t, std::vector<double> const & values, size_t n)
+template <typename T>
+T interpolate_bernstein_impl(T t, std::vector<T> const & values, size_t n)
 {
-    double ret = 0.0;
+    T ret = 0.0;
     for (size_t it = 0; it <= n; ++it)
     {
-        double v = (it >= values.size()) ? 1.0 : values[it];
+        T v = (it >= values.size()) ? 1.0 : values[it];
         v *= calc_bernstein_polynomial(t, it, n);
         ret += v;
     }
     return ret;
+}
+
+} /* end namespace detail */
+
+double calc_bernstein_polynomial(double t, size_t i, size_t n)
+{
+    return detail::calc_bernstein_polynomial_impl<double>(t, i, n);
+}
+
+double interpolate_bernstein(double t, std::vector<double> const & values, size_t n)
+{
+    return detail::interpolate_bernstein_impl<double>(t, values, n);
 }
 
 } /* end namespace modmesh */

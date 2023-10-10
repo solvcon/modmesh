@@ -34,6 +34,7 @@
 #include <modmesh/view/RManager.hpp>
 #include <modmesh/view/RPythonConsoleDockWidget.hpp>
 #include <modmesh/view/RStaticMesh.hpp>
+#include <modmesh/view/R3DWorld.hpp>
 #include <modmesh/view/RAxisMark.hpp>
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

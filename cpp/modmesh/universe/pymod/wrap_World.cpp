@@ -121,7 +121,7 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
     namespace py = pybind11;
 
     (*this)
-        .def(py::init<std::vector<typename wrapped_type::vector_type> const &>(), py::arg("vectors"))
+        .def(py::init<std::vector<typename wrapped_type::vector_type> const &>(), py::arg("controls"))
         .def(
             "__len__",
             [](wrapped_type const & self)
@@ -168,6 +168,7 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
     // Locus points
     (*this)
         .def("sample", &wrapped_type::sample, py::arg("nlocus"))
+        .def_property_readonly("nlocus", &wrapped_type::nlocus)
         .def_property_readonly(
             "locus_points",
             [](wrapped_type const & self)
@@ -185,12 +186,12 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
 
 template <typename T>
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapWorld
-    : public WrapBase<WrapWorld<T>, World<T>>
+    : public WrapBase<WrapWorld<T>, World<T>, std::shared_ptr<World<T>>>
 {
 
 public:
 
-    using base_type = WrapBase<WrapWorld<T>, World<T>>;
+    using base_type = WrapBase<WrapWorld<T>, World<T>, std::shared_ptr<World<T>>>;
     using wrapped_type = typename base_type::wrapped_type;
 
     friend typename base_type::root_base_type;
@@ -208,20 +209,32 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
     namespace py = pybind11;
 
     (*this)
-        .def(py::init<>())
+        .def(
+            py::init(
+                []()
+                { return wrapped_type::construct(); }))
         //
         ;
 
     // Bezier curves
     (*this)
-        .def("add_bezier", &wrapped_type::add_bezier, py::arg("vectors"))
+        .def(
+            "add_bezier",
+            [](wrapped_type & self, std::vector<typename wrapped_type::vector_type> const & controls) -> auto &
+            {
+                self.add_bezier(controls);
+                return self.bezier_at(self.nbezier() - 1);
+            },
+            py::arg("controls"),
+            py::return_value_policy::reference_internal)
         .def_property_readonly("nbezier", &wrapped_type::nbezier)
         .def(
             "bezier",
             [](wrapped_type & self, size_t i) -> auto &
             {
                 return self.bezier_at(i);
-            })
+            },
+            py::return_value_policy::reference_internal)
         //
         ;
 }
