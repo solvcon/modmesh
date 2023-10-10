@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2023, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,13 +26,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/common_detail.hpp> // Must be the first include.
+#include <modmesh/universe/bernstein.hpp>
 
-#include <modmesh/view/R3DWidget.hpp>
-#include <modmesh/view/RManager.hpp>
-#include <modmesh/view/RPythonConsoleDockWidget.hpp>
-#include <modmesh/view/RStaticMesh.hpp>
-#include <modmesh/view/RWorld.hpp>
-#include <modmesh/view/RAxisMark.hpp>
+namespace modmesh
+{
+
+double calc_bernstein_polynomial(double t, size_t i, size_t n)
+{
+    return detail::calc_bernstein_polynomial_impl<double>(t, i, n);
+}
+
+double interpolate_bernstein(double t, std::vector<double> const & values, size_t n)
+{
+    return detail::interpolate_bernstein_impl<double>(t, values, n);
+}
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

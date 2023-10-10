@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2023, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,13 +26,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/common_detail.hpp> // Must be the first include.
+#include <modmesh/universe/pymod/universe_pymod.hpp> // Must be the first include.
 
-#include <modmesh/view/R3DWidget.hpp>
-#include <modmesh/view/RManager.hpp>
-#include <modmesh/view/RPythonConsoleDockWidget.hpp>
-#include <modmesh/view/RStaticMesh.hpp>
-#include <modmesh/view/RWorld.hpp>
-#include <modmesh/view/RAxisMark.hpp>
+namespace modmesh
+{
+
+namespace python
+{
+
+struct bernstein_pymod_tag;
+
+template <>
+OneTimeInitializer<bernstein_pymod_tag> & OneTimeInitializer<bernstein_pymod_tag>::me()
+{
+    static OneTimeInitializer<bernstein_pymod_tag> instance;
+    return instance;
+}
+
+void initialize_universe(pybind11::module & mod)
+{
+    auto initialize_impl = [](pybind11::module & mod)
+    {
+        wrap_bernstein(mod);
+        wrap_World(mod);
+    };
+
+    OneTimeInitializer<bernstein_pymod_tag>::me()(mod, initialize_impl);
+}
+
+} /* end namespace python */
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

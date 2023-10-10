@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2023, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,13 +28,60 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/common_detail.hpp> // Must be the first include.
+#include <modmesh/math.hpp>
+#include <vector>
 
-#include <modmesh/view/R3DWidget.hpp>
-#include <modmesh/view/RManager.hpp>
-#include <modmesh/view/RPythonConsoleDockWidget.hpp>
-#include <modmesh/view/RStaticMesh.hpp>
-#include <modmesh/view/RWorld.hpp>
-#include <modmesh/view/RAxisMark.hpp>
+namespace modmesh
+{
+
+namespace detail
+{
+
+template <typename T>
+T calc_bernstein_polynomial_impl(T t, size_t i, size_t n)
+{
+    T ret = 1.0;
+    {
+        T const v = (i > 0) ? std::pow(t, i) : 1.0;
+        ret *= v;
+    }
+    {
+        T const v = (n > i) ? std::pow(1.0 - t, n - i) : 1.0;
+        ret *= v;
+    }
+    for (size_t it = n; it > 1; --it)
+    {
+        ret *= it;
+    }
+    for (size_t it = i; it > 1; --it)
+    {
+        ret /= it;
+    }
+    for (size_t it = (n - i); it > 1; --it)
+    {
+        ret /= it;
+    }
+    return ret;
+}
+
+template <typename T>
+T interpolate_bernstein_impl(T t, std::vector<T> const & values, size_t n)
+{
+    T ret = 0.0;
+    for (size_t it = 0; it <= n; ++it)
+    {
+        T v = (it >= values.size()) ? 1.0 : values[it];
+        v *= calc_bernstein_polynomial_impl(t, it, n);
+        ret += v;
+    }
+    return ret;
+}
+
+} /* end namespace detail */
+
+double calc_bernstein_polynomial(double t, size_t i, size_t n);
+double interpolate_bernstein(double t, std::vector<double> const & values, size_t n);
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2023, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,13 +28,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/common_detail.hpp> // Must be the first include.
+#include <pybind11/pybind11.h> // Must be the first include.
+#include <pybind11/stl.h>
 
-#include <modmesh/view/R3DWidget.hpp>
-#include <modmesh/view/RManager.hpp>
-#include <modmesh/view/RPythonConsoleDockWidget.hpp>
-#include <modmesh/view/RStaticMesh.hpp>
-#include <modmesh/view/RWorld.hpp>
-#include <modmesh/view/RAxisMark.hpp>
+#include <modmesh/python/common.hpp>
+#include <modmesh/universe/universe.hpp>
+
+namespace modmesh
+{
+
+namespace python
+{
+
+void initialize_universe(pybind11::module & mod);
+void wrap_bernstein(pybind11::module & mod);
+void wrap_World(pybind11::module & mod);
+
+} /* end namespace python */
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

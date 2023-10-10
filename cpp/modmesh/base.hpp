@@ -71,6 +71,9 @@ class NumberBase
 
 public:
 
+    static_assert(std::is_integral_v<I>, "I must be integral type");
+    static_assert(std::is_floating_point_v<R>, "R must be floating-point type");
+
     using int_type = I;
     using uint_type = std::make_unsigned_t<I>;
     using size_type = uint_type;

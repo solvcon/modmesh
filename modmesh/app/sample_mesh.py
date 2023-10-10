@@ -125,6 +125,31 @@ def make_tetrahedron():
     return mh
 
 
+def make_bezier():
+    """
+    A simple example for drawing a couple of cubic Bezier curves.
+    """
+    Vector = core.Vector3dFp64
+    World = core.WorldFp64
+    w = World()
+    b1 = w.add_bezier(
+        [Vector(0, 0, 0), Vector(1, 1, 0), Vector(3, 1, 0),
+         Vector(4, 0, 0)])
+    b1.sample(7)
+    b2 = w.add_bezier(
+        [Vector(4, 0, 0), Vector(3, -1, 0), Vector(1, -1, 0),
+         Vector(0, 0, 0)])
+    b2.sample(25)
+    b3 = w.add_bezier(
+        [Vector(0, 2, 0), Vector(1, 3, 0), Vector(3, 3, 0),
+         Vector(4, 2, 0)])
+    b3.sample(9)
+    wid = view.mgr.add3DWidget()
+    wid.updateWorld(w)
+    wid.showMark()
+    return wid
+
+
 def load_app():
     aenv = apputil.get_current_appenv()
     symbols = (
@@ -135,6 +160,7 @@ def load_app():
         'make_triangle',
         'make_tetrahedron',
         'make_mesh_viewer',
+        'make_bezier',
         ('add3DWidget', view.mgr.add3DWidget),
     )
     for k in symbols:

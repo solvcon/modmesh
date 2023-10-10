@@ -30,6 +30,8 @@
 
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
 
+#include <modmesh/view/RWorld.hpp>
+
 #include <Qt>
 #include <QWidget>
 #include <Qt3DWindow>
@@ -114,6 +116,7 @@ public:
 
     void showMark();
     void updateMesh(std::shared_ptr<StaticMesh> const & mesh);
+    void updateWorld(std::shared_ptr<WorldFp64> const & world);
 
     std::shared_ptr<StaticMesh> mesh() const { return m_mesh; }
 

@@ -84,6 +84,18 @@ void R3DWidget::updateMesh(std::shared_ptr<StaticMesh> const & mesh)
     m_mesh = mesh;
 }
 
+void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
+{
+    for (Qt3DCore::QNode * child : m_scene->childNodes())
+    {
+        if (typeid(*child) == typeid(RWorld))
+        {
+            child->deleteLater();
+        }
+    }
+    new RWorld(world, m_scene);
+}
+
 void R3DWidget::resizeEvent(QResizeEvent * event)
 {
     QWidget::resizeEvent(event);

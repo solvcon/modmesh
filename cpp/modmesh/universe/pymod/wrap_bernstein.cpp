@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2023, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,13 +26,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/common_detail.hpp> // Must be the first include.
+#include <modmesh/universe/pymod/universe_pymod.hpp> // Must be the first include.
 
-#include <modmesh/view/R3DWidget.hpp>
-#include <modmesh/view/RManager.hpp>
-#include <modmesh/view/RPythonConsoleDockWidget.hpp>
-#include <modmesh/view/RStaticMesh.hpp>
-#include <modmesh/view/RWorld.hpp>
-#include <modmesh/view/RAxisMark.hpp>
+namespace modmesh
+{
+
+namespace python
+{
+
+void wrap_bernstein(pybind11::module & mod)
+{
+    namespace py = pybind11;
+
+    mod
+        .def("calc_bernstein_polynomial", calc_bernstein_polynomial, py::arg("t"), py::arg("i"), py::arg("n"))
+        .def("interpolate_bernstein", interpolate_bernstein, py::arg("t"), py::arg("values"), py::arg("n"))
+        //
+        ;
+}
+
+} /* end namespace python */
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
