@@ -88,12 +88,12 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
 {
     for (Qt3DCore::QNode * child : m_scene->childNodes())
     {
-        if (typeid(*child) == typeid(R3DWorld))
+        if (typeid(*child) == typeid(RWorld))
         {
             child->deleteLater();
         }
     }
-    new R3DWorld(world, m_scene);
+    new RWorld(world, m_scene);
 }
 
 void R3DWidget::resizeEvent(QResizeEvent * event)

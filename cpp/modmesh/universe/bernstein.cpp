@@ -31,51 +31,6 @@
 namespace modmesh
 {
 
-namespace detail
-{
-
-template <typename T>
-T calc_bernstein_polynomial_impl(T t, size_t i, size_t n)
-{
-    T ret = 1.0;
-    {
-        T const v = (i > 0) ? std::pow(t, i) : 1.0;
-        ret *= v;
-    }
-    {
-        T const v = (n > i) ? std::pow(1.0 - t, n - i) : 1.0;
-        ret *= v;
-    }
-    for (size_t it = n; it > 1; --it)
-    {
-        ret *= it;
-    }
-    for (size_t it = i; it > 1; --it)
-    {
-        ret /= it;
-    }
-    for (size_t it = (n - i); it > 1; --it)
-    {
-        ret /= it;
-    }
-    return ret;
-}
-
-template <typename T>
-T interpolate_bernstein_impl(T t, std::vector<T> const & values, size_t n)
-{
-    T ret = 0.0;
-    for (size_t it = 0; it <= n; ++it)
-    {
-        T v = (it >= values.size()) ? 1.0 : values[it];
-        v *= calc_bernstein_polynomial(t, it, n);
-        ret += v;
-    }
-    return ret;
-}
-
-} /* end namespace detail */
-
 double calc_bernstein_polynomial(double t, size_t i, size_t n)
 {
     return detail::calc_bernstein_polynomial_impl<double>(t, i, n);

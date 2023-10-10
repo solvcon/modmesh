@@ -30,7 +30,7 @@
 
 #include <modmesh/view/common_detail.hpp> // Must be the first include.
 
-#include <modmesh/view/R3DWorld.hpp>
+#include <modmesh/view/RWorld.hpp>
 
 #include <Qt>
 #include <QWidget>

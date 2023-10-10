@@ -175,16 +175,16 @@ class BernsteinInterpolationTC(BernsteinTB, unittest.TestCase):
 class Vector3dTB(ModMeshTB):
 
     def test_construct(self):
-        Vector3d = self.kls
+        Vector = self.kls
 
         # Construct using positional arguments
-        vec = Vector3d(1, 2, 3)
+        vec = Vector(1, 2, 3)
         self.assertEqual(vec.x, 1.0)
         self.assertEqual(vec.y, 2.0)
         self.assertEqual(vec.z, 3.0)
 
         # Construct using keyword arguments
-        vec = Vector3d(x=2.2, y=5.8, z=-9.22)
+        vec = Vector(x=2.2, y=5.8, z=-9.22)
         self.assert_allclose(vec, [2.2, 5.8, -9.22])
         self.assert_allclose(vec[0], 2.2)
         self.assert_allclose(vec[1], 5.8)
@@ -196,9 +196,9 @@ class Vector3dTB(ModMeshTB):
             vec[3]
 
     def test_fill(self):
-        Vector3d = self.kls
+        Vector = self.kls
 
-        vec = Vector3d(1, 2, 3)
+        vec = Vector(1, 2, 3)
         vec.fill(10.0)
         self.assertEqual(list(vec), [10, 10, 10])
 
@@ -234,13 +234,13 @@ class Vector3dFp64TC(Vector3dTB, unittest.TestCase):
 class Bezier3dTB(ModMeshTB):
 
     def test_control_points(self):
-        Vector3d = self.vkls
-        Bezier3d = self.bkls
+        Vector = self.vkls
+        Bezier = self.bkls
 
         # Create a cubic Bezier curve
-        bzr = Bezier3d(
-            [Vector3d(0, 0, 0), Vector3d(1, 1, 0), Vector3d(3, 1, 0),
-             Vector3d(4, 0, 0)])
+        bzr = Bezier(
+            [Vector(0, 0, 0), Vector(1, 1, 0), Vector(3, 1, 0),
+             Vector(4, 0, 0)])
         self.assertEqual(len(bzr), 4)
         self.assertEqual(list(bzr[0]), [0, 0, 0])
         self.assertEqual(list(bzr[1]), [1, 1, 0])
@@ -259,8 +259,8 @@ class Bezier3dTB(ModMeshTB):
         self.assertEqual(list(bzr.control_points[2]), [3, 1, 0])
         self.assertEqual(list(bzr.control_points[3]), [4, 0, 0])
 
-        bzr.control_points = [Vector3d(4, 0, 0), Vector3d(3, 1, 0),
-                              Vector3d(1, 1, 0), Vector3d(0, 0, 0)]
+        bzr.control_points = [Vector(4, 0, 0), Vector(3, 1, 0),
+                              Vector(1, 1, 0), Vector(0, 0, 0)]
         self.assertEqual(list(bzr.control_points[0]), [4, 0, 0])
         self.assertEqual(list(bzr.control_points[1]), [3, 1, 0])
         self.assertEqual(list(bzr.control_points[2]), [1, 1, 0])
@@ -269,25 +269,25 @@ class Bezier3dTB(ModMeshTB):
         with self.assertRaisesRegex(
                 IndexError,
                 "Bezier3d.control_points: len\\(points\\) 3 != ncontrol 4"):
-            bzr.control_points = [Vector3d(3, 1, 0), Vector3d(1, 1, 0),
-                                  Vector3d(0, 0, 0)]
+            bzr.control_points = [Vector(3, 1, 0), Vector(1, 1, 0),
+                                  Vector(0, 0, 0)]
         with self.assertRaisesRegex(
                 IndexError,
                 "Bezier3d.control_points: len\\(points\\) 5 != ncontrol 4"):
-            bzr.control_points = [Vector3d(4, 0, 0), Vector3d(3, 1, 0),
-                                  Vector3d(1, 1, 0), Vector3d(0, 0, 0),
-                                  Vector3d(0, 0, 0)]
+            bzr.control_points = [Vector(4, 0, 0), Vector(3, 1, 0),
+                                  Vector(1, 1, 0), Vector(0, 0, 0),
+                                  Vector(0, 0, 0)]
 
         # Locus point API
         self.assertEqual(len(bzr.locus_points), 0)
 
     def test_local_points(self):
-        Vector3d = self.vkls
-        Bezier3d = self.bkls
+        Vector = self.vkls
+        Bezier = self.bkls
 
-        b = Bezier3d(
-            [Vector3d(0, 0, 0), Vector3d(1, 1, 0), Vector3d(3, 1, 0),
-             Vector3d(4, 0, 0)])
+        b = Bezier(
+            [Vector(0, 0, 0), Vector(1, 1, 0), Vector(3, 1, 0),
+             Vector(4, 0, 0)])
         self.assertEqual(len(b.control_points), 4)
         self.assertEqual(b.nlocus, 0)
         self.assertEqual(len(b.locus_points), 0)
@@ -339,7 +339,7 @@ class Bezier3dFp64TC(Bezier3dTB, unittest.TestCase):
 class WorldTB(ModMeshTB):
 
     def test_bezier(self):
-        Vector3d = self.vkls
+        Vector = self.vkls
         World = self.wkls
 
         w = World()
@@ -352,8 +352,8 @@ class WorldTB(ModMeshTB):
 
         # Add Bezier curve
         b = w.add_bezier(
-            [Vector3d(0, 0, 0), Vector3d(1, 1, 0), Vector3d(3, 1, 0),
-             Vector3d(4, 0, 0)])
+            [Vector(0, 0, 0), Vector(1, 1, 0), Vector(3, 1, 0),
+             Vector(4, 0, 0)])
         self.assertEqual(w.nbezier, 1)
         with self.assertRaisesRegex(
                 IndexError, "World: \\(bezier\\) i 1 >= size 1"):

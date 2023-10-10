@@ -53,13 +53,13 @@ namespace modmesh
 /**
  * Make a world viewable.
  */
-class R3DWorld
+class RWorld
     : public Qt3DCore::QEntity
 {
 
 public:
 
-    R3DWorld(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * parent = nullptr);
+    RWorld(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * parent = nullptr);
 
     void set_world(std::shared_ptr<WorldFp64> const & world) { m_world = world; }
     bool has_world() const { return bool(m_world); }

@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.16)
 
 set(MODMESH_UNIVERSE_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/bernstein.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/bezier.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/World.hpp
     CACHE FILEPATH "" FORCE)
 

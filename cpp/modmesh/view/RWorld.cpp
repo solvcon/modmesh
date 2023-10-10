@@ -26,14 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/R3DWorld.hpp> // Must be the first include.
+#include <modmesh/view/RWorld.hpp> // Must be the first include.
 
 #include <modmesh/view/common_detail.hpp>
 
 namespace modmesh
 {
 
-R3DWorld::R3DWorld(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * parent)
+RWorld::RWorld(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * parent)
     : Qt3DCore::QEntity(parent)
     , m_world(world)
     , m_geometry(new Qt3DCore::QGeometry(this))
@@ -47,7 +47,7 @@ R3DWorld::R3DWorld(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * p
     addComponent(m_material);
 }
 
-void R3DWorld::update_geometry()
+void RWorld::update_geometry()
 {
     size_t npoint = 0;
     for (size_t i = 0; i < m_world->nbezier(); ++i)
