@@ -153,17 +153,43 @@ void RManager::setUpMenu()
         auto * use_orbit_camera = new RAction(
             QString("Use Orbit Camera Controller"),
             QString("Use Oribt Camera Controller"),
-            []()
+            [this]()
             {
                 qDebug() << "Use Orbit Camera Controller (menu demo)";
+                for (auto subwin : m_mdiArea->subWindowList())
+                {
+                    try
+                    {
+                        R3DWidget * viewer = dynamic_cast<R3DWidget *>(subwin->widget());
+                        viewer->scene()->setOrbitCameraController();
+                        viewer->scene()->controller()->setCamera(viewer->camera());
+                    }
+                    catch (std::bad_cast & e)
+                    {
+                        std::cerr << e.what() << std::endl;
+                    }
+                }
             });
 
         auto * use_fps_camera = new RAction(
             QString("Use First Person Camera Controller"),
             QString("Use First Person Camera Controller"),
-            []()
+            [this]()
             {
                 qDebug() << "Use First Person Camera Controller (menu demo)";
+                for (auto subwin : m_mdiArea->subWindowList())
+                {
+                    try
+                    {
+                        R3DWidget * viewer = dynamic_cast<R3DWidget *>(subwin->widget());
+                        viewer->scene()->setFirstPersonCameraController();
+                        viewer->scene()->controller()->setCamera(viewer->camera());
+                    }
+                    catch (std::bad_cast & e)
+                    {
+                        std::cerr << e.what() << std::endl;
+                    }
+                }
             });
 
         auto * cameraGroup = new QActionGroup(m_mainWindow);
