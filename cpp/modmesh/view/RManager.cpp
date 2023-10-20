@@ -192,15 +192,39 @@ void RManager::setUpMenu()
                 }
             });
 
+        auto * use_custom_camera = new RAction(
+            QString("Use Custom Camera Controller"),
+            QString("Use Custom Camera Controller"),
+            [this]()
+            {
+                qDebug() << "Use Custom Camera Controller (menu demo)";
+                for (auto subwin : m_mdiArea->subWindowList())
+                {
+                    try
+                    {
+                        R3DWidget * viewer = dynamic_cast<R3DWidget *>(subwin->widget());
+                        viewer->scene()->setCustomCameraController();
+                        viewer->scene()->controller()->setCamera(viewer->camera());
+                    }
+                    catch (std::bad_cast & e)
+                    {
+                        std::cerr << e.what() << std::endl;
+                    }
+                }
+            });
+
         auto * cameraGroup = new QActionGroup(m_mainWindow);
         cameraGroup->addAction(use_orbit_camera);
         cameraGroup->addAction(use_fps_camera);
+        cameraGroup->addAction(use_custom_camera);
         use_orbit_camera->setCheckable(true);
         use_fps_camera->setCheckable(true);
+        use_custom_camera->setCheckable(true);
         use_orbit_camera->setChecked(true);
 
         m_cameraMenu->addAction(use_orbit_camera);
         m_cameraMenu->addAction(use_fps_camera);
+        m_cameraMenu->addAction(use_custom_camera);
     }
 
     {
