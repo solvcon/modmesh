@@ -36,10 +36,11 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot
 from matplotlib.backends.backend_qtagg import FigureCanvas
+from matplotlib.ticker import FormatStrFormatter
 from matplotlib.figure import Figure
 from PySide6.QtWidgets import (QApplication, QWidget, QScrollArea,
-                               QFrame, QGridLayout, QVBoxLayout, QPushButton,
-                               QHBoxLayout, QFileDialog, QLayout)
+                               QGridLayout, QVBoxLayout, QPushButton,
+                               QHBoxLayout, QFileDialog, QLayout, QCheckBox)
 from PySide6.QtCore import Qt, QEvent, QMimeData, QTimer
 from PySide6.QtGui import QDrag, QPixmap
 
@@ -85,7 +86,9 @@ class PlotManager(QWidget):
     def __init__(self, shocktube):
         super().__init__()
         self.setWindowTitle("Euler 1D")
-        self.setMinimumSize(500, 350)
+        # Set minimum window size to prevent the plot from looking
+        # distorted due to the window being too small
+        self.setMinimumSize(1150, 750)
         self.setAcceptDrops(True)
 
         self.scroll_area = QScrollArea()
@@ -94,12 +97,13 @@ class PlotManager(QWidget):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
-        self.graph_container = QWidget()
+        self.main_container = QWidget()
+        self.figure_container = None
         self.use_grid_layout = True
-        self.graph_layout = None
+        self.main_layout = None
         self.shocktube = shocktube
 
-        self.scroll_area.setWidget(self.graph_container)
+        self.scroll_area.setWidget(self.main_container)
         self.layout.addWidget(self.scroll_area)
 
         self.button_layout = QHBoxLayout()
@@ -118,21 +122,32 @@ class PlotManager(QWidget):
 
         self.layout.addLayout(self.button_layout)
 
+        self.data_lines = {}
+
         self.density = QuantityLine(name="density",
                                     unit=r"$\mathrm{kg}/\mathrm{m}^3$")
+        self.data_lines[self.density.name] = [self.density, True]
         self.velocity = QuantityLine(name="velocity",
                                      unit=r"$\mathrm{m}/\mathrm{s}$")
+        self.data_lines[self.velocity.name] = [self.velocity, True]
         self.pressure = QuantityLine(name="pressure", unit=r"$\mathrm{Pa}$")
+        self.data_lines[self.pressure.name] = [self.pressure, True]
         self.temperature = QuantityLine(name="temperature",
                                         unit=r"$\mathrm{K}$")
-        self.internal_energy = QuantityLine(name="int. energy",
+        self.data_lines[self.temperature.name] = [self.temperature, False]
+        self.internal_energy = QuantityLine(name="internal_energy",
                                             unit=r"$\mathrm{J}/\mathrm{kg}$")
+        self.data_lines[self.internal_energy.name] = [self.internal_energy,
+                                                      False]
         self.entropy = QuantityLine(name="entropy",
                                     unit=r"$\mathrm{J}/\mathrm{K}$")
+        self.data_lines[self.entropy.name] = [self.entropy, False]
+
+        self.checkbox_select_num = 3
 
     def save_all(self):
-        fig = QPixmap(self.graph_container.size())
-        self.graph_container.render(fig)
+        fig = QPixmap(self.figure_container.size())
+        self.figure_container.render(fig)
 
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
@@ -143,19 +158,17 @@ class PlotManager(QWidget):
         if fileName != "":
             fig.save(fileName, "JPG", 100)
 
-    def switch_layout(self):
-        while self.graph_layout is not None and self.graph_layout.count():
-            item = self.graph_layout.takeAt(0)
+    def _update_layout(self):
+        while self.main_layout is not None and self.main_layout.count():
+            item = self.main_layout.takeAt(0)
             if isinstance(item, QLayout):
                 self.delete_layout(item)
             else:
                 item.widget().setParent(None)
                 item.widget().deleteLater()
 
-        self.graph_layout.deleteLater()
-        self.graph_container.update()
-
-        self.use_grid_layout = not self.use_grid_layout
+        self.main_layout.deleteLater()
+        self.main_container.update()
 
         # Qt objects are managed by Qt internal event loop,
         # hence it will not be deleted immediately when we called
@@ -168,20 +181,22 @@ class PlotManager(QWidget):
             else:
                 self.build_lines_single_plot()
 
-        self.graph_layout.destroyed.connect(del_cb)
+        self.main_layout.destroyed.connect(del_cb)
 
-        self.graph_layout.update()
-        self.graph_container.update()
+        self.main_layout.update()
+        self.main_container.update()
+
+    def switch_layout(self):
+        self.use_grid_layout = not self.use_grid_layout
+        self._update_layout()
 
     def delete_layout(self, layout):
         """Delete all widgets from a layout."""
         for i in reversed(range(layout.count())):
-            widget = layout.itemAt(0).widget()
-
+            widget = layout.itemAt(i).widget()
             # Check if the widget is a layout
             if isinstance(widget, QLayout):
                 self.delete_layout(widget)
-
             else:
                 widget.setParent(None)
                 widget.deleteLater()
@@ -191,15 +206,16 @@ class PlotManager(QWidget):
         layout.deleteLater()
 
     def eventFilter(self, obj, event):
-        if event.type() == QEvent.MouseButtonPress:
-            self.mousePressEvent(event)
-        elif event.type() == QEvent.MouseMove:
-            self.mouseMoveEvent(event)
+        if self.use_grid_layout:
+            if event.type() == QEvent.MouseButtonPress:
+                self.mousePressEvent(event)
+            elif event.type() == QEvent.MouseMove:
+                self.mouseMoveEvent(event)
 
         return super().eventFilter(obj, event)
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.LeftButton and self.use_grid_layout:
             coord = event.windowPos().toPoint()
             self.targetIndex = self.getWindowIndex(coord)
         else:
@@ -207,7 +223,7 @@ class PlotManager(QWidget):
 
     def mouseMoveEvent(self, event):
         if event.buttons() == Qt.LeftButton and self.targetIndex is not None:
-            windowItem = self.graph_layout.itemAt(self.targetIndex)
+            windowItem = self.figure_layout.itemAt(self.targetIndex)
 
             drag = QDrag(windowItem)
 
@@ -236,36 +252,79 @@ class PlotManager(QWidget):
             i, j = (max(self.targetIndex, targetWindowIndex),
                     min(self.targetIndex, targetWindowIndex))
 
-            p1, p2 = (self.graph_layout.getItemPosition(i),
-                      self.graph_layout.getItemPosition(j))
+            p1, p2 = (self.figure_layout.getItemPosition(i),
+                      self.figure_layout.getItemPosition(j))
 
-            self.graph_layout.addItem(self.graph_layout.takeAt(i), *p2)
-            self.graph_layout.addItem(self.graph_layout.takeAt(j), *p1)
+            self.figure_layout.addItem(self.figure_layout.takeAt(i), *p2)
+            self.figure_layout.addItem(self.figure_layout.takeAt(j), *p1)
 
     def getWindowIndex(self, pos):
-        for i in range(self.graph_layout.count()):
-            if self.graph_layout.itemAt(i).geometry().contains(pos):
+        for i in range(self.figure_layout.count()):
+            if self.figure_layout.itemAt(i).geometry().contains(pos):
                 return i
 
     def update_lines(self):
-        self.density.update(adata=self.shocktube.density_field,
-                            ndata=self.shocktube.svr.density[::2])
-        self.pressure.update(adata=self.shocktube.pressure_field,
-                             ndata=self.shocktube.svr.pressure[::2])
-        self.velocity.update(adata=self.shocktube.velocity_field,
-                             ndata=self.shocktube.svr.velocity[::2])
-        self.temperature.update(adata=self.shocktube.temperature_field,
-                                ndata=self.shocktube.svr.temperature[::2])
-        self.internal_energy.update(adata=self.shocktube.internal_energy_field,
-                                    ndata=(self.shocktube.svr.
-                                           internal_energy[::2]))
-        self.entropy.update(adata=self.shocktube.entropy_field,
-                            ndata=self.shocktube.svr.entropy[::2])
+        if self.use_grid_layout:
+            self.density.update(adata=self.shocktube.density_field,
+                                ndata=self.shocktube.svr.density[::2])
+            self.pressure.update(adata=self.shocktube.pressure_field,
+                                 ndata=self.shocktube.svr.pressure[::2])
+            self.velocity.update(adata=self.shocktube.velocity_field,
+                                 ndata=self.shocktube.svr.velocity[::2])
+            self.temperature.update(adata=self.shocktube.temperature_field,
+                                    ndata=self.shocktube.svr.temperature[::2])
+            self.internal_energy.update(adata=(self.shocktube.
+                                               internal_energy_field),
+                                        ndata=(self.shocktube.svr.
+                                               internal_energy[::2]))
+            self.entropy.update(adata=self.shocktube.entropy_field,
+                                ndata=self.shocktube.svr.entropy[::2])
+        else:
+            for name, data_line in self.data_lines.items():
+                if data_line[1]:
+                    eval(f'(data_line[0].update(adata=self.shocktube.'
+                         f'{name}_field, ndata=self.shocktube.svr.'
+                         f'{name}[::2]))')
 
     def build_lines_grid_layout(self):
+        self.main_layout = QHBoxLayout(self.main_container)
+        self.main_container.setLayout(self.main_layout)
+
+        self.figure_container = QWidget()
+        self.figure_layout = QGridLayout()
+        self.figure_container.setLayout(self.figure_layout)
+
+        self.main_layout.addWidget(self.figure_container)
+        self._update_grid_figure()
+
+    def build_lines_single_plot(self):
+        checkbox_layout = QVBoxLayout()
+        self._build_checkbox(checkbox_layout)
+
+        self.main_layout = QHBoxLayout(self.main_container)
+        self.main_layout.addLayout(checkbox_layout, 1)
+        self.main_container.setLayout(self.main_layout)
+
+        self.figure_container = QWidget()
+        self.figure_layout = QVBoxLayout()
+        self.figure_container.setLayout(self.figure_layout)
+
+        self.main_layout.addWidget(self.figure_container, 4)
+
+        # Legend figure
+        legend_fig = Figure()
+        legend_canvas = FigureCanvas(legend_fig)
+        checkbox_layout.addWidget(legend_canvas)
+
+        lines = self._update_single_figure()
+
+        legend_canvas.figure.legend(lines,
+                                    [line.get_label() for line in lines],
+                                    loc='center',
+                                    frameon=False)
+
+    def _update_grid_figure(self):
         x = self.shocktube.svr.coord[::2]
-        self.graph_layout = QGridLayout(self.graph_container)
-        self.graph_container.setLayout(self.graph_layout)
 
         for i, (data, color) in enumerate((
                 (self.density, 'r'),
@@ -277,11 +336,7 @@ class PlotManager(QWidget):
         )):
             figure = Figure()
             canvas = FigureCanvas(figure)
-            frame = QFrame()
-            frame.setStyleSheet('background-color: white;')
-            frame.setFrameStyle(QFrame.Panel | QFrame.Raised)
 
-            frameContainer = QVBoxLayout(frame)
             axis = figure.add_subplot()
             axis.autoscale(enable=True, axis='y', tight=False)
             data.bind_axis(axis)
@@ -298,83 +353,128 @@ class PlotManager(QWidget):
             axis.grid()
             canvas.installEventFilter(self)
 
-            frameContainer.addWidget(canvas)
-
             box = QVBoxLayout()
-            box.addWidget(frame)
+            box.addWidget(canvas)
 
-            self.graph_layout.addLayout(box, i // 2, i % 2)
-            self.graph_layout.setColumnStretch(i % 2, 1)
-            self.graph_layout.setRowStretch(i // 2, 1)
+            self.figure_layout.addLayout(box, i // 2, i % 2)
+            self.figure_layout.setColumnStretch(i % 2, 1)
+            self.figure_layout.setRowStretch(i // 2, 1)
 
         self.update_lines()
 
-    def build_lines_single_plot(self):
+    def _update_single_figure(self):
         x = self.shocktube.svr.coord[::2]
-        self.graph_layout = QVBoxLayout(self.graph_container)
-        self.graph_container.setLayout(self.graph_layout)
-
         fig = Figure()
+        fig.tight_layout()
         canvas = FigureCanvas(fig)
         ax = canvas.figure.subplots()
         ax.autoscale(enable=True, axis='y', tight=False)
-        frame = QFrame()
-        frame.setStyleSheet('background-color: white;')
-        frame.setFrameStyle(QFrame.Panel | QFrame.Raised)
-        frameContainer = QVBoxLayout(frame)
 
         lines = []
 
-        for i, (data, color) in enumerate((
-                (self.density, 'r'),
-                (self.velocity, 'g'),
-                (self.pressure, 'b'),
-                (self.temperature, 'c'),
-                (self.internal_energy, 'k'),
-                (self.entropy, 'm')
-        )):
+        # Matplotlib need to plot y axis on the left hand side first
+        # then the reset of axis can be plotted on right hand side
+        main_axis_plotted = False
+
+        # Record how many lines had been selected to plot
+        select_num = 0
+
+        for data, color in (
+            (self.density, 'r'),
+            (self.velocity, 'g'),
+            (self.pressure, 'b'),
+            (self.temperature, 'c'),
+            (self.internal_energy, 'k'),
+            (self.entropy, 'm')
+        ):
             # Plot multiple data line with same X axis, it need to plot a
             # data line on main axis first
-            if i == 0:
-                data.bind_axis(ax)
-                data.ana, = ax.plot(x.copy(), np.zeros_like(x),
-                                    f'{color}-',
-                                    label=f'{data.name}_ana')
-                data.num, = ax.plot(x.copy(), np.zeros_like(x),
-                                    f'{color}x',
-                                    label=f'{data.name}_num')
-                ax.set_ylabel(f'{data.name} ({data.unit})')
-            else:
-                ax_new = ax.twinx()
-                data.bind_axis(ax_new)
-                data.ana, = ax_new.plot(x.copy(), np.zeros_like(x),
+            if self.data_lines[data.name][1]:
+                if not main_axis_plotted:
+                    data.bind_axis(ax)
+                    data.ana, = ax.plot(x.copy(), np.zeros_like(x),
                                         f'{color}-',
                                         label=f'{data.name}_ana')
-                data.num, = ax_new.plot(x.copy(), np.zeros_like(x),
+                    data.num, = ax.plot(x.copy(), np.zeros_like(x),
                                         f'{color}x',
                                         label=f'{data.name}_num')
-                ax_new.spines.right.set_position(("axes", 1 + (i - 1) * 0.1))
-                ax_new.set_ylabel(f'{data.name} ({data.unit})')
-
+                    ax.set_ylabel(f'{data.name} ({data.unit})')
+                    main_axis_plotted = True
+                else:
+                    ax_new = ax.twinx()
+                    data.bind_axis(ax_new)
+                    data.ana, = ax_new.plot(x.copy(), np.zeros_like(x),
+                                            f'{color}-',
+                                            label=f'{data.name}_ana')
+                    data.num, = ax_new.plot(x.copy(), np.zeros_like(x),
+                                            f'{color}x',
+                                            label=f'{data.name}_num')
+                    ax_new.spines.right.set_position(("axes",
+                                                      (1 + (select_num - 1)
+                                                       * 0.2)))
+                    ax_new.set_ylabel(f'{data.name} ({data.unit})')
+                    ax_new.yaxis.set_major_formatter((FormatStrFormatter
+                                                      ('%.2f')))
+                select_num += 1
             lines.append(data.ana)
             lines.append(data.num)
 
-        ax.legend(lines, [line.get_label() for line in lines])
         ax.set_xlabel("distance (m)")
         ax.grid()
         canvas.installEventFilter(self)
 
         # These parameters are the results obtained by my tuning on GUI
-        fig.subplots_adjust(left=0.053, right=0.638, bottom=0.093, top=0.976,
+        fig.subplots_adjust(left=0.1,
+                            right=0.97 - (self.checkbox_select_num - 1) * 0.1,
+                            bottom=0.093, top=0.976,
                             wspace=0.2, hspace=0.2)
 
-        frameContainer.addWidget(canvas)
+        prev_fig = self.figure_layout.takeAt(0)
 
-        box = QVBoxLayout()
-        box.addWidget(frame)
+        if prev_fig:
+            prev_fig.widget().deleteLater()
 
-        self.graph_layout.addLayout(box)
         self.update_lines()
+        self.figure_layout.addWidget(canvas)
+
+        return lines
+
+    def _build_checkbox(self, layout):
+        layout.setSpacing(50)
+        for name, data_line in self.data_lines.items():
+            check_box = QCheckBox(name)
+            if data_line[1]:
+                check_box.toggle()
+            check_box.clicked.connect(self._checkbox_cb)
+            layout.addWidget(check_box)
+
+    def _checkbox_cb(self):
+        # Under a single plot layout, that allow 3 lines on the same chart
+        # simultaneously to avoid it looking too crowded.
+        # I have chosen to use checkboxes for user to select
+        # the parameters they want to plot on the chart.
+        checkbox = self.sender()
+        if self.checkbox_select_num == 3:
+            if checkbox.isChecked():
+                checkbox.toggle()
+            else:
+                self.checkbox_select_num -= 1
+                self.data_lines[checkbox.text()][1] = False
+        elif self.checkbox_select_num == 1:
+            if not checkbox.isChecked():
+                checkbox.toggle()
+            else:
+                self.checkbox_select_num += 1
+                self.data_lines[checkbox.text()][1] = True
+        else:
+            if checkbox.isChecked():
+                self.checkbox_select_num += 1
+                self.data_lines[checkbox.text()][1] = True
+            else:
+                self.checkbox_select_num -= 1
+                self.data_lines[checkbox.text()][1] = False
+
+        self._update_single_figure()
 
 
 class Controller:
@@ -407,7 +507,7 @@ class Controller:
             # and matplotlib.  We may consider to use composite for QMainWindow
             # instead of inheritance.
             self._subwin = view.mgr.addSubWindow(self._main)
-            self._subwin.resize(400, 300)
+            self._subwin.resize(1150, 750)
 
         self.plt_mgr = PlotManager(self.shocktube)
         # Ideally one would use self.addToolBar here, but it is slightly
