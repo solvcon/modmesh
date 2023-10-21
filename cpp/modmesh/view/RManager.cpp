@@ -31,6 +31,7 @@
 #include <vector>
 
 #include <modmesh/view/RAction.hpp>
+#include <modmesh/view/RParameter.hpp>
 #include <Qt>
 #include <QMenuBar>
 #include <QMenu>
@@ -210,6 +211,19 @@ void RManager::setUpMenu()
         this->addApplication(QString("euler1d"));
         this->addApplication(QString("linear_wave"));
         this->addApplication(QString("bad_euler1d"));
+    }
+
+    {
+        QAction * params = new RAction(
+            QString("Parameters"),
+            QString("Runtime parameters"),
+            []()
+            {
+                openParameterView();
+            }
+        );
+        m_mainWindow->menuBar()->addAction(params);
+
     }
 }
 
