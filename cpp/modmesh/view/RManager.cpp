@@ -219,7 +219,12 @@ void RManager::setUpMenu()
             QString("Runtime parameters"),
             []()
             {
-                openParameterView();
+                static int64_t int64V = 5566;
+                static double doubleV = 77.88;
+                auto params = createParameters();
+                addParam(params, "global.a.b.int64_foo", &int64V);
+                addParam(params, "global.a.b.double_bar", &doubleV);
+                openParameterView(params);
             }
         );
         m_mainWindow->menuBar()->addAction(params);

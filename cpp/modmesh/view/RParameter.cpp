@@ -30,86 +30,16 @@
 
 namespace modmesh
 {
-
-static int int64V = 5566;
-static double doubleV = 77.88;
-
-int getter_func_i64(int64_t *ptr) {
-    return *ptr;
-}
-
-void setter_func_i64(int64_t *ptr, int value) {
-    *ptr = value;
-}
-
-double getter_func_double(double *ptr) {
-    return *ptr;
-}
-
-void setter_func_double(double *ptr, double value) {
-    *ptr = value;
-}
-
-enum DataType {
-    TYPE_INT64,
-    TYPE_DOUBLE,
-};
-
-static struct param {
-    const char * key;
-    void * value;
-    int dtype;
-} params[] = {
-    {"a.b.int64_foo", &int64V, TYPE_INT64},
-    {"a.b.double_bar", &doubleV, TYPE_DOUBLE},
-};
-
-void openParameterView() {
+pybind11::tuple createParameters(void) {
     pybind11::module pui_module = pybind11::module::import("PUI");
-    auto state = pui_module.attr("StateDict")();
-    auto paramsList = pybind11::list();
+    return pybind11::make_tuple(
+        pui_module.attr("StateDict")(), pybind11::list()
+    );
+}
 
-    for(int i=0;i<sizeof(params)/sizeof(params[0]);i++){
-        auto key = params[i].key;
-        auto ptr = params[i].value;
-        switch(params[i].dtype){
-            case TYPE_INT64:
-                {
-                    state[pybind11::str(key)] = getter_func_i64((int64_t *)ptr);
-                    auto binding = state(key);
-                    binding.attr("bind")(
-                        pybind11::cpp_function([ptr](){
-                            return getter_func_i64((int64_t *)ptr);
-                        }),
-                        pybind11::cpp_function([key, ptr](int64_t value){
-                            std::cout << "Set " << key << " = " << value << std::endl;
-                            setter_func_i64((int64_t *)ptr, value);
-                        })
-                    );
-                    paramsList.append(binding);
-                }
-                break;
-            case TYPE_DOUBLE:
-                {
-                    state[pybind11::str(key)] = getter_func_double((double *)ptr);
-                    auto binding = state(key);
-                    binding.attr("bind")(
-                        pybind11::cpp_function([ptr](){
-                            return getter_func_double((double *)ptr);
-                        }),
-                        pybind11::cpp_function([key, ptr](double value){
-                            std::cout << "Set " << key << " = " << value << std::endl;
-                            setter_func_double((double *)ptr, value);
-                        })
-                    );
-                    paramsList.append(binding);
-                }
-                break;
-        }
-    }
-
+void openParameterView(pybind11::tuple & params) {
     pybind11::module params_module = pybind11::module::import("modmesh.params");
-    params_module.attr("openParameterView")(paramsList);
+    params_module.attr("openParameterView")(params[1]);
 }
 
 } /* end namespace modmesh */
