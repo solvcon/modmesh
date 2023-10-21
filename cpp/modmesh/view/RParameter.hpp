@@ -37,18 +37,17 @@ pybind11::tuple createParameters(void);
 void openParameterView(pybind11::tuple & params);
 
 template <typename T>
-void addParam(pybind11::tuple & params, const char *key, T *ptr) {
+void addParam(pybind11::tuple & params, const char * key, T * ptr)
+{
     params[0][pybind11::str(key)] = *ptr;
     auto binding = params[0](key);
     binding.attr("bind")(
-        pybind11::cpp_function([ptr](){
-            return *ptr;
-        }),
-        pybind11::cpp_function([key, ptr](T value){
+        pybind11::cpp_function([ptr]()
+                               { return *ptr; }),
+        pybind11::cpp_function([key, ptr](T value)
+                               {
             std::cout << "Set " << key << " = " << value << std::endl;
-            *ptr = value;
-        })
-    );
+            *ptr = value; }));
     static_cast<pybind11::list>(params[1]).append(binding);
 }
 

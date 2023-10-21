@@ -225,10 +225,8 @@ void RManager::setUpMenu()
                 addParam(params, "global.a.b.int64_foo", &int64V);
                 addParam(params, "global.a.b.double_bar", &doubleV);
                 openParameterView(params);
-            }
-        );
+            });
         m_mainWindow->menuBar()->addAction(params);
-
     }
 }
 

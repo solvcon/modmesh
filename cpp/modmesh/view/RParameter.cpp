@@ -30,14 +30,15 @@
 
 namespace modmesh
 {
-pybind11::tuple createParameters(void) {
+pybind11::tuple createParameters(void)
+{
     pybind11::module pui_module = pybind11::module::import("PUI");
     return pybind11::make_tuple(
-        pui_module.attr("StateDict")(), pybind11::list()
-    );
+        pui_module.attr("StateDict")(), pybind11::list());
 }
 
-void openParameterView(pybind11::tuple & params) {
+void openParameterView(pybind11::tuple & params)
+{
     pybind11::module params_module = pybind11::module::import("modmesh.params");
     params_module.attr("openParameterView")(params[1]);
 }
