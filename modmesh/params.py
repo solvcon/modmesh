@@ -1,6 +1,6 @@
 from PUI.PySide6 import *
 
-class ParametersView(PuiInQt):
+class ParameterView(PuiInQt):
     class TableAdapter:
         def __init__(self, state, data):
             self.state = state
@@ -40,14 +40,14 @@ class ParametersView(PuiInQt):
             TextField(self.state("filter"))
             Table(self.TableAdapter(self.state, data.params))
 
-def openParametersView(params):
+def openParameterView(params):
     state  = State()
     state.buffer = [f"line {i}" for i in range(50)]
     state.cmd_edit = ""
     state.config_modal = False
     state.filter = ""
     state.params = params
-    pv = ParametersView(Window(size=(640, 480)), state)
+    pv = ParameterView(Window(size=(640, 480)), state)
     pv.redraw()
 
 if __name__=="__main__":
@@ -56,7 +56,7 @@ if __name__=="__main__":
             self.app = QtWidgets.QApplication([])
 
         def run(self):
-            openParametersView()
+            openParameterView()
             self.app.exec()
 
     root = Example()
