@@ -29,7 +29,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from PUI.PySide6 import *
+from PUI.PySide6 import State, PuiInQt, Window, VBox, Table, TextField
+from PySide6 import QtWidgets
+
 
 class ParameterView(PuiInQt):
     class TableAdapter:
@@ -42,14 +44,14 @@ class ParameterView(PuiInQt):
             return [param.key, param.value][col]
 
         def setData(self, row, col, value):
-            if col==1:
+            if col == 1:
                 self._data[row].value = value
 
         def editable(self, row, col):
             return col > 0
 
         def columnHeader(self, col):
-            return ["Key","Value"][col]
+            return ["Key", "Value"][col]
 
         def rowCount(self):
             return len(self._data)
@@ -66,13 +68,18 @@ class ParameterView(PuiInQt):
         if not self.state.filter:
             data.params = self.state.params
         else:
-            data.params = [it for it in self.state.params if self.state.filter in it.key]
+            data.params = [
+                it
+                for it in self.state.params
+                if self.state.filter in it.key
+            ]
         with VBox():
             TextField(self.state("filter"))
             Table(self.TableAdapter(self.state, data.params))
 
+
 def openParameterView(params):
-    state  = State()
+    state = State()
     state.buffer = [f"line {i}" for i in range(50)]
     state.cmd_edit = ""
     state.config_modal = False
@@ -81,7 +88,8 @@ def openParameterView(params):
     pv = ParameterView(Window(size=(640, 480)), state)
     pv.redraw()
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     class Example():
         def __init__(self):
             self.app = QtWidgets.QApplication([])
