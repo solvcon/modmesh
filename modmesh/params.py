@@ -29,8 +29,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import PUI
 from PUI.PySide6 import State, PuiInQt, Window, VBox, Table, TextField
 from PySide6 import QtWidgets
+
+if tuple([int(x) for x in PUI.__version__.split(".")]) != (0, 3):
+    raise ValueError("PUI too old")
 
 
 class ParameterView(PuiInQt):
