@@ -84,9 +84,6 @@ class ParameterView(PuiInQt):
 
 def openParameterView(params):
     state = State()
-    state.buffer = [f"line {i}" for i in range(50)]
-    state.cmd_edit = ""
-    state.config_modal = False
     state.filter = ""
     state.params = params
     pv = ParameterView(Window(size=(640, 480)), state)
@@ -99,7 +96,15 @@ if __name__ == "__main__":
             self.app = QtWidgets.QApplication([])
 
         def run(self):
-            openParameterView()
+            from PUI.PySide6 import StateDict
+            paramsState = StateDict()
+            paramsState["a.b.foo_int64"] = 5566
+            paramsState["a.b.bar_double"] = 77.88
+            paramsList = [
+                paramsState("a.b.foo_int64"),
+                paramsState("a.b.bar_double"),
+            ]
+            openParameterView(paramsList)
             self.app.exec()
 
     root = Example()
