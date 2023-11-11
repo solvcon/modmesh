@@ -88,7 +88,7 @@ class PlotManager(QWidget):
         self.setWindowTitle("Euler 1D")
         # Set minimum window size to prevent the plot from looking
         # distorted due to the window being too small
-        self.setMinimumSize(1150, 750)
+        self.setMinimumSize(1150, 700)
         self.setAcceptDrops(True)
 
         self.scroll_area = QScrollArea()
@@ -510,11 +510,35 @@ class Controller:
             self._subwin.resize(1150, 750)
 
         self.plt_mgr = PlotManager(self.shocktube)
+        self.plt_mgr.build_lines_grid_layout()
         # Ideally one would use self.addToolBar here, but it is slightly
         # incompatible between PyQt6 and other bindings, so we just add the
         # toolbar as a plain widget instead.
         layout = QVBoxLayout(self._main)
+        ctrl_button_layout = QHBoxLayout()
+
+        start_button = QPushButton()
+        start_button.setText('Start')
+        start_button.clicked.connect(self.start)
+        ctrl_button_layout.addWidget(start_button)
+
+        stop_button = QPushButton()
+        stop_button.setText('Stop')
+        stop_button.clicked.connect(self.stop)
+        ctrl_button_layout.addWidget(stop_button)
+
+        step_button = QPushButton()
+        step_button.setText('Step')
+        step_button.clicked.connect(self.step_button_cb)
+        ctrl_button_layout.addWidget(step_button)
+
+        reset_button = QPushButton()
+        reset_button.setText('Reset')
+        reset_button.clicked.connect(self.reset)
+        ctrl_button_layout.addWidget(reset_button)
+
         layout.addWidget(self.plt_mgr)
+        layout.addLayout(ctrl_button_layout)
 
         self.profiling = profiling
 
@@ -529,10 +553,30 @@ class Controller:
     def stop(self):
         self.timer.stop()
 
+    def step_button_cb(self):
+        self.step()
+
     def step(self, steps=1):
         self.march_alpha2(steps=steps)
         if self.max_steps and self.current_step > self.max_steps:
             self.stop()
+
+    def reset(self):
+        self.stop()
+        self.current_step = 0
+        self.shocktube = euler1d.ShockTube()
+        self.shocktube.build_constant(gamma=1.4,
+                                      pressure1=1.0,
+                                      density1=1.0,
+                                      pressure5=0.1,
+                                      density5=0.125)
+        self.shocktube.build_numerical(xmin=-10,
+                                       xmax=10,
+                                       ncoord=201,
+                                       time_increment=0.05)
+        self.shocktube.build_field(t=0)
+        self.plt_mgr.shocktube = self.shocktube
+        self.plt_mgr.update_lines()
 
     def march_alpha2(self, steps=1):
         self.shocktube.svr.march_alpha2(steps=steps)
@@ -545,14 +589,11 @@ class Controller:
             self.log(mm.time_registry.report())
         self.plt_mgr.update_lines()
 
-    def setup_solver(self, interval):
+    def setup_timer(self, interval):
         """
         :param interval: milliseconds
         :return: nothing
         """
-        self.shocktube.build_field(t=0)
-        self.plt_mgr.shocktube = self.shocktube
-        self.plt_mgr.build_lines_grid_layout()
         self.interval = interval
         self.timer = QTimer()
         self.timer.timeout.connect(self.step)
@@ -583,12 +624,13 @@ def run(interval=10, max_steps=50, no_view_mgr=False, **kw):
     st.build_constant(gamma=1.4, pressure1=1.0, density1=1.0, pressure5=0.1,
                       density5=0.125)
     st.build_numerical(xmin=-10, xmax=10, ncoord=201, time_increment=0.05)
+    st.build_field(t=0)
 
     if no_view_mgr:
         ctrl = ControllerNoViewMgr(shocktube=st, max_steps=max_steps, **kw)
     else:
         ctrl = Controller(shocktube=st, max_steps=max_steps, **kw)
-    ctrl.setup_solver(interval)
+    ctrl.setup_timer(interval)
     ctrl.show()
 
     return ctrl
