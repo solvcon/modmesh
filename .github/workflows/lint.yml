@@ -165,13 +165,15 @@ jobs:
 
       - name: dependency by homebrew
         run: |
-          # brew update  # No update because it is slow
+          # Reopen for runner image v20231029.1
+          # old homebrew/core cause brew link and unlink not working
+          brew update  # No update because it is slow
           # Force using python 3.10 from homebrew
           brew unlink python
           brew link --force --overwrite python@3.10
-          brew install llvm qt6
-          ln -s "$(brew --prefix llvm)/bin/clang-format" "/usr/local/bin/clang-format"
-          ln -s "$(brew --prefix llvm)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+          brew install llvm@16 qt6
+          ln -s "$(brew --prefix llvm@16)/bin/clang-format" "/usr/local/bin/clang-format"
+          ln -s "$(brew --prefix llvm@16)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 
       - name: dependency by pip
         run: |
