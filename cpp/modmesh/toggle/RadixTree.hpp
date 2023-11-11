@@ -40,18 +40,21 @@ namespace modmesh
 /**
  * Simple Timed Entry
  */
-class TimedEntry {
+class TimedEntry
+{
 public:
     size_t count() const { return m_count; }
     double time() const { return m_time; }
 
-    TimedEntry& add_time(double time) {
+    TimedEntry & add_time(double time)
+    {
         ++m_count;
         m_time += time;
         return *this;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const TimedEntry& entry) {
+    friend std::ostream & operator<<(std::ostream & os, const TimedEntry & entry)
+    {
         os << "Count: " << entry.count() << " - Time: " << entry.time();
         return os;
     }
@@ -62,22 +65,30 @@ private:
 }; /* end class TimedEntry */
 
 template <typename T>
-class RadixTreeNode {
+class RadixTreeNode
+{
 private:
     using ChildList = std::list<std::unique_ptr<RadixTreeNode>>;
 
 public:
-    RadixTreeNode() : prev(nullptr) {};
-    RadixTreeNode(std::string name, int key) : m_name(std::move(name)), m_key(key), prev(nullptr) {}
-    
-    const int& getKey() const { return m_key; }
-    const std::string& getName() const { return m_name; }
-    T& getData() { return m_data; }
-    const T& getData() const { return m_data; }
-    const ChildList& getChildren() const { return m_children; }
+    RadixTreeNode()
+        : prev(nullptr){};
+    RadixTreeNode(std::string name, int key)
+        : m_name(std::move(name))
+        , m_key(key)
+        , prev(nullptr)
+    {
+    }
+
+    const int & getKey() const { return m_key; }
+    const std::string & getName() const { return m_name; }
+    T & getData() { return m_data; }
+    const T & getData() const { return m_data; }
+    const ChildList & getChildren() const { return m_children; }
 
     // Add a child node
-    RadixTreeNode<T>* addChild(std::string childName, int childKey) {
+    RadixTreeNode<T> * addChild(std::string childName, int childKey)
+    {
         auto newChild = std::make_unique<RadixTreeNode<T>>(std::move(childName), std::move(childKey));
         newChild->prev = this;
         m_children.push_back(std::move(newChild));
@@ -85,22 +96,25 @@ public:
     }
 
     // Get a child node with a given key
-    RadixTreeNode<T>* getChild(int key) const {
-        auto it = std::find_if(m_children.begin(), m_children.end(), [&](const auto& child) {
-            return child->getKey() == key;
-        });
+    RadixTreeNode<T> * getChild(int key) const
+    {
+        auto it = std::find_if(m_children.begin(), m_children.end(), [&](const auto & child)
+                               { return child->getKey() == key; });
         return (it != m_children.end()) ? it->get() : nullptr;
     }
-    
-    // Get prev node in the tree
-    RadixTreeNode<T>* getPrev() const {
+
+    // Get prev node
+    RadixTreeNode<T> * getPrev() const
+    {
         return prev;
     }
 
     // // print node information
-    std::string Info() const {
+    std::string Info() const
+    {
         std::ostringstream oss;
-        if (nullptr != prev) {
+        if (nullptr != prev)
+        {
             oss << getName() << " - ";
             oss << getData();
         }
@@ -112,7 +126,7 @@ private:
     std::string m_name;
     T m_data;
     ChildList m_children;
-    RadixTreeNode<T>* prev;
+    RadixTreeNode<T> * prev;
 }; /* end class RadixTreeNode */
 
 /*
@@ -121,59 +135,76 @@ https://kalkicode.com/radix-tree-implementation
 https://www.algotree.org/algorithms/trie/
 */
 template <typename T>
-class RadixTree {
+class RadixTree
+{
 public:
-    RadixTree() : m_root(std::make_unique<RadixTreeNode<T>>()), m_currentNode(m_root.get()) {}
+    RadixTree()
+        : m_root(std::make_unique<RadixTreeNode<T>>())
+        , m_currentNode(m_root.get())
+    {
+    }
 
-    T& entry(const std::string& name) {
+    T & entry(const std::string & name)
+    {
         int id = getId(name);
 
-        RadixTreeNode<T>* child = m_currentNode->getChild(id);
+        RadixTreeNode<T> * child = m_currentNode->getChild(id);
 
-        if (!child) {
+        if (!child)
+        {
             m_currentNode = m_currentNode->addChild(name, id);
-        } else {
+        }
+        else
+        {
             m_currentNode = child;
         }
 
         return m_currentNode->getData();
     }
 
-    void moveCurrentToParent() {
-        if (m_currentNode != m_root.get()) {
+    void moveCurrentToParent()
+    {
+        if (m_currentNode != m_root.get())
+        {
             m_currentNode = m_currentNode->getPrev();
         }
     }
 
-    const RadixTreeNode<T>* getCurrentNode() const { return m_currentNode; }
-    const int getUniqueNode() const {
+    const RadixTreeNode<T> * getCurrentNode() const { return m_currentNode; }
+    const int getUniqueNode() const
+    {
         return m_unique_id;
     }
 
-    void print() const {
+    void print() const
+    {
         printRecursive(m_root.get(), 0);
     }
 
 private:
-    void printRecursive(const RadixTreeNode<T>* node, int depth) const {
-        for (int i = 0; i < depth; ++i) {
+    void printRecursive(const RadixTreeNode<T> * node, int depth) const
+    {
+        for (int i = 0; i < depth; ++i)
+        {
             std::cout << "  ";
         }
 
         std::cout << node->Info();
 
-        for (const auto& child : node->getChildren()) {
+        for (const auto & child : node->getChildren())
+        {
             printRecursive(child.get(), depth + 1);
         }
     }
 
-    int getId(const std::string& name) {
+    int getId(const std::string & name)
+    {
         auto [it, inserted] = m_id_map.try_emplace(name, m_unique_id++);
         return it->second;
     }
 
     std::unique_ptr<RadixTreeNode<T>> m_root;
-    RadixTreeNode<T>* m_currentNode;
+    RadixTreeNode<T> * m_currentNode;
     std::unordered_map<std::string, int> m_id_map;
     int m_unique_id = 0;
 }; /* end class RadixTree */
