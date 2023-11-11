@@ -34,6 +34,7 @@
 #include <list>
 #include <unordered_map>
 #include <stack>
+#include <algorithm>
 
 namespace modmesh
 {
