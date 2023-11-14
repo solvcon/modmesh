@@ -110,10 +110,7 @@ public:
         return (it != m_children.end()) ? it->get() : nullptr;
     }
 
-    RadixTreeNode<T> * get_prev() const
-    {
-        return m_prev;
-    }
+    RadixTreeNode<T> * get_prev() const { return m_prev; }
 
 private:
     key_type m_key = -1;
