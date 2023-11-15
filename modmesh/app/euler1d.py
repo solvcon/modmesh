@@ -147,6 +147,13 @@ class PlotManager(QWidget):
 
     @Slot(bool)
     def save_all(self, checked=False):
+        """
+        This callback function don't care button's checked state,
+        therefore the checked state is not used in this function.
+
+        :param checked: button is checked or not
+        :return: nothing
+        """
         fig = QPixmap(self.figure_container.size())
         self.figure_container.render(fig)
 
@@ -171,13 +178,22 @@ class PlotManager(QWidget):
         self.main_layout.deleteLater()
         self.main_container.update()
 
-        # Qt objects are managed by Qt internal event loop,
-        # hence it will not be deleted immediately when we called
-        # deleteLater() and a QWidget only accept one layout at
-        # the same time, therefore a object delete callback is
-        # needed to set new layout after old layout deleted.
         @Slot(QObject)
         def del_cb(obj=None):
+            """
+            Qt objects are managed by Qt internal event loop,
+            hence it will not be deleted immediately when we called
+            deleteLater() and a QWidget only accept one layout at
+            the same time, therefore a object delete callback is
+            needed to set new layout after old layout deleted.
+
+            This callback will be called before the obj destroyed,
+            in this callback only update the layout, therefore the obj
+            is not used in this callback.
+
+            :param obj: The object about to be destroyed
+            :return: nothing
+            """
             if self.use_grid_layout:
                 self.build_lines_grid_layout()
             else:
@@ -190,6 +206,13 @@ class PlotManager(QWidget):
 
     @Slot(bool)
     def switch_layout(self, checked=False):
+        """
+        This callback function don't care button's checked state,
+        therefore the checked state is not used in this function.
+
+        :param checked: button is checked or not
+        :return: nothing
+        """
         self.use_grid_layout = not self.use_grid_layout
         self._update_layout()
 
@@ -453,10 +476,18 @@ class PlotManager(QWidget):
 
     @Slot(bool)
     def _checkbox_cb(self, checked=False):
-        # Under a single plot layout, that allow 3 lines on the same chart
-        # simultaneously to avoid it looking too crowded.
-        # I have chosen to use checkboxes for user to select
-        # the parameters they want to plot on the chart.
+        """
+        This callback function don't care button's checked state,
+        therefore the checked state is not used in this function.
+
+        Under a single plot layout, that allow 3 lines on the same chart
+        simultaneously to avoid it looking too crowded.
+        I have chosen to use checkboxes for user to select
+        the parameters they want to plot on the chart.
+
+        :param checked: button is checked or not
+        :return: nothing
+        """
         checkbox = self.sender()
         if self.checkbox_select_num == 3:
             if checkbox.isChecked():
@@ -553,14 +584,35 @@ class Controller:
 
     @Slot(bool)
     def start(self, checked=False):
+        """
+        This callback function don't care button's checked state,
+        therefore the checked state is not used in this function.
+
+        :param checked: button is checked or not
+        :return: nothing
+        """
         self.timer.start(self.interval)
 
     @Slot(bool)
     def stop(self, checked=False):
+        """
+        This callback function don't care button's checked state,
+        therefore the checked state is not used in this function.
+
+        :param checked: button is checked or not
+        :return: nothing
+        """
         self.timer.stop()
 
     @Slot(bool)
     def step_button_cb(self, checked=False):
+        """
+        This callback function don't care button's checked state,
+        therefore the checked state is not used in this function.
+
+        :param checked: button is checked or not
+        :return: nothing
+        """
         self.step()
 
     def step(self, steps=1):
@@ -574,6 +626,13 @@ class Controller:
 
     @Slot(bool)
     def reset(self, checked=False):
+        """
+        This callback function don't care button's checked state,
+        therefore the checked state is not used in this function.
+
+        :param checked: button is checked or not
+        :return: nothing
+        """
         self.stop()
         self.current_step = 0
         self.shocktube = euler1d.ShockTube()
