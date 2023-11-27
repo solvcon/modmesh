@@ -85,7 +85,7 @@ struct CellType : NumberBase<int32_t, double>
     }
 
     uint8_t id() const { return m_id; }
-    uint8_t ndim() const { return m_ndim; }
+    uint8_t ndim() const { return static_cast<int>(m_ndim); }
     uint8_t nnode() const { return m_attrs[NNODE_IDX]; }
     uint8_t nedge() const { return m_attrs[NEDGE_IDX]; }
     uint8_t nsurface() const { return m_attrs[NSURFACE_IDX]; }
@@ -309,6 +309,9 @@ public:
     uint_type nedge() const { return static_cast<uint_type>(m_ednds.shape(0)); }
     size_t nbcs() const { return m_bcs.size(); }
 
+    void set_ncell(uint_type ncell) { m_ncell = ncell; }
+    void set_nnode(uint_type nnode) { m_nnode = nnode; }
+    void set_ndim(uint_type ndim) { m_ndim = ndim; }
     /**
      * Get the "self" cell number of the input face by index.  A shorthand of
      * fccls()[ifc][0] .

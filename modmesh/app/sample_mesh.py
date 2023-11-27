@@ -61,6 +61,19 @@ print("tet nedge:", mh_tet.nedge)
     if set_command:
         view.mgr.pycon.command = cmd.strip()
 
+def help_hex(set_command=False):
+    cmd = """
+# Open a sub window for a hexahedron:
+w_hex = add3DWidget()
+mh_hex = make_hexahedron()
+w_hex.updateMesh(mh_hex)
+w_hex.showMark()
+print("hex nedge:", mh_hex.nedge)
+"""
+    view.mgr.pycon.writeToHistory(cmd)
+    if set_command:
+        view.mgr.pycon.command = cmd.strip()
+
 
 def help_other(set_command=False):
     cmd = """
@@ -124,6 +137,15 @@ def make_tetrahedron():
     mh.build_ghost()
     return mh
 
+def make_hexahedron():
+    mh = core.StaticMesh(ndim=3, nnode=8, nface=6, ncell=1)
+    mh.ndcrd.ndarray[:, :] = (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1)
+    mh.cltpn.ndarray[:] = core.StaticMesh.HEXAHEDRON
+    mh.clnds.ndarray[:, :9] = [(8, 0 ,2 ,3 ,1 ,4 ,6 ,7 ,5)]
+    mh.build_interior()
+    mh.build_boundary()
+    mh.build_ghost()
+    return mh
 
 def make_bezier():
     """
@@ -155,10 +177,12 @@ def load_app():
     symbols = (
         'help_tri',
         'help_tet',
+        'help_hex',
         'help_mesh_viewer',
         'help_other',
         'make_triangle',
         'make_tetrahedron',
+        'make_hexahedron',
         'make_mesh_viewer',
         'make_bezier',
         ('add3DWidget', view.mgr.add3DWidget),
@@ -176,6 +200,7 @@ def load_app():
 # Use the functions for more examples:
 help_tri(set_command=False)  # or True
 help_tet(set_command=False)  # or True
+help_hex(set_command=False)  # or True
 help_other(set_command=False)  # or True
 help_mesh_viewer(path, set_command=False)  # or True
 """)
