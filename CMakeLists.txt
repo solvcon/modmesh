@@ -23,6 +23,13 @@ endif()
 option(USE_CLANG_TIDY "use clang-tidy" OFF)
 option(LINT_AS_ERRORS "clang-tidy warnings as errors" OFF)
 
+# Sanitizers
+# - Undefined Behavior Sanitization: Preventing the unpredictable outcomes of undefined behavior. See https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+# - Memory Leaks Sanitization: Prevententing memory leaks caused from inproper memory management. See https://clang.llvm.org/docs/MemorySanitizer.html
+# - Address Sanitization: Protecting against address-related vulnerabilities. See https://clang.llvm.org/docs/AddressSanitizer.html
+option(USE_SANITIZER "use sanitizer (undefined, leak, address)" OFF)
+
+
 if(BUILD_QT)
     option(QT3D_USE_RHI "Qt use RHI" OFF)
     message(STATUS "QT3D_USE_RHI: ${QT3D_USE_RHI}")
@@ -45,6 +52,15 @@ if(USE_CLANG_TIDY)
     endif()
 else()
     message(STATUS "not use clang-tidy")
+endif()
+
+if(USE_SANITIZER)
+    message(STATUS "use sanitizer")
+    set(SANITIZER_LIST "undefined,leak,address")
+    add_compile_options(-fsanitize=${SANITIZER_LIST})
+    add_link_options(-fsanitize=${SANITIZER_LIST})
+else()
+    message(STATUS "not use sanitizer")
 endif()
 
 include(Flake8)
