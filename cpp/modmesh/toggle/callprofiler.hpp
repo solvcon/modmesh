@@ -8,21 +8,22 @@
 namespace modmesh
 {
 
-// Define a structure for each node in the radix tree
+// The profiling result of the caller
 struct CallerProfile
 {
-    std::string functionName;
+    std::string callerName;
     std::chrono::milliseconds totalTime;
     int callCount = 0;
 };
 
-// Define a structure to represent a function call
+// Information of the caller stored in the profiler stack
 struct CallerInfo
 {
     std::string callerName;
     std::chrono::high_resolution_clock::time_point startTime;
 };
 
+/// The profiler that profiles the hierarchical caller stack.
 class CallProfiler
 {
 public:
@@ -55,7 +56,7 @@ public:
         // Update profiling information
         callProfile.totalTime += elapsedTime;
         callProfile.callCount++;
-        callProfile.functionName = callerName;
+        callProfile.callerName = callerName;
 
         // Pop the function from the call stack
         m_callStack.pop();
@@ -68,6 +69,7 @@ public:
         _print_profiling_result(*(m_radixTree.get_current_node()), 0, outstream);
     }
 
+    /// Result the profiler
     void reset()
     {
         while (!m_callStack.empty())
@@ -95,7 +97,7 @@ private:
         }
         else
         {
-            outstream << profile.functionName << " - Total Time: " << profile.totalTime.count() << " ms, Call Count: " << profile.callCount << std::endl;
+            outstream << profile.callerName << " - Total Time: " << profile.totalTime.count() << " ms, Call Count: " << profile.callCount << std::endl;
         }
 
         for (const auto & child : node.children())
@@ -105,11 +107,11 @@ private:
     }
 
 private:
-    std::stack<CallerInfo> m_callStack;
-    RadixTree<CallerProfile> m_radixTree;
+    std::stack<CallerInfo> m_callStack; /// the stack of the callers
+    RadixTree<CallerProfile> m_radixTree; /// the data structure of the callers
 };
 
-/// Utility to time how long a scope takes
+/// Utility to profile a call
 class CallProfilerProbe
 {
 public:
