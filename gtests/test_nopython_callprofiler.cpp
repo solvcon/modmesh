@@ -74,9 +74,9 @@ TEST(CallProfilerCase2, construction)
 
     const char * answer = R"(Profiling Result
   foo1 - Total Time: 61 ms, Call Count: 1
-    foo2 - Total Time: 115 ms, Call Count: 1
-      foo3 - Total Time: 73 ms, Call Count: 1
-  foo2 - Total Time: 73 ms, Call Count: 1
+    foo2 - Total Time: 54 ms, Call Count: 1
+      foo3 - Total Time: 19 ms, Call Count: 1
+  foo2 - Total Time: 54 ms, Call Count: 1
     foo3 - Total Time: 19 ms, Call Count: 1
   foo3 - Total Time: 38 ms, Call Count: 2
 )";
