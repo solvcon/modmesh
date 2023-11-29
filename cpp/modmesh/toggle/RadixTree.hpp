@@ -162,6 +162,14 @@ public:
         }
     }
 
+    void reset()
+    {
+        m_root = std::move(std::make_unique<RadixTreeNode<T>>());
+        m_current_node = m_root.get();
+        m_id_map.clear();
+        m_unique_id = 0;
+    }
+
     RadixTreeNode<T> * get_current_node() const { return m_current_node; }
     key_type get_unique_node() const { return m_unique_id; }
 
