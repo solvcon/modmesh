@@ -12,9 +12,14 @@ namespace modmesh
 // The profiling result of the caller
 struct CallerProfile
 {
+    CallerProfile()
+        : totalTime(0)
+        , callCount(0)
+    {
+    }
     std::string callerName;
     std::chrono::milliseconds totalTime;
-    int callCount = 0;
+    int callCount;
 };
 
 // Information of the caller stored in the profiler stack
