@@ -2,6 +2,7 @@
 #include <chrono>
 #include <ostream>
 #include <stack>
+#include <functional>
 #include <unordered_map>
 #include "RadixTree.hpp"
 
@@ -21,7 +22,10 @@ struct CallerInfo
 {
     std::string callerName;
     std::chrono::high_resolution_clock::time_point startTime;
+    std::function<void()> cancelCallback;
 };
+
+class CallProfilerTest;
 
 /// The profiler that profiles the hierarchical caller stack.
 class CallProfiler
@@ -35,10 +39,10 @@ public:
     }
 
     // Called when a function starts
-    void start_caller(const std::string & callerName)
+    void start_caller(const std::string & callerName, std::function<void()> cancelCallback)
     {
         auto startTime = std::chrono::high_resolution_clock::now();
-        m_callStack.push({callerName, startTime});
+        m_callStack.push({callerName, startTime, cancelCallback});
         m_radixTree.entry(callerName);
     }
 
@@ -74,6 +78,7 @@ public:
     {
         while (!m_callStack.empty())
         {
+            m_callStack.top().cancelCallback();
             m_callStack.pop();
         }
         m_radixTree.reset();
@@ -107,6 +112,8 @@ private:
     }
 
 private:
+    friend class CallProfilerTest;
+
     std::stack<CallerInfo> m_callStack; /// the stack of the callers
     RadixTree<CallerProfile> m_radixTree; /// the data structure of the callers
 };
@@ -118,15 +125,28 @@ public:
     CallProfilerProbe(CallProfiler & profiler, const char * callerName)
         : m_profiler(profiler)
     {
-        m_profiler.start_caller(callerName);
+        auto cancelCallback = [&]()
+        {
+            cancel();
+        };
+        m_profiler.start_caller(callerName, cancelCallback);
     }
 
     ~CallProfilerProbe()
     {
-        m_profiler.end_caller();
+        if (!m_cancel)
+        {
+            m_profiler.end_caller();
+        }
+    }
+
+    void cancel()
+    {
+        m_cancel = true;
     }
 
 private:
+    bool m_cancel = false;
     CallProfiler & m_profiler;
 };
 
