@@ -4,7 +4,7 @@
 #include <stack>
 #include <functional>
 #include <unordered_map>
-#include "RadixTree.hpp"
+#include <modmesh/toggle/RadixTree.hpp>
 
 namespace modmesh
 {
