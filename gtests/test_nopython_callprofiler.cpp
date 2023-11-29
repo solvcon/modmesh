@@ -1,16 +1,30 @@
-#include <modmesh/toggle/callprofiler.hpp>
 #include <gtest/gtest.h>
 #include <thread>
+
+#include <modmesh/toggle/callprofiler.hpp>
 
 #ifdef Py_PYTHON_H
 #error "Python.h should not be included."
 #endif
 
-TEST(CallProfiler, construction)
+namespace modmesh
 {
-    namespace mm = modmesh;
-    mm::CallProfiler::instance();
-}
+class CallProfilerTest : public ::testing::Test
+{
+protected:
+    void SetUp() override
+    {
+        CallProfiler & profiler = CallProfiler::instance();
+        pProfiler = &profiler;
+    }
+
+    std::stack<CallerInfo> & call_stack()
+    {
+        return pProfiler->m_callStack;
+    }
+
+    CallProfiler * pProfiler;
+};
 
 constexpr int uniqueTime1 = 19;
 constexpr int uniqueTime2 = 35;
@@ -18,35 +32,39 @@ constexpr int uniqueTime3 = 7;
 
 void foo3()
 {
-    modmesh::USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
+    USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
     std::this_thread::sleep_for(std::chrono::milliseconds(uniqueTime1));
 }
 
 void foo2()
 {
-    modmesh::USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
+    USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
     std::this_thread::sleep_for(std::chrono::milliseconds(uniqueTime2));
     foo3();
 }
 
 void foo1()
 {
-    modmesh::USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
+    USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
     foo2();
     std::this_thread::sleep_for(std::chrono::milliseconds(uniqueTime3));
 }
 
-TEST(CallProfilerCase1, construction)
+TEST_F(CallProfilerTest, test_reset)
 {
-    namespace mm = modmesh;
+    USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
+    pProfiler->reset();
+    EXPECT_EQ(call_stack().empty(), true);
+}
 
-    mm::CallProfiler& profiler = mm::CallProfiler::instance();
-    profiler.reset();
+TEST_F(CallProfilerTest, simple_case_1)
+{
+    pProfiler->reset();
 
     foo1();
 
     std::stringstream ss;
-    profiler.print_profiling_result(ss);
+    pProfiler->print_profiling_result(ss);
 
     const char * answer = R"(Profiling Result
   foo1 - Total Time: 61 ms, Call Count: 1
@@ -57,12 +75,9 @@ TEST(CallProfilerCase1, construction)
     EXPECT_EQ(ss.str(), answer);
 }
 
-TEST(CallProfilerCase2, construction)
+TEST_F(CallProfilerTest, simple_case_2)
 {
-    namespace mm = modmesh;
-
-    mm::CallProfiler& profiler = mm::CallProfiler::instance();
-    profiler.reset();
+    pProfiler->reset();
 
     foo1();
     foo2();
@@ -70,7 +85,7 @@ TEST(CallProfilerCase2, construction)
     foo3();
 
     std::stringstream ss;
-    profiler.print_profiling_result(ss);
+    pProfiler->print_profiling_result(ss);
 
     const char * answer = R"(Profiling Result
   foo1 - Total Time: 61 ms, Call Count: 1
@@ -83,3 +98,5 @@ TEST(CallProfilerCase2, construction)
 
     EXPECT_EQ(ss.str(), answer);
 }
+
+} // namespace modmesh
