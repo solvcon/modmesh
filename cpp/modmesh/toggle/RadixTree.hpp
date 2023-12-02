@@ -41,29 +41,29 @@ namespace modmesh
 /**
  * Simple Timed Entry
  */
-class TimedEntry
-{
-public:
-    size_t count() const { return m_count; }
-    double time() const { return m_time; }
+// class TimedEntry
+// {
+// public:
+//     size_t count() const { return m_count; }
+//     double time() const { return m_time; }
 
-    TimedEntry & add_time(double time)
-    {
-        ++m_count;
-        m_time += time;
-        return *this;
-    }
+//     TimedEntry & add_time(double time)
+//     {
+//         ++m_count;
+//         m_time += time;
+//         return *this;
+//     }
 
-    friend std::ostream & operator<<(std::ostream & os, const TimedEntry & entry)
-    {
-        os << "Count: " << entry.count() << " - Time: " << entry.time();
-        return os;
-    }
+//     friend std::ostream & operator<<(std::ostream & os, const TimedEntry & entry)
+//     {
+//         os << "Count: " << entry.count() << " - Time: " << entry.time();
+//         return os;
+//     }
 
-private:
-    size_t m_count = 0;
-    double m_time = 0.0;
-}; /* end class TimedEntry */
+// private:
+//     size_t m_count = 0;
+//     double m_time = 0.0;
+// }; /* end class TimedEntry */
 
 template <typename T>
 class RadixTreeNode
@@ -161,6 +161,46 @@ public:
             m_current_node = m_current_node->get_prev();
         }
     }
+
+    void clear()
+    {
+        m_root.reset(new RadixTreeNode<T>());
+        m_current_node = m_root.get();
+        m_id_map.clear();
+        m_unique_id = 0;
+    }
+
+    template <typename U>
+    void printTree()
+    {
+
+        if (!m_root)
+            return;
+
+        std::stack<std::pair<const modmesh::RadixTreeNode<T>*, int>> stack;
+        // Start with the children of the root node
+        for (auto it = m_root->children().rbegin(); it != m_root->children().rend(); ++it)
+        {
+            stack.push({it->get(), 0});
+        }
+
+        while (!stack.empty())
+        {
+            auto [node, depth] = stack.top();
+            stack.pop();
+
+            for (int i = 0; i < depth; ++i)
+                std::cout << "  ";
+
+            std::cout << node->name() << " : " << node->data() << "\n";
+
+            for (auto it = node->children().rbegin(); it != node->children().rend(); ++it)
+            {
+                stack.push({it->get(), depth + 1});
+            }
+        }
+    }
+
 
     RadixTreeNode<T> * get_current_node() const { return m_current_node; }
     key_type get_unique_node() const { return m_unique_id; }

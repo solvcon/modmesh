@@ -122,6 +122,12 @@ public:
         return *this;
     }
 
+    friend std::ostream & operator<<(std::ostream & os, const TimedEntry & entry)
+    {
+        os << "Count: " << entry.count() << " - Time: " << entry.time();
+        return os;
+    }
+
 private:
 
     size_t m_count = 0;

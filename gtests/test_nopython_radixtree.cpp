@@ -1,4 +1,5 @@
 #include <modmesh/toggle/RadixTree.hpp>
+#include <modmesh/toggle/profile.hpp>
 #include <gtest/gtest.h>
 
 #ifdef Py_PYTHON_H
