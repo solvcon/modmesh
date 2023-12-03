@@ -62,7 +62,11 @@ TEST_F(CallProfilerTest, test_print_result)
 
 static bool diff_time(std::chrono::nanoseconds raw_nano_time, int time_ms, int factor = 1)
 {
-    const int error = 5 * factor; // a function call can has error in about 5 ms on macOS
+#if defined __APPLE__ or defined _MSC_VER
+    const int error = 10 * factor; // a function call can has few milliseconds error on macOS and Windows
+#else
+    constexpr int error = 3; // on ubuntu the error is more fixed.
+#endif
     return std::abs(raw_nano_time.count() / 1e6 - time_ms) < error;
 }
 
