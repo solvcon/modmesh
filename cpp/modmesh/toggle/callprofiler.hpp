@@ -195,8 +195,15 @@ private:
 };
 
 #ifdef CALLPROFILER
+
+#ifdef _MSC_VER
+// ref: https://learn.microsoft.com/en-us/cpp/preprocessor/predefined-macros
+#define __CROSS_PRETTY_FUNCTION__ __FUNCSIG__
+#else
 // ref: https://gcc.gnu.org/onlinedocs/gcc/Function-Names.html
-#define USE_CALLPROFILER_PROFILE_THIS_FUNCTION() modmesh::CallProfilerProbe __profilerProbe##__COUNTER__(modmesh::CallProfiler::instance(), __PRETTY_FUNCTION__)
+#define __CROSS_PRETTY_FUNCTION__ __PRETTY_FUNCTION__
+#endif
+#define USE_CALLPROFILER_PROFILE_THIS_FUNCTION() modmesh::CallProfilerProbe __profilerProbe##__COUNTER__(modmesh::CallProfiler::instance(), __CROSS_PRETTY_FUNCTION__)
 #define USE_CALLPROFILER_PROFILE_THIS_SCOPE(scopeName) modmesh::CallProfilerProbe __profilerProbe##__COUNTER__(modmesh::CallProfiler::instance(), scopeName)
 #else
 #define USE_CALLPROFILER_PROFILE_THIS_FUNCTION() // do nothing
