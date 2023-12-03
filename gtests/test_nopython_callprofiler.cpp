@@ -66,6 +66,24 @@ static bool diff_time(std::chrono::nanoseconds raw_nano_time, int time_ms, int f
     return std::abs(raw_nano_time.count() / 1e6 - time_ms) < error;
 }
 
+#ifdef _MSC_VER
+auto foo1Name = "void __cdecl modmesh::foo1(void)";
+#else
+auto foo1Name = "void modmesh::foo1()";
+#endif
+
+#ifdef _MSC_VER
+auto foo2Name = "void __cdecl modmesh::foo2(void)";
+#else
+auto foo2Name = "void modmesh::foo2()";
+#endif
+
+#ifdef _MSC_VER
+auto foo3Name = "void __cdecl modmesh::foo3(void)";
+#else
+auto foo3Name = "void modmesh::foo3()";
+#endif
+
 TEST_F(CallProfilerTest, test_simple_case1)
 {
     pProfiler->reset();
@@ -79,17 +97,17 @@ TEST_F(CallProfilerTest, test_simple_case1)
     int key = 0;
 
     auto * node1 = radix_tree().get_current_node()->get_child(key++);
-    EXPECT_EQ(node1->data().caller_name, "void modmesh::foo1()");
+    EXPECT_EQ(node1->data().caller_name, foo1Name);
     EXPECT_EQ(node1->data().call_count, 1);
     EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2 + uniqueTime3, 3));
 
     auto * node2 = node1->get_child(key++);
-    EXPECT_EQ(node2->data().caller_name, "void modmesh::foo2()");
+    EXPECT_EQ(node2->data().caller_name, foo2Name);
     EXPECT_EQ(node2->data().call_count, 1);
     EXPECT_TRUE(diff_time(node2->data().total_time, uniqueTime1 + uniqueTime2, 2));
 
     auto * node3 = node2->get_child(key++);
-    EXPECT_EQ(node3->data().caller_name, "void modmesh::foo3()");
+    EXPECT_EQ(node3->data().caller_name, foo3Name);
     EXPECT_EQ(node3->data().call_count, 1);
     EXPECT_TRUE(diff_time(node3->data().total_time, uniqueTime1));
 }
@@ -111,51 +129,45 @@ TEST_F(CallProfilerTest, simple_case_2)
 
     // for first `foo1()` call
     {
-        auto name1 = "void modmesh::foo1()";
-        auto * node1 = radix_tree().get_current_node()->get_child(name1);
+        auto * node1 = radix_tree().get_current_node()->get_child(foo1Name);
         EXPECT_NE(node1, nullptr);
-        EXPECT_EQ(node1->data().caller_name, name1);
+        EXPECT_EQ(node1->data().caller_name, foo1Name);
         EXPECT_EQ(node1->data().call_count, 1);
         EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2 + uniqueTime3, 3));
 
-        auto name2 = "void modmesh::foo2()";
-        auto * node2 = node1->get_child(name2);
+        auto * node2 = node1->get_child(foo2Name);
         EXPECT_NE(node2, nullptr);
-        EXPECT_EQ(node2->data().caller_name, name2);
+        EXPECT_EQ(node2->data().caller_name, foo2Name);
         EXPECT_EQ(node2->data().call_count, 1);
         EXPECT_TRUE(diff_time(node2->data().total_time, uniqueTime1 + uniqueTime2, 2));
 
-        auto name3 = "void modmesh::foo3()";
-        auto * node3 = node2->get_child(name3);
+        auto * node3 = node2->get_child(foo3Name);
         EXPECT_NE(node3, nullptr);
-        EXPECT_EQ(node3->data().caller_name, name3);
+        EXPECT_EQ(node3->data().caller_name, foo3Name);
         EXPECT_EQ(node3->data().call_count, 1);
         EXPECT_TRUE(diff_time(node3->data().total_time, uniqueTime1));
     }
 
     // for  `foo2()` call
     {
-        auto name1 = "void modmesh::foo2()";
-        auto * node1 = radix_tree().get_current_node()->get_child(name1); // id = 1, because previously already assigned in the map, FIXME: probably find a better way than hard
+        auto * node1 = radix_tree().get_current_node()->get_child(foo2Name); // id = 1, because previously already assigned in the map, FIXME: probably find a better way than hard
         EXPECT_NE(node1, nullptr);
-        EXPECT_EQ(node1->data().caller_name, name1);
+        EXPECT_EQ(node1->data().caller_name, foo2Name);
         EXPECT_EQ(node1->data().call_count, 1);
         EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2, 2));
 
-        auto name2 = "void modmesh::foo3()";
-        auto * node2 = node1->get_child(name2);
+        auto * node2 = node1->get_child(foo3Name);
         EXPECT_NE(node2, nullptr);
-        EXPECT_EQ(node2->data().caller_name, name2);
+        EXPECT_EQ(node2->data().caller_name, foo3Name);
         EXPECT_EQ(node2->data().call_count, 1);
         EXPECT_TRUE(diff_time(node2->data().total_time, uniqueTime1));
     }
 
     // for  two `foo3()` call
     {
-        auto name1 = "void modmesh::foo3()";
-        auto * node1 = radix_tree().get_current_node()->get_child(name1);
+        auto * node1 = radix_tree().get_current_node()->get_child(foo3Name);
         EXPECT_NE(node1, nullptr);
-        EXPECT_EQ(node1->data().caller_name, name1);
+        EXPECT_EQ(node1->data().caller_name, foo3Name);
         EXPECT_EQ(node1->data().call_count, 2);
         EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 * 2, 2));
     }
