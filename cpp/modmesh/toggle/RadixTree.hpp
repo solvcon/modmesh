@@ -151,7 +151,7 @@ public:
         if (!m_root)
             return;
 
-        std::stack<std::pair<const modmesh::RadixTreeNode<T>*, int>> stack;
+        std::stack<std::pair<const modmesh::RadixTreeNode<T> *, int>> stack;
         // Start with the children of the root node
         for (auto it = m_root->children().rbegin(); it != m_root->children().rend(); ++it)
         {
@@ -174,7 +174,6 @@ public:
             }
         }
     }
-
 
     RadixTreeNode<T> * get_current_node() const { return m_current_node; }
     key_type get_unique_node() const { return m_unique_id; }

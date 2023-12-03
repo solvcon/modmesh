@@ -65,7 +65,8 @@ public:
 
     void reset() { m_tree.clear(); }
 
-    void report(){
+    void report()
+    {
         m_tree.printTree<TimedEntry>();
     }
 
@@ -119,13 +120,7 @@ private:
 
 } /* end namespace modmesh */
 
-
-
 #define MODMESH_TIME_RADIX() \
     ProfilerProbe _local_scoped_timer_##__LINE__(__FUNCTION__);
-
-/*
- * End MODMESH_PROFILE.
- */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
