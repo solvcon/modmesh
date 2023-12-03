@@ -312,6 +312,7 @@ public:
     void set_ncell(uint_type ncell) { m_ncell = ncell; }
     void set_nnode(uint_type nnode) { m_nnode = nnode; }
     void set_ndim(uint_type ndim) { m_ndim = ndim; }
+    void set_nface(uint_type nface) { m_nface = nface; }
     /**
      * Get the "self" cell number of the input face by index.  A shorthand of
      * fccls()[ifc][0] .
@@ -348,7 +349,7 @@ public:
 
     void build_edge();
 
-private:
+public:
 
     void build_faces_from_cells();
     void calc_metric();
@@ -358,6 +359,78 @@ public:
 
     void build_boundary();
     void build_ghost();
+
+public:
+
+    void createQuadFaces()
+    {
+        // Clear all previous faces and edges
+        m_nface = 0;
+        m_fcnds.remake(small_vector<size_t>{m_nface, 4}, 0);
+        m_fccls.remake(small_vector<size_t>{m_nface, 2}, 0);
+
+        // Create node group
+        std::vector<std::vector<uint_type>> nodeGroups(6);
+
+        for (uint_type i = 0; i < m_nnode; ++i)
+        {
+            real_type x = ndcrd(i, 0);
+            real_type y = ndcrd(i, 1);
+            real_type z = ndcrd(i, 2);
+
+            if (x == 0.0)
+            {
+                nodeGroups[0].push_back(i); // i=0
+            }
+            else if (x == 1.0)
+            {
+                nodeGroups[1].push_back(i); // i=1
+            }
+
+            if (y == 0.0)
+            {
+                nodeGroups[2].push_back(i); // j=0
+            }
+            else if (y == 1.0)
+            {
+                nodeGroups[3].push_back(i); // j=1
+            }
+
+            if (z == 0.0)
+            {
+                nodeGroups[4].push_back(i); // k=0
+            }
+            else if (z == 1.0)
+            {
+                nodeGroups[5].push_back(i); // k=1
+            }
+        }
+
+        // Create a two-dimensional surface based on node grouping
+        for (size_t idx = 0; idx < nodeGroups.size(); ++idx)
+        {
+            const std::vector<uint_type> & group = nodeGroups[idx];
+            if (group.size() == 4) // Each face has four nodes
+            {
+                // Create a new face
+                ++m_nface;
+                m_fcnds.remake(small_vector<size_t>{m_nface, 4}, 0);
+                m_fccls.remake(small_vector<size_t>{m_nface, 2}, 0);
+
+                for (size_t i = 0; i < 4; ++i)
+                {
+                    m_fcnds(m_nface - 1, i) = group[i];
+                }
+
+                // Set the associated unit
+                m_fccls(m_nface - 1, 0) = -1; // Not associated with any unit
+                m_fccls(m_nface - 1, 1) = -1;
+            }
+        }
+
+        // Update edge
+        build_edge();
+    }
 
 private:
 
