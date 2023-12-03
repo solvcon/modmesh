@@ -120,6 +120,7 @@ private:
 
 } /* end namespace modmesh */
 
+// ref: https://gcc.gnu.org/onlinedocs/gcc/Function-Names.html
 #define MODMESH_TIME_RADIX() \
     ProfilerProbe _local_scoped_timer_##__LINE__(__PRETTY_FUNCTION__);
 

@@ -60,6 +60,7 @@ TEST_F(CallProfilerTest, simple_case_2)
     f.bar3();
     f.bar3();
     info->report();
+
 }
 
 } // namespace modmesh
