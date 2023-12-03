@@ -40,4 +40,10 @@
 #include <modmesh/mesh/mesh.hpp>
 #include <modmesh/toggle/toggle.hpp>
 
+#if defined(USE_SANITIZER) && (defined(__clang__) || defined(__GNUC__))
+#define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
+#else
+#define ATTRIBUTE_NO_SANITIZE_ADDRESS
+#endif
+
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
