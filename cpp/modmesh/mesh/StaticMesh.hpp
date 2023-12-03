@@ -362,7 +362,7 @@ public:
 
 public:
 
-    void createQuadFaces()
+    void createHexFaces()
     {
         // Clear all previous faces and edges
         m_nface = 0;

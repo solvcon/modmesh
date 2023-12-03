@@ -88,7 +88,7 @@ private:
             mesh->ndcrd(i, 2) = z;
         }
         // Reading connectivity and populating 'clnds'
-        mesh->createQuadFaces();
+        mesh->createHexFaces();
         p3d_File.close();
     }
 
