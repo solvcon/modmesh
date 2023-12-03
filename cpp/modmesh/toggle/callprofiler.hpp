@@ -57,15 +57,18 @@ struct CallerProfile
         auto end_time = std::chrono::high_resolution_clock::now();
         auto elapsed_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time);
         total_time += elapsed_time;
+        call_count++;
     }
 
     std::chrono::high_resolution_clock::time_point start_time;
     std::function<void()> cancel_callback;
     std::string caller_name;
-    std::chrono::nanoseconds total_time;
-    int callCount = 0;
+    std::chrono::nanoseconds total_time; /// use nanoseconds to have higher precision
+    int call_count = 0;
     bool is_running = false;
 };
+
+class CallProfilerTest; // for gtest
 
 /// The profiler that profiles the hierarchical caller stack.
 class CallProfiler
@@ -91,12 +94,10 @@ public:
     // Called when a function ends
     void end_caller(const std::string & caller_name)
     {
-
         CallerProfile & callProfile = m_radix_tree.get_current_node()->data();
 
         // Update profiling information
         callProfile.stop_stopwatch();
-        callProfile.callCount++;
 
         // Pop the caller from the call stack
         m_radix_tree.move_current_to_parent();
@@ -144,7 +145,7 @@ private:
         }
         else
         {
-            outstream << profile.caller_name << " - Total Time: " << profile.total_time.count() / 1000 << " ms, Call Count: " << profile.callCount << std::endl;
+            outstream << profile.caller_name << " - Total Time: " << profile.total_time.count() / 1e6 << " ms, Call Count: " << profile.call_count << std::endl;
         }
 
         for (const auto & child : node.children())
@@ -155,6 +156,8 @@ private:
 
 private:
     RadixTree<CallerProfile> m_radix_tree; /// the data structure of the callers
+
+    friend CallProfilerTest;
 };
 
 /// Utility to profile a call
@@ -192,6 +195,7 @@ private:
 };
 
 #ifdef CALLPROFILER
+// ref: https://gcc.gnu.org/onlinedocs/gcc/Function-Names.html
 #define USE_CALLPROFILER_PROFILE_THIS_FUNCTION() modmesh::CallProfilerProbe __profilerProbe##__COUNTER__(modmesh::CallProfiler::instance(), __PRETTY_FUNCTION__)
 #define USE_CALLPROFILER_PROFILE_THIS_SCOPE(scopeName) modmesh::CallProfilerProbe __profilerProbe##__COUNTER__(modmesh::CallProfiler::instance(), scopeName)
 #else
