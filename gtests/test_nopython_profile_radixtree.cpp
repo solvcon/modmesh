@@ -25,7 +25,8 @@ constexpr int uniqueTime1 = 19;
 constexpr int uniqueTime2 = 35;
 constexpr int uniqueTime3 = 7;
 
-class Foo{
+class Foo
+{
 public:
     Foo() = default;
 
@@ -49,7 +50,6 @@ public:
         std::this_thread::sleep_for(std::chrono::milliseconds(uniqueTime3));
     }
 };
-
 
 TEST_F(CallProfilerTest, simple_case_2)
 {
