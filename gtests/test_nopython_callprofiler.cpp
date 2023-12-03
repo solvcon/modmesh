@@ -26,22 +26,28 @@ protected:
     CallProfiler * pProfiler;
 };
 
-// the value cannot be too small, otherwise some OSs don't support short precise sleep
-// see: https://www.reddit.com/r/cpp_questions/comments/1625536/
-constexpr int uniqueTime1 = 151;
-constexpr int uniqueTime2 = 50;
-constexpr int uniqueTime3 = 223;
+constexpr int uniqueTime1 = 19;
+constexpr int uniqueTime2 = 35;
+constexpr int uniqueTime3 = 7;
 
 void foo3()
 {
     USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
-    std::this_thread::sleep_for(std::chrono::milliseconds(uniqueTime1));
+    auto start_time = std::chrono::high_resolution_clock::now();
+    while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count() < uniqueTime1)
+    {
+        // use busy loop to get a precise duration
+    }
 }
 
 void foo2()
 {
     USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
-    std::this_thread::sleep_for(std::chrono::milliseconds(uniqueTime2));
+    auto start_time = std::chrono::high_resolution_clock::now();
+    while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count() < uniqueTime2)
+    {
+        // use busy loop to get a precise duration
+    }
     foo3();
 }
 
@@ -49,7 +55,11 @@ void foo1()
 {
     USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
     foo2();
-    std::this_thread::sleep_for(std::chrono::milliseconds(uniqueTime3));
+    auto start_time = std::chrono::high_resolution_clock::now();
+    while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count() < uniqueTime3)
+    {
+        // use busy loop to get a precise duration
+    }
 }
 
 TEST_F(CallProfilerTest, test_print_result)
@@ -62,13 +72,9 @@ TEST_F(CallProfilerTest, test_print_result)
     pProfiler->print_profiling_result(ss);
 }
 
-static bool diff_time(std::chrono::nanoseconds raw_nano_time, int time_ms, int factor = 1)
+static bool diff_time(std::chrono::nanoseconds raw_nano_time, int time_ms)
 {
-#if defined __APPLE__ or defined _MSC_VER
-    const int error = 20 * factor; // a function call can has few milliseconds error on macOS and Windows
-#else
-    constexpr int error = 3; // on ubuntu the error is more fixed.
-#endif
+    constexpr int error = 5; // a reasonable error
     return std::abs(raw_nano_time.count() / 1e6 - time_ms) < error;
 }
 
@@ -106,12 +112,12 @@ TEST_F(CallProfilerTest, test_simple_case1)
     auto * node1 = radix_tree().get_current_node()->get_child(key++);
     EXPECT_EQ(node1->data().caller_name, foo1Name);
     EXPECT_EQ(node1->data().call_count, 1);
-    EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2 + uniqueTime3, 3));
+    EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2 + uniqueTime3));
 
     auto * node2 = node1->get_child(key++);
     EXPECT_EQ(node2->data().caller_name, foo2Name);
     EXPECT_EQ(node2->data().call_count, 1);
-    EXPECT_TRUE(diff_time(node2->data().total_time, uniqueTime1 + uniqueTime2, 2));
+    EXPECT_TRUE(diff_time(node2->data().total_time, uniqueTime1 + uniqueTime2));
 
     auto * node3 = node2->get_child(key++);
     EXPECT_EQ(node3->data().caller_name, foo3Name);
@@ -142,13 +148,13 @@ TEST_F(CallProfilerTest, simple_case_2)
         EXPECT_NE(node1, nullptr);
         EXPECT_EQ(node1->data().caller_name, foo1Name);
         EXPECT_EQ(node1->data().call_count, 1);
-        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2 + uniqueTime3, 3));
+        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2 + uniqueTime3));
 
         auto * node2 = node1->get_child(foo2Name);
         EXPECT_NE(node2, nullptr);
         EXPECT_EQ(node2->data().caller_name, foo2Name);
         EXPECT_EQ(node2->data().call_count, 1);
-        EXPECT_TRUE(diff_time(node2->data().total_time, uniqueTime1 + uniqueTime2, 2));
+        EXPECT_TRUE(diff_time(node2->data().total_time, uniqueTime1 + uniqueTime2));
 
         auto * node3 = node2->get_child(foo3Name);
         EXPECT_NE(node3, nullptr);
@@ -163,7 +169,7 @@ TEST_F(CallProfilerTest, simple_case_2)
         EXPECT_NE(node1, nullptr);
         EXPECT_EQ(node1->data().caller_name, foo2Name);
         EXPECT_EQ(node1->data().call_count, 1);
-        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2, 2));
+        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2));
 
         auto * node2 = node1->get_child(foo3Name);
         EXPECT_NE(node2, nullptr);
@@ -178,7 +184,7 @@ TEST_F(CallProfilerTest, simple_case_2)
         EXPECT_NE(node1, nullptr);
         EXPECT_EQ(node1->data().caller_name, foo3Name);
         EXPECT_EQ(node1->data().call_count, 2);
-        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 * 2, 2));
+        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 * 2));
     }
 }
 
