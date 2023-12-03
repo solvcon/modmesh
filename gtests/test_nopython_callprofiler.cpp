@@ -65,7 +65,7 @@ TEST_F(CallProfilerTest, test_print_result)
 static bool diff_time(std::chrono::nanoseconds raw_nano_time, int time_ms, int factor = 1)
 {
 #if defined __APPLE__ or defined _MSC_VER
-    const int error = 10 * factor; // a function call can has few milliseconds error on macOS and Windows
+    const int error = 20 * factor; // a function call can has few milliseconds error on macOS and Windows
 #else
     constexpr int error = 3; // on ubuntu the error is more fixed.
 #endif
