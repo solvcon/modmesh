@@ -1,4 +1,33 @@
 #pragma once
+
+/*
+ * Copyright (c) 2023, Quentin Tsai <quentin.tsai.tw@gmail.com>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * - Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * - Neither the name of the copyright holder nor the names of its contributors
+ *   may be used to endorse or promote products derived from this software
+ *   without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <chrono>
 #include <functional>
 #include <modmesh/toggle/RadixTree.hpp>
@@ -17,13 +46,13 @@ struct CallerProfile
     {
     }
 
-    void start_time_watch()
+    void start_stopwatch()
     {
         start_time = std::chrono::high_resolution_clock::now();
         is_running = true;
     }
 
-    void stop_time_watch()
+    void stop_stopwatch()
     {
         auto end_time = std::chrono::high_resolution_clock::now();
         auto elapsed_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time);
@@ -56,7 +85,7 @@ public:
         m_radix_tree.entry(caller_name);
         CallerProfile & callProfile = m_radix_tree.get_current_node()->data();
         callProfile.caller_name = caller_name;
-        callProfile.start_time_watch();
+        callProfile.start_stopwatch();
     }
 
     // Called when a function ends
@@ -66,7 +95,7 @@ public:
         CallerProfile & callProfile = m_radix_tree.get_current_node()->data();
 
         // Update profiling information
-        callProfile.stop_time_watch();
+        callProfile.stop_stopwatch();
         callProfile.callCount++;
 
         // Pop the caller from the call stack
@@ -90,7 +119,7 @@ public:
             CallerProfile & profile = m_radix_tree.get_current_node()->data();
             if (profile.is_running)
             {
-                profile.stop_time_watch();
+                profile.stop_stopwatch();
             }
             m_radix_tree.move_current_to_parent();
         }
@@ -138,7 +167,7 @@ public:
     {
         auto cancel_callback = [&]()
         {
-            Cancel();
+            cancel();
         };
         m_profiler.start_caller(m_caller_name, cancel_callback);
     }
@@ -151,7 +180,7 @@ public:
         }
     }
 
-    void Cancel()
+    void cancel()
     {
         m_cancel = true;
     }
