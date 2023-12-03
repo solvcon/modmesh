@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2023, Quentin Tsai <quentin.tsai.tw@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -115,7 +115,7 @@ private:
     StopWatch m_sw;
     char const * m_name;
 
-}; /* end class Profiler */
+}; /* end class ProfilerProbe */
 
 } /* end namespace modmesh */
 
