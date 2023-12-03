@@ -26,9 +26,11 @@ protected:
     CallProfiler * pProfiler;
 };
 
-constexpr int uniqueTime1 = 19;
-constexpr int uniqueTime2 = 35;
-constexpr int uniqueTime3 = 7;
+// the value cannot be too small, otherwise some OSs don't support short precise sleep
+// see: https://www.reddit.com/r/cpp_questions/comments/1625536/
+constexpr int uniqueTime1 = 151;
+constexpr int uniqueTime2 = 50;
+constexpr int uniqueTime3 = 223;
 
 void foo3()
 {
@@ -94,6 +96,7 @@ TEST_F(CallProfilerTest, test_simple_case1)
 
     foo1();
 
+    // Example:
     // void modmesh::foo1() - Total Time: 61 ms, Call Count: 1
     //   void modmesh::foo2() - Total Time: 54 ms, Call Count: 1
     //      void modmesh::foo3() - Total Time: 19 ms, Call Count: 1
@@ -124,6 +127,8 @@ TEST_F(CallProfilerTest, simple_case_2)
     foo2();
     foo3();
     foo3();
+
+    // Example:
     // void modmesh::foo1 - Total Time: 61 ms, Call Count: 1
     //   void modmesh::foo2 - Total Time: 54 ms, Call Count: 1
     //     void modmesh::foo3 - Total Time: 19 ms, Call Count: 1
