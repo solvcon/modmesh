@@ -25,34 +25,40 @@ constexpr int uniqueTime1 = 19;
 constexpr int uniqueTime2 = 35;
 constexpr int uniqueTime3 = 7;
 
-void foo3()
-{
-    MODMESH_TIME_RADIX();
-    std::this_thread::sleep_for(std::chrono::milliseconds(uniqueTime1));
-}
+class Foo{
+public:
+    Foo() = default;
 
-void foo2()
-{
-    MODMESH_TIME_RADIX();
-    std::this_thread::sleep_for(std::chrono::milliseconds(uniqueTime2));
-    foo3();
-}
+    void bar3()
+    {
+        MODMESH_TIME_RADIX();
+        std::this_thread::sleep_for(std::chrono::milliseconds(uniqueTime1));
+    }
 
-void foo1()
-{
-    MODMESH_TIME_RADIX();
-    foo2();
-    std::this_thread::sleep_for(std::chrono::milliseconds(uniqueTime3));
-}
+    void bar2()
+    {
+        MODMESH_TIME_RADIX();
+        std::this_thread::sleep_for(std::chrono::milliseconds(uniqueTime2));
+        bar3();
+    }
+
+    void bar1()
+    {
+        MODMESH_TIME_RADIX();
+        bar2();
+        std::this_thread::sleep_for(std::chrono::milliseconds(uniqueTime3));
+    }
+};
+
 
 TEST_F(CallProfilerTest, simple_case_2)
 {
     info->reset();
-
-    foo1();
-    foo2();
-    foo3();
-    foo3();
+    modmesh::Foo f;
+    f.bar1();
+    f.bar2();
+    f.bar3();
+    f.bar3();
     info->report();
 }
 

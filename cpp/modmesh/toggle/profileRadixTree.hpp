@@ -121,6 +121,6 @@ private:
 } /* end namespace modmesh */
 
 #define MODMESH_TIME_RADIX() \
-    ProfilerProbe _local_scoped_timer_##__LINE__(__FUNCTION__);
+    ProfilerProbe _local_scoped_timer_##__LINE__(__PRETTY_FUNCTION__);
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
