@@ -110,6 +110,13 @@ public:
         return (it != m_children.end()) ? it->get() : nullptr;
     }
 
+    RadixTreeNode<T> * get_child(std::string name) const
+    {
+        auto it = std::find_if(m_children.begin(), m_children.end(), [&](const auto & child)
+                               { return child->name() == name; });
+        return (it != m_children.end()) ? it->get() : nullptr;
+    }
+
     RadixTreeNode<T> * get_prev() const { return m_prev; }
 
 private:
