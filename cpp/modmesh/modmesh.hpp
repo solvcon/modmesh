@@ -40,6 +40,7 @@
 #include <modmesh/mesh/mesh.hpp>
 #include <modmesh/toggle/toggle.hpp>
 
+// TODO Add MSVC case once sanitizer can be default turned on for CI testing
 #if defined(USE_SANITIZER) && (defined(__clang__) || defined(__GNUC__))
 #define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
 #else
