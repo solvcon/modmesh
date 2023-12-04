@@ -9,6 +9,9 @@
 #include <modmesh/toggle/RadixTree.hpp>
 namespace modmesh
 {
+
+namespace detail
+{
 class CallProfilerTest : public ::testing::Test
 {
 protected:
@@ -79,19 +82,19 @@ static bool diff_time(std::chrono::nanoseconds raw_nano_time, int time_ms)
 }
 
 #ifdef _MSC_VER
-auto foo1Name = "void __cdecl modmesh::foo1(void)";
+auto foo1Name = "void __cdecl modmesh::detail::foo1(void)";
 #else
 auto foo1Name = "void modmesh::foo1()";
 #endif
 
 #ifdef _MSC_VER
-auto foo2Name = "void __cdecl modmesh::foo2(void)";
+auto foo2Name = "void __cdecl modmesh::detail::foo2(void)";
 #else
 auto foo2Name = "void modmesh::foo2()";
 #endif
 
 #ifdef _MSC_VER
-auto foo3Name = "void __cdecl modmesh::foo3(void)";
+auto foo3Name = "void __cdecl modmesh::detail::foo3(void)";
 #else
 auto foo3Name = "void modmesh::foo3()";
 #endif
@@ -188,4 +191,5 @@ TEST_F(CallProfilerTest, simple_case_2)
     }
 }
 
+} // namespace detail
 } // namespace modmesh

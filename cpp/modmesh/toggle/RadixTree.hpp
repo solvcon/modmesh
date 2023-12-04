@@ -226,7 +226,9 @@ struct CallerProfile
     bool is_running = false;
 }; /* end struct CallerProfile */
 
-class CallProfilerTest; // for gtest
+namespace detail {
+    class CallProfilerTest; // for gtest
+}
 
 /// The profiler that profiles the hierarchical caller stack.
 class CallProfiler
@@ -281,7 +283,7 @@ private:
 private:
     RadixTree<CallerProfile> m_radix_tree; /// the data structure of the callers
 
-    friend CallProfilerTest;
+    friend detail::CallProfilerTest;
 }; /* end class CallProfiler */
 
 /// Utility to profile a call
