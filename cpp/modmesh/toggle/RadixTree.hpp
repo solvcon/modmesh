@@ -226,8 +226,9 @@ struct CallerProfile
     bool is_running = false;
 }; /* end struct CallerProfile */
 
-namespace detail {
-    class CallProfilerTest; // for gtest
+namespace detail
+{
+class CallProfilerTest; // for gtest
 }
 
 /// The profiler that profiles the hierarchical caller stack.
