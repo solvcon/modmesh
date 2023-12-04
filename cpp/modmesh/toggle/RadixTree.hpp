@@ -170,6 +170,11 @@ public:
         m_unique_id = 0;
     }
 
+    bool is_root() const
+    {
+        return m_current_node == m_root.get();
+    }
+
     RadixTreeNode<T> * get_current_node() const { return m_current_node; }
     key_type get_unique_node() const { return m_unique_id; }
 
