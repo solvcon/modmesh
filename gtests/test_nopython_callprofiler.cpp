@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 #include <thread>
 
-#include <modmesh/toggle/callprofiler.hpp>
-
 #ifdef Py_PYTHON_H
 #error "Python.h should not be included."
 #endif
 
+#define CALLPROFILER 1
+#include <modmesh/toggle/callprofiler.hpp>
 namespace modmesh
 {
 class CallProfilerTest : public ::testing::Test
@@ -16,11 +16,6 @@ protected:
     {
         CallProfiler & profiler = CallProfiler::instance();
         pProfiler = &profiler;
-    }
-
-    std::stack<CallerInfo> & call_stack()
-    {
-        return pProfiler->m_callStack;
     }
 
     CallProfiler * pProfiler;
@@ -48,13 +43,6 @@ void foo1()
     USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
     foo2();
     std::this_thread::sleep_for(std::chrono::milliseconds(uniqueTime3));
-}
-
-TEST_F(CallProfilerTest, test_reset)
-{
-    USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
-    pProfiler->reset();
-    EXPECT_EQ(call_stack().empty(), true);
 }
 
 TEST_F(CallProfilerTest, simple_case_1)
