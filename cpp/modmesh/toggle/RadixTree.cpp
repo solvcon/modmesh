@@ -45,6 +45,7 @@ void CallProfiler::reset()
     m_radix_tree.reset();
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void CallProfiler::print_profiling_result(const RadixTreeNode<CallerProfile> & node, const int depth, std::ostream & outstream) const
 {
     for (int i = 0; i < depth; ++i)
@@ -65,6 +66,7 @@ void CallProfiler::print_profiling_result(const RadixTreeNode<CallerProfile> & n
 
     for (const auto & child : node.children())
     {
+        // NOLINTNEXTLINE(misc-no-recursion)
         print_profiling_result(*child, depth + 1, outstream);
     }
 }
