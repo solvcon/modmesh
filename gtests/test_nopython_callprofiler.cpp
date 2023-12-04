@@ -60,9 +60,9 @@ TEST_F(CallProfilerTest, test_print_result)
     pProfiler->print_profiling_result(ss);
 }
 
-static bool diff_time(std::chrono::nanoseconds raw_nano_time, int time_ms)
+static bool diff_time(std::chrono::nanoseconds raw_nano_time, int time_ms, int factor = 1)
 {
-    constexpr int error = 2; // error in 2 ms
+    const int error = 5 * factor; // a function call can has error in about 5 ms on macOS
     return std::abs(raw_nano_time.count() / 1e6 - time_ms) < error;
 }
 
@@ -81,12 +81,12 @@ TEST_F(CallProfilerTest, test_simple_case1)
     auto * node1 = radix_tree().get_current_node()->get_child(key++);
     EXPECT_EQ(node1->data().caller_name, "void modmesh::foo1()");
     EXPECT_EQ(node1->data().call_count, 1);
-    EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2 + uniqueTime3));
+    EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2 + uniqueTime3, 3));
 
     auto * node2 = node1->get_child(key++);
     EXPECT_EQ(node2->data().caller_name, "void modmesh::foo2()");
     EXPECT_EQ(node2->data().call_count, 1);
-    EXPECT_TRUE(diff_time(node2->data().total_time, uniqueTime1 + uniqueTime2));
+    EXPECT_TRUE(diff_time(node2->data().total_time, uniqueTime1 + uniqueTime2, 2));
 
     auto * node3 = node2->get_child(key++);
     EXPECT_EQ(node3->data().caller_name, "void modmesh::foo3()");
@@ -116,14 +116,14 @@ TEST_F(CallProfilerTest, simple_case_2)
         EXPECT_NE(node1, nullptr);
         EXPECT_EQ(node1->data().caller_name, name1);
         EXPECT_EQ(node1->data().call_count, 1);
-        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2 + uniqueTime3));
+        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2 + uniqueTime3, 3));
 
         auto name2 = "void modmesh::foo2()";
         auto * node2 = node1->get_child(name2);
         EXPECT_NE(node2, nullptr);
         EXPECT_EQ(node2->data().caller_name, name2);
         EXPECT_EQ(node2->data().call_count, 1);
-        EXPECT_TRUE(diff_time(node2->data().total_time, uniqueTime1 + uniqueTime2));
+        EXPECT_TRUE(diff_time(node2->data().total_time, uniqueTime1 + uniqueTime2, 2));
 
         auto name3 = "void modmesh::foo3()";
         auto * node3 = node2->get_child(name3);
@@ -140,7 +140,7 @@ TEST_F(CallProfilerTest, simple_case_2)
         EXPECT_NE(node1, nullptr);
         EXPECT_EQ(node1->data().caller_name, name1);
         EXPECT_EQ(node1->data().call_count, 1);
-        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2));
+        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2, 2));
 
         auto name2 = "void modmesh::foo3()";
         auto * node2 = node1->get_child(name2);
@@ -157,7 +157,7 @@ TEST_F(CallProfilerTest, simple_case_2)
         EXPECT_NE(node1, nullptr);
         EXPECT_EQ(node1->data().caller_name, name1);
         EXPECT_EQ(node1->data().call_count, 2);
-        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 * 2));
+        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 * 2, 2));
     }
 }
 
