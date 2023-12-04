@@ -209,6 +209,12 @@ struct CallerProfile
     {
     }
 
+    CallerProfile(CallerProfile const &) = default;
+    CallerProfile(CallerProfile &&) = default;
+    CallerProfile & operator=(CallerProfile const &) = default;
+    CallerProfile & operator=(CallerProfile &&) = default;
+    ~CallerProfile() = default;
+
     void start_stopwatch()
     {
         start_time = std::chrono::high_resolution_clock::now();
@@ -236,6 +242,9 @@ class CallProfilerTest; // for gtest
 /// The profiler that profiles the hierarchical caller stack.
 class CallProfiler
 {
+private:
+    CallProfiler() = default;
+
 public:
     /// A singleton.
     static CallProfiler & instance()
@@ -264,12 +273,8 @@ public:
     void end_caller(const std::string & caller_name)
     {
         CallerProfile & callProfile = m_radix_tree.get_current_node()->data();
-
-        // Update profiling information
-        callProfile.stop_stopwatch();
-
-        // Pop the caller from the call stack
-        m_radix_tree.move_current_to_parent();
+        callProfile.stop_stopwatch(); // Update profiling information
+        m_radix_tree.move_current_to_parent(); // Pop the caller from the call stack
     }
 
     /// Print the profiling information
@@ -282,8 +287,6 @@ public:
     void reset();
 
 private:
-    CallProfiler() = default;
-
     void print_profiling_result(const RadixTreeNode<CallerProfile> & node, const int depth, std::ostream & outstream) const;
 
 private:
