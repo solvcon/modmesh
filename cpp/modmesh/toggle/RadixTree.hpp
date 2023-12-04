@@ -204,17 +204,6 @@ private:
 // The profiling result of the caller
 struct CallerProfile
 {
-    CallerProfile()
-        : total_time(0)
-    {
-    }
-
-    CallerProfile(CallerProfile const &) = default;
-    CallerProfile(CallerProfile &&) = default;
-    CallerProfile & operator=(CallerProfile const &) = default;
-    CallerProfile & operator=(CallerProfile &&) = default;
-    ~CallerProfile() = default;
-
     void start_stopwatch()
     {
         start_time = std::chrono::high_resolution_clock::now();
@@ -232,7 +221,7 @@ struct CallerProfile
     std::chrono::high_resolution_clock::time_point start_time;
     std::function<void()> cancel_callback;
     std::string caller_name;
-    std::chrono::nanoseconds total_time; /// use nanoseconds to have higher precision
+    std::chrono::nanoseconds total_time = std::chrono::nanoseconds(0); /// use nanoseconds to have higher precision
     int call_count = 0;
     bool is_running = false;
 }; /* end struct CallerProfile */
@@ -272,8 +261,8 @@ public:
     // Called when a function ends
     void end_caller(const std::string & caller_name)
     {
-        CallerProfile & callProfile = m_radix_tree.get_current_node()->data();
-        callProfile.stop_stopwatch(); // Update profiling information
+        CallerProfile & call_profile = m_radix_tree.get_current_node()->data();
+        call_profile.stop_stopwatch(); // Update profiling information
         m_radix_tree.move_current_to_parent(); // Pop the caller from the call stack
     }
 

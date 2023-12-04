@@ -33,9 +33,6 @@ namespace modmesh
 
 void CallProfiler::reset()
 {
-    RadixTreeNode<CallerProfile> * newNode;
-    RadixTreeNode<CallerProfile> * currentNode = m_radix_tree.get_current_node();
-
     while (!m_radix_tree.is_root())
     {
         CallerProfile & profile = m_radix_tree.get_current_node()->data();
