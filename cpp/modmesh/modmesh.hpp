@@ -42,9 +42,9 @@
 
 // TODO Add MSVC case once sanitizer can be default turned on for CI testing
 #if defined(USE_SANITIZER) && (defined(__clang__) || defined(__GNUC__))
-#define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
+#define ASAN_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
 #else
-#define ATTRIBUTE_NO_SANITIZE_ADDRESS
+#define ASAN_NO_SANITIZE_ADDRESS
 #endif
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
