@@ -6,7 +6,7 @@
 #endif
 
 #define CALLPROFILER 1
-#include <modmesh/toggle/callprofiler.hpp>
+#include <modmesh/toggle/RadixTree.hpp>
 namespace modmesh
 {
 class CallProfilerTest : public ::testing::Test

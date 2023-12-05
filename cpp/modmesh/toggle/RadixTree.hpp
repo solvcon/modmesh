@@ -28,13 +28,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sstream>
-#include <iostream>
-#include <memory>
-#include <list>
-#include <unordered_map>
-#include <stack>
 #include <algorithm>
+#include <chrono>
+#include <iostream>
+#include <list>
+#include <memory>
+#include <sstream>
+#include <stack>
+#include <unordered_map>
 
 namespace modmesh
 {
@@ -198,6 +199,152 @@ private:
     std::unordered_map<std::string, key_type> m_id_map;
     key_type m_unique_id = 0;
 }; /* end class RadixTree */
+
+// The profiling result of the caller
+struct CallerProfile
+{
+    CallerProfile()
+        : total_time(0)
+    {
+    }
+
+    void start_stopwatch()
+    {
+        start_time = std::chrono::high_resolution_clock::now();
+        is_running = true;
+    }
+
+    void stop_stopwatch()
+    {
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto elapsed_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time);
+        total_time += elapsed_time;
+        call_count++;
+    }
+
+    std::chrono::high_resolution_clock::time_point start_time;
+    std::function<void()> cancel_callback;
+    std::string caller_name;
+    std::chrono::nanoseconds total_time; /// use nanoseconds to have higher precision
+    int call_count = 0;
+    bool is_running = false;
+}; /* end struct CallerProfile */
+
+class CallProfilerTest; // for gtest
+
+/// The profiler that profiles the hierarchical caller stack.
+class CallProfiler
+{
+public:
+    /// A singleton.
+    static CallProfiler & instance()
+    {
+        static CallProfiler instance;
+        return instance;
+    }
+
+    CallProfiler(CallProfiler const &) = delete;
+    CallProfiler(CallProfiler &&) = delete;
+    CallProfiler & operator=(CallProfiler const &) = delete;
+    CallProfiler & operator=(CallProfiler &&) = delete;
+    ~CallProfiler() = default;
+
+    // Called when a function starts
+    void start_caller(const std::string & caller_name, std::function<void()> cancel_callback)
+    {
+        auto start_time = std::chrono::high_resolution_clock::now();
+        m_radix_tree.entry(caller_name);
+        CallerProfile & callProfile = m_radix_tree.get_current_node()->data();
+        callProfile.caller_name = caller_name;
+        callProfile.start_stopwatch();
+    }
+
+    // Called when a function ends
+    void end_caller(const std::string & caller_name)
+    {
+        CallerProfile & callProfile = m_radix_tree.get_current_node()->data();
+
+        // Update profiling information
+        callProfile.stop_stopwatch();
+
+        // Pop the caller from the call stack
+        m_radix_tree.move_current_to_parent();
+    }
+
+    /// Print the profiling information
+    void print_profiling_result(std::ostream & outstream) const
+    {
+        print_profiling_result(*(m_radix_tree.get_current_node()), 0, outstream);
+    }
+
+    /// Reset the profiler
+    void reset();
+
+private:
+    CallProfiler() = default;
+
+    void print_profiling_result(const RadixTreeNode<CallerProfile> & node, const int depth, std::ostream & outstream) const;
+
+private:
+    RadixTree<CallerProfile> m_radix_tree; /// the data structure of the callers
+
+    friend CallProfilerTest;
+}; /* end class CallProfiler */
+
+/// Utility to profile a call
+class CallProfilerProbe
+{
+public:
+    CallProfilerProbe(CallProfiler & profiler, const char * caller_name)
+        : m_profiler(profiler)
+        , m_caller_name(caller_name)
+    {
+        auto cancel_callback = [&]()
+        {
+            cancel();
+        };
+        m_profiler.start_caller(m_caller_name, cancel_callback);
+    }
+
+    CallProfilerProbe(CallProfilerProbe const &) = delete;
+    CallProfilerProbe(CallProfilerProbe &&) = delete;
+    CallProfilerProbe & operator=(CallProfilerProbe const &) = delete;
+    CallProfilerProbe & operator=(CallProfilerProbe &&) = delete;
+
+    ~CallProfilerProbe()
+    {
+        if (!m_cancel)
+        {
+            m_profiler.end_caller(m_caller_name);
+        }
+    }
+
+    void cancel()
+    {
+        m_cancel = true;
+    }
+
+private:
+    const char * m_caller_name;
+    bool m_cancel = false;
+    CallProfiler & m_profiler;
+}; /* end struct CallProfilerProbe */
+
+#ifdef CALLPROFILER
+
+#ifdef _MSC_VER
+// ref: https://learn.microsoft.com/en-us/cpp/preprocessor/predefined-macros
+#define __CROSS_PRETTY_FUNCTION__ __FUNCSIG__
+#else
+// ref: https://gcc.gnu.org/onlinedocs/gcc/Function-Names.html
+#define __CROSS_PRETTY_FUNCTION__ __PRETTY_FUNCTION__
+#endif
+#define USE_CALLPROFILER_PROFILE_THIS_FUNCTION() modmesh::CallProfilerProbe __profilerProbe##__COUNTER__(modmesh::CallProfiler::instance(), __CROSS_PRETTY_FUNCTION__)
+#define USE_CALLPROFILER_PROFILE_THIS_SCOPE(scopeName) modmesh::CallProfilerProbe __profilerProbe##__COUNTER__(modmesh::CallProfiler::instance(), scopeName)
+#else
+#define USE_CALLPROFILER_PROFILE_THIS_FUNCTION() // do nothing
+#define USE_CALLPROFILER_PROFILE_THIS_SCOPE(scopeName) // do nothing
+#endif
 
 } /* end namespace modmesh */
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
