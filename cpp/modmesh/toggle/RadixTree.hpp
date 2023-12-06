@@ -229,7 +229,7 @@ struct CallerProfile
 namespace detail
 {
 class CallProfilerTest; // for gtest
-}
+} /* end namespace detail */
 
 /// The profiler that profiles the hierarchical caller stack.
 class CallProfiler
