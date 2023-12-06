@@ -50,8 +50,10 @@ public:
 
     value_type x() const { return *m_xptr; }
     value_type dx() const { return xpos() - xneg(); }
-    value_type xneg() const { return *(m_xptr - 1); }
-    value_type xpos() const { return *(m_xptr + 1); }
+
+    // By pass address sanitizer check, more information please reference to issue #257
+    ASAN_NO_SANITIZE_ADDRESS value_type xneg() const { return *(m_xptr - 1); }
+    ASAN_NO_SANITIZE_ADDRESS value_type xpos() const { return *(m_xptr + 1); }
     value_type xctr() const { return static_cast<ET const *>(this)->xctr(); }
 
     void move(ssize_t offset) { m_xptr += offset; }
