@@ -401,7 +401,7 @@ jobs:
 
       - name: dependency by pip
         run: |
-          pip3 install -U numpy pytest flake8 pybind11 pyside6==$(qmake -query QT_VERSION)
+          pip3 install -U numpy pytest flake8 pybind11==2.11.1 pyside6==$(qmake -query QT_VERSION)
           # Add PySide6 and Shiboken6 path into system path, that allow exe file can find
           # dll during runtime
           # If user needs to modified system path in github actions container
