@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2024, An-Chi Liu <phy.tiger@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,39 +26,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/buffer/pymod/buffer_pymod.hpp> // Must be the first include.
+#include <modmesh/testhelper/pymod/testbuffer_pymod.hpp> // Must be the first include.
+
+#include <modmesh/modmesh.hpp>
+#include <modmesh/python/common.hpp>
+#include <pybind11/stl.h>
 
 namespace modmesh
 {
-
 namespace python
 {
 
-struct buffer_pymod_tag;
+struct testbuffer_pymod_tag
+{
+};
 
 template <>
-OneTimeInitializer<buffer_pymod_tag> & OneTimeInitializer<buffer_pymod_tag>::me()
+OneTimeInitializer<testbuffer_pymod_tag> & OneTimeInitializer<testbuffer_pymod_tag>::me()
 {
-    static OneTimeInitializer<buffer_pymod_tag> instance;
+    static OneTimeInitializer<testbuffer_pymod_tag> instance;
     return instance;
 }
 
-void initialize_buffer(pybind11::module & mod)
+void initialize_testbuffer(pybind11::module & mod)
 {
     auto initialize_impl = [](pybind11::module & mod)
     {
-        import_numpy();
-
-        wrap_ConcreteBuffer(mod);
-        wrap_SimpleArray(mod);
-        wrap_SimpleArrayPlex(mod);
+        wrap_TestSimpleArrayHelper(mod);
     };
 
-    OneTimeInitializer<buffer_pymod_tag>::me()(mod, initialize_impl);
+    OneTimeInitializer<testbuffer_pymod_tag>::me()(mod, initialize_impl);
 }
 
 } /* end namespace python */
 
 } /* end namespace modmesh */
-
-// vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

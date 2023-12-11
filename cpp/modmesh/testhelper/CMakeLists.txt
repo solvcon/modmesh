@@ -1,0 +1,28 @@
+# Copyright (c) 2024, An-Chi Liu <phy.tiger@gmail.com>
+# BSD-style license; see COPYING
+
+cmake_minimum_required(VERSION 3.16)
+
+set(MODMESH_TESTHELPER_HEADERS
+    CACHE FILEPATH "" FORCE)
+
+set(MODMESH_TESTHELPER_SOURCES
+    CACHE FILEPATH "" FORCE)
+
+set(MODMESH_TESTHELPER_PYMODHEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/testbuffer_pymod.hpp
+    CACHE FILEPATH "" FORCE)
+
+set(MODMESH_TESTHELPER_PYMODSOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/testbuffer_pymod.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_TestSimpleArrayHelper.cpp
+    CACHE FILEPATH "" FORCE)
+
+set(MODMESH_TESTHELPER_FILES
+    ${MODMESH_TESTHELPER_HEADERS}
+    ${MODMESH_TESTHELPER_SOURCES}
+    ${MODMESH_TESTHELPER_PYMODHEADERS}
+    ${MODMESH_TESTHELPER_PYMODSOURCES}
+    CACHE FILEPATH "" FORCE)
+
+# vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

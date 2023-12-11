@@ -1,5 +1,6 @@
+#pragma once
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2024, An-Chi Liu <phy.tiger@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,7 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/buffer/pymod/buffer_pymod.hpp> // Must be the first include.
+#include <pybind11/pybind11.h> // Must be the first include.
+#include <pybind11/stl.h>
+
+#include <modmesh/python/common.hpp>
 
 namespace modmesh
 {
@@ -34,31 +38,12 @@ namespace modmesh
 namespace python
 {
 
-struct buffer_pymod_tag;
+void initialize_testbuffer(pybind11::module & mod);
 
-template <>
-OneTimeInitializer<buffer_pymod_tag> & OneTimeInitializer<buffer_pymod_tag>::me()
-{
-    static OneTimeInitializer<buffer_pymod_tag> instance;
-    return instance;
-}
-
-void initialize_buffer(pybind11::module & mod)
-{
-    auto initialize_impl = [](pybind11::module & mod)
-    {
-        import_numpy();
-
-        wrap_ConcreteBuffer(mod);
-        wrap_SimpleArray(mod);
-        wrap_SimpleArrayPlex(mod);
-    };
-
-    OneTimeInitializer<buffer_pymod_tag>::me()(mod, initialize_impl);
-}
+void wrap_TestSimpleArrayHelper(pybind11::module & mod);
 
 } /* end namespace python */
 
 } /* end namespace modmesh */
 
-// vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

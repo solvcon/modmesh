@@ -27,8 +27,9 @@
  */
 
 #include <modmesh/buffer/pymod/buffer_pymod.hpp> // Must be the first include.
-#include <modmesh/buffer/pymod/TypeBroadcast.hpp>
+
 #include <modmesh/buffer/buffer.hpp>
+#include <modmesh/buffer/pymod/TypeBroadcast.hpp>
 
 namespace modmesh
 {
@@ -156,6 +157,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def_property_readonly("has_ghost", &wrapped_type::has_ghost)
             .def_property("nghost", &wrapped_type::nghost, &wrapped_type::set_nghost)
             .def_property_readonly("nbody", &wrapped_type::nbody)
+            .def_property_readonly("plex", &get_arrayplex)
             .wrap_modifiers()
             .wrap_calculators()
             //
@@ -405,6 +407,11 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             shape = shape_in.cast<std::vector<size_t>>();
         }
         return shape;
+    }
+
+    static pybind11::object get_arrayplex(wrapped_type const & arr)
+    {
+        return pybind11::cast(SimpleArrayPlex(arr));
     }
 
 }; /* end class WrapSimpleArray */

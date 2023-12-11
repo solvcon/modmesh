@@ -32,6 +32,13 @@ option(LINT_AS_ERRORS "clang-tidy warnings as errors" OFF)
 option(USE_SANITIZER "use sanitizer (undefined, leak, address)" OFF)
 
 
+option(USE_PYTEST_HELPER_BINDING "use helper bindings to run pytest. should be ON if the build is for pytest" OFF)
+if(USE_PYTEST_HELPER_BINDING)
+    add_definitions(-D USE_PYTEST_HELPER_BINDING)
+endif()
+message(STATUS "USE_PYTEST_HELPER_BINDING: ${USE_PYTEST_HELPER_BINDING}")
+
+
 if(BUILD_QT)
     option(QT3D_USE_RHI "Qt use RHI" OFF)
     message(STATUS "QT3D_USE_RHI: ${QT3D_USE_RHI}")
@@ -82,8 +89,10 @@ message(STATUS "DEBUG_SYMBOL: ${DEBUG_SYMBOL}")
 if(DEBUG_SYMBOL)
     if(MSVC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DEBUG")
+        add_compile_options(/O2 /Ob2)
+        string(REPLACE "/RTC1" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}") # /RTC1 incompatible with /O2
     else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O2")
     endif()
 endif()
 

@@ -71,7 +71,7 @@ jobs:
     - name: setup.py install build_ext
       run: |
         sudo python3 setup.py install build_ext \
-          --cmake-args="${JOB_CMAKE_ARGS} -DPYTHON_EXECUTABLE=$(which python3)" \
+          --cmake-args="${JOB_CMAKE_ARGS} -DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON" \
           --make-args="VERBOSE=1"
 
     - name: pytest
@@ -157,7 +157,7 @@ jobs:
           # Using pip install instead of legacy install
           # ref: https://stackoverflow.com/questions/52375693/troubleshooting-pkg-resources-distributionnotfound-error
           python3 -m pip install -v . --no-use-pep517 --global-option=build_ext \
-            --global-option="--cmake-args=${JOB_CMAKE_ARGS} -DPYTHON_EXECUTABLE=$(which python3)" \
+            --global-option="--cmake-args=${JOB_CMAKE_ARGS} -DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON" \
             --global-option="--make-args="VERBOSE=1""
 
       - name: pytest

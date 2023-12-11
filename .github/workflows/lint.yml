@@ -118,7 +118,7 @@ jobs:
         make viewer \
           ${JOB_MAKE_ARGS} \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
 
     - name: make run_viewer_pytest
       run: |
@@ -126,7 +126,7 @@ jobs:
         make run_viewer_pytest \
           ${JOB_MAKE_ARGS} \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
 
     - name: make flake8
       run: |
@@ -208,7 +208,7 @@ jobs:
           make viewer \
             ${JOB_MAKE_ARGS} \
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
 
       - name: make run_viewer_pytest
         run: |
