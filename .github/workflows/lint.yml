@@ -168,9 +168,9 @@ jobs:
           # Reopen for runner image v20231029.1
           # old homebrew/core cause brew link and unlink not working
           brew update  # No update because it is slow
-          # Force using python 3.11 from homebrew
+          # Force using python 3.12 from homebrew
           brew unlink python
-          brew link --force --overwrite python@3.11
+          brew link --force --overwrite python@3.12
           brew install llvm@16 qt6
           ln -s "$(brew --prefix llvm@16)/bin/clang-format" "/usr/local/bin/clang-format"
           ln -s "$(brew --prefix llvm@16)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
