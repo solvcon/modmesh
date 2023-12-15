@@ -222,8 +222,8 @@ jobs:
 
     strategy:
       matrix:
-        # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
-        os: [macos-12]
+        # https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
+        os: [macos-13]
         cmake_build_type: [Release]
 
       fail-fast: false
@@ -242,7 +242,7 @@ jobs:
         run: |
           # Reopen for runner image v20231029.1
           # old homebrew/core cause brew link and unlink not working
-          brew update  # No update because it is slow
+          brew untap homebrew/core homebrew/cask && brew update
           # Force using python 3.12 from homebrew
           brew unlink python
           brew link --force --overwrite python@3.12
@@ -260,7 +260,7 @@ jobs:
       - name: dependency by manual script
         run: |
           sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
-          if [ "${{ matrix.os }}" == "macos-12" ] ; then \
+          if [ "${{ matrix.os }}" == "macos-13" ] ; then \
             thirdparty/metal-cpp.sh ; \
           fi
 
@@ -301,7 +301,7 @@ jobs:
       - name: make pytest BUILD_QT=OFF
         run: |
           JOB_MAKE_ARGS="VERBOSE=1"
-          if [ "${{ matrix.os }}" == "macos-12" ] ; then \
+          if [ "${{ matrix.os }}" == "macos-13" ] ; then \
             JOB_MAKE_ARGS="${JOB_MAKE_ARGS} BUILD_METAL=ON" ; \
           fi
           make pytest ${JOB_MAKE_ARGS}
@@ -323,7 +323,7 @@ jobs:
           # Solve this issue by removed PySide6 prebuilt Qt library
           rm -rf $(python3 -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))")/Qt/lib/*.framework
           JOB_MAKE_ARGS="VERBOSE=1"
-          if [ "${{ matrix.os }}" == "macos-12" ] ; then \
+          if [ "${{ matrix.os }}" == "macos-13" ] ; then \
             JOB_MAKE_ARGS="${JOB_MAKE_ARGS} BUILD_METAL=ON" ; \
           fi
           make pytest ${JOB_MAKE_ARGS}
