@@ -61,6 +61,19 @@ print("tet nedge:", mh_tet.nedge)
     if set_command:
         view.mgr.pycon.command = cmd.strip()
 
+def help_hex(set_command=False):
+    cmd = """
+# Open a sub window for a hexahedron:
+w_hex = add3DWidget()
+mh_hex = make_hexahedron()
+w_hex.updateMesh(mh_hex)
+w_hex.showMark()
+print("hex nedge:", mh_hex.nedge)
+"""
+    view.mgr.pycon.writeToHistory(cmd)
+    if set_command:
+        view.mgr.pycon.command = cmd.strip()
+
 
 def help_other(set_command=False):
     cmd = """
@@ -87,7 +100,19 @@ def help_mesh_viewer(path, set_command=False):
     cmd = f"""
 # Open a sub window for the mesh viewer:
 w_mh_viewer = add3DWidget()
-mh_viewer = make_mesh_viewer("{path}")
+mh_viewer = make_p3d_viewer("{path}")
+w_mh_viewer.updateMesh(mh_viewer)
+w_mh_viewer.showMark()
+"""
+    view.mgr.pycon.writeToHistory(cmd)
+    if set_command:
+        view.mgr.pycon.command = cmd.strip()
+
+def help_p3d_viewer(path, set_command=False):
+    cmd = f"""
+# Open a sub window for the mesh viewer:
+w_mh_viewer = add3DWidget()
+mh_viewer = make_p3d_viewer("{path}")
 w_mh_viewer.updateMesh(mh_viewer)
 w_mh_viewer.showMark()
 """
@@ -102,6 +127,10 @@ def make_mesh_viewer(path):
     mh = gm.to_block()
     return mh
 
+def make_p3d_viewer(path):
+    p3d = core.Plot3d(path)
+    mh = p3d.load_file()
+    return mh
 
 def make_triangle():
     mh = core.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
@@ -124,6 +153,15 @@ def make_tetrahedron():
     mh.build_ghost()
     return mh
 
+def make_hexahedron():
+    mh = core.StaticMesh(ndim=3, nnode=8, nface=6, ncell=1)
+    mh.ndcrd.ndarray[:, :] = (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1)
+    mh.cltpn.ndarray[:] = core.StaticMesh.HEXAHEDRON
+    mh.clnds.ndarray[:, :9] = [(8, 0 ,2 ,3 ,1 ,4 ,6 ,7 ,5)]
+    mh.build_interior()
+    mh.build_boundary()
+    mh.build_ghost()
+    return mh
 
 def make_bezier():
     """
@@ -155,11 +193,15 @@ def load_app():
     symbols = (
         'help_tri',
         'help_tet',
+        'help_hex',
         'help_mesh_viewer',
+        'help_p3d_viewer',
         'help_other',
         'make_triangle',
         'make_tetrahedron',
+        'make_hexahedron',
         'make_mesh_viewer',
+        'make_p3d_viewer',
         'make_bezier',
         ('add3DWidget', view.mgr.add3DWidget),
     )
@@ -176,8 +218,10 @@ def load_app():
 # Use the functions for more examples:
 help_tri(set_command=False)  # or True
 help_tet(set_command=False)  # or True
+help_hex(set_command=False)  # or True
 help_other(set_command=False)  # or True
 help_mesh_viewer(path, set_command=False)  # or True
+help_p3d_viewer(path, set_command=False)  # or True
 """)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

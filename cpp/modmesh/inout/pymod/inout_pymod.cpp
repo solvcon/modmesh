@@ -20,6 +20,7 @@ void initialize_inout(pybind11::module & mod)
     auto initialize_impl = [](pybind11::module & mod)
     {
         wrap_Gmsh(mod);
+        wrap_Plot3d(mod);
     };
 
     OneTimeInitializer<inout_pymod_tag>::me()(mod, initialize_impl);
