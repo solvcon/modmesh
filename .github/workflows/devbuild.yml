@@ -242,7 +242,7 @@ jobs:
         run: |
           # Reopen for runner image v20231029.1
           # old homebrew/core cause brew link and unlink not working
-          brew untap homebrew/core homebrew/cask && brew update
+          # brew untap homebrew/core homebrew/cask && brew update
           # Force using python 3.12 from homebrew
           brew unlink python
           brew link --force --overwrite python@3.12
