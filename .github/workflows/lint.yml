@@ -169,8 +169,8 @@ jobs:
           # old homebrew/core cause brew link and unlink not working
           # brew untap homebrew/core homebrew/cask && brew update
           # Force using python 3.12 from homebrew
-          brew unlink python
-          brew link --force --overwrite python@3.12
+          # brew unlink python
+          # brew link --force --overwrite python@3.12
           brew install llvm@16 qt6
           ln -s "$(brew --prefix llvm@16)/bin/clang-format" "/usr/local/bin/clang-format"
           ln -s "$(brew --prefix llvm@16)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
