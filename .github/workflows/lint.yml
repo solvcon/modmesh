@@ -147,8 +147,8 @@ jobs:
 
     strategy:
       matrix:
-        # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
-        os: [macos-12]
+        # https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
+        os: [macos-13]
         cmake_build_type: [Debug]
 
       fail-fast: false
@@ -165,12 +165,8 @@ jobs:
 
       - name: dependency by homebrew
         run: |
-          # Reopen for runner image v20231029.1
-          # old homebrew/core cause brew link and unlink not working
-          brew update  # No update because it is slow
-          # Force using python 3.11 from homebrew
-          brew unlink python
-          brew link --force --overwrite python@3.11
+          export HOMEBREW_NO_AUTO_UPDATE=1
+          export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
           brew install llvm@16 qt6
           ln -s "$(brew --prefix llvm@16)/bin/clang-format" "/usr/local/bin/clang-format"
           ln -s "$(brew --prefix llvm@16)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
