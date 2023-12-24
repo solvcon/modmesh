@@ -28,6 +28,7 @@
 
 #include <modmesh/mesh/StaticMesh.hpp>
 
+// #include "StaticMesh.hpp"
 #include <set>
 
 namespace modmesh
@@ -138,7 +139,7 @@ struct FaceBuilder
         return NFACE;
     }
 
-    size_t add_hexahedron(int_type icl, int_type ifc)
+    size_t add_hexahedron(int_type icl, int_type ifc) // icl給1,ifc給6
     {
         constexpr const size_t NFACE = 6;
         // extract 6 quadrilaterals from a hexahedron.

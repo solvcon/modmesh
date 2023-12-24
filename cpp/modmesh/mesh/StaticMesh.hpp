@@ -85,7 +85,7 @@ struct CellType : NumberBase<int32_t, double>
     }
 
     uint8_t id() const { return m_id; }
-    uint8_t ndim() const { return static_cast<int>(m_ndim); }
+    uint8_t ndim() const { return m_ndim; }
     uint8_t nnode() const { return m_attrs[NNODE_IDX]; }
     uint8_t nedge() const { return m_attrs[NEDGE_IDX]; }
     uint8_t nsurface() const { return m_attrs[NSURFACE_IDX]; }
@@ -270,18 +270,18 @@ public:
         , m_nnode(nnode)
         , m_nface(nface)
         , m_ncell(ncell)
-        , m_ndcrd(std::vector<size_t>{nnode, m_ndim}, 0)
-        , m_fccnd(std::vector<size_t>{nface, m_ndim}, 0)
-        , m_fcnml(std::vector<size_t>{nface, m_ndim}, 0)
-        , m_fcara(std::vector<size_t>{nface}, 0)
-        , m_clcnd(std::vector<size_t>{ncell, m_ndim}, 0)
-        , m_clvol(std::vector<size_t>{ncell}, 0)
-        , m_fctpn(std::vector<size_t>{nface})
-        , m_cltpn(std::vector<size_t>{ncell})
-        , m_clgrp(std::vector<size_t>{ncell})
+        , m_ndcrd(std::vector<size_t>{nnode, m_ndim}, 0) //{8,3}
+        , m_fccnd(std::vector<size_t>{nface, m_ndim}, 0) //{6,3}
+        , m_fcnml(std::vector<size_t>{nface, m_ndim}, 0) //{6,3}
+        , m_fcara(std::vector<size_t>{nface}, 0) //{6}
+        , m_clcnd(std::vector<size_t>{ncell, m_ndim}, 0) //{1,3}
+        , m_clvol(std::vector<size_t>{ncell}, 0) //{1}
+        , m_fctpn(std::vector<size_t>{nface}) //{6}
+        , m_cltpn(std::vector<size_t>{ncell}) //{1} 1-d array with ncell elements,m_cltpn[0]=5
+        , m_clgrp(std::vector<size_t>{ncell}) //{1}
         , m_fcnds(std::vector<size_t>{nface, FCMND + 1})
         , m_fccls(std::vector<size_t>{nface, FCREL})
-        , m_clnds(std::vector<size_t>{ncell, CLMND + 1})
+        , m_clnds(std::vector<size_t>{ncell, CLMND + 1}) //{1,9}
         , m_clfcs(std::vector<size_t>{ncell, CLMFC + 1})
         , m_ednds(std::vector<size_t>{0, 2})
         , m_bndfcs(std::vector<size_t>{0, StaticMeshBC::BFREL})
@@ -309,9 +309,6 @@ public:
     uint_type nedge() const { return static_cast<uint_type>(m_ednds.shape(0)); }
     size_t nbcs() const { return m_bcs.size(); }
 
-    void set_ncell(uint_type ncell) { m_ncell = ncell; }
-    void set_nnode(uint_type nnode) { m_nnode = nnode; }
-    void set_ndim(uint_type ndim) { m_ndim = ndim; }
     /**
      * Get the "self" cell number of the input face by index.  A shorthand of
      * fccls()[ifc][0] .
@@ -335,18 +332,28 @@ public:
 
     void build_interior(bool do_metric, bool do_edge = true)
     {
-        build_faces_from_cells();
+        build_faces_from_cells(); // call it
         if (do_metric)
         {
-            calc_metric();
+            calc_metric(); // no need to read
         }
         if (do_edge)
         {
-            build_edge();
+            build_edge(); // call it
         }
     }
 
     void build_edge();
+
+public:
+    void call_build_faces_from_cells()
+    {
+        build_faces_from_cells();
+    }
+    void call_build_edge()
+    {
+        build_edge();
+    }
 
 private:
 
@@ -358,6 +365,74 @@ public:
 
     void build_boundary();
     void build_ghost();
+
+public:
+
+    void createQuadFaces()
+    {
+
+        m_nface = 0;
+        m_fcnds.remake(small_vector<size_t>{m_nface, 4}, 0);
+        m_fccls.remake(small_vector<size_t>{m_nface, 2}, 0);
+
+        std::vector<std::vector<uint_type>> nodeGroups(6);
+
+        for (uint_type i = 0; i < m_nnode; ++i)
+        {
+            real_type x = ndcrd(i, 0);
+            real_type y = ndcrd(i, 1);
+            real_type z = ndcrd(i, 2);
+
+            if (x == 0.0)
+            {
+                nodeGroups[0].push_back(i); // i=0
+            }
+            else if (x == 1.0)
+            {
+                nodeGroups[1].push_back(i); // i=1
+            }
+
+            if (y == 0.0)
+            {
+                nodeGroups[2].push_back(i); // j=0
+            }
+            else if (y == 1.0)
+            {
+                nodeGroups[3].push_back(i); // j=1
+            }
+
+            if (z == 0.0)
+            {
+                nodeGroups[4].push_back(i); // k=0
+            }
+            else if (z == 1.0)
+            {
+                nodeGroups[5].push_back(i); // k=1
+            }
+        }
+
+        for (size_t groupIdx = 0; groupIdx < nodeGroups.size(); ++groupIdx)
+        {
+            const std::vector<uint_type> & group = nodeGroups[groupIdx];
+            if (group.size() == 4)
+            {
+
+                ++m_nface;
+                m_fcnds.remake(small_vector<size_t>{m_nface, 4}, 0);
+                m_fccls.remake(small_vector<size_t>{m_nface, 2}, 0);
+
+                for (size_t i = 0; i < 4; ++i)
+                {
+                    m_fcnds(m_nface - 1, i) = group[i];
+                }
+
+                m_fccls(m_nface - 1, 0) = -1;
+                m_fccls(m_nface - 1, 1) = -1;
+            }
+        }
+
+        build_edge();
+    }
 
 private:
 
