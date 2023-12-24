@@ -23,6 +23,8 @@ add_executable(
     test_nopython_modmesh.cpp
     test_nopython_inout.cpp
     test_nopython_radixtree.cpp
+    test_nopython_callprofiler.cpp
+    ${MODMESH_TOGGLE_SOURCES}
 )
 target_link_libraries(
     test_nopython

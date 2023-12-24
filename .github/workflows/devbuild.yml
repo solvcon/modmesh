@@ -222,8 +222,8 @@ jobs:
 
     strategy:
       matrix:
-        # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
-        os: [macos-12]
+        # https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
+        os: [macos-13]
         cmake_build_type: [Release]
 
       fail-fast: false
@@ -240,12 +240,8 @@ jobs:
 
       - name: dependency by homebrew
         run: |
-          # Reopen for runner image v20231029.1
-          # old homebrew/core cause brew link and unlink not working
-          brew update  # No update because it is slow
-          # Force using python 3.11 from homebrew
-          brew unlink python
-          brew link --force --overwrite python@3.11
+          export HOMEBREW_NO_AUTO_UPDATE=1
+          export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
           brew install qt6
 
       - name: dependency by pip
@@ -260,7 +256,7 @@ jobs:
       - name: dependency by manual script
         run: |
           sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
-          if [ "${{ matrix.os }}" == "macos-12" ] ; then \
+          if [ "${{ matrix.os }}" == "macos-13" ] ; then \
             thirdparty/metal-cpp.sh ; \
           fi
 
@@ -301,7 +297,7 @@ jobs:
       - name: make pytest BUILD_QT=OFF
         run: |
           JOB_MAKE_ARGS="VERBOSE=1"
-          if [ "${{ matrix.os }}" == "macos-12" ] ; then \
+          if [ "${{ matrix.os }}" == "macos-13" ] ; then \
             JOB_MAKE_ARGS="${JOB_MAKE_ARGS} BUILD_METAL=ON" ; \
           fi
           make pytest ${JOB_MAKE_ARGS}
@@ -323,7 +319,7 @@ jobs:
           # Solve this issue by removed PySide6 prebuilt Qt library
           rm -rf $(python3 -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))")/Qt/lib/*.framework
           JOB_MAKE_ARGS="VERBOSE=1"
-          if [ "${{ matrix.os }}" == "macos-12" ] ; then \
+          if [ "${{ matrix.os }}" == "macos-13" ] ; then \
             JOB_MAKE_ARGS="${JOB_MAKE_ARGS} BUILD_METAL=ON" ; \
           fi
           make pytest ${JOB_MAKE_ARGS}
@@ -401,7 +397,7 @@ jobs:
 
       - name: dependency by pip
         run: |
-          pip3 install -U numpy pytest flake8 pybind11 pyside6==$(qmake -query QT_VERSION)
+          pip3 install -U numpy pytest flake8 pybind11==2.11.1 pyside6==$(qmake -query QT_VERSION)
           # Add PySide6 and Shiboken6 path into system path, that allow exe file can find
           # dll during runtime
           # If user needs to modified system path in github actions container
