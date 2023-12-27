@@ -71,7 +71,7 @@ else
 	PYTEST_OPTS ?=
 endif
 
-ifneq ($(COVERAGE),)
+ifeq ($(COVERAGE), ON)
 	PYTEST_OPTS += --cov --cov-report=xml
 endif
 

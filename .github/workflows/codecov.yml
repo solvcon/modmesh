@@ -13,6 +13,8 @@ jobs:
         
         env:
             JOB_MAKE_ARGS: VERBOSE=1 BUILD_QT=ON COVERAGE=ON
+            QT_DEBUG_PLUGINS: 1
+            QT_QPA_PLATFORM: offscreen
 
         strategy:
             matrix:
