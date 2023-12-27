@@ -24,6 +24,7 @@ DEBUG_SYMBOL ?= ON
 MODMESH_PROFILE ?= OFF
 BUILD_METAL ?= OFF
 BUILD_QT ?= ON
+COVERAGE ?= OFF
 USE_CLANG_TIDY ?= OFF
 CMAKE_BUILD_TYPE ?= Release
 MAKE_PARALLEL ?= -j
@@ -68,6 +69,10 @@ ifneq ($(VERBOSE),)
 	PYTEST_OPTS ?= -v -s
 else
 	PYTEST_OPTS ?=
+endif
+
+ifneq ($(COVERAGE),)
+	PYTEST_OPTS += --cov --cov-report=xml
 endif
 
 .PHONY: default

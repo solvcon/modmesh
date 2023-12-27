@@ -20,3 +20,5 @@ setup.mk
 *.obj
 *.pdb
 *.env
+*.coverage
+coverage.xml
