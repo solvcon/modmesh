@@ -2,6 +2,7 @@ import sys
 import matplotlib
 import matplotlib.pyplot
 import numpy as np
+import modmesh as mm
 
 from dataclasses import dataclass
 from matplotlib.backends.backend_qtagg import FigureCanvas
@@ -313,4 +314,14 @@ class Euler1DApp(PuiInQt):
 
 def load_app():
     app = Euler1DApp(Window())
+    use_sub = mm.Toggle.instance.get_value('apps.euler1d.use_sub',
+                                                False)
+    if use_sub is None:
+        use_sub = mm.Toggle.instance.solid.use_pyside
+
+    if use_sub:
+        _subwin = view.mgr.addSubWindow(app.ui.ui)
+        _subwin.resize(1150, 550)
+        _subwin.show()
+
     app.redraw()
