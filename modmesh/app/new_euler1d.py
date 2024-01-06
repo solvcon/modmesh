@@ -47,6 +47,11 @@ class SolverConfig():
     def columnHeader(self, col):
         return self._col_header[col]
 
+    def editable(self, row, col):
+        if col == 1:
+            return True
+        return False
+
     # Delete row header
     rowHeader = None
 
@@ -55,9 +60,6 @@ class SolverConfig():
 
     def columnCount(self):
         return len(self._tbl_content.value[0])
-
-    def editable(self, row, col):
-        return True
 
 
 class Euler1DApp(PuiInQt):
