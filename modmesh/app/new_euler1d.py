@@ -83,7 +83,6 @@ class Euler1DApp(PuiInQt):
         self.current_step = 0
         self.interval = self.get_var("timer_interval")
         self.max_steps = self.get_var("max_steps")
-        self.setup_timer()
 
     def setup_timer(self):
         """
@@ -194,6 +193,7 @@ class Euler1DApp(PuiInQt):
 
     def set(self):
         self.set_solver_config()
+        self.setup_timer()
         self.update_lines()
 
     def stop(self):
