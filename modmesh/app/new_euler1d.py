@@ -321,5 +321,5 @@ def load_app():
         _subwin = view.mgr.addSubWindow(app.ui.ui)
         _subwin.resize(1150, 550)
         _subwin.show()
-
+    app.ui.ui.resize(1150, 550)
     app.redraw()
