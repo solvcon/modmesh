@@ -1,3 +1,4 @@
+import sys
 import matplotlib
 import matplotlib.pyplot
 import numpy as np
@@ -5,10 +6,13 @@ import numpy as np
 from dataclasses import dataclass
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
-#  from PySide6.QtWidgets import QWidget
+from matplotlib.ticker import FormatStrFormatter
+from PySide6.QtCore import QTimer, Slot
+from PySide6.QtWidgets import QWidget
 from PUI.PySide6 import *
 from ..onedim import euler1d
-#  from PySide6 import Qt
+from .. import view
+
 
 @dataclass
 class QuantityLine:
@@ -18,10 +22,9 @@ class QuantityLine:
     name: str = ""
     unit: str = ""
 
-    def bind_axis(self, axis):
-        self.axis = axis
-
-    def update(self, adata, ndata):
+    def update(self, xdata, adata, ndata):
+        self.ana.set_xdata(xdata)
+        self.num.set_xdata(xdata)
         self.ana.set_ydata(adata)
         self.num.set_ydata(ndata)
         self.axis.relim()
@@ -30,64 +33,218 @@ class QuantityLine:
         self.num.figure.canvas.draw()
 
 
-class PlotArea(FigureCanvas):
-    def __init__(self):
-        self.figure = Figure()
-        super().__init__(self.figure)
-        self._plot()
+class SolverConfig():
+    def __init__(self, data):
+        self._tbl_content = data
+        self._col_header = ["Variable", "Value", "Description"]
 
-    def _plot(self):
-        #  plt.style.use('_mpl-gallery')
-        # make data
-        x = np.linspace(0, 10, 100)
-        y = 4 + 2 * np.sin(2 * x)
-        # plot
-        ax = self.figure.subplots()
-        # Need to set tight layout before plot the
-        self.figure.tight_layout(w_pad=0.0)
-        ax.plot(x, y, linewidth=2.0)
-        ax.set(xlim=(0, 8), xticks=np.arange(1, 8),
-        ylim=(0, 8), yticks=np.arange(1, 8))
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
-        ax.set_title("test plot")
+    def data(self, row, col):
+        return self._tbl_content.value[row][col]
 
-        self.figure.canvas.draw()
+    def setData(self, row, col, value):
+        self._tbl_content.value[row][col] = value
+        self._tbl_content.emit()
+
+    def columnHeader(self, col):
+        return self._col_header[col]
+
+    # Delete row header
+    rowHeader = None
+
+    def rowCount(self):
+        return len(self._tbl_content.value)
+
+    def columnCount(self):
+        return len(self._tbl_content.value[0])
+
+    def editable(self, row, col):
+        return True
 
 
-class SolverConfig(PUIView):
-    class TableAdapter:
-        def __init__(self, data):
-            self._tbl_content = data
-            self._col_header = ["Variable", "Value", "Description"]
+class Euler1DApp(PuiInQt):
+    def init_solver(self, gamma=1.4, pressure_left=1.0, density_left=1.0,
+                     pressure_right=0.1, density_right=0.125, xmin=-10,
+                     xmax=10, ncoord=201, time_increment=0.05):
+        self.st = euler1d.ShockTube()
+        self.st.build_constant(gamma, pressure_left, density_left,
+                               pressure_right, density_right)
+        self.st.build_numerical(xmin, xmax, ncoord, time_increment)
+        self.st.build_field(t=0)
 
-        def data(self, row, col):
-            return self._tbl_content.value[row][col]
+    def set_solver_config(self):
+        self.init_solver(gamma=self.get_var("gamma"),
+                          pressure_left=self.get_var("p_left"),
+                          density_left=self.get_var("rho_left"),
+                          pressure_right=self.get_var("p_right"),
+                          density_right=self.get_var("rho_right"),
+                          xmin=self.get_var("xmin"),
+                          xmax=self.get_var("xmax"),
+                          ncoord=self.get_var("ncoord"),
+                          time_increment=self.get_var("time_increment"))
+        self.current_step = 0
+        self.interval = self.get_var("timer_interval")
+        self.max_steps = self.get_var("max_steps")
+        self.setup_timer()
 
-        def setData(self, row, col, value):
-            self._tbl_content.value[row][col] = value
-            self._tbl_content.emit()
+    def setup_timer(self):
+        """
+        :return: nothing
+        """
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.timer_timeout)
 
-        def columnHeader(self, col):
-            return self._col_header[col]
-
-        # Delete row header
-        rowHeader = None
-
-        def rowCount(self):
-            return len(self._tbl_content.value)
-
-        def columnCount(self):
-            return len(self._tbl_content.value[0])
-
-        def editable(self, row, col):
-            return True
-
-    def __call__(self, key):
+    def get_var(self, key):
         for ele in self.state("data").value:
             if key == ele[0]:
                 return ele[1]
         return None
+
+    def update_single_figure(self):
+        x = self.st.svr.coord[::2]
+        fig = Figure()
+        fig.tight_layout()
+        canvas = FigureCanvas(fig)
+        ax = canvas.figure.subplots()
+        ax.autoscale(enable=True, axis='y', tight=False)
+
+        lines = []
+
+        # Matplotlib need to plot y axis on the left hand side first
+        # then the reset of axis can be plotted on right hand side
+        main_axis_plotted = False
+
+        # Record how many lines had been selected to plot
+        select_num = 0
+
+        for data, color in (
+            (self.density, 'r'),
+            (self.velocity, 'g'),
+            (self.pressure, 'b'),
+            (self.temperature, 'c'),
+            (self.internal_energy, 'k'),
+            (self.entropy, 'm')
+        ):
+            # Plot multiple data line with same X axis, it need to plot a
+            # data line on main axis first
+            if self.data_lines[data.name][1]:
+                if not main_axis_plotted:
+                    data.axis = ax
+                    data.ana, = ax.plot(x, np.zeros_like(x),
+                                        f'{color}-',
+                                        label=f'{data.name}_ana')
+                    data.num, = ax.plot(x, np.zeros_like(x),
+                                        f'{color}x',
+                                        label=f'{data.name}_num')
+                    ax.set_ylabel(f'{data.name} ({data.unit})')
+                    main_axis_plotted = True
+                else:
+                    ax_new = ax.twinx()
+                    data.axis = ax_new
+                    data.ana, = ax_new.plot(x, np.zeros_like(x),
+                                            f'{color}-',
+                                            label=f'{data.name}_ana')
+                    data.num, = ax_new.plot(x, np.zeros_like(x),
+                                            f'{color}x',
+                                            label=f'{data.name}_num')
+                    ax_new.spines.right.set_position(("axes",
+                                                      (1 + (select_num - 1)
+                                                       * 0.2)))
+                    ax_new.set_ylabel(f'{data.name} ({data.unit})')
+                    ax_new.yaxis.set_major_formatter((FormatStrFormatter
+                                                      ('%.2f')))
+                select_num += 1
+
+        ax.set_xlabel("distance (m)")
+        ax.grid()
+
+        # These parameters are the results obtained by my tuning on GUI
+        fig.subplots_adjust(left=0.1,
+                            right=0.97 - (self.checkbox_select_num - 1) * 0.1,
+                            bottom=0.093, top=0.976,
+                            wspace=0.2, hspace=0.2)
+
+        self.update_lines()
+
+        return canvas
+
+    def march_alpha2(self, steps=1):
+        if self.max_steps and self.current_step > self.max_steps:
+            self.stop()
+            return
+
+        self.st.svr.march_alpha2(steps=steps)
+        self.current_step += steps
+        time_current = self.current_step * self.st.svr.time_increment
+        self.st.build_field(t=time_current)
+        cfl = self.st.svr.cfl
+        self.log(f"CFL: min {cfl.min()} max {cfl.max()}")
+        self.update_lines()
+
+    def step(self, steps=1):
+        self.march_alpha2(steps=steps)
+
+    def start(self):
+        """
+        This callback function don't care button's checked state,
+        therefore the checked state is not used in this function.
+
+        :param checked: button is checked or not
+        :return: nothing
+        """
+        self.timer.start(self.interval)
+
+    def set(self):
+        self.set_solver_config()
+        self.update_lines()
+
+    def stop(self):
+        """
+        The stop button callback for stopping Qt timer.
+        :return: nothing
+        """
+        self.timer.stop()
+
+    def save_file(self):
+        print("Save file mockup")
+
+    @Slot()
+    def timer_timeout(self):
+        self.step()
+
+    @staticmethod
+    def log(msg):
+        sys.stdout.write(msg)
+        sys.stdout.write('\n')
+        view.mgr.pycon.writeToHistory(msg)
+        view.mgr.pycon.writeToHistory('\n')
+
+    def update_lines(self):
+        if self.use_grid_layout:
+            self.density.update(xdata=self.st.svr.coord[::2],
+                                adata=self.st.density_field,
+                                ndata=self.st.svr.density[::2])
+            self.pressure.update(xdata=self.st.svr.coord[::2],
+                                 adata=self.st.pressure_field,
+                                 ndata=self.st.svr.pressure[::2])
+            self.velocity.update(xdata=self.st.svr.coord[::2],
+                                 adata=self.st.velocity_field,
+                                 ndata=self.st.svr.velocity[::2])
+            self.temperature.update(xdata=self.st.svr.coord[::2],
+                                    adata=self.st.temperature_field,
+                                    ndata=self.st.svr.temperature[::2])
+            self.internal_energy.update(xdata=self.st.svr.coord[::2],
+                                        adata=(self.st.internal_energy_field),
+                                        ndata=(self.st.svr.
+                                               internal_energy[::2]))
+            self.entropy.update(xdata=self.st.svr.coord[::2],
+                                adata=self.st.entropy_field,
+                                ndata=self.st.svr.entropy[::2])
+        else:
+            for name, data_line in self.data_lines.items():
+                if data_line[1]:
+                    eval(f'(data_line[0].update(xdata=self.st.svr.coord[::2]'
+                         f', adata=self.st.{name}_field, ndata=self.st.svr.'
+                         f'{name}[::2]))')
 
     def setup(self):
         self.state = State()
@@ -101,64 +258,58 @@ class SolverConfig(PUIView):
                 ["xmax", 10, "The most right point of x axis."],
                 ["ncoord", 201, "Number of grid point."],
                 ["time_increment", 0.05, "The density of right hand side."],
+                ["timer_interval", 10, "Qt timer interval"],
+                ["max_steps", 50, "Maximum step"],
                 ]
-
-    def content(self):
-        Table(self.TableAdapter(self.state("data")))
-
-
-class Euler1DApp(PuiInQt):
-    def _init_solver(self, gamma=1.4, pressure_left=1.0, density_left=1.0,
-                     pressure_right=0.1, density_right=0.125, xmin=-10,
-                     xmax=10, ncoord=201, time_increment=0.05):
-        self.st = euler1d.ShockTube()
-        self.st.build_constant(gamma, pressure_left, density_left,
-                               pressure_right, density_right)
-        self.st.build_numerical(xmin, xmax, ncoord, time_increment)
-        self.st.build_field(t=0)
-
-    def setup(self):
-        self._init_solver(gamma=1.4, pressure_left=1.0, density_left=1.0,
-                          pressure_right=0.1, density_right=0.125, xmin=-10,
-                          xmax=10, ncoord=201, time_increment=0.05)
+        self.config = SolverConfig(self.state("data"))
+        self.data_lines = {}
+        self.density = QuantityLine(name="density",
+                                    unit=r"$\mathrm{kg}/\mathrm{m}^3$")
+        self.data_lines[self.density.name] = [self.density, True]
+        self.velocity = QuantityLine(name="velocity",
+                                     unit=r"$\mathrm{m}/\mathrm{s}$")
+        self.data_lines[self.velocity.name] = [self.velocity, True]
+        self.pressure = QuantityLine(name="pressure", unit=r"$\mathrm{Pa}$")
+        self.data_lines[self.pressure.name] = [self.pressure, True]
+        self.temperature = QuantityLine(name="temperature",
+                                        unit=r"$\mathrm{K}$")
+        self.data_lines[self.temperature.name] = [self.temperature, False]
+        self.internal_energy = QuantityLine(name="internal_energy",
+                                            unit=r"$\mathrm{J}/\mathrm{kg}$")
+        self.data_lines[self.internal_energy.name] = [self.internal_energy,
+                                                      False]
+        self.entropy = QuantityLine(name="entropy",
+                                    unit=r"$\mathrm{J}/\mathrm{K}$")
+        self.data_lines[self.entropy.name] = [self.entropy, False]
+        self.use_grid_layout = False
+        self.checkbox_select_num = 3
+        self.set_solver_config()
+        self.plot_holder = self.update_single_figure()
+        self.setup_timer()
 
     def content(self):
         with MenuBar():
             with Menu("File"):
-                MenuAction("Save").trigger(self.save_file_cb)
+                MenuAction("Save").trigger(self.save_file)
         with Splitter():
             with VBox():
                 with VBox().layout(weight=4):
                     Label("Solver")
                     with ComboBox():
-                        ComboBoxItem("CESE")
+                        ComboBoxItem("Euler1D-CESE")
                     Label("Configuration")
                     with Scroll():
-                        self.config = SolverConfig()
-                    Button("Set").click(self.set_solver_config)
+                        Table(self.config)
+                    Button("Set").click(self.set)
                 with VBox().layout(weight=1):
                     Spacer()
-                    Button("Start")
-                    Button("Stop")
+                    Button("Start").click(self.start)
+                    Button("Stop").click(self.stop)
                     Button("Step")
 
             with VBox():
-                QtInPui(PlotArea()).layout(width=700)
+                QtInPui(self.plot_holder)
 
-    def save_file_cb(self):
-        print("Save file mockup")
-
-    def set_solver_config(self):
-        print("Set solver config")
-        self._init_solver(gamma=self.config("gamma"),
-                          pressure_left=self.config("p_left"),
-                          density_left=self.config("rho_left"),
-                          pressure_right=self.config("p_right"),
-                          density_right=self.config("rho_right"),
-                          xmin=self.config("xmin"),
-                          xmax=self.config("xmax"),
-                          ncoord=self.config("ncoord"),
-                          time_increment=self.config("time_increment"))
 
 def load_app():
     app = Euler1DApp(Window())
