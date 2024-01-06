@@ -24,10 +24,8 @@ class QuantityLine:
     unit: str = ""
 
     def update(self, xdata, adata, ndata):
-        self.ana.set_xdata(xdata)
-        self.num.set_xdata(xdata)
-        self.ana.set_ydata(adata)
-        self.num.set_ydata(ndata)
+        self.ana.set_data(xdata, adata)
+        self.num.set_data(xdata, ndata)
         self.axis.relim()
         self.axis.autoscale_view()
         self.ana.figure.canvas.draw()
