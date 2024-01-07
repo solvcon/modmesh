@@ -313,7 +313,7 @@ class Euler1DApp(PuiInQt):
                     Spacer()
                     Button("Start").click(self.start)
                     Button("Stop").click(self.stop)
-                    Button("Step")
+                    Button("Step").click(self.step)
             with VBox():
                 QtInPui(self.plot_holder)
 
