@@ -9,8 +9,17 @@ from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FormatStrFormatter
 from PySide6.QtCore import QTimer, Slot
-from PySide6.QtWidgets import QWidget
-from PUI.PySide6 import *
+from PUI.state import State
+from PUI.PySide6.base import PuiInQt, QtInPui
+from PUI.PySide6.button import Button
+from PUI.PySide6.layout import VBox, Spacer
+from PUI.PySide6.menu import Menu, MenuAction, MenuBar
+from PUI.PySide6.splitter import Splitter
+from PUI.PySide6.scroll import Scroll
+from PUI.PySide6.window import Window
+from PUI.PySide6.combobox import ComboBox, ComboBoxItem
+from PUI.PySide6.label import Label
+from PUI.PySide6.table import Table
 from ..onedim import euler1d
 from .. import view
 
@@ -64,8 +73,8 @@ class SolverConfig():
 
 class Euler1DApp(PuiInQt):
     def init_solver(self, gamma=1.4, pressure_left=1.0, density_left=1.0,
-                     pressure_right=0.1, density_right=0.125, xmin=-10,
-                     xmax=10, ncoord=201, time_increment=0.05):
+                    pressure_right=0.1, density_right=0.125, xmin=-10,
+                    xmax=10, ncoord=201, time_increment=0.05):
         self.st = euler1d.ShockTube()
         self.st.build_constant(gamma, pressure_left, density_left,
                                pressure_right, density_right)
@@ -74,14 +83,14 @@ class Euler1DApp(PuiInQt):
 
     def set_solver_config(self):
         self.init_solver(gamma=self.get_var("gamma"),
-                          pressure_left=self.get_var("p_left"),
-                          density_left=self.get_var("rho_left"),
-                          pressure_right=self.get_var("p_right"),
-                          density_right=self.get_var("rho_right"),
-                          xmin=self.get_var("xmin"),
-                          xmax=self.get_var("xmax"),
-                          ncoord=self.get_var("ncoord"),
-                          time_increment=self.get_var("time_increment"))
+                         pressure_left=self.get_var("p_left"),
+                         density_left=self.get_var("rho_left"),
+                         pressure_right=self.get_var("p_right"),
+                         density_right=self.get_var("rho_right"),
+                         xmin=self.get_var("xmin"),
+                         xmax=self.get_var("xmax"),
+                         ncoord=self.get_var("ncoord"),
+                         time_increment=self.get_var("time_increment"))
         self.current_step = 0
         self.interval = self.get_var("timer_interval")
         self.max_steps = self.get_var("max_steps")
@@ -106,8 +115,6 @@ class Euler1DApp(PuiInQt):
         canvas = FigureCanvas(fig)
         ax = canvas.figure.subplots()
         ax.autoscale(enable=True, axis='y', tight=False)
-
-        lines = []
 
         # Matplotlib need to plot y axis on the left hand side first
         # then the reset of axis can be plotted on right hand side
@@ -307,7 +314,6 @@ class Euler1DApp(PuiInQt):
                     Button("Start").click(self.start)
                     Button("Stop").click(self.stop)
                     Button("Step")
-
             with VBox():
                 QtInPui(self.plot_holder)
 
@@ -315,7 +321,7 @@ class Euler1DApp(PuiInQt):
 def load_app():
     app = Euler1DApp(Window())
     use_sub = mm.Toggle.instance.get_value('apps.euler1d.use_sub',
-                                                False)
+                                           False)
     if use_sub is None:
         use_sub = mm.Toggle.instance.solid.use_pyside
 
