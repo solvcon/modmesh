@@ -4,6 +4,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(modmesh)
 
+cmake_policy(SET CMP0148 OLD)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
 
 if(NOT SKIP_PYTHON_EXECUTABLE)
