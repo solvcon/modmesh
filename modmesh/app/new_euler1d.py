@@ -42,8 +42,23 @@ class QuantityLine:
 
 
 class SolverConfig():
-    def __init__(self, data):
-        self._tbl_content = data
+    def __init__(self):
+        self.state = State()
+        self.state.data = [
+                ["gamma", 1.4, "The ratio of the specific heats."],
+                ["p_left", 1.0, "The pressure of left hand side."],
+                ["rho_left", 1.0, "The density of left hand side."],
+                ["p_right", 0.1, "The pressure of right hand side."],
+                ["rho_right", 0.125, "The density of right hand side."],
+                ["xmin", -10, "The most left point of x axis."],
+                ["xmax", 10, "The most right point of x axis."],
+                ["ncoord", 201, "Number of grid point."],
+                ["time_increment", 0.05, "The density of right hand side."],
+                ["timer_interval", 10, "Qt timer interval"],
+                ["max_steps", 50, "Maximum step"],
+                ["profiling", False, "Turn on / off solver profiling"],
+                ]
+        self._tbl_content = self.state("data")
         self._col_header = ["Variable", "Value", "Description"]
 
     def data(self, row, col):
@@ -70,6 +85,12 @@ class SolverConfig():
     def columnCount(self):
         return len(self._tbl_content.value[0])
 
+    def get_var(self, key):
+        for ele in self.state("data").value:
+            if key == ele[0]:
+                return ele[1]
+        return None
+
 
 class Euler1DApp(PuiInQt):
     def init_solver(self, gamma=1.4, pressure_left=1.0, density_left=1.0,
@@ -82,19 +103,19 @@ class Euler1DApp(PuiInQt):
         self.st.build_field(t=0)
 
     def set_solver_config(self):
-        self.init_solver(gamma=self.get_var("gamma"),
-                         pressure_left=self.get_var("p_left"),
-                         density_left=self.get_var("rho_left"),
-                         pressure_right=self.get_var("p_right"),
-                         density_right=self.get_var("rho_right"),
-                         xmin=self.get_var("xmin"),
-                         xmax=self.get_var("xmax"),
-                         ncoord=self.get_var("ncoord"),
-                         time_increment=self.get_var("time_increment"))
+        self.init_solver(gamma=self.config.get_var("gamma"),
+                         pressure_left=self.config.get_var("p_left"),
+                         density_left=self.config.get_var("rho_left"),
+                         pressure_right=self.config.get_var("p_right"),
+                         density_right=self.config.get_var("rho_right"),
+                         xmin=self.config.get_var("xmin"),
+                         xmax=self.config.get_var("xmax"),
+                         ncoord=self.config.get_var("ncoord"),
+                         time_increment=self.config.get_var("time_increment"))
         self.current_step = 0
-        self.interval = self.get_var("timer_interval")
-        self.max_steps = self.get_var("max_steps")
-        self.profiling = self.get_var("profiling")
+        self.interval = self.config.get_var("timer_interval")
+        self.max_steps = self.config.get_var("max_steps")
+        self.profiling = self.config.get_var("profiling")
 
     def setup_timer(self):
         """
@@ -102,12 +123,6 @@ class Euler1DApp(PuiInQt):
         """
         self.timer = QTimer()
         self.timer.timeout.connect(self.timer_timeout)
-
-    def get_var(self, key):
-        for ele in self.state("data").value:
-            if key == ele[0]:
-                return ele[1]
-        return None
 
     def update_single_figure(self):
         x = self.st.svr.coord[::2]
@@ -258,22 +273,8 @@ class Euler1DApp(PuiInQt):
                          f'{name}[::2]))')
 
     def setup(self):
-        self.state = State()
-        self.state.data = [
-                ["gamma", 1.4, "The ratio of the specific heats."],
-                ["p_left", 1.0, "The pressure of left hand side."],
-                ["rho_left", 1.0, "The density of left hand side."],
-                ["p_right", 0.1, "The pressure of right hand side."],
-                ["rho_right", 0.125, "The density of right hand side."],
-                ["xmin", -10, "The most left point of x axis."],
-                ["xmax", 10, "The most right point of x axis."],
-                ["ncoord", 201, "Number of grid point."],
-                ["time_increment", 0.05, "The density of right hand side."],
-                ["timer_interval", 10, "Qt timer interval"],
-                ["max_steps", 50, "Maximum step"],
-                ["profiling", False, "Turn on / off solver profiling"],
-                ]
-        self.config = SolverConfig(self.state("data"))
+
+        self.config = SolverConfig()
         self.data_lines = {}
         self.density = QuantityLine(name="density",
                                     unit=r"$\mathrm{kg}/\mathrm{m}^3$")
