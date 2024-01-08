@@ -94,6 +94,7 @@ class Euler1DApp(PuiInQt):
         self.current_step = 0
         self.interval = self.get_var("timer_interval")
         self.max_steps = self.get_var("max_steps")
+        self.profiling = self.get_var("profiling")
 
     def setup_timer(self):
         """
@@ -186,6 +187,8 @@ class Euler1DApp(PuiInQt):
         cfl = self.st.svr.cfl
         self.log(f"CFL: min {cfl.min()} max {cfl.max()}")
         self.update_lines()
+        if self.profiling:
+            self.log(mm.time_registry.report())
 
     def step(self, steps=1):
         self.march_alpha2(steps=steps)
@@ -268,6 +271,7 @@ class Euler1DApp(PuiInQt):
                 ["time_increment", 0.05, "The density of right hand side."],
                 ["timer_interval", 10, "Qt timer interval"],
                 ["max_steps", 50, "Maximum step"],
+                ["profiling", False, "Turn on / off solver profiling"],
                 ]
         self.config = SolverConfig(self.state("data"))
         self.data_lines = {}
