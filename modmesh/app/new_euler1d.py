@@ -221,7 +221,7 @@ class Euler1DApp(PuiInQt):
     def set(self):
         self.set_solver_config()
         self.setup_timer()
-        self.update_lines()
+        self.plot_holder.plot = self.update_single_figure()
 
     def stop(self):
         """
@@ -297,8 +297,9 @@ class Euler1DApp(PuiInQt):
         self.use_grid_layout = False
         self.checkbox_select_num = 3
         self.set_solver_config()
-        self.plot_holder = self.update_single_figure()
         self.setup_timer()
+        self.plot_holder = State()
+        self.plot_holder.plot = self.update_single_figure()
 
     def content(self):
         with MenuBar():
@@ -320,7 +321,7 @@ class Euler1DApp(PuiInQt):
                     Button("Stop").click(self.stop)
                     Button("Step").click(self.step)
             with VBox():
-                QtInPui(self.plot_holder)
+                QtInPui(self.plot_holder.plot)
 
 
 def load_app():
