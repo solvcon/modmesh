@@ -124,12 +124,45 @@ class Euler1DApp(PuiInQt):
         self.timer = QTimer()
         self.timer.timeout.connect(self.timer_timeout)
 
-    def update_single_figure(self):
+    def build_grid_figure(self):
         x = self.st.svr.coord[::2]
         fig = Figure()
+        canvas = FigureCanvas(fig)
+        ax = canvas.figure.subplots(3, 2)
         fig.tight_layout()
+
+        for i, (data, color) in enumerate((
+                (self.density, 'r'),
+                (self.velocity, 'g'),
+                (self.pressure, 'b'),
+                (self.temperature, 'c'),
+                (self.internal_energy, 'k'),
+                (self.entropy, 'm')
+        )):
+            axis = ax[i // 2][i % 2]
+            axis.autoscale(enable=True, axis='y', tight=False)
+            data.axis = axis
+            data.ana, = axis.plot(x, np.zeros_like(x),
+                                  f'{color}-',
+                                  label=f'{data.name}_ana')
+            data.num, = axis.plot(x, np.zeros_like(x),
+                                  f'{color}x',
+                                  label=f'{data.name}_num')
+            axis.set_ylabel(f'{data.name} ({data.unit})')
+
+            axis.set_xlabel("distance (m)")
+            axis.legend()
+            axis.grid()
+
+        self.update_lines()
+        return canvas
+
+    def build_single_figure(self):
+        x = self.st.svr.coord[::2]
+        fig = Figure()
         canvas = FigureCanvas(fig)
         ax = canvas.figure.subplots()
+        fig.tight_layout()
         ax.autoscale(enable=True, axis='y', tight=False)
 
         # Matplotlib need to plot y axis on the left hand side first
@@ -221,7 +254,10 @@ class Euler1DApp(PuiInQt):
     def set(self):
         self.set_solver_config()
         self.setup_timer()
-        self.plot_holder.plot = self.update_single_figure()
+        if self.use_grid_layout:
+            self.plot_holder.plot = self.build_grid_figure()
+        else:
+            self.plot_holder.plot = self.build_single_figure()
 
     def stop(self):
         """
@@ -229,6 +265,14 @@ class Euler1DApp(PuiInQt):
         :return: nothing
         """
         self.timer.stop()
+
+    def single_layout(self):
+        self.use_grid_layout = False
+        self.plot_holder.plot = self.build_single_figure()
+
+    def grid_layout(self):
+        self.use_grid_layout = True
+        self.plot_holder.plot = self.build_grid_figure()
 
     def save_file(self):
         print("Save file mockup")
@@ -299,12 +343,15 @@ class Euler1DApp(PuiInQt):
         self.set_solver_config()
         self.setup_timer()
         self.plot_holder = State()
-        self.plot_holder.plot = self.update_single_figure()
+        self.plot_holder.plot = self.build_single_figure()
 
     def content(self):
         with MenuBar():
             with Menu("File"):
                 MenuAction("Save").trigger(self.save_file)
+            with Menu("Layout"):
+                MenuAction("Single").trigger(self.single_layout)
+                MenuAction("Grid").trigger(self.grid_layout)
         with Splitter():
             with VBox():
                 with VBox().layout(weight=4):
