@@ -9,6 +9,8 @@ from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FormatStrFormatter
 from PySide6.QtCore import QTimer, Slot
+from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QFileDialog
 from PUI.state import State
 from PUI.PySide6.base import PuiInQt, QtInPui
 from PUI.PySide6.button import Button
@@ -275,7 +277,24 @@ class Euler1DApp(PuiInQt):
         self.plot_holder.plot = self.build_grid_figure()
 
     def save_file(self):
-        print("Save file mockup")
+        """
+        This callback function don't care button's checked state,
+        therefore the checked state is not used in this function.
+
+        :param checked: button is checked or not
+        :return: nothing
+        """
+        fig = QPixmap(self.plot_holder.plot.size())
+        self.plot_holder.plot.render(fig)
+
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(None, "Save file", "",
+                                                  "All Files (*)",
+                                                  options=options)
+
+        if fileName != "":
+            fig.save(fileName, "JPG", 100)
 
     @Slot()
     def timer_timeout(self):
