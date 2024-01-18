@@ -8,15 +8,14 @@ from dataclasses import dataclass
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FormatStrFormatter
-from PySide6.QtCore import QTimer, Slot
+from PySide6.QtCore import QTimer, Slot, Qt
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QFileDialog, QDockWidget
 from PUI.state import State
 from PUI.PySide6.base import PuiInQt, QtInPui
 from PUI.PySide6.button import Button
 from PUI.PySide6.layout import VBox, Spacer
 from PUI.PySide6.menu import Menu, MenuAction, MenuBar
-from PUI.PySide6.splitter import Splitter
 from PUI.PySide6.scroll import Scroll
 from PUI.PySide6.window import Window
 from PUI.PySide6.combobox import ComboBox, ComboBoxItem
@@ -95,6 +94,32 @@ class SolverConfig():
 
 
 class Euler1DApp(PuiInQt):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.config = SolverConfig()
+        self.data_lines = {}
+        self.density = QuantityLine(name="density",
+                                    unit=r"$\mathrm{kg}/\mathrm{m}^3$")
+        self.data_lines[self.density.name] = [self.density, True]
+        self.velocity = QuantityLine(name="velocity",
+                                     unit=r"$\mathrm{m}/\mathrm{s}$")
+        self.data_lines[self.velocity.name] = [self.velocity, True]
+        self.pressure = QuantityLine(name="pressure", unit=r"$\mathrm{Pa}$")
+        self.data_lines[self.pressure.name] = [self.pressure, True]
+        self.temperature = QuantityLine(name="temperature",
+                                        unit=r"$\mathrm{K}$")
+        self.data_lines[self.temperature.name] = [self.temperature, False]
+        self.internal_energy = QuantityLine(name="internal_energy",
+                                            unit=r"$\mathrm{J}/\mathrm{kg}$")
+        self.data_lines[self.internal_energy.name] = [self.internal_energy,
+                                                      False]
+        self.entropy = QuantityLine(name="entropy",
+                                    unit=r"$\mathrm{J}/\mathrm{K}$")
+        self.data_lines[self.entropy.name] = [self.entropy, False]
+        self.use_grid_layout = False
+        self.checkbox_select_num = 3
+        self.plot_holder = State()
+
     def init_solver(self, gamma=1.4, pressure_left=1.0, density_left=1.0,
                     pressure_right=0.1, density_right=0.125, xmin=-10,
                     xmax=10, ncoord=201, time_increment=0.05):
@@ -336,32 +361,8 @@ class Euler1DApp(PuiInQt):
                          f'{name}[::2]))')
 
     def setup(self):
-
-        self.config = SolverConfig()
-        self.data_lines = {}
-        self.density = QuantityLine(name="density",
-                                    unit=r"$\mathrm{kg}/\mathrm{m}^3$")
-        self.data_lines[self.density.name] = [self.density, True]
-        self.velocity = QuantityLine(name="velocity",
-                                     unit=r"$\mathrm{m}/\mathrm{s}$")
-        self.data_lines[self.velocity.name] = [self.velocity, True]
-        self.pressure = QuantityLine(name="pressure", unit=r"$\mathrm{Pa}$")
-        self.data_lines[self.pressure.name] = [self.pressure, True]
-        self.temperature = QuantityLine(name="temperature",
-                                        unit=r"$\mathrm{K}$")
-        self.data_lines[self.temperature.name] = [self.temperature, False]
-        self.internal_energy = QuantityLine(name="internal_energy",
-                                            unit=r"$\mathrm{J}/\mathrm{kg}$")
-        self.data_lines[self.internal_energy.name] = [self.internal_energy,
-                                                      False]
-        self.entropy = QuantityLine(name="entropy",
-                                    unit=r"$\mathrm{J}/\mathrm{K}$")
-        self.data_lines[self.entropy.name] = [self.entropy, False]
-        self.use_grid_layout = False
-        self.checkbox_select_num = 3
         self.set_solver_config()
         self.setup_timer()
-        self.plot_holder = State()
         self.plot_holder.plot = self.build_single_figure()
 
     def content(self):
@@ -371,35 +372,47 @@ class Euler1DApp(PuiInQt):
             with Menu("Layout"):
                 MenuAction("Single").trigger(self.single_layout)
                 MenuAction("Grid").trigger(self.grid_layout)
-        with Splitter():
-            with VBox():
-                with VBox().layout(weight=4):
-                    Label("Solver")
-                    with ComboBox():
-                        ComboBoxItem("Euler1D-CESE")
-                    Label("Configuration")
-                    with Scroll():
-                        Table(self.config)
-                    Button("Set").click(self.set)
-                with VBox().layout(weight=1):
-                    Spacer()
-                    Button("Start").click(self.start)
-                    Button("Stop").click(self.stop)
-                    Button("Step").click(self.step)
-            with VBox():
-                QtInPui(self.plot_holder.plot)
+        with VBox():
+            QtInPui(self.plot_holder.plot)
+
+
+class ConfigWindow(PuiInQt):
+    def __init__(self, parent, controlled):
+        super().__init__(parent)
+        self.controlled = controlled
+
+    def setup(self):
+        self.config = self.controlled.config
+
+    def content(self):
+        with VBox():
+            with VBox().layout(weight=4):
+                Label("Solver")
+                with ComboBox():
+                    ComboBoxItem("Euler1D-CESE")
+                Label("Configuration")
+                with Scroll():
+                    Table(self.config)
+                Button("Set").click(self.controlled.set)
+            with VBox().layout(weight=1):
+                Spacer()
+                Button("Start").click(self.controlled.start)
+                Button("Stop").click(self.controlled.stop)
+                Button("Step").click(self.controlled.step)
 
 
 def load_app():
     app = Euler1DApp(Window())
-    use_sub = mm.Toggle.instance.get_value('apps.euler1d.use_sub',
-                                           False)
-    if use_sub is None:
-        use_sub = mm.Toggle.instance.solid.use_pyside
+    config_window = ConfigWindow(Window(), app)
 
-    if use_sub:
-        _subwin = view.mgr.addSubWindow(app.ui.ui)
-        _subwin.resize(1150, 550)
-        _subwin.show()
-    app.ui.ui.resize(1150, 550)
+    config_widget = QDockWidget("config")
+    config_widget.setWidget(config_window.ui.ui)
+    view.mgr.mainWindow.addDockWidget(Qt.LeftDockWidgetArea, config_widget)
+
+    config_window.redraw()
+
+    _subwin = view.mgr.addSubWindow(app.ui.ui)
+    _subwin.showMaximized()
+    _subwin.show()
+
     app.redraw()
