@@ -15,12 +15,12 @@ from PUI.state import State
 from PUI.PySide6.base import PuiInQt, QtInPui
 from PUI.PySide6.button import Button
 from PUI.PySide6.layout import VBox, Spacer
-from PUI.PySide6.menu import Menu, MenuAction, MenuBar
 from PUI.PySide6.scroll import Scroll
 from PUI.PySide6.window import Window
 from PUI.PySide6.combobox import ComboBox, ComboBoxItem
 from PUI.PySide6.label import Label
 from PUI.PySide6.table import Table
+from PUI.PySide6.toolbar import ToolBar, ToolBarAction
 from ..onedim import euler1d
 from .. import view
 
@@ -93,9 +93,8 @@ class SolverConfig():
         return None
 
 
-class Euler1DApp(PuiInQt):
-    def __init__(self, parent):
-        super().__init__(parent)
+class Euler1DApp():
+    def __init__(self):
         self.config = SolverConfig()
         self.data_lines = {}
         self.density = QuantityLine(name="density",
@@ -119,6 +118,9 @@ class Euler1DApp(PuiInQt):
         self.use_grid_layout = False
         self.checkbox_select_num = 3
         self.plot_holder = State()
+        self.set_solver_config()
+        self.setup_timer()
+        self.plot_holder.plot = self.build_single_figure()
 
     def init_solver(self, gamma=1.4, pressure_left=1.0, density_left=1.0,
                     pressure_right=0.1, density_right=0.125, xmin=-10,
@@ -360,29 +362,30 @@ class Euler1DApp(PuiInQt):
                          f', adata=self.st.{name}_field, ndata=self.st.svr.'
                          f'{name}[::2]))')
 
+
+class PlotArea(PuiInQt):
+    def __init__(self, parent, app):
+        super().__init__(parent)
+        self.app = app
+
     def setup(self):
-        self.set_solver_config()
-        self.setup_timer()
-        self.plot_holder.plot = self.build_single_figure()
+        pass
 
     def content(self):
-        with MenuBar():
-            with Menu("File"):
-                MenuAction("Save").trigger(self.save_file)
-            with Menu("Layout"):
-                MenuAction("Single").trigger(self.single_layout)
-                MenuAction("Grid").trigger(self.grid_layout)
-        with VBox():
-            QtInPui(self.plot_holder.plot)
+        with ToolBar():
+            ToolBarAction("Save").trigger(self.app.save_file)
+            ToolBarAction("SingleLayout").trigger(self.app.single_layout)
+            ToolBarAction("GridLayout").trigger(self.app.grid_layout)
+        QtInPui(self.app.plot_holder.plot)
 
 
 class ConfigWindow(PuiInQt):
-    def __init__(self, parent, controlled):
+    def __init__(self, parent, app):
         super().__init__(parent)
-        self.controlled = controlled
+        self.app = app
 
     def setup(self):
-        self.config = self.controlled.config
+        self.config = self.app.config
 
     def content(self):
         with VBox():
@@ -393,26 +396,26 @@ class ConfigWindow(PuiInQt):
                 Label("Configuration")
                 with Scroll():
                     Table(self.config)
-                Button("Set").click(self.controlled.set)
+                Button("Set").click(self.app.set)
             with VBox().layout(weight=1):
                 Spacer()
-                Button("Start").click(self.controlled.start)
-                Button("Stop").click(self.controlled.stop)
-                Button("Step").click(self.controlled.step)
+                Button("Start").click(self.app.start)
+                Button("Stop").click(self.app.stop)
+                Button("Step").click(self.app.step)
 
 
 def load_app():
-    app = Euler1DApp(Window())
-    config_window = ConfigWindow(Window(), app)
+    app = Euler1DApp()
+    plotting_area = PlotArea(Window(), app)
 
+    config_window = ConfigWindow(Window(), app)
     config_widget = QDockWidget("config")
     config_widget.setWidget(config_window.ui.ui)
+
     view.mgr.mainWindow.addDockWidget(Qt.LeftDockWidgetArea, config_widget)
+    _subwin = view.mgr.addSubWindow(plotting_area.ui.ui)
+    _subwin.showMaximized()
 
     config_window.redraw()
-
-    _subwin = view.mgr.addSubWindow(app.ui.ui)
-    _subwin.showMaximized()
+    plotting_area.redraw()
     _subwin.show()
-
-    app.redraw()
