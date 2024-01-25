@@ -27,6 +27,24 @@ from .. import view
 
 @dataclass
 class QuantityLine:
+    """
+    A class representing a quantity line with associated data.
+
+    This class is a data structure that holds information about a quantity line
+    in a plot. It is designed to be used in conjunction with Matplotlib for
+    visualizing analytical and numerical data.
+
+    Class attributes:
+        - `ana` (matplotlib.lines.Line2D): Line2D for analytical data.
+        - `num` (matplotlib.lines.Line2D): Line2D for numerical data.
+        - `axis` (matplotlib.pyplot.axis): Axis for the plot.
+        - `name` (str): Name of the quantity.
+        - `unit` (str): Unit of measurement.
+
+    Methods:
+        - :meth:`update(xdata, adata, ndata)`: Update the line data and
+          redraw the plot.
+    """
     ana: matplotlib.lines.Line2D = None
     num: matplotlib.lines.Line2D = None
     axis: matplotlib.pyplot.axis = None
@@ -34,6 +52,20 @@ class QuantityLine:
     unit: str = ""
 
     def update(self, xdata, adata, ndata):
+        """
+        Update the line data and redraw the plot.
+
+        :param xdata: X-axis data.
+        :type xdata: ndarray
+
+        :param adata: Analytical data.
+        :type adata: ndarray
+
+        :param ndata: Numerical data.
+        :type ndata: ndarray
+
+        :return: None
+        """
         self.ana.set_data(xdata, adata)
         self.num.set_data(xdata, ndata)
         self.axis.relim()
@@ -43,6 +75,38 @@ class QuantityLine:
 
 
 class SolverConfig():
+    """
+    Configuration class for the solver.
+
+    This class provides a configuration interface for the solver, allowing
+    users to set and retrieve parameters related to the simulation.
+
+    Attributes:
+        - `state` (:class:`State`): The state object holding configuration
+          data.
+        - `state.data` (list): A list containing configuration parameters
+          in the form of [variable_name, value, description].
+        - `_tbl_content` (:class:`State`): The content of the
+          configuration table.
+        - `_col_header` (list): The header for the configuration
+          table columns.
+
+    Methods:
+        - :meth:`data(row, col)`: Get the value at a specific row and column
+          in the configuration table.
+        - :meth:`setData(row, col, value)`: Set the value at a specific row
+          and column in the configuration table.
+        - :meth:`columnHeader(col)`: Get the header for a specific column
+          in the configuration table.
+        - :meth:`editable(row, col)`: Check if a cell in the configuration
+          table is editable.
+        - :meth:`rowCount()`: Get the number of rows in the configuration
+          table.
+        - :meth:`columnCount()`: Get the number of columns in the
+          configuration table.
+        - :meth:`get_var(key)`: Get the value of a configuration variable
+          based on its key.
+    """
     def __init__(self):
         self.state = State()
         self.state.data = [
@@ -63,16 +127,52 @@ class SolverConfig():
         self._col_header = ["Variable", "Value", "Description"]
 
     def data(self, row, col):
+        """
+        Get the value at a specific row and column in the configuration table.
+
+        :param row: Row index.
+        :type row: int
+        :param col: Column index.
+        :type col: int
+        :return: The value at the specified location in
+        the configuration table.
+        """
         return self._tbl_content.value[row][col]
 
     def setData(self, row, col, value):
+        """
+        Set the value at a specific row and column in the configuration table.
+
+        :param row: Row index.
+        :type row: int
+        :param col: Column index.
+        :type col: int
+        :prarm value: Any
+        :return None
+        """
         self._tbl_content.value[row][col] = value
         self._tbl_content.emit()
 
     def columnHeader(self, col):
+        """
+        Get the specific column header in the configuration table.
+
+        :param col: Column index.
+        :type col: int
+        :return: The header for the specific column.
+        """
         return self._col_header[col]
 
     def editable(self, row, col):
+        """
+        Check if the cell is editable.
+
+        :param row: Row index.
+        :type row: int
+        :param col: Column index.
+        :type col: int
+        :return: True if the cell is editable, false otherwise.
+        """
         if col == 1:
             return True
         return False
@@ -81,12 +181,29 @@ class SolverConfig():
     rowHeader = None
 
     def rowCount(self):
+        """
+        Get the number of rows in the configuration table.
+
+        :return: The number of rows.
+        """
         return len(self._tbl_content.value)
 
     def columnCount(self):
+        """
+        Get the number of columns in the configuration table.
+
+        :return: The number of columns.
+        """
         return len(self._tbl_content.value[0])
 
     def get_var(self, key):
+        """
+        Get the value of a configuration variable based on its key.
+
+        :param key: The key of the variable.
+        :type key: str
+        :return: The value of the specified variable.
+        """
         for ele in self.state("data").value:
             if key == ele[0]:
                 return ele[1]
@@ -94,6 +211,48 @@ class SolverConfig():
 
 
 class Euler1DApp():
+    """
+    Main application class for the Euler 1D solver.
+
+    This class provides the main application logic for the Euler 1D solver.
+    It includes methods for initializing the solver, configuring parameters,
+    setting up timers, and building visualization figures.
+
+    Attributes:
+        - `config` (:class:`SolverConfig`): Configuration object
+          for the solver.
+        - `data_lines` (dict): Dictionary containing QuantityLine objects and
+          their display status.
+        - Other QuantityLine objects such as `density`, `velocity`, etc.
+        - `use_grid_layout` (bool): Flag indicating whether to use a
+          grid layout.
+        - `checkbox_select_num` (int): Number of checkboxes selected.
+        - `plot_holder` (:class:`State`): State object for holding plots.
+
+    Methods:
+        - :meth:`init_solver(gamma, pressure_left, density_left, ...)`:
+          Initialize the shock tube solver and set up the initial conditions.
+        - :meth:`set_solver_config()`: Initialize solver configuration
+          based on user input.
+        - :meth:`setup_timer()`: Set up the Qt timer for data visualization.
+        - :meth:`build_grid_figure()`: Build a grid figure for visualization.
+        - :meth:`build_single_figure()`: Build a single-figure layout for
+          visualization.
+        - :meth:`march_alpha2(steps)`: Call the C++ solver to march the
+          time step.
+        - :meth:`step(steps)`: Callback function for the step button.
+        - :meth:`start()`: Start the solver.
+        - :meth:`set()`: Set the solver configurations and update the timer.
+        - :meth:`stop()`: Stop the solver.
+        - :meth:`single_layout()`: Switch plot holder to a single plot layout.
+        - :meth:`grid_layout()`: Switch plot holder to a grid plot layout.
+        - :meth:`save_file()`: Save the current plot to a file.
+        - :meth:`timer_timeout()`: Qt timer timeout callback.
+        - :meth:`log(msg)`: Print log messages to the console window and
+          standard output.
+        - :meth:`update_lines()`: Update all data lines after the solver
+          finishes computation.
+    """
     def __init__(self):
         self.config = SolverConfig()
         self.data_lines = {}
@@ -125,6 +284,12 @@ class Euler1DApp():
     def init_solver(self, gamma=1.4, pressure_left=1.0, density_left=1.0,
                     pressure_right=0.1, density_right=0.125, xmin=-10,
                     xmax=10, ncoord=201, time_increment=0.05):
+        """
+        This function is used to initialize shock tube solver and setup
+        the initial conition.
+
+        :return: None
+        """
         self.st = euler1d.ShockTube()
         self.st.build_constant(gamma, pressure_left, density_left,
                                pressure_right, density_right)
@@ -132,6 +297,12 @@ class Euler1DApp():
         self.st.build_field(t=0)
 
     def set_solver_config(self):
+        """
+        Initializing solver configure by user's input, also reset
+        the computational results.
+
+        :return None
+        """
         self.init_solver(gamma=self.config.get_var("gamma"),
                          pressure_left=self.config.get_var("p_left"),
                          density_left=self.config.get_var("rho_left"),
@@ -148,12 +319,22 @@ class Euler1DApp():
 
     def setup_timer(self):
         """
-        :return: nothing
+        Steup the Qt timer for data visualization, timer also driver
+        solver marching time step.
+
+        :return: None
         """
         self.timer = QTimer()
         self.timer.timeout.connect(self.timer_timeout)
 
     def build_grid_figure(self):
+        """
+        Create a matplotlib figure that includes all data lines, each
+        represeting a physical variable. The layout of figure is that
+        a grid plot.
+
+        :return: FigureCanvas
+        """
         x = self.st.svr.coord[::2]
         fig = Figure()
         canvas = FigureCanvas(fig)
@@ -187,6 +368,13 @@ class Euler1DApp():
         return canvas
 
     def build_single_figure(self):
+        """
+        Create a matplotlib figure that includes up to 3 data lines, each
+        represeting a physical variable. The layout of figure is that
+        a single plot contains all data lines.
+
+        :return: FigureCanvas
+        """
         x = self.st.svr.coord[::2]
         fig = Figure()
         canvas = FigureCanvas(fig)
@@ -253,6 +441,12 @@ class Euler1DApp():
         return canvas
 
     def march_alpha2(self, steps=1):
+        """
+        This function is used to call c++ solver to march the time step, also
+        calling python side analytical solution to march the time step.
+
+        :return: None
+        """
         if self.max_steps and self.current_step > self.max_steps:
             self.stop()
             return
@@ -268,6 +462,11 @@ class Euler1DApp():
             self.log(mm.time_registry.report())
 
     def step(self, steps=1):
+        """
+        Callback function of step button.
+
+        :return: None
+        """
         self.march_alpha2(steps=steps)
 
     def start(self):
@@ -276,11 +475,17 @@ class Euler1DApp():
         therefore the checked state is not used in this function.
 
         :param checked: button is checked or not
-        :return: nothing
+        :return: None
         """
         self.timer.start(self.interval)
 
     def set(self):
+        """
+        Callback function of set button that set the solver
+        configures and setup the timer.
+
+        :return: None
+        """
         self.set_solver_config()
         self.setup_timer()
         if self.use_grid_layout:
@@ -291,25 +496,35 @@ class Euler1DApp():
     def stop(self):
         """
         The stop button callback for stopping Qt timer.
-        :return: nothing
+        :return: None
         """
         self.timer.stop()
 
     def single_layout(self):
+        """
+        Toolbar action callback that switch plot holder to single plot layout.
+
+        :return: None
+        """
         self.use_grid_layout = False
         self.plot_holder.plot = self.build_single_figure()
 
     def grid_layout(self):
+        """
+        Toolbar action callback that switch plot holder to grid plot layout.
+
+        :return: None
+        """
         self.use_grid_layout = True
         self.plot_holder.plot = self.build_grid_figure()
 
     def save_file(self):
         """
-        This callback function don't care button's checked state,
-        therefore the checked state is not used in this function.
+        Toolbar action callback, that use pixmap to store plotting area
+        and open a dialog that allows user to decide where to store the
+        figure file.
 
-        :param checked: button is checked or not
-        :return: nothing
+        :return: None
         """
         fig = QPixmap(self.plot_holder.plot.size())
         self.plot_holder.plot.render(fig)
@@ -325,16 +540,32 @@ class Euler1DApp():
 
     @Slot()
     def timer_timeout(self):
+        """
+        Qt timer timeout callback.
+
+        :return: None
+        """
         self.step()
 
     @staticmethod
     def log(msg):
+        """
+        Print log in both console window and standard output.
+
+        :return: None
+        """
         sys.stdout.write(msg)
         sys.stdout.write('\n')
         view.mgr.pycon.writeToHistory(msg)
         view.mgr.pycon.writeToHistory('\n')
 
     def update_lines(self):
+        """
+        Updating all data lines after the solver finishes
+        its computation each time.
+
+        :return: None
+        """
         if self.use_grid_layout:
             self.density.update(xdata=self.st.svr.coord[::2],
                                 adata=self.st.density_field,
@@ -364,6 +595,20 @@ class Euler1DApp():
 
 
 class PlotArea(PuiInQt):
+    """
+    Class for displaying the plot area in the application.
+
+    This class inherits from `PuiInQt` and is responsible for managing the
+    display of the plot area in the application.
+
+    Attributes:
+        - `app`: The app want to plot something in plotting area.
+
+    Methods:
+        - :meth:`setup()`: Placeholder method for setting up the plot area.
+        - :meth:`content()`: Method for defining the content of the plot area,
+          including a toolbar and the actual plot.
+    """
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
@@ -372,6 +617,11 @@ class PlotArea(PuiInQt):
         pass
 
     def content(self):
+        """
+        Define the GUI layout of plotting area
+
+        :return: nothing
+        """
         with ToolBar():
             ToolBarAction("Save").trigger(self.app.save_file)
             ToolBarAction("SingleLayout").trigger(self.app.single_layout)
@@ -380,14 +630,41 @@ class PlotArea(PuiInQt):
 
 
 class ConfigWindow(PuiInQt):
+    """
+    ConfigWindow class for managing solver configurations.
+
+    This class inherit from the PuiInQt class and provides a graphical user
+    interface for managing solver configurations. It includes options to set
+    the solver type, view and edit configuration parameters, and control the
+    solver's behavior.
+
+    Attributes:
+        - `app`: The app want to plot something in plotting area.
+        - `config` (:class:`SolverConfig`): Configuration object
+          for the solver.
+
+    Methods:
+        - :meth:`setup()`: Setup method to configure the window.
+        - :meth:`content()`: Method to define the content of the window.
+    """
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
 
     def setup(self):
+        """
+        Assign the configure object from app
+
+        :return: nothing
+        """
         self.config = self.app.config
 
     def content(self):
+        """
+        Define the GUI layout of the window
+
+        :return: nothing
+        """
         with VBox():
             with VBox().layout(weight=4):
                 Label("Solver")
