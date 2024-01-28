@@ -69,7 +69,21 @@ w_2dmix = add3DWidget()
 mh_2dmix = make_2dmix(do_small=False)
 w_2dmix.updateMesh(mh_2dmix)
 w_2dmix.showMark()
-print("tet nedge:", mh_2dmix.nedge)
+print("2dmix nedge:", mh_2dmix.nedge)
+"""
+    view.mgr.pycon.writeToHistory(cmd)
+    if set_command:
+        view.mgr.pycon.command = cmd.strip()
+
+
+def help_3dmix(set_command=False):
+    cmd = """
+# Open a sub window for triangles and quadrilaterals:
+w_3dmix = add3DWidget()
+mh_3dmix = make_3dmix()
+w_3dmix.updateMesh(mh_3dmix)
+w_3dmix.showMark()
+print("3dmix nedge:", mh_3dmix.nedge)
 """
     view.mgr.pycon.writeToHistory(cmd)
     if set_command:
@@ -182,6 +196,32 @@ def make_2dmix(do_small=False):
     return mh
 
 
+def make_3dmix():
+    HEX = core.StaticMesh.HEXAHEDRON
+    TET = core.StaticMesh.TETRAHEDRON
+    PSM = core.StaticMesh.PRISM
+    PYR = core.StaticMesh.PYRAMID
+
+    mh = core.StaticMesh(ndim=3, nnode=11, nface=0, ncell=4)
+    mh.ndcrd.ndarray[:, :] = [
+        (0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0),
+        (0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1),
+        (0.5, 1.5, 0.5),
+        (1.5, 1, 0.5), (1.5, 0, 0.5),
+    ]
+    mh.cltpn.ndarray[:] = [
+        HEX, PYR, TET, PSM,
+    ]
+    mh.clnds.ndarray[:, :9] = [
+        (8, 0, 1, 2, 3, 4, 5, 6, 7), (5, 2, 3, 7, 6, 8, -1, -1, -1),
+        (4, 2, 6, 9, 8, -1, -1, -1, -1), (6, 2, 6, 9, 1, 5, 10, -1, -1),
+    ]
+    mh.build_interior()
+    mh.build_boundary()
+    mh.build_ghost()
+    return mh
+
+
 def make_tetrahedron():
     mh = core.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
     mh.ndcrd.ndarray[:, :] = (0, 0, 0), (0, 1, 0), (-1, 1, 0), (0, 1, 1)
@@ -224,12 +264,14 @@ def load_app():
         'help_tri',
         'help_tet',
         'help_2dmix',
+        'help_3dmix',
         'help_mesh_viewer',
         'help_other',
         'help_bezier',
         'make_triangle',
         'make_tetrahedron',
         'make_2dmix',
+        'make_3dmix',
         'make_mesh_viewer',
         'make_bezier',
         ('add3DWidget', view.mgr.add3DWidget),
@@ -248,6 +290,7 @@ def load_app():
 help_tri(set_command=False)  # or True
 help_tet(set_command=False)  # or True
 help_2dmix(set_command=False)  # or True
+help_3dmix(set_command=False)  # or True
 help_other(set_command=False)  # or True
 help_mesh_viewer(path, set_command=False)  # or True
 help_bezier(set_command=False)  # or True
