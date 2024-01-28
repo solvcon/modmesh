@@ -62,6 +62,20 @@ print("tet nedge:", mh_tet.nedge)
         view.mgr.pycon.command = cmd.strip()
 
 
+def help_2dmix(set_command=False):
+    cmd = """
+# Open a sub window for triangles and quadrilaterals:
+w_2dmix = add3DWidget()
+mh_2dmix = make_2dmix(do_small=False)
+w_2dmix.updateMesh(mh_2dmix)
+w_2dmix.showMark()
+print("tet nedge:", mh_2dmix.nedge)
+"""
+    view.mgr.pycon.writeToHistory(cmd)
+    if set_command:
+        view.mgr.pycon.command = cmd.strip()
+
+
 def help_other(set_command=False):
     cmd = """
 # Show triangle information:
@@ -96,6 +110,16 @@ w_mh_viewer.showMark()
         view.mgr.pycon.command = cmd.strip()
 
 
+def help_bezier(set_command=False):
+    cmd = """
+# Open a sub window for some bezier curves:
+w = make_bezier()
+"""
+    view.mgr.pycon.writeToHistory(cmd)
+    if set_command:
+        view.mgr.pycon.command = cmd.strip()
+
+
 def make_mesh_viewer(path):
     data = open(path, 'rb').read()
     gm = core.Gmsh(data)
@@ -108,6 +132,50 @@ def make_triangle():
     mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
     mh.cltpn.ndarray[:] = core.StaticMesh.TRIANGLE
     mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
+    mh.build_interior()
+    mh.build_boundary()
+    mh.build_ghost()
+    return mh
+
+
+def make_2dmix(do_small=False):
+    T = core.StaticMesh.TRIANGLE
+    Q = core.StaticMesh.QUADRILATERAL
+
+    if do_small:
+        mh = core.StaticMesh(ndim=2, nnode=6, nface=0, ncell=3)
+        mh.ndcrd.ndarray[:, :] = [
+            (0, 0), (1, 0), (0, 1), (1, 1), (2, 0), (2, 1)
+        ]
+        mh.cltpn.ndarray[:] = [
+            T, T, Q,
+        ]
+        mh.clnds.ndarray[:, :5] = [
+            (3, 0, 3, 2, -1), (3, 0, 1, 3, -1), (4, 1, 4, 5, 3),
+        ]
+    else:
+        mh = core.StaticMesh(ndim=2, nnode=16, nface=0, ncell=14)
+        mh.ndcrd.ndarray[:, :] = [
+            (0, 0), (1, 0), (2, 0), (3, 0),
+            (0, 1), (1, 1), (2, 1), (3, 1),
+            (0, 2), (1, 2), (2, 2), (3, 2),
+            (0, 3), (1, 3), (2, 3), (3, 3),
+        ]
+        mh.cltpn.ndarray[:] = [
+            T, T, T, T, T, T,  # 0-5,
+            Q, Q,  # 6-7
+            T, T, T, T,  # 8-11
+            Q, Q,  # 12-13
+        ]
+        mh.clnds.ndarray[:, :5] = [
+            (3, 0, 5, 4, -1), (3, 0, 1, 5, -1),  # 0-1 triangles
+            (3, 1, 2, 5, -1), (3, 2, 6, 5, -1),  # 2-3 triangles
+            (3, 2, 7, 6, -1), (3, 2, 3, 7, -1),  # 4-5 triangles
+            (4, 4, 5, 9, 8), (4, 5, 6, 10, 9),  # 6-7 quadrilaterals
+            (3, 6, 7, 10, -1), (3, 7, 11, 10, -1),  # 8-9 triangles
+            (3, 8, 9, 12, -1), (3, 9, 13, 12, -1),  # 10-11 triangles
+            (4, 9, 10, 14, 13), (4, 10, 11, 15, 14),  # 12-13 quadrilaterals
+        ]
     mh.build_interior()
     mh.build_boundary()
     mh.build_ghost()
@@ -155,10 +223,13 @@ def load_app():
     symbols = (
         'help_tri',
         'help_tet',
+        'help_2dmix',
         'help_mesh_viewer',
         'help_other',
+        'help_bezier',
         'make_triangle',
         'make_tetrahedron',
+        'make_2dmix',
         'make_mesh_viewer',
         'make_bezier',
         ('add3DWidget', view.mgr.add3DWidget),
@@ -176,8 +247,10 @@ def load_app():
 # Use the functions for more examples:
 help_tri(set_command=False)  # or True
 help_tet(set_command=False)  # or True
+help_2dmix(set_command=False)  # or True
 help_other(set_command=False)  # or True
 help_mesh_viewer(path, set_command=False)  # or True
+help_bezier(set_command=False)  # or True
 """)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
