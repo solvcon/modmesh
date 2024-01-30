@@ -69,7 +69,11 @@ Gmsh::Gmsh(const std::string & data)
 
 std::shared_ptr<StaticMesh> Gmsh::to_block()
 {
-    std::shared_ptr<StaticMesh> block = StaticMesh::construct(m_eldim.max(), m_nds.shape(0), 0, m_elems.size());
+    std::shared_ptr<StaticMesh> block = StaticMesh::construct(
+        m_eldim.max(),
+        static_cast<StaticMesh::uint_type>(m_nds.shape(0)),
+        0,
+        static_cast<StaticMesh::uint_type>(m_elems.size()));
     build_interior(block);
     return block;
 }
