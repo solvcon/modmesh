@@ -86,7 +86,7 @@ jobs:
         ### The following command is the original commend, and it will fail on pytest == 8.0.0 .
         ### pytest --rootdir=/tmp -v
         ### Here is the issue and temporary solution: https://github.com/pytest-dev/pytest/issues/11781  
-        ### The alternative command is ```pytest --rootdir=. -v```
+        ### The alternative command to solve the issue is ```pytest --rootdir=. -v```.
         pytest --rootdir=. -v
         cd ..
 
@@ -173,6 +173,6 @@ jobs:
           ### The following command is the original commend, and it will fail on pytest == 8.0.0 .
           ### pytest --rootdir=/tmp -v
           ### Here is the issue and temporary solution: https://github.com/pytest-dev/pytest/issues/11781  
-          ### The alternative command is ```pytest --rootdir=. -v```
+          ### The alternative command to solve the issue is ```pytest --rootdir=. -v``` .
           pytest --rootdir=. -v
           cd ..
