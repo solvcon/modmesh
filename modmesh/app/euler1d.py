@@ -29,101 +29,260 @@
 __package__ = "modmesh.app"
 
 import sys
-from dataclasses import dataclass
-
-import numpy as np
-
 import matplotlib
 import matplotlib.pyplot
-from matplotlib.backends.backend_qtagg import FigureCanvas
-from matplotlib.ticker import FormatStrFormatter
-from matplotlib.figure import Figure
-from PySide6.QtWidgets import (QApplication, QWidget, QScrollArea,
-                               QGridLayout, QVBoxLayout, QPushButton,
-                               QHBoxLayout, QFileDialog, QLayout, QCheckBox)
-from PySide6.QtCore import Qt, QEvent, QMimeData, QTimer, QObject, Slot
-from PySide6.QtGui import QDrag, QPixmap
-
+import numpy as np
 import modmesh as mm
-from .. import view
+
+from dataclasses import dataclass
+from matplotlib.backends.backend_qtagg import FigureCanvas
+from matplotlib.figure import Figure
+from matplotlib.ticker import FormatStrFormatter
+from PySide6.QtCore import QTimer, Slot, Qt
+from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QFileDialog, QDockWidget
+from PUI.state import State
+from PUI.PySide6.base import PuiInQt, QtInPui
+from PUI.PySide6.button import Button
+from PUI.PySide6.layout import VBox, Spacer
+from PUI.PySide6.scroll import Scroll
+from PUI.PySide6.window import Window
+from PUI.PySide6.combobox import ComboBox, ComboBoxItem
+from PUI.PySide6.label import Label
+from PUI.PySide6.table import Table
+from PUI.PySide6.toolbar import ToolBar, ToolBarAction
 from ..onedim import euler1d
-
-
-def load_app():
-    view.mgr.pycon.writeToHistory("""
-# Use the functions for more examples:
-ctrl.start()  # Start the movie
-ctrl.step()  # Stepping the solution
-
-# Note: you can enable profiling info by "profiling" option
-ctrl = mm.app.euler1d.run(interval=10, max_steps=50, profiling=True)
-""")
-    cmd = "ctrl = mm.app.euler1d.run(interval=10, max_steps=50)"
-    view.mgr.pycon.command = cmd
+from .. import view
 
 
 @dataclass
 class QuantityLine:
+    """
+    A class representing a quantity line with associated data.
+
+    This class is a data structure that holds information about a quantity line
+    in a plot. It is designed to be used in conjunction with Matplotlib for
+    visualizing analytical and numerical data.
+
+    Class attributes:
+        - `ana` (matplotlib.lines.Line2D): Line2D for analytical data.
+        - `num` (matplotlib.lines.Line2D): Line2D for numerical data.
+        - `axis` (matplotlib.pyplot.axis): Axis for the plot.
+        - `name` (str): Name of the quantity.
+        - `unit` (str): Unit of measurement.
+
+    Methods:
+        - :meth:`update(xdata, adata, ndata)`: Update the line data and
+          redraw the plot.
+    """
     ana: matplotlib.lines.Line2D = None
     num: matplotlib.lines.Line2D = None
     axis: matplotlib.pyplot.axis = None
     name: str = ""
     unit: str = ""
 
-    def bind_axis(self, axis):
-        self.axis = axis
-
     def update(self, adata, ndata):
-        self.ana.set_ydata(adata.copy())
-        self.num.set_ydata(ndata.copy())
+        """
+        Update the line data and redraw the plot.
+
+        :param adata: Analytical data.
+        :type adata: ndarray
+
+        :param ndata: Numerical data.
+        :type ndata: ndarray
+
+        :return: None
+        """
+        self.ana.set_ydata(adata)
+        self.num.set_ydata(ndata)
         self.axis.relim()
         self.axis.autoscale_view()
         self.ana.figure.canvas.draw()
         self.num.figure.canvas.draw()
 
 
-class PlotManager(QWidget):
-    def __init__(self, shocktube):
-        super().__init__()
-        self.setWindowTitle("Euler 1D")
-        # Set minimum window size to prevent the plot from looking
-        # distorted due to the window being too small
-        self.setMinimumSize(1150, 700)
-        self.setAcceptDrops(True)
+class SolverConfig():
+    """
+    Configuration class for the solver.
 
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
+    This class provides a configuration interface for the solver, allowing
+    users to set and retrieve parameters related to the simulation.
 
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
+    Attributes:
+        - `state` (:class:`State`): The state object holding configuration
+          data.
+        - `state.data` (list): A list containing configuration parameters
+          in the form of [variable_name, value, description].
+        - `_tbl_content` (:class:`State`): The content of the
+          configuration table.
+        - `_col_header` (list): The header for the configuration
+          table columns.
 
-        self.main_container = QWidget()
-        self.figure_container = None
-        self.use_grid_layout = True
-        self.main_layout = None
-        self.shocktube = shocktube
+    Methods:
+        - :meth:`data(row, col)`: Get the value at a specific row and column
+          in the configuration table.
+        - :meth:`setData(row, col, value)`: Set the value at a specific row
+          and column in the configuration table.
+        - :meth:`columnHeader(col)`: Get the header for a specific column
+          in the configuration table.
+        - :meth:`editable(row, col)`: Check if a cell in the configuration
+          table is editable.
+        - :meth:`rowCount()`: Get the number of rows in the configuration
+          table.
+        - :meth:`columnCount()`: Get the number of columns in the
+          configuration table.
+        - :meth:`get_var(key)`: Get the value of a configuration variable
+          based on its key.
+    """
+    def __init__(self):
+        self.state = State()
+        self.state.data = [
+                ["gamma", 1.4, "The ratio of the specific heats."],
+                ["p_left", 1.0, "The pressure of left hand side."],
+                ["rho_left", 1.0, "The density of left hand side."],
+                ["p_right", 0.1, "The pressure of right hand side."],
+                ["rho_right", 0.125, "The density of right hand side."],
+                ["xmin", -10, "The most left point of x axis."],
+                ["xmax", 10, "The most right point of x axis."],
+                ["ncoord", 201, "Number of grid point."],
+                ["time_increment", 0.05, "The density of right hand side."],
+                ["timer_interval", 10, "Qt timer interval"],
+                ["max_steps", 50, "Maximum step"],
+                ["profiling", False, "Turn on / off solver profiling"],
+                ]
+        self._tbl_content = self.state("data")
+        self._col_header = ["Variable", "Value", "Description"]
 
-        self.scroll_area.setWidget(self.main_container)
-        self.layout.addWidget(self.scroll_area)
+    def data(self, row, col):
+        """
+        Get the value at a specific row and column in the configuration table.
 
-        self.button_layout = QHBoxLayout()
+        :param row: Row index.
+        :type row: int
+        :param col: Column index.
+        :type col: int
+        :return: The value at the specified location in
+        the configuration table.
+        """
+        return self._tbl_content.value[row][col]
 
-        self.save_button = QPushButton()
-        self.save_button.setText("Save")
+    def setData(self, row, col, value):
+        """
+        Set the value at a specific row and column in the configuration table.
 
-        self.swtich_button = QPushButton()
-        self.swtich_button.setText("Layout swtich")
+        :param row: Row index.
+        :type row: int
+        :param col: Column index.
+        :type col: int
+        :prarm value: Any
+        :return None
+        """
+        self._tbl_content.value[row][col] = value
+        self._tbl_content.emit()
 
-        self.button_layout.addWidget(self.save_button)
-        self.button_layout.addWidget(self.swtich_button)
+    def columnHeader(self, col):
+        """
+        Get the specific column header in the configuration table.
 
-        self.save_button.clicked.connect(self.save_all)
-        self.swtich_button.clicked.connect(self.switch_layout)
+        :param col: Column index.
+        :type col: int
+        :return: The header for the specific column.
+        """
+        return self._col_header[col]
 
-        self.layout.addLayout(self.button_layout)
+    def editable(self, row, col):
+        """
+        Check if the cell is editable.
 
+        :param row: Row index.
+        :type row: int
+        :param col: Column index.
+        :type col: int
+        :return: True if the cell is editable, false otherwise.
+        """
+        if col == 1:
+            return True
+        return False
+
+    # Delete row header
+    rowHeader = None
+
+    def rowCount(self):
+        """
+        Get the number of rows in the configuration table.
+
+        :return: The number of rows.
+        """
+        return len(self._tbl_content.value)
+
+    def columnCount(self):
+        """
+        Get the number of columns in the configuration table.
+
+        :return: The number of columns.
+        """
+        return len(self._tbl_content.value[0])
+
+    def get_var(self, key):
+        """
+        Get the value of a configuration variable based on its key.
+
+        :param key: The key of the variable.
+        :type key: str
+        :return: The value of the specified variable.
+        """
+        for ele in self.state("data").value:
+            if key == ele[0]:
+                return ele[1]
+        return None
+
+
+class Euler1DApp():
+    """
+    Main application class for the Euler 1D solver.
+
+    This class provides the main application logic for the Euler 1D solver.
+    It includes methods for initializing the solver, configuring parameters,
+    setting up timers, and building visualization figures.
+
+    Attributes:
+        - `config` (:class:`SolverConfig`): Configuration object
+          for the solver.
+        - `data_lines` (dict): Dictionary containing QuantityLine objects and
+          their display status.
+        - Other QuantityLine objects such as `density`, `velocity`, etc.
+        - `use_grid_layout` (bool): Flag indicating whether to use a
+          grid layout.
+        - `checkbox_select_num` (int): Number of checkboxes selected.
+        - `plot_holder` (:class:`State`): State object for holding plots.
+
+    Methods:
+        - :meth:`init_solver(gamma, pressure_left, density_left, ...)`:
+          Initialize the shock tube solver and set up the initial conditions.
+        - :meth:`set_solver_config()`: Initialize solver configuration
+          based on user input.
+        - :meth:`setup_timer()`: Set up the Qt timer for data visualization.
+        - :meth:`build_grid_figure()`: Build a grid figure for visualization.
+        - :meth:`build_single_figure()`: Build a single-figure layout for
+          visualization.
+        - :meth:`march_alpha2(steps)`: Call the C++ solver to march the
+          time step.
+        - :meth:`step(steps)`: Callback function for the step button.
+        - :meth:`start()`: Start the solver.
+        - :meth:`set()`: Set the solver configurations and update the timer.
+        - :meth:`stop()`: Stop the solver.
+        - :meth:`single_layout()`: Switch plot holder to a single plot layout.
+        - :meth:`grid_layout()`: Switch plot holder to a grid plot layout.
+        - :meth:`save_file()`: Save the current plot to a file.
+        - :meth:`timer_timeout()`: Qt timer timeout callback.
+        - :meth:`log(msg)`: Print log messages to the console window and
+          standard output.
+        - :meth:`update_lines()`: Update all data lines after the solver
+          finishes computation.
+    """
+    def __init__(self):
+        self.config = SolverConfig()
         self.data_lines = {}
-
         self.density = QuantityLine(name="density",
                                     unit=r"$\mathrm{kg}/\mathrm{m}^3$")
         self.data_lines[self.density.name] = [self.density, True]
@@ -142,215 +301,72 @@ class PlotManager(QWidget):
         self.entropy = QuantityLine(name="entropy",
                                     unit=r"$\mathrm{J}/\mathrm{K}$")
         self.data_lines[self.entropy.name] = [self.entropy, False]
-
+        self.use_grid_layout = False
         self.checkbox_select_num = 3
+        self.plot_holder = State()
+        self.set_solver_config()
+        self.setup_timer()
+        self.plot_holder.plot = self.build_single_figure()
 
-    @Slot(bool)
-    def save_all(self, checked=False):
+    def init_solver(self, gamma=1.4, pressure_left=1.0, density_left=1.0,
+                    pressure_right=0.1, density_right=0.125, xmin=-10,
+                    xmax=10, ncoord=201, time_increment=0.05):
         """
-        This callback function don't care button's checked state,
-        therefore the checked state is not used in this function.
+        This function is used to initialize shock tube solver and setup
+        the initial conition.
 
-        :param checked: button is checked or not
-        :return: nothing
+        :return: None
         """
-        fig = QPixmap(self.figure_container.size())
-        self.figure_container.render(fig)
+        self.st = euler1d.ShockTube()
+        self.st.build_constant(gamma, pressure_left, density_left,
+                               pressure_right, density_right)
+        self.st.build_numerical(xmin, xmax, ncoord, time_increment)
+        self.st.build_field(t=0)
 
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getSaveFileName(None, "Save file", "",
-                                                  "All Files (*)",
-                                                  options=options)
-
-        if fileName != "":
-            fig.save(fileName, "JPG", 100)
-
-    def _update_layout(self):
-        while self.main_layout is not None and self.main_layout.count():
-            item = self.main_layout.takeAt(0)
-            if isinstance(item, QLayout):
-                self.delete_layout(item)
-            else:
-                item.widget().setParent(None)
-                item.widget().deleteLater()
-
-        self.main_layout.deleteLater()
-        self.main_container.update()
-
-        @Slot(QObject)
-        def del_cb(obj=None):
-            """
-            Qt objects are managed by Qt internal event loop,
-            hence it will not be deleted immediately when we called
-            deleteLater() and a QWidget only accept one layout at
-            the same time, therefore a object delete callback is
-            needed to set new layout after old layout deleted.
-
-            This callback will be called before the obj destroyed,
-            in this callback only update the layout, therefore the obj
-            is not used in this callback.
-
-            :param obj: The object about to be destroyed
-            :return: nothing
-            """
-            if self.use_grid_layout:
-                self.build_lines_grid_layout()
-            else:
-                self.build_lines_single_plot()
-
-        self.main_layout.destroyed.connect(del_cb)
-
-        self.main_layout.update()
-        self.main_container.update()
-
-    @Slot(bool)
-    def switch_layout(self, checked=False):
+    def set_solver_config(self):
         """
-        This callback function don't care button's checked state,
-        therefore the checked state is not used in this function.
+        Initializing solver configure by user's input, also reset
+        the computational results.
 
-        :param checked: button is checked or not
-        :return: nothing
+        :return None
         """
-        self.use_grid_layout = not self.use_grid_layout
-        self._update_layout()
+        self.init_solver(gamma=self.config.get_var("gamma"),
+                         pressure_left=self.config.get_var("p_left"),
+                         density_left=self.config.get_var("rho_left"),
+                         pressure_right=self.config.get_var("p_right"),
+                         density_right=self.config.get_var("rho_right"),
+                         xmin=self.config.get_var("xmin"),
+                         xmax=self.config.get_var("xmax"),
+                         ncoord=self.config.get_var("ncoord"),
+                         time_increment=self.config.get_var("time_increment"))
+        self.current_step = 0
+        self.interval = self.config.get_var("timer_interval")
+        self.max_steps = self.config.get_var("max_steps")
+        self.profiling = self.config.get_var("profiling")
 
-    def delete_layout(self, layout):
-        """Delete all widgets from a layout."""
-        for i in reversed(range(layout.count())):
-            widget = layout.itemAt(i).widget()
-            # Check if the widget is a layout
-            if isinstance(widget, QLayout):
-                self.delete_layout(widget)
-            else:
-                widget.setParent(None)
-                widget.deleteLater()
+    def setup_timer(self):
+        """
+        Steup the Qt timer for data visualization, timer also driver
+        solver marching time step.
 
-        layout.update()
-        layout.setParent(None)
-        layout.deleteLater()
+        :return: None
+        """
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.timer_timeout)
 
-    def eventFilter(self, obj, event):
-        if self.use_grid_layout:
-            if event.type() == QEvent.MouseButtonPress:
-                self.mousePressEvent(event)
-            elif event.type() == QEvent.MouseMove:
-                self.mouseMoveEvent(event)
+    def build_grid_figure(self):
+        """
+        Create a matplotlib figure that includes all data lines, each
+        represeting a physical variable. The layout of figure is that
+        a grid plot.
 
-        return super().eventFilter(obj, event)
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton and self.use_grid_layout:
-            coord = event.windowPos().toPoint()
-            self.targetIndex = self.getWindowIndex(coord)
-        else:
-            self.targetIndex = None
-
-    def mouseMoveEvent(self, event):
-        if event.buttons() == Qt.LeftButton and self.targetIndex is not None:
-            windowItem = self.figure_layout.itemAt(self.targetIndex)
-
-            drag = QDrag(windowItem)
-
-            pix = windowItem.itemAt(0).widget().grab()
-
-            mimeData = QMimeData()
-            mimeData.setImageData(pix)
-
-            drag.setMimeData(mimeData)
-            drag.setPixmap(pix)
-            drag.setHotSpot(event.pos())
-            drag.exec()
-
-    def dragEnterEvent(self, event):
-        if event.mimeData().hasImage():
-            event.accept()
-        else:
-            event.ignore()
-
-    def dropEvent(self, event):
-        if not event.source().geometry().contains(event.pos()):
-            targetWindowIndex = self.getWindowIndex(event.pos())
-            if targetWindowIndex is None:
-                return
-
-            i, j = (max(self.targetIndex, targetWindowIndex),
-                    min(self.targetIndex, targetWindowIndex))
-
-            p1, p2 = (self.figure_layout.getItemPosition(i),
-                      self.figure_layout.getItemPosition(j))
-
-            self.figure_layout.addItem(self.figure_layout.takeAt(i), *p2)
-            self.figure_layout.addItem(self.figure_layout.takeAt(j), *p1)
-
-    def getWindowIndex(self, pos):
-        for i in range(self.figure_layout.count()):
-            if self.figure_layout.itemAt(i).geometry().contains(pos):
-                return i
-
-    def update_lines(self):
-        if self.use_grid_layout:
-            self.density.update(adata=self.shocktube.density_field,
-                                ndata=self.shocktube.svr.density[::2])
-            self.pressure.update(adata=self.shocktube.pressure_field,
-                                 ndata=self.shocktube.svr.pressure[::2])
-            self.velocity.update(adata=self.shocktube.velocity_field,
-                                 ndata=self.shocktube.svr.velocity[::2])
-            self.temperature.update(adata=self.shocktube.temperature_field,
-                                    ndata=self.shocktube.svr.temperature[::2])
-            self.internal_energy.update(adata=(self.shocktube.
-                                               internal_energy_field),
-                                        ndata=(self.shocktube.svr.
-                                               internal_energy[::2]))
-            self.entropy.update(adata=self.shocktube.entropy_field,
-                                ndata=self.shocktube.svr.entropy[::2])
-        else:
-            for name, data_line in self.data_lines.items():
-                if data_line[1]:
-                    eval(f'(data_line[0].update(adata=self.shocktube.'
-                         f'{name}_field, ndata=self.shocktube.svr.'
-                         f'{name}[::2]))')
-
-    def build_lines_grid_layout(self):
-        self.main_layout = QHBoxLayout(self.main_container)
-        self.main_container.setLayout(self.main_layout)
-
-        self.figure_container = QWidget()
-        self.figure_layout = QGridLayout()
-        self.figure_container.setLayout(self.figure_layout)
-
-        self.main_layout.addWidget(self.figure_container)
-        self._update_grid_figure()
-
-    def build_lines_single_plot(self):
-        checkbox_layout = QVBoxLayout()
-        self._build_checkbox(checkbox_layout)
-
-        self.main_layout = QHBoxLayout(self.main_container)
-        self.main_layout.addLayout(checkbox_layout, 1)
-        self.main_container.setLayout(self.main_layout)
-
-        self.figure_container = QWidget()
-        self.figure_layout = QVBoxLayout()
-        self.figure_container.setLayout(self.figure_layout)
-
-        self.main_layout.addWidget(self.figure_container, 4)
-
-        # Legend figure
-        legend_fig = Figure()
-        legend_canvas = FigureCanvas(legend_fig)
-        checkbox_layout.addWidget(legend_canvas)
-
-        lines = self._update_single_figure()
-
-        legend_canvas.figure.legend(lines,
-                                    [line.get_label() for line in lines],
-                                    loc='center',
-                                    frameon=False)
-
-    def _update_grid_figure(self):
-        x = self.shocktube.svr.coord[::2]
+        :return: FigureCanvas
+        """
+        x = self.st.svr.coord[::2]
+        fig = Figure()
+        canvas = FigureCanvas(fig)
+        ax = canvas.figure.subplots(3, 2)
+        fig.tight_layout()
 
         for i, (data, color) in enumerate((
                 (self.density, 'r'),
@@ -360,16 +376,13 @@ class PlotManager(QWidget):
                 (self.internal_energy, 'k'),
                 (self.entropy, 'm')
         )):
-            figure = Figure()
-            canvas = FigureCanvas(figure)
-
-            axis = figure.add_subplot()
+            axis = ax[i // 2][i % 2]
             axis.autoscale(enable=True, axis='y', tight=False)
-            data.bind_axis(axis)
-            data.ana, = axis.plot(x.copy(), np.zeros_like(x),
+            data.axis = axis
+            data.ana, = axis.plot(x, np.zeros_like(x),
                                   f'{color}-',
                                   label=f'{data.name}_ana')
-            data.num, = axis.plot(x.copy(), np.zeros_like(x),
+            data.num, = axis.plot(x, np.zeros_like(x),
                                   f'{color}x',
                                   label=f'{data.name}_num')
             axis.set_ylabel(f'{data.name} ({data.unit})')
@@ -377,26 +390,24 @@ class PlotManager(QWidget):
             axis.set_xlabel("distance (m)")
             axis.legend()
             axis.grid()
-            canvas.installEventFilter(self)
-
-            box = QVBoxLayout()
-            box.addWidget(canvas)
-
-            self.figure_layout.addLayout(box, i // 2, i % 2)
-            self.figure_layout.setColumnStretch(i % 2, 1)
-            self.figure_layout.setRowStretch(i // 2, 1)
 
         self.update_lines()
+        return canvas
 
-    def _update_single_figure(self):
-        x = self.shocktube.svr.coord[::2]
+    def build_single_figure(self):
+        """
+        Create a matplotlib figure that includes up to 3 data lines, each
+        represeting a physical variable. The layout of figure is that
+        a single plot contains all data lines.
+
+        :return: FigureCanvas
+        """
+        x = self.st.svr.coord[::2]
         fig = Figure()
-        fig.tight_layout()
         canvas = FigureCanvas(fig)
         ax = canvas.figure.subplots()
+        fig.tight_layout()
         ax.autoscale(enable=True, axis='y', tight=False)
-
-        lines = []
 
         # Matplotlib need to plot y axis on the left hand side first
         # then the reset of axis can be plotted on right hand side
@@ -417,22 +428,22 @@ class PlotManager(QWidget):
             # data line on main axis first
             if self.data_lines[data.name][1]:
                 if not main_axis_plotted:
-                    data.bind_axis(ax)
-                    data.ana, = ax.plot(x.copy(), np.zeros_like(x),
+                    data.axis = ax
+                    data.ana, = ax.plot(x, np.zeros_like(x),
                                         f'{color}-',
                                         label=f'{data.name}_ana')
-                    data.num, = ax.plot(x.copy(), np.zeros_like(x),
+                    data.num, = ax.plot(x, np.zeros_like(x),
                                         f'{color}x',
                                         label=f'{data.name}_num')
                     ax.set_ylabel(f'{data.name} ({data.unit})')
                     main_axis_plotted = True
                 else:
                     ax_new = ax.twinx()
-                    data.bind_axis(ax_new)
-                    data.ana, = ax_new.plot(x.copy(), np.zeros_like(x),
+                    data.axis = ax_new
+                    data.ana, = ax_new.plot(x, np.zeros_like(x),
                                             f'{color}-',
                                             label=f'{data.name}_ana')
-                    data.num, = ax_new.plot(x.copy(), np.zeros_like(x),
+                    data.num, = ax_new.plot(x, np.zeros_like(x),
                                             f'{color}x',
                                             label=f'{data.name}_num')
                     ax_new.spines.right.set_position(("axes",
@@ -442,12 +453,9 @@ class PlotManager(QWidget):
                     ax_new.yaxis.set_major_formatter((FormatStrFormatter
                                                       ('%.2f')))
                 select_num += 1
-            lines.append(data.ana)
-            lines.append(data.num)
 
         ax.set_xlabel("distance (m)")
         ax.grid()
-        canvas.installEventFilter(self)
 
         # These parameters are the results obtained by my tuning on GUI
         fig.subplots_adjust(left=0.1,
@@ -455,275 +463,256 @@ class PlotManager(QWidget):
                             bottom=0.093, top=0.976,
                             wspace=0.2, hspace=0.2)
 
-        prev_fig = self.figure_layout.takeAt(0)
-
-        if prev_fig:
-            prev_fig.widget().deleteLater()
-
         self.update_lines()
-        self.figure_layout.addWidget(canvas)
 
-        return lines
+        return canvas
 
-    def _build_checkbox(self, layout):
-        layout.setSpacing(50)
-        for name, data_line in self.data_lines.items():
-            check_box = QCheckBox(name)
-            if data_line[1]:
-                check_box.toggle()
-            check_box.clicked.connect(self._checkbox_cb)
-            layout.addWidget(check_box)
-
-    @Slot(bool)
-    def _checkbox_cb(self, checked=False):
+    def march_alpha2(self, steps=1):
         """
-        This callback function don't care button's checked state,
-        therefore the checked state is not used in this function.
+        This function is used to call c++ solver to march the time step, also
+        calling python side analytical solution to march the time step.
 
-        Under a single plot layout, that allow 3 lines on the same chart
-        simultaneously to avoid it looking too crowded.
-        I have chosen to use checkboxes for user to select
-        the parameters they want to plot on the chart.
-
-        :param checked: button is checked or not
-        :return: nothing
+        :return: None
         """
-        checkbox = self.sender()
-        if self.checkbox_select_num == 3:
-            if checkbox.isChecked():
-                checkbox.toggle()
-            else:
-                self.checkbox_select_num -= 1
-                self.data_lines[checkbox.text()][1] = False
-        elif self.checkbox_select_num == 1:
-            if not checkbox.isChecked():
-                checkbox.toggle()
-            else:
-                self.checkbox_select_num += 1
-                self.data_lines[checkbox.text()][1] = True
-        else:
-            if checkbox.isChecked():
-                self.checkbox_select_num += 1
-                self.data_lines[checkbox.text()][1] = True
-            else:
-                self.checkbox_select_num -= 1
-                self.data_lines[checkbox.text()][1] = False
+        if self.max_steps and self.current_step > self.max_steps:
+            self.stop()
+            return
 
-        self._update_single_figure()
+        self.st.svr.march_alpha2(steps=steps)
+        self.current_step += steps
+        time_current = self.current_step * self.st.svr.time_increment
+        self.st.build_field(t=time_current)
+        cfl = self.st.svr.cfl
+        self.log(f"CFL: min {cfl.min()} max {cfl.max()}")
+        self.update_lines()
+        if self.profiling:
+            self.log(mm.time_registry.report())
 
+    def step(self, steps=1):
+        """
+        Callback function of step button.
 
-class Controller:
-    def __init__(self, shocktube, max_steps, use_sub=None, profiling=False):
-        if None is shocktube.gamma:
-            raise ValueError("shocktube does not have constant built")
-        if None is shocktube.svr:
-            raise ValueError("shocktube does not have numerical solver built")
+        :return: None
+        """
+        self.march_alpha2(steps=steps)
 
-        super().__init__()
-
-        self.shocktube = shocktube
-
-        self.max_steps = max_steps
-        self.current_step = 0
-        self.timer = None
-
-        self.use_sub = mm.Toggle.instance.get_value('apps.euler1d.use_sub',
-                                                    False)
-        if self.use_sub is None:
-            self.use_sub = mm.Toggle.instance.solid.use_pyside
-        self._main = QWidget()
-
-        if self.use_sub:
-            # FIXME: sub window causes missing QWindow with the following
-            # error:
-            # RuntimeError:
-            # Internal C++ object (PySide6.QtGui.QWindow) already deleted.
-            # It is probably because RMainWindow is not recognized by PySide6
-            # and matplotlib.  We may consider to use composite for QMainWindow
-            # instead of inheritance.
-            self._subwin = view.mgr.addSubWindow(self._main)
-            self._subwin.resize(1150, 750)
-
-        self.plt_mgr = PlotManager(self.shocktube)
-        self.plt_mgr.build_lines_grid_layout()
-        # Ideally one would use self.addToolBar here, but it is slightly
-        # incompatible between PyQt6 and other bindings, so we just add the
-        # toolbar as a plain widget instead.
-        layout = QVBoxLayout(self._main)
-        ctrl_button_layout = QHBoxLayout()
-
-        start_button = QPushButton()
-        start_button.setText('Start')
-        start_button.clicked.connect(self.start)
-        ctrl_button_layout.addWidget(start_button)
-
-        stop_button = QPushButton()
-        stop_button.setText('Stop')
-        stop_button.clicked.connect(self.stop)
-        ctrl_button_layout.addWidget(stop_button)
-
-        step_button = QPushButton()
-        step_button.setText('Step')
-        step_button.clicked.connect(self.step_button_cb)
-        ctrl_button_layout.addWidget(step_button)
-
-        reset_button = QPushButton()
-        reset_button.setText('Reset')
-        reset_button.clicked.connect(self.reset)
-        ctrl_button_layout.addWidget(reset_button)
-
-        layout.addWidget(self.plt_mgr)
-        layout.addLayout(ctrl_button_layout)
-
-        self.profiling = profiling
-
-    def show(self):
-        self._main.show()
-        if self.use_sub:
-            self._subwin.show()
-
-    @Slot(bool)
-    def start(self, checked=False):
+    def start(self):
         """
         This callback function don't care button's checked state,
         therefore the checked state is not used in this function.
 
         :param checked: button is checked or not
-        :return: nothing
+        :return: None
         """
         self.timer.start(self.interval)
 
-    @Slot(bool)
-    def stop(self, checked=False):
+    def set(self):
         """
-        This callback function don't care button's checked state,
-        therefore the checked state is not used in this function.
+        Callback function of set button that set the solver
+        configures and setup the timer.
 
-        :param checked: button is checked or not
-        :return: nothing
+        :return: None
+        """
+        self.set_solver_config()
+        self.setup_timer()
+        if self.use_grid_layout:
+            self.plot_holder.plot = self.build_grid_figure()
+        else:
+            self.plot_holder.plot = self.build_single_figure()
+
+    def stop(self):
+        """
+        The stop button callback for stopping Qt timer.
+        :return: None
         """
         self.timer.stop()
 
-    @Slot(bool)
-    def step_button_cb(self, checked=False):
+    def single_layout(self):
         """
-        This callback function don't care button's checked state,
-        therefore the checked state is not used in this function.
+        Toolbar action callback that switch plot holder to single plot layout.
 
-        :param checked: button is checked or not
-        :return: nothing
+        :return: None
         """
-        self.step()
+        self.use_grid_layout = False
+        self.plot_holder.plot = self.build_single_figure()
 
-    def step(self, steps=1):
-        self.march_alpha2(steps=steps)
-        if self.max_steps and self.current_step > self.max_steps:
-            self.stop()
+    def grid_layout(self):
+        """
+        Toolbar action callback that switch plot holder to grid plot layout.
+
+        :return: None
+        """
+        self.use_grid_layout = True
+        self.plot_holder.plot = self.build_grid_figure()
+
+    def save_file(self):
+        """
+        Toolbar action callback, that use pixmap to store plotting area
+        and open a dialog that allows user to decide where to store the
+        figure file.
+
+        :return: None
+        """
+        fig = QPixmap(self.plot_holder.plot.size())
+        self.plot_holder.plot.render(fig)
+
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(None, "Save file", "",
+                                                  "All Files (*)",
+                                                  options=options)
+
+        if fileName != "":
+            fig.save(fileName, "JPG", 100)
 
     @Slot()
-    def timer_timeout_cb(self):
+    def timer_timeout(self):
+        """
+        Qt timer timeout callback.
+
+        :return: None
+        """
         self.step()
-
-    @Slot(bool)
-    def reset(self, checked=False):
-        """
-        This callback function don't care button's checked state,
-        therefore the checked state is not used in this function.
-
-        :param checked: button is checked or not
-        :return: nothing
-        """
-        self.stop()
-        self.current_step = 0
-        self.shocktube = euler1d.ShockTube()
-        self.shocktube.build_constant(gamma=1.4,
-                                      pressure1=1.0,
-                                      density1=1.0,
-                                      pressure5=0.1,
-                                      density5=0.125)
-        self.shocktube.build_numerical(xmin=-10,
-                                       xmax=10,
-                                       ncoord=201,
-                                       time_increment=0.05)
-        self.shocktube.build_field(t=0)
-        self.plt_mgr.shocktube = self.shocktube
-        self.plt_mgr.update_lines()
-
-    def march_alpha2(self, steps=1):
-        self.shocktube.svr.march_alpha2(steps=steps)
-        self.current_step += steps
-        time_current = self.current_step * self.shocktube.svr.time_increment
-        self.shocktube.build_field(t=time_current)
-        cfl = self.shocktube.svr.cfl
-        self.log(f"CFL: min {cfl.min()} max {cfl.max()}")
-        if self.profiling:
-            self.log(mm.time_registry.report())
-        self.plt_mgr.update_lines()
-
-    def setup_timer(self, interval):
-        """
-        :param interval: milliseconds
-        :return: nothing
-        """
-        self.interval = interval
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.timer_timeout_cb)
 
     @staticmethod
     def log(msg):
+        """
+        Print log in both console window and standard output.
+
+        :return: None
+        """
         sys.stdout.write(msg)
         sys.stdout.write('\n')
         view.mgr.pycon.writeToHistory(msg)
         view.mgr.pycon.writeToHistory('\n')
 
+    def update_lines(self):
+        """
+        Updating all data lines after the solver finishes
+        its computation each time.
 
-class ControllerNoViewMgr(Controller):
-    def __init__(self, shocktube, max_steps, use_sub=None, profiling=False):
-        super().__init__(shocktube,
-                         max_steps,
-                         use_sub=None,
-                         profiling=profiling)
-
-    @staticmethod
-    def log(msg):
-        sys.stdout.write(msg)
-        sys.stdout.write("\n")
-
-
-def run(interval=10, max_steps=50, no_view_mgr=False, **kw):
-    st = euler1d.ShockTube()
-    st.build_constant(gamma=1.4, pressure1=1.0, density1=1.0, pressure5=0.1,
-                      density5=0.125)
-    st.build_numerical(xmin=-10, xmax=10, ncoord=201, time_increment=0.05)
-    st.build_field(t=0)
-
-    if no_view_mgr:
-        ctrl = ControllerNoViewMgr(shocktube=st, max_steps=max_steps, **kw)
-    else:
-        ctrl = Controller(shocktube=st, max_steps=max_steps, **kw)
-    ctrl.setup_timer(interval)
-    ctrl.show()
-
-    return ctrl
+        :return: None
+        """
+        if self.use_grid_layout:
+            self.density.update(adata=self.st.density_field,
+                                ndata=self.st.svr.density[::2])
+            self.pressure.update(adata=self.st.pressure_field,
+                                 ndata=self.st.svr.pressure[::2])
+            self.velocity.update(adata=self.st.velocity_field,
+                                 ndata=self.st.svr.velocity[::2])
+            self.temperature.update(adata=self.st.temperature_field,
+                                    ndata=self.st.svr.temperature[::2])
+            self.internal_energy.update(adata=(self.st.internal_energy_field),
+                                        ndata=(self.st.svr.
+                                               internal_energy[::2]))
+            self.entropy.update(adata=self.st.entropy_field,
+                                ndata=self.st.svr.entropy[::2])
+        else:
+            for name, data_line in self.data_lines.items():
+                if data_line[1]:
+                    eval(f'(data_line[0].update(adata=self.st.{name}_field,'
+                         f' ndata=self.st.svr.{name}[::2]))')
 
 
-if __name__ == "__main__":
-    try:
-        app = QApplication()
+class PlotArea(PuiInQt):
+    """
+    Class for displaying the plot area in the application.
 
-        ctrl = run(interval=10, max_steps=50, no_view_mgr=True, profiling=True)
-        ctrl.start()
+    This class inherits from `PuiInQt` and is responsible for managing the
+    display of the plot area in the application.
 
-        # The trick to close the event loop of app automatically
-        # The timer will emit a closeAllWindows event after 20 seconds
-        # after the app is executed.
-        QTimer.singleShot(20000, app.closeAllWindows)
+    Attributes:
+        - `app`: The app want to plot something in plotting area.
 
-        sys.exit(app.exec())
+    Methods:
+        - :meth:`setup()`: Placeholder method for setting up the plot area.
+        - :meth:`content()`: Method for defining the content of the plot area,
+          including a toolbar and the actual plot.
+    """
+    def __init__(self, parent, app):
+        super().__init__(parent)
+        self.app = app
 
-    except ImportError:
-        print("Something wrong when importing PySide6.")
-        print("Do you install PySide6?")
-        sys.exit(1)
+    def setup(self):
+        pass
 
-# vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
+    def content(self):
+        """
+        Define the GUI layout of plotting area
+
+        :return: nothing
+        """
+        with ToolBar():
+            ToolBarAction("Save").trigger(self.app.save_file)
+            ToolBarAction("SingleLayout").trigger(self.app.single_layout)
+            ToolBarAction("GridLayout").trigger(self.app.grid_layout)
+        QtInPui(self.app.plot_holder.plot)
+
+
+class ConfigWindow(PuiInQt):
+    """
+    ConfigWindow class for managing solver configurations.
+
+    This class inherit from the PuiInQt class and provides a graphical user
+    interface for managing solver configurations. It includes options to set
+    the solver type, view and edit configuration parameters, and control the
+    solver's behavior.
+
+    Attributes:
+        - `app`: The app want to plot something in plotting area.
+        - `config` (:class:`SolverConfig`): Configuration object
+          for the solver.
+
+    Methods:
+        - :meth:`setup()`: Setup method to configure the window.
+        - :meth:`content()`: Method to define the content of the window.
+    """
+    def __init__(self, parent, app):
+        super().__init__(parent)
+        self.app = app
+
+    def setup(self):
+        """
+        Assign the configure object from app
+
+        :return: nothing
+        """
+        self.config = self.app.config
+
+    def content(self):
+        """
+        Define the GUI layout of the window
+
+        :return: nothing
+        """
+        with VBox():
+            with VBox().layout(weight=4):
+                Label("Solver")
+                with ComboBox():
+                    ComboBoxItem("Euler1D-CESE")
+                Label("Configuration")
+                with Scroll():
+                    Table(self.config)
+                Button("Set").click(self.app.set)
+            with VBox().layout(weight=1):
+                Spacer()
+                Button("Start").click(self.app.start)
+                Button("Stop").click(self.app.stop)
+                Button("Step").click(self.app.step)
+
+
+def load_app():
+    app = Euler1DApp()
+    plotting_area = PlotArea(Window(), app)
+
+    config_window = ConfigWindow(Window(), app)
+    config_widget = QDockWidget("config")
+    config_widget.setWidget(config_window.ui.ui)
+
+    view.mgr.mainWindow.addDockWidget(Qt.LeftDockWidgetArea, config_widget)
+    _subwin = view.mgr.addSubWindow(plotting_area.ui.ui)
+    _subwin.showMaximized()
+
+    config_window.redraw()
+    plotting_area.redraw()
+    _subwin.show()
