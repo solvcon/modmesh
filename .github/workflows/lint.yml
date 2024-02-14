@@ -148,7 +148,7 @@ jobs:
     strategy:
       matrix:
         # https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
-        os: [macos-13, macos-14]
+        os: [macos-13]
         cmake_build_type: [Debug]
 
       fail-fast: false

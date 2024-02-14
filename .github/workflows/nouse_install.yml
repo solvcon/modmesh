@@ -103,9 +103,8 @@ jobs:
 
     strategy:
       matrix:
-        # https://github.com/actions/runner-images/blob/main/images/macos/macos-11-Readme.md
         # https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
-        os: [macos-13, macos-14]
+        os: [macos-13]
 
       fail-fast: false
 
