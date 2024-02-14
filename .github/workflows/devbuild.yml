@@ -223,7 +223,8 @@ jobs:
     strategy:
       matrix:
         # https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
-        os: [macos-13]
+        # https://github.com/actions/runner-images/blob/main/images/macos/macos-14-Readme.md
+        os: [macos-13, macos-14]
         cmake_build_type: [Release]
 
       fail-fast: false
@@ -256,7 +257,7 @@ jobs:
       - name: dependency by manual script
         run: |
           sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
-          if [ "${{ matrix.os }}" == "macos-13" ] ; then \
+          if [ "${{ matrix.os }}" == "macos-13" ] || [ "${{ matrix.os }}" == "macos-14" ] ; then \
             thirdparty/metal-cpp.sh ; \
           fi
 
@@ -297,7 +298,7 @@ jobs:
       - name: make pytest BUILD_QT=OFF
         run: |
           JOB_MAKE_ARGS="VERBOSE=1"
-          if [ "${{ matrix.os }}" == "macos-13" ] ; then \
+          if [ "${{ matrix.os }}" == "macos-13" ] || [ "${{ matrix.os }}" == "macos-14" ] ; then \
             JOB_MAKE_ARGS="${JOB_MAKE_ARGS} BUILD_METAL=ON" ; \
           fi
           make pytest ${JOB_MAKE_ARGS}
@@ -319,7 +320,7 @@ jobs:
           # Solve this issue by removed PySide6 prebuilt Qt library
           rm -rf $(python3 -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))")/Qt/lib/*.framework
           JOB_MAKE_ARGS="VERBOSE=1"
-          if [ "${{ matrix.os }}" == "macos-13" ] ; then \
+          if [ "${{ matrix.os }}" == "macos-13" ] || [ "${{ matrix.os }}" == "macos-14" ] ; then \
             JOB_MAKE_ARGS="${JOB_MAKE_ARGS} BUILD_METAL=ON" ; \
           fi
           make pytest ${JOB_MAKE_ARGS}
