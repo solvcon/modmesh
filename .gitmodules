@@ -1,0 +1,3 @@
+[submodule "thirdparty/PUI"]
+	path = thirdparty/PUI
+	url = https://github.com/buganini/PUI.git
