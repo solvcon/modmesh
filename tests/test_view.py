@@ -32,6 +32,7 @@ try:
     from modmesh import view
 except ImportError:
     view = None
+import PUI.PySide6
 
 
 @unittest.skipUnless(modmesh.HAS_VIEW, "Qt view is not built")
@@ -39,6 +40,10 @@ class ViewTC(unittest.TestCase):
 
     def test_import(self):
         self.assertTrue(hasattr(modmesh.view, "mgr"))
+        self.assertTrue(hasattr(PUI.PySide6, "PUINode"))
+        self.assertTrue(hasattr(PUI.PySide6, "PUIView"))
+        self.assertEqual(PUI.PySide6.PUI_BACKEND, "PySide6",
+                         "PUI backebd mismatch")
 
     @unittest.skip("headless testing is not ready")
     def test_pycon(self):

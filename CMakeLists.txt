@@ -35,6 +35,10 @@ option(USE_SANITIZER "use sanitizer (undefined, leak, address)" OFF)
 if(BUILD_QT)
     option(QT3D_USE_RHI "Qt use RHI" OFF)
     message(STATUS "QT3D_USE_RHI: ${QT3D_USE_RHI}")
+    execute_process(
+        COMMAND ./PUI.sh
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/thirdparty 
+    )
 endif()
 
 find_program(
