@@ -32,7 +32,14 @@ try:
     from modmesh import view
 except ImportError:
     view = None
-import PUI.PySide6
+try:
+    import PUI.PySide6
+except ImportError:
+    # Bypass PUI import error if modmesh is built without Qt PUI may not be
+    # installed in this case.
+    # If modmesh is built with Qt, the ViewTC will check if PUI is working
+    # or not.
+    pass
 
 
 @unittest.skipUnless(modmesh.HAS_VIEW, "Qt view is not built")

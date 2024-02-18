@@ -57,34 +57,33 @@ try:
 except ImportError:
     pass
 
-# Try to find the PUI in thirdparty, if failed to find PUI
-# modmesh will raise ImportError and terminate itself.
-filename = os.path.join('thirdparty', 'PUI')
-path = os.getcwd()
-try:
-    while True:
-        if os.path.exists(os.path.join(path, filename)):
-            break
-        if path == os.path.dirname(path):
-            path = None
-            break
-        else:
-            path = os.path.dirname(path)
-    if path is None:
-        raise ImportError
-except ImportError:
-    sys.stderr.write('Can not find PUI in your environment.\n')
-    sys.stderr.write('Please run git submodule update --init\n')
-    sys.exit(0)
-
-path = os.path.join(path, filename)
-sys.path.append(path)
-
 
 def _load():
     if enable:
         for name in _from_impl:
             globals()[name] = getattr(_vimpl, name)
+        # Try to find the PUI in thirdparty, if failed to find PUI
+        # modmesh will raise ImportError and terminate itself.
+        filename = os.path.join('thirdparty', 'PUI')
+        path = os.getcwd()
+        try:
+            while True:
+                if os.path.exists(os.path.join(path, filename)):
+                    break
+                if path == os.path.dirname(path):
+                    path = None
+                    break
+                else:
+                    path = os.path.dirname(path)
+            if path is None:
+                raise ImportError
+        except ImportError:
+            sys.stderr.write('Can not find PUI in your environment.\n')
+            sys.stderr.write('Please run git submodule update --init\n')
+            sys.exit(0)
+
+        path = os.path.join(path, filename)
+        sys.path.append(path)
 
 
 _load()
