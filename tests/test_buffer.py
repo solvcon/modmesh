@@ -650,7 +650,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual(
             str(type(array_int32_2)), "<class '_modmesh.SimpleArrayInt32'>")
 
-    def test_SimpleArray_SimpleArrayPlex_type_change(self):
+    def test_SimpleArray_SimpleArrayPlex_type_switch(self):
         arrayplex_int32 = modmesh.SimpleArray((2, 3, 4), dtype="int32")
 
         # from plex to typed

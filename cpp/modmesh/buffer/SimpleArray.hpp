@@ -40,6 +40,7 @@ typedef SSIZE_T ssize_t;
 
 namespace modmesh
 {
+
 namespace detail
 {
 

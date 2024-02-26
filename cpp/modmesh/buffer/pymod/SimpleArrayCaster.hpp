@@ -30,12 +30,12 @@
 
 #include <modmesh/buffer/buffer.hpp>
 
-/*
+/**
  * The purpose of including this header is to facilitate implicit casting of
  * SimpleArray types, such as casting from SimpleArrayPlex to SimplyArray.
  * It should be incorporated whenever there is a C++ function wrapped by
  * Pybind11 that involves SimpleArray as either parameters or a return value.
- **/
+ */
 
 namespace pybind11
 {
