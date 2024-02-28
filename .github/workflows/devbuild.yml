@@ -318,7 +318,13 @@ jobs:
           # PySide6 installed by pip will bundle with a prebuilt Qt,
           # this will cause duplicated symbol.
           # Solve this issue by removed PySide6 prebuilt Qt library
-          rm -rf $(python3 -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))")/Qt/lib/*.framework
+          PYSIDE6_PATH=$(python3 -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))")
+          echo "pyside6 path: ${PYSIDE6_PATH}"
+          rm -rf ${PYSIDE6_PATH}/Qt/lib/*.framework
+          # maunally add homebrew's Qt rpath to PySide6
+          install_name_tool -add_rpath $(qtpaths --install-prefix)/lib ${PYSIDE6_PATH}/QtWidgets.abi3.so
+          install_name_tool -add_rpath $(qtpaths --install-prefix)/lib ${PYSIDE6_PATH}/QtGui.abi3.so
+          install_name_tool -add_rpath $(qtpaths --install-prefix)/lib ${PYSIDE6_PATH}/QtCore.abi3.so
           JOB_MAKE_ARGS="VERBOSE=1"
           if [ "${{ matrix.os }}" == "macos-13" ] || [ "${{ matrix.os }}" == "macos-14" ] ; then \
             JOB_MAKE_ARGS="${JOB_MAKE_ARGS} BUILD_METAL=ON" ; \
