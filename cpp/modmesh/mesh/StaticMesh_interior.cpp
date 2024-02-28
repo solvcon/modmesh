@@ -254,8 +254,8 @@ struct FaceBuilder
         // face 2.
         clfcs(icl, 2) = ifc;
         fcnds(ifc, 1) = clnds(icl, 4);
-        fcnds(ifc, 2) = clnds(icl, 5);
-        fcnds(ifc, 3) = clnds(icl, 6);
+        fcnds(ifc, 2) = clnds(icl, 6);
+        fcnds(ifc, 3) = clnds(icl, 5);
         ++ifc;
         // face 3.
         clfcs(icl, 3) = ifc;
