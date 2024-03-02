@@ -75,7 +75,9 @@ def _load():
                     break
                 else:
                     path = os.path.dirname(path)
-            if path is None:
+            if path is None or not os.path.exists(os.path.join(path,
+                                                               filename,
+                                                               'PUI')):
                 raise ImportError
         except ImportError:
             sys.stderr.write('Can not find PUI in your environment.\n')
