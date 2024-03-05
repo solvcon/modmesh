@@ -43,6 +43,7 @@ __all__ = [  # noqa: F822
     'time_registry',
     'ConcreteBuffer',
     'Gmsh',
+    'SimpleArray',
     'SimpleArrayBool',
     'SimpleArrayInt8',
     'SimpleArrayInt16',
@@ -73,6 +74,9 @@ __all__ = [  # noqa: F822
     'Bezier3dFp64',
     'WorldFp32',
     'WorldFp64',
+
+    # TODO: have a way to enable this according to `USE_PYTEST_HELPER_BINDING`
+    'testhelper',
 ]
 
 

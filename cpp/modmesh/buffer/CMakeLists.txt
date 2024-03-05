@@ -11,17 +11,20 @@ set(MODMESH_BUFFER_HEADERS
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_BUFFER_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/SimpleArray.cpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_BUFFER_PYMODHEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/buffer_pymod.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/TypeBroadcast.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/SimpleArrayCaster.hpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_BUFFER_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/buffer_pymod.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_ConcreteBuffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_SimpleArray.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_SimpleArrayPlex.cpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_BUFFER_FILES

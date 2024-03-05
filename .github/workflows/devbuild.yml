@@ -159,7 +159,7 @@ jobs:
           VERBOSE=1 USE_CLANG_TIDY=OFF \
           BUILD_QT=OFF \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
         make buildext VERBOSE=1
 
     - name: make pytest BUILD_QT=OFF
@@ -167,7 +167,7 @@ jobs:
         python3 -c "import modmesh; assert modmesh.HAS_VIEW == False"
         make pytest VERBOSE=1
 
-    - name: make buildext BUILD_QT=ON
+    - name: make buildext BUILD_QT=ON USE_PYTEST_HELPER_BINDING=OFF
       run: |
         rm -f build/*/Makefile
         make cmake \
@@ -177,7 +177,18 @@ jobs:
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
         make buildext VERBOSE=1
 
-    - name: make pytest BUILD_QT=ON
+    # build with pytest helper binding for testing
+    - name: make buildext BUILD_QT=ON USE_PYTEST_HELPER_BINDING=ON
+      run: |
+        rm -f build/*/Makefile
+        make cmake \
+          VERBOSE=1 USE_CLANG_TIDY=OFF \
+          BUILD_QT=ON \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
+        make buildext VERBOSE=1
+
+    - name: make pytest BUILD_QT=ON USE_PYTEST_HELPER_BINDING=ON
       run: |
         python3 -c "import modmesh; assert modmesh.HAS_VIEW == True"
         make pytest VERBOSE=1
@@ -189,7 +200,7 @@ jobs:
           VERBOSE=1 USE_CLANG_TIDY=OFF \
           BUILD_QT=ON \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
 
     - name: make run_viewer_pytest
       run: |
@@ -205,7 +216,7 @@ jobs:
           VERBOSE=1 USE_CLANG_TIDY=OFF \
           BUILD_QT=OFF \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_SANITIZER=OFF"
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_SANITIZER=OFF -DUSE_PYTEST_HELPER_BINDING=ON"
         make buildext VERBOSE=1
         make pytest VERBOSE=1
 
@@ -292,7 +303,7 @@ jobs:
             VERBOSE=1 USE_CLANG_TIDY=OFF \
             BUILD_QT=OFF \
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
           make buildext VERBOSE=1
 
       - name: make pytest BUILD_QT=OFF
@@ -303,7 +314,7 @@ jobs:
           fi
           make pytest ${JOB_MAKE_ARGS}
 
-      - name: make buildext BUILD_QT=ON
+      - name: make buildext BUILD_QT=ON USE_PYTEST_HELPER_BINDING=OFF
         run: |
           rm -f build/*/Makefile
           make cmake \
@@ -313,7 +324,18 @@ jobs:
             CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
           make buildext VERBOSE=1
 
-      - name: make pytest BUILD_QT=ON
+      # build with pytest helper binding for testing
+      - name: make buildext BUILD_QT=ON USE_PYTEST_HELPER_BINDING=ON
+        run: |
+          rm -f build/*/Makefile
+          make cmake \
+            VERBOSE=1 USE_CLANG_TIDY=OFF \
+            BUILD_QT=ON \
+            CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
+          make buildext VERBOSE=1
+
+      - name: make pytest BUILD_QT=ON USE_PYTEST_HELPER_BINDING=ON
         run: |
           # PySide6 installed by pip will bundle with a prebuilt Qt,
           # this will cause duplicated symbol.
@@ -338,7 +360,7 @@ jobs:
             VERBOSE=1 USE_CLANG_TIDY=OFF \
             BUILD_QT=ON \
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
 
       - name: make run_viewer_pytest
         run: |
@@ -353,7 +375,7 @@ jobs:
             VERBOSE=1 USE_CLANG_TIDY=OFF \
             BUILD_QT=OFF \
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_SANITIZER=OFF"
+            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_SANITIZER=OFF -DUSE_PYTEST_HELPER_BINDING=ON"
           make buildext VERBOSE=1
           make pytest VERBOSE=1
 
@@ -429,11 +451,26 @@ jobs:
           Get-Command clang-tidy
           Get-Command flake8
 
-      - name: cmake ALL_BUILD
+      - name: cmake ALL_BUILD USE_PYTEST_HELPER_BINDING=OFF DEBUG_BUILD_OPTIMIZATION_ONE=ON
         run: |
           cmake `
             -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} `
             -Dpybind11_DIR="$(pybind11-config --cmakedir)" `
+            -DDEBUG_BUILD_OPTIMIZATION_ONE=ON `
+            -S${{ github.workspace }} `
+            -B${{ github.workspace }}/build
+          cmake --build ${{ github.workspace }}/build `
+            --config ${{ matrix.cmake_build_type }} `
+            --target ALL_BUILD
+
+      - name: cmake ALL_BUILD USE_PYTEST_HELPER_BINDING=ON DEBUG_BUILD_OPTIMIZATION_ONE=ON
+        run: |
+          Remove-Item -Path ${{ github.workspace }}/build -Recurse -Force
+          cmake `
+            -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} `
+            -Dpybind11_DIR="$(pybind11-config --cmakedir)" `
+            -DUSE_PYTEST_HELPER_BINDING=ON `
+            -DDEBUG_BUILD_OPTIMIZATION_ONE=ON `
             -S${{ github.workspace }} `
             -B${{ github.workspace }}/build
           cmake --build ${{ github.workspace }}/build `

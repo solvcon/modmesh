@@ -42,6 +42,7 @@ namespace python
 void initialize_buffer(pybind11::module & mod);
 void wrap_ConcreteBuffer(pybind11::module & mod);
 void wrap_SimpleArray(pybind11::module & mod);
+void wrap_SimpleArrayPlex(pybind11::module & mod);
 
 } /* end namespace python */
 

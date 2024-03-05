@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2024, An-Chi Liu <phy.tiger@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,7 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/buffer/pymod/buffer_pymod.hpp> // Must be the first include.
+#include <modmesh/testhelper/pymod/testbuffer_pymod.hpp> // Must be the first include.
+
+#include <modmesh/buffer/buffer.hpp>
+#include <modmesh/buffer/pymod/SimpleArrayCaster.hpp>
 
 namespace modmesh
 {
@@ -34,31 +37,48 @@ namespace modmesh
 namespace python
 {
 
-struct buffer_pymod_tag;
-
-template <>
-OneTimeInitializer<buffer_pymod_tag> & OneTimeInitializer<buffer_pymod_tag>::me()
+struct TestSimpleArrayHelper
 {
-    static OneTimeInitializer<buffer_pymod_tag> instance;
-    return instance;
-}
+}; /* end of TestSimpleArrayHelper */
 
-void initialize_buffer(pybind11::module & mod)
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapTestSimpleArrayHelper
+    : public WrapBase<WrapTestSimpleArrayHelper, TestSimpleArrayHelper>
 {
-    auto initialize_impl = [](pybind11::module & mod)
+
+public:
+
+    friend root_base_type;
+
+protected:
+
+    WrapTestSimpleArrayHelper(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : root_base_type(mod, pyname, pydoc)
     {
-        import_numpy();
+        (*this)
+            .def("test_cast_to_arrayint32", []() -> modmesh::SimpleArrayInt32
+                 {
+                     // clang-format off
+                     SimpleArrayInt32 arr(100);
+                     return arr;
+                     // clang-format on
+                 })
+            .def("test_load_arrayin32_from_arrayplex", [](modmesh::SimpleArrayInt32 &) -> bool
+                 { return true; })
+            .def("test_load_arrayfloat64_from_arrayplex", [](modmesh::SimpleArrayFloat64 &) -> bool
+                 { return true; })
+            //
+            ;
+    }
 
-        wrap_ConcreteBuffer(mod);
-        wrap_SimpleArray(mod);
-        wrap_SimpleArrayPlex(mod);
-    };
+}; /* end class WrapTestSimpleArrayHelper */
 
-    OneTimeInitializer<buffer_pymod_tag>::me()(mod, initialize_impl);
+void wrap_TestSimpleArrayHelper(pybind11::module & mod)
+{
+    WrapTestSimpleArrayHelper::commit(mod, "TestSimpleArrayHelper", "TestSimpleArrayHelper");
 }
 
 } /* end namespace python */
 
 } /* end namespace modmesh */
 
-// vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

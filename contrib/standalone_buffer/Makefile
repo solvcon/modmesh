@@ -38,16 +38,24 @@ $(SETUPROOT)/wrap_ConcreteBuffer.o: $(SETUPROOT)/modmesh/buffer/pymod/wrap_Concr
 $(SETUPROOT)/wrap_SimpleArray.o: $(SETUPROOT)/modmesh/buffer/pymod/wrap_SimpleArray.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
+$(SETUPROOT)/wrap_SimpleArrayPlex.o: $(SETUPROOT)/modmesh/buffer/pymod/wrap_SimpleArrayPlex.cpp Makefile
+	c++ $(CFLAGS) -c $< -o $@
+
 $(SETUPROOT)/buffer_pymod.o: $(SETUPROOT)/modmesh/buffer/pymod/buffer_pymod.cpp Makefile
+	c++ $(CFLAGS) -c $< -o $@
+
+$(SETUPROOT)/SimpleArray.o: $(SETUPROOT)/modmesh/buffer/SimpleArray.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
 $(SETUPROOT)/modbuf.o: modbuf.cpp
 	c++ $(CFLAGS) -c $< -o $@
 
-$(MODPATH): Makefile $(SETUPROOT)/wrap_ConcreteBuffer.o $(SETUPROOT)/wrap_SimpleArray.o $(SETUPROOT)/buffer_pymod.o $(SETUPROOT)/modbuf.o
+$(MODPATH): Makefile $(SETUPROOT)/SimpleArray.o $(SETUPROOT)/wrap_ConcreteBuffer.o $(SETUPROOT)/wrap_SimpleArray.o $(SETUPROOT)/wrap_SimpleArrayPlex.o $(SETUPROOT)/buffer_pymod.o $(SETUPROOT)/modbuf.o
 	c++ $(LDFLAGS) \
+		$(SETUPROOT)/SimpleArray.o \
 		$(SETUPROOT)/wrap_ConcreteBuffer.o \
 		$(SETUPROOT)/wrap_SimpleArray.o \
+		$(SETUPROOT)/wrap_SimpleArrayPlex.o \
 		$(SETUPROOT)/buffer_pymod.o \
 		$(SETUPROOT)/modbuf.o \
 		-o $@
