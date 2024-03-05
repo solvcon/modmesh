@@ -148,7 +148,7 @@ jobs:
     strategy:
       matrix:
         # https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
-        os: [macos-13]
+        os: [macos-13, macos-14]
         cmake_build_type: [Debug]
 
       fail-fast: false
@@ -203,12 +203,20 @@ jobs:
       - name: make cinclude (check_include)
         run: make cinclude
 
-      - name: make viewer
+      - name: make viewer USE_PYTEST_HELPER_BINDING=OFF DEBUG_BUILD_OPTIMIZATION_ONE=ON
         run: |
           make viewer \
             ${JOB_MAKE_ARGS} \
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
+            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON -DDEBUG_BUILD_OPTIMIZATION_ONE=ON"
+
+      - name: make viewer USE_PYTEST_HELPER_BINDING=ON DEBUG_BUILD_OPTIMIZATION_ONE=ON
+        run: |
+          rm -f build/*/Makefile
+          make viewer \
+            ${JOB_MAKE_ARGS} \
+            CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON -DDEBUG_BUILD_OPTIMIZATION_ONE=ON"
 
       - name: make run_viewer_pytest
         run: |
