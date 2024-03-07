@@ -149,6 +149,12 @@ void RManager::setUpMenu()
     }
 
     {
+        m_appMenu = m_mainWindow->menuBar()->addMenu(QString("Mesh"));
+
+        this->addApplication(QString("mh_3dmix"));
+    }
+
+    {
         m_cameraMenu = m_mainWindow->menuBar()->addMenu(QString("Camera"));
 
         auto * use_orbit_camera = new RAction(
@@ -211,12 +217,6 @@ void RManager::setUpMenu()
         this->addApplication(QString("euler1d"));
         this->addApplication(QString("linear_wave"));
         this->addApplication(QString("bad_euler1d"));
-    }
-
-    {
-        m_appMenu = m_mainWindow->menuBar()->addMenu(QString("Mesh"));
-
-        this->addApplication(QString("mh_3dmix"));
     }
 
     {

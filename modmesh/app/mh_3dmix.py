@@ -26,26 +26,12 @@
 
 
 """
-Show sample mesh
+Show 3D mixed mesh
 """
 
 from .. import core
 from .. import view
 from .. import apputil
-
-
-def help_3dmix(set_command=False):
-    cmd = """
-# Open a sub window for triangles and quadrilaterals:
-w_3dmix = add3DWidget()
-mh_3dmix = make_3dmix()
-w_3dmix.updateMesh(mh_3dmix)
-w_3dmix.showMark()
-print("3dmix nedge:", mh_3dmix.nedge)
-"""
-    view.mgr.pycon.writeToHistory(cmd)
-    if set_command:
-        view.mgr.pycon.command = cmd.strip()
 
 
 def make_3dmix():
@@ -77,7 +63,6 @@ def make_3dmix():
 def load_app():
     aenv = apputil.get_current_appenv()
     symbols = (
-        'help_3dmix',
         'make_3dmix',
     )
     for k in symbols:
@@ -94,6 +79,6 @@ def load_app():
     mh_3dmix = make_3dmix()
     w_3dmix.updateMesh(mh_3dmix)
     w_3dmix.showMark()
-    print("3dmix nedge:", mh_3dmix.nedge)   
+    view.mgr.pycon.writeToHistory(f"3dmix nedge: {mh_3dmix.nedge}\n")
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
