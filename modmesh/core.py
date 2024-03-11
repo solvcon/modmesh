@@ -76,7 +76,7 @@ __all__ = [  # noqa: F822
     'WorldFp64',
 
     # TODO: have a way to enable this according to `USE_PYTEST_HELPER_BINDING`
-    'testhelper',
+    # 'testhelper',
 ]
 
 
