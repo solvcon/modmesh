@@ -700,4 +700,29 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         sarr = sarr.abs()
         self.assertEqual(sarr.sum(), True)
 
+
+class SimpleArrayPlexTC(unittest.TestCase):
+
+    def test_SimpleArrayPlex_constructor(self):
+        # 1. shape constructor
+        dtype_list = [
+            "bool", "int8", "uint8", "int16", "uint16", "int32", "uint32",
+            "int64", "uint64", "float32", "float64"
+        ]
+        for dtype in dtype_list:
+            modmesh.SimpleArray((2, 3, 4), dtype=dtype)
+
+        # 2. shape and value constructor
+        for dtype in dtype_list:
+            modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=1.111)
+
+        # 3. np.ndarray constructor
+        # exclude bool, since it cannot use np.arange
+        dtype_list_no_bool = dtype_list[1:]
+        for dtype in dtype_list_no_bool:
+            ndarr = np.arange(2 * 3 * 4, dtype=dtype)
+            modmesh.SimpleArray(ndarr)
+        boolean_array = np.array([True, False, True], dtype='bool')
+        modmesh.SimpleArray(boolean_array)
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

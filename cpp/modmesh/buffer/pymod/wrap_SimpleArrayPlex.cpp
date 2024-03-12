@@ -53,6 +53,32 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                     { return wrapped_type(make_shape(shape), datatype); }),
                 pybind11::arg("shape"),
                 pybind11::arg("dtype"))
+            .def_timed(
+                // Note we use double instead of T to avoid the template (,which is not supported by pybind11::init)
+                // Value will later be converted to the correct datatype in the constructor
+                // This may cause the loss of precision, but should be fine to most cases
+                pybind11::init(
+                    [](pybind11::object const & shape, double const & value, std::string const & datatype)
+                    { return wrapped_type(make_shape(shape), value, datatype); }),
+                pybind11::arg("shape"),
+                pybind11::arg("value"),
+                pybind11::arg("dtype"))
+            .def(
+                pybind11::init(
+                    [](pybind11::array & arr_in)
+                    {
+                        shape_type shape;
+                        for (ssize_t i = 0; i < arr_in.ndim(); ++i)
+                        {
+                            shape.push_back(arr_in.shape(i));
+                        }
+                        std::shared_ptr<ConcreteBuffer> const buffer = ConcreteBuffer::construct(
+                            arr_in.nbytes(),
+                            arr_in.mutable_data(),
+                            std::make_unique<ConcreteBufferNdarrayRemover>(arr_in));
+                        return wrapped_type(shape, buffer, pybind11::str(arr_in.dtype()));
+                    }),
+                pybind11::arg("array"))
             .def_property_readonly("typed", &get_typed_array)
             /// TODO: should have the same interface as WrapSimpleArray
             ;

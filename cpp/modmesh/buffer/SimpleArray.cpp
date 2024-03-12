@@ -146,82 +146,74 @@ DataType get_data_type_from_type<double>()
     return DataType::Float64;
 }
 
-SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, DataType data_type)
+#define CREATE_SIMPLE_ARRAY(DataType, ArrayType, ...)                          \
+    case DataType:                                                             \
+        m_instance_ptr = reinterpret_cast<void *>(new ArrayType(__VA_ARGS__)); \
+        break;
+
+SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const DataType data_type)
     : m_data_type(data_type)
     , m_has_instance_ownership(true)
 {
     switch (data_type)
     {
-    case DataType::Bool:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayBool(shape));
-        break;
-    }
-    case DataType::Int8:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayInt8(shape));
-        break;
-    }
-    case DataType::Int16:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayInt16(shape));
-        break;
-    }
-    case DataType::Int32:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayInt32(shape));
-        break;
-    }
-    case DataType::Int64:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayInt64(shape));
-        break;
-    }
-    case DataType::Uint8:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayUint8(shape));
-        break;
-    }
-    case DataType::Uint16:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayUint16(shape));
-        break;
-    }
-    case DataType::Uint32:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayUint32(shape));
-        break;
-    }
-    case DataType::Uint64:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayUint64(shape));
-        break;
-    }
-    case DataType::Float32:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayFloat32(shape));
-        break;
-    }
-    case DataType::Float64:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayFloat64(shape));
-        break;
-    }
+        CREATE_SIMPLE_ARRAY(DataType::Bool, SimpleArrayBool, shape)
+        CREATE_SIMPLE_ARRAY(DataType::Int8, SimpleArrayInt8, shape)
+        CREATE_SIMPLE_ARRAY(DataType::Int16, SimpleArrayInt16, shape)
+        CREATE_SIMPLE_ARRAY(DataType::Int32, SimpleArrayInt32, shape)
+        CREATE_SIMPLE_ARRAY(DataType::Int64, SimpleArrayInt64, shape)
+        CREATE_SIMPLE_ARRAY(DataType::Uint8, SimpleArrayUint8, shape)
+        CREATE_SIMPLE_ARRAY(DataType::Uint16, SimpleArrayUint16, shape)
+        CREATE_SIMPLE_ARRAY(DataType::Uint32, SimpleArrayUint32, shape)
+        CREATE_SIMPLE_ARRAY(DataType::Uint64, SimpleArrayUint64, shape)
+        CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape)
+        CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape)
     default:
-    {
         throw std::runtime_error("Unsupported datatype");
     }
+}
+
+SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const double & value, const DataType data_type)
+    : m_data_type(data_type)
+    , m_has_instance_ownership(true)
+{
+    switch (data_type)
+    {
+        CREATE_SIMPLE_ARRAY(DataType::Bool, SimpleArrayBool, shape, value)
+        CREATE_SIMPLE_ARRAY(DataType::Int8, SimpleArrayInt8, shape, value)
+        CREATE_SIMPLE_ARRAY(DataType::Int16, SimpleArrayInt16, shape, value)
+        CREATE_SIMPLE_ARRAY(DataType::Int32, SimpleArrayInt32, shape, value)
+        CREATE_SIMPLE_ARRAY(DataType::Int64, SimpleArrayInt64, shape, value)
+        CREATE_SIMPLE_ARRAY(DataType::Uint8, SimpleArrayUint8, shape, value)
+        CREATE_SIMPLE_ARRAY(DataType::Uint16, SimpleArrayUint16, shape, value)
+        CREATE_SIMPLE_ARRAY(DataType::Uint32, SimpleArrayUint32, shape, value)
+        CREATE_SIMPLE_ARRAY(DataType::Uint64, SimpleArrayUint64, shape, value)
+        CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape, value)
+        CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape, value)
+    default:
+        throw std::runtime_error("Unsupported datatype");
+    }
+}
+
+SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> buffer, const DataType data_type)
+    : m_data_type(data_type)
+    , m_has_instance_ownership(true)
+{
+    switch (data_type)
+    {
+        CREATE_SIMPLE_ARRAY(DataType::Bool, SimpleArrayBool, shape, buffer)
+        CREATE_SIMPLE_ARRAY(DataType::Int8, SimpleArrayInt8, shape, buffer)
+        CREATE_SIMPLE_ARRAY(DataType::Int16, SimpleArrayInt16, shape, buffer)
+        CREATE_SIMPLE_ARRAY(DataType::Int32, SimpleArrayInt32, shape, buffer)
+        CREATE_SIMPLE_ARRAY(DataType::Int64, SimpleArrayInt64, shape, buffer)
+        CREATE_SIMPLE_ARRAY(DataType::Uint8, SimpleArrayUint8, shape, buffer)
+        CREATE_SIMPLE_ARRAY(DataType::Uint16, SimpleArrayUint16, shape, buffer)
+        CREATE_SIMPLE_ARRAY(DataType::Uint32, SimpleArrayUint32, shape, buffer)
+        CREATE_SIMPLE_ARRAY(DataType::Uint64, SimpleArrayUint64, shape, buffer)
+        CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape, buffer)
+        CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape, buffer)
+    default:
+        throw std::runtime_error("Unsupported datatype");
     }
 }
 
