@@ -706,14 +706,14 @@ public:
     {
     }
 
-    explicit SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> buffer, const std::string & data_type)
+    explicit SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const std::string & data_type)
         : SimpleArrayPlex(shape, buffer, get_data_type_from_string(data_type))
     {
     }
 
     explicit SimpleArrayPlex(const shape_type & shape, const DataType data_type);
     explicit SimpleArrayPlex(const shape_type & shape, const double & value, const DataType data_type);
-    explicit SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> buffer, const DataType data_type);
+    explicit SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const DataType data_type);
 
     template <typename T>
     SimpleArrayPlex(const SimpleArray<T> & array)

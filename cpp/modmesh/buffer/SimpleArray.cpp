@@ -148,6 +148,7 @@ DataType get_data_type_from_type<double>()
 
 #define CREATE_SIMPLE_ARRAY(DataType, ArrayType, ...)                          \
     case DataType:                                                             \
+        /* NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) */      \
         m_instance_ptr = reinterpret_cast<void *>(new ArrayType(__VA_ARGS__)); \
         break;
 
@@ -195,7 +196,7 @@ SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const double & value,
     }
 }
 
-SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> buffer, const DataType data_type)
+SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const DataType data_type)
     : m_data_type(data_type)
     , m_has_instance_ownership(true)
 {
