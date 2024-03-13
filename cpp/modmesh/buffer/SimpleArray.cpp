@@ -146,7 +146,10 @@ DataType get_data_type_from_type<double>()
     return DataType::Float64;
 }
 
-#define CREATE_SIMPLE_ARRAY(DataType, ArrayType, ...)                          \
+// According to the `DataType`, create the corresponding `SimpleArray<T>` instance
+// and assign it to `m_instance_ptr`. The `m_instance_ptr` is a void pointer, so
+// we need to use `reinterpret_cast` to convert the pointer of the array instance.
+#define MM_DECL_CREATE_SIMPLE_ARRAY(DataType, ArrayType, ...)                  \
     case DataType:                                                             \
         /* NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) */      \
         m_instance_ptr = reinterpret_cast<void *>(new ArrayType(__VA_ARGS__)); \
@@ -158,17 +161,17 @@ SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const DataType data_t
 {
     switch (data_type)
     {
-        CREATE_SIMPLE_ARRAY(DataType::Bool, SimpleArrayBool, shape)
-        CREATE_SIMPLE_ARRAY(DataType::Int8, SimpleArrayInt8, shape)
-        CREATE_SIMPLE_ARRAY(DataType::Int16, SimpleArrayInt16, shape)
-        CREATE_SIMPLE_ARRAY(DataType::Int32, SimpleArrayInt32, shape)
-        CREATE_SIMPLE_ARRAY(DataType::Int64, SimpleArrayInt64, shape)
-        CREATE_SIMPLE_ARRAY(DataType::Uint8, SimpleArrayUint8, shape)
-        CREATE_SIMPLE_ARRAY(DataType::Uint16, SimpleArrayUint16, shape)
-        CREATE_SIMPLE_ARRAY(DataType::Uint32, SimpleArrayUint32, shape)
-        CREATE_SIMPLE_ARRAY(DataType::Uint64, SimpleArrayUint64, shape)
-        CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape)
-        CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Bool, SimpleArrayBool, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int8, SimpleArrayInt8, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int16, SimpleArrayInt16, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int32, SimpleArrayInt32, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int64, SimpleArrayInt64, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint8, SimpleArrayUint8, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint16, SimpleArrayUint16, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint32, SimpleArrayUint32, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint64, SimpleArrayUint64, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape)
     default:
         throw std::runtime_error("Unsupported datatype");
     }
@@ -180,17 +183,17 @@ SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const double & value,
 {
     switch (data_type)
     {
-        CREATE_SIMPLE_ARRAY(DataType::Bool, SimpleArrayBool, shape, value)
-        CREATE_SIMPLE_ARRAY(DataType::Int8, SimpleArrayInt8, shape, value)
-        CREATE_SIMPLE_ARRAY(DataType::Int16, SimpleArrayInt16, shape, value)
-        CREATE_SIMPLE_ARRAY(DataType::Int32, SimpleArrayInt32, shape, value)
-        CREATE_SIMPLE_ARRAY(DataType::Int64, SimpleArrayInt64, shape, value)
-        CREATE_SIMPLE_ARRAY(DataType::Uint8, SimpleArrayUint8, shape, value)
-        CREATE_SIMPLE_ARRAY(DataType::Uint16, SimpleArrayUint16, shape, value)
-        CREATE_SIMPLE_ARRAY(DataType::Uint32, SimpleArrayUint32, shape, value)
-        CREATE_SIMPLE_ARRAY(DataType::Uint64, SimpleArrayUint64, shape, value)
-        CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape, value)
-        CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape, value)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Bool, SimpleArrayBool, shape, value)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int8, SimpleArrayInt8, shape, value)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int16, SimpleArrayInt16, shape, value)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int32, SimpleArrayInt32, shape, value)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int64, SimpleArrayInt64, shape, value)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint8, SimpleArrayUint8, shape, value)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint16, SimpleArrayUint16, shape, value)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint32, SimpleArrayUint32, shape, value)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint64, SimpleArrayUint64, shape, value)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape, value)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape, value)
     default:
         throw std::runtime_error("Unsupported datatype");
     }
@@ -202,21 +205,23 @@ SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const std::shared_ptr
 {
     switch (data_type)
     {
-        CREATE_SIMPLE_ARRAY(DataType::Bool, SimpleArrayBool, shape, buffer)
-        CREATE_SIMPLE_ARRAY(DataType::Int8, SimpleArrayInt8, shape, buffer)
-        CREATE_SIMPLE_ARRAY(DataType::Int16, SimpleArrayInt16, shape, buffer)
-        CREATE_SIMPLE_ARRAY(DataType::Int32, SimpleArrayInt32, shape, buffer)
-        CREATE_SIMPLE_ARRAY(DataType::Int64, SimpleArrayInt64, shape, buffer)
-        CREATE_SIMPLE_ARRAY(DataType::Uint8, SimpleArrayUint8, shape, buffer)
-        CREATE_SIMPLE_ARRAY(DataType::Uint16, SimpleArrayUint16, shape, buffer)
-        CREATE_SIMPLE_ARRAY(DataType::Uint32, SimpleArrayUint32, shape, buffer)
-        CREATE_SIMPLE_ARRAY(DataType::Uint64, SimpleArrayUint64, shape, buffer)
-        CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape, buffer)
-        CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Bool, SimpleArrayBool, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int8, SimpleArrayInt8, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int16, SimpleArrayInt16, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int32, SimpleArrayInt32, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int64, SimpleArrayInt64, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint8, SimpleArrayUint8, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint16, SimpleArrayUint16, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint32, SimpleArrayUint32, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint64, SimpleArrayUint64, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape, buffer)
     default:
         throw std::runtime_error("Unsupported datatype");
     }
 }
+
+#undef MM_DECL_CREATE_SIMPLE_ARRAY
 
 SimpleArrayPlex::SimpleArrayPlex(SimpleArrayPlex const & other)
     : m_data_type(other.m_data_type)
