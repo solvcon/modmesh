@@ -167,6 +167,10 @@ jobs:
         run: |
           export HOMEBREW_NO_AUTO_UPDATE=1
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
+          if [ "${{ matrix.os }}" == "macos-13" ] ; then
+            # GitHub Action macOS 13 has a problem with python3
+            brew list -1 | grep python | while read formula; do brew unlink $formula; brew link --overwrite $formula; done;
+          fi
           brew install llvm@16 qt6
           ln -s "$(brew --prefix llvm@16)/bin/clang-format" "/usr/local/bin/clang-format"
           ln -s "$(brew --prefix llvm@16)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
@@ -175,10 +179,17 @@ jobs:
         run: |
           echo "which python3: $(which python3)"
           ls -al $(which python3)
-          python3 -m pip -v install --upgrade setuptools
-          python3 -m pip -v install --upgrade pip
-          python3 -m pip -v install --upgrade numpy pytest flake8 pyside6==$(qmake -query QT_VERSION)
-
+          if [ "${{ matrix.os }}" == "macos-13" ] ; then
+            # suppress the warning of pip because of python link issue of brew
+            python3 -m pip -v install --upgrade setuptools --break-system-packages
+            python3 -m pip -v install --upgrade pip --break-system-packages
+            python3 -m pip -v install --upgrade numpy pytest flake8 pyside6==$(qmake -query QT_VERSION) --break-system-packages
+          else
+            python3 -m pip -v install --upgrade setuptools
+            python3 -m pip -v install --upgrade pip
+            python3 -m pip -v install --upgrade numpy pytest flake8 pyside6==$(qmake -query QT_VERSION)
+          fi
+  
       - name: dependency (manual)
         run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
 
