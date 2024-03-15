@@ -80,7 +80,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
     }
 
     /// Initialize the arrayplex with the given value
-    /// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     static wrapped_type init_array_plex_with_value(pybind11::object const & shape_in, pybind11::object const & value, std::string const & datatype)
     {
         const shape_type shape = make_shape(shape_in);
