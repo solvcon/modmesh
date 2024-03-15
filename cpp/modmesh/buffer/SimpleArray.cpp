@@ -177,28 +177,6 @@ SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const DataType data_t
     }
 }
 
-SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const double & value, const DataType data_type)
-    : m_data_type(data_type)
-    , m_has_instance_ownership(true)
-{
-    switch (data_type)
-    {
-        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Bool, SimpleArrayBool, shape, value)
-        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int8, SimpleArrayInt8, shape, value)
-        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int16, SimpleArrayInt16, shape, value)
-        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int32, SimpleArrayInt32, shape, value)
-        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int64, SimpleArrayInt64, shape, value)
-        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint8, SimpleArrayUint8, shape, value)
-        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint16, SimpleArrayUint16, shape, value)
-        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint32, SimpleArrayUint32, shape, value)
-        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint64, SimpleArrayUint64, shape, value)
-        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape, value)
-        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape, value)
-    default:
-        throw std::runtime_error("Unsupported datatype");
-    }
-}
-
 SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const DataType data_type)
     : m_data_type(data_type)
     , m_has_instance_ownership(true)

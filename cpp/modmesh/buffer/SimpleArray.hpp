@@ -701,18 +701,12 @@ public:
     {
     }
 
-    explicit SimpleArrayPlex(const shape_type & shape, const double & value, const std::string & data_type)
-        : SimpleArrayPlex(shape, value, get_data_type_from_string(data_type))
-    {
-    }
-
     explicit SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const std::string & data_type)
         : SimpleArrayPlex(shape, buffer, get_data_type_from_string(data_type))
     {
     }
 
     explicit SimpleArrayPlex(const shape_type & shape, const DataType data_type);
-    explicit SimpleArrayPlex(const shape_type & shape, const double & value, const DataType data_type);
     explicit SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const DataType data_type);
 
     template <typename T>
@@ -735,7 +729,14 @@ public:
         return m_data_type;
     }
 
+    /// Get the pointer to the const instance of SimpleArray<T>.
     const void * instance_ptr() const
+    {
+        return m_instance_ptr;
+    }
+
+    /// Get the pointer to the mutable instance of SimpleArray<T>.
+    void * mutable_instance_ptr() const
     {
         return m_instance_ptr;
     }
