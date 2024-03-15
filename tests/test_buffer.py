@@ -598,7 +598,8 @@ class SimpleArrayBasicTC(unittest.TestCase):
                 for k in range(4):
                     self.assertEqual(ndarr2[i, j, k], sarr[i - G, j, k])
 
-    @unittest.skip("temporarily disabled, issue #287")
+    @unittest.skipUnless(modmesh.testhelper.PYTEST_HELPER_BINDING_BUILT,
+                         "TestSimpleArrayHelper is not built")
     def test_SimpleArray_casting(self):
         helper = modmesh.testhelper.TestSimpleArrayHelper
         # first check the caster works if the argument is exact the same type

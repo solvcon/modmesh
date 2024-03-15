@@ -54,9 +54,12 @@ void initialize(pybind11::module_ mod)
     pybind11::module_ onedim_mod = mod.def_submodule("onedim", "onedim");
     initialize_onedim(onedim_mod);
 
-#ifdef USE_PYTEST_HELPER_BINDING
     pybind11::module_ testhelper_mod = mod.def_submodule("testhelper", "testhelper");
+#ifdef USE_PYTEST_HELPER_BINDING
     initialize_testbuffer(testhelper_mod);
+    testhelper_mod.attr("PYTEST_HELPER_BINDING_BUILT") = true;
+#else
+    testhelper_mod.attr("PYTEST_HELPER_BINDING_BUILT") = false;
 #endif
 
 #ifdef QT_CORE_LIB
