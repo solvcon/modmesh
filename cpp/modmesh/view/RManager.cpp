@@ -217,6 +217,7 @@ void RManager::setUpMenu()
         this->addApplication(QString("euler1d"));
         this->addApplication(QString("linear_wave"));
         this->addApplication(QString("bad_euler1d"));
+        this->addApplication(QString("cavity2d"));
     }
 
     {
