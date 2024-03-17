@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+# Copyright (c) 2021, Yung-Yu Chen <yyc@solvcon.net>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -26,72 +26,59 @@
 
 
 """
-General mesh data definition and manipulation in one, two, and
-three-dimensional space.
+Show 3D mixed mesh
 """
 
-
-# Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
-
-
-__all__ = [  # noqa: F822
-    'WrapperProfilerStatus',
-    'wrapper_profiler_status',
-    'StopWatch',
-    'stop_watch',
-    'TimeRegistry',
-    'time_registry',
-    'ConcreteBuffer',
-    'Gmsh',
-    'SimpleArray',
-    'SimpleArrayBool',
-    'SimpleArrayInt8',
-    'SimpleArrayInt16',
-    'SimpleArrayInt32',
-    'SimpleArrayInt64',
-    'SimpleArrayUint8',
-    'SimpleArrayUint16',
-    'SimpleArrayUint32',
-    'SimpleArrayUint64',
-    'SimpleArrayFloat32',
-    'SimpleArrayFloat64',
-    'StaticGrid1d',
-    'StaticGrid2d',
-    'StaticGrid3d',
-    'StaticMesh',
-    'HierarchicalToggleAccess',
-    'Toggle',
-    'CommandLineInfo',
-    'ProcessInfo',
-    'METAL_BUILT',
-    'metal_running',
-    'HAS_VIEW',
-    'calc_bernstein_polynomial',
-    'interpolate_bernstein',
-    'Vector3dFp32',
-    'Vector3dFp64',
-    'Bezier3dFp32',
-    'Bezier3dFp64',
-    'WorldFp32',
-    'WorldFp64',
-    'testhelper',
-]
+from .. import core
+from .. import view
+from .. import apputil
 
 
-# A hidden loophole to impolementation; it should only be used for testing
-# during development.
-try:
-    import _modmesh as _impl  # noqa: F401
-except ImportError:
-    from . import _modmesh as _impl  # noqa: F401
+def make_3dmix():
+    HEX = core.StaticMesh.HEXAHEDRON
+    TET = core.StaticMesh.TETRAHEDRON
+    PSM = core.StaticMesh.PRISM
+    PYR = core.StaticMesh.PYRAMID
+
+    mh = core.StaticMesh(ndim=3, nnode=11, nface=0, ncell=4)
+    mh.ndcrd.ndarray[:, :] = [
+        (0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0),
+        (0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1),
+        (0.5, 1.5, 0.5),
+        (1.5, 1, 0.5), (1.5, 0, 0.5),
+    ]
+    mh.cltpn.ndarray[:] = [
+        HEX, PYR, TET, PSM,
+    ]
+    mh.clnds.ndarray[:, :9] = [
+        (8, 0, 1, 2, 3, 4, 5, 6, 7), (5, 2, 3, 7, 6, 8, -1, -1, -1),
+        (4, 2, 6, 9, 8, -1, -1, -1, -1), (6, 2, 6, 9, 1, 5, 10, -1, -1),
+    ]
+    mh.build_interior()
+    mh.build_boundary()
+    mh.build_ghost()
+    return mh
 
 
-def _load():
-    for name in __all__:
-        globals()[name] = getattr(_impl, name)
-
-
-_load()
-del _load
+def load_app():
+    aenv = apputil.get_current_appenv()
+    symbols = (
+        'make_3dmix',
+    )
+    for k in symbols:
+        if isinstance(k, tuple):
+            k, o = k
+        else:
+            o = globals().get(k, None)
+            if o is None:
+                o = locals().get(k, None)
+        view.mgr.pycon.writeToHistory(f"Adding symbol {k}\n")
+        aenv.globals[k] = o
+    # Open a sub window for triangles and quadrilaterals:
+    w_3dmix = view.mgr.add3DWidget()
+    mh_3dmix = make_3dmix()
+    w_3dmix.updateMesh(mh_3dmix)
+    w_3dmix.showMark()
+    view.mgr.pycon.writeToHistory(f"3dmix nedge: {mh_3dmix.nedge}\n")
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

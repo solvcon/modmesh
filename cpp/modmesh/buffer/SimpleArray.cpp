@@ -146,84 +146,60 @@ DataType get_data_type_from_type<double>()
     return DataType::Float64;
 }
 
-SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, DataType data_type)
+// According to the `DataType`, create the corresponding `SimpleArray<T>` instance
+// and assign it to `m_instance_ptr`. The `m_instance_ptr` is a void pointer, so
+// we need to use `reinterpret_cast` to convert the pointer of the array instance.
+#define MM_DECL_CREATE_SIMPLE_ARRAY(DataType, ArrayType, ...)                  \
+    case DataType:                                                             \
+        /* NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) */      \
+        m_instance_ptr = reinterpret_cast<void *>(new ArrayType(__VA_ARGS__)); \
+        break;
+
+SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const DataType data_type)
     : m_data_type(data_type)
     , m_has_instance_ownership(true)
 {
     switch (data_type)
     {
-    case DataType::Bool:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayBool(shape));
-        break;
-    }
-    case DataType::Int8:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayInt8(shape));
-        break;
-    }
-    case DataType::Int16:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayInt16(shape));
-        break;
-    }
-    case DataType::Int32:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayInt32(shape));
-        break;
-    }
-    case DataType::Int64:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayInt64(shape));
-        break;
-    }
-    case DataType::Uint8:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayUint8(shape));
-        break;
-    }
-    case DataType::Uint16:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayUint16(shape));
-        break;
-    }
-    case DataType::Uint32:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayUint32(shape));
-        break;
-    }
-    case DataType::Uint64:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayUint64(shape));
-        break;
-    }
-    case DataType::Float32:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayFloat32(shape));
-        break;
-    }
-    case DataType::Float64:
-    {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayFloat64(shape));
-        break;
-    }
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Bool, SimpleArrayBool, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int8, SimpleArrayInt8, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int16, SimpleArrayInt16, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int32, SimpleArrayInt32, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int64, SimpleArrayInt64, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint8, SimpleArrayUint8, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint16, SimpleArrayUint16, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint32, SimpleArrayUint32, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint64, SimpleArrayUint64, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape)
     default:
-    {
         throw std::runtime_error("Unsupported datatype");
     }
+}
+
+SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const DataType data_type)
+    : m_data_type(data_type)
+    , m_has_instance_ownership(true)
+{
+    switch (data_type)
+    {
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Bool, SimpleArrayBool, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int8, SimpleArrayInt8, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int16, SimpleArrayInt16, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int32, SimpleArrayInt32, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Int64, SimpleArrayInt64, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint8, SimpleArrayUint8, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint16, SimpleArrayUint16, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint32, SimpleArrayUint32, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Uint64, SimpleArrayUint64, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape, buffer)
+        MM_DECL_CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape, buffer)
+    default:
+        throw std::runtime_error("Unsupported datatype");
     }
 }
+
+#undef MM_DECL_CREATE_SIMPLE_ARRAY
 
 SimpleArrayPlex::SimpleArrayPlex(SimpleArrayPlex const & other)
     : m_data_type(other.m_data_type)

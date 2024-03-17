@@ -197,15 +197,11 @@ std::enable_if_t<is_simple_array_v<S>, pybind11::array> to_ndarray(S && sarr)
     std::vector<size_t> stride(sarr.stride().begin(), sarr.stride().end());
     for (size_t & v : stride) { v *= sarr.itemsize(); }
     return py::array(
-        py::detail::npy_format_descriptor<T>::dtype() /* Numpy dtype */
-        ,
-        shape /* Buffer dimensions */
-        ,
-        stride /* Strides (in bytes) for each index */
-        ,
-        sarr.data() /* Pointer to buffer */
-        ,
-        py::cast(sarr.buffer().shared_from_this()) /* Owning Python object */
+        py::detail::npy_format_descriptor<T>::dtype(), // Numpy dtype
+        shape, // Buffer dimensions
+        stride, // Strides (in bytes) for each index
+        sarr.data(), // Pointer to buffer
+        py::cast(sarr.buffer().shared_from_this()) // Create the Python object owning the buffer
     );
 }
 
@@ -218,7 +214,10 @@ static SimpleArray<T> makeSimpleArray(pybind11::array_t<T> & ndarr)
         shape.push_back(ndarr.shape(i));
     }
     std::shared_ptr<ConcreteBuffer> const buffer = ConcreteBuffer::construct(
-        ndarr.nbytes(), ndarr.mutable_data(), std::make_unique<ConcreteBufferNdarrayRemover>(ndarr));
+        ndarr.nbytes(), // Number of bytes
+        ndarr.mutable_data(), // Pointer to buffer
+        std::make_unique<ConcreteBufferNdarrayRemover>(ndarr) // Use ndarray to own the buffer
+    );
     return SimpleArray<T>(shape, buffer);
 }
 

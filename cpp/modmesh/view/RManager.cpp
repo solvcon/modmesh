@@ -91,7 +91,7 @@ R3DWidget * RManager::add3DWidget()
         viewer->setWindowTitle("3D viewer");
         viewer->show();
         auto * subwin = this->addSubWindow(viewer);
-        subwin->resize(300, 200);
+        subwin->resize(400, 300);
     }
     return viewer;
 }
@@ -146,6 +146,12 @@ void RManager::setUpMenu()
             m_fileMenu->addAction(action);
         }
 #endif
+    }
+
+    {
+        m_appMenu = m_mainWindow->menuBar()->addMenu(QString("Mesh"));
+
+        this->addApplication(QString("mh_3dmix"));
     }
 
     {
