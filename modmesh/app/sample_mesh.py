@@ -89,6 +89,7 @@ print("3dmix nedge:", mh_3dmix.nedge)
     if set_command:
         view.mgr.pycon.command = cmd.strip()
 
+
 def help_solvcon(set_command=False):
     cmd = """
 # Open a sub window for solvcon icon:
@@ -412,7 +413,7 @@ help_tri(set_command=False)  # or True
 help_tet(set_command=False)  # or True
 help_2dmix(set_command=False)  # or True
 help_3dmix(set_command=False)  # or True
-help_solvcon(set_command=False)  # or True                                 
+help_solvcon(set_command=False)  # or True
 help_other(set_command=False)  # or True
 help_mesh_viewer(path, set_command=False)  # or True
 help_bezier(set_command=False)  # or True
