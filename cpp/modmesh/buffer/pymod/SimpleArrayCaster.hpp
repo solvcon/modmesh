@@ -43,7 +43,7 @@ namespace detail
 {
 
 // Define the Pybind11 caster for SimpleArray<T>
-#define SIMPLE_ARRAY_CASTER(DATATYPE)                                                                                                                         \
+#define DECL_MM_SIMPLE_ARRAY_CASTER(DATATYPE)                                                                                                                 \
     template <> /* NOLINTNEXTLINE(bugprone-macro-parentheses) */                                                                                              \
     struct type_caster<modmesh::SimpleArray##DATATYPE> : public type_caster_base<modmesh::SimpleArray##DATATYPE>                                              \
     {                                                                                                                                                         \
@@ -86,17 +86,19 @@ namespace detail
         }                                                                                                                                                     \
     }
 
-SIMPLE_ARRAY_CASTER(Bool);
-SIMPLE_ARRAY_CASTER(Int8);
-SIMPLE_ARRAY_CASTER(Int16);
-SIMPLE_ARRAY_CASTER(Int32);
-SIMPLE_ARRAY_CASTER(Int64);
-SIMPLE_ARRAY_CASTER(Uint8);
-SIMPLE_ARRAY_CASTER(Uint16);
-SIMPLE_ARRAY_CASTER(Uint32);
-SIMPLE_ARRAY_CASTER(Uint64);
-SIMPLE_ARRAY_CASTER(Float32);
-SIMPLE_ARRAY_CASTER(Float64);
+DECL_MM_SIMPLE_ARRAY_CASTER(Bool);
+DECL_MM_SIMPLE_ARRAY_CASTER(Int8);
+DECL_MM_SIMPLE_ARRAY_CASTER(Int16);
+DECL_MM_SIMPLE_ARRAY_CASTER(Int32);
+DECL_MM_SIMPLE_ARRAY_CASTER(Int64);
+DECL_MM_SIMPLE_ARRAY_CASTER(Uint8);
+DECL_MM_SIMPLE_ARRAY_CASTER(Uint16);
+DECL_MM_SIMPLE_ARRAY_CASTER(Uint32);
+DECL_MM_SIMPLE_ARRAY_CASTER(Uint64);
+DECL_MM_SIMPLE_ARRAY_CASTER(Float32);
+DECL_MM_SIMPLE_ARRAY_CASTER(Float64);
+
+#undef DECL_MM_SIMPLE_ARRAY_CASTER
 
 } /* end namespace detail */
 } /* end namespace pybind11 */
