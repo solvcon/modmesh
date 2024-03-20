@@ -45,7 +45,7 @@ struct DataTypeHasher
     }
 };
 
-// NOLINTNEXTLINE(cert-err58-cpp, cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects)
+// NOLINTNEXTLINE(misc-use-anonymous-namespace, cert-err58-cpp, cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects)
 static std::unordered_map<std::string, DataType, DataTypeHasher> string_data_type_map = {
     {"bool", DataType::Bool},
     {"int8", DataType::Int8},
