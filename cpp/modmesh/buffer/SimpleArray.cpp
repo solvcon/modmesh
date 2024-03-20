@@ -31,53 +31,41 @@
 namespace modmesh
 {
 
-DataType get_data_type_from_string(const std::string & data_type_string)
+namespace detail
 {
-    if (data_type_string == "bool")
+struct DataTypeHasher
+{
+    std::size_t operator()(const std::string & data_type_string) const
     {
-        return DataType::Bool;
+        const char ch1 = data_type_string.front();
+        const char ch2 = data_type_string.back();
+        return static_cast<std::size_t>(ch1) << 8 | static_cast<std::size_t>(ch2);
     }
-    if (data_type_string == "int8")
+};
+
+// NOLINTNEXTLINE(cert-err58-cpp, cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects)
+static std::unordered_map<std::string, DataType, DataTypeHasher> string_data_type_map = {
+    {"bool", DataType::Bool},
+    {"int8", DataType::Int8},
+    {"int16", DataType::Int16},
+    {"int32", DataType::Int32},
+    {"int64", DataType::Int64},
+    {"uint8", DataType::Uint8},
+    {"uint16", DataType::Uint16},
+    {"uint32", DataType::Uint32},
+    {"uint64", DataType::Uint64},
+    {"float32", DataType::Float32},
+    {"float64", DataType::Float64}};
+} // end of namespace detail
+
+DataType::DataType(const std::string & data_type_string)
+{
+    auto it = detail::string_data_type_map.find(data_type_string);
+    if (it == detail::string_data_type_map.end())
     {
-        return DataType::Int8;
+        throw std::runtime_error("Unsupported datatype");
     }
-    if (data_type_string == "int16")
-    {
-        return DataType::Int16;
-    }
-    if (data_type_string == "int32")
-    {
-        return DataType::Int32;
-    }
-    if (data_type_string == "int64")
-    {
-        return DataType::Uint64;
-    }
-    if (data_type_string == "uint8")
-    {
-        return DataType::Uint8;
-    }
-    if (data_type_string == "uint16")
-    {
-        return DataType::Uint16;
-    }
-    if (data_type_string == "uint32")
-    {
-        return DataType::Uint32;
-    }
-    if (data_type_string == "uint64")
-    {
-        return DataType::Uint64;
-    }
-    if (data_type_string == "float32")
-    {
-        return DataType::Float32;
-    }
-    if (data_type_string == "float64")
-    {
-        return DataType::Float64;
-    }
-    throw std::runtime_error("Unsupported datatype");
+    m_data_type = it->second;
 }
 
 template <>

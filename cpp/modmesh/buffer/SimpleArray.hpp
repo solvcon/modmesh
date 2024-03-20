@@ -668,23 +668,42 @@ using SimpleArrayUint64 = SimpleArray<uint64_t>;
 using SimpleArrayFloat32 = SimpleArray<float>;
 using SimpleArrayFloat64 = SimpleArray<double>;
 
-enum class DataType
+class DataType
 {
-    Undefined,
-    Bool,
-    Int8,
-    Int16,
-    Int32,
-    Int64,
-    Uint8,
-    Uint16,
-    Uint32,
-    Uint64,
-    Float32,
-    Float64,
-}; /* end enum class DataType */
+public:
+    enum DataTypeEnum
+    {
+        Undefined,
+        Bool,
+        Int8,
+        Int16,
+        Int32,
+        Int64,
+        Uint8,
+        Uint16,
+        Uint32,
+        Uint64,
+        Float32,
+        Float64,
+    }; /* end enum Type */
 
-DataType get_data_type_from_string(const std::string & data_type_string);
+    DataType() = default;
+
+    constexpr DataType(const DataTypeEnum datatype)
+        : m_data_type(datatype)
+    {
+    }
+
+    DataType(const std::string & data_type_string);
+
+    constexpr operator DataTypeEnum() const { return m_data_type; } // Allow switch and comparisons.
+    explicit operator bool() const = delete; // Prevent usage: if(datatype)
+    constexpr bool operator==(DataType datatype) const { return m_data_type == datatype.m_data_type; }
+    constexpr bool operator!=(DataType datatype) const { return m_data_type != datatype.m_data_type; }
+
+private:
+    DataTypeEnum m_data_type;
+}; /* end class DataType */
 
 template <typename T>
 DataType get_data_type_from_type();
@@ -696,13 +715,13 @@ public:
 
     SimpleArrayPlex() = default;
 
-    explicit SimpleArrayPlex(const shape_type & shape, const std::string & data_type)
-        : SimpleArrayPlex(shape, get_data_type_from_string(data_type))
+    explicit SimpleArrayPlex(const shape_type & shape, const std::string & data_type_string)
+        : SimpleArrayPlex(shape, DataType(data_type_string))
     {
     }
 
-    explicit SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const std::string & data_type)
-        : SimpleArrayPlex(shape, buffer, get_data_type_from_string(data_type))
+    explicit SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const std::string & data_type_string)
+        : SimpleArrayPlex(shape, buffer, DataType(data_type_string))
     {
     }
 
