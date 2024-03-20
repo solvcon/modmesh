@@ -28,6 +28,8 @@
 
 #include <modmesh/buffer/SimpleArray.hpp>
 
+#include <unordered_map>
+
 namespace modmesh
 {
 
