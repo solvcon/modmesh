@@ -113,11 +113,22 @@ jobs:
         #
         # In short, OpenGL libraries and headers are required. Without
         # installing this package, cmake won't find out the correct lib path.
-        if [ "${{ matrix.os }}" == "ubuntu-22.04" ] ; then \
-          sudo apt-get -qy install \
-              qt6-3d-dev xvfb \
-              libgl1-mesa-dev
-        fi
+        # if [ "${{ matrix.os }}" == "ubuntu-22.04" ] ; then \
+        #   sudo apt-get -qy install \
+        #       qt6-3d-dev xvfb \
+        #       libgl1-mesa-dev
+        # fi
+
+    - name: install qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        aqtversion: '==3.1.*'
+        version: '6.5.3'
+        host: 'linux'
+        target: 'desktop'
+        arch: 'gcc_64'
+        modules: 'qt3d'
+        setup-python: 'false'
 
     - name: dependency by pip
       run: |
@@ -258,7 +269,18 @@ jobs:
             # GitHub Action macOS 13 has a problem with python3
             brew list -1 | grep python | while read formula; do brew unlink $formula; brew link --overwrite $formula; done;
           fi
-          brew install qt6
+          # brew install qt6
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: '==3.1.*'
+          version: '6.5.3'
+          host: 'mac'
+          target: 'desktop'
+          arch: 'clang_64'
+          modules: 'qt3d'
+          setup-python: 'false'
 
       - name: dependency by pip
         run: |
@@ -425,14 +447,14 @@ jobs:
       - name: install qt
         uses: jurplel/install-qt-action@v3
         with:
-          aqtversion: '==2.1.*'
-          version: '6.3.1'
+          aqtversion: '==3.1.*'
+          version: '6.5.3'
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2019_64'
           modules: 'qt3d'
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10' 
 
