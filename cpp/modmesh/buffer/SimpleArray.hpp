@@ -699,7 +699,9 @@ public:
     constexpr operator DataTypeEnum() const { return m_data_type; } // Allow switch and comparisons.
     explicit operator bool() const = delete; // Prevent usage: if(datatype)
     constexpr bool operator==(DataType datatype) const { return m_data_type == datatype.m_data_type; }
+    constexpr bool operator==(DataType::DataTypeEnum datatype_enum) const { return m_data_type == datatype_enum; }
     constexpr bool operator!=(DataType datatype) const { return m_data_type != datatype.m_data_type; }
+    constexpr bool operator!=(DataType::DataTypeEnum datatype_enum) const { return m_data_type != datatype_enum; }
 
 private:
     DataTypeEnum m_data_type;
