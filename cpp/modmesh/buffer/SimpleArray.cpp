@@ -80,67 +80,67 @@ DataType::DataType(const std::string & data_type_string)
 }
 
 template <>
-DataType get_data_type_from_type<bool>()
+DataType DataType::from<bool>()
 {
     return DataType::Bool;
 }
 
 template <>
-DataType get_data_type_from_type<int8_t>()
+DataType DataType::from<int8_t>()
 {
     return DataType::Int8;
 }
 
 template <>
-DataType get_data_type_from_type<int16_t>()
+DataType DataType::from<int16_t>()
 {
     return DataType::Int16;
 }
 
 template <>
-DataType get_data_type_from_type<int32_t>()
+DataType DataType::from<int32_t>()
 {
     return DataType::Int32;
 }
 
 template <>
-DataType get_data_type_from_type<int64_t>()
+DataType DataType::from<int64_t>()
 {
     return DataType::Int64;
 }
 
 template <>
-DataType get_data_type_from_type<uint8_t>()
+DataType DataType::from<uint8_t>()
 {
     return DataType::Uint8;
 }
 
 template <>
-DataType get_data_type_from_type<uint16_t>()
+DataType DataType::from<uint16_t>()
 {
     return DataType::Uint16;
 }
 
 template <>
-DataType get_data_type_from_type<uint32_t>()
+DataType DataType::from<uint32_t>()
 {
     return DataType::Uint32;
 }
 
 template <>
-DataType get_data_type_from_type<uint64_t>()
+DataType DataType::from<uint64_t>()
 {
     return DataType::Uint64;
 }
 
 template <>
-DataType get_data_type_from_type<float>()
+DataType DataType::from<float>()
 {
     return DataType::Float32;
 }
 
 template <>
-DataType get_data_type_from_type<double>()
+DataType DataType::from<double>()
 {
     return DataType::Float64;
 }

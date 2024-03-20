@@ -696,16 +696,18 @@ public:
 
     DataType(const std::string & data_type_string);
 
+    enum_type type() const { return m_data_type; }
+
     constexpr operator enum_type() const { return m_data_type; } // Allow implicit switch and comparisons.
     explicit operator bool() const = delete; // Prevent usage: if(datatype)
+
+    template <typename T>
+    static DataType from();
 
 private:
     enum_type m_data_type;
 
 }; /* end class DataType */
-
-template <typename T>
-DataType get_data_type_from_type();
 
 class SimpleArrayPlex
 {
@@ -730,7 +732,7 @@ public:
     template <typename T>
     SimpleArrayPlex(const SimpleArray<T> & array)
     {
-        m_data_type = get_data_type_from_type<T>();
+        m_data_type = DataType::from<T>();
         m_has_instance_ownership = true;
         m_instance_ptr = reinterpret_cast<void *>(new SimpleArray<T>(array));
     }
