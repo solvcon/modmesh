@@ -46,7 +46,7 @@ struct DataTypeHasher
     //      "float64" -> 'f' << 8 | '4' = 26164
     std::size_t operator()(const std::string & data_type_string) const
     {
-        assert(data_type_string.size() > 4); // the length of "bool" and "int8" is 4, and all other data types are longer than 4
+        assert(data_type_string.size() >= 4); // the length of "bool" and "int8" is 4, and all other data types are longer than 4
         const char ch1 = data_type_string.front();
         const char ch2 = data_type_string.back();
         return static_cast<std::size_t>(ch1) << 8 | static_cast<std::size_t>(ch2);
