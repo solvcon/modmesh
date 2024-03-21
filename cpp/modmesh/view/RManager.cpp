@@ -131,6 +131,16 @@ void RManager::setUpMenu()
             m_fileMenu->addAction(action);
         }
 
+        m_eulerMenu = m_mainWindow->menuBar()->addMenu(QString("Euler"));
+
+        {
+            auto app_name = QString("euler1d");
+            auto * action = new RAppAction(
+                QString("Load ") + app_name,
+                QString("Load ") + app_name,
+                QString("modmesh.app.") + app_name);
+            m_eulerMenu->addAction(action);
+        }
 #ifndef Q_OS_MACOS
         {
             // Qt for mac merges "quit" or "exit" with the default quit item in the
@@ -214,7 +224,6 @@ void RManager::setUpMenu()
         m_appMenu = m_mainWindow->menuBar()->addMenu(QString("App"));
 
         this->addApplication(QString("sample_mesh"));
-        this->addApplication(QString("euler1d"));
         this->addApplication(QString("linear_wave"));
         this->addApplication(QString("bad_euler1d"));
     }

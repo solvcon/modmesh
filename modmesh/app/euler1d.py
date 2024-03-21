@@ -37,20 +37,21 @@ import modmesh as mm
 from dataclasses import dataclass
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
-from matplotlib.ticker import FormatStrFormatter
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
+from matplotlib.pyplot import setp
 from PySide6.QtCore import QTimer, Slot, Qt
-from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QFileDialog, QDockWidget
+from PySide6.QtWidgets import QDockWidget
 from PUI.state import State
 from PUI.PySide6.base import PuiInQt, QtInPui
 from PUI.PySide6.button import Button
-from PUI.PySide6.layout import VBox, Spacer
+from PUI.PySide6.layout import VBox, Spacer, HBox
 from PUI.PySide6.scroll import Scroll
 from PUI.PySide6.window import Window
 from PUI.PySide6.combobox import ComboBox, ComboBoxItem
 from PUI.PySide6.label import Label
 from PUI.PySide6.table import Table
-from PUI.PySide6.toolbar import ToolBar, ToolBarAction
+from PUI.PySide6.toolbar import ToolBar
+from PUI.PySide6.modal import Modal
 from ..onedim import euler1d
 from .. import view
 
@@ -70,6 +71,8 @@ class QuantityLine:
         - `axis` (matplotlib.pyplot.axis): Axis for the plot.
         - `name` (str): Name of the quantity.
         - `unit` (str): Unit of measurement.
+        - `y_upper_lim` (float): y axis upper limit.
+        - `y_bottom_lim` (float): y axis bottom limit.
 
     Methods:
         - :meth:`update(xdata, adata, ndata)`: Update the line data and
@@ -78,6 +81,8 @@ class QuantityLine:
     ana: matplotlib.lines.Line2D = None
     num: matplotlib.lines.Line2D = None
     axis: matplotlib.pyplot.axis = None
+    y_upper_lim: float = 0.0
+    y_bottom_lim: float = 0.0
     name: str = ""
     unit: str = ""
 
@@ -95,8 +100,6 @@ class QuantityLine:
         """
         self.ana.set_ydata(adata)
         self.num.set_ydata(ndata)
-        self.axis.relim()
-        self.axis.autoscale_view()
         self.ana.figure.canvas.draw()
         self.num.figure.canvas.draw()
 
@@ -110,9 +113,7 @@ class SolverConfig():
 
     Attributes:
         - `state` (:class:`State`): The state object holding configuration
-          data.
-        - `state.data` (list): A list containing configuration parameters
-          in the form of [variable_name, value, description].
+          data in the form of [variable_name, value, description].
         - `_tbl_content` (:class:`State`): The content of the
           configuration table.
         - `_col_header` (list): The header for the configuration
@@ -131,27 +132,13 @@ class SolverConfig():
           table.
         - :meth:`columnCount()`: Get the number of columns in the
           configuration table.
-        - :meth:`get_var(key)`: Get the value of a configuration variable
-          based on its key.
+        - :meth:`get_var(key_row, key_col)`: Get the value of a configuration
+          variable based on its key.
     """
-    def __init__(self):
-        self.state = State()
-        self.state.data = [
-                ["gamma", 1.4, "The ratio of the specific heats."],
-                ["p_left", 1.0, "The pressure of left hand side."],
-                ["rho_left", 1.0, "The density of left hand side."],
-                ["p_right", 0.1, "The pressure of right hand side."],
-                ["rho_right", 0.125, "The density of right hand side."],
-                ["xmin", -10, "The most left point of x axis."],
-                ["xmax", 10, "The most right point of x axis."],
-                ["ncoord", 201, "Number of grid point."],
-                ["time_increment", 0.05, "The density of right hand side."],
-                ["timer_interval", 10, "Qt timer interval"],
-                ["max_steps", 50, "Maximum step"],
-                ["profiling", False, "Turn on / off solver profiling"],
-                ]
-        self._tbl_content = self.state("data")
-        self._col_header = ["Variable", "Value", "Description"]
+    def __init__(self, input_data):
+        self.state = State(input_data)
+        self._tbl_content = self.state
+        self._col_header = ["variable", "value", "description"]
 
     def data(self, row, col):
         """
@@ -164,7 +151,7 @@ class SolverConfig():
         :return: The value at the specified location in
         the configuration table.
         """
-        return self._tbl_content.value[row][col]
+        return self._tbl_content[row][col]
 
     def setData(self, row, col, value):
         """
@@ -177,8 +164,7 @@ class SolverConfig():
         :prarm value: Any
         :return None
         """
-        self._tbl_content.value[row][col] = value
-        self._tbl_content.emit()
+        self._tbl_content[row][col] = value
 
     def columnHeader(self, col):
         """
@@ -213,7 +199,7 @@ class SolverConfig():
 
         :return: The number of rows.
         """
-        return len(self._tbl_content.value)
+        return len(self._tbl_content)
 
     def columnCount(self):
         """
@@ -221,19 +207,150 @@ class SolverConfig():
 
         :return: The number of columns.
         """
-        return len(self._tbl_content.value[0])
+        return len(self._tbl_content[0])
 
-    def get_var(self, key):
+    def get_var(self, key_row, key_col):
         """
         Get the value of a configuration variable based on its key.
 
-        :param key: The key of the variable.
-        :type key: str
+        :param key_row: The row key of the variable.
+        :type key_row: str
+        :param key_col: The col key of the variable.
+        :type key_col: str
         :return: The value of the specified variable.
         """
-        for ele in self.state("data").value:
-            if key == ele[0]:
-                return ele[1]
+        for ele in self.state:
+            if key_row == ele[0]:
+                for idx, name in enumerate(self._col_header):
+                    if key_col == name:
+                        return ele[idx]
+        return None
+
+
+class PlotConfig():
+    """
+    Configuration class for the plot.
+
+    This class provides a configuration interface for the plot, allowing
+    users to set and retrieve parameters related to the plotting arae.
+
+    Attributes:
+        - `state` (:class:`State`): The state object holding configuration
+          data in the form of [variable, line_selection, y_axis_upper_limit,
+          y_axis_bottom_limit].
+        - `_tbl_content` (:class:`State`): The content of the
+          configuration table.
+        - `_col_header` (list): The header for the configuration
+          table columns.
+
+    Methods:
+        - :meth:`data(row, col)`: Get the value at a specific row and column
+          in the configuration table.
+        - :meth:`setData(row, col, value)`: Set the value at a specific row
+          and column in the configuration table.
+        - :meth:`columnHeader(col)`: Get the header for a specific column
+          in the configuration table.
+        - :meth:`editable(row, col)`: Check if a cell in the configuration
+          table is editable.
+        - :meth:`rowCount()`: Get the number of rows in the configuration
+          table.
+        - :meth:`columnCount()`: Get the number of columns in the
+          configuration table.
+        - :meth:`get_var(key, key_row, key_col)`: Get the value of a
+          configuration variable based on its key.
+    """
+    def __init__(self, input_data):
+        self.state = State(input_data)
+        self._tbl_content = self.state
+        self._col_header = ["variable",
+                            "line_selection",
+                            "y_axis_upper_limit",
+                            "y_axis_bottom_limit"]
+
+    def data(self, row, col):
+        """
+        Get the value at a specific row and column in the configuration table.
+
+        :param row: Row index.
+        :type row: int
+        :param col: Column index.
+        :type col: int
+        :return: The value at the specified location in
+        the configuration table.
+        """
+        return self._tbl_content[row][col]
+
+    def setData(self, row, col, value):
+        """
+        Set the value at a specific row and column in the configuration table.
+
+        :param row: Row index.
+        :type row: int
+        :param col: Column index.
+        :type col: int
+        :prarm value: Any
+        :return None
+        """
+        self._tbl_content[row][col] = value
+
+    def columnHeader(self, col):
+        """
+        Get the specific column header in the configuration table.
+
+        :param col: Column index.
+        :type col: int
+        :return: The header for the specific column.
+        """
+        return self._col_header[col]
+
+    def editable(self, row, col):
+        """
+        Check if the cell is editable.
+
+        :param row: Row index.
+        :type row: int
+        :param col: Column index.
+        :type col: int
+        :return: True if the cell is editable, false otherwise.
+        """
+        if col >= 1:
+            return True
+        return False
+
+    # Delete row header
+    rowHeader = None
+
+    def rowCount(self):
+        """
+        Get the number of rows in the configuration table.
+
+        :return: The number of rows.
+        """
+        return len(self._tbl_content)
+
+    def columnCount(self):
+        """
+        Get the number of columns in the configuration table.
+
+        :return: The number of columns.
+        """
+        return len(self._tbl_content[0])
+
+    def get_var(self, key_row, key_col):
+        """
+        Get the value of a configuration variable based on its key.
+
+        :param key_row: The row key of the variable.
+        :type key_row: str
+        :param key_col: The col key of the variable.
+        :type key_col: str
+        :return: The value of the specified variable.
+        """
+        for ele in self.state:
+            if key_row == ele[0]:
+                for idx, name in enumerate(self._col_header):
+                    if key_col == name:
+                        return ele[idx]
         return None
 
 
@@ -246,14 +363,18 @@ class Euler1DApp():
     setting up timers, and building visualization figures.
 
     Attributes:
-        - `config` (:class:`SolverConfig`): Configuration object
+        - `solver_config` (:class:`SolverConfig`): Configuration object
           for the solver.
+        - `solver_config_data` (list): Solver configuration data
+        - `plot_config` (:class:`PlotConfig`): Configuration object
+          for the plotting area.
+        - `plot_config_data` (list): Plotting area configuration data
         - `data_lines` (dict): Dictionary containing QuantityLine objects and
           their display status.
-        - Other QuantityLine objects such as `density`, `velocity`, etc.
+        - Other QuantityLine (:class:`QuantityLine`) objects such as `density`,
+          `velocity`, etc. to save physical variables.
         - `use_grid_layout` (bool): Flag indicating whether to use a
           grid layout.
-        - `checkbox_select_num` (int): Number of checkboxes selected.
         - `plot_holder` (:class:`State`): State object for holding plots.
 
     Methods:
@@ -273,7 +394,6 @@ class Euler1DApp():
         - :meth:`stop()`: Stop the solver.
         - :meth:`single_layout()`: Switch plot holder to a single plot layout.
         - :meth:`grid_layout()`: Switch plot holder to a grid plot layout.
-        - :meth:`save_file()`: Save the current plot to a file.
         - :meth:`timer_timeout()`: Qt timer timeout callback.
         - :meth:`log(msg)`: Print log messages to the console window and
           standard output.
@@ -281,28 +401,71 @@ class Euler1DApp():
           finishes computation.
     """
     def __init__(self):
-        self.config = SolverConfig()
-        self.data_lines = {}
+        self.solver_config_data = [
+                ["gamma", 1.4, "The ratio of the specific heats."],
+                ["p_left", 1.0, "The pressure of left hand side."],
+                ["rho_left", 1.0, "The density of left hand side."],
+                ["p_right", 0.1, "The pressure of right hand side."],
+                ["rho_right", 0.125, "The density of right hand side."],
+                ["xmin", -10, "The most left point of x axis."],
+                ["xmax", 10, "The most right point of x axis."],
+                ["ncoord", 201, "Number of grid point."],
+                ["time_increment", 0.05, "The density of right hand side."],
+                ["timer_interval", 10, "Qt timer interval"],
+                ["max_steps", 50, "Maximum step"],
+                ["profiling", False, "Turn on / off solver profiling"],
+                ]
+        self.solver_config = SolverConfig(self.solver_config_data)
+        self.plot_config_data = []
         self.density = QuantityLine(name="density",
-                                    unit=r"$\mathrm{kg}/\mathrm{m}^3$")
-        self.data_lines[self.density.name] = [self.density, True]
+                                    unit=r"$\mathrm{kg}/\mathrm{m}^3$",
+                                    y_upper_lim=1.2,
+                                    y_bottom_lim=-0.1)
+        self.plot_config_data.append([self.density.name,
+                                      True,
+                                      self.density.y_upper_lim,
+                                      self.density.y_bottom_lim])
         self.velocity = QuantityLine(name="velocity",
-                                     unit=r"$\mathrm{m}/\mathrm{s}$")
-        self.data_lines[self.velocity.name] = [self.velocity, True]
-        self.pressure = QuantityLine(name="pressure", unit=r"$\mathrm{Pa}$")
-        self.data_lines[self.pressure.name] = [self.pressure, True]
+                                     unit=r"$\mathrm{m}/\mathrm{s}$",
+                                     y_upper_lim=1.2,
+                                     y_bottom_lim=-0.1)
+        self.plot_config_data.append([self.velocity.name,
+                                      True,
+                                      self.velocity.y_upper_lim,
+                                      self.velocity.y_bottom_lim])
+        self.pressure = QuantityLine(name="pressure", unit=r"$\mathrm{Pa}$",
+                                     y_upper_lim=1.2,
+                                     y_bottom_lim=-0.1)
+        self.plot_config_data.append([self.pressure.name,
+                                      True,
+                                      self.pressure.y_upper_lim,
+                                      self.pressure.y_bottom_lim])
         self.temperature = QuantityLine(name="temperature",
-                                        unit=r"$\mathrm{K}$")
-        self.data_lines[self.temperature.name] = [self.temperature, False]
+                                        unit=r"$\mathrm{K}$",
+                                        y_upper_lim=0.15,
+                                        y_bottom_lim=0.0)
+        self.plot_config_data.append([self.temperature.name,
+                                      False,
+                                      self.temperature.y_upper_lim,
+                                      self.temperature.y_bottom_lim])
         self.internal_energy = QuantityLine(name="internal_energy",
-                                            unit=r"$\mathrm{J}/\mathrm{kg}$")
-        self.data_lines[self.internal_energy.name] = [self.internal_energy,
-                                                      False]
+                                            unit=r"$\mathrm{J}/\mathrm{kg}$",
+                                            y_upper_lim=3.0,
+                                            y_bottom_lim=1.5)
+        self.plot_config_data.append([self.internal_energy.name,
+                                      False,
+                                      self.internal_energy.y_upper_lim,
+                                      self.internal_energy.y_bottom_lim])
         self.entropy = QuantityLine(name="entropy",
-                                    unit=r"$\mathrm{J}/\mathrm{K}$")
-        self.data_lines[self.entropy.name] = [self.entropy, False]
+                                    unit=r"$\mathrm{J}/\mathrm{K}$",
+                                    y_upper_lim=2.2,
+                                    y_bottom_lim=0.9)
+        self.plot_config_data.append([self.entropy.name,
+                                      False,
+                                      self.entropy.y_upper_lim,
+                                      self.entropy.y_bottom_lim])
+        self.plot_config = PlotConfig(self.plot_config_data)
         self.use_grid_layout = False
-        self.checkbox_select_num = 3
         self.plot_holder = State()
         self.set_solver_config()
         self.setup_timer()
@@ -330,19 +493,24 @@ class Euler1DApp():
 
         :return None
         """
-        self.init_solver(gamma=self.config.get_var("gamma"),
-                         pressure_left=self.config.get_var("p_left"),
-                         density_left=self.config.get_var("rho_left"),
-                         pressure_right=self.config.get_var("p_right"),
-                         density_right=self.config.get_var("rho_right"),
-                         xmin=self.config.get_var("xmin"),
-                         xmax=self.config.get_var("xmax"),
-                         ncoord=self.config.get_var("ncoord"),
-                         time_increment=self.config.get_var("time_increment"))
+        self.init_solver(gamma=self.solver_config.get_var("gamma", "value"),
+                         pressure_left=self.solver_config.get_var("p_left",
+                                                                  "value"),
+                         density_left=self.solver_config.get_var("rho_left",
+                                                                 "value"),
+                         pressure_right=self.solver_config.get_var("p_right",
+                                                                   "value"),
+                         density_right=self.solver_config.get_var("rho_right",
+                                                                  "value"),
+                         xmin=self.solver_config.get_var("xmin", "value"),
+                         xmax=self.solver_config.get_var("xmax", "value"),
+                         ncoord=self.solver_config.get_var("ncoord", "value"),
+                         time_increment=(self.solver_config.
+                                         get_var("time_increment", "value")))
         self.current_step = 0
-        self.interval = self.config.get_var("timer_interval")
-        self.max_steps = self.config.get_var("max_steps")
-        self.profiling = self.config.get_var("profiling")
+        self.interval = self.solver_config.get_var("timer_interval", "value")
+        self.max_steps = self.solver_config.get_var("max_steps", "value")
+        self.profiling = self.solver_config.get_var("profiling", "value")
 
     def setup_timer(self):
         """
@@ -367,6 +535,8 @@ class Euler1DApp():
         canvas = FigureCanvas(fig)
         ax = canvas.figure.subplots(3, 2)
         fig.tight_layout()
+        y_upper_lim_max = 0.0
+        y_bottom_lim_min = sys.float_info.max
 
         for i, (data, color) in enumerate((
                 (self.density, 'r'),
@@ -377,7 +547,6 @@ class Euler1DApp():
                 (self.entropy, 'm')
         )):
             axis = ax[i // 2][i % 2]
-            axis.autoscale(enable=True, axis='y', tight=False)
             data.axis = axis
             data.ana, = axis.plot(x, np.zeros_like(x),
                                   f'{color}-',
@@ -385,12 +554,15 @@ class Euler1DApp():
             data.num, = axis.plot(x, np.zeros_like(x),
                                   f'{color}x',
                                   label=f'{data.name}_num')
-            axis.set_ylabel(f'{data.name} ({data.unit})')
+            axis.set_ylabel(f'{data.name}')
 
-            axis.set_xlabel("distance (m)")
+            axis.set_xlabel("distance")
             axis.legend()
             axis.grid()
+            y_upper_lim_max = max(y_upper_lim_max, data.y_upper_lim)
+            y_bottom_lim_min = min(y_bottom_lim_min, data.y_bottom_lim)
 
+        setp(ax, ylim=[y_bottom_lim_min, y_upper_lim_max])
         self.update_lines()
         return canvas
 
@@ -407,14 +579,8 @@ class Euler1DApp():
         canvas = FigureCanvas(fig)
         ax = canvas.figure.subplots()
         fig.tight_layout()
-        ax.autoscale(enable=True, axis='y', tight=False)
-
-        # Matplotlib need to plot y axis on the left hand side first
-        # then the reset of axis can be plotted on right hand side
-        main_axis_plotted = False
-
-        # Record how many lines had been selected to plot
-        select_num = 0
+        y_upper_lim_max = 0.0
+        y_bottom_lim_min = sys.float_info.max
 
         for data, color in (
             (self.density, 'r'),
@@ -426,43 +592,22 @@ class Euler1DApp():
         ):
             # Plot multiple data line with same X axis, it need to plot a
             # data line on main axis first
-            if self.data_lines[data.name][1]:
-                if not main_axis_plotted:
-                    data.axis = ax
-                    data.ana, = ax.plot(x, np.zeros_like(x),
-                                        f'{color}-',
-                                        label=f'{data.name}_ana')
-                    data.num, = ax.plot(x, np.zeros_like(x),
-                                        f'{color}x',
-                                        label=f'{data.name}_num')
-                    ax.set_ylabel(f'{data.name} ({data.unit})')
-                    main_axis_plotted = True
-                else:
-                    ax_new = ax.twinx()
-                    data.axis = ax_new
-                    data.ana, = ax_new.plot(x, np.zeros_like(x),
-                                            f'{color}-',
-                                            label=f'{data.name}_ana')
-                    data.num, = ax_new.plot(x, np.zeros_like(x),
-                                            f'{color}x',
-                                            label=f'{data.name}_num')
-                    ax_new.spines.right.set_position(("axes",
-                                                      (1 + (select_num - 1)
-                                                       * 0.2)))
-                    ax_new.set_ylabel(f'{data.name} ({data.unit})')
-                    ax_new.yaxis.set_major_formatter((FormatStrFormatter
-                                                      ('%.2f')))
-                select_num += 1
+            if self.plot_config.get_var(data.name, "line_selection"):
+                data.axis = ax
+                data.ana, = ax.plot(x, np.zeros_like(x),
+                                    f'{color}-',
+                                    label=f'{data.name}_ana')
+                data.num, = ax.plot(x, np.zeros_like(x),
+                                    f'{color}x',
+                                    label=f'{data.name}_num')
+                y_upper_lim_max = max(y_upper_lim_max, data.y_upper_lim)
+                y_bottom_lim_min = min(y_bottom_lim_min, data.y_bottom_lim)
 
-        ax.set_xlabel("distance (m)")
+        ax.set_xlabel("distance")
         ax.grid()
+        ax.legend()
 
-        # These parameters are the results obtained by my tuning on GUI
-        fig.subplots_adjust(left=0.1,
-                            right=0.97 - (self.checkbox_select_num - 1) * 0.1,
-                            bottom=0.093, top=0.976,
-                            wspace=0.2, hspace=0.2)
-
+        setp(ax, ylim=[y_bottom_lim_min, y_upper_lim_max])
         self.update_lines()
 
         return canvas
@@ -515,10 +660,7 @@ class Euler1DApp():
         """
         self.set_solver_config()
         self.setup_timer()
-        if self.use_grid_layout:
-            self.plot_holder.plot = self.build_grid_figure()
-        else:
-            self.plot_holder.plot = self.build_single_figure()
+        self.update_layout()
 
     def stop(self):
         """
@@ -527,9 +669,33 @@ class Euler1DApp():
         """
         self.timer.stop()
 
+    def update_layout(self):
+        """
+        To refresh plotting area layout.
+
+        :return: None
+        """
+        for line in (
+            self.density,
+            self.velocity,
+            self.pressure,
+            self.temperature,
+            self.internal_energy,
+            self.entropy
+        ):
+            line.y_upper_lim = self.plot_config.get_var(line.name,
+                                                        "y_axis_upper_limit")
+            line.y_bottom_lim = self.plot_config.get_var(line.name,
+                                                         "y_axis_bottom_limit")
+
+        if self.use_grid_layout:
+            self.plot_holder.plot = self.build_grid_figure()
+        else:
+            self.plot_holder.plot = self.build_single_figure()
+
     def single_layout(self):
         """
-        Toolbar action callback that switch plot holder to single plot layout.
+        Button action callback that switch plot holder to single plot layout.
 
         :return: None
         """
@@ -538,32 +704,12 @@ class Euler1DApp():
 
     def grid_layout(self):
         """
-        Toolbar action callback that switch plot holder to grid plot layout.
+        Button action callback that switch plot holder to grid plot layout.
 
         :return: None
         """
         self.use_grid_layout = True
         self.plot_holder.plot = self.build_grid_figure()
-
-    def save_file(self):
-        """
-        Toolbar action callback, that use pixmap to store plotting area
-        and open a dialog that allows user to decide where to store the
-        figure file.
-
-        :return: None
-        """
-        fig = QPixmap(self.plot_holder.plot.size())
-        self.plot_holder.plot.render(fig)
-
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getSaveFileName(None, "Save file", "",
-                                                  "All Files (*)",
-                                                  options=options)
-
-        if fileName != "":
-            fig.save(fileName, "JPG", 100)
 
     @Slot()
     def timer_timeout(self):
@@ -608,9 +754,9 @@ class Euler1DApp():
             self.entropy.update(adata=self.st.entropy_field,
                                 ndata=self.st.svr.entropy[::2])
         else:
-            for name, data_line in self.data_lines.items():
-                if data_line[1]:
-                    eval(f'(data_line[0].update(adata=self.st.{name}_field,'
+            for name, is_selected, *_ in self.plot_config.state:
+                if is_selected:
+                    eval(f'(self.{name}.update(adata=self.st.{name}_field,'
                          f' ndata=self.st.svr.{name}[::2]))')
 
 
@@ -643,15 +789,13 @@ class PlotArea(PuiInQt):
         :return: nothing
         """
         with ToolBar():
-            ToolBarAction("Save").trigger(self.app.save_file)
-            ToolBarAction("SingleLayout").trigger(self.app.single_layout)
-            ToolBarAction("GridLayout").trigger(self.app.grid_layout)
+            QtInPui(NavigationToolbar2QT(self.app.plot_holder.plot, None))
         QtInPui(self.app.plot_holder.plot)
 
 
 class ConfigWindow(PuiInQt):
     """
-    ConfigWindow class for managing solver configurations.
+    ConfigWindow class for managing solver and plotting area configurations.
 
     This class inherit from the PuiInQt class and provides a graphical user
     interface for managing solver configurations. It includes options to set
@@ -660,16 +804,26 @@ class ConfigWindow(PuiInQt):
 
     Attributes:
         - `app`: The app want to plot something in plotting area.
-        - `config` (:class:`SolverConfig`): Configuration object
+        - `solver_config` (:class:`SolverConfig`): Configuration object
           for the solver.
+        - `plot_config` (:class:`PlotConfig`): Configuration object
+          for the plotting area.
+        - `state` (:class:`State`): The state object holding plot configuration
+          window opening state.
 
     Methods:
         - :meth:`setup()`: Setup method to configure the window.
         - :meth:`content()`: Method to define the content of the window.
+        - :meth:`on_open()`: Callback function when plot configure modal
+          window is opened.
+        - :meth:`on_close()`: Callback function when plot configure modal
+          windows is closed.
     """
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
+        self.state = State()
+        self.state.plot_config_open = False
 
     def setup(self):
         """
@@ -677,7 +831,14 @@ class ConfigWindow(PuiInQt):
 
         :return: nothing
         """
-        self.config = self.app.config
+        self.solver_config = self.app.solver_config
+        self.plot_config = self.app.plot_config
+
+    def on_open(self):
+        self.state.plot_config_open = True
+
+    def on_close(self):
+        self.state.plot_config_open = False
 
     def content(self):
         """
@@ -692,13 +853,27 @@ class ConfigWindow(PuiInQt):
                     ComboBoxItem("Euler1D-CESE")
                 Label("Configuration")
                 with Scroll():
-                    Table(self.config)
+                    Table(self.solver_config)
                 Button("Set").click(self.app.set)
+                Button("Option").click(self.on_open)
             with VBox().layout(weight=1):
                 Spacer()
                 Button("Start").click(self.app.start)
                 Button("Stop").click(self.app.stop)
                 Button("Step").click(self.app.step)
+            with (Modal(self.state("plot_config_open"),
+                        title="Plot configuration")
+                  .open(self.on_open)
+                  .close(self.on_close)):
+                with VBox():
+                    with HBox():
+                        Label("Layout selection")
+                        Button("Grid").click(lambda: self.app.grid_layout())
+                        Button("Single").click((lambda:
+                                                self.app.single_layout()))
+                    Label("Data line configuration")
+                    Table(self.plot_config)
+                    Button("Save").click(lambda: self.app.update_layout())
 
 
 def load_app():
