@@ -37,13 +37,21 @@ namespace detail
 {
 struct DataTypeHasher
 {
+    // The std::hash<std::string> is not deterministic, so we implement our own.
+    // We can use the first and last character to hash the string.
+    // The first character indicates the type of the data, and the last character indicates the size of the data (except for bool, which is a special case).
+    // The combination of the first and last character can uniquely identify the data type.
+    // e.g. "int32"   -> 'i' << 8 | '2' = 26930
+    //      "uint32"  -> 'u' << 8 | '2' = 30002
+    //      "float64" -> 'f' << 8 | '4' = 26164
     std::size_t operator()(const std::string & data_type_string) const
     {
+        assert(data_type_string.size() > 4); // the length of "bool" and "int8" is 4, and all other data types are longer than 4
         const char ch1 = data_type_string.front();
         const char ch2 = data_type_string.back();
         return static_cast<std::size_t>(ch1) << 8 | static_cast<std::size_t>(ch2);
     }
-};
+}; /* end struct DataTypeHasher */
 
 // NOLINTNEXTLINE(misc-use-anonymous-namespace, cert-err58-cpp, cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects)
 static std::unordered_map<std::string, DataType, DataTypeHasher> string_data_type_map = {
@@ -58,7 +66,8 @@ static std::unordered_map<std::string, DataType, DataTypeHasher> string_data_typ
     {"uint64", DataType::Uint64},
     {"float32", DataType::Float32},
     {"float64", DataType::Float64}};
-} // end of namespace detail
+
+} /* end namespace detail */
 
 DataType::DataType(const std::string & data_type_string)
 {

@@ -671,7 +671,7 @@ using SimpleArrayFloat64 = SimpleArray<double>;
 class DataType
 {
 public:
-    enum DataTypeEnum
+    enum enum_type
     {
         Undefined,
         Bool,
@@ -685,22 +685,22 @@ public:
         Uint64,
         Float32,
         Float64,
-    }; /* end enum Type */
+    }; /* end enum enum_type */
 
     DataType() = default;
 
-    constexpr DataType(const DataTypeEnum datatype)
+    constexpr DataType(const enum_type datatype)
         : m_data_type(datatype)
     {
     }
 
     DataType(const std::string & data_type_string);
 
-    constexpr operator DataTypeEnum() const { return m_data_type; } // Allow implicit switch and comparisons.
+    constexpr operator enum_type() const { return m_data_type; } // Allow implicit switch and comparisons.
     explicit operator bool() const = delete; // Prevent usage: if(datatype)
 
 private:
-    DataTypeEnum m_data_type;
+    enum_type m_data_type;
 
 }; /* end class DataType */
 
