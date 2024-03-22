@@ -668,26 +668,46 @@ using SimpleArrayUint64 = SimpleArray<uint64_t>;
 using SimpleArrayFloat32 = SimpleArray<float>;
 using SimpleArrayFloat64 = SimpleArray<double>;
 
-enum class DataType
+class DataType
 {
-    Undefined,
-    Bool,
-    Int8,
-    Int16,
-    Int32,
-    Int64,
-    Uint8,
-    Uint16,
-    Uint32,
-    Uint64,
-    Float32,
-    Float64,
-}; /* end enum class DataType */
+public:
+    enum enum_type
+    {
+        Undefined,
+        Bool,
+        Int8,
+        Int16,
+        Int32,
+        Int64,
+        Uint8,
+        Uint16,
+        Uint32,
+        Uint64,
+        Float32,
+        Float64,
+    }; /* end enum enum_type */
 
-DataType get_data_type_from_string(const std::string & data_type_string);
+    DataType() = default;
 
-template <typename T>
-DataType get_data_type_from_type();
+    constexpr DataType(const enum_type datatype)
+        : m_data_type(datatype)
+    {
+    }
+
+    DataType(const std::string & data_type_string);
+
+    enum_type type() const { return m_data_type; }
+
+    constexpr operator enum_type() const { return m_data_type; } // Allow implicit switch and comparisons.
+    explicit operator bool() const = delete; // Prevent usage: if(datatype)
+
+    template <typename T>
+    static DataType from();
+
+private:
+    enum_type m_data_type;
+
+}; /* end class DataType */
 
 class SimpleArrayPlex
 {
@@ -696,13 +716,13 @@ public:
 
     SimpleArrayPlex() = default;
 
-    explicit SimpleArrayPlex(const shape_type & shape, const std::string & data_type)
-        : SimpleArrayPlex(shape, get_data_type_from_string(data_type))
+    explicit SimpleArrayPlex(const shape_type & shape, const std::string & data_type_string)
+        : SimpleArrayPlex(shape, DataType(data_type_string))
     {
     }
 
-    explicit SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const std::string & data_type)
-        : SimpleArrayPlex(shape, buffer, get_data_type_from_string(data_type))
+    explicit SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const std::string & data_type_string)
+        : SimpleArrayPlex(shape, buffer, DataType(data_type_string))
     {
     }
 
@@ -712,7 +732,7 @@ public:
     template <typename T>
     SimpleArrayPlex(const SimpleArray<T> & array)
     {
-        m_data_type = get_data_type_from_type<T>();
+        m_data_type = DataType::from<T>();
         m_has_instance_ownership = true;
         m_instance_ptr = reinterpret_cast<void *>(new SimpleArray<T>(array));
     }

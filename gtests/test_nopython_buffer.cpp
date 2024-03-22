@@ -62,4 +62,25 @@ TEST(SimpleArray, abs)
     EXPECT_EQ(brr.sum(), 10.0);
 }
 
+TEST(SimpleArray_DataType, from_type)
+{
+    modmesh::DataType dt_double = modmesh::DataType::from<double>();
+    EXPECT_EQ(dt_double.type(), modmesh::DataType::Float64);
+
+    modmesh::DataType dt_int = modmesh::DataType::from<int>();
+    EXPECT_EQ(dt_int.type(), modmesh::DataType::Int32);
+}
+
+TEST(SimpleArray_DataType, from_string)
+{
+    modmesh::DataType dt_double = modmesh::DataType("float64");
+    EXPECT_EQ(dt_double.type(), modmesh::DataType::Float64);
+
+    modmesh::DataType dt_bool = modmesh::DataType("bool");
+    EXPECT_EQ(dt_bool.type(), modmesh::DataType::Bool);
+
+    EXPECT_THROW(modmesh::DataType("float16"), std::invalid_argument); // float16 does not exist
+    EXPECT_THROW(modmesh::DataType("bool8"), std::invalid_argument); // bool8 does not exist
+}
+
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

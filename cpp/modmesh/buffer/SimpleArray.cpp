@@ -28,120 +28,119 @@
 
 #include <modmesh/buffer/SimpleArray.hpp>
 
+#include <unordered_map>
+
 namespace modmesh
 {
 
-DataType get_data_type_from_string(const std::string & data_type_string)
+namespace detail
 {
-    if (data_type_string == "bool")
+struct DataTypeHasher
+{
+    // The std::hash<std::string> is not deterministic, so we implement our own.
+    // We can use the first and last character to hash the string.
+    // The first character indicates the type of the data, and the last character indicates the size of the data (except for bool, which is a special case).
+    // The combination of the first and last character can uniquely identify the data type.
+    // e.g. "int32"   -> 'i' << 8 | '2' = 26930
+    //      "uint32"  -> 'u' << 8 | '2' = 30002
+    //      "float64" -> 'f' << 8 | '4' = 26164
+    std::size_t operator()(const std::string & data_type_string) const
     {
-        return DataType::Bool;
+        assert(data_type_string.size() >= 4); // the length of "bool" and "int8" is 4, and all other data types are longer than 4
+        const char ch1 = data_type_string.front();
+        const char ch2 = data_type_string.back();
+        return static_cast<std::size_t>(ch1) << 8 | static_cast<std::size_t>(ch2);
     }
-    if (data_type_string == "int8")
+}; /* end struct DataTypeHasher */
+
+// NOLINTNEXTLINE(misc-use-anonymous-namespace, cert-err58-cpp, cppcoreguidelines-avoid-non-const-global-variables, fuchsia-statically-constructed-objects)
+static std::unordered_map<std::string, DataType, DataTypeHasher> string_data_type_map = {
+    {"bool", DataType::Bool},
+    {"int8", DataType::Int8},
+    {"int16", DataType::Int16},
+    {"int32", DataType::Int32},
+    {"int64", DataType::Int64},
+    {"uint8", DataType::Uint8},
+    {"uint16", DataType::Uint16},
+    {"uint32", DataType::Uint32},
+    {"uint64", DataType::Uint64},
+    {"float32", DataType::Float32},
+    {"float64", DataType::Float64}};
+
+} /* end namespace detail */
+
+DataType::DataType(const std::string & data_type_string)
+{
+    auto it = detail::string_data_type_map.find(data_type_string);
+    if (it == detail::string_data_type_map.end())
     {
-        return DataType::Int8;
+        throw std::invalid_argument("Unsupported datatype");
     }
-    if (data_type_string == "int16")
-    {
-        return DataType::Int16;
-    }
-    if (data_type_string == "int32")
-    {
-        return DataType::Int32;
-    }
-    if (data_type_string == "int64")
-    {
-        return DataType::Uint64;
-    }
-    if (data_type_string == "uint8")
-    {
-        return DataType::Uint8;
-    }
-    if (data_type_string == "uint16")
-    {
-        return DataType::Uint16;
-    }
-    if (data_type_string == "uint32")
-    {
-        return DataType::Uint32;
-    }
-    if (data_type_string == "uint64")
-    {
-        return DataType::Uint64;
-    }
-    if (data_type_string == "float32")
-    {
-        return DataType::Float32;
-    }
-    if (data_type_string == "float64")
-    {
-        return DataType::Float64;
-    }
-    throw std::runtime_error("Unsupported datatype");
+    m_data_type = it->second;
 }
 
 template <>
-DataType get_data_type_from_type<bool>()
+DataType DataType::from<bool>()
 {
     return DataType::Bool;
 }
 
 template <>
-DataType get_data_type_from_type<int8_t>()
+DataType DataType::from<int8_t>()
 {
     return DataType::Int8;
 }
 
 template <>
-DataType get_data_type_from_type<int16_t>()
+DataType DataType::from<int16_t>()
 {
     return DataType::Int16;
 }
 
 template <>
-DataType get_data_type_from_type<int32_t>()
+DataType DataType::from<int32_t>()
 {
     return DataType::Int32;
 }
 
 template <>
-DataType get_data_type_from_type<int64_t>()
+DataType DataType::from<int64_t>()
 {
     return DataType::Int64;
 }
 
 template <>
-DataType get_data_type_from_type<uint8_t>()
+DataType DataType::from<uint8_t>()
 {
     return DataType::Uint8;
 }
 
 template <>
-DataType get_data_type_from_type<uint16_t>()
+DataType DataType::from<uint16_t>()
 {
     return DataType::Uint16;
 }
 
 template <>
-DataType get_data_type_from_type<uint32_t>()
+DataType DataType::from<uint32_t>()
 {
     return DataType::Uint32;
 }
 
 template <>
-DataType get_data_type_from_type<uint64_t>()
+DataType DataType::from<uint64_t>()
 {
     return DataType::Uint64;
 }
 
 template <>
-DataType get_data_type_from_type<float>()
+DataType DataType::from<float>()
 {
     return DataType::Float32;
 }
 
 template <>
-DataType get_data_type_from_type<double>()
+DataType DataType::from<double>()
 {
     return DataType::Float64;
 }
