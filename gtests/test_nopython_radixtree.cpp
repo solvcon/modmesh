@@ -8,20 +8,20 @@
 /**
  * Simple Timed Entry for Testing
  */
-class TimedEntry
+class TestedTimedEntry
 {
 public:
     size_t count() const { return m_count; }
     double time() const { return m_time; }
 
-    TimedEntry & add_time(double time)
+    TestedTimedEntry & add_time(double time)
     {
         ++m_count;
         m_time += time;
         return *this;
     }
 
-    friend std::ostream & operator<<(std::ostream & os, const TimedEntry & entry)
+    friend std::ostream & operator<<(std::ostream & os, const TestedTimedEntry & entry)
     {
         os << "Count: " << entry.count() << " - Time: " << entry.time();
         return os;
@@ -30,7 +30,7 @@ public:
 private:
     size_t m_count = 0;
     double m_time = 0.0;
-}; /* end class TimedEntry */
+}; /* end class TestedTimedEntry */
 
 template <typename T>
 std::string get_info(modmesh::RadixTreeNode<T> & r)
@@ -46,22 +46,22 @@ std::string get_info(modmesh::RadixTreeNode<T> & r)
 TEST(RadixTree, construction)
 {
     namespace mm = modmesh;
-    mm::RadixTree<TimedEntry> radix_tree;
+    mm::RadixTree<TestedTimedEntry> radix_tree;
     EXPECT_EQ(radix_tree.get_unique_node(), 0);
 }
 
 TEST(RadixTree, single_insertion)
 {
     namespace mm = modmesh;
-    mm::RadixTree<TimedEntry> radix_tree;
-    TimedEntry & entry1 = radix_tree.entry("a");
+    mm::RadixTree<TestedTimedEntry> radix_tree;
+    TestedTimedEntry & entry1 = radix_tree.entry("a");
     entry1.add_time(5.2);
 
     EXPECT_EQ(entry1.count(), 1);
     EXPECT_DOUBLE_EQ(entry1.time(), 5.2);
     EXPECT_EQ(radix_tree.get_unique_node(), 1);
 
-    mm::RadixTreeNode<TimedEntry> * node = radix_tree.get_current_node();
+    mm::RadixTreeNode<TestedTimedEntry> * node = radix_tree.get_current_node();
     EXPECT_EQ(node->name(), "a");
     EXPECT_EQ(get_info(*node), "a - Count: 1 - Time: 5.2");
 }
@@ -69,33 +69,33 @@ TEST(RadixTree, single_insertion)
 TEST(RadixTree, multiple_insertion)
 {
     namespace mm = modmesh;
-    mm::RadixTree<TimedEntry> radix_tree;
-    TimedEntry & entry1 = radix_tree.entry("a");
+    mm::RadixTree<TestedTimedEntry> radix_tree;
+    TestedTimedEntry & entry1 = radix_tree.entry("a");
     entry1.add_time(5.2);
-    const mm::RadixTreeNode<TimedEntry> * const node1 = radix_tree.get_current_node();
+    const mm::RadixTreeNode<TestedTimedEntry> * const node1 = radix_tree.get_current_node();
 
-    TimedEntry & entry2 = radix_tree.entry("b");
+    TestedTimedEntry & entry2 = radix_tree.entry("b");
     entry2.add_time(10.1);
 
     EXPECT_EQ(radix_tree.get_unique_node(), 2);
 
-    const mm::RadixTreeNode<TimedEntry> * const node2 = radix_tree.get_current_node();
+    const mm::RadixTreeNode<TestedTimedEntry> * const node2 = radix_tree.get_current_node();
     EXPECT_EQ(node2->get_prev(), node1);
 }
 
 TEST(RadixTree, move_current_pointer)
 {
     namespace mm = modmesh;
-    mm::RadixTree<TimedEntry> radix_tree;
-    TimedEntry & entry1 = radix_tree.entry("a");
+    mm::RadixTree<TestedTimedEntry> radix_tree;
+    TestedTimedEntry & entry1 = radix_tree.entry("a");
     entry1.add_time(5.2);
-    const mm::RadixTreeNode<TimedEntry> * const node1 = radix_tree.get_current_node();
+    const mm::RadixTreeNode<TestedTimedEntry> * const node1 = radix_tree.get_current_node();
 
-    TimedEntry & entry2 = radix_tree.entry("b");
+    TestedTimedEntry & entry2 = radix_tree.entry("b");
     entry2.add_time(10.1);
 
     radix_tree.move_current_to_parent();
-    const mm::RadixTreeNode<TimedEntry> * const node2 = radix_tree.get_current_node();
+    const mm::RadixTreeNode<TestedTimedEntry> * const node2 = radix_tree.get_current_node();
 
     EXPECT_EQ(radix_tree.get_unique_node(), 2);
     EXPECT_EQ(node2->name(), "a");
