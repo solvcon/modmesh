@@ -79,8 +79,8 @@ TEST(SimpleArray_DataType, from_string)
     modmesh::DataType dt_bool = modmesh::DataType("bool");
     EXPECT_EQ(dt_bool.type(), modmesh::DataType::Bool);
 
-    EXPECT_THROW(modmesh::DataType("float16"), std::runtime_error); // float16 does not exist
-    EXPECT_THROW(modmesh::DataType("bool8"), std::runtime_error); // bool8 does not exist
+    EXPECT_THROW(modmesh::DataType("float16"), std::invalid_argument); // float16 does not exist
+    EXPECT_THROW(modmesh::DataType("bool8"), std::invalid_argument); // bool8 does not exist
 }
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

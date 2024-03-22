@@ -74,7 +74,7 @@ DataType::DataType(const std::string & data_type_string)
     auto it = detail::string_data_type_map.find(data_type_string);
     if (it == detail::string_data_type_map.end())
     {
-        throw std::runtime_error("Unsupported datatype");
+        throw std::invalid_argument("Unsupported datatype");
     }
     m_data_type = it->second;
 }
