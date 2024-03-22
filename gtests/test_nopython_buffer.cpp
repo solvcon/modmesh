@@ -64,7 +64,6 @@ TEST(SimpleArray, abs)
 
 TEST(SimpleArray_DataType, from_type)
 {
-    using namespace modmesh;
     modmesh::DataType dt_double = modmesh::DataType::from<double>();
     EXPECT_EQ(dt_double.type(), modmesh::DataType::Float64);
 
@@ -74,7 +73,6 @@ TEST(SimpleArray_DataType, from_type)
 
 TEST(SimpleArray_DataType, from_string)
 {
-    using namespace modmesh;
     modmesh::DataType dt_double = modmesh::DataType("float64");
     EXPECT_EQ(dt_double.type(), modmesh::DataType::Float64);
 
