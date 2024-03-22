@@ -40,33 +40,6 @@
 
 namespace modmesh
 {
-/**
- * Simple Timed Entry
- */
-class TimedEntry
-{
-public:
-    size_t count() const { return m_count; }
-    double time() const { return m_time; }
-
-    TimedEntry & add_time(double time)
-    {
-        ++m_count;
-        m_time += time;
-        return *this;
-    }
-
-    friend std::ostream & operator<<(std::ostream & os, const TimedEntry & entry)
-    {
-        os << "Count: " << entry.count() << " - Time: " << entry.time();
-        return os;
-    }
-
-private:
-    size_t m_count = 0;
-    double m_time = 0.0;
-}; /* end class TimedEntry */
-
 template <typename T>
 class RadixTreeNode
 {
