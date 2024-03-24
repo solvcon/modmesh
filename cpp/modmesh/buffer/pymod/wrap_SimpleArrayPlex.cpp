@@ -34,6 +34,133 @@ namespace modmesh
 namespace python
 {
 
+/// Execute the callback function with the typed array
+/// @tparam Callable the type of the callback function
+/// @param arrayplex the plex array, which is the wrapper of the typed array
+/// @param callback the callback function, which has the typed array as the argument
+/// @return the return type of the callback function
+template <typename Callable>
+// NOLINTNEXTLINE(misc-use-anonymous-namespace)
+static auto execute_callback_with_typed_array(SimpleArrayPlex & arrayplex, Callable && callback)
+{
+    switch (arrayplex.data_type())
+    {
+    case DataType::Bool:
+    {
+        auto * array = static_cast<SimpleArrayBool *>(arrayplex.mutable_instance_ptr());
+        return callback(*array);
+        break;
+    }
+    case DataType::Int8:
+    {
+        auto * array = static_cast<SimpleArrayInt8 *>(arrayplex.mutable_instance_ptr());
+        return callback(*array);
+        break;
+    }
+    case DataType::Int16:
+    {
+        auto * array = static_cast<SimpleArrayInt16 *>(arrayplex.mutable_instance_ptr());
+        return callback(*array);
+        break;
+    }
+    case DataType::Int32:
+    {
+        auto * array = static_cast<SimpleArrayInt32 *>(arrayplex.mutable_instance_ptr());
+        return callback(*array);
+        break;
+    }
+    case DataType::Int64:
+    {
+        auto * array = static_cast<SimpleArrayInt64 *>(arrayplex.mutable_instance_ptr());
+        return callback(*array);
+        break;
+    }
+    case DataType::Uint8:
+    {
+        auto * array = static_cast<SimpleArrayUint8 *>(arrayplex.mutable_instance_ptr());
+        return callback(*array);
+        break;
+    }
+    case DataType::Uint16:
+    {
+        auto * array = static_cast<SimpleArrayUint16 *>(arrayplex.mutable_instance_ptr());
+        return callback(*array);
+        break;
+    }
+    case DataType::Uint32:
+    {
+        auto * array = static_cast<SimpleArrayUint32 *>(arrayplex.mutable_instance_ptr());
+        return callback(*array);
+        break;
+    }
+    case DataType::Uint64:
+    {
+        auto * array = static_cast<SimpleArrayUint64 *>(arrayplex.mutable_instance_ptr());
+        return callback(*array);
+        break;
+    }
+    case DataType::Float32:
+    {
+        auto * array = static_cast<SimpleArrayFloat32 *>(arrayplex.mutable_instance_ptr());
+        return callback(*array);
+        break;
+    }
+    case DataType::Float64:
+    {
+        auto * array = static_cast<SimpleArrayFloat64 *>(arrayplex.mutable_instance_ptr());
+        return callback(*array);
+        break;
+    }
+    default:
+    {
+        throw std::invalid_argument("Unsupported datatype");
+    }
+    }
+}
+
+/// Check the data type of the python value match the given data type. If not, throw a type error.
+// NOLINTNEXTLINE(misc-use-anonymous-namespace)
+static void verify_python_value_datatype(pybind11::object const & value, DataType datatype)
+{
+    switch (datatype)
+    {
+    case DataType::Bool:
+    {
+        if (!pybind11::isinstance<pybind11::bool_>(value))
+        {
+            throw pybind11::type_error("Data type mismatch, expected Python bool");
+        }
+        break;
+    }
+    case DataType::Int8:
+    case DataType::Int16:
+    case DataType::Int32:
+    case DataType::Int64:
+    case DataType::Uint8:
+    case DataType::Uint16:
+    case DataType::Uint32:
+    case DataType::Uint64:
+    {
+        if (!pybind11::isinstance<pybind11::int_>(value))
+        {
+            throw pybind11::type_error("Data type mismatch, expected Python int");
+        }
+        break;
+    }
+    case DataType::Float32:
+    case DataType::Float64:
+    {
+        if (!pybind11::isinstance<pybind11::float_>(value))
+        {
+            throw pybind11::type_error("Data type mismatch, expected Python float");
+        }
+        break;
+    }
+    default:
+        throw std::runtime_error("Unsupported datatype");
+    }
+}
+
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<WrapSimpleArrayPlex, SimpleArrayPlex>
 {
     using root_base_type = WrapBase<WrapSimpleArrayPlex, SimpleArrayPlex>;
@@ -75,133 +202,47 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                     }),
                 pybind11::arg("array"))
             .def_property_readonly("typed", &get_typed_array)
+            .def_buffer(
+                [](wrapped_type & self)
+                {
+                    return execute_callback_with_typed_array(
+                        self,
+                        [](auto & array)
+                        {
+                            using data_type = typename std::remove_reference_t<decltype(array[0])>;
+                            std::vector<size_t> stride;
+                            
+                            for (size_t const i : array.stride())
+                            {
+                                stride.push_back(i * sizeof(data_type));
+                            }
+                            return pybind11::buffer_info(
+                                array.data(), /* Pointer to buffer */
+                                sizeof(data_type), /* Size of one scalar */
+                                pybind11::format_descriptor<data_type>::format(), /* Python struct-style format descriptor */
+                                array.ndim(), /* Number of dimensions */
+                                std::vector<size_t>(array.shape().begin(), array.shape().end()), /* Buffer dimensions */
+                                stride /* Strides (in bytes) for each index */
+                            ); });
+                })
             /// TODO: should have the same interface as WrapSimpleArray
             ;
     }
 
     /// Initialize the arrayplex with the given value
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    static wrapped_type init_array_plex_with_value(pybind11::object const & shape_in, pybind11::object const & value, std::string const & datatype)
+    static wrapped_type init_array_plex_with_value(pybind11::object const & shape_in, pybind11::object const & py_value, std::string const & datatype_str)
     {
         const shape_type shape = make_shape(shape_in);
-        wrapped_type array_plex(shape, datatype);
-
-        // cast value to correct type based on the datatype
-        switch (array_plex.data_type())
-        {
-        case DataType::Bool:
-        {
-            if (!pybind11::isinstance<pybind11::bool_>(value))
-            {
-                throw std::runtime_error("Data type mismatch, expected Python bool");
-            }
-            auto * array = static_cast<SimpleArrayBool *>(array_plex.mutable_instance_ptr());
-            array->fill(value.cast<bool>());
-            break;
-        }
-        case DataType::Int8:
-        {
-            if (!pybind11::isinstance<pybind11::int_>(value))
-            {
-                throw std::runtime_error("Data type mismatch, expected Python int");
-            }
-            auto * array = static_cast<SimpleArrayInt8 *>(array_plex.mutable_instance_ptr());
-            array->fill(value.cast<int8_t>());
-            break;
-        }
-        case DataType::Int16:
-        {
-            if (!pybind11::isinstance<pybind11::int_>(value))
-            {
-                throw std::runtime_error("Data type mismatch, expected Python int");
-            }
-            auto * array = static_cast<SimpleArrayInt16 *>(array_plex.mutable_instance_ptr());
-            array->fill(value.cast<int16_t>());
-            break;
-        }
-        case DataType::Int32:
-        {
-            if (!pybind11::isinstance<pybind11::int_>(value))
-            {
-                throw std::runtime_error("Data type mismatch, expected Python int");
-            }
-            auto * array = static_cast<SimpleArrayInt32 *>(array_plex.mutable_instance_ptr());
-            array->fill(value.cast<int32_t>());
-            break;
-        }
-        case DataType::Int64:
-        {
-            if (!pybind11::isinstance<pybind11::int_>(value))
-            {
-                throw std::runtime_error("Data type mismatch, expected Python int");
-            }
-            auto * array = static_cast<SimpleArrayInt64 *>(array_plex.mutable_instance_ptr());
-            array->fill(value.cast<int64_t>());
-            break;
-        }
-        case DataType::Uint8:
-        {
-            if (!pybind11::isinstance<pybind11::int_>(value))
-            {
-                throw std::runtime_error("Data type mismatch, expected Python int");
-            }
-            auto * array = static_cast<SimpleArrayUint8 *>(array_plex.mutable_instance_ptr());
-            array->fill(value.cast<uint8_t>());
-            break;
-        }
-        case DataType::Uint16:
-        {
-            if (!pybind11::isinstance<pybind11::int_>(value))
-            {
-                throw std::runtime_error("Data type mismatch, expected Python int");
-            }
-            auto * array = static_cast<SimpleArrayUint16 *>(array_plex.mutable_instance_ptr());
-            array->fill(value.cast<uint16_t>());
-            break;
-        }
-        case DataType::Uint32:
-        {
-            if (!pybind11::isinstance<pybind11::int_>(value))
-            {
-                throw std::runtime_error("Data type mismatch, expected Python int");
-            }
-            auto * array = static_cast<SimpleArrayUint32 *>(array_plex.mutable_instance_ptr());
-            array->fill(value.cast<int32_t>());
-            break;
-        }
-        case DataType::Uint64:
-        {
-            if (!pybind11::isinstance<pybind11::int_>(value))
-            {
-                throw std::runtime_error("Data type mismatch, expected Python int");
-            }
-            auto * array = static_cast<SimpleArrayUint64 *>(array_plex.mutable_instance_ptr());
-            array->fill(value.cast<int64_t>());
-            break;
-        }
-        case DataType::Float32:
-        {
-            if (!pybind11::isinstance<pybind11::float_>(value))
-            {
-                throw std::runtime_error("Data type mismatch, expected Python float");
-            }
-            auto * array = static_cast<SimpleArrayFloat32 *>(array_plex.mutable_instance_ptr());
-            array->fill(value.cast<float>());
-            break;
-        }
-        case DataType::Float64:
-        {
-            if (!pybind11::isinstance<pybind11::float_>(value))
-            {
-                throw std::runtime_error("Data type mismatch, expected Python float");
-            }
-            auto * array = static_cast<SimpleArrayFloat64 *>(array_plex.mutable_instance_ptr());
-            array->fill(value.cast<double>());
-            break;
-        }
-        default:
-            throw std::runtime_error("Unsupported datatype");
-        }
+        wrapped_type array_plex(shape, datatype_str);
+        auto datatype = array_plex.data_type();
+        execute_callback_with_typed_array(
+            array_plex, [&py_value, datatype](auto & array)
+            { 
+                using value_type = typename std::remove_reference_t<decltype(array[0])>;
+                verify_python_value_datatype(py_value, datatype);
+                const auto value = py_value.cast<value_type>();
+                array.fill(value); });
         return array_plex;
     }
 
@@ -286,6 +327,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
         }
         return shape;
     }
+
 }; /* end of class WrapSimpleArrayPlex*/
 
 void wrap_SimpleArrayPlex(pybind11::module & mod)

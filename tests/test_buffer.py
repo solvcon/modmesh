@@ -716,7 +716,7 @@ class SimpleArrayPlexTC(unittest.TestCase):
         # 2. shape and value constructor
         modmesh.SimpleArray((2, 3, 4), dtype="bool", value=True)
         with self.assertRaisesRegex(
-                RuntimeError,
+                TypeError,
                 r"Data type mismatch, expected Python bool"
         ):
             modmesh.SimpleArray((2, 3, 4), dtype="bool", value=3.3)
@@ -728,7 +728,7 @@ class SimpleArrayPlexTC(unittest.TestCase):
         for dtype in dtype_list_int:
             modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3)
             with self.assertRaisesRegex(
-                RuntimeError,
+                TypeError,
                 r"Data type mismatch, expected Python int"
             ):
                 modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3.3)
@@ -737,7 +737,7 @@ class SimpleArrayPlexTC(unittest.TestCase):
         for dtype in dtype_list_float:
             modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3.0)
             with self.assertRaisesRegex(
-                RuntimeError,
+                TypeError,
                 r"Data type mismatch, expected Python float"
             ):
                 modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3)
@@ -753,5 +753,13 @@ class SimpleArrayPlexTC(unittest.TestCase):
             modmesh.SimpleArray(ndarr)
         boolean_array = np.array([True, False, True], dtype='bool')
         modmesh.SimpleArray(boolean_array)
+
+    def test_SimpleArrayPlex_buffer(self):
+        magic_number = 3.1415
+        sarr = modmesh.SimpleArray(
+            (2, 3, 4), value=magic_number, dtype='float64')
+        ndarr = np.array(sarr, copy=False)
+        self.assertEqual((2, 3, 4), ndarr.shape)
+        self.assertEqual((ndarr == magic_number).all(), True)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
