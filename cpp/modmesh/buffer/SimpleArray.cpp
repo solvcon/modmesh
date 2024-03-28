@@ -172,7 +172,7 @@ SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const DataType data_t
         DECL_MM_CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape)
         DECL_MM_CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape)
     default:
-        throw std::runtime_error("Unsupported datatype");
+        throw std::invalid_argument("Unsupported datatype");
     }
 }
 
@@ -194,7 +194,7 @@ SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const std::shared_ptr
         DECL_MM_CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape, buffer)
         DECL_MM_CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape, buffer)
     default:
-        throw std::runtime_error("Unsupported datatype");
+        throw std::invalid_argument("Unsupported datatype");
     }
 }
 
@@ -291,7 +291,7 @@ SimpleArrayPlex::SimpleArrayPlex(SimpleArrayPlex const & other)
     }
     default:
     {
-        throw std::runtime_error("Unsupported datatype");
+        throw std::invalid_argument("Unsupported datatype");
     }
     }
 }
@@ -408,7 +408,7 @@ SimpleArrayPlex & SimpleArrayPlex::operator=(SimpleArrayPlex const & other)
     }
     default:
     {
-        throw std::runtime_error("Unsupported datatype");
+        throw std::invalid_argument("Unsupported datatype");
     }
     }
     return *this;
