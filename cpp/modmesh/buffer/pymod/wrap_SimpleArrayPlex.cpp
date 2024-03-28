@@ -35,87 +35,43 @@ namespace python
 {
 
 /// Execute the callback function with the typed array
-/// @tparam Callable the type of the callback function
+/// @tparam C the type of the callback function
 /// @param arrayplex the plex array, which is the wrapper of the typed array
 /// @param callback the callback function, which has the typed array as the argument
 /// @return the return type of the callback function
-template <typename Callable>
+template <typename C>
 // NOLINTNEXTLINE(misc-use-anonymous-namespace)
-static auto execute_callback_with_typed_array(SimpleArrayPlex & arrayplex, Callable && callback)
+static auto execute_callback_with_typed_array(SimpleArrayPlex & arrayplex, C && callback)
 {
+// We get the typed array from the arrayplex and call the callback function with the typed array.
+#define DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType, ArrayType)                 \
+    case DataType:                                                                 \
+    {                                                                              \
+        auto * array = static_cast<ArrayType *>(arrayplex.mutable_instance_ptr()); \
+        return callback(*array);                                                   \
+        break;                                                                     \
+    }
+
     switch (arrayplex.data_type())
     {
-    case DataType::Bool:
-    {
-        auto * array = static_cast<SimpleArrayBool *>(arrayplex.mutable_instance_ptr());
-        return callback(*array);
-        break;
-    }
-    case DataType::Int8:
-    {
-        auto * array = static_cast<SimpleArrayInt8 *>(arrayplex.mutable_instance_ptr());
-        return callback(*array);
-        break;
-    }
-    case DataType::Int16:
-    {
-        auto * array = static_cast<SimpleArrayInt16 *>(arrayplex.mutable_instance_ptr());
-        return callback(*array);
-        break;
-    }
-    case DataType::Int32:
-    {
-        auto * array = static_cast<SimpleArrayInt32 *>(arrayplex.mutable_instance_ptr());
-        return callback(*array);
-        break;
-    }
-    case DataType::Int64:
-    {
-        auto * array = static_cast<SimpleArrayInt64 *>(arrayplex.mutable_instance_ptr());
-        return callback(*array);
-        break;
-    }
-    case DataType::Uint8:
-    {
-        auto * array = static_cast<SimpleArrayUint8 *>(arrayplex.mutable_instance_ptr());
-        return callback(*array);
-        break;
-    }
-    case DataType::Uint16:
-    {
-        auto * array = static_cast<SimpleArrayUint16 *>(arrayplex.mutable_instance_ptr());
-        return callback(*array);
-        break;
-    }
-    case DataType::Uint32:
-    {
-        auto * array = static_cast<SimpleArrayUint32 *>(arrayplex.mutable_instance_ptr());
-        return callback(*array);
-        break;
-    }
-    case DataType::Uint64:
-    {
-        auto * array = static_cast<SimpleArrayUint64 *>(arrayplex.mutable_instance_ptr());
-        return callback(*array);
-        break;
-    }
-    case DataType::Float32:
-    {
-        auto * array = static_cast<SimpleArrayFloat32 *>(arrayplex.mutable_instance_ptr());
-        return callback(*array);
-        break;
-    }
-    case DataType::Float64:
-    {
-        auto * array = static_cast<SimpleArrayFloat64 *>(arrayplex.mutable_instance_ptr());
-        return callback(*array);
-        break;
-    }
+        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Bool, SimpleArrayBool)
+        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Int8, SimpleArrayInt8)
+        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Int16, SimpleArrayInt16)
+        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Int32, SimpleArrayInt32)
+        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Int64, SimpleArrayInt64)
+        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Uint8, SimpleArrayUint8)
+        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Uint16, SimpleArrayUint16)
+        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Uint32, SimpleArrayUint32)
+        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Uint64, SimpleArrayUint64)
+        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Float32, SimpleArrayFloat32)
+        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Float64, SimpleArrayFloat64)
     default:
     {
         throw std::invalid_argument("Unsupported datatype");
     }
     }
+
+#undef DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY
 }
 
 /// Check the data type of the python value match the given data type. If not, throw a type error.
