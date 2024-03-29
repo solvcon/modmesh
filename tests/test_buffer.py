@@ -762,4 +762,24 @@ class SimpleArrayPlexTC(unittest.TestCase):
         self.assertEqual((2, 3, 4), ndarr.shape)
         self.assertEqual((ndarr == magic_number).all(), True)
 
+    def test_SimpleArrayPlex_get_item(self):
+        magic_number = 3.1415
+        sarr = modmesh.SimpleArray(
+            (2, 3, 4), value=magic_number, dtype='float64')
+        self.assertEqual(sarr[1, 2, 3], magic_number)
+        self.assertEqual(sarr[2], magic_number)
+
+    def test_SimpleArrayPlex_properties(self):
+        magic_number = 3.1415
+        shape = (2, 3, 4)
+        sarr = modmesh.SimpleArray(shape, value=magic_number, dtype='float64')
+
+        self.assertEqual(sarr.nbytes, 2*3*4*8)
+        self.assertEqual(sarr.size, 2*3*4)
+        self.assertEqual(sarr.itemsize, 8)
+        self.assertEqual(sarr.stride, (12, 4, 1))
+        self.assertEqual(len(sarr), 2*3*4)  # number of elements
+        self.assertEqual(sarr.nbody, 2 - 0)
+        self.assertEqual(sarr.has_ghost, False)
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
