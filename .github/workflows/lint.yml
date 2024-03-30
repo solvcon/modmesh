@@ -179,8 +179,8 @@ jobs:
         run: |
           echo "which python3: $(which python3)"
           ls -al $(which python3)
-          if [ "${{ matrix.os }}" == "macos-13" ] ; then
-            # suppress the warning of pip because of python link issue of brew
+          if [ "${{ matrix.os }}" == "macos-13" ] || [ "${{ matrix.os }}" == "macos-14" ] ; then
+            # suppress the warning of pip because brew forces PEP668 since python3.12
             python3 -m pip -v install --upgrade setuptools --break-system-packages
             python3 -m pip -v install --upgrade pip --break-system-packages
             python3 -m pip -v install --upgrade numpy pytest flake8 pyside6==$(qmake -query QT_VERSION) --break-system-packages
