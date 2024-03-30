@@ -28,6 +28,8 @@
 
 #include <modmesh/buffer/pymod/buffer_pymod.hpp> // Must be the first include.
 
+#include <type_traits>
+
 namespace modmesh
 {
 
@@ -35,21 +37,23 @@ namespace python
 {
 
 /// Execute the callback function with the typed array
+/// @tparam A either `SimpleArrayPlex` or `const SimpleArrayPlex`
 /// @tparam C the type of the callback function
 /// @param arrayplex the plex array, which is the wrapper of the typed array
-/// @param callback the callback function, which has the typed array as the argument
+/// @param callback the callback function, which has the mutable typed array as the argument
 /// @return the return type of the callback function
-template <typename C>
+template <typename A, typename C, typename = std::enable_if_t<std::is_same_v<std::remove_const_t<A>, SimpleArrayPlex>>>
 // NOLINTNEXTLINE(misc-use-anonymous-namespace)
-static auto execute_callback_with_typed_array(SimpleArrayPlex & arrayplex, C && callback)
+static auto execute_callback_with_typed_array(A & arrayplex, C && callback)
 {
 // We get the typed array from the arrayplex and call the callback function with the typed array.
-#define DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType, ArrayType)                 \
-    case DataType:                                                                 \
-    {                                                                              \
-        auto * array = static_cast<ArrayType *>(arrayplex.mutable_instance_ptr()); \
-        return callback(*array);                                                   \
-        break;                                                                     \
+#define DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType, ArrayType)                                                     \
+    case DataType:                                                                                                     \
+    {                                                                                                                  \
+        using ArrayTypePtr = typename std::conditional<std::is_const<A>::value, const ArrayType *, ArrayType *>::type; \
+        /* NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) */                                              \
+        auto array = reinterpret_cast<ArrayTypePtr>(arrayplex.mutable_instance_ptr());                                 \
+        return callback(*array);                                                                                       \
     }
 
     switch (arrayplex.data_type())
@@ -117,6 +121,87 @@ static void verify_python_value_datatype(pybind11::object const & value, DataTyp
     }
 }
 
+// NOLINTNEXTLINE(misc-use-anonymous-namespace)
+static modmesh::detail::shape_type make_shape(pybind11::object const & shape_in)
+{
+    modmesh::detail::shape_type shape;
+    try
+    {
+        shape.push_back(shape_in.cast<size_t>());
+    }
+    catch (const pybind11::cast_error &)
+    {
+        shape = shape_in.cast<std::vector<size_t>>();
+    }
+    return shape;
+}
+
+/// Get the typed array value by the key
+/// @tparam T the type of the key
+template <typename T>
+// NOLINTNEXTLINE(misc-use-anonymous-namespace)
+static pybind11::object get_typed_array_value(const SimpleArrayPlex & array_plex, T key)
+{
+#define DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType, ArrayType)                     \
+    case DataType:                                                                      \
+    {                                                                                   \
+        const auto * array = static_cast<const ArrayType *>(array_plex.instance_ptr()); \
+        return pybind11::cast(array->at(key));                                          \
+    }
+
+    switch (array_plex.data_type())
+    {
+        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Bool, SimpleArrayBool)
+        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Int8, SimpleArrayInt8)
+        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Int16, SimpleArrayInt16)
+        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Int32, SimpleArrayInt32)
+        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Int64, SimpleArrayInt64)
+        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Uint8, SimpleArrayUint8)
+        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Uint16, SimpleArrayUint16)
+        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Uint32, SimpleArrayUint32)
+        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Uint64, SimpleArrayUint64)
+        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Float32, SimpleArrayFloat32)
+        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Float64, SimpleArrayFloat64)
+    default:
+    {
+        throw std::runtime_error("Unsupported datatype");
+    }
+    }
+#undef DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX
+}
+
+/// Get the typed array from the arrayplex
+// NOLINTNEXTLINE(misc-use-anonymous-namespace)
+static pybind11::object get_typed_array(const SimpleArrayPlex & array_plex)
+{
+#define DECL_MM_GET_TYPED_ARRAY(DataType, ArrayType)                                    \
+    case DataType:                                                                      \
+    {                                                                                   \
+        const auto * array = static_cast<const ArrayType *>(array_plex.instance_ptr()); \
+        return pybind11::cast(std::move(ArrayType(*array)));                            \
+    }
+
+    switch (array_plex.data_type())
+    {
+        DECL_MM_GET_TYPED_ARRAY(DataType::Bool, SimpleArrayBool)
+        DECL_MM_GET_TYPED_ARRAY(DataType::Int8, SimpleArrayInt8)
+        DECL_MM_GET_TYPED_ARRAY(DataType::Int16, SimpleArrayInt16)
+        DECL_MM_GET_TYPED_ARRAY(DataType::Int32, SimpleArrayInt32)
+        DECL_MM_GET_TYPED_ARRAY(DataType::Int64, SimpleArrayInt64)
+        DECL_MM_GET_TYPED_ARRAY(DataType::Uint8, SimpleArrayUint8)
+        DECL_MM_GET_TYPED_ARRAY(DataType::Uint16, SimpleArrayUint16)
+        DECL_MM_GET_TYPED_ARRAY(DataType::Uint32, SimpleArrayUint32)
+        DECL_MM_GET_TYPED_ARRAY(DataType::Uint64, SimpleArrayUint64)
+        DECL_MM_GET_TYPED_ARRAY(DataType::Float32, SimpleArrayFloat32)
+        DECL_MM_GET_TYPED_ARRAY(DataType::Float64, SimpleArrayFloat64)
+    default:
+    {
+        throw std::runtime_error("Unsupported datatype");
+    }
+    }
+#undef DECL_MM_GET_TYPED_ARRAY
+}
+
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<WrapSimpleArrayPlex, SimpleArrayPlex>
 {
     using root_base_type = WrapBase<WrapSimpleArrayPlex, SimpleArrayPlex>;
@@ -181,6 +266,72 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                                 stride /* Strides (in bytes) for each index */
                             ); });
                 })
+            .def_property_readonly("nbytes", [](wrapped_type & self)
+                                   { return execute_callback_with_typed_array(
+                                         self, [](auto & array)
+                                         { return array.nbytes(); }); })
+            .def_property_readonly("size", [](wrapped_type & self)
+                                   { return execute_callback_with_typed_array(
+                                         self, [](auto & array)
+                                         { return array.size(); }); })
+            .def_property_readonly("itemsize", [](wrapped_type & self)
+                                   { return execute_callback_with_typed_array(
+                                         self, [](auto & array)
+                                         { return array.itemsize(); }); })
+            .def_property_readonly(
+                "shape",
+                [](wrapped_type const & self)
+                {
+                    return execute_callback_with_typed_array(
+                        self, [](const auto & array)
+                        {
+                            pybind11::tuple ret(array.shape().size());
+                            for (size_t i = 0; i < array.shape().size(); ++i)
+                            {
+                                ret[i] = array.shape()[i];
+                            }
+                            return ret; });
+                })
+            .def_property_readonly(
+                "stride",
+                [](wrapped_type const & self)
+                {
+                    return execute_callback_with_typed_array(
+                        self,
+                        [](const auto & array)
+                        {
+                            pybind11::tuple ret(array.stride().size());
+                            for (size_t i = 0; i < array.stride().size(); ++i)
+                            {
+                                ret[i] = array.stride()[i];
+                            }
+                            return ret;
+                        });
+                })
+            .def("__len__", [](wrapped_type & self)
+                 { return execute_callback_with_typed_array(
+                       self, [](auto & array)
+                       { return array.size(); }); })
+            .def("__getitem__", &get_typed_array_value<ssize_t>)
+            .def("__getitem__", &get_typed_array_value<const std::vector<ssize_t> &>)
+            .def(
+                "reshape",
+                [](wrapped_type const & self, pybind11::object const & py_shape)
+                { return execute_callback_with_typed_array(
+                      self,
+                      // NOLINTNEXTLINE(fuchsia-trailing-return)
+                      [&](const auto & array) -> wrapped_type // need the return type to get correct deduced type
+                      { 
+                        const auto shape = make_shape(py_shape);
+                        return array.reshape(shape); }); })
+            .def_property_readonly("has_ghost", [](wrapped_type & self)
+                                   { return execute_callback_with_typed_array(
+                                         self, [](auto & array)
+                                         { return array.has_ghost(); }); })
+            .def_property_readonly("nbody", [](wrapped_type & self)
+                                   { return execute_callback_with_typed_array(
+                                         self, [](auto & array)
+                                         { return array.nbody(); }); })
             /// TODO: should have the same interface as WrapSimpleArray
             ;
     }
@@ -200,88 +351,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                 const auto value = py_value.cast<value_type>();
                 array.fill(value); });
         return array_plex;
-    }
-
-    /// Return the typed function from the arrayplex
-    static pybind11::object
-    get_typed_array(wrapped_type const & array_plex)
-    {
-        switch (array_plex.data_type())
-        {
-        case DataType::Bool:
-        {
-            const auto * array = static_cast<const SimpleArrayBool *>(array_plex.instance_ptr());
-            return pybind11::cast(std::move(SimpleArrayBool(*array)));
-        }
-        case DataType::Int8:
-        {
-            const auto * array = static_cast<const SimpleArrayInt8 *>(array_plex.instance_ptr());
-            return pybind11::cast(std::move(SimpleArrayInt8(*array)));
-        }
-        case DataType::Int16:
-        {
-            const auto * array = static_cast<const SimpleArrayInt16 *>(array_plex.instance_ptr());
-            return pybind11::cast(std::move(SimpleArrayInt16(*array)));
-        }
-        case DataType::Int32:
-        {
-            const auto * array = static_cast<const SimpleArrayInt32 *>(array_plex.instance_ptr());
-            return pybind11::cast(std::move(SimpleArrayInt32(*array)));
-        }
-        case DataType::Int64:
-        {
-            const auto * array = static_cast<const SimpleArrayInt64 *>(array_plex.instance_ptr());
-            return pybind11::cast(std::move(SimpleArrayInt64(*array)));
-        }
-        case DataType::Uint8:
-        {
-            const auto * array = static_cast<const SimpleArrayUint8 *>(array_plex.instance_ptr());
-            return pybind11::cast(std::move(SimpleArrayUint8(*array)));
-        }
-        case DataType::Uint16:
-        {
-            const auto * array = static_cast<const SimpleArrayUint16 *>(array_plex.instance_ptr());
-            return pybind11::cast(std::move(SimpleArrayUint16(*array)));
-        }
-        case DataType::Uint32:
-        {
-            const auto * array = static_cast<const SimpleArrayUint32 *>(array_plex.instance_ptr());
-            return pybind11::cast(std::move(SimpleArrayUint32(*array)));
-        }
-        case DataType::Uint64:
-        {
-            const auto * array = static_cast<const SimpleArrayUint64 *>(array_plex.instance_ptr());
-            return pybind11::cast(std::move(SimpleArrayUint64(*array)));
-        }
-        case DataType::Float32:
-        {
-            const auto * array = static_cast<const SimpleArrayFloat32 *>(array_plex.instance_ptr());
-            return pybind11::cast(std::move(SimpleArrayFloat32(*array)));
-        }
-        case DataType::Float64:
-        {
-            const auto * array = static_cast<const SimpleArrayFloat64 *>(array_plex.instance_ptr());
-            return pybind11::cast(std::move(SimpleArrayFloat64(*array)));
-        }
-        default:
-        {
-            throw std::runtime_error("Unsupported datatype");
-        }
-        }
-    }
-
-    static shape_type make_shape(pybind11::object const & shape_in)
-    {
-        shape_type shape;
-        try
-        {
-            shape.push_back(shape_in.cast<size_t>());
-        }
-        catch (const pybind11::cast_error &)
-        {
-            shape = shape_in.cast<std::vector<size_t>>();
-        }
-        return shape;
     }
 
 }; /* end of class WrapSimpleArrayPlex*/
