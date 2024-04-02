@@ -28,6 +28,7 @@
 
 #include <modmesh/buffer/pymod/buffer_pymod.hpp> // Must be the first include.
 
+#include <modmesh/buffer/pymod/array_common.hpp>
 #include <type_traits>
 
 namespace modmesh
@@ -119,21 +120,6 @@ static void verify_python_value_datatype(pybind11::object const & value, DataTyp
     default:
         throw std::runtime_error("Unsupported datatype");
     }
-}
-
-// NOLINTNEXTLINE(misc-use-anonymous-namespace)
-static modmesh::detail::shape_type make_shape(pybind11::object const & shape_in)
-{
-    modmesh::detail::shape_type shape;
-    try
-    {
-        shape.push_back(shape_in.cast<size_t>());
-    }
-    catch (const pybind11::cast_error &)
-    {
-        shape = shape_in.cast<std::vector<size_t>>();
-    }
-    return shape;
 }
 
 /// Get the typed array value by the key
@@ -251,20 +237,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                         [](auto & array)
                         {
                             using data_type = typename std::remove_reference_t<decltype(array[0])>;
-                            std::vector<size_t> stride;
-                            
-                            for (size_t const i : array.stride())
-                            {
-                                stride.push_back(i * sizeof(data_type));
-                            }
-                            return pybind11::buffer_info(
-                                array.data(), /* Pointer to buffer */
-                                sizeof(data_type), /* Size of one scalar */
-                                pybind11::format_descriptor<data_type>::format(), /* Python struct-style format descriptor */
-                                array.ndim(), /* Number of dimensions */
-                                std::vector<size_t>(array.shape().begin(), array.shape().end()), /* Buffer dimensions */
-                                stride /* Strides (in bytes) for each index */
-                            ); });
+                            return get_buffer_info<data_type>(array); });
                 })
             .def_property_readonly("nbytes", [](wrapped_type & self)
                                    { return execute_callback_with_typed_array(
@@ -285,28 +258,18 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                     return execute_callback_with_typed_array(
                         self, [](const auto & array)
                         {
-                            pybind11::tuple ret(array.shape().size());
-                            for (size_t i = 0; i < array.shape().size(); ++i)
-                            {
-                                ret[i] = array.shape()[i];
-                            }
-                            return ret; });
+                            using data_type = typename std::remove_const_t<std::remove_reference_t<decltype(array[0])>>;
+                            return get_array_shape<data_type>(array); });
                 })
             .def_property_readonly(
                 "stride",
                 [](wrapped_type const & self)
                 {
                     return execute_callback_with_typed_array(
-                        self,
-                        [](const auto & array)
+                        self, [](const auto & array)
                         {
-                            pybind11::tuple ret(array.stride().size());
-                            for (size_t i = 0; i < array.stride().size(); ++i)
-                            {
-                                ret[i] = array.stride()[i];
-                            }
-                            return ret;
-                        });
+                            using data_type = typename std::remove_const_t<std::remove_reference_t<decltype(array[0])>>;
+                            return get_array_stride<data_type>(array); });
                 })
             .def("__len__", [](wrapped_type & self)
                  { return execute_callback_with_typed_array(
@@ -314,14 +277,18 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                        { return array.size(); }); })
             .def("__getitem__", &get_typed_array_value<ssize_t>)
             .def("__getitem__", &get_typed_array_value<const std::vector<ssize_t> &>)
-            .def(
-                "reshape",
-                [](wrapped_type const & self, pybind11::object const & py_shape)
-                { return execute_callback_with_typed_array(
-                      self,
-                      // NOLINTNEXTLINE(fuchsia-trailing-return)
-                      [&](const auto & array) -> wrapped_type // need the return type to get correct deduced type
-                      { 
+            .def("__setitem__", [](wrapped_type & self, pybind11::args const & args)
+                 { return execute_callback_with_typed_array(
+                       self, [&args](auto & array)
+                       { 
+                            using data_type = typename std::remove_reference_t<decltype(array[0])>;
+                            setitem_parser<data_type>(array, args); }); })
+            .def("reshape", [](wrapped_type const & self, pybind11::object const & py_shape)
+                 { return execute_callback_with_typed_array(
+                       self,
+                       // NOLINTNEXTLINE(fuchsia-trailing-return)
+                       [&](const auto & array) -> wrapped_type // need the return type to get correct deduced type
+                       { 
                         const auto shape = make_shape(py_shape);
                         return array.reshape(shape); }); })
             .def_property_readonly("has_ghost", [](wrapped_type & self)

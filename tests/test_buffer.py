@@ -774,12 +774,47 @@ class SimpleArrayPlexTC(unittest.TestCase):
         shape = (2, 3, 4)
         sarr = modmesh.SimpleArray(shape, value=magic_number, dtype='float64')
 
-        self.assertEqual(sarr.nbytes, 2*3*4*8)
-        self.assertEqual(sarr.size, 2*3*4)
+        self.assertEqual(sarr.nbytes, 2 * 3 * 4 * 8)
+        self.assertEqual(sarr.size, 2 * 3 * 4)
         self.assertEqual(sarr.itemsize, 8)
         self.assertEqual(sarr.stride, (12, 4, 1))
-        self.assertEqual(len(sarr), 2*3*4)  # number of elements
+        self.assertEqual(len(sarr), 2 * 3 * 4)  # number of elements
         self.assertEqual(sarr.nbody, 2 - 0)
         self.assertEqual(sarr.has_ghost, False)
+
+    def test_SimpleArrayPlex_set_item_simple(self):
+        # just test if the SimpleArrayPlex works
+        # more detailed tests are in SimpleArrayBasicTC
+        magic_number = 1214
+
+        sarr = modmesh.SimpleArray(20, dtype="uint32")
+        sarr[7] = magic_number
+        self.assertEqual(sarr[7], magic_number)
+
+        magic_number = 12141618
+        sarr = modmesh.SimpleArray((2, 3, 4), dtype="uint64")
+        sarr[1, 2, 3] = magic_number
+        self.assertEqual(sarr[1, 2, 3], magic_number)
+
+    def test_SimpleArrayPlex_set_item_ellipse(self):
+        # just test if the SimpleArrayPlex works
+        # more detailed tests are in SimpleArrayBasicTC
+        sarr = modmesh.SimpleArray((2, 3, 4), dtype="float64")
+        ndarr = np.arange(
+            (4 * 2) * (3 * 3) * (2 * 4), dtype='float64').reshape(
+            (4 * 2, 3 * 3, 2 * 4))
+
+        stride_arr = ndarr[::4, ::3, ::2]
+
+        # point to the same data
+        self.assertEqual(ndarr.__array_interface__['data'],
+                         stride_arr.__array_interface__['data'])
+
+        sarr[...] = stride_arr[...]
+
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(stride_arr[i, j, k], sarr[i, j, k])
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
