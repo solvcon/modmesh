@@ -113,20 +113,19 @@ jobs:
         sudo apt-get -qy install \
             sudo curl git build-essential make cmake libc6-dev gcc g++ \
             python3 python3-dev python3-venv
-        # # Install qt6 only with ubuntu-22.04
-        # # This page explains why we need libgl1-mesa-dev
-        # # https://doc-snapshots.qt.io/qt6-dev/linux.html
-        # #
-        # # In short, OpenGL libraries and headers are required. Without
-        # # installing this package, cmake won't find out the correct lib path.
+        # Install qt6 only with ubuntu-22.04
+        # This page explains why we need libgl1-mesa-dev
+        # https://doc-snapshots.qt.io/qt6-dev/linux.html
+        #
+        # In short, OpenGL libraries and headers are required. Without
+        # installing this package, cmake won't find the correct lib path.
+        # This has been replaced by the 'Install Qt' section below to manage qt6 versioning independently from the OS.
 
         # if [ "${{ matrix.os }}" == "ubuntu-22.04" ] ; then \
         #   sudo apt-get -qy install \
         #       qt6-3d-dev xvfb \
         #       libgl1-mesa-dev
         # fi
-
-        # # This has been replaced by the 'Install Qt' section below to manage qt6 versioning independently from the OS.
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v3
@@ -282,8 +281,8 @@ jobs:
         run: |
           export HOMEBREW_NO_AUTO_UPDATE=1
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
+          # This has been replaced by the 'Install Qt' section below to manage qt6 versioning independently from the OS.
           # brew install qt6
-          # # This has been replaced by the 'Install Qt' section below to manage qt6 versioning independently from the OS.
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
