@@ -131,7 +131,7 @@ jobs:
       uses: jurplel/install-qt-action@v3
       with:
         aqtversion: '==3.1.*'
-        version: '6.5.3'
+        version: '6.6.3'
         host: 'linux'
         target: 'desktop'
         arch: 'gcc_64'
@@ -255,6 +255,7 @@ jobs:
 
     env:
       QT_DEBUG_PLUGINS: 1
+      PIP_BREAK_SYSTEM_PACKAGES: 1 # disabling PEP668
 
     strategy:
       matrix:
@@ -288,7 +289,7 @@ jobs:
         uses: jurplel/install-qt-action@v3
         with:
           aqtversion: '==3.1.*'
-          version: '6.5.3'
+          version: '6.6.3'
           host: 'mac'
           target: 'desktop'
           arch: 'clang_64'
@@ -465,7 +466,7 @@ jobs:
         uses: jurplel/install-qt-action@v3
         with:
           aqtversion: '==3.1.*'
-          version: '6.5.3'
+          version: '6.6.3'
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2019_64'
