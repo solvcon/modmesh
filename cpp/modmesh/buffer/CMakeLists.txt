@@ -9,6 +9,7 @@ set(MODMESH_BUFFER_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/ConcreteBuffer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ExpandableBuffer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SimpleArray.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SimpleCollector.hpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_BUFFER_SOURCES

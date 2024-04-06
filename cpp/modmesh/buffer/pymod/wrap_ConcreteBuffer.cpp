@@ -121,7 +121,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapExpandableBuffer
 }; /* end class WrapExpandableBuffer */
 
 WrapExpandableBuffer::WrapExpandableBuffer(pybind11::module & mod, char const * pyname, char const * pydoc)
-    : root_base_type(mod, pyname, pydoc, pybind11::buffer_protocol())
+    : root_base_type(mod, pyname, pydoc)
 {
     namespace py = pybind11;
 

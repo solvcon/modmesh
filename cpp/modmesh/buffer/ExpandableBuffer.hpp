@@ -64,6 +64,11 @@ public:
         return std::make_shared<ExpandableBuffer>(std::forward<Args>(args)..., ctor_passkey());
     }
 
+    ExpandableBuffer(size_type nbyte, ctor_passkey const &)
+    {
+        expand(nbyte);
+    }
+
     ExpandableBuffer(ctor_passkey const &) {}
 
     ExpandableBuffer() = delete;
@@ -91,7 +96,7 @@ public:
         m_end = m_begin + nbyte;
     }
 
-    std::shared_ptr<ConcreteBuffer> const & as_concrete(size_type cap);
+    std::shared_ptr<ConcreteBuffer> const & as_concrete(size_type cap = 0);
 
     int8_t operator[](size_t it) const { return data(it); }
     int8_t & operator[](size_t it) { return data(it); }

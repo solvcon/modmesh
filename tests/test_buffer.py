@@ -810,4 +810,25 @@ class SimpleArrayPlexTC(unittest.TestCase):
         self.assertEqual(sarr.nbody, 2 - 0)
         self.assertEqual(sarr.has_ghost, False)
 
+
+class SimpleCollectorTC(unittest.TestCase):
+
+    def test_construct(self):
+        ct = modmesh.SimpleCollectorFloat64(6)
+        self.assertEqual(6, ct.capacity)
+        self.assertEqual(6, len(ct))
+
+        # initialize
+        for it in range(6):
+            ct[it] = it
+
+        arr = ct.as_array()
+        self.assertEqual(6, len(arr))
+        self.assertEqual(list(range(6)), list(arr))
+
+        # prove ct and arr share memory
+        for it in range(6):
+            ct[it] = it + 10
+        self.assertEqual(list(it + 10 for it in range(6)), list(ct))
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

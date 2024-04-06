@@ -36,5 +36,6 @@
 #include <modmesh/buffer/ConcreteBuffer.hpp>
 #include <modmesh/buffer/ExpandableBuffer.hpp>
 #include <modmesh/buffer/SimpleArray.hpp>
+#include <modmesh/buffer/SimpleCollector.hpp>
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
