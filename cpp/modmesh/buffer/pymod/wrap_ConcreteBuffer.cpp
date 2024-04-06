@@ -110,9 +110,45 @@ WrapConcreteBuffer::WrapConcreteBuffer(pybind11::module & mod, char const * pyna
         ;
 }
 
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapExpandableBuffer
+    : public WrapBase<WrapExpandableBuffer, ExpandableBuffer, std::shared_ptr<ExpandableBuffer>>
+{
+
+    friend root_base_type;
+
+    WrapExpandableBuffer(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+}; /* end class WrapExpandableBuffer */
+
+WrapExpandableBuffer::WrapExpandableBuffer(pybind11::module & mod, char const * pyname, char const * pydoc)
+    : root_base_type(mod, pyname, pydoc, pybind11::buffer_protocol())
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def_timed(py::init([]()
+                            { return wrapped_type::construct(); }))
+        .def("reserve", &wrapped_type::reserve, py::arg("cap"))
+        .def("expand", &wrapped_type::expand, py::arg("nbyte"))
+        .def_property_readonly("capacity", &wrapped_type::capacity)
+        .def("__len__", &wrapped_type::size)
+        .def(
+            "__getitem__",
+            [](wrapped_type const & self, size_t it)
+            { return self.at(it); })
+        .def(
+            "__setitem__",
+            [](wrapped_type & self, size_t it, int8_t val)
+            { self.at(it) = val; })
+        .def("as_concrete", &wrapped_type::as_concrete, py::arg("cap") = 0)
+        //
+        ;
+}
+
 void wrap_ConcreteBuffer(pybind11::module & mod)
 {
     WrapConcreteBuffer::commit(mod, "ConcreteBuffer", "ConcreteBuffer");
+    WrapExpandableBuffer::commit(mod, "ExpandableBuffer", "ExpandableBuffer");
 }
 
 } /* end namespace python */

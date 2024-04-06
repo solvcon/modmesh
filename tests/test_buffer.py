@@ -86,6 +86,33 @@ class ConcreteBufferBasicTC(unittest.TestCase):
         self.assertTrue((ndarr == 0).all())
 
 
+class ExpandableBufferBasicTC(unittest.TestCase):
+
+    def test_ExpandableBuffer(self):
+        ebuf = modmesh.ExpandableBuffer()
+        self.assertEqual(0, ebuf.capacity)
+        self.assertEqual(0, len(ebuf))
+        ebuf.reserve(10)
+        self.assertEqual(10, ebuf.capacity)
+        self.assertEqual(0, len(ebuf))  # size unchanged
+        ebuf.expand(10)
+        self.assertEqual(10, ebuf.capacity)
+        self.assertEqual(10, len(ebuf))  # size changed
+
+        # initialize
+        for it in range(len(ebuf)):
+            ebuf[it] = it
+
+        cbuf = ebuf.as_concrete()
+        self.assertEqual(10, len(cbuf))
+        self.assertEqual(list(range(10)), list(cbuf))
+
+        # prove cbuf and gbuf share memory
+        for it in range(len(cbuf)):
+            cbuf[it] = it + 10
+        self.assertEqual(list(i + 10 for i in range(10)), list(ebuf))
+
+
 class SimpleArrayBasicTC(unittest.TestCase):
 
     def test_SimpleArray(self):
@@ -634,7 +661,8 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         # check if arrayplex can cast to simplearray
         self.assertEqual(
-            helper.test_load_arrayfloat64_from_arrayplex(arrayplex_float64), True)  # noqa: E501
+            helper.test_load_arrayfloat64_from_arrayplex(arrayplex_float64),
+            True)  # noqa: E501
 
         # float64 and int32 are differet types
         with self.assertRaisesRegex(TypeError,
@@ -728,8 +756,8 @@ class SimpleArrayPlexTC(unittest.TestCase):
         for dtype in dtype_list_int:
             modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3)
             with self.assertRaisesRegex(
-                TypeError,
-                r"Data type mismatch, expected Python int"
+                    TypeError,
+                    r"Data type mismatch, expected Python int"
             ):
                 modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3.3)
 
@@ -737,8 +765,8 @@ class SimpleArrayPlexTC(unittest.TestCase):
         for dtype in dtype_list_float:
             modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3.0)
             with self.assertRaisesRegex(
-                TypeError,
-                r"Data type mismatch, expected Python float"
+                    TypeError,
+                    r"Data type mismatch, expected Python float"
             ):
                 modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3)
 
@@ -774,11 +802,11 @@ class SimpleArrayPlexTC(unittest.TestCase):
         shape = (2, 3, 4)
         sarr = modmesh.SimpleArray(shape, value=magic_number, dtype='float64')
 
-        self.assertEqual(sarr.nbytes, 2*3*4*8)
-        self.assertEqual(sarr.size, 2*3*4)
+        self.assertEqual(sarr.nbytes, 2 * 3 * 4 * 8)
+        self.assertEqual(sarr.size, 2 * 3 * 4)
         self.assertEqual(sarr.itemsize, 8)
         self.assertEqual(sarr.stride, (12, 4, 1))
-        self.assertEqual(len(sarr), 2*3*4)  # number of elements
+        self.assertEqual(len(sarr), 2 * 3 * 4)  # number of elements
         self.assertEqual(sarr.nbody, 2 - 0)
         self.assertEqual(sarr.has_ghost, False)
 
