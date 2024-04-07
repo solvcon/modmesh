@@ -42,7 +42,7 @@ __all__ = [  # noqa: F822
     'TimeRegistry',
     'time_registry',
     'ConcreteBuffer',
-    'ExpandableBuffer',
+    'BufferExpander',
     'Gmsh',
     'SimpleArray',
     'SimpleArrayBool',

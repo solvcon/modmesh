@@ -110,17 +110,17 @@ WrapConcreteBuffer::WrapConcreteBuffer(pybind11::module & mod, char const * pyna
         ;
 }
 
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapExpandableBuffer
-    : public WrapBase<WrapExpandableBuffer, ExpandableBuffer, std::shared_ptr<ExpandableBuffer>>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapBufferExpander
+    : public WrapBase<WrapBufferExpander, BufferExpander, std::shared_ptr<BufferExpander>>
 {
 
     friend root_base_type;
 
-    WrapExpandableBuffer(pybind11::module & mod, char const * pyname, char const * pydoc);
+    WrapBufferExpander(pybind11::module & mod, char const * pyname, char const * pydoc);
 
-}; /* end class WrapExpandableBuffer */
+}; /* end class WrapBufferExpander */
 
-WrapExpandableBuffer::WrapExpandableBuffer(pybind11::module & mod, char const * pyname, char const * pydoc)
+WrapBufferExpander::WrapBufferExpander(pybind11::module & mod, char const * pyname, char const * pydoc)
     : root_base_type(mod, pyname, pydoc)
 {
     namespace py = pybind11;
@@ -156,7 +156,7 @@ WrapExpandableBuffer::WrapExpandableBuffer(pybind11::module & mod, char const * 
 void wrap_ConcreteBuffer(pybind11::module & mod)
 {
     WrapConcreteBuffer::commit(mod, "ConcreteBuffer", "ConcreteBuffer");
-    WrapExpandableBuffer::commit(mod, "ExpandableBuffer", "ExpandableBuffer");
+    WrapBufferExpander::commit(mod, "BufferExpander", "BufferExpander");
 }
 
 } /* end namespace python */

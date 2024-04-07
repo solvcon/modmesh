@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/buffer/ExpandableBuffer.hpp>
+#include <modmesh/buffer/BufferExpander.hpp>
 #include <modmesh/buffer/SimpleArray.hpp>
 
 #include <limits>
@@ -48,17 +48,17 @@ private:
 public:
 
     using value_type = typename array_internal_types::value_type;
-    using expander_type = ExpandableBuffer;
+    using expander_type = BufferExpander;
 
     static constexpr size_t ITEMSIZE = sizeof(value_type);
 
     explicit SimpleCollector(size_t length)
-        : m_expander(ExpandableBuffer::construct(length * ITEMSIZE))
+        : m_expander(BufferExpander::construct(length * ITEMSIZE))
     {
     }
 
     SimpleCollector()
-        : m_expander(ExpandableBuffer::construct())
+        : m_expander(BufferExpander::construct())
     {
     }
 

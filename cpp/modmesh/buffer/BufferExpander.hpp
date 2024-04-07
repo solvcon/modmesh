@@ -43,8 +43,8 @@ namespace modmesh
  * Untyped and growing memory buffer for contiguous data storage.  The internal
  * expandable memory buffer cannot be used externally.
  */
-class ExpandableBuffer
-    : public std::enable_shared_from_this<ExpandableBuffer>
+class BufferExpander
+    : public std::enable_shared_from_this<BufferExpander>
 {
 
 private:
@@ -59,17 +59,17 @@ public:
     using difference_type = std::ptrdiff_t;
 
     template <typename... Args>
-    static std::shared_ptr<ExpandableBuffer> construct(Args &&... args)
+    static std::shared_ptr<BufferExpander> construct(Args &&... args)
     {
-        return std::make_shared<ExpandableBuffer>(std::forward<Args>(args)..., ctor_passkey());
+        return std::make_shared<BufferExpander>(std::forward<Args>(args)..., ctor_passkey());
     }
 
-    std::shared_ptr<ExpandableBuffer> clone()
+    std::shared_ptr<BufferExpander> clone()
     {
-        return ExpandableBuffer::construct(copy_concrete(), /*clone*/ false);
+        return BufferExpander::construct(copy_concrete(), /*clone*/ false);
     }
 
-    ExpandableBuffer(std::shared_ptr<ConcreteBuffer> const & buf, bool clone, ctor_passkey const &)
+    BufferExpander(std::shared_ptr<ConcreteBuffer> const & buf, bool clone, ctor_passkey const &)
         : m_concrete_buffer(clone ? buf->clone() : buf)
         , m_begin(m_concrete_buffer->data())
         , m_end(m_begin + size())
@@ -77,19 +77,19 @@ public:
     {
     }
 
-    ExpandableBuffer(size_type nbyte, ctor_passkey const &)
+    BufferExpander(size_type nbyte, ctor_passkey const &)
     {
         expand(nbyte);
     }
 
-    ExpandableBuffer(ctor_passkey const &) {}
+    BufferExpander(ctor_passkey const &) {}
 
-    ExpandableBuffer() = delete;
-    ExpandableBuffer(ExpandableBuffer const &) = delete;
-    ExpandableBuffer(ExpandableBuffer &&) = delete;
-    ExpandableBuffer & operator=(ExpandableBuffer const &) = delete;
-    ExpandableBuffer & operator=(ExpandableBuffer &&) = delete;
-    ~ExpandableBuffer() = default;
+    BufferExpander() = delete;
+    BufferExpander(BufferExpander const &) = delete;
+    BufferExpander(BufferExpander &&) = delete;
+    BufferExpander & operator=(BufferExpander const &) = delete;
+    BufferExpander & operator=(BufferExpander &&) = delete;
+    ~BufferExpander() = default;
 
     size_type size() const noexcept
     {
@@ -145,7 +145,7 @@ private:
     {
         if (it >= size())
         {
-            throw std::out_of_range(Formatter() << "ExpandableBuffer: index " << it << " is out of bounds with size " << size());
+            throw std::out_of_range(Formatter() << "BufferExpander: index " << it << " is out of bounds with size " << size());
         }
     }
 
@@ -166,7 +166,7 @@ private:
     int8_t * m_end = nullptr;
     int8_t * m_end_cap = nullptr;
 
-}; /* end class ExpandableBuffer */
+}; /* end class BufferExpander */
 
 } /* end namespace modmesh */
 

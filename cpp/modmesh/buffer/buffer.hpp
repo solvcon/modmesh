@@ -34,7 +34,7 @@
 
 #include <modmesh/buffer/small_vector.hpp>
 #include <modmesh/buffer/ConcreteBuffer.hpp>
-#include <modmesh/buffer/ExpandableBuffer.hpp>
+#include <modmesh/buffer/BufferExpander.hpp>
 #include <modmesh/buffer/SimpleArray.hpp>
 #include <modmesh/buffer/SimpleCollector.hpp>
 

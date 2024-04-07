@@ -26,12 +26,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/buffer/ExpandableBuffer.hpp>
+#include <modmesh/buffer/BufferExpander.hpp>
 
 namespace modmesh
 {
 
-void ExpandableBuffer::reserve(size_type cap)
+void BufferExpander::reserve(size_type cap)
 {
     if (cap > capacity())
     {
@@ -56,7 +56,7 @@ void ExpandableBuffer::reserve(size_type cap)
     }
 }
 
-std::shared_ptr<ConcreteBuffer> ExpandableBuffer::copy_concrete(size_type cap)
+std::shared_ptr<ConcreteBuffer> BufferExpander::copy_concrete(size_type cap)
 {
     size_type const old_size = size();
     size_type const csize = cap > old_size ? cap : old_size;
@@ -65,7 +65,7 @@ std::shared_ptr<ConcreteBuffer> ExpandableBuffer::copy_concrete(size_type cap)
     return buf;
 }
 
-std::shared_ptr<ConcreteBuffer> const & ExpandableBuffer::as_concrete(size_type cap)
+std::shared_ptr<ConcreteBuffer> const & BufferExpander::as_concrete(size_type cap)
 {
     size_type const old_size = size();
     if (!m_concrete_buffer)

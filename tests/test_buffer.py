@@ -86,58 +86,58 @@ class ConcreteBufferBasicTC(unittest.TestCase):
         self.assertTrue((ndarr == 0).all())
 
 
-class ExpandableBufferBasicTC(unittest.TestCase):
+class BufferExpanderBasicTC(unittest.TestCase):
 
-    def test_ExpandableBuffer(self):
-        ebuf = modmesh.ExpandableBuffer(10)
-        self.assertEqual(10, ebuf.capacity)
-        self.assertEqual(10, len(ebuf))
+    def test_BufferExpander(self):
+        ep = modmesh.BufferExpander(10)
+        self.assertEqual(10, ep.capacity)
+        self.assertEqual(10, len(ep))
 
-        ebuf = modmesh.ExpandableBuffer()
-        self.assertEqual(0, ebuf.capacity)
-        self.assertEqual(0, len(ebuf))
-
-        with self.assertRaisesRegex(
-                IndexError,
-                "ExpandableBuffer: index 0 is out of bounds with size 0"
-        ):
-            ebuf[0]
-
-        ebuf.reserve(10)
-        self.assertEqual(10, ebuf.capacity)
-        self.assertEqual(0, len(ebuf))  # size unchanged
+        ep = modmesh.BufferExpander()
+        self.assertEqual(0, ep.capacity)
+        self.assertEqual(0, len(ep))
 
         with self.assertRaisesRegex(
                 IndexError,
-                "ExpandableBuffer: index 0 is out of bounds with size 0"
+                "BufferExpander: index 0 is out of bounds with size 0"
         ):
-            ebuf[0]
+            ep[0]
 
-        ebuf.expand(10)
-        self.assertEqual(10, ebuf.capacity)
-        self.assertEqual(10, len(ebuf))  # size changed
+        ep.reserve(10)
+        self.assertEqual(10, ep.capacity)
+        self.assertEqual(0, len(ep))  # size unchanged
 
-        ebuf[9]  # should not raise an exception
         with self.assertRaisesRegex(
                 IndexError,
-                "ExpandableBuffer: index 10 is out of bounds with size 10"
+                "BufferExpander: index 0 is out of bounds with size 0"
         ):
-            ebuf[10]
+            ep[0]
+
+        ep.expand(10)
+        self.assertEqual(10, ep.capacity)
+        self.assertEqual(10, len(ep))  # size changed
+
+        ep[9]  # should not raise an exception
+        with self.assertRaisesRegex(
+                IndexError,
+                "BufferExpander: index 10 is out of bounds with size 10"
+        ):
+            ep[10]
 
         # initialize
-        for it in range(len(ebuf)):
-            ebuf[it] = it
+        for it in range(len(ep)):
+            ep[it] = it
 
-        self.assertFalse(ebuf.is_concrete)
-        cbuf = ebuf.as_concrete()
-        self.assertTrue(ebuf.is_concrete)
+        self.assertFalse(ep.is_concrete)
+        cbuf = ep.as_concrete()
+        self.assertTrue(ep.is_concrete)
         self.assertEqual(10, len(cbuf))
         self.assertEqual(list(range(10)), list(cbuf))
 
         # prove cbuf and gbuf share memory
         for it in range(len(cbuf)):
             cbuf[it] = it + 10
-        self.assertEqual(list(i + 10 for i in range(10)), list(ebuf))
+        self.assertEqual(list(i + 10 for i in range(10)), list(ep))
 
 
 class SimpleArrayBasicTC(unittest.TestCase):

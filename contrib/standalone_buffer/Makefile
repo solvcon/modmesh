@@ -44,7 +44,7 @@ $(SETUPROOT)/wrap_SimpleArrayPlex.o: $(SETUPROOT)/modmesh/buffer/pymod/wrap_Simp
 $(SETUPROOT)/buffer_pymod.o: $(SETUPROOT)/modmesh/buffer/pymod/buffer_pymod.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
-$(SETUPROOT)/ExpandableBuffer.o: $(SETUPROOT)/modmesh/buffer/ExpandableBuffer.cpp Makefile
+$(SETUPROOT)/BufferExpander.o: $(SETUPROOT)/modmesh/buffer/BufferExpander.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
 $(SETUPROOT)/SimpleArray.o: $(SETUPROOT)/modmesh/buffer/SimpleArray.cpp Makefile
@@ -54,7 +54,7 @@ $(SETUPROOT)/modbuf.o: modbuf.cpp
 	c++ $(CFLAGS) -c $< -o $@
 
 OBJS = \
-	$(SETUPROOT)/ExpandableBuffer.o \
+	$(SETUPROOT)/BufferExpander.o \
 	$(SETUPROOT)/SimpleArray.o \
 	$(SETUPROOT)/wrap_ConcreteBuffer.o \
 	$(SETUPROOT)/wrap_SimpleArray.o \
