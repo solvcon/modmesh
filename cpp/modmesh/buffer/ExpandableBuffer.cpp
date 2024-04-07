@@ -56,14 +56,21 @@ void ExpandableBuffer::reserve(size_type cap)
     }
 }
 
+std::shared_ptr<ConcreteBuffer> ExpandableBuffer::copy_concrete(size_type cap)
+{
+    size_type const old_size = size();
+    size_type const csize = cap > old_size ? cap : old_size;
+    auto buf = ConcreteBuffer::construct(csize);
+    std::copy_n(m_begin, old_size, buf->data());
+    return buf;
+}
+
 std::shared_ptr<ConcreteBuffer> const & ExpandableBuffer::as_concrete(size_type cap)
 {
     size_type const old_size = size();
     if (!m_concrete_buffer)
     {
-        size_type const csize = cap > old_size ? cap : old_size;
-        m_concrete_buffer = ConcreteBuffer::construct(csize);
-        std::copy_n(m_begin, old_size, m_concrete_buffer->begin());
+        m_concrete_buffer = copy_concrete(cap);
         m_data_holder.reset();
     }
     m_begin = m_concrete_buffer->data();

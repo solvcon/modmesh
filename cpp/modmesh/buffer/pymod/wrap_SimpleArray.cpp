@@ -440,6 +440,9 @@ WrapSimpleCollector<T>::WrapSimpleCollector(pybind11::module & mod, char const *
                 [](size_t length)
                 { return wrapped_type(length); }),
             py::arg("length"))
+        .def_timed(py::init<>())
+        .def("reserve", &wrapped_type::reserve, py::arg("cap"))
+        .def("expand", &wrapped_type::expand, py::arg("length"))
         .def_property_readonly("capacity", &wrapped_type::capacity)
         .def("__len__", &wrapped_type::size)
         .def(

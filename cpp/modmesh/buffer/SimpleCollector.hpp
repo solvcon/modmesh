@@ -57,11 +57,47 @@ public:
     {
     }
 
+    SimpleCollector()
+        : m_expander(ExpandableBuffer::construct())
+    {
+    }
+
+    SimpleCollector(SimpleCollector const & other)
+        : m_expander(other.m_expander->clone())
+    {
+    }
+
+    SimpleCollector & operator=(SimpleCollector const & other)
+    {
+        if (this != &other)
+        {
+            m_expander = other.m_expander->clone();
+        }
+        return *this;
+    }
+
+    SimpleCollector(SimpleCollector && other)
+        : m_expander(std::move(other.m_expander))
+    {
+    }
+
+    SimpleCollector & operator=(SimpleCollector && other)
+    {
+        if (this != &other)
+        {
+            m_expander = std::move(other.m_expander);
+        }
+        return *this;
+    }
+
     size_t size() const { return expander().size() / ITEMSIZE; }
     size_t capacity() const { return expander().capacity() / ITEMSIZE; }
 
     value_type const & operator[](size_t it) const noexcept { return data(it); }
     value_type & operator[](size_t it) noexcept { return data(it); }
+
+    void reserve(size_t cap) { expander().reserve(cap * ITEMSIZE); }
+    void expand(size_t length) { expander().expand(length * ITEMSIZE); }
 
     value_type const & at(size_t it) const
     {

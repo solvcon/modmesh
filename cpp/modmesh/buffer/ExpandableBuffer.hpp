@@ -64,6 +64,19 @@ public:
         return std::make_shared<ExpandableBuffer>(std::forward<Args>(args)..., ctor_passkey());
     }
 
+    std::shared_ptr<ExpandableBuffer> clone()
+    {
+        return ExpandableBuffer::construct(copy_concrete(), /*clone*/ false);
+    }
+
+    ExpandableBuffer(std::shared_ptr<ConcreteBuffer> const & buf, bool clone, ctor_passkey const &)
+        : m_concrete_buffer(clone ? buf->clone() : buf)
+        , m_begin(m_concrete_buffer->data())
+        , m_end(m_begin + size())
+        , m_end_cap(m_begin + m_concrete_buffer->size())
+    {
+    }
+
     ExpandableBuffer(size_type nbyte, ctor_passkey const &)
     {
         expand(nbyte);
@@ -90,13 +103,15 @@ public:
 
     void reserve(size_type cap);
 
-    void expand(size_type nbyte)
+    void expand(size_type length)
     {
-        reserve(nbyte);
-        m_end = m_begin + nbyte;
+        reserve(length);
+        m_end = m_begin + length;
     }
 
+    std::shared_ptr<ConcreteBuffer> copy_concrete(size_type cap = 0);
     std::shared_ptr<ConcreteBuffer> const & as_concrete(size_type cap = 0);
+    bool is_concrete() const { return bool(m_concrete_buffer); }
 
     int8_t operator[](size_t it) const { return data(it); }
     int8_t & operator[](size_t it) { return data(it); }
@@ -144,13 +159,12 @@ private:
         return ret;
     }
 
+    std::unique_ptr<int8_t> m_data_holder = nullptr;
+    std::shared_ptr<ConcreteBuffer> m_concrete_buffer = nullptr;
+
     int8_t * m_begin = nullptr;
     int8_t * m_end = nullptr;
     int8_t * m_end_cap = nullptr;
-
-    std::unique_ptr<int8_t> m_data_holder = nullptr;
-
-    std::shared_ptr<ConcreteBuffer> m_concrete_buffer = nullptr;
 
 }; /* end class ExpandableBuffer */
 

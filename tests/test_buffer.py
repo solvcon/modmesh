@@ -89,21 +89,48 @@ class ConcreteBufferBasicTC(unittest.TestCase):
 class ExpandableBufferBasicTC(unittest.TestCase):
 
     def test_ExpandableBuffer(self):
+        ebuf = modmesh.ExpandableBuffer(10)
+        self.assertEqual(10, ebuf.capacity)
+        self.assertEqual(10, len(ebuf))
+
         ebuf = modmesh.ExpandableBuffer()
         self.assertEqual(0, ebuf.capacity)
         self.assertEqual(0, len(ebuf))
+
+        with self.assertRaisesRegex(
+                IndexError,
+                "ExpandableBuffer: index 0 is out of bounds with size 0"
+        ):
+            ebuf[0]
+
         ebuf.reserve(10)
         self.assertEqual(10, ebuf.capacity)
         self.assertEqual(0, len(ebuf))  # size unchanged
+
+        with self.assertRaisesRegex(
+                IndexError,
+                "ExpandableBuffer: index 0 is out of bounds with size 0"
+        ):
+            ebuf[0]
+
         ebuf.expand(10)
         self.assertEqual(10, ebuf.capacity)
         self.assertEqual(10, len(ebuf))  # size changed
+
+        ebuf[9]  # should not raise an exception
+        with self.assertRaisesRegex(
+                IndexError,
+                "ExpandableBuffer: index 10 is out of bounds with size 10"
+        ):
+            ebuf[10]
 
         # initialize
         for it in range(len(ebuf)):
             ebuf[it] = it
 
+        self.assertFalse(ebuf.is_concrete)
         cbuf = ebuf.as_concrete()
+        self.assertTrue(ebuf.is_concrete)
         self.assertEqual(10, len(cbuf))
         self.assertEqual(list(range(10)), list(cbuf))
 
@@ -814,9 +841,40 @@ class SimpleArrayPlexTC(unittest.TestCase):
 class SimpleCollectorTC(unittest.TestCase):
 
     def test_construct(self):
-        ct = modmesh.SimpleCollectorFloat64(6)
+        ct = modmesh.SimpleCollectorFloat64(10)
+        self.assertEqual(10, ct.capacity)
+        self.assertEqual(10, len(ct))
+
+        ct = modmesh.SimpleCollectorFloat64()
+        self.assertEqual(0, ct.capacity)
+        self.assertEqual(0, len(ct))
+
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 0 is out of bounds with size 0"
+        ):
+            ct[0]
+
+        ct.reserve(6)
         self.assertEqual(6, ct.capacity)
-        self.assertEqual(6, len(ct))
+        self.assertEqual(0, len(ct))  # size unchanged
+
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 0 is out of bounds with size 0"
+        ):
+            ct[0]
+
+        ct.expand(6)
+        self.assertEqual(6, ct.capacity)
+        self.assertEqual(6, len(ct))  # size changed
+
+        ct[5]  # should not raise an exception
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 6 is out of bounds with size 6"
+        ):
+            ct[6]
 
         # initialize
         for it in range(6):
