@@ -412,6 +412,52 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
 
 }; /* end class WrapSimpleArray */
 
+template <typename T>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleCollector
+    : public WrapBase<WrapSimpleCollector<T>, SimpleCollector<T>>
+{
+
+    using root_base_type = WrapBase<WrapSimpleCollector<T>, SimpleCollector<T>>;
+    using wrapped_type = typename root_base_type::wrapped_type;
+    using wrapper_type = typename root_base_type::wrapper_type;
+    using value_type = typename wrapped_type::value_type;
+
+    friend root_base_type;
+
+    WrapSimpleCollector(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+}; /* end class WrapSimpleCollector */
+
+template <typename T>
+WrapSimpleCollector<T>::WrapSimpleCollector(pybind11::module & mod, char const * pyname, char const * pydoc)
+    : root_base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def_timed(
+            py::init(
+                [](size_t length)
+                { return wrapped_type(length); }),
+            py::arg("length"))
+        .def_timed(py::init<>())
+        .def_timed("reserve", &wrapped_type::reserve, py::arg("cap"))
+        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
+        .def_property_readonly("capacity", &wrapped_type::capacity)
+        .def("__len__", &wrapped_type::size)
+        .def(
+            "__getitem__",
+            [](wrapped_type const & self, size_t key)
+            { return self.at(key); })
+        .def(
+            "__setitem__",
+            [](wrapped_type & self, size_t key, value_type val)
+            { self.at(key) = val; })
+        .def_timed("as_array", &wrapped_type::as_array)
+        //
+        ;
+}
+
 void wrap_SimpleArray(pybind11::module & mod)
 {
     WrapSimpleArray<bool>::commit(mod, "SimpleArrayBool", "SimpleArrayBool");
@@ -425,6 +471,18 @@ void wrap_SimpleArray(pybind11::module & mod)
     WrapSimpleArray<uint64_t>::commit(mod, "SimpleArrayUint64", "SimpleArrayUint64");
     WrapSimpleArray<float>::commit(mod, "SimpleArrayFloat32", "SimpleArrayFloat32");
     WrapSimpleArray<double>::commit(mod, "SimpleArrayFloat64", "SimpleArrayFloat64");
+
+    WrapSimpleCollector<bool>::commit(mod, "SimpleCollectorBool", "SimpleCollectorBool");
+    WrapSimpleCollector<int8_t>::commit(mod, "SimpleCollectorInt8", "SimpleCollectorInt8");
+    WrapSimpleCollector<int16_t>::commit(mod, "SimpleCollectorInt16", "SimpleCollectorInt16");
+    WrapSimpleCollector<int32_t>::commit(mod, "SimpleCollectorInt32", "SimpleCollectorInt32");
+    WrapSimpleCollector<int64_t>::commit(mod, "SimpleCollectorInt64", "SimpleCollectorInt64");
+    WrapSimpleCollector<uint8_t>::commit(mod, "SimpleCollectorUint8", "SimpleCollectorUint8");
+    WrapSimpleCollector<uint16_t>::commit(mod, "SimpleCollectorUint16", "SimpleCollectorUint16");
+    WrapSimpleCollector<uint32_t>::commit(mod, "SimpleCollectorUint32", "SimpleCollectorUint32");
+    WrapSimpleCollector<uint64_t>::commit(mod, "SimpleCollectorUint64", "SimpleCollectorUint64");
+    WrapSimpleCollector<float>::commit(mod, "SimpleCollectorFloat32", "SimpleCollectorFloat32");
+    WrapSimpleCollector<double>::commit(mod, "SimpleCollectorFloat64", "SimpleCollectorFloat64");
 }
 
 } /* end namespace python */
