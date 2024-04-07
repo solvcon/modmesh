@@ -441,8 +441,8 @@ WrapSimpleCollector<T>::WrapSimpleCollector(pybind11::module & mod, char const *
                 { return wrapped_type(length); }),
             py::arg("length"))
         .def_timed(py::init<>())
-        .def("reserve", &wrapped_type::reserve, py::arg("cap"))
-        .def("expand", &wrapped_type::expand, py::arg("length"))
+        .def_timed("reserve", &wrapped_type::reserve, py::arg("cap"))
+        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
         .def_property_readonly("capacity", &wrapped_type::capacity)
         .def("__len__", &wrapped_type::size)
         .def(
@@ -453,7 +453,7 @@ WrapSimpleCollector<T>::WrapSimpleCollector(pybind11::module & mod, char const *
             "__setitem__",
             [](wrapped_type & self, size_t key, value_type val)
             { self.at(key) = val; })
-        .def("as_array", &wrapped_type::as_array)
+        .def_timed("as_array", &wrapped_type::as_array)
         //
         ;
 }

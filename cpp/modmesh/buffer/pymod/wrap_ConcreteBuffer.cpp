@@ -133,8 +133,8 @@ WrapBufferExpander::WrapBufferExpander(pybind11::module & mod, char const * pyna
             py::arg("length"))
         .def_timed(py::init([]()
                             { return wrapped_type::construct(); }))
-        .def("reserve", &wrapped_type::reserve, py::arg("cap"))
-        .def("expand", &wrapped_type::expand, py::arg("length"))
+        .def_timed("reserve", &wrapped_type::reserve, py::arg("cap"))
+        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
         .def_property_readonly("capacity", &wrapped_type::capacity)
         .def("__len__", &wrapped_type::size)
         .def(
@@ -145,9 +145,9 @@ WrapBufferExpander::WrapBufferExpander(pybind11::module & mod, char const * pyna
             "__setitem__",
             [](wrapped_type & self, size_t it, int8_t val)
             { self.at(it) = val; })
-        .def("clone", &wrapped_type::clone)
-        .def("copy_concrete", &wrapped_type::copy_concrete, py::arg("cap") = 0)
-        .def("as_concrete", &wrapped_type::as_concrete, py::arg("cap") = 0)
+        .def_timed("clone", &wrapped_type::clone)
+        .def_timed("copy_concrete", &wrapped_type::copy_concrete, py::arg("cap") = 0)
+        .def_timed("as_concrete", &wrapped_type::as_concrete, py::arg("cap") = 0)
         .def_property_readonly("is_concrete", &wrapped_type::is_concrete)
         //
         ;
