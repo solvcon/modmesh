@@ -109,7 +109,7 @@ public:
         m_end = m_begin + length;
     }
 
-    std::shared_ptr<ConcreteBuffer> copy_concrete(size_type cap = 0);
+    std::shared_ptr<ConcreteBuffer> copy_concrete(size_type cap = 0) const;
     std::shared_ptr<ConcreteBuffer> const & as_concrete(size_type cap = 0);
     bool is_concrete() const { return bool(m_concrete_buffer); }
 

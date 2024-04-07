@@ -56,7 +56,7 @@ void BufferExpander::reserve(size_type cap)
     }
 }
 
-std::shared_ptr<ConcreteBuffer> BufferExpander::copy_concrete(size_type cap)
+std::shared_ptr<ConcreteBuffer> BufferExpander::copy_concrete(size_type cap) const
 {
     size_type const old_size = size();
     size_type const csize = cap > old_size ? cap : old_size;
