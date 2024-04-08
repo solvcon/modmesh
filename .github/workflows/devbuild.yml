@@ -119,7 +119,8 @@ jobs:
         #
         # In short, OpenGL libraries and headers are required. Without
         # installing this package, cmake won't find the correct lib path.
-        # This has been replaced by the 'Install Qt' section below to manage qt6 versioning independently from the OS.
+        # This has been replaced by the 'install qt' section below to manage
+        # qt6 versioning independently from the OS.
 
         # if [ "${{ matrix.os }}" == "ubuntu-22.04" ] ; then \
         #   sudo apt-get -qy install \
@@ -127,7 +128,7 @@ jobs:
         #       libgl1-mesa-dev
         # fi
 
-    - name: Install Qt
+    - name: install qt
       uses: jurplel/install-qt-action@v3
       with:
         aqtversion: '==3.1.*'
@@ -282,10 +283,11 @@ jobs:
         run: |
           export HOMEBREW_NO_AUTO_UPDATE=1
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
-          # This has been replaced by the 'Install Qt' section below to manage qt6 versioning independently from the OS.
+          # This has been replaced by the 'install qt' section below to manage
+          # qt6 versioning independently from the OS.
           # brew install qt6
 
-      - name: Install Qt
+      - name: install qt
         uses: jurplel/install-qt-action@v3
         with:
           aqtversion: '==3.1.*'
@@ -462,7 +464,7 @@ jobs:
         run: |
           echo "github.event_name: ${{ github.event_name }}"
 
-      - name: Install Qt
+      - name: install qt
         uses: jurplel/install-qt-action@v3
         with:
           aqtversion: '==3.1.*'
