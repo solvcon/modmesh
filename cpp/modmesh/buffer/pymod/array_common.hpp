@@ -38,7 +38,7 @@ namespace modmesh
 
 namespace python
 {
-using slice_type = small_vector<int>;
+using slice_type = modmesh::detail::slice_type;
 using shape_type = modmesh::detail::shape_type;
 
 inline shape_type make_shape(pybind11::object const & shape_in)
@@ -259,28 +259,6 @@ inline void slice_syntax_check(pybind11::tuple const & tuple, size_t ndim)
     {
         throw std::runtime_error("syntax error. no more than one ellipsis.");
     }
-}
-
-template <typename T>
-pybind11::tuple get_array_stride(const SimpleArray<T> & array)
-{
-    pybind11::tuple ret(array.stride().size());
-    for (size_t i = 0; i < array.stride().size(); ++i)
-    {
-        ret[i] = array.stride()[i];
-    }
-    return ret;
-}
-
-template <typename T>
-pybind11::tuple get_array_shape(const SimpleArray<T> & array)
-{
-    pybind11::tuple ret(array.shape().size());
-    for (size_t i = 0; i < array.shape().size(); ++i)
-    {
-        ret[i] = array.shape()[i];
-    }
-    return ret;
 }
 
 template <typename T>

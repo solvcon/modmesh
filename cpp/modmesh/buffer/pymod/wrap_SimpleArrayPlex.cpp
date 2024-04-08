@@ -258,18 +258,28 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                     return execute_callback_with_typed_array(
                         self, [](const auto & array)
                         {
-                            using data_type = typename std::remove_const_t<std::remove_reference_t<decltype(array[0])>>;
-                            return get_array_shape<data_type>(array); });
+                            pybind11::tuple ret(array.shape().size());
+                            for (size_t i = 0; i < array.shape().size(); ++i)
+                            {
+                                ret[i] = array.shape()[i];
+                            }
+                            return ret; });
                 })
             .def_property_readonly(
                 "stride",
                 [](wrapped_type const & self)
                 {
                     return execute_callback_with_typed_array(
-                        self, [](const auto & array)
+                        self,
+                        [](const auto & array)
                         {
-                            using data_type = typename std::remove_const_t<std::remove_reference_t<decltype(array[0])>>;
-                            return get_array_stride<data_type>(array); });
+                            pybind11::tuple ret(array.stride().size());
+                            for (size_t i = 0; i < array.stride().size(); ++i)
+                            {
+                                ret[i] = array.stride()[i];
+                            }
+                            return ret;
+                        });
                 })
             .def("__len__", [](wrapped_type & self)
                  { return execute_callback_with_typed_array(

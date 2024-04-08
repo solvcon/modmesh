@@ -99,8 +99,28 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def_property_readonly("nbytes", &wrapped_type::nbytes)
             .def_property_readonly("size", &wrapped_type::size)
             .def_property_readonly("itemsize", &wrapped_type::itemsize)
-            .def_property_readonly("shape", &get_array_shape<T>)
-            .def_property_readonly("stride", &get_array_stride<T>)
+            .def_property_readonly(
+                "shape",
+                [](wrapped_type const & self)
+                {
+                    py::tuple ret(self.shape().size());
+                    for (size_t i = 0; i < self.shape().size(); ++i)
+                    {
+                        ret[i] = self.shape()[i];
+                    }
+                    return ret;
+                })
+            .def_property_readonly(
+                "stride",
+                [](wrapped_type const & self)
+                {
+                    py::tuple ret(self.stride().size());
+                    for (size_t i = 0; i < self.stride().size(); ++i)
+                    {
+                        ret[i] = self.stride()[i];
+                    }
+                    return ret;
+                })
             .def("__len__", &wrapped_type::size)
             .def(
                 "__getitem__",
