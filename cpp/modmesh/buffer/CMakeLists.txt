@@ -7,10 +7,13 @@ set(MODMESH_BUFFER_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/small_vector.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConcreteBuffer.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BufferExpander.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SimpleArray.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SimpleCollector.hpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_BUFFER_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/BufferExpander.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SimpleArray.cpp
     CACHE FILEPATH "" FORCE)
 

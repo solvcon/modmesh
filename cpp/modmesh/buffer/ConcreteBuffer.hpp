@@ -274,6 +274,8 @@ public:
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
     using unique_ptr_type = std::unique_ptr<int8_t, data_deleter_type>;
 
+private:
+
     void validate_range(size_t it) const
     {
         if (it >= size())

@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2024, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,14 +26,59 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * The interface master header file for the memory buffer.
- */
-
-#include <modmesh/buffer/small_vector.hpp>
-#include <modmesh/buffer/ConcreteBuffer.hpp>
 #include <modmesh/buffer/BufferExpander.hpp>
-#include <modmesh/buffer/SimpleArray.hpp>
-#include <modmesh/buffer/SimpleCollector.hpp>
 
-// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
+namespace modmesh
+{
+
+void BufferExpander::reserve(size_type cap)
+{
+    if (cap > capacity())
+    {
+        size_type const old_size = size();
+        // Create new data holder and copy data.
+        std::unique_ptr<int8_t> new_data_holder = allocate(cap);
+        std::copy_n(m_begin, old_size, new_data_holder.get());
+        // Process data holders.
+        m_data_holder.swap(new_data_holder);
+        if (m_concrete_buffer)
+        {
+            m_concrete_buffer.reset();
+        }
+        // Reset pointers.
+        m_begin = m_data_holder.get();
+        m_end = m_begin + old_size;
+        m_end_cap = m_begin + cap;
+    }
+    else
+    {
+        return;
+    }
+}
+
+std::shared_ptr<ConcreteBuffer> BufferExpander::copy_concrete(size_type cap) const
+{
+    size_type const old_size = size();
+    size_type const csize = cap > old_size ? cap : old_size;
+    auto buf = ConcreteBuffer::construct(csize);
+    std::copy_n(m_begin, old_size, buf->data());
+    return buf;
+}
+
+std::shared_ptr<ConcreteBuffer> const & BufferExpander::as_concrete(size_type cap)
+{
+    size_type const old_size = size();
+    if (!m_concrete_buffer)
+    {
+        m_concrete_buffer = copy_concrete(cap);
+        m_data_holder.reset();
+    }
+    m_begin = m_concrete_buffer->data();
+    m_end = m_begin + old_size;
+    m_end_cap = m_begin + m_concrete_buffer->size();
+    return m_concrete_buffer;
+}
+
+} /* end namespace modmesh */
+
+/* vim: set et ts=4 sw=4: */

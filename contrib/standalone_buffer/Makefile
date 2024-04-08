@@ -44,21 +44,26 @@ $(SETUPROOT)/wrap_SimpleArrayPlex.o: $(SETUPROOT)/modmesh/buffer/pymod/wrap_Simp
 $(SETUPROOT)/buffer_pymod.o: $(SETUPROOT)/modmesh/buffer/pymod/buffer_pymod.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
+$(SETUPROOT)/BufferExpander.o: $(SETUPROOT)/modmesh/buffer/BufferExpander.cpp Makefile
+	c++ $(CFLAGS) -c $< -o $@
+
 $(SETUPROOT)/SimpleArray.o: $(SETUPROOT)/modmesh/buffer/SimpleArray.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
 $(SETUPROOT)/modbuf.o: modbuf.cpp
 	c++ $(CFLAGS) -c $< -o $@
 
-$(MODPATH): Makefile $(SETUPROOT)/SimpleArray.o $(SETUPROOT)/wrap_ConcreteBuffer.o $(SETUPROOT)/wrap_SimpleArray.o $(SETUPROOT)/wrap_SimpleArrayPlex.o $(SETUPROOT)/buffer_pymod.o $(SETUPROOT)/modbuf.o
-	c++ $(LDFLAGS) \
-		$(SETUPROOT)/SimpleArray.o \
-		$(SETUPROOT)/wrap_ConcreteBuffer.o \
-		$(SETUPROOT)/wrap_SimpleArray.o \
-		$(SETUPROOT)/wrap_SimpleArrayPlex.o \
-		$(SETUPROOT)/buffer_pymod.o \
-		$(SETUPROOT)/modbuf.o \
-		-o $@
+OBJS = \
+	$(SETUPROOT)/BufferExpander.o \
+	$(SETUPROOT)/SimpleArray.o \
+	$(SETUPROOT)/wrap_ConcreteBuffer.o \
+	$(SETUPROOT)/wrap_SimpleArray.o \
+	$(SETUPROOT)/wrap_SimpleArrayPlex.o \
+	$(SETUPROOT)/buffer_pymod.o \
+	$(SETUPROOT)/modbuf.o
+
+$(MODPATH): Makefile $(OBJS)
+	c++ $(LDFLAGS) $(OBJS) -o $@
 
 .PHONY: copy
 copy:

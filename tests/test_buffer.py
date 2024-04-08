@@ -86,6 +86,60 @@ class ConcreteBufferBasicTC(unittest.TestCase):
         self.assertTrue((ndarr == 0).all())
 
 
+class BufferExpanderBasicTC(unittest.TestCase):
+
+    def test_BufferExpander(self):
+        ep = modmesh.BufferExpander(10)
+        self.assertEqual(10, ep.capacity)
+        self.assertEqual(10, len(ep))
+
+        ep = modmesh.BufferExpander()
+        self.assertEqual(0, ep.capacity)
+        self.assertEqual(0, len(ep))
+
+        with self.assertRaisesRegex(
+                IndexError,
+                "BufferExpander: index 0 is out of bounds with size 0"
+        ):
+            ep[0]
+
+        ep.reserve(10)
+        self.assertEqual(10, ep.capacity)
+        self.assertEqual(0, len(ep))  # size unchanged
+
+        with self.assertRaisesRegex(
+                IndexError,
+                "BufferExpander: index 0 is out of bounds with size 0"
+        ):
+            ep[0]
+
+        ep.expand(10)
+        self.assertEqual(10, ep.capacity)
+        self.assertEqual(10, len(ep))  # size changed
+
+        ep[9]  # should not raise an exception
+        with self.assertRaisesRegex(
+                IndexError,
+                "BufferExpander: index 10 is out of bounds with size 10"
+        ):
+            ep[10]
+
+        # initialize
+        for it in range(len(ep)):
+            ep[it] = it
+
+        self.assertFalse(ep.is_concrete)
+        cbuf = ep.as_concrete()
+        self.assertTrue(ep.is_concrete)
+        self.assertEqual(10, len(cbuf))
+        self.assertEqual(list(range(10)), list(cbuf))
+
+        # prove cbuf and gbuf share memory
+        for it in range(len(cbuf)):
+            cbuf[it] = it + 10
+        self.assertEqual(list(i + 10 for i in range(10)), list(ep))
+
+
 class SimpleArrayBasicTC(unittest.TestCase):
 
     def test_SimpleArray(self):
@@ -634,7 +688,8 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         # check if arrayplex can cast to simplearray
         self.assertEqual(
-            helper.test_load_arrayfloat64_from_arrayplex(arrayplex_float64), True)  # noqa: E501
+            helper.test_load_arrayfloat64_from_arrayplex(arrayplex_float64),
+            True)  # noqa: E501
 
         # float64 and int32 are differet types
         with self.assertRaisesRegex(TypeError,
@@ -728,8 +783,8 @@ class SimpleArrayPlexTC(unittest.TestCase):
         for dtype in dtype_list_int:
             modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3)
             with self.assertRaisesRegex(
-                TypeError,
-                r"Data type mismatch, expected Python int"
+                    TypeError,
+                    r"Data type mismatch, expected Python int"
             ):
                 modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3.3)
 
@@ -737,8 +792,8 @@ class SimpleArrayPlexTC(unittest.TestCase):
         for dtype in dtype_list_float:
             modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3.0)
             with self.assertRaisesRegex(
-                TypeError,
-                r"Data type mismatch, expected Python float"
+                    TypeError,
+                    r"Data type mismatch, expected Python float"
             ):
                 modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3)
 
@@ -816,5 +871,57 @@ class SimpleArrayPlexTC(unittest.TestCase):
             for j in range(3):
                 for k in range(4):
                     self.assertEqual(stride_arr[i, j, k], sarr[i, j, k])
+
+
+class SimpleCollectorTC(unittest.TestCase):
+
+    def test_construct(self):
+        ct = modmesh.SimpleCollectorFloat64(10)
+        self.assertEqual(10, ct.capacity)
+        self.assertEqual(10, len(ct))
+
+        ct = modmesh.SimpleCollectorFloat64()
+        self.assertEqual(0, ct.capacity)
+        self.assertEqual(0, len(ct))
+
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 0 is out of bounds with size 0"
+        ):
+            ct[0]
+
+        ct.reserve(6)
+        self.assertEqual(6, ct.capacity)
+        self.assertEqual(0, len(ct))  # size unchanged
+
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 0 is out of bounds with size 0"
+        ):
+            ct[0]
+
+        ct.expand(6)
+        self.assertEqual(6, ct.capacity)
+        self.assertEqual(6, len(ct))  # size changed
+
+        ct[5]  # should not raise an exception
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 6 is out of bounds with size 6"
+        ):
+            ct[6]
+
+        # initialize
+        for it in range(6):
+            ct[it] = it
+
+        arr = ct.as_array()
+        self.assertEqual(6, len(arr))
+        self.assertEqual(list(range(6)), list(arr))
+
+        # prove ct and arr share memory
+        for it in range(6):
+            ct[it] = it + 10
+        self.assertEqual(list(it + 10 for it in range(6)), list(ct))
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
