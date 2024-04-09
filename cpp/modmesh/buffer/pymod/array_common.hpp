@@ -61,7 +61,7 @@ class ArrayPropertyHelper
 {
 public:
 
-    static void broadcast_array_using_ellipsis(SimpleArray<T> & arr_out, pybind11::array const & arr_in)
+    static inline void broadcast_array_using_ellipsis(SimpleArray<T> & arr_out, pybind11::array const & arr_in)
     {
         auto slices = make_default_slices(arr_out);
 
@@ -81,7 +81,7 @@ public:
         }
     }
 
-    static void setitem_parser(SimpleArray<T> & arr_out, pybind11::args const & args)
+    static inline void setitem_parser(SimpleArray<T> & arr_out, pybind11::args const & args)
     {
         namespace py = pybind11;
 
@@ -141,7 +141,7 @@ public:
         throw std::runtime_error("unsupported operation.");
     }
 
-    static pybind11::buffer_info get_buffer_info(SimpleArray<T> & array)
+    static inline pybind11::buffer_info get_buffer_info(SimpleArray<T> & array)
     {
         std::vector<size_t> stride;
         for (size_t const i : array.stride())
@@ -159,7 +159,8 @@ public:
     }
 
 private:
-    static std::vector<slice_type> make_default_slices(SimpleArray<T> const & arr)
+
+    static inline std::vector<slice_type> make_default_slices(SimpleArray<T> const & arr)
     {
         std::vector<slice_type> slices;
         slices.reserve(arr.ndim());
@@ -174,7 +175,7 @@ private:
         return slices;
     }
 
-    static void copy_slice(slice_type & slice_out, pybind11::slice const & slice_in)
+    static inline void copy_slice(slice_type & slice_out, pybind11::slice const & slice_in)
     {
         auto start = std::string(pybind11::str(slice_in.attr("start")));
         auto stop = std::string(pybind11::str(slice_in.attr("stop")));
@@ -185,7 +186,7 @@ private:
         slice_out[2] = step == "None" ? slice_out[2] : std::stoi(step);
     }
 
-    static void slice_syntax_check(pybind11::tuple const & tuple, size_t ndim)
+    static inline void slice_syntax_check(pybind11::tuple const & tuple, size_t ndim)
     {
         namespace py = pybind11;
 
@@ -219,9 +220,9 @@ private:
         }
     }
 
-    static void process_slices(pybind11::tuple const & tuple,
-                               std::vector<slice_type> & slices,
-                               size_t ndim)
+    static inline void process_slices(pybind11::tuple const & tuple,
+                                      std::vector<slice_type> & slices,
+                                      size_t ndim)
     {
         namespace py = pybind11;
 
@@ -261,9 +262,9 @@ private:
         }
     }
 
-    static void broadcast_array_using_slice(SimpleArray<T> & arr_out,
-                                            std::vector<slice_type> const & slices,
-                                            pybind11::array const & arr_in)
+    static inline void broadcast_array_using_slice(SimpleArray<T> & arr_out,
+                                                   std::vector<slice_type> const & slices,
+                                                   pybind11::array const & arr_in)
     {
         TypeBroadcast<T>::check_shape(arr_out, slices, arr_in);
 
