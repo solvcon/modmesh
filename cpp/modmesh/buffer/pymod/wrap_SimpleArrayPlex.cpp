@@ -237,7 +237,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                         [](auto & array)
                         {
                             using data_type = typename std::remove_reference_t<decltype(array[0])>;
-                            return get_buffer_info<data_type>(array); });
+                            return ArrayPropertyHelper<data_type>::get_buffer_info(array); });
                 })
             .def_property_readonly("nbytes", [](wrapped_type & self)
                                    { return execute_callback_with_typed_array(
@@ -292,7 +292,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                        self, [&args](auto & array)
                        { 
                             using data_type = typename std::remove_reference_t<decltype(array[0])>;
-                            setitem_parser<data_type>(array, args); }); })
+                            ArrayPropertyHelper<data_type>::setitem_parser(array, args); }); })
             .def("reshape", [](wrapped_type const & self, pybind11::object const & py_shape)
                  { return execute_callback_with_typed_array(
                        self,

@@ -45,6 +45,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
     using wrapped_type = typename root_base_type::wrapped_type;
     using wrapper_type = typename root_base_type::wrapper_type;
     using value_type = typename wrapped_type::value_type;
+    using property_helper = ArrayPropertyHelper<T>;
 
     friend root_base_type;
 
@@ -85,7 +86,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                         return wrapped_type(shape, buffer);
                     }),
                 py::arg("array"))
-            .def_buffer(&get_buffer_info<T>)
+            .def_buffer(&property_helper::get_buffer_info)
             .def_property_readonly(
                 "ndarray",
                 [](wrapped_type & self)
@@ -130,7 +131,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 "__getitem__",
                 [](wrapped_type const & self, std::vector<ssize_t> const & key)
                 { return self.at(key); })
-            .def("__setitem__", &setitem_parser<T>)
+            .def("__setitem__", &property_helper::setitem_parser)
             .def(
                 "reshape",
                 [](wrapped_type const & self, py::object const & shape)
