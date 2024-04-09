@@ -193,7 +193,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
     using root_base_type = WrapBase<WrapSimpleArrayPlex, SimpleArrayPlex>;
     using wrapped_type = typename root_base_type::wrapped_type;
     using wrapper_type = typename root_base_type::wrapper_type;
-    using shape_type = modmesh::detail::shape_type;
 
     friend root_base_type;
 
@@ -216,7 +215,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                 pybind11::init(
                     [](pybind11::array & arr_in)
                     {
-                        shape_type shape;
+                        modmesh::detail::shape_type shape;
                         for (ssize_t i = 0; i < arr_in.ndim(); ++i)
                         {
                             shape.push_back(arr_in.shape(i));
@@ -317,7 +316,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     static wrapped_type init_array_plex_with_value(pybind11::object const & shape_in, pybind11::object const & py_value, std::string const & datatype_str)
     {
-        const shape_type shape = make_shape(shape_in);
+        const modmesh::detail::shape_type shape = make_shape(shape_in);
         wrapped_type array_plex(shape, datatype_str);
         auto datatype = array_plex.data_type();
         execute_callback_with_typed_array(

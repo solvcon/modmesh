@@ -38,12 +38,10 @@ namespace modmesh
 
 namespace python
 {
-using slice_type = modmesh::detail::slice_type;
-using shape_type = modmesh::detail::shape_type;
 
-inline shape_type make_shape(pybind11::object const & shape_in)
+inline modmesh::detail::shape_type make_shape(pybind11::object const & shape_in)
 {
-    shape_type shape;
+    modmesh::detail::shape_type shape;
     try
     {
         shape.push_back(shape_in.cast<size_t>());
@@ -160,13 +158,13 @@ public:
 
 private:
 
-    static inline std::vector<slice_type> make_default_slices(SimpleArray<T> const & arr)
+    static inline std::vector<modmesh::detail::slice_type> make_default_slices(SimpleArray<T> const & arr)
     {
-        std::vector<slice_type> slices;
+        std::vector<modmesh::detail::slice_type> slices;
         slices.reserve(arr.ndim());
         for (size_t i = 0; i < arr.ndim(); ++i)
         {
-            slice_type default_slice(3);
+            modmesh::detail::slice_type default_slice(3);
             default_slice[0] = 0; // start
             default_slice[1] = static_cast<int>(arr.shape(i)); // stop
             default_slice[2] = 1; // step
@@ -175,7 +173,7 @@ private:
         return slices;
     }
 
-    static inline void copy_slice(slice_type & slice_out, pybind11::slice const & slice_in)
+    static inline void copy_slice(modmesh::detail::slice_type & slice_out, pybind11::slice const & slice_in)
     {
         auto start = std::string(pybind11::str(slice_in.attr("start")));
         auto stop = std::string(pybind11::str(slice_in.attr("stop")));
@@ -221,7 +219,7 @@ private:
     }
 
     static inline void process_slices(pybind11::tuple const & tuple,
-                                      std::vector<slice_type> & slices,
+                                      std::vector<modmesh::detail::slice_type> & slices,
                                       size_t ndim)
     {
         namespace py = pybind11;
@@ -263,7 +261,7 @@ private:
     }
 
     static inline void broadcast_array_using_slice(SimpleArray<T> & arr_out,
-                                                   std::vector<slice_type> const & slices,
+                                                   std::vector<modmesh::detail::slice_type> const & slices,
                                                    pybind11::array const & arr_in)
     {
         TypeBroadcast<T>::check_shape(arr_out, slices, arr_in);

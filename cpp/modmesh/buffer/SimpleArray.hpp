@@ -84,7 +84,7 @@ namespace detail
 
 using shape_type = small_vector<size_t>;
 using sshape_type = small_vector<ssize_t>;
-using slice_type = small_vector<int>;
+using slice_type = small_vector<size_t>;
 
 template <typename T>
 struct SimpleArrayInternalTypes

@@ -40,11 +40,9 @@ namespace python
 template <typename T /* original type */, typename D /* for destination type */>
 struct TypeBroadcastImpl
 {
-    using slice_type = small_vector<int>;
-    using shape_type = typename SimpleArray<T>::shape_type;
 
     // NOLINTNEXTLINE(misc-no-recursion)
-    static void copy_idx(SimpleArray<T> & arr_out, std::vector<slice_type> const & slices, pybind11::array_t<D> const * arr_in, shape_type left_shape, shape_type sidx, int dim)
+    static void copy_idx(SimpleArray<T> & arr_out, std::vector<modmesh::detail::slice_type> const & slices, pybind11::array_t<D> const * arr_in, modmesh::detail::shape_type left_shape, modmesh::detail::shape_type sidx, int dim)
     {
         using out_type = typename std::remove_reference_t<decltype(arr_out[0])>;
 
@@ -78,15 +76,15 @@ struct TypeBroadcastImpl
         }
     }
 
-    static void broadcast(SimpleArray<T> & arr_out, std::vector<slice_type> const & slices, pybind11::array const & arr_in)
+    static void broadcast(SimpleArray<T> & arr_out, std::vector<modmesh::detail::slice_type> const & slices, pybind11::array const & arr_in)
     {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         auto * arr_new = reinterpret_cast<pybind11::array_t<D> const *>(&arr_in);
 
-        shape_type left_shape(arr_out.ndim());
+        modmesh::detail::shape_type left_shape(arr_out.ndim());
         for (size_t i = 0; i < arr_out.ndim(); i++)
         {
-            slice_type const & slice = slices[i];
+            modmesh::detail::slice_type const & slice = slices[i];
             if ((slice[1] - slice[0]) % slice[2] == 0)
             {
                 left_shape[i] = (slice[1] - slice[0]) / slice[2];
@@ -97,7 +95,7 @@ struct TypeBroadcastImpl
             }
         }
 
-        shape_type sidx_init(arr_out.ndim());
+        modmesh::detail::shape_type sidx_init(arr_out.ndim());
 
         for (size_t i = 0; i < arr_out.ndim(); ++i)
         {
@@ -111,22 +109,20 @@ struct TypeBroadcastImpl
 template <typename T>
 struct TypeBroadcast
 {
-    using slice_type = small_vector<int>;
-    using shape_type = typename SimpleArray<T>::shape_type;
 
-    static void check_shape(SimpleArray<T> const & arr_out, std::vector<slice_type> const & slices, pybind11::array const & arr_in)
+    static void check_shape(SimpleArray<T> const & arr_out, std::vector<modmesh::detail::slice_type> const & slices, pybind11::array const & arr_in)
     {
-        shape_type right_shape(arr_in.ndim());
+        modmesh::detail::shape_type right_shape(arr_in.ndim());
         for (pybind11::ssize_t i = 0; i < arr_in.ndim(); i++)
         {
             right_shape[i] = arr_in.shape(i);
         }
 
-        shape_type left_shape(arr_out.ndim());
+        modmesh::detail::shape_type left_shape(arr_out.ndim());
         // TODO: range check
         for (size_t i = 0; i < arr_out.ndim(); i++)
         {
-            const slice_type & slice = slices[i];
+            const modmesh::detail::slice_type & slice = slices[i];
             if ((slice[1] - slice[0]) % slice[2] == 0)
             {
                 left_shape[i] = (slice[1] - slice[0]) / slice[2];
@@ -151,7 +147,7 @@ struct TypeBroadcast
         }
     }
 
-    static void broadcast(SimpleArray<T> & arr_out, std::vector<slice_type> const & slices, pybind11::array const & arr_in)
+    static void broadcast(SimpleArray<T> & arr_out, std::vector<modmesh::detail::slice_type> const & slices, pybind11::array const & arr_in)
     {
         if (dtype_is_type<bool>(arr_in))
         {
@@ -204,7 +200,7 @@ struct TypeBroadcast
     }
 
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    static void throw_shape_error(shape_type const & left_shape, shape_type const & right_shape)
+    static void throw_shape_error(modmesh::detail::shape_type const & left_shape, modmesh::detail::shape_type const & right_shape)
     {
 
         std::ostringstream msg;

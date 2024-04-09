@@ -74,7 +74,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                         {
                             throw std::runtime_error("dtype mismatch");
                         }
-                        shape_type shape;
+                        modmesh::detail::shape_type shape;
                         for (ssize_t i = 0; i < arr_in.ndim(); ++i)
                         {
                             shape.push_back(arr_in.shape(i));
