@@ -38,19 +38,25 @@ install() {
 
 pybind11() {
 
-  cmakeargs=("-DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}")
-  cmakeargs+=("-DCMAKE_BUILD_TYPE=Release")
+  cmakeargs=("-DCMAKE_BUILD_TYPE=Release")
+  if [ -z "${NO_INSTALL_PREFIX}" ] ; then
+  cmakeargs+=("-DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}")
+  fi
+  cmakeargs+=("-DUSE_PYTHON_INCLUDE_DIR=ON")
   cmakeargs+=("-DPYTHON_EXECUTABLE:FILEPATH=`which python3`")
   cmakeargs+=("-DPYBIND11_TEST=OFF")
-  install ${PYBIND_ORG:-pybind} pybind11 ${PYBIND_BRANCH:-v2.11.1} \
-    ${PYBIND_LOCAL:-pybind11-2.11.1} "${cmakeargs[@]}"
+  echo "cmakeargs: ${cmakeargs[@]}"
+  install ${PYBIND_ORG:-pybind} pybind11 ${PYBIND_BRANCH:-v2.12.0} \
+    ${PYBIND_LOCAL:-pybind11-2.12.0} "${cmakeargs[@]}"
 
 }
 
 xtl() {
 
-  cmakeargs=("-DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}")
-  cmakeargs+=("-DCMAKE_BUILD_TYPE=Release")
+  cmakeargs=("-DCMAKE_BUILD_TYPE=Release")
+  if [ -z "${NO_INSTALL_PREFIX}" ] ; then
+  cmakeargs+=("-DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}")
+  fi
   install ${XTL_ORG:-xtensor-stack} xtl ${XTL_BRANCH:-0.6.9} \
     ${XTL_LOCAL:-xtl-0.6.9} "${cmakeargs[@]}"
 
@@ -58,8 +64,10 @@ xtl() {
 
 xsimd() {
 
-  cmakeargs=("-DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}")
-  cmakeargs+=("-DCMAKE_BUILD_TYPE=Release")
+  cmakeargs=("-DCMAKE_BUILD_TYPE=Release")
+  if [ -z "${NO_INSTALL_PREFIX}" ] ; then
+  cmakeargs+=("-DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}")
+  fi
   cmakeargs+=("-DBUILD_TESTS=OFF")
   install ${XSIMD_ORG:-xtensor-stack} xsimd ${XSIMD_BRANCH:-7.4.4} \
     ${XSIMD_LOCAL:-xsimd-7.4.4} "${cmakeargs[@]}"
@@ -68,8 +76,10 @@ xsimd() {
 
 xtensor() {
 
-  cmakeargs=("-DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}")
-  cmakeargs+=("-DCMAKE_BUILD_TYPE=Release")
+  cmakeargs=("-DCMAKE_BUILD_TYPE=Release")
+  if [ -z "${NO_INSTALL_PREFIX}" ] ; then
+  cmakeargs+=("-DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}")
+  fi
   install ${XTENSOR_ORG:-xtensor-stack} xtensor ${XTENSOR_BRANCH:-0.21.2} \
     ${XTENSOR_LOCAL:-xtensor-0.21.2} "${cmakeargs[@]}"
 
@@ -77,8 +87,10 @@ xtensor() {
 
 xtensor_python() {
 
-  cmakeargs=("-DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}")
-  cmakeargs+=("-DCMAKE_BUILD_TYPE=Release")
+  cmakeargs=("-DCMAKE_BUILD_TYPE=Release")
+  if [ -z "${NO_INSTALL_PREFIX}" ] ; then
+  cmakeargs+=("-DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX}")
+  fi
   install ${XTENSOR_PYTHON_ORG:-xtensor-stack} xtensor-python \
     ${XTENSOR_PYTHON_BRANCH:-0.24.1} \
     ${XTENSOR_PYTHON_LOCAL:-xtensor-python-0.24.1} "${cmakeargs[@]}"
