@@ -59,7 +59,7 @@ class ArrayPropertyHelper
 {
 public:
 
-    static inline void broadcast_array_using_ellipsis(SimpleArray<T> & arr_out, pybind11::array const & arr_in)
+    static void broadcast_array_using_ellipsis(SimpleArray<T> & arr_out, pybind11::array const & arr_in)
     {
         auto slices = make_default_slices(arr_out);
 
@@ -79,7 +79,7 @@ public:
         }
     }
 
-    static inline void setitem_parser(SimpleArray<T> & arr_out, pybind11::args const & args)
+    static void setitem_parser(SimpleArray<T> & arr_out, pybind11::args const & args)
     {
         namespace py = pybind11;
 
@@ -139,7 +139,7 @@ public:
         throw std::runtime_error("unsupported operation.");
     }
 
-    static inline pybind11::buffer_info get_buffer_info(SimpleArray<T> & array)
+    static pybind11::buffer_info get_buffer_info(SimpleArray<T> & array)
     {
         std::vector<size_t> stride;
         for (size_t const i : array.stride())
@@ -158,7 +158,7 @@ public:
 
 private:
 
-    static inline std::vector<modmesh::detail::slice_type> make_default_slices(SimpleArray<T> const & arr)
+    static std::vector<modmesh::detail::slice_type> make_default_slices(SimpleArray<T> const & arr)
     {
         std::vector<modmesh::detail::slice_type> slices;
         slices.reserve(arr.ndim());
@@ -173,7 +173,7 @@ private:
         return slices;
     }
 
-    static inline void copy_slice(modmesh::detail::slice_type & slice_out, pybind11::slice const & slice_in)
+    static void copy_slice(modmesh::detail::slice_type & slice_out, pybind11::slice const & slice_in)
     {
         auto start = std::string(pybind11::str(slice_in.attr("start")));
         auto stop = std::string(pybind11::str(slice_in.attr("stop")));
@@ -184,7 +184,7 @@ private:
         slice_out[2] = step == "None" ? slice_out[2] : std::stoi(step);
     }
 
-    static inline void slice_syntax_check(pybind11::tuple const & tuple, size_t ndim)
+    static void slice_syntax_check(pybind11::tuple const & tuple, size_t ndim)
     {
         namespace py = pybind11;
 
@@ -218,9 +218,9 @@ private:
         }
     }
 
-    static inline void process_slices(pybind11::tuple const & tuple,
-                                      std::vector<modmesh::detail::slice_type> & slices,
-                                      size_t ndim)
+    static void process_slices(pybind11::tuple const & tuple,
+                               std::vector<modmesh::detail::slice_type> & slices,
+                               size_t ndim)
     {
         namespace py = pybind11;
 
@@ -260,9 +260,9 @@ private:
         }
     }
 
-    static inline void broadcast_array_using_slice(SimpleArray<T> & arr_out,
-                                                   std::vector<modmesh::detail::slice_type> const & slices,
-                                                   pybind11::array const & arr_in)
+    static void broadcast_array_using_slice(SimpleArray<T> & arr_out,
+                                            std::vector<modmesh::detail::slice_type> const & slices,
+                                            pybind11::array const & arr_in)
     {
         TypeBroadcast<T>::check_shape(arr_out, slices, arr_in);
 
