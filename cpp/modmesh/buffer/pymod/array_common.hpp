@@ -58,6 +58,8 @@ template <typename T>
 class ArrayPropertyHelper
 {
 public:
+    using shape_type = modmesh::detail::shape_type;
+    using slice_type = modmesh::detail::slice_type;
 
     static void broadcast_array_using_ellipsis(SimpleArray<T> & arr_out, pybind11::array const & arr_in)
     {
@@ -158,13 +160,13 @@ public:
 
 private:
 
-    static std::vector<modmesh::detail::slice_type> make_default_slices(SimpleArray<T> const & arr)
+    static std::vector<slice_type> make_default_slices(SimpleArray<T> const & arr)
     {
-        std::vector<modmesh::detail::slice_type> slices;
+        std::vector<slice_type> slices;
         slices.reserve(arr.ndim());
         for (size_t i = 0; i < arr.ndim(); ++i)
         {
-            modmesh::detail::slice_type default_slice(3);
+            slice_type default_slice(3);
             default_slice[0] = 0; // start
             default_slice[1] = static_cast<int>(arr.shape(i)); // stop
             default_slice[2] = 1; // step
@@ -173,7 +175,7 @@ private:
         return slices;
     }
 
-    static void copy_slice(modmesh::detail::slice_type & slice_out, pybind11::slice const & slice_in)
+    static void copy_slice(slice_type & slice_out, pybind11::slice const & slice_in)
     {
         auto start = std::string(pybind11::str(slice_in.attr("start")));
         auto stop = std::string(pybind11::str(slice_in.attr("stop")));
@@ -219,7 +221,7 @@ private:
     }
 
     static void process_slices(pybind11::tuple const & tuple,
-                               std::vector<modmesh::detail::slice_type> & slices,
+                               std::vector<slice_type> & slices,
                                size_t ndim)
     {
         namespace py = pybind11;
@@ -261,7 +263,7 @@ private:
     }
 
     static void broadcast_array_using_slice(SimpleArray<T> & arr_out,
-                                            std::vector<modmesh::detail::slice_type> const & slices,
+                                            std::vector<slice_type> const & slices,
                                             pybind11::array const & arr_in)
     {
         TypeBroadcast<T>::check_shape(arr_out, slices, arr_in);
