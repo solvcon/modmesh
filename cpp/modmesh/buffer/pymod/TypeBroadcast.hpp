@@ -28,9 +28,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <pybind11/pybind11.h> // Must be the first include.
-#include <pybind11/numpy.h>
 #include <modmesh/buffer/SimpleArray.hpp>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h> // Must be the first include.
 
 namespace modmesh
 {
@@ -40,8 +40,8 @@ namespace python
 template <typename T /* original type */, typename D /* for destination type */>
 struct TypeBroadcastImpl
 {
-    using slice_type = small_vector<int>;
-    using shape_type = typename SimpleArray<T>::shape_type;
+    using slice_type = modmesh::detail::slice_type;
+    using shape_type = modmesh::detail::shape_type;
 
     // NOLINTNEXTLINE(misc-no-recursion)
     static void copy_idx(SimpleArray<T> & arr_out, std::vector<slice_type> const & slices, pybind11::array_t<D> const * arr_in, shape_type left_shape, shape_type sidx, int dim)
@@ -111,8 +111,8 @@ struct TypeBroadcastImpl
 template <typename T>
 struct TypeBroadcast
 {
-    using slice_type = small_vector<int>;
-    using shape_type = typename SimpleArray<T>::shape_type;
+    using slice_type = modmesh::detail::slice_type;
+    using shape_type = modmesh::detail::shape_type;
 
     static void check_shape(SimpleArray<T> const & arr_out, std::vector<slice_type> const & slices, pybind11::array const & arr_in)
     {

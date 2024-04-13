@@ -208,7 +208,7 @@ std::enable_if_t<is_simple_array_v<S>, pybind11::array> to_ndarray(S && sarr)
 template <typename T>
 static SimpleArray<T> makeSimpleArray(pybind11::array_t<T> & ndarr)
 {
-    typename SimpleArray<T>::shape_type shape;
+    modmesh::detail::shape_type shape;
     for (ssize_t i = 0; i < ndarr.ndim(); ++i)
     {
         shape.push_back(ndarr.shape(i));
