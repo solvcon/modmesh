@@ -224,20 +224,20 @@ jobs:
       - name: make cinclude (check_include)
         run: make cinclude
 
-      - name: make viewer USE_PYTEST_HELPER_BINDING=OFF DEBUG_BUILD_OPTIMIZATION_ONE=ON
+      - name: make viewer USE_PYTEST_HELPER_BINDING=OFF
         run: |
           make viewer \
             ${JOB_MAKE_ARGS} \
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON -DDEBUG_BUILD_OPTIMIZATION_ONE=ON"
+            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
 
-      - name: make viewer USE_PYTEST_HELPER_BINDING=ON DEBUG_BUILD_OPTIMIZATION_ONE=ON
+      - name: make viewer USE_PYTEST_HELPER_BINDING=ON
         run: |
           rm -f build/*/Makefile
           make viewer \
             ${JOB_MAKE_ARGS} \
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON -DDEBUG_BUILD_OPTIMIZATION_ONE=ON"
+            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
 
       - name: make run_viewer_pytest
         run: |
