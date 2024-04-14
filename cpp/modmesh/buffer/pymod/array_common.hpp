@@ -33,6 +33,14 @@
 #include <modmesh/buffer/SimpleArray.hpp>
 #include <modmesh/buffer/pymod/TypeBroadcast.hpp>
 
+// We faced an issue where the template specialization for the caster of
+// SimpleArray<T> doesn't function correctly on both macOS and Windows.
+// While the root cause of the problem remains unclear, a workaround is
+// available by including the caster header in this file, impacting
+// wrap_SimpleArray.cpp.
+// See more details in the issue: https://github.com/solvcon/modmesh/issues/283
+#include <modmesh/buffer/pymod/SimpleArrayCaster.hpp>
+
 namespace modmesh
 {
 

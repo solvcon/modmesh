@@ -477,26 +477,24 @@ jobs:
           Get-Command clang-tidy
           Get-Command flake8
 
-      - name: cmake ALL_BUILD USE_PYTEST_HELPER_BINDING=OFF DEBUG_BUILD_OPTIMIZATION_ONE=ON
+      - name: cmake ALL_BUILD USE_PYTEST_HELPER_BINDING=OFF
         run: |
           cmake `
             -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} `
             -Dpybind11_DIR="$(pybind11-config --cmakedir)" `
-            -DDEBUG_BUILD_OPTIMIZATION_ONE=ON `
             -S${{ github.workspace }} `
             -B${{ github.workspace }}/build
           cmake --build ${{ github.workspace }}/build `
             --config ${{ matrix.cmake_build_type }} `
             --target ALL_BUILD
 
-      - name: cmake ALL_BUILD USE_PYTEST_HELPER_BINDING=ON DEBUG_BUILD_OPTIMIZATION_ONE=ON
+      - name: cmake ALL_BUILD USE_PYTEST_HELPER_BINDING=ON
         run: |
           Remove-Item -Path ${{ github.workspace }}/build -Recurse -Force
           cmake `
             -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} `
             -Dpybind11_DIR="$(pybind11-config --cmakedir)" `
             -DUSE_PYTEST_HELPER_BINDING=ON `
-            -DDEBUG_BUILD_OPTIMIZATION_ONE=ON `
             -S${{ github.workspace }} `
             -B${{ github.workspace }}/build
           cmake --build ${{ github.workspace }}/build `

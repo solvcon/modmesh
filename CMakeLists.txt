@@ -31,11 +31,6 @@ option(LINT_AS_ERRORS "clang-tidy warnings as errors" OFF)
 # - Address Sanitization: Protecting against address-related vulnerabilities. See https://clang.llvm.org/docs/AddressSanitizer.html
 option(USE_SANITIZER "use sanitizer (undefined, leak, address)" OFF)
 
-# FIXME: A workaround flag, check more on https://github.com/solvcon/modmesh/issues/283
-# For macOS and Windows development, please turn on this flag to avoid the issue.
-option(DEBUG_BUILD_OPTIMIZATION_ONE "use -O1 for debug build. This is a workaround for issue#283." OFF)
-message(STATUS "DEBUG_BUILD_OPTIMIZATION_ONE: ${DEBUG_BUILD_OPTIMIZATION_ONE}")
-
 option(USE_PYTEST_HELPER_BINDING "use helper bindings to run pytest. should be ON if the build is for pytest" OFF)
 if(USE_PYTEST_HELPER_BINDING)
     add_definitions(-D USE_PYTEST_HELPER_BINDING)
@@ -97,20 +92,8 @@ message(STATUS "DEBUG_SYMBOL: ${DEBUG_SYMBOL}")
 if(DEBUG_SYMBOL)
     if(MSVC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DEBUG")
-        if(DEBUG_BUILD_OPTIMIZATION_ONE)
-            # MSVC optimization flags are different from GCC/Clang, so there is no -O1 in MSVC.
-            # /O1 means minimize size and /O2 means maximun speed.
-            # We found that only /O2 can have the correct behavior, so we set /O2 here.
-            # /Ob2 is the default value of /O2, but we found that it need to explicitly set /Ob2 to have the correct behavior.
-            # See more: https://learn.microsoft.com/en-us/cpp/build/reference/o1-o2-minimize-size-maximize-speed
-            add_compile_options(/O2 /Ob2)
-            string(REPLACE "/RTC1" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}") # /RTC1 incompatible with /O1
-        endif()
     else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
-        if(DEBUG_BUILD_OPTIMIZATION_ONE)
-            add_compile_options(-O1)
-        endif()
     endif()
 endif()
 
