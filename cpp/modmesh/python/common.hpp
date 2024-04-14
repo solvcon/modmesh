@@ -285,7 +285,7 @@ public:
     wrapper_type & METHOD(Args &&... args)                                    \
     {                                                                         \
         m_cls.METHOD(std::forward<Args>(args)...);                            \
-        return *static_cast<wrapper_type *>(this);                            \
+        return *static_cast<std::add_pointer_t<wrapper_type>>(this);          \
     }
 
 #define DECL_MM_PYBIND_CLASS_METHOD_TIMED(METHOD)                             \
@@ -293,7 +293,7 @@ public:
     wrapper_type & METHOD##_timed(Args &&... args)                            \
     {                                                                         \
         m_cls.METHOD(std::forward<Args>(args)..., mmtag());                   \
-        return *static_cast<wrapper_type *>(this);                            \
+        return *static_cast<std::add_pointer_t<wrapper_type>>(this);          \
     }
 
 #define DECL_MM_PYBIND_CLASS_METHOD(METHOD)     \
@@ -349,7 +349,7 @@ public:
             //
             ;
 
-        return *static_cast<wrapper_type *>(this);
+        return *static_cast<std::add_pointer_t<wrapper_type>>(this);
     }
 
     template <typename Func>
@@ -382,7 +382,7 @@ public:
             //
             ;
 
-        return *static_cast<wrapper_type *>(this);
+        return *static_cast<std::add_pointer_t<wrapper_type>>(this);
     }
 
     class_ & cls() { return m_cls; }
