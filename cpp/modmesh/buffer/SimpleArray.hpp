@@ -128,8 +128,9 @@ public:
 
     using value_type = typename internal_types::value_type;
 
-    value_type min(value_type initial = std::numeric_limits<value_type>::max()) const
+    value_type min() const
     {
+        value_type initial = std::numeric_limits<value_type>::max();
         auto athis = static_cast<A const *>(this);
         for (size_t i = 0; i < athis->size(); ++i)
         {
@@ -141,8 +142,9 @@ public:
         return initial;
     }
 
-    value_type max(value_type initial = std::numeric_limits<value_type>::lowest()) const
+    value_type max() const
     {
+        value_type initial = std::numeric_limits<value_type>::lowest();
         auto athis = static_cast<A const *>(this);
         for (size_t i = 0; i < athis->size(); ++i)
         {
@@ -154,8 +156,9 @@ public:
         return initial;
     }
 
-    value_type sum(value_type initial = 0) const
+    value_type sum() const
     {
+        value_type initial = 0;
         auto athis = static_cast<A const *>(this);
         if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
         {

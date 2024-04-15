@@ -143,7 +143,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                                    { return pybind11::cast(SimpleArrayPlex(arr)); })
             .wrap_modifiers()
             .wrap_calculators()
-            //
+            // ATTENTION: always keep the same interface between WrapSimpleArrayPlex and WrapSimpleArray
             ;
     }
 
@@ -170,9 +170,9 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
 
         (*this)
-            .def("min", &wrapped_type::min, py::arg("initial") = std::numeric_limits<value_type>::max())
-            .def("max", &wrapped_type::max, py::arg("initial") = std::numeric_limits<value_type>::lowest())
-            .def("sum", &wrapped_type::sum, py::arg("initial") = 0)
+            .def("min", &wrapped_type::min)
+            .def("max", &wrapped_type::max)
+            .def("sum", &wrapped_type::sum)
             .def("abs", &wrapped_type::abs)
             //
             ;
