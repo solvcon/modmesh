@@ -837,7 +837,7 @@ class SimpleArrayPlexTC(unittest.TestCase):
         self.assertEqual(sarr.nbody, 2 - 0)
         self.assertEqual(sarr.has_ghost, False)
         self.assertEqual(sarr.nghost, 0)
-        
+
     def test_minmaxsum(self):
         sarr = modmesh.SimpleArray((2, 4), value=10.0, dtype='float64')
 
