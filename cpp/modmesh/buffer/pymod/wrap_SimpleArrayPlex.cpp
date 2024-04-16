@@ -371,14 +371,14 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
 
 #undef DECL_MM_EXECUTE_TYPED_ARRAY_METHOD
 
-}; // namespace python
+}; /* end of class WrapSimpleArrayPlex*/
 
 void wrap_SimpleArrayPlex(pybind11::module & mod)
 {
     WrapSimpleArrayPlex::commit(mod, "SimpleArray", "SimpleArray");
 }
 
-} // namespace python
+} /* end namespace python */
 
 } /* end namespace modmesh */
 
