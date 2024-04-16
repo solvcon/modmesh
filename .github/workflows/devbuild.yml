@@ -25,7 +25,12 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v1
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
         with:
           fetch-depth: 1
 
@@ -99,7 +104,12 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v1
+    - name: Harden Runner
+      uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      with:
+        egress-policy: audit
+
+    - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
       with:
         fetch-depth: 1
 
@@ -254,7 +264,12 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v1
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
         with:
           fetch-depth: 1
 
@@ -426,18 +441,23 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v3
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
         with:
           fetch-depth: 1
 
-      - uses: ilammy/msvc-dev-cmd@v1
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: event name
         run: |
           echo "github.event_name: ${{ github.event_name }}"
 
       - name: install qt
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@b7840a6733f49e2a39c4355260d2375063d39b61 # v3
         with:
           aqtversion: '==2.1.*'
           version: '6.3.1'
@@ -446,7 +466,7 @@ jobs:
           arch: 'win64_msvc2019_64'
           modules: 'qt3d'
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
         with:
           python-version: '3.10' 
 
