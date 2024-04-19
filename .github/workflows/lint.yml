@@ -20,14 +20,19 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v2
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
 
       - name: event name
         run: |
           echo "github.event_name: ${{ github.event_name }}"
 
       - name: Run clang-format style check for C/C++/Protobuf programs.
-        uses: jidicula/clang-format-action@v4.11.0
+        uses: jidicula/clang-format-action@f62da5e3d3a2d88ff364771d9d938773a618ab5e # v4.11.0
         with:
           clang-format-version: '16'
           check-path: ${{ matrix.path }}
@@ -53,7 +58,12 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v1
+    - name: Harden Runner
+      uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      with:
+        egress-policy: audit
+
+    - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
       with:
         fetch-depth: 1
 
@@ -161,7 +171,12 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v1
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
         with:
           fetch-depth: 1
 

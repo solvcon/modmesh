@@ -6,6 +6,9 @@ on:
   schedule:
     - cron: '34 17 * * *'
 
+permissions:
+  contents: read
+
 jobs:
 
   nouse_install_ubuntu:
@@ -27,7 +30,12 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v1
+    - name: Harden Runner
+      uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      with:
+        egress-policy: audit
+
+    - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
       with:
         fetch-depth: 1
 
@@ -116,7 +124,12 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v1
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
         with:
           fetch-depth: 1
 
