@@ -836,6 +836,28 @@ class SimpleArrayPlexTC(unittest.TestCase):
         self.assertEqual(len(sarr), 2 * 3 * 4)  # number of elements
         self.assertEqual(sarr.nbody, 2 - 0)
         self.assertEqual(sarr.has_ghost, False)
+        self.assertEqual(sarr.nghost, 0)
+
+    def test_minmaxsum(self):
+        sarr = modmesh.SimpleArray((2, 4), value=10.0, dtype='float64')
+
+        self.assertEqual(sarr.sum(), 10.0 * 2 * 4)
+        self.assertEqual(sarr.min(), 10.0)
+        self.assertEqual(sarr.max(), 10.0)
+        sarr.fill(1.0)
+        self.assertEqual(sarr.sum(), 1.0 * 2 * 4)
+        self.assertEqual(sarr.min(), 1.0)
+        self.assertEqual(sarr.max(), 1.0)
+        sarr[1, 0] = 9.2
+        sarr[0, 3] = -2.3
+        self.assertEqual(sarr.min(), -2.3)
+        self.assertEqual(sarr.max(), 9.2)
+
+    def test_abs(self):
+        sarr = modmesh.SimpleArray((3, 2), value=-2, dtype='int64')
+        self.assertEqual(sarr.sum(), -2 * 3 * 2)
+        sarr = sarr.abs()
+        self.assertEqual(sarr.sum(), 2 * 3 * 2)
 
     def test_SimpleArrayPlex_set_item_simple(self):
         # just test if the SimpleArrayPlex works

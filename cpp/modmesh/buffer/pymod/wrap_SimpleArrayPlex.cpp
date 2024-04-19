@@ -196,6 +196,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
 
     friend root_base_type;
 
+#define DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(typed_array_method)          \
+    [](wrapped_type & self) { return execute_callback_with_typed_array( \
+                                  self, [](auto & array) { return array.typed_array_method(); }); }
+
     WrapSimpleArrayPlex(pybind11::module & mod, char const * pyname, char const * pydoc)
         : root_base_type(mod, pyname, pydoc, pybind11::buffer_protocol())
     {
@@ -238,18 +242,9 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                             using data_type = typename std::remove_reference_t<decltype(array[0])>;
                             return ArrayPropertyHelper<data_type>::get_buffer_info(array); });
                 })
-            .def_property_readonly("nbytes", [](wrapped_type & self)
-                                   { return execute_callback_with_typed_array(
-                                         self, [](auto & array)
-                                         { return array.nbytes(); }); })
-            .def_property_readonly("size", [](wrapped_type & self)
-                                   { return execute_callback_with_typed_array(
-                                         self, [](auto & array)
-                                         { return array.size(); }); })
-            .def_property_readonly("itemsize", [](wrapped_type & self)
-                                   { return execute_callback_with_typed_array(
-                                         self, [](auto & array)
-                                         { return array.itemsize(); }); })
+            .def_property_readonly("nbytes", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(nbytes))
+            .def_property_readonly("size", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(size))
+            .def_property_readonly("itemsize", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(itemsize))
             .def_property_readonly(
                 "shape",
                 [](wrapped_type const & self)
@@ -280,10 +275,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                             return ret;
                         });
                 })
-            .def("__len__", [](wrapped_type & self)
-                 { return execute_callback_with_typed_array(
-                       self, [](auto & array)
-                       { return array.size(); }); })
+            .def("__len__", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(size))
             .def("__getitem__", &get_typed_array_value<ssize_t>)
             .def("__getitem__", &get_typed_array_value<const std::vector<ssize_t> &>)
             .def("__setitem__", [](wrapped_type & self, pybind11::args const & args)
@@ -300,16 +292,64 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                        { 
                         const auto shape = make_shape(py_shape);
                         return array.reshape(shape); }); })
-            .def_property_readonly("has_ghost", [](wrapped_type & self)
-                                   { return execute_callback_with_typed_array(
-                                         self, [](auto & array)
-                                         { return array.has_ghost(); }); })
-            .def_property_readonly("nbody", [](wrapped_type & self)
-                                   { return execute_callback_with_typed_array(
-                                         self, [](auto & array)
-                                         { return array.nbody(); }); })
-            /// TODO: should have the same interface as WrapSimpleArray
+            .def_property_readonly("has_ghost", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(has_ghost))
+            .def_property(
+                "nghost",
+                // getter
+                DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(nghost),
+                // setter
+                [](wrapped_type & self, size_t size)
+                { return execute_callback_with_typed_array(
+                      self, [size](auto & array)
+                      { return array.set_nghost(size); }); })
+            .def_property_readonly("nbody", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(nbody))
+            .wrap_modifiers()
+            .wrap_calculators()
+            // ATTENTION: always keep the same interface between WrapSimpleArrayPlex and WrapSimpleArray
             ;
+    }
+
+    wrapper_type & wrap_modifiers()
+    {
+        namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
+
+        (*this)
+            .def(
+                "fill",
+                [](wrapped_type & self, pybind11::object const & py_value)
+                {
+                    auto datatype = self.data_type();
+                    execute_callback_with_typed_array(
+                        self, [&py_value, datatype](auto & array)
+                        {
+                            using value_type = typename std::remove_reference_t<decltype(array[0])>;
+                            verify_python_value_datatype(py_value, datatype);
+                            const auto value = py_value.cast<value_type>();
+                            array.fill(value);
+                        }); },
+                py::arg("value"))
+            //
+            ;
+
+        return *this;
+    }
+
+    wrapper_type & wrap_calculators()
+    {
+#define DECL_MM_EXECUTE_TYPED_ARRAY_METHOD_RETUN_TYPED_VALUE(typed_array_method) \
+    [](wrapped_type & self) { return execute_callback_with_typed_array(          \
+                                  self, [](auto & array) { return pybind11::cast(array.typed_array_method()); }); }
+
+        (*this)
+            .def("min", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD_RETUN_TYPED_VALUE(min))
+            .def("max", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD_RETUN_TYPED_VALUE(max))
+            .def("sum", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD_RETUN_TYPED_VALUE(sum))
+            .def("abs", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD_RETUN_TYPED_VALUE(abs))
+            //
+            ;
+
+#undef DECL_MM_EXECUTE_TYPED_ARRAY_METHOD_RETUN_TYPED_VALUE
+        return *this;
     }
 
     /// Initialize the arrayplex with the given value
@@ -328,6 +368,8 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                 array.fill(value); });
         return array_plex;
     }
+
+#undef DECL_MM_EXECUTE_TYPED_ARRAY_METHOD
 
 }; /* end of class WrapSimpleArrayPlex*/
 
