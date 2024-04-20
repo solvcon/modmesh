@@ -45,7 +45,7 @@ jobs:
     - name: dependency by pip
       run: |
         sudo pip3 install setuptools
-        sudo pip3 install numpy pytest flake8
+        sudo pip3 install numpy pytest jsonschema flake8
 
     - name: dependency by manual script
       run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
@@ -135,7 +135,7 @@ jobs:
           # temporary remove pip upgrade, due to latest pip will let cmake
           # fail to find Numpy
           # python3 -m pip -v install --upgrade pip
-          python3 -m pip -v install --upgrade numpy pytest flake8
+          python3 -m pip -v install --upgrade numpy pytest flake8 jsonschema
 
       - name: dependency by manual script
         run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11

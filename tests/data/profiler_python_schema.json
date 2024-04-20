@@ -1,0 +1,41 @@
+{
+    "type": "object",
+    "properties": {
+        "name": {"type": "string"},
+        "total_time": {"type": "number"},
+        "count": {"type": "integer"},
+        "current_node": {"type": "boolean"},
+        "children": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "total_time": {"type": "number"},
+                    "count": {"type": "integer"},
+                    "children": {
+                        "type": "array",
+                        "items": {"$ref": "#/definitions/child"}
+                    }
+                },
+                "required": ["name", "total_time", "count", "children"]
+            }
+        }
+    },
+    "required": ["name", "total_time", "count", "current_node", "children"],
+    "definitions": {
+        "child": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "total_time": {"type": "number"},
+                "count": {"type": "integer"},
+                "children": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/child"}
+                }
+            },
+            "required": ["name", "total_time", "count", "children"]
+        }
+    }
+}

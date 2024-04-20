@@ -28,6 +28,8 @@
 
 #include <modmesh/toggle/pymod/toggle_pymod.hpp> // Must be the first include.
 #include <modmesh/modmesh.hpp>
+#include <queue>
+#include <unordered_map>
 
 namespace modmesh
 {
@@ -163,12 +165,95 @@ protected:
 
 }; /* end class WrapTimeRegistry */
 
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapCallProfiler : public WrapBase<WrapCallProfiler, CallProfiler>
+{
+public:
+    friend root_base_type;
+
+protected:
+    WrapCallProfiler(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : root_base_type(mod, pyname, pydoc)
+    {
+        namespace py = pybind11;
+
+        (*this)
+            .def_property_readonly_static(
+                "instance",
+                [](py::object const &) -> wrapped_type &
+                { return wrapped_type::instance(); })
+            .def("result", [](CallProfiler & profiler)
+                 {
+            const RadixTreeNode<CallerProfile> * root = profiler.radix_tree().get_root();
+            if (root->no_children()) {
+                return py::dict();
+            }
+            py::dict result;
+            std::queue<const RadixTreeNode<CallerProfile>*> node_queue;
+            std::unordered_map<const RadixTreeNode<CallerProfile>*, py::dict> dict_storage;
+
+            node_queue.push(root);
+            dict_storage[root] = result;
+
+            while (!node_queue.empty()) {
+                const RadixTreeNode<CallerProfile>* cur_node = node_queue.front();
+                const py::dict& current_dict = dict_storage[cur_node];
+                node_queue.pop();
+
+                current_dict["name"] = cur_node->name();
+                current_dict["total_time"] = cur_node->data().total_time.count() / 1e6;
+                current_dict["count"] = cur_node->data().call_count;
+                if (cur_node == profiler.radix_tree().get_current_node()){
+                    current_dict["current_node"] = true;
+                }
+
+                py::list children_list;
+                for (const auto& child : cur_node->children()) {
+                    dict_storage[child.get()] = py::dict();
+                    py::dict& child_dict = dict_storage[child.get()];
+                    children_list.append(child_dict);
+                    node_queue.push(child.get());
+                }
+                current_dict["children"] = children_list;
+            }
+            return result; })
+            .def("reset", &wrapped_type::reset);
+        ;
+
+        mod.attr("call_profiler") = mod.attr("CallProfiler").attr("instance");
+    }
+}; /* end class WrapCallProfiler */
+
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapCallProfilerProbe : public WrapBase<WrapCallProfilerProbe, CallProfilerProbe>
+{
+public:
+    friend root_base_type;
+
+protected:
+    WrapCallProfilerProbe(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : root_base_type(mod, pyname, pydoc)
+    {
+        namespace py = pybind11;
+
+        (*this)
+            .def(
+                py::init(
+                    [](const char * caller_name)
+                    {
+                        return std::make_unique<CallProfilerProbe>(CallProfiler::instance(), caller_name);
+                    }),
+                py::arg("caller_name"))
+            .def("cancel", &wrapped_type::cancel);
+    }
+}; /* end class WrapCallProfilerProbe */
+
 void wrap_profile(pybind11::module & mod)
 {
     WrapWrapperProfilerStatus::commit(mod, "WrapperProfilerStatus", "WrapperProfilerStatus");
     WrapStopWatch::commit(mod, "StopWatch", "StopWatch");
     WrapTimedEntry::commit(mod, "TimedEntry", "TimeEntry");
     WrapTimeRegistry::commit(mod, "TimeRegistry", "TimeRegistry");
+    WrapCallProfiler::commit(mod, "CallProfiler", "CallProfiler");
+    WrapCallProfilerProbe::commit(mod, "CallProfilerProbe", "CallProfilerProbe");
 }
 
 } /* end namespace python */

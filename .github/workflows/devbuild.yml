@@ -146,7 +146,7 @@ jobs:
     - name: dependency by pip
       run: |
         sudo pip3 install setuptools
-        sudo pip3 install numpy pytest flake8
+        sudo pip3 install numpy pytest flake8 jsonschema
         sudo pip3 install pyside6==$(qmake6 -query QT_VERSION)
 
     - name: dependency by manual script
@@ -314,12 +314,12 @@ jobs:
             # suppress the warning of pip because brew forces PEP668 since python3.12
             python3 -m pip -v install --upgrade setuptools  --break-system-packages
             python3 -m pip -v install --upgrade pip  --break-system-packages
-            python3 -m pip -v install --upgrade numpy pytest flake8  --break-system-packages
+            python3 -m pip -v install --upgrade numpy pytest flake8 jsonschema  --break-system-packages
             python3 -m pip -v install --upgrade pyside6==$(qmake -query QT_VERSION)  --break-system-packages
           else
             python3 -m pip -v install --upgrade setuptools
             python3 -m pip -v install --upgrade pip
-            python3 -m pip -v install --upgrade numpy pytest flake8
+            python3 -m pip -v install --upgrade numpy pytest flake8 jsonschema
             python3 -m pip -v install --upgrade pyside6==$(qmake -query QT_VERSION)
           fi  
 
@@ -492,7 +492,7 @@ jobs:
 
       - name: dependency by pip
         run: |
-          pip3 install -U numpy pytest flake8 pybind11 pyside6==$(qmake -query QT_VERSION)
+          pip3 install -U numpy pytest jsonschema flake8 pybind11 pyside6==$(qmake -query QT_VERSION)
           # Add PySide6 and Shiboken6 path into system path, that allow exe file can find
           # dll during runtime
           # If user needs to modified system path in github actions container
