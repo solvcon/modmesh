@@ -133,6 +133,8 @@ WrapBufferExpander::WrapBufferExpander(pybind11::module & mod, char const * pyna
             py::arg("length"))
         .def_timed(py::init([]()
                             { return wrapped_type::construct(); }))
+        .def_timed(py::init([](std::shared_ptr<ConcreteBuffer> const & buf)
+                            { return wrapped_type::construct(buf, /*clone*/ true); }))
         .def_timed("reserve", &wrapped_type::reserve, py::arg("cap"))
         .def_timed("expand", &wrapped_type::expand, py::arg("length"))
         .def_property_readonly("capacity", &wrapped_type::capacity)

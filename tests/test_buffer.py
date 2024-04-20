@@ -139,6 +139,20 @@ class BufferExpanderBasicTC(unittest.TestCase):
             cbuf[it] = it + 10
         self.assertEqual(list(i + 10 for i in range(10)), list(ep))
 
+    def test_BufferExpanderFromConcreteBuffer(self):
+        buf = modmesh.ConcreteBuffer(10)
+        for it in range(len(buf)):
+            buf[it] = it
+
+        ep = modmesh.BufferExpander(buf)
+        self.assertEqual(10, ep.capacity)
+        self.assertEqual(10, len(ep))
+        for it in range(len(ep)):
+            ep[it] = it + 100
+
+        for it in range(len(buf)):
+            self.assertEqual(buf[it] + 100, ep[it])
+
 
 class SimpleArrayBasicTC(unittest.TestCase):
 
