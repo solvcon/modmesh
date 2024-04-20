@@ -76,13 +76,26 @@ jobs:
         # https://doc-snapshots.qt.io/qt6-dev/linux.html
         #
         # In short, OpenGL libraries and headers are required. Without
-        # installing this package, cmake won't find out the correct lib path.
+        # installing this package, cmake won't find the correct lib path.
+        # This has been replaced by the 'install qt' section below to manage
+        # qt6 versioning independently from the OS.
 
-        if [ "${{ matrix.os }}" == "ubuntu-22.04" ] ; then \
-          sudo apt-get -qy install \
-              qt6-3d-dev xvfb \
-              libgl1-mesa-dev
-        fi
+        # if [ "${{ matrix.os }}" == "ubuntu-22.04" ] ; then \
+        #   sudo apt-get -qy install \
+        #       qt6-3d-dev xvfb \
+        #       libgl1-mesa-dev
+        # fi
+
+    - name: install qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        aqtversion: '==3.1.*'
+        version: '6.6.3'
+        host: 'linux'
+        target: 'desktop'
+        arch: 'gcc_64'
+        modules: 'qt3d'
+        setup-python: 'false'
 
     - name: dependency by pip
       run: |
@@ -150,6 +163,7 @@ jobs:
     env:
       JOB_MAKE_ARGS: VERBOSE=1 BUILD_QT=ON USE_CLANG_TIDY=ON LINT_AS_ERRORS=ON
       QT_DEBUG_PLUGINS: 1
+      PIP_BREAK_SYSTEM_PACKAGES: 1 # disabling PEP668
 
     strategy:
       matrix:
@@ -175,9 +189,23 @@ jobs:
         run: |
           export HOMEBREW_NO_AUTO_UPDATE=1
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
-          brew install llvm@16 qt6
+          # This has been replaced by the 'install qt' section below to manage
+          # qt6 versioning independently from the OS.
+          # brew install llvm@16 qt6
+          brew install llvm@16
           ln -s "$(brew --prefix llvm@16)/bin/clang-format" "/usr/local/bin/clang-format"
           ln -s "$(brew --prefix llvm@16)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+
+      - name: install qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: '==3.1.*'
+          version: '6.6.3'
+          host: 'mac'
+          target: 'desktop'
+          arch: 'clang_64'
+          modules: 'qt3d'
+          setup-python: 'false'
 
       - name: dependency by pip
         run: |
