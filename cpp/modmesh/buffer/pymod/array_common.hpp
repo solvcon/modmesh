@@ -95,8 +95,10 @@ public:
 
         if (args.size() == 2)
         {
+            const bool isNumber = py::isinstance<py::bool_>(args[1]) || py::isinstance<py::int_>(args[1]) || py::isinstance<py::float_>(args[1]);
+
             // sarr[K] = V
-            if (py::isinstance<py::int_>(args[0]) && !py::isinstance<py::array>(args[1]))
+            if (py::isinstance<py::int_>(args[0]) && isNumber)
             {
                 const auto key = args[0].cast<ssize_t>();
 
@@ -104,16 +106,19 @@ public:
                 return;
             }
             // sarr[K1, K2, K3] = V
-            if (py::isinstance<py::tuple>(args[0]) && !py::isinstance<py::array>(args[1]))
+            if (py::isinstance<py::tuple>(args[0]) && isNumber)
             {
                 const auto key = args[0].cast<std::vector<ssize_t>>();
 
                 arr_out.at(key) = args[1].cast<T>();
                 return;
             }
+
+            const bool isArray = py::isinstance<py::list>(args[1]) || py::isinstance<py::array>(args[1]) || py::isinstance<py::tuple>(args[1]);
+
             // multi-dimension with slice and ellipsis
             // sarr[slice, slice, ellipsis] = ndarr
-            if (py::isinstance<py::tuple>(args[0]) && py::isinstance<py::array>(args[1]))
+            if (py::isinstance<py::tuple>(args[0]) && isArray)
             {
                 const py::tuple tuple_in = args[0];
                 const py::array arr_in = args[1];
@@ -126,7 +131,7 @@ public:
             }
             // one-dimension with slice
             // sarr[slice] = ndarr
-            if (py::isinstance<py::slice>(args[0]) && py::isinstance<py::array>(args[1]))
+            if (py::isinstance<py::slice>(args[0]) && isArray)
             {
                 const auto slice_in = args[0].cast<py::slice>();
                 const auto arr_in = args[1].cast<py::array>();
@@ -138,7 +143,7 @@ public:
                 return;
             }
             // sarr[ellipsis] = ndarr
-            if (py::isinstance<py::ellipsis>(args[0]) && py::isinstance<py::array>(args[1]))
+            if (py::isinstance<py::ellipsis>(args[0]) && isArray)
             {
                 const auto arr_in = args[1].cast<py::array>();
 
