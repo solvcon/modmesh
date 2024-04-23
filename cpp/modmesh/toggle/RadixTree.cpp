@@ -43,6 +43,7 @@ void CallProfiler::reset()
         m_radix_tree.move_current_to_parent();
     }
     m_radix_tree.reset();
+    m_cancel_callbacks.clear();
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
