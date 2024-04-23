@@ -192,7 +192,6 @@ struct CallerProfile
     }
 
     std::chrono::high_resolution_clock::time_point start_time;
-    std::function<void()> cancel_callback;
     std::string caller_name;
     std::chrono::nanoseconds total_time = std::chrono::nanoseconds(0); /// use nanoseconds to have higher precision
     int call_count = 0;
@@ -227,6 +226,7 @@ public:
     // Called when a function starts
     void start_caller(const std::string & caller_name, std::function<void()> cancel_callback)
     {
+        m_cancel_callbacks.push_back(cancel_callback);
         auto start_time = std::chrono::high_resolution_clock::now();
         m_radix_tree.entry(caller_name);
         CallerProfile & callProfile = m_radix_tree.get_current_node()->data();
@@ -251,11 +251,22 @@ public:
     /// Reset the profiler
     void reset();
 
+    /// Cancel the profiling from all probes
+    void cancel()
+    {
+        for (auto & cancel_callback : m_cancel_callbacks)
+        {
+            cancel_callback();
+        }
+        reset();
+    }
+
 private:
     void print_profiling_result(const RadixTreeNode<CallerProfile> & node, const int depth, std::ostream & outstream) const;
 
 private:
     RadixTree<CallerProfile> m_radix_tree; /// the data structure of the callers
+    std::vector<std::function<void()>> m_cancel_callbacks; /// the callback to cancel the profiling from all probes
 
     friend detail::CallProfilerTest;
 }; /* end class CallProfiler */

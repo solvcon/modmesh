@@ -191,5 +191,26 @@ TEST_F(CallProfilerTest, simple_case_2)
     }
 }
 
+TEST_F(CallProfilerTest, cancel)
+{
+    pProfiler->reset();
+
+    auto test1 = [&]()
+    {
+        USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
+
+        auto test2 = [&]()
+        {
+            USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
+            pProfiler->cancel();
+        };
+
+        test2();
+    };
+    test1();
+
+    EXPECT_EQ(radix_tree().get_unique_node(), 0);
+}
+
 } // namespace detail
 } // namespace modmesh
