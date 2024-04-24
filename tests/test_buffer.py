@@ -666,6 +666,42 @@ class SimpleArrayBasicTC(unittest.TestCase):
                 for k in range(4):
                     self.assertEqual(ndarr2[i, j, k], sarr[i - G, j, k])
 
+    def test_SimpleArray_broadcast_from_list_list(self):
+        sarr = modmesh.SimpleArrayFloat64((2, 3))
+        sarr[:, :] = [[1, 2, 3], [4, 5, 6]]
+        for i in range(2):
+            for j in range(3):
+                self.assertEqual(sarr[i, j], i * 3 + j + 1)
+
+        sarr = modmesh.SimpleArrayFloat64((2, 3))
+        sarr[:1, :2] = [[1, 2]]
+        self.assertEqual(sarr[0, 0], 1)
+        self.assertEqual(sarr[0, 1], 2)
+
+    def test_SimpleArray_broadcast_from_tuple_list(self):
+        sarr = modmesh.SimpleArrayFloat64((2, 3))
+        sarr[:, :] = [(1, 2, 3), (4, 5, 6)]
+        for i in range(2):
+            for j in range(3):
+                self.assertEqual(sarr[i, j], i * 3 + j + 1)
+
+        sarr = modmesh.SimpleArrayFloat64((2, 3))
+        sarr[:1, :2] = [(1, 2)]
+        self.assertEqual(sarr[0, 0], 1)
+        self.assertEqual(sarr[0, 1], 2)
+
+    def test_SimpleArray_broadcast_from_tuple_tuple(self):
+        sarr = modmesh.SimpleArrayFloat64((2, 3))
+        sarr[:, :] = ((1, 2, 3), (4, 5, 6))
+        for i in range(2):
+            for j in range(3):
+                self.assertEqual(sarr[i, j], i * 3 + j + 1)
+
+        sarr = modmesh.SimpleArrayFloat64((2, 3))
+        sarr[:1, :2] = ((1, 2),)
+        self.assertEqual(sarr[0, 0], 1)
+        self.assertEqual(sarr[0, 1], 2)
+
     @unittest.skipUnless(modmesh.testhelper.PYTEST_HELPER_BINDING_BUILT,
                          "TestSimpleArrayHelper is not built")
     def test_SimpleArray_casting(self):

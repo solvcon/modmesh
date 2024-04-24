@@ -95,28 +95,36 @@ public:
 
         if (args.size() == 2)
         {
-            // sarr[K] = V
-            if (py::isinstance<py::int_>(args[0]) && !py::isinstance<py::array>(args[1]))
-            {
-                const auto key = args[0].cast<ssize_t>();
+            const py::object & py_key = args[0];
+            const py::object & py_value = args[1];
 
-                arr_out.at(key) = args[1].cast<T>();
+            const bool is_number = py::isinstance<py::bool_>(py_value) || py::isinstance<py::int_>(py_value) || py::isinstance<py::float_>(py_value);
+
+            // sarr[K] = V
+            if (py::isinstance<py::int_>(py_key) && is_number)
+            {
+                const auto key = py_key.cast<ssize_t>();
+
+                arr_out.at(key) = py_value.cast<T>();
                 return;
             }
             // sarr[K1, K2, K3] = V
-            if (py::isinstance<py::tuple>(args[0]) && !py::isinstance<py::array>(args[1]))
+            if (py::isinstance<py::tuple>(py_key) && is_number)
             {
-                const auto key = args[0].cast<std::vector<ssize_t>>();
+                const auto key = py_key.cast<std::vector<ssize_t>>();
 
-                arr_out.at(key) = args[1].cast<T>();
+                arr_out.at(key) = py_value.cast<T>();
                 return;
             }
+
+            const bool is_sequence = py::isinstance<py::list>(py_value) || py::isinstance<py::array>(py_value) || py::isinstance<py::tuple>(py_value);
+
             // multi-dimension with slice and ellipsis
             // sarr[slice, slice, ellipsis] = ndarr
-            if (py::isinstance<py::tuple>(args[0]) && py::isinstance<py::array>(args[1]))
+            if (py::isinstance<py::tuple>(py_key) && is_sequence)
             {
-                const py::tuple tuple_in = args[0];
-                const py::array arr_in = args[1];
+                const py::tuple tuple_in = py_key;
+                const py::array arr_in = py_value;
 
                 auto slices = make_default_slices(arr_out);
                 process_slices(tuple_in, slices, arr_out.ndim());
@@ -126,10 +134,10 @@ public:
             }
             // one-dimension with slice
             // sarr[slice] = ndarr
-            if (py::isinstance<py::slice>(args[0]) && py::isinstance<py::array>(args[1]))
+            if (py::isinstance<py::slice>(py_key) && is_sequence)
             {
-                const auto slice_in = args[0].cast<py::slice>();
-                const auto arr_in = args[1].cast<py::array>();
+                const auto slice_in = py_key.cast<py::slice>();
+                const auto arr_in = py_value.cast<py::array>();
 
                 auto slices = make_default_slices(arr_out);
                 copy_slice(slices[0], slice_in);
@@ -138,9 +146,9 @@ public:
                 return;
             }
             // sarr[ellipsis] = ndarr
-            if (py::isinstance<py::ellipsis>(args[0]) && py::isinstance<py::array>(args[1]))
+            if (py::isinstance<py::ellipsis>(py_key) && is_sequence)
             {
-                const auto arr_in = args[1].cast<py::array>();
+                const auto arr_in = py_value.cast<py::array>();
 
                 broadcast_array_using_ellipsis(arr_out, arr_in);
                 return;
