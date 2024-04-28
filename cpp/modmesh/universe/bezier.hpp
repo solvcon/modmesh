@@ -29,6 +29,7 @@
  */
 
 #include <modmesh/base.hpp>
+#include <modmesh/buffer/buffer.hpp>
 #include <modmesh/universe/bernstein.hpp>
 
 #include <deque>
@@ -108,6 +109,100 @@ private:
 
 using Vector3dFp32 = Vector3d<float>;
 using Vector3dFp64 = Vector3d<double>;
+
+/**
+ * Vector or point in three-dimensional space.
+ *
+ * @tparam T floating-point type
+ */
+template <typename T>
+class Edge3d
+    : public NumberBase<int32_t, T>
+{
+
+public:
+
+    using vector_type = Vector3d<T>;
+    using value_type = typename vector_type::value_type;
+
+    Edge3d(vector_type const & tail, vector_type const & head)
+        : m_vec{tail, head}
+    {
+    }
+
+    Edge3d(value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
+        : m_vec{vector_type{x0, y0, z0}, vector_type{x1, y1, z1}}
+    {
+    }
+
+    Edge3d() = default;
+    Edge3d(Edge3d const &) = default;
+    Edge3d & operator=(Edge3d const &) = default;
+    Edge3d(Edge3d &&) = default;
+    Edge3d & operator=(Edge3d &&) = default;
+    ~Edge3d() = default;
+
+    vector_type const & v0() const { return m_vec[0]; }
+    vector_type & v0() { return m_vec[0]; }
+    vector_type const & v1() const { return m_vec[1]; }
+    vector_type & v1() { return m_vec[1]; }
+
+    value_type x0() const { return m_vec[0].x(); }
+    value_type & x0() { return m_vec[0].x(); }
+    void set_x0(value_type v) { m_vec[0].set_x(v); }
+
+    value_type y0() const { return m_vec[0].y(); }
+    value_type & y0() { return m_vec[0].y(); }
+    void set_y0(value_type v) { m_vec[0].set_y(v); }
+
+    value_type z0() const { return m_vec[0].z(); }
+    value_type & z0() { return m_vec[0].z(); }
+    void set_z0(value_type v) { m_vec[0].set_z(v); }
+
+    value_type x1() const { return m_vec[1].x(); }
+    value_type & x1() { return m_vec[1].x(); }
+    void set_x1(value_type v) { m_vec[1].set_x(v); }
+
+    value_type y1() const { return m_vec[1].y(); }
+    value_type & y1() { return m_vec[1].y(); }
+    void set_y1(value_type v) { m_vec[1].set_y(v); }
+
+    value_type z1() const { return m_vec[1].z(); }
+    value_type & z1() { return m_vec[1].z(); }
+    void set_z1(value_type v) { m_vec[1].set_z(v); }
+
+    vector_type const & operator[](size_t i) const { return m_vec[i]; }
+    vector_type & operator[](size_t i) { return m_vec[i]; }
+
+    vector_type const & at(size_t i) const
+    {
+        check_size(i, 2);
+        return m_vec[i];
+    }
+    vector_type & at(size_t i)
+    {
+        check_size(i, 2);
+        return m_vec[i];
+    }
+
+    size_t size() const { return 2; }
+
+private:
+
+    void check_size(size_t i, size_t s) const
+    {
+        if (i >= s)
+        {
+            throw std::out_of_range(Formatter() << "Edge3d: i " << i << " >= size " << s);
+        }
+    }
+
+    vector_type m_vec[2];
+
+}; /* end class Edge3d */
+
+using Edge3dFp32 = Edge3d<float>;
+using Edge3dFp64 = Edge3d<double>;
 
 /**
  * Bezier curve in three-dimensional space.
@@ -210,6 +305,18 @@ void Bezier3d<T>::sample(size_t nlocus)
 
 using Bezier3dFp32 = Bezier3d<float>;
 using Bezier3dFp64 = Bezier3d<double>;
+
+class PointCloud
+{
+
+public:
+private:
+
+    SimpleCollector<double> m_x;
+    SimpleCollector<double> m_y;
+    SimpleCollector<double> m_z;
+
+}; /* end class PointCloud */
 
 } /* end namespace modmesh */
 

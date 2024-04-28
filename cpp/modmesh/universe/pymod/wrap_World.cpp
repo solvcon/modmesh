@@ -63,6 +63,14 @@ WrapVector3d<T>::WrapVector3d(pybind11::module & mod, const char * pyname, const
     (*this)
         .def(py::init<value_type, value_type, value_type>(), py::arg("x"), py::arg("y"), py::arg("z"))
         .def(
+            "__str__",
+            [](wrapped_type const & self)
+            {
+                return (Formatter()
+                        << "Vector3d(" << self.x() << ", " << self.y() << ", " << self.z() << ")")
+                    .str();
+            })
+        .def(
             "__len__",
             [](wrapped_type const & self)
             { return self.size(); })
@@ -72,7 +80,7 @@ WrapVector3d<T>::WrapVector3d(pybind11::module & mod, const char * pyname, const
             { return self.at(it); })
         .def(
             "__setitem__",
-            [](wrapped_type & self, size_t it, typename wrapped_type::value_type val)
+            [](wrapped_type & self, size_t it, value_type val)
             { self.at(it) = val; })
         .def("fill", &wrapped_type::fill, py::arg("value"))
         //
@@ -91,6 +99,103 @@ WrapVector3d<T>::WrapVector3d(pybind11::module & mod, const char * pyname, const
        DECL_WRAP(x)
        DECL_WRAP(y)
        DECL_WRAP(z)
+       ;
+#undef DECL_WRAP
+    // clang-format on
+}
+
+template <typename T>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapEdge3d
+    : public WrapBase<WrapEdge3d<T>, Edge3d<T>>
+{
+
+public:
+
+    using base_type = WrapBase<WrapEdge3d<T>, Edge3d<T>>;
+    using wrapped_type = typename base_type::wrapped_type;
+
+    using vector_type = typename base_type::wrapped_type::vector_type;
+    using value_type = typename base_type::wrapped_type::value_type;
+
+    friend typename base_type::root_base_type;
+
+protected:
+
+    WrapEdge3d(pybind11::module & mod, char const * pyname, char const * pydoc);
+};
+/* end class WrapEdge3dF32 */
+
+template <typename T>
+WrapEdge3d<T>::WrapEdge3d(pybind11::module & mod, const char * pyname, const char * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def(py::init<value_type, value_type, value_type, value_type, value_type, value_type>(),
+             py::arg("x0"),
+             py::arg("y0"),
+             py::arg("z0"),
+             py::arg("x1"),
+             py::arg("y1"),
+             py::arg("z1"))
+        .def(
+            "__str__",
+            [](wrapped_type const & self)
+            {
+                return (Formatter()
+                        << "Edge3d("
+                        << self.x0() << ", " << self.y0() << ", " << self.z0() << ", "
+                        << self.x1() << ", " << self.y1() << ", " << self.z1() << ")")
+                    .str();
+            })
+        .def(
+            "__len__",
+            [](wrapped_type const & self)
+            { return self.size(); })
+        .def(
+            "__getitem__",
+            [](wrapped_type const & self, size_t it)
+            { return self.at(it); })
+        .def(
+            "__setitem__",
+            [](wrapped_type & self, size_t it, vector_type const & vec)
+            { self.at(it) = vec; })
+        //
+        ;
+
+    // v0 (tail) and v1 (head) accessors.
+#define DECL_WRAP(NAME)                                                       \
+    .def_property(                                                            \
+        #NAME,                                                                \
+        [](wrapped_type const & self)                                         \
+        { return self.NAME(); },                                              \
+        [](wrapped_type & self, typename wrapped_type::vector_type const & v) \
+        { self.NAME() = v; })
+    // clang-format off
+    (*this)
+        DECL_WRAP(v0)
+        DECL_WRAP(v1)
+        ;
+#undef DECL_WRAP
+    // clang-format on
+
+    // x, y, z accessors.
+#define DECL_WRAP(NAME)                                              \
+    .def_property(                                                   \
+        #NAME,                                                       \
+        [](wrapped_type const & self)                                \
+        { return self.NAME(); },                                     \
+        [](wrapped_type & self, typename wrapped_type::value_type v) \
+        { self.NAME() = v; })
+    // clang-format off
+   (*this)
+       DECL_WRAP(x0)
+       DECL_WRAP(y0)
+       DECL_WRAP(z0)
+       DECL_WRAP(x1)
+       DECL_WRAP(y1)
+       DECL_WRAP(z1)
        ;
 #undef DECL_WRAP
     // clang-format on
@@ -194,6 +299,11 @@ public:
     using base_type = WrapBase<WrapWorld<T>, World<T>, std::shared_ptr<World<T>>>;
     using wrapped_type = typename base_type::wrapped_type;
 
+    using value_type = typename wrapped_type::value_type;
+    using vector_type = typename wrapped_type::vector_type;
+    using edge_type = typename wrapped_type::edge_type;
+    using bezier_type = typename wrapped_type::bezier_type;
+
     friend typename base_type::root_base_type;
 
 protected:
@@ -219,6 +329,37 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
     // Bezier curves
     (*this)
         .def(
+            "add_edge",
+            [](wrapped_type & self, edge_type const & edge) -> auto &
+            {
+                self.add_edge(edge);
+                return self.edge_at(self.nedge() - 1);
+            },
+            py::arg("edge"),
+            py::return_value_policy::reference_internal)
+        .def(
+            "add_edge",
+            [](wrapped_type & self, value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1) -> auto &
+            {
+                self.add_edge(x0, y0, z0, x1, y1, z1);
+                return self.edge_at(self.nedge() - 1);
+            },
+            py::arg("x0"),
+            py::arg("y0"),
+            py::arg("z0"),
+            py::arg("x1"),
+            py::arg("y1"),
+            py::arg("z1"),
+            py::return_value_policy::reference_internal)
+        .def_property_readonly("nedge", &wrapped_type::nedge)
+        .def(
+            "edge",
+            [](wrapped_type & self, size_t i) -> auto &
+            {
+                return self.edge_at(i);
+            },
+            py::return_value_policy::reference_internal)
+        .def(
             "add_bezier",
             [](wrapped_type & self, std::vector<typename wrapped_type::vector_type> const & controls) -> auto &
             {
@@ -243,6 +384,8 @@ void wrap_World(pybind11::module & mod)
 {
     WrapVector3d<float>::commit(mod, "Vector3dFp32", "Vector3dFp32");
     WrapVector3d<double>::commit(mod, "Vector3dFp64", "Vector3dFp64");
+    WrapEdge3d<float>::commit(mod, "Edge3dFp32", "Edge3dFp32");
+    WrapEdge3d<double>::commit(mod, "Edge3dFp64", "Edge3dFp64");
     WrapBezier3d<float>::commit(mod, "Bezier3dFp32", "Bezier3dFp32");
     WrapBezier3d<double>::commit(mod, "Bezier3dFp64", "Bezier3dFp64");
     WrapWorld<float>::commit(mod, "WorldFp32", "WorldFp32");

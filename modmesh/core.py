@@ -82,6 +82,8 @@ __all__ = [  # noqa: F822
     'interpolate_bernstein',
     'Vector3dFp32',
     'Vector3dFp64',
+    'Edge3dFp32',
+    'Edge3dFp64',
     'Bezier3dFp32',
     'Bezier3dFp64',
     'WorldFp32',
