@@ -232,7 +232,7 @@ TEST_F(CallProfilerTest, test_serialization)
     //          "unique_id":3
     //      }
     //  }
-    
+
     std::stringstream ss;
     pProfiler->serialize(ss);
 }
