@@ -125,8 +125,8 @@ public:
     using vector_type = Vector3d<T>;
     using value_type = typename vector_type::value_type;
 
-    Edge3d(vector_type const & tail, vector_type const & head)
-        : m_vec{tail, head}
+    Edge3d(vector_type const & v0, vector_type const & v1)
+        : m_vec{v0, v1}
     {
     }
 
@@ -144,8 +144,10 @@ public:
 
     vector_type const & v0() const { return m_vec[0]; }
     vector_type & v0() { return m_vec[0]; }
+    void set_v0(vector_type const & v) { m_vec[0] = v; }
     vector_type const & v1() const { return m_vec[1]; }
     vector_type & v1() { return m_vec[1]; }
+    void set_v1(vector_type const & v) { m_vec[1] = v; }
 
     value_type x0() const { return m_vec[0].x(); }
     value_type & x0() { return m_vec[0].x(); }

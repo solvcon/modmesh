@@ -132,6 +132,9 @@ WrapEdge3d<T>::WrapEdge3d(pybind11::module & mod, const char * pyname, const cha
     namespace py = pybind11;
 
     (*this)
+        .def(py::init<vector_type const &, vector_type const &>(),
+             py::arg("v0"),
+             py::arg("v1"))
         .def(py::init<value_type, value_type, value_type, value_type, value_type, value_type>(),
              py::arg("x0"),
              py::arg("y0"),
