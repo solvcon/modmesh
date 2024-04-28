@@ -92,7 +92,7 @@ public:
         return (it != m_children.end()) ? it->get() : nullptr;
     }
 
-    RadixTreeNode<T> * get_prev() const { return m_prev; }
+    RadixTreeNode<T> * get_prev() const { return m_prev; } 
 
 private:
     key_type m_key = -1;
@@ -191,6 +191,45 @@ struct CallerProfile
         call_count++;
     }
 
+    // It returns the json format.
+    void serialize(std::ostream & outstream) const{
+        outstream << "{";
+        outstream << "\"start_time\": \"" << start_time.time_since_epoch().count() << "\",";
+        outstream << "\"caller_name\": \"" << caller_name << "\",";
+        outstream << "\"total_time\": " << total_time.count() << ",";
+        outstream << "\"call_count\": " << call_count << ",";
+        outstream << "\"is_running\": " << is_running;
+        outstream << "}";
+        return;
+    }
+
+    // It deserialize the json format.
+    void deserialize(const std::string & json){
+        std::stringstream ss(json);
+        std::string info;
+        // start_time
+        std::getline(ss, info, ':');
+        std::getline(ss, info, ',');
+        start_time = std::chrono::high_resolution_clock::time_point(std::chrono::nanoseconds(std::stoll(info)));
+        // caller_name
+        std::getline(ss, info, ':');
+        std::getline(ss, info, ',');
+        caller_name = info;
+        // total_time
+        std::getline(ss, info, ':');
+        std::getline(ss, info, ',');
+        total_time = std::chrono::nanoseconds(std::stoll(info));
+        // call_count
+        std::getline(ss, info, ':');
+        std::getline(ss, info, ',');
+        call_count = std::stoi(info);
+        // is_running
+        std::getline(ss, info, ':');
+        std::getline(ss, info, ',');
+        is_running = std::stoi(info);
+        return;
+    }
+
     std::chrono::high_resolution_clock::time_point start_time;
     std::string caller_name;
     std::chrono::nanoseconds total_time = std::chrono::nanoseconds(0); /// use nanoseconds to have higher precision
@@ -260,10 +299,13 @@ public:
         }
         reset();
     }
+    
+    void serialize(std::ostream & outstream) const;
 
 private:
     void print_profiling_result(const RadixTreeNode<CallerProfile> & node, const int depth, std::ostream & outstream) const;
-
+    void serialize_radix_tree(std::ostream & outstream) const;
+    void serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile> & node, bool is_first_node, std::ostream & outstream) const;
 private:
     RadixTree<CallerProfile> m_radix_tree; /// the data structure of the callers
     std::vector<std::function<void()>> m_cancel_callbacks; /// the callback to cancel the profiling from all probes

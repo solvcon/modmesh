@@ -72,6 +72,54 @@ void CallProfiler::print_profiling_result(const RadixTreeNode<CallerProfile> & n
     }
 }
 
+void CallProfiler::serialize(std::ostream & outstream) const{
+    // The serialization of the cancel callbacks is meaningless.
+    // We only need to serialize the radix tree.
+    outstream << "{";
+    outstream << "\"radix_tree\":"; serialize_radix_tree(outstream);
+    outstream << "}";
+    return;
+}
+
+void CallProfiler::serialize_radix_tree(std::ostream & outstream) const{
+    outstream << "{";
+    outstream << "\"nodes\":["; serialize_radix_tree_nodes(*(m_radix_tree.get_current_node()), true, outstream); outstream << "],";
+    outstream << "\"current_node\":" << m_radix_tree.get_current_node()->key() << ",";
+    outstream << "\"unique_id\":" << m_radix_tree.get_unique_node();
+    outstream << "}";
+    return;
+}
+
+void CallProfiler::serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile> & node, bool is_first_node, std::ostream & outstream) const{
+    if(!is_first_node)
+    {
+        outstream << ",";
+    }
+    outstream << "{";
+    outstream << "\"key\":" << node.key() << ",";
+    outstream << "\"name\":\"" << node.name() << "\",";
+    outstream << "\"data\":"; node.data().serialize(outstream); outstream << ",";
+    outstream << "\"children\":[";
+    bool is_first_child = true;
+    for (const auto & child : node.children())
+    {
+        // Avoid the trailing comma.
+        if (!is_first_child)
+        {
+            outstream << ",";
+        }
+        is_first_child = false;
+        outstream << child -> key();
+    }
+    outstream << "]";
+    outstream << "}";
+    for (const auto & child : node.children())
+    {
+        serialize_radix_tree_nodes(*child, false, outstream);
+    }
+    return;
+}
+
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
