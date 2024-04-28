@@ -72,52 +72,58 @@ void CallProfiler::print_profiling_result(const RadixTreeNode<CallerProfile> & n
     }
 }
 
-void CallProfiler::serialize(std::ostream & outstream) const{
-    // The serialization of the cancel callbacks is meaningless.
-    // We only need to serialize the radix tree.
-    outstream << "{";
-    outstream << "\"radix_tree\":"; serialize_radix_tree(outstream);
-    outstream << "}";
-    return;
+void CallProfiler::serialize(std::ostream & outstream) const
+{
+    outstream << R"({)";
+    outstream << R"("radix_tree": )";
+    serialize_radix_tree(outstream);
+    outstream << R"(})";
 }
 
-void CallProfiler::serialize_radix_tree(std::ostream & outstream) const{
-    outstream << "{";
-    outstream << "\"nodes\":["; serialize_radix_tree_nodes(*(m_radix_tree.get_current_node()), true, outstream); outstream << "],";
-    outstream << "\"current_node\":" << m_radix_tree.get_current_node()->key() << ",";
-    outstream << "\"unique_id\":" << m_radix_tree.get_unique_node();
-    outstream << "}";
-    return;
+void CallProfiler::serialize_radix_tree(std::ostream & outstream) const
+{
+    outstream << R"({)";
+    outstream << R"("nodes": [)";
+    serialize_radix_tree_nodes(*(m_radix_tree.get_current_node()), true, outstream);
+    outstream << R"(],)";
+    outstream << R"("current_node": )" << m_radix_tree.get_current_node()->key() << R"(,)";
+    outstream << R"("unique_id": )" << m_radix_tree.get_unique_node();
+    outstream << R"(})";
 }
 
-void CallProfiler::serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile> & node, bool is_first_node, std::ostream & outstream) const{
-    if(!is_first_node)
+// NOLINTNEXTLINE(misc-no-recursion)
+void CallProfiler::serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile> & node, bool is_first_node, std::ostream & outstream) const
+{
+    // Avoid the trailing comma.
+    if (!is_first_node)
     {
-        outstream << ",";
+        outstream << R"(,)";
     }
-    outstream << "{";
-    outstream << "\"key\":" << node.key() << ",";
-    outstream << "\"name\":\"" << node.name() << "\",";
-    outstream << "\"data\":"; node.data().serialize(outstream); outstream << ",";
-    outstream << "\"children\":[";
+    outstream << R"({)";
+    outstream << R"("key": )" << node.key() << R"(,)";
+    outstream << R"("name": ")" << node.name() << R"(",)";
+    outstream << R"("data": )";
+    node.data().serialize(outstream);
+    outstream << R"(,)";
+    outstream << R"("children": [)";
     bool is_first_child = true;
     for (const auto & child : node.children())
     {
         // Avoid the trailing comma.
         if (!is_first_child)
         {
-            outstream << ",";
+            outstream << R"(,)";
         }
         is_first_child = false;
-        outstream << child -> key();
+        outstream << child->key();
     }
-    outstream << "]";
-    outstream << "}";
+    outstream << R"(])";
+    outstream << R"(})";
     for (const auto & child : node.children())
     {
+        // NOLINTNEXTLINE(misc-no-recursion)
         serialize_radix_tree_nodes(*child, false, outstream);
     }
-    return;
 }
 
 } /* end namespace modmesh */
