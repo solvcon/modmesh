@@ -654,7 +654,7 @@ private:
 
 template <typename S>
 using is_simple_array = std::is_same<
-    std::remove_reference_t<S>,
+    std::remove_const_t<std::remove_reference_t<S>>,
     SimpleArray<typename std::remove_reference_t<S>::value_type>>;
 
 template <typename S>

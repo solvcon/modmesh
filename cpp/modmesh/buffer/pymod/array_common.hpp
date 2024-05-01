@@ -89,6 +89,78 @@ public:
         }
     }
 
+    static pybind11::object getitem_parser(const SimpleArray<T> & arr, pybind11::args const & args)
+    {
+        namespace py = pybind11;
+        if (args.size() != 1)
+        {
+            throw std::runtime_error("unsupported operation.");
+        }
+
+        const py::object & py_key = args[0];
+
+        // sarr[x]
+        if (py::isinstance<py::int_>(py_key))
+        {
+            const auto key = py_key.cast<ssize_t>();
+            return py::cast(arr.at(key));
+        }
+
+        bool is_tuple = py::isinstance<py::tuple>(py_key);
+        bool is_number_tuple = false;
+        if (is_tuple)
+        {
+            const py::tuple tuple_in = py_key;
+            if (tuple_in.size() > 0)
+            {
+                is_number_tuple = py::isinstance<py::int_>(tuple_in[0]);
+            }
+        }
+
+        // sarr[x, y, z]
+        if (is_number_tuple)
+        {
+            const auto key = py_key.cast<std::vector<ssize_t>>();
+            return py::cast(arr.at(key));
+        }
+
+        // multi-dimension with slice and ellipsis
+        // sarr[slice, slice, ellipsis]
+        if (is_tuple)
+        {
+            const py::tuple tuple_in = py_key;
+
+            auto slices = make_default_slices(arr);
+            process_slices(tuple_in, slices, arr.ndim());
+
+            SimpleArray<T> arr_out(get_shape_from_slices(slices));
+
+            broadcast_array_using_slice(arr_out, slices, to_ndarray(arr));
+            return py::cast(arr_out);
+        }
+        // one-dimension with slice
+        // sarr[slice]
+        if (py::isinstance<py::slice>(py_key))
+        {
+            const auto slice_in = py_key.cast<py::slice>();
+
+            auto slices = make_default_slices(arr);
+            copy_slice(slices[0], slice_in);
+
+            SimpleArray<T> arr_out(get_shape_from_slices(slices));
+
+            broadcast_array_using_slice(arr_out, slices, to_ndarray(arr));
+            return py::cast(arr_out);
+        }
+        // sarr[ellipsis]
+        if (py::isinstance<py::ellipsis>(py_key))
+        {
+            return py::cast(arr);
+        }
+
+        throw std::runtime_error("unsupported operation.");
+    }
+
     static void setitem_parser(SimpleArray<T> & arr_out, pybind11::args const & args)
     {
         namespace py = pybind11;
@@ -114,6 +186,16 @@ public:
                 const auto key = py_key.cast<std::vector<ssize_t>>();
 
                 arr_out.at(key) = py_value.cast<T>();
+                return;
+            }
+            // sarr[ellipsis] = V
+            if (py::isinstance<py::ellipsis>(py_key) && is_number)
+            {
+                const auto value = py_value.cast<T>();
+                for (ssize_t i = 0; i < arr_out.size(); i++)
+                {
+                    arr_out.at(i) = value;
+                }
                 return;
             }
 
@@ -296,6 +378,22 @@ private:
         {
             arr_out.set_nghost(nghost);
         }
+    }
+
+    static shape_type get_shape_from_slices(std::vector<slice_type> const & slices)
+    {
+
+        shape_type shape;
+        for (auto const & slice : slices)
+        {
+            std::cout << slice[0] << ", " << slice[1] << ", " << slice[2] << std::endl;
+
+            shape.push_back((slice[1] - slice[0]) / slice[2]);
+
+            std::cout << ((slice[1] - slice[0]) / slice[2]) << std::endl;
+        }
+        std::cout << std::endl;
+        return shape;
     }
 };
 

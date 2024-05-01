@@ -157,9 +157,9 @@ def make_mesh_viewer(path):
 
 def make_triangle():
     mh = core.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
-    mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
-    mh.cltpn.ndarray[:] = core.StaticMesh.TRIANGLE
-    mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
+    mh.ndcrd[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
+    mh.cltpn[:] = core.StaticMesh.TRIANGLE
+    mh.clnds[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
     mh.build_interior()
     mh.build_boundary()
     mh.build_ghost()
@@ -172,30 +172,30 @@ def make_2dmix(do_small=False):
 
     if do_small:
         mh = core.StaticMesh(ndim=2, nnode=6, nface=0, ncell=3)
-        mh.ndcrd.ndarray[:, :] = [
+        mh.ndcrd[:, :] = [
             (0, 0), (1, 0), (0, 1), (1, 1), (2, 0), (2, 1)
         ]
-        mh.cltpn.ndarray[:] = [
+        mh.cltpn[:] = [
             T, T, Q,
         ]
-        mh.clnds.ndarray[:, :5] = [
+        mh.clnds[:, :5] = [
             (3, 0, 3, 2, -1), (3, 0, 1, 3, -1), (4, 1, 4, 5, 3),
         ]
     else:
         mh = core.StaticMesh(ndim=2, nnode=16, nface=0, ncell=14)
-        mh.ndcrd.ndarray[:, :] = [
+        mh.ndcrd[:, :] = [
             (0, 0), (1, 0), (2, 0), (3, 0),
             (0, 1), (1, 1), (2, 1), (3, 1),
             (0, 2), (1, 2), (2, 2), (3, 2),
             (0, 3), (1, 3), (2, 3), (3, 3),
         ]
-        mh.cltpn.ndarray[:] = [
+        mh.cltpn[:] = [
             T, T, T, T, T, T,  # 0-5,
             Q, Q,  # 6-7
             T, T, T, T,  # 8-11
             Q, Q,  # 12-13
         ]
-        mh.clnds.ndarray[:, :5] = [
+        mh.clnds[:, :5] = [
             (3, 0, 5, 4, -1), (3, 0, 1, 5, -1),  # 0-1 triangles
             (3, 1, 2, 5, -1), (3, 2, 6, 5, -1),  # 2-3 triangles
             (3, 2, 7, 6, -1), (3, 2, 3, 7, -1),  # 4-5 triangles
@@ -217,16 +217,16 @@ def make_3dmix():
     PYR = core.StaticMesh.PYRAMID
 
     mh = core.StaticMesh(ndim=3, nnode=11, nface=0, ncell=4)
-    mh.ndcrd.ndarray[:, :] = [
+    mh.ndcrd[:, :] = [
         (0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0),
         (0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1),
         (0.5, 1.5, 0.5),
         (1.5, 1, 0.5), (1.5, 0, 0.5),
     ]
-    mh.cltpn.ndarray[:] = [
+    mh.cltpn[:] = [
         HEX, PYR, TET, PSM,
     ]
-    mh.clnds.ndarray[:, :9] = [
+    mh.clnds[:, :9] = [
         (8, 0, 1, 2, 3, 4, 5, 6, 7), (5, 2, 3, 7, 6, 8, -1, -1, -1),
         (4, 2, 6, 9, 8, -1, -1, -1, -1), (6, 2, 6, 9, 1, 5, 10, -1, -1),
     ]
@@ -239,7 +239,7 @@ def make_3dmix():
 def make_solvcon():
     Q = core.StaticMesh.QUADRILATERAL
     mh = core.StaticMesh(ndim=2, nnode=140, nface=0, ncell=65)
-    mh.ndcrd.ndarray[:, :] = [
+    mh.ndcrd[:, :] = [
             (0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0),
             (7, 0), (8, 0), (9, 0), (10, 0), (11, 0), (12, 0), (13, 0),
             (14, 0), (15, 0), (16, 0), (18, 0), (19, 0), (20, 0), (21, 0),
@@ -261,7 +261,7 @@ def make_solvcon():
             (23, 4), (24, 4), (25, 4), (26, 4), (27, 4), (0, 5), (1, 5),
             (2, 5), (3, 5)
         ]
-    mh.cltpn.ndarray[:] = [
+    mh.cltpn[:] = [
            Q, Q, Q, Q, Q, Q, Q, Q, Q, Q,
            Q, Q, Q, Q, Q, Q, Q, Q, Q, Q, Q,  # 0-20
            Q, Q, Q, Q, Q, Q, Q, Q, Q, Q, Q,  # 21-31
@@ -269,7 +269,7 @@ def make_solvcon():
            Q, Q, Q, Q, Q, Q, Q, Q, Q, Q, Q, Q, Q, Q, Q, Q,  # 46-61
            Q, Q, Q  # 62-64
         ]
-    mh.clnds.ndarray[:, :5] = [
+    mh.clnds[:, :5] = [
             (4, 0, 1, 30, 29),
             (4, 1, 2, 31, 30),
             (4, 2, 3, 32, 31),
@@ -344,9 +344,9 @@ def make_solvcon():
 
 def make_tetrahedron():
     mh = core.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
-    mh.ndcrd.ndarray[:, :] = (0, 0, 0), (0, 1, 0), (-1, 1, 0), (0, 1, 1)
-    mh.cltpn.ndarray[:] = core.StaticMesh.TETRAHEDRON
-    mh.clnds.ndarray[:, :5] = [(4, 0, 1, 2, 3)]
+    mh.ndcrd[:, :] = (0, 0, 0), (0, 1, 0), (-1, 1, 0), (0, 1, 1)
+    mh.cltpn[:] = core.StaticMesh.TETRAHEDRON
+    mh.clnds[:, :5] = [(4, 0, 1, 2, 3)]
     mh.build_interior()
     mh.build_boundary()
     mh.build_ghost()

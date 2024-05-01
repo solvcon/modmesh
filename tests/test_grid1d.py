@@ -51,7 +51,7 @@ class StaticGrid1dTC(unittest.TestCase):
 
         # gd.coord is a SimpleArray.
         self.assertEqual(np.float64, gd.coord.ndarray.dtype)
-        gd.coord.ndarray[:] = np.arange(11, dtype='float64')
+        gd.coord[:] = np.arange(11, dtype='float64')
         self.assertEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], list(gd))
         self.assertFalse(gd.coord.is_from_python)
 

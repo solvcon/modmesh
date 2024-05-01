@@ -78,12 +78,6 @@ namespace detail
             value = const_cast<modmesh::SimpleArray##DATATYPE *>(array_from_arrayplex);                                                                       \
             return true;                                                                                                                                      \
         }                                                                                                                                                     \
-                                                                                                                                                              \
-        /* Conversion from C++ to Python object */                                                                                                            \
-        static pybind11::handle cast(modmesh::SimpleArray##DATATYPE && src, pybind11::return_value_policy policy, pybind11::handle parent)                    \
-        {                                                                                                                                                     \
-            return base::cast(src, policy, parent);                                                                                                           \
-        }                                                                                                                                                     \
     }
 
 DECL_MM_SIMPLE_ARRAY_CASTER(Bool);

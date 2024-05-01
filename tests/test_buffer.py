@@ -434,6 +434,14 @@ class SimpleArrayBasicTC(unittest.TestCase):
         sarr.ndarray.fill(100)
         self.assertTrue((ndarr == 100).all())
 
+    def test_SimpleArray_broadcast_ellipsis_value(self):
+        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        sarr[...] = 1.234
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(1.234, sarr[i, j, k])
+
     def test_SimpleArray_broadcast_ellipsis_shape(self):
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
         ndarr = np.arange(2 * 3 * 4, dtype='float64').reshape((2, 3, 4))

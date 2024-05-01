@@ -123,15 +123,8 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                     return ret;
                 })
             .def("__len__", &wrapped_type::size)
-            .def(
-                "__getitem__",
-                [](wrapped_type const & self, ssize_t key)
-                { return self.at(key); })
-            .def(
-                "__getitem__",
-                [](wrapped_type const & self, std::vector<ssize_t> const & key)
-                { return self.at(key); })
             .def("__setitem__", &property_helper::setitem_parser)
+            .def("__getitem__", &property_helper::getitem_parser)
             .def(
                 "reshape",
                 [](wrapped_type const & self, py::object const & shape)
