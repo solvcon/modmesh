@@ -37,6 +37,7 @@
 #include <sstream>
 #include <stack>
 #include <unordered_map>
+#include <queue>
 
 namespace modmesh
 {
@@ -191,19 +192,8 @@ struct CallerProfile
         call_count++;
     }
 
-    // It returns the json format.
-    void serialize(std::ostream & outstream) const
-    {
-        outstream << R"({)";
-        outstream << R"("start_time": )" << start_time.time_since_epoch().count() << R"(,)";
-        outstream << R"("caller_name": ")" << caller_name << R"(",)";
-        outstream << R"("total_time": )" << total_time.count() << R"(,)";
-        outstream << R"("call_count": )" << call_count << R"(,)";
-        outstream << R"("is_running": )" << is_running;
-        outstream << R"(})";
-    }
-
     // It deserialize the json format.
+    /*
     void deserialize(const std::string & json)
     {
         std::stringstream ss(json);
@@ -229,7 +219,7 @@ struct CallerProfile
         std::getline(ss, info, ',');
         is_running = std::stoi(info);
     }
-
+    */
     std::chrono::high_resolution_clock::time_point start_time;
     std::string caller_name;
     std::chrono::nanoseconds total_time = std::chrono::nanoseconds(0); /// use nanoseconds to have higher precision
@@ -300,12 +290,10 @@ public:
         reset();
     }
 
-    void serialize(std::ostream & outstream) const;
+    const RadixTree<CallerProfile> & radix_tree() const { return m_radix_tree; }
 
 private:
     void print_profiling_result(const RadixTreeNode<CallerProfile> & node, const int depth, std::ostream & outstream) const;
-    void serialize_radix_tree(std::ostream & outstream) const;
-    void serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile> & node, bool is_first_node, std::ostream & outstream) const;
 
 private:
     RadixTree<CallerProfile> m_radix_tree; /// the data structure of the callers
@@ -352,6 +340,23 @@ private:
     bool m_cancel = false;
     CallProfiler & m_profiler;
 }; /* end struct CallProfilerProbe */
+
+class CallProfilerSerializer
+{
+public:
+    // It returns the json format of the CallProfiler.
+    static void serialize(const CallProfiler & profiler, std::ostream & outstream)
+    {
+        serialize_call_profiler(profiler, outstream);
+    }
+
+private:
+    static void serialize_call_profiler(const CallProfiler & profiler, std::ostream & outstream);
+    static void serialize_radix_tree(const CallProfiler & profiler, std::ostream & outstream);
+    static void serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile> * node, std::ostream & outstream);
+    static void serialize_radix_tree_node(const RadixTreeNode<CallerProfile> & node, bool is_first_node, std::ostream & outstream);
+    static void serialize_caller_profile(const CallerProfile & profile, std::ostream & outstream);
+}; /* end struct CallProfilerSerializer */
 
 #ifdef CALLPROFILER
 

@@ -72,28 +72,85 @@ void CallProfiler::print_profiling_result(const RadixTreeNode<CallerProfile> & n
     }
 }
 
-void CallProfiler::serialize(std::ostream & outstream) const
+void CallProfilerSerializer::serialize_call_profiler(const CallProfiler & profiler, std::ostream & outstream)
 {
+    // Example:
+    //  {
+    //      "radix_tree":
+    //      {
+    //          "nodes":[
+    //              {"key":-1,"name":"","data":{"start_time": "0","caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children":[0]},
+    //              {"key":0,"name":"void modmesh::detail::foo1()","data":{"start_time": "17745276708555250","caller_name": "void modmesh::detail::foo1()","total_time": 61002916,"call_count": 1,"is_running": 1},"children":[1]},
+    //              {"key":1,"name":"void modmesh::detail::foo2()","data":{"start_time": "17745276708555458","caller_name": "void modmesh::detail::foo2()","total_time": 54002250,"call_count": 1,"is_running": 1},"children":[2]},
+    //              {"key":2,"name":"void modmesh::detail::foo3()","data":{"start_time": "17745276743555833","caller_name": "void modmesh::detail::foo3()","total_time": 19001833,"call_count": 1,"is_running": 1},"children":[]}
+    //          ],
+    //          "current_node":-1,
+    //          "unique_id":3
+    //      }
+    //  }
+
     outstream << R"({)";
     outstream << R"("radix_tree": )";
-    serialize_radix_tree(outstream);
+    CallProfilerSerializer::serialize_radix_tree(profiler, outstream);
     outstream << R"(})";
 }
 
-void CallProfiler::serialize_radix_tree(std::ostream & outstream) const
+void CallProfilerSerializer::serialize_radix_tree(const CallProfiler & profiler, std::ostream & outstream)
 {
+    // Example:
+    //  {
+    //      "nodes":[
+    //          {"key":-1,"name":"","data":{"start_time": "0","caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children":[0]},
+    //          {"key":0,"name":"void modmesh::detail::foo1()","data":{"start_time": "17745276708555250","caller_name": "void modmesh::detail::foo1()","total_time": 61002916,"call_count": 1,"is_running": 1},"children":[1]},
+    //          {"key":1,"name":"void modmesh::detail::foo2()","data":{"start_time": "17745276708555458","caller_name": "void modmesh::detail::foo2()","total_time": 54002250,"call_count": 1,"is_running": 1},"children":[2]},
+    //          {"key":2,"name":"void modmesh::detail::foo3()","data":{"start_time": "17745276743555833","caller_name": "void modmesh::detail::foo3()","total_time": 19001833,"call_count": 1,"is_running": 1},"children":[]}
+    //      ],
+    //      "current_node":-1,
+    //      "unique_id":3
+    //  }
+
     outstream << R"({)";
     outstream << R"("nodes": [)";
-    serialize_radix_tree_nodes(*(m_radix_tree.get_current_node()), true, outstream);
+    CallProfilerSerializer::serialize_radix_tree_nodes(profiler.radix_tree().get_current_node(), outstream);
     outstream << R"(],)";
-    outstream << R"("current_node": )" << m_radix_tree.get_current_node()->key() << R"(,)";
-    outstream << R"("unique_id": )" << m_radix_tree.get_unique_node();
+    outstream << R"("current_node": )" << profiler.radix_tree().get_current_node()->key() << R"(,)";
+    outstream << R"("unique_id": )" << profiler.radix_tree().get_unique_node();
     outstream << R"(})";
 }
-
-// NOLINTNEXTLINE(misc-no-recursion)
-void CallProfiler::serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile> & node, bool is_first_node, std::ostream & outstream) const
+void CallProfilerSerializer::serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile> * node, std::ostream & outstream)
 {
+    std::queue<const RadixTreeNode<CallerProfile> *> nodes_buffer;
+    nodes_buffer.push(node);
+    bool is_first_node = true;
+
+    // Serialize the nodes in a breadth-first manner.
+    while (!nodes_buffer.empty())
+    {
+        int nodes_buffer_size = nodes_buffer.size();
+        for (int i = 0; i < nodes_buffer_size; i++)
+        {
+            const RadixTreeNode<CallerProfile> * current_node = nodes_buffer.front();
+            nodes_buffer.pop();
+            CallProfilerSerializer::serialize_radix_tree_node(*current_node, is_first_node, outstream);
+            is_first_node = false;
+            for (const auto & child : current_node->children())
+            {
+                nodes_buffer.push(child.get());
+            }
+        }
+    }
+}
+
+void CallProfilerSerializer::serialize_radix_tree_node(const RadixTreeNode<CallerProfile> & node, bool is_first_node, std::ostream & outstream)
+{
+    // Example:
+    //  {
+    //      "key":-1,
+    //      "name":"",
+    //      "data":{"start_time": "0","caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},
+    //      "children":[0]
+    //  }
+
     // Avoid the trailing comma.
     if (!is_first_node)
     {
@@ -103,7 +160,7 @@ void CallProfiler::serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile>
     outstream << R"("key": )" << node.key() << R"(,)";
     outstream << R"("name": ")" << node.name() << R"(",)";
     outstream << R"("data": )";
-    node.data().serialize(outstream);
+    CallProfilerSerializer::serialize_caller_profile(node.data(), outstream);
     outstream << R"(,)";
     outstream << R"("children": [)";
     bool is_first_child = true;
@@ -119,11 +176,26 @@ void CallProfiler::serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile>
     }
     outstream << R"(])";
     outstream << R"(})";
-    for (const auto & child : node.children())
-    {
-        // NOLINTNEXTLINE(misc-no-recursion)
-        serialize_radix_tree_nodes(*child, false, outstream);
-    }
+}
+
+void CallProfilerSerializer::serialize_caller_profile(const CallerProfile & profile, std::ostream & outstream)
+{
+    // Example:
+    //  {
+    //      "start_time": "0",
+    //      "caller_name": "",
+    //      "total_time": 0,
+    //      "call_count": 0,
+    //      "is_running": 0
+    //  }
+
+    outstream << R"({)";
+    outstream << R"("start_time": )" << profile.start_time.time_since_epoch().count() << R"(,)";
+    outstream << R"("caller_name": ")" << profile.caller_name << R"(",)";
+    outstream << R"("total_time": )" << profile.total_time.count() << R"(,)";
+    outstream << R"("call_count": )" << profile.call_count << R"(,)";
+    outstream << R"("is_running": )" << profile.is_running;
+    outstream << R"(})";
 }
 
 } /* end namespace modmesh */

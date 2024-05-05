@@ -212,6 +212,12 @@ TEST_F(CallProfilerTest, cancel)
     EXPECT_EQ(radix_tree().get_unique_node(), 0);
 }
 
+#ifdef _MSC_VER
+std::string serializeStr = R"x({"radix_tree": {"nodes": [{"key": -1,"name": "","data": {"start_time": 0,"caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children": [0]},{"key": 0,"name": "void __cdecl modmesh::detail::foo1()","data": {"start_time": 18348582416327166,"caller_name": "void __cdecl modmesh::detail::foo1()","total_time": 61001042,"call_count": 1,"is_running": 1},"children": [1]},{"key": 1,"name": "void __cdecl modmesh::detail::foo2()","data": {"start_time": 18348582416327416,"caller_name": "void __cdecl modmesh::detail::foo2()","total_time": 54000667,"call_count": 1,"is_running": 1},"children": [2]},{"key": 2,"name": "void __cdecl modmesh::detail::foo3()","data": {"start_time": 18348582451327708,"caller_name": "void __cdecl modmesh::detail::foo3()","total_time": 19000167,"call_count": 1,"is_running": 1},"children": []}],"current_node": -1,"unique_id": 3}})x";
+#else
+std::string serializeStr = R"x({"radix_tree": {"nodes": [{"key": -1,"name": "","data": {"start_time": 0,"caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children": [0]},{"key": 0,"name": "void modmesh::detail::foo1()","data": {"start_time": 18348582416327166,"caller_name": "void modmesh::detail::foo1()","total_time": 61001042,"call_count": 1,"is_running": 1},"children": [1]},{"key": 1,"name": "void modmesh::detail::foo2()","data": {"start_time": 18348582416327416,"caller_name": "void modmesh::detail::foo2()","total_time": 54000667,"call_count": 1,"is_running": 1},"children": [2]},{"key": 2,"name": "void modmesh::detail::foo3()","data": {"start_time": 18348582451327708,"caller_name": "void modmesh::detail::foo3()","total_time": 19000167,"call_count": 1,"is_running": 1},"children": []}],"current_node": -1,"unique_id": 3}})x";
+#endif
+
 TEST_F(CallProfilerTest, test_serialization)
 {
     pProfiler->reset();
@@ -234,7 +240,26 @@ TEST_F(CallProfilerTest, test_serialization)
     //  }
 
     std::stringstream ss;
-    pProfiler->serialize(ss);
+    CallProfilerSerializer::serialize(*pProfiler, ss);
+
+// Validate the serialization result except for the start_time and total_time
+#ifdef _MSC_VER
+    EXPECT_EQ(ss.str().substr(0, 237), serializeStr.substr(0, 237));
+    EXPECT_EQ(ss.str().substr(254, 69), serializeStr.substr(254, 69));
+    EXPECT_EQ(ss.str().substr(331, 131), serializeStr.substr(331, 131));
+    EXPECT_EQ(ss.str().substr(479, 69), serializeStr.substr(479, 69));
+    EXPECT_EQ(ss.str().substr(556, 131), serializeStr.substr(556, 131));
+    EXPECT_EQ(ss.str().substr(704, 69), serializeStr.substr(704, 69));
+    EXPECT_EQ(ss.str().substr(781), serializeStr.substr(781));
+#else
+    EXPECT_EQ(ss.str().substr(0, 230), serializeStr.substr(0, 230));
+    EXPECT_EQ(ss.str().substr(246, 61), serializeStr.substr(246, 61));
+    EXPECT_EQ(ss.str().substr(315, 123), serializeStr.substr(315, 123));
+    EXPECT_EQ(ss.str().substr(455, 61), serializeStr.substr(455, 61));
+    EXPECT_EQ(ss.str().substr(524, 123), serializeStr.substr(524, 123));
+    EXPECT_EQ(ss.str().substr(664, 61), serializeStr.substr(664, 61));
+    EXPECT_EQ(ss.str().substr(733), serializeStr.substr(733));
+#endif
 }
 
 } // namespace detail
