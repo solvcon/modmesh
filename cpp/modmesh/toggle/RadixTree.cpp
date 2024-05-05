@@ -126,7 +126,7 @@ void CallProfilerSerializer::serialize_radix_tree_nodes(const RadixTreeNode<Call
     // Serialize the nodes in a breadth-first manner.
     while (!nodes_buffer.empty())
     {
-        int nodes_buffer_size = nodes_buffer.size();
+        const int nodes_buffer_size = nodes_buffer.size();
         for (int i = 0; i < nodes_buffer_size; i++)
         {
             const RadixTreeNode<CallerProfile> * current_node = nodes_buffer.front();
