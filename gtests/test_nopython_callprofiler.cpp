@@ -213,10 +213,15 @@ TEST_F(CallProfilerTest, cancel)
 }
 
 #ifdef _MSC_VER
-std::string serializeStr = R"x({"radix_tree": {"nodes": [{"key": -1,"name": "","data": {"start_time": 0,"caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children": [0]},{"key": 0,"name": "void __cdecl modmesh::detail::foo1()","data": {"start_time": 18348582416327166,"caller_name": "void __cdecl modmesh::detail::foo1()","total_time": 61001042,"call_count": 1,"is_running": 1},"children": [1]},{"key": 1,"name": "void __cdecl modmesh::detail::foo2()","data": {"start_time": 18348582416327416,"caller_name": "void __cdecl modmesh::detail::foo2()","total_time": 54000667,"call_count": 1,"is_running": 1},"children": [2]},{"key": 2,"name": "void __cdecl modmesh::detail::foo3()","data": {"start_time": 18348582451327708,"caller_name": "void __cdecl modmesh::detail::foo3()","total_time": 19000167,"call_count": 1,"is_running": 1},"children": []}],"current_node": -1,"unique_id": 3}})x";
+std::string serializeExample = R"x({"radix_tree": {"nodes": [{"key": -1,"name": "","data": {"start_time": 0,"caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children": [0]},{"key": 0,"name": "void __cdecl modmesh::detail::foo1()","data": {"start_time": 18348582416327166,"caller_name": "void __cdecl modmesh::detail::foo1()","total_time": 61001042,"call_count": 1,"is_running": 1},"children": [1]},{"key": 1,"name": "void __cdecl modmesh::detail::foo2()","data": {"start_time": 18348582416327416,"caller_name": "void __cdecl modmesh::detail::foo2()","total_time": 54000667,"call_count": 1,"is_running": 1},"children": [2]},{"key": 2,"name": "void __cdecl modmesh::detail::foo3()","data": {"start_time": 18348582451327708,"caller_name": "void __cdecl modmesh::detail::foo3()","total_time": 19000167,"call_count": 1,"is_running": 1},"children": []}],"current_node": -1,"unique_id": 3}})x";
 #else
-std::string serializeStr = R"x({"radix_tree": {"nodes": [{"key": -1,"name": "","data": {"start_time": 0,"caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children": [0]},{"key": 0,"name": "void modmesh::detail::foo1()","data": {"start_time": 18348582416327166,"caller_name": "void modmesh::detail::foo1()","total_time": 61001042,"call_count": 1,"is_running": 1},"children": [1]},{"key": 1,"name": "void modmesh::detail::foo2()","data": {"start_time": 18348582416327416,"caller_name": "void modmesh::detail::foo2()","total_time": 54000667,"call_count": 1,"is_running": 1},"children": [2]},{"key": 2,"name": "void modmesh::detail::foo3()","data": {"start_time": 18348582451327708,"caller_name": "void modmesh::detail::foo3()","total_time": 19000167,"call_count": 1,"is_running": 1},"children": []}],"current_node": -1,"unique_id": 3}})x";
+std::string serializeExample = R"x({"radix_tree": {"nodes": [{"key": -1,"name": "","data": {"start_time": 0,"caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children": [0]},{"key": 0,"name": "void modmesh::detail::foo1()","data": {"start_time": 18348582416327166,"caller_name": "void modmesh::detail::foo1()","total_time": 61001042,"call_count": 1,"is_running": 1},"children": [1]},{"key": 1,"name": "void modmesh::detail::foo2()","data": {"start_time": 18348582416327416,"caller_name": "void modmesh::detail::foo2()","total_time": 54000667,"call_count": 1,"is_running": 1},"children": [2]},{"key": 2,"name": "void modmesh::detail::foo3()","data": {"start_time": 18348582451327708,"caller_name": "void modmesh::detail::foo3()","total_time": 19000167,"call_count": 1,"is_running": 1},"children": []}],"current_node": -1,"unique_id": 3}})x";
 #endif
+
+std::string start_time_str = R"("start_time": )";
+std::string total_time_str = R"("total_time": )";
+std::string caller_name_str = R"(,"caller_name": )";
+std::string call_count_str = R"(,"call_count": )";
 
 TEST_F(CallProfilerTest, test_serialization)
 {
@@ -229,10 +234,10 @@ TEST_F(CallProfilerTest, test_serialization)
     //      "radix_tree":
     //      {
     //          "nodes":[
-    //              {"key":-1,"name":"","data":{"start_time": "0","caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children":[0]},
-    //              {"key":0,"name":"void modmesh::detail::foo1()","data":{"start_time": "17745276708555250","caller_name": "void modmesh::detail::foo1()","total_time": 61002916,"call_count": 1,"is_running": 1},"children":[1]},
-    //              {"key":1,"name":"void modmesh::detail::foo2()","data":{"start_time": "17745276708555458","caller_name": "void modmesh::detail::foo2()","total_time": 54002250,"call_count": 1,"is_running": 1},"children":[2]},
-    //              {"key":2,"name":"void modmesh::detail::foo3()","data":{"start_time": "17745276743555833","caller_name": "void modmesh::detail::foo3()","total_time": 19001833,"call_count": 1,"is_running": 1},"children":[]}
+    //              {"key":-1,"name":"","data":{"start_time": 0,"caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children":[0]},
+    //              {"key":0,"name":"void modmesh::detail::foo1()","data":{"start_time": 17745276708555250,"caller_name": "void modmesh::detail::foo1()","total_time": 61002916,"call_count": 1,"is_running": 1},"children":[1]},
+    //              {"key":1,"name":"void modmesh::detail::foo2()","data":{"start_time": 17745276708555458,"caller_name": "void modmesh::detail::foo2()","total_time": 54002250,"call_count": 1,"is_running": 1},"children":[2]},
+    //              {"key":2,"name":"void modmesh::detail::foo3()","data":{"start_time": 17745276743555833,"caller_name": "void modmesh::detail::foo3()","total_time": 19001833,"call_count": 1,"is_running": 1},"children":[]}
     //          ],
     //          "current_node":-1,
     //          "unique_id":3
@@ -242,24 +247,50 @@ TEST_F(CallProfilerTest, test_serialization)
     std::stringstream ss;
     CallProfilerSerializer::serialize(*pProfiler, ss);
 
-// Validate the serialization result except for the start_time and total_time
-#ifdef _MSC_VER
-    EXPECT_EQ(ss.str().substr(0, 237), serializeStr.substr(0, 237));
-    EXPECT_EQ(ss.str().substr(254, 69), serializeStr.substr(254, 69));
-    EXPECT_EQ(ss.str().substr(331, 131), serializeStr.substr(331, 131));
-    EXPECT_EQ(ss.str().substr(479, 69), serializeStr.substr(479, 69));
-    EXPECT_EQ(ss.str().substr(556, 131), serializeStr.substr(556, 131));
-    EXPECT_EQ(ss.str().substr(704, 69), serializeStr.substr(704, 69));
-    EXPECT_EQ(ss.str().substr(781), serializeStr.substr(781));
-#else
-    EXPECT_EQ(ss.str().substr(0, 230), serializeStr.substr(0, 230));
-    EXPECT_EQ(ss.str().substr(246, 61), serializeStr.substr(246, 61));
-    EXPECT_EQ(ss.str().substr(315, 123), serializeStr.substr(315, 123));
-    EXPECT_EQ(ss.str().substr(455, 61), serializeStr.substr(455, 61));
-    EXPECT_EQ(ss.str().substr(524, 123), serializeStr.substr(524, 123));
-    EXPECT_EQ(ss.str().substr(664, 61), serializeStr.substr(664, 61));
-    EXPECT_EQ(ss.str().substr(733), serializeStr.substr(733));
-#endif
+    int ss_start_time_pos0 = ss.str().find(start_time_str);
+    int ss_start_time_pos1 = ss.str().find(start_time_str, ss_start_time_pos0 + 1);
+    int ss_start_time_pos2 = ss.str().find(start_time_str, ss_start_time_pos1 + 1);
+    int ss_start_time_pos3 = ss.str().find(start_time_str, ss_start_time_pos2 + 1);
+    int ss_total_time_pos0 = ss.str().find(total_time_str);
+    int ss_total_time_pos1 = ss.str().find(total_time_str, ss_total_time_pos0 + 1);
+    int ss_total_time_pos2 = ss.str().find(total_time_str, ss_total_time_pos1 + 1);
+    int ss_total_time_pos3 = ss.str().find(total_time_str, ss_total_time_pos2 + 1);
+    int ss_caller_name_pos0 = ss.str().find(caller_name_str);
+    int ss_caller_name_pos1 = ss.str().find(caller_name_str, ss_caller_name_pos0 + 1);
+    int ss_caller_name_pos2 = ss.str().find(caller_name_str, ss_caller_name_pos1 + 1);
+    int ss_caller_name_pos3 = ss.str().find(caller_name_str, ss_caller_name_pos2 + 1);
+    int ss_call_count_pos0 = ss.str().find(call_count_str);
+    int ss_call_count_pos1 = ss.str().find(call_count_str, ss_call_count_pos0 + 1);
+    int ss_call_count_pos2 = ss.str().find(call_count_str, ss_call_count_pos1 + 1);
+    int ss_call_count_pos3 = ss.str().find(call_count_str, ss_call_count_pos2 + 1);
+
+    int example_start_time_pos0 = serializeExample.find(start_time_str);
+    int example_start_time_pos1 = serializeExample.find(start_time_str, example_start_time_pos0 + 1);
+    int example_start_time_pos2 = serializeExample.find(start_time_str, example_start_time_pos1 + 1);
+    int example_start_time_pos3 = serializeExample.find(start_time_str, example_start_time_pos2 + 1);
+    int example_total_time_pos0 = serializeExample.find(total_time_str);
+    int example_total_time_pos1 = serializeExample.find(total_time_str, example_total_time_pos0 + 1);
+    int example_total_time_pos2 = serializeExample.find(total_time_str, example_total_time_pos1 + 1);
+    int example_total_time_pos3 = serializeExample.find(total_time_str, example_total_time_pos2 + 1);
+    int example_caller_name_pos0 = serializeExample.find(caller_name_str);
+    int example_caller_name_pos1 = serializeExample.find(caller_name_str, example_caller_name_pos0 + 1);
+    int example_caller_name_pos2 = serializeExample.find(caller_name_str, example_caller_name_pos1 + 1);
+    int example_caller_name_pos3 = serializeExample.find(caller_name_str, example_caller_name_pos2 + 1);
+    int example_call_count_pos0 = serializeExample.find(call_count_str);
+    int example_call_count_pos1 = serializeExample.find(call_count_str, example_call_count_pos0 + 1);
+    int example_call_count_pos2 = serializeExample.find(call_count_str, example_call_count_pos1 + 1);
+    int example_call_count_pos3 = serializeExample.find(call_count_str, example_call_count_pos2 + 1);
+
+    // Validate the serialization result except for the start_time and total_time
+    EXPECT_EQ(ss.str().substr(0, ss_start_time_pos0 + start_time_str.size()), serializeExample.substr(0, example_start_time_pos0 + start_time_str.size()));
+    EXPECT_EQ(ss.str().substr(ss_caller_name_pos0, ss_total_time_pos0 + total_time_str.size() - ss_caller_name_pos0), serializeExample.substr(example_caller_name_pos0, example_total_time_pos0 + total_time_str.size() - example_caller_name_pos0));
+    EXPECT_EQ(ss.str().substr(ss_call_count_pos0, ss_start_time_pos1 - ss_call_count_pos0), serializeExample.substr(example_call_count_pos0, example_start_time_pos1 - example_call_count_pos0));
+    EXPECT_EQ(ss.str().substr(ss_caller_name_pos1, ss_total_time_pos1 + total_time_str.size() - ss_caller_name_pos1), serializeExample.substr(example_caller_name_pos1, example_total_time_pos1 + total_time_str.size() - example_caller_name_pos1));
+    EXPECT_EQ(ss.str().substr(ss_call_count_pos1, ss_start_time_pos2 - ss_call_count_pos1), serializeExample.substr(example_call_count_pos1, example_start_time_pos2 - example_call_count_pos1));
+    EXPECT_EQ(ss.str().substr(ss_caller_name_pos2, ss_total_time_pos2 + total_time_str.size() - ss_caller_name_pos2), serializeExample.substr(example_caller_name_pos2, example_total_time_pos2 + total_time_str.size() - example_caller_name_pos2));
+    EXPECT_EQ(ss.str().substr(ss_call_count_pos2, ss_start_time_pos3 - ss_call_count_pos2), serializeExample.substr(example_call_count_pos2, example_start_time_pos3 - example_call_count_pos2));
+    EXPECT_EQ(ss.str().substr(ss_caller_name_pos3, ss_total_time_pos3 + total_time_str.size() - ss_caller_name_pos3), serializeExample.substr(example_caller_name_pos3, example_total_time_pos3 + total_time_str.size() - example_caller_name_pos3));
+    EXPECT_EQ(ss.str().substr(ss_call_count_pos3), serializeExample.substr(example_call_count_pos3));
 }
 
 } // namespace detail

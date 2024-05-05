@@ -79,10 +79,10 @@ void CallProfilerSerializer::serialize_call_profiler(const CallProfiler & profil
     //      "radix_tree":
     //      {
     //          "nodes":[
-    //              {"key":-1,"name":"","data":{"start_time": "0","caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children":[0]},
-    //              {"key":0,"name":"void modmesh::detail::foo1()","data":{"start_time": "17745276708555250","caller_name": "void modmesh::detail::foo1()","total_time": 61002916,"call_count": 1,"is_running": 1},"children":[1]},
-    //              {"key":1,"name":"void modmesh::detail::foo2()","data":{"start_time": "17745276708555458","caller_name": "void modmesh::detail::foo2()","total_time": 54002250,"call_count": 1,"is_running": 1},"children":[2]},
-    //              {"key":2,"name":"void modmesh::detail::foo3()","data":{"start_time": "17745276743555833","caller_name": "void modmesh::detail::foo3()","total_time": 19001833,"call_count": 1,"is_running": 1},"children":[]}
+    //              {"key":-1,"name":"","data":{"start_time": 0,"caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children":[0]},
+    //              {"key":0,"name":"void modmesh::detail::foo1()","data":{"start_time": 17745276708555250,"caller_name": "void modmesh::detail::foo1()","total_time": 61002916,"call_count": 1,"is_running": 1},"children":[1]},
+    //              {"key":1,"name":"void modmesh::detail::foo2()","data":{"start_time": 17745276708555458,"caller_name": "void modmesh::detail::foo2()","total_time": 54002250,"call_count": 1,"is_running": 1},"children":[2]},
+    //              {"key":2,"name":"void modmesh::detail::foo3()","data":{"start_time": 17745276743555833,"caller_name": "void modmesh::detail::foo3()","total_time": 19001833,"call_count": 1,"is_running": 1},"children":[]}
     //          ],
     //          "current_node":-1,
     //          "unique_id":3
@@ -100,10 +100,10 @@ void CallProfilerSerializer::serialize_radix_tree(const CallProfiler & profiler,
     // Example:
     //  {
     //      "nodes":[
-    //          {"key":-1,"name":"","data":{"start_time": "0","caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children":[0]},
-    //          {"key":0,"name":"void modmesh::detail::foo1()","data":{"start_time": "17745276708555250","caller_name": "void modmesh::detail::foo1()","total_time": 61002916,"call_count": 1,"is_running": 1},"children":[1]},
-    //          {"key":1,"name":"void modmesh::detail::foo2()","data":{"start_time": "17745276708555458","caller_name": "void modmesh::detail::foo2()","total_time": 54002250,"call_count": 1,"is_running": 1},"children":[2]},
-    //          {"key":2,"name":"void modmesh::detail::foo3()","data":{"start_time": "17745276743555833","caller_name": "void modmesh::detail::foo3()","total_time": 19001833,"call_count": 1,"is_running": 1},"children":[]}
+    //          {"key":-1,"name":"","data":{"start_time": 0,"caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children":[0]},
+    //          {"key":0,"name":"void modmesh::detail::foo1()","data":{"start_time": 17745276708555250,"caller_name": "void modmesh::detail::foo1()","total_time": 61002916,"call_count": 1,"is_running": 1},"children":[1]},
+    //          {"key":1,"name":"void modmesh::detail::foo2()","data":{"start_time": 17745276708555458,"caller_name": "void modmesh::detail::foo2()","total_time": 54002250,"call_count": 1,"is_running": 1},"children":[2]},
+    //          {"key":2,"name":"void modmesh::detail::foo3()","data":{"start_time": 17745276743555833,"caller_name": "void modmesh::detail::foo3()","total_time": 19001833,"call_count": 1,"is_running": 1},"children":[]}
     //      ],
     //      "current_node":-1,
     //      "unique_id":3
@@ -147,7 +147,7 @@ void CallProfilerSerializer::serialize_radix_tree_node(const RadixTreeNode<Calle
     //  {
     //      "key":-1,
     //      "name":"",
-    //      "data":{"start_time": "0","caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},
+    //      "data":{"start_time": 0,"caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},
     //      "children":[0]
     //  }
 
@@ -182,7 +182,7 @@ void CallProfilerSerializer::serialize_caller_profile(const CallerProfile & prof
 {
     // Example:
     //  {
-    //      "start_time": "0",
+    //      "start_time": 0,
     //      "caller_name": "",
     //      "total_time": 0,
     //      "call_count": 0,
