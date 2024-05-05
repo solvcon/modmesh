@@ -162,6 +162,7 @@ void RManager::setUpMenu()
         m_appMenu = m_mainWindow->menuBar()->addMenu(QString("Mesh"));
 
         this->addApplication(QString("mh_3dmix"));
+        this->addApplication(QString("naca"));
     }
 
     {

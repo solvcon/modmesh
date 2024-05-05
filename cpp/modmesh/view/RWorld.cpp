@@ -49,7 +49,7 @@ RWorld::RWorld(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
 
 void RWorld::update_geometry()
 {
-    size_t npoint = 0;
+    size_t npoint = m_world->nedge() * 2;
     for (size_t i = 0; i < m_world->nbezier(); ++i)
     {
         npoint += m_world->bezier(i).nlocus();
@@ -75,6 +75,18 @@ void RWorld::update_geometry()
                 barray.resize(npoint * 3 * sizeof(float));
                 SimpleArray<float> sarr = makeSimpleArray<float>(barray, small_vector<size_t>{npoint, 3}, /*view*/ true);
                 size_t ipt = 0;
+                for (size_t i = 0; i < m_world->nedge(); i++)
+                {
+                    Edge3dFp64 const & e = m_world->edge(i);
+                    sarr(ipt, 0) = e.v0()[0];
+                    sarr(ipt, 1) = e.v0()[1];
+                    sarr(ipt, 2) = e.v0()[2];
+                    ++ipt;
+                    sarr(ipt, 0) = e.v1()[0];
+                    sarr(ipt, 1) = e.v1()[1];
+                    sarr(ipt, 2) = e.v1()[2];
+                    ++ipt;
+                }
                 for (size_t i = 0; i < m_world->nbezier(); ++i)
                 {
                     Bezier3dFp64 const & b = m_world->bezier(i);
@@ -103,7 +115,7 @@ void RWorld::update_geometry()
             indices->setVertexBaseType(Qt3DCore::QAttribute::UnsignedInt);
             indices->setAttributeType(Qt3DCore::QAttribute::IndexAttribute);
 
-            size_t nedge = 0;
+            size_t nedge = m_world->nedge();
             {
                 for (size_t i = 0; i < m_world->nbezier(); ++i)
                 {
@@ -119,6 +131,12 @@ void RWorld::update_geometry()
                 SimpleArray<uint32_t> sarr = makeSimpleArray<uint32_t>(barray, small_vector<size_t>{nedge, 2}, /*view*/ true);
                 size_t ied = 0;
                 size_t ipt = 0;
+                for (size_t i = 0; i < m_world->nedge(); ++i)
+                {
+                    sarr(ied, 0) = ipt++;
+                    sarr(ied, 1) = ipt++;
+                    ++ied;
+                }
                 for (size_t i = 0; i < m_world->nbezier(); ++i)
                 {
                     Bezier3dFp64 const & b = m_world->bezier(i);
