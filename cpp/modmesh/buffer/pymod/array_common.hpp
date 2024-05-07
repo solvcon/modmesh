@@ -188,6 +188,30 @@ public:
                 arr_out.at(key) = py_value.cast<T>();
                 return;
             }
+            // multi-dimension with slice and ellipsis
+            // sarr[slice, slice, ellipsis] = v
+            if (py::isinstance<py::tuple>(py_key) && is_number)
+            {
+                const py::tuple tuple_in = py_key;
+
+                auto slices = make_default_slices(arr_out);
+                process_slices(tuple_in, slices, arr_out.ndim());
+
+                broadcast_array_using_slice(arr_out, slices, py_value);
+                return;
+            }
+            // one-dimension with slice
+            // sarr[slice] = v
+            if (py::isinstance<py::slice>(py_key) && is_number)
+            {
+                const auto slice_in = py_key.cast<py::slice>();
+
+                auto slices = make_default_slices(arr_out);
+                copy_slice(slices[0], slice_in);
+
+                broadcast_array_using_slice(arr_out, slices, py_value);
+                return;
+            }
             // sarr[ellipsis] = V
             if (py::isinstance<py::ellipsis>(py_key) && is_number)
             {
@@ -373,6 +397,31 @@ private:
         }
 
         TypeBroadcast<T>::broadcast(arr_out, slices, arr_in);
+
+        if (0 != nghost)
+        {
+            arr_out.set_nghost(nghost);
+        }
+    }
+
+    static void broadcast_array_using_slice(SimpleArray<T> & arr_out,
+                                            std::vector<slice_type> const & slices,
+                                            const pybind11::object & py_number)
+    {
+        namespace py = pybind11;
+
+        if (!py::isinstance<py::bool_>(py_number) && !py::isinstance<py::int_>(py_number) && !py::isinstance<py::float_>(py_number))
+        {
+            throw std::runtime_error("Cannot broadcast a non-number value to an array.");
+        }
+
+        const size_t nghost = arr_out.nghost();
+        if (0 != nghost)
+        {
+            arr_out.set_nghost(0);
+        }
+
+        TypeBroadcast<T>::broadcast(arr_out, slices, py_number);
 
         if (0 != nghost)
         {
