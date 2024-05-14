@@ -434,13 +434,57 @@ class SimpleArrayBasicTC(unittest.TestCase):
         sarr.ndarray.fill(100)
         self.assertTrue((ndarr == 100).all())
 
-    def test_SimpleArray_broadcast_ellipsis_value(self):
+    def test_SimpleArray_broadcast_ellipsis_number(self):
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
         sarr[...] = 1.234
         for i in range(2):
             for j in range(3):
                 for k in range(4):
                     self.assertEqual(1.234, sarr[i, j, k])
+
+    def test_SimpleArray_broadcast_slice_ellipsis_number(self):
+        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        ndarr = np.arange(2 * 3 * 4, dtype='float64').reshape((2, 3, 4))
+
+        VALUE1 = 1.234
+        VALUE2 = 5.678
+        sarr.fill(VALUE1)
+        ndarr[...] = VALUE1
+
+        ndarr[0:1, ..., ::2] = VALUE2
+        sarr[0:1, ..., ::2] = VALUE2
+
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(ndarr[i, j, k], sarr[i, j, k])
+
+    def test_SimpleArray_broadcast_slice_number(self):
+        TOTAL = 20
+        
+        sarr = modmesh.SimpleArrayFloat64(TOTAL)
+        ndarr = np.arange(100, dtype='float64')
+
+        VALUE1 = 1.234
+        VALUE2 = 5.678
+        VALUE3 = 9.123
+
+        sarr.fill(VALUE1)
+        ndarr[...] = VALUE1
+
+        ndarr[2:15:3] = VALUE2
+        sarr[2:15:3] = VALUE2
+
+        for i in range(TOTAL):
+            print(i, ndarr[i], sarr[i])
+        for i in range(TOTAL):
+            self.assertEqual(ndarr[i], sarr[i])
+
+        ndarr[5:19:2] = VALUE3
+        sarr[5:19:2] = VALUE3
+
+        for i in range(TOTAL):
+            self.assertEqual(ndarr[i], sarr[i])
 
     def test_SimpleArray_broadcast_ellipsis_shape(self):
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
@@ -648,8 +692,6 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         sarr[::STEP] = ndarr[...]
         ndarr2[::STEP] = ndarr[...]
-
-        print(ndarr2.shape)
 
         for i in range(0, N, STEP):
             self.assertEqual(ndarr2[i], sarr[i - G])
