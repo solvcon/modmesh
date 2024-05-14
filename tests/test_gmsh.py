@@ -22,14 +22,14 @@ class GmshTC(unittest.TestCase):
 
         # Due to ghost cell and ghost node had been created, the real body
         # had been shifted and start with index 3
-        np.testing.assert_almost_equal(blk.ndcrd[3:, :].ndarray.tolist(),
+        np.testing.assert_almost_equal(blk.ndcrd.ndarray[3:, :].tolist(),
                                        [[0.0, 0.0],
                                         [-1.0, -1.0],
                                         [1.0, -1.0],
                                         [0.0, 1.0]])
         # Check cells information
         self.assertEqual(blk.ncell, 3)
-        self.assertEqual(blk.cltpn[3:].ndarray.tolist(), [4, 4, 4])
-        self.assertEqual(blk.clnds[3:, :4].ndarray.tolist(), [[3, 0, 1, 2],
+        self.assertEqual(blk.cltpn.ndarray[3:].tolist(), [4, 4, 4])
+        self.assertEqual(blk.clnds.ndarray[3:, :4].tolist(), [[3, 0, 1, 2],
                                                               [3, 0, 2, 3],
                                                               [3, 0, 3, 1]])

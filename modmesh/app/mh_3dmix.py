@@ -41,16 +41,16 @@ def make_3dmix():
     PYR = core.StaticMesh.PYRAMID
 
     mh = core.StaticMesh(ndim=3, nnode=11, nface=0, ncell=4)
-    mh.ndcrd[:, :] = [
+    mh.ndcrd.ndarray[:, :] = [
         (0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0),
         (0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1),
         (0.5, 1.5, 0.5),
         (1.5, 1, 0.5), (1.5, 0, 0.5),
     ]
-    mh.cltpn[:] = [
+    mh.cltpn.ndarray[:] = [
         HEX, PYR, TET, PSM,
     ]
-    mh.clnds[:, :9] = [
+    mh.clnds.ndarray[:, :9] = [
         (8, 0, 1, 2, 3, 4, 5, 6, 7), (5, 2, 3, 7, 6, 8, -1, -1, -1),
         (4, 2, 6, 9, 8, -1, -1, -1, -1), (6, 2, 6, 9, 1, 5, 10, -1, -1),
     ]

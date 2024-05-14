@@ -64,11 +64,11 @@ class StaticMeshTC(unittest.TestCase):
         self.assertEqual((mh.ngstcell + mh.ncell, mh.CLMFC+1), mh.clfcs.shape)
 
     def _check_metric_trivial(self, mh):
-        self.assertTrue((mh.fccnd[:].ndarray == 0).all())
-        self.assertTrue((mh.fcnml[:, :].ndarray == 0).all())
-        self.assertTrue((mh.fcara[:].ndarray == 0).all())
-        self.assertTrue((mh.clcnd[:, :].ndarray == 0).all())
-        self.assertTrue((mh.clvol[:].ndarray == 0).all())
+        self.assertTrue((mh.fccnd.ndarray[:, :] == 0).all())
+        self.assertTrue((mh.fcnml.ndarray[:, :] == 0).all())
+        self.assertTrue((mh.fcara.ndarray[:] == 0).all())
+        self.assertTrue((mh.clcnd.ndarray[:, :] == 0).all())
+        self.assertTrue((mh.clvol.ndarray[:] == 0).all())
 
     def test_construct(self):
         def _test(cls, ndim):
@@ -82,9 +82,9 @@ class StaticMeshTC(unittest.TestCase):
 
     def test_2d_trivial_triangles(self):
         mh = modmesh.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
-        mh.ndcrd[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
-        mh.cltpn[:] = modmesh.StaticMesh.TRIANGLE
-        mh.clnds[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
+        mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
+        mh.cltpn.ndarray[:] = modmesh.StaticMesh.TRIANGLE
+        mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
 
         self._check_shape(mh, ndim=2, nnode=4, nface=0, ncell=3,
                           nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
@@ -140,9 +140,9 @@ class StaticMeshTC(unittest.TestCase):
 
     def test_3d_single_tetrahedron(self):
         mh = modmesh.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
-        mh.ndcrd[:, :] = (0, 0, 0), (0, 1, 0), (-1, 1, 0), (0, 1, 1)
-        mh.cltpn[:] = modmesh.StaticMesh.TETRAHEDRON
-        mh.clnds[:, :5] = [(4, 0, 1, 2, 3)]
+        mh.ndcrd.ndarray[:, :] = (0, 0, 0), (0, 1, 0), (-1, 1, 0), (0, 1, 1)
+        mh.cltpn.ndarray[:] = modmesh.StaticMesh.TETRAHEDRON
+        mh.clnds.ndarray[:, :5] = [(4, 0, 1, 2, 3)]
 
         self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,
                           nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
@@ -203,9 +203,9 @@ class StaticMeshTC(unittest.TestCase):
 
     def test_1d_single_line(self):
         mh = modmesh.StaticMesh(ndim=1, nnode=2, nface=0, ncell=1)
-        mh.ndcrd[:] = [[0], [1]]
-        mh.cltpn[...] = modmesh.StaticMesh.LINE
-        mh.clnds[:, :3] = [(2, 0, 1)]
+        mh.ndcrd.ndarray[:] = [[0], [1]]
+        mh.cltpn.ndarray[:] = modmesh.StaticMesh.LINE
+        mh.clnds.ndarray[:, :3] = [(2, 0, 1)]
 
         self._check_shape(mh, ndim=1, nnode=2, nface=0, ncell=1,
                           nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
