@@ -44,6 +44,7 @@ __all__ = [  # noqa: F822
     'ConcreteBuffer',
     'BufferExpander',
     'Gmsh',
+    'Plot3d',
     'SimpleArray',
     'SimpleArrayBool',
     'SimpleArrayInt8',

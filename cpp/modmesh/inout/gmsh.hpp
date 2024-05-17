@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <sstream>
 #include <vector>
@@ -8,6 +9,7 @@
 #include <modmesh/base.hpp>
 #include <modmesh/mesh/mesh.hpp>
 #include <modmesh/buffer/buffer.hpp>
+#include <modmesh/inout/inout_util.hpp>
 
 namespace modmesh
 {
@@ -226,18 +228,6 @@ private:
         {
             m_ndmap(usnds[i]) = i;
         }
-    }
-
-    std::vector<std::string> tokenize(const std::string & str, const char delim)
-    {
-        std::vector<std::string> output;
-        std::stringstream ss(str);
-        std::string token;
-        while (std::getline(ss, token, delim))
-        {
-            output.push_back(token);
-        }
-        return output;
     }
 
     void build_interior(const std::shared_ptr<StaticMesh> & blk);
