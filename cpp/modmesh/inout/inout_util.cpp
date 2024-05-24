@@ -2,14 +2,15 @@
 
 namespace modmesh
 {
+
 namespace inout
 {
-small_vector<std::string> tokenize(const std::string & str, const std::string delim)
+
+std::vector<std::string> tokenize(const std::string & str, const std::regex & regex_delim)
 {
-    small_vector<std::string> output;
-    std::regex regex_delim(delim);
+    std::vector<std::string> output;
     std::sregex_iterator iter(str.begin(), str.end(), regex_delim);
-    std::sregex_iterator end;
+    const std::sregex_iterator end;
     while (iter != end)
     {
         output.push_back(iter->str());
@@ -17,9 +18,10 @@ small_vector<std::string> tokenize(const std::string & str, const std::string de
     }
     return output;
 }
-small_vector<std::string> tokenize(const std::string & str, const char delim)
+
+std::vector<std::string> tokenize(const std::string & str, const char delim)
 {
-    small_vector<std::string> output;
+    std::vector<std::string> output;
     std::stringstream ss(str);
     std::string token;
     while (std::getline(ss, token, delim))
@@ -28,5 +30,7 @@ small_vector<std::string> tokenize(const std::string & str, const char delim)
     }
     return output;
 }
+
 } // namespace inout
+
 } // namespace modmesh

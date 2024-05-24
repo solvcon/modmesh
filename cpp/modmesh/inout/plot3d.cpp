@@ -2,31 +2,16 @@
 
 namespace modmesh
 {
+
 namespace inout
 {
+
 Plot3d::Plot3d(const std::string & data)
 {
     std::string line;
-    std::queue<real_type> parsing_q;
     size_t total_blk_size = 0;
-    size_t x_base_idx = 0, y_base_idx = 0, z_base_idx = 0;
-    uint_type idx = 0;
     uint_type nblocks = 0;
-    uint_type base_idx = 0;
-    // hexahedron has 8 nodes + 1 for store nodes number
-    small_vector<uint_type> nds_temp(9, 0U);
-    // These vector of x, y, z coordinate shift is used to build the hexahedron element
-    // the nodes order of the hexahedron element is clock of the xy face
-    // Referece: https://github.com/nasa/Plot3D_utilities/blob/main/colab/Plot3D_SplitBlocksExample.ipynb
-    small_vector<small_vector<int_type>> shift = {
-        {-1, -1, -1},
-        {-1, 0, -1},
-        {-1, 0, 0},
-        {-1, -1, 0},
-        {0, -1, -1},
-        {0, 0, -1},
-        {0, 0, 0},
-        {0, -1, 0}};
+    const std::regex plot3d_block_delim(R"(\d+)");
 
     stream << data;
     // getting the first line for total blocks number of the p3d mesh file
@@ -42,7 +27,7 @@ Plot3d::Plot3d(const std::string & data)
     for (auto i = 0; i < nblocks; ++i)
     {
         std::getline(stream, line);
-        auto tokens = tokenize(line, "\\d+");
+        auto tokens = tokenize(line, plot3d_block_delim);
         m_x_shape(i) = std::stoul(tokens[0]);
         m_y_shape(i) = std::stoul(tokens[1]);
         m_z_shape(i) = std::stoul(tokens[2]);
@@ -52,28 +37,20 @@ Plot3d::Plot3d(const std::string & data)
 
     m_nds.remake(small_vector<size_t>{total_blk_size, 3}, 0);
 
-    // processing the first block first.
-    for (auto k = 0; k < 3; ++k)
-    {
-        for (auto j = 0; j < m_blk_sizes(0); ++j)
-        {
-            if (parsing_q.empty())
-            {
-                std::getline(stream, line);
-                // using regex to parsing the string and split them into float number
-                // also need to consider the scientific notation.
-                auto tokens = tokenize(line, "(-?\\d+(\\.\\d+)?([eE][+-]?\\d+)?|\\b\\d+\\b)");
-                for (auto token : tokens) parsing_q.push(std::stod(token));
-            }
-            m_nds(j, k) = parsing_q.front();
-            parsing_q.pop();
-        }
-    }
+    parseCoordinates(nblocks);
+    buildHexahedronElements(nblocks);
+}
 
-    for (auto blk = 1; blk < nblocks; ++blk)
-    {
-        base_idx += m_blk_sizes(blk - 1);
+void Plot3d::parseCoordinates(const uint_type nblocks)
+{
+    uint_type base_idx = 0;
+    std::string line;
+    std::queue<real_type> parsing_q;
+    const std::regex plot3d_coord_delim(R"(-?\d+(\.\d+)?([eE][+-]?\d+)?|\b\d+\b)");
 
+    // TODO: The nested for-loop needs to be enhanced
+    for (auto blk = 0; blk < nblocks; ++blk)
+    {
         for (auto k = 0; k < 3; ++k)
         {
             for (auto j = 0; j < m_blk_sizes(blk); ++j)
@@ -81,15 +58,38 @@ Plot3d::Plot3d(const std::string & data)
                 if (parsing_q.empty())
                 {
                     std::getline(stream, line);
-                    auto tokens = tokenize(line, "(-?\\d+(\\.\\d+)?([eE][+-]?\\d+)?|\\b\\d+\\b)");
-                    for (auto token : tokens) parsing_q.push(std::stod(token));
+                    // using regex to parsing the string and split them into float number
+                    // also need to consider the scientific notation.
+                    auto tokens = tokenize(line, plot3d_coord_delim);
+                    for (auto const & token : tokens) { parsing_q.push(std::stod(token)); }
                 }
                 m_nds(j + base_idx, k) = parsing_q.front();
                 parsing_q.pop();
             }
         }
+        base_idx += m_blk_sizes(blk);
     }
+}
 
+void Plot3d::buildHexahedronElements(const uint_type nblocks)
+{
+    uint_type idx = 0;
+    // hexahedron has 8 nodes + 1 for store nodes number
+    small_vector<uint_type> nds_temp(9, 0U);
+    // These vector of x, y, z coordinate shift is used to build the hexahedron element
+    // the nodes order of the hexahedron element is clock of the xy face
+    // Referece: https://github.com/nasa/Plot3D_utilities/blob/main/colab/Plot3D_SplitBlocksExample.ipynb
+    const std::vector<std::vector<int_type>> shift = {
+        {-1, -1, -1},
+        {-1, 0, -1},
+        {-1, 0, 0},
+        {-1, -1, 0},
+        {0, -1, -1},
+        {0, 0, -1},
+        {0, 0, 0},
+        {0, -1, 0}};
+
+    // TODO: The nested for-loop needs to be enhanced
     // build the hexahedron element from nodes
     for (auto blk = 0; blk < nblocks; ++blk)
     {
@@ -142,7 +142,9 @@ void Plot3d::build_interior(const std::shared_ptr<StaticMesh> & blk)
     blk->build_boundary();
     blk->build_ghost();
 }
+
 } // namespace inout
+
 } // namespace modmesh
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <unordered_map>
+#include <vector>
 
 #include <modmesh/base.hpp>
 #include <modmesh/mesh/mesh.hpp>
@@ -12,8 +13,10 @@
 
 namespace modmesh
 {
+
 namespace inout
 {
+
 class Plot3d
     : public NumberBase<int32_t, double>
 {
@@ -42,6 +45,9 @@ private:
         return blk > 0 ? m_blk_sizes(blk - 1) : 0 + x + y * m_x_shape(blk) + z * m_x_shape(blk) * m_y_shape(blk);
     }
 
+    void parseCoordinates(const uint_type nblocks);
+    void buildHexahedronElements(const uint_type nblocks);
+
     std::stringstream stream;
 
     SimpleArray<real_type> m_nds;
@@ -52,7 +58,9 @@ private:
 
     std::unordered_map<uint_type, small_vector<uint_type>> m_elems;
 };
+
 } // namespace inout
+
 } // namespace modmesh
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
