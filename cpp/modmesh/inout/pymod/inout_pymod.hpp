@@ -15,6 +15,7 @@ namespace python
 
 void initialize_inout(pybind11::module & mod);
 void wrap_Gmsh(pybind11::module & mod);
+void wrap_Plot3d(pybind11::module & mod);
 
 } /* end namespace python */
 

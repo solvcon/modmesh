@@ -125,11 +125,24 @@ w_tri.view_center = (0, 0, 0)
         view.mgr.pycon.command = cmd.strip()
 
 
-def help_mesh_viewer(path, set_command=False):
+def help_gmsh_viewer(path, set_command=False):
     cmd = f"""
-# Open a sub window for the mesh viewer:
+# Open a sub window for the gmsh viewer:
 w_mh_viewer = add3DWidget()
-mh_viewer = make_mesh_viewer("{path}")
+mh_viewer = make_gmsh_viewer("{path}")
+w_mh_viewer.updateMesh(mh_viewer)
+w_mh_viewer.showMark()
+"""
+    view.mgr.pycon.writeToHistory(cmd)
+    if set_command:
+        view.mgr.pycon.command = cmd.strip()
+
+
+def help_plot3d_viewer(path, set_command=False):
+    cmd = f"""
+# Open a sub window for the plot3d viewer:
+w_mh_viewer = add3DWidget()
+mh_viewer = make_plot3d_viewer("{path}")
 w_mh_viewer.updateMesh(mh_viewer)
 w_mh_viewer.showMark()
 """
@@ -148,10 +161,17 @@ w = make_bezier()
         view.mgr.pycon.command = cmd.strip()
 
 
-def make_mesh_viewer(path):
+def make_gmsh_viewer(path):
     data = open(path, 'rb').read()
     gm = core.Gmsh(data)
     mh = gm.to_block()
+    return mh
+
+
+def make_plot3d_viewer(path):
+    data = open(path, 'rb').read()
+    pm = core.Plot3d(data)
+    mh = pm.to_block()
     return mh
 
 
@@ -385,17 +405,19 @@ def load_app():
         'help_tet',
         'help_2dmix',
         'help_3dmix',
-        'help_mesh_viewer',
+        'help_gmsh_viewer',
         'help_solvcon',
         'help_other',
         'help_bezier',
+        'help_plot3d_viewer',
         'make_triangle',
         'make_tetrahedron',
         'make_2dmix',
         'make_3dmix',
         'make_solvcon',
-        'make_mesh_viewer',
+        'make_gmsh_viewer',
         'make_bezier',
+        'make_plot3d_viewer',
         ('add3DWidget', view.mgr.add3DWidget),
     )
     for k in symbols:
@@ -415,7 +437,8 @@ help_2dmix(set_command=False)  # or True
 help_3dmix(set_command=False)  # or True
 help_solvcon(set_command=False)  # or True
 help_other(set_command=False)  # or True
-help_mesh_viewer(path, set_command=False)  # or True
+help_gmsh_viewer(path, set_command=False)  # or True
+help_plot3d_viewer(path, set_command=False)  # or True
 help_bezier(set_command=False)  # or True
 """)
 
