@@ -60,6 +60,45 @@ class ROrbitCameraController
     using Qt3DExtras::QOrbitCameraController::QOrbitCameraController;
 }; /* end class ROrbitCameraController */
 
+class RCustomCameraController
+    : public Qt3DExtras::QAbstractCameraController
+{
+    Q_OBJECT
+public:
+    explicit RCustomCameraController(Qt3DCore::QNode * parent = nullptr)
+        : QAbstractCameraController(parent)
+    {
+    }
+    ~RCustomCameraController() {}
+
+private:
+    void moveCamera(const QAbstractCameraController::InputState & state, float dt) override
+    {
+        Qt3DRender::QCamera * theCamera = camera();
+
+        if (theCamera == nullptr)
+            return;
+
+        theCamera->translate(QVector3D(state.txAxisValue * linearSpeed(),
+                                       state.tyAxisValue * linearSpeed(),
+                                       state.tzAxisValue * linearSpeed()) *
+                             dt);
+        if (state.leftMouseButtonActive)
+        {
+            float theLookSpeed = lookSpeed();
+            if (state.shiftKeyActive)
+            {
+                theLookSpeed *= 0.2f;
+            }
+
+            const QVector3D upVector(0.0f, 1.0f, 0.0f);
+
+            theCamera->pan(state.rxAxisValue * theLookSpeed * dt, upVector);
+            theCamera->tilt(state.ryAxisValue * theLookSpeed * dt);
+        }
+    };
+}; /* end class RCustomCameraController */
+
 class RScene
     : public Qt3DCore::QEntity
 {
@@ -84,6 +123,8 @@ public:
     void setOrbitCameraController() { setCameraController(new ROrbitCameraController(this)); }
 
     void setFirstPersonCameraController() { setCameraController(new RFirstPersonCameraController(this)); }
+
+    void setCustomCameraController() { setCameraController(new RCustomCameraController(this)); }
 
 private:
 
