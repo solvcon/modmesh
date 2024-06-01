@@ -170,6 +170,22 @@ void Euler1DCore::treat_boundary_so0()
         m_so0(ic, 1) = m_so0(ic - 1, 1);
         m_so0(ic, 2) = m_so0(ic - 1, 2);
     }
+
+    // Set the boundary point eqaul to the inside point.
+    {
+        // Left boundary.
+        size_t const ic = 0;
+        m_so0(ic, 0) = m_so0(ic + 2, 0);
+        m_so0(ic, 1) = m_so0(ic + 2, 1);
+        m_so0(ic, 2) = m_so0(ic + 2, 2);
+    }
+    {
+        // Right boundary.
+        size_t const ic = ncoord() - 1;
+        m_so0(ic, 0) = m_so0(ic - 2, 0);
+        m_so0(ic, 1) = m_so0(ic - 2, 1);
+        m_so0(ic, 2) = m_so0(ic - 2, 2);
+    }
 }
 
 void Euler1DCore::treat_boundary_so1()
@@ -190,6 +206,22 @@ void Euler1DCore::treat_boundary_so1()
         m_so1(ic, 0) = m_so1(ic - 1, 0);
         m_so1(ic, 1) = m_so1(ic - 1, 1);
         m_so1(ic, 2) = m_so1(ic - 1, 2);
+    }
+
+    // Set the boundary point eqaul to the inside point.
+    {
+        // Left boundary.
+        size_t const ic = 0;
+        m_so1(ic, 0) = m_so1(ic + 2, 0);
+        m_so1(ic, 1) = m_so1(ic + 2, 1);
+        m_so1(ic, 2) = m_so1(ic + 2, 2);
+    }
+    {
+        // Right boundary.
+        size_t const ic = ncoord() - 1;
+        m_so1(ic, 0) = m_so1(ic - 2, 0);
+        m_so1(ic, 1) = m_so1(ic - 2, 1);
+        m_so1(ic, 2) = m_so1(ic - 2, 2);
     }
 }
 
