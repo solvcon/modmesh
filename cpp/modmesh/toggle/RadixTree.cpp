@@ -84,7 +84,7 @@ void CallProfilerSerializer::serialize_radix_tree(const CallProfiler & profiler,
 {
     // Serialize the RadixTree.
     outstream << R"(    "radix_tree": {)" << '\n';
-    outstream << R"(        "current_node": ")" << profiler.radix_tree().get_current_node() << R"(",)" << '\n';
+    outstream << R"(        "current_node": ")" << reinterpret_cast<std::uintptr_t>(profiler.radix_tree().get_current_node()) << R"(",)" << '\n';
     CallProfilerSerializer::serialize_radix_tree_nodes(profiler.radix_tree().get_current_node(), outstream);
     CallProfilerSerializer::serialize_id_map(profiler.radix_tree().get_id_map(RadixTree<CallerProfile>::CallProfilerPK()), outstream);
     outstream << R"(        "unique_id": )" << profiler.radix_tree().get_unique_node() << '\n';
@@ -160,7 +160,7 @@ void CallProfilerSerializer::serialize_radix_tree_node(const RadixTreeNode<Calle
     outstream << R"(                "key": )" << node.key() << R"(,)" << '\n';
     outstream << R"(                "name": ")" << node.name() << R"(",)" << '\n';
     CallProfilerSerializer::serialize_caller_profile(node.data(), outstream);
-    outstream << R"(                "address": ")" << &node << R"(",)" << '\n';
+    outstream << R"(                "address": ")" << reinterpret_cast<std::uintptr_t>(&node) << R"(",)" << '\n';
     CallProfilerSerializer::serialize_radix_tree_node_children(node.children(), outstream);
 
     outstream << R"(            })";
@@ -190,7 +190,7 @@ void CallProfilerSerializer::serialize_radix_tree_node_children(const CallProfil
                 outstream << R"(,)" << '\n';
             }
             is_first_child = false;
-            outstream << R"(                    ")" << child << R"(")";
+            outstream << R"(                    ")" << reinterpret_cast<std::uintptr_t>(child.get()) << R"(")";
         }
         outstream << '\n';
         outstream << R"(                ])" << '\n';
