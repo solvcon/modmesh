@@ -225,6 +225,78 @@ std::string call_count_str = R"(,"call_count": )";
 
 TEST_F(CallProfilerTest, test_serialization)
 {
+    /* Here is the expected format of output:
+    {
+        "radix_tree": {
+            "current_node": "105553178001632",
+            "nodes": [{
+                    "key": -1,
+                    "name": "",
+                    "data": {
+                        "start_time": 0,
+                        "caller_name": "",
+                        "total_time": 0,
+                        "call_count": 0,
+                        "is_running": 0
+                    },
+                    "address": "105553178001632",
+                    children": [
+                        "105553178002080"
+                    ]
+                },
+                {
+                    "key": 0,
+                    "name": "void modmesh::detail::foo1()",
+                    "data": {
+                        "start_time": 1969175311810791,
+                        "caller_name": "void modmesh::detail::foo1()",
+                        "total_time": 61010334,
+                        "call_count": 1,
+                        "is_running": 1
+                    },
+                    "address": "105553178002080",
+                    children": [
+                        "105553178001408"
+                    ]
+                },
+                {
+                    "key": 1,
+                    "name": "void modmesh::detail::foo2()",
+                    "data": {
+                        "start_time": 1969175311811000,
+                        "caller_name": "void modmesh::detail::foo2()",
+                        "total_time": 54010041,
+                        "call_count": 1,
+                        "is_running": 1
+                    },
+                    "address": "105553178001408",
+                    children": [
+                        "105553178034176"
+                    ]
+                },
+                {
+                    "key": 2,
+                    "name": "void modmesh::detail::foo3()",
+                    "data": {
+                        "start_time": 1969175346815166,
+                        "caller_name": "void modmesh::detail::foo3()",
+                        "total_time": 19005625,
+                        "call_count": 1,
+                        "is_running": 1
+                    },
+                    "address": "105553178034176",
+                    children": []
+                }
+            ],
+            "id_map": {
+                "void modmesh::detail::foo3()": 2,
+                "void modmesh::detail::foo2()": 1,
+                "void modmesh::detail::foo1()": 0
+            },
+            "unique_id": 3
+        }
+    }
+    */
     pProfiler->reset();
 
     foo1();
