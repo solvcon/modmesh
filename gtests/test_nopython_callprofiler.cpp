@@ -228,72 +228,9 @@ TEST_F(CallProfilerTest, test_serialization)
     pProfiler->reset();
 
     foo1();
-
-    // Example:
-    //  {
-    //      "radix_tree":
-    //      {
-    //          "nodes":[
-    //              {"key":-1,"name":"","data":{"start_time": 0,"caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children":[0]},
-    //              {"key":0,"name":"void modmesh::detail::foo1()","data":{"start_time": 17745276708555250,"caller_name": "void modmesh::detail::foo1()","total_time": 61002916,"call_count": 1,"is_running": 1},"children":[1]},
-    //              {"key":1,"name":"void modmesh::detail::foo2()","data":{"start_time": 17745276708555458,"caller_name": "void modmesh::detail::foo2()","total_time": 54002250,"call_count": 1,"is_running": 1},"children":[2]},
-    //              {"key":2,"name":"void modmesh::detail::foo3()","data":{"start_time": 17745276743555833,"caller_name": "void modmesh::detail::foo3()","total_time": 19001833,"call_count": 1,"is_running": 1},"children":[]}
-    //          ],
-    //          "current_node":-1,
-    //          "unique_id":3
-    //      }
-    //  }
-
     std::stringstream ss;
     CallProfilerSerializer::serialize(*pProfiler, ss);
-
-    int ss_start_time_pos0 = ss.str().find(start_time_str);
-    int ss_start_time_pos1 = ss.str().find(start_time_str, ss_start_time_pos0 + 1);
-    int ss_start_time_pos2 = ss.str().find(start_time_str, ss_start_time_pos1 + 1);
-    int ss_start_time_pos3 = ss.str().find(start_time_str, ss_start_time_pos2 + 1);
-    int ss_total_time_pos0 = ss.str().find(total_time_str);
-    int ss_total_time_pos1 = ss.str().find(total_time_str, ss_total_time_pos0 + 1);
-    int ss_total_time_pos2 = ss.str().find(total_time_str, ss_total_time_pos1 + 1);
-    int ss_total_time_pos3 = ss.str().find(total_time_str, ss_total_time_pos2 + 1);
-    int ss_caller_name_pos0 = ss.str().find(caller_name_str);
-    int ss_caller_name_pos1 = ss.str().find(caller_name_str, ss_caller_name_pos0 + 1);
-    int ss_caller_name_pos2 = ss.str().find(caller_name_str, ss_caller_name_pos1 + 1);
-    int ss_caller_name_pos3 = ss.str().find(caller_name_str, ss_caller_name_pos2 + 1);
-    int ss_call_count_pos0 = ss.str().find(call_count_str);
-    int ss_call_count_pos1 = ss.str().find(call_count_str, ss_call_count_pos0 + 1);
-    int ss_call_count_pos2 = ss.str().find(call_count_str, ss_call_count_pos1 + 1);
-    int ss_call_count_pos3 = ss.str().find(call_count_str, ss_call_count_pos2 + 1);
-
-    int example_start_time_pos0 = serializeExample.find(start_time_str);
-    int example_start_time_pos1 = serializeExample.find(start_time_str, example_start_time_pos0 + 1);
-    int example_start_time_pos2 = serializeExample.find(start_time_str, example_start_time_pos1 + 1);
-    int example_start_time_pos3 = serializeExample.find(start_time_str, example_start_time_pos2 + 1);
-    int example_total_time_pos0 = serializeExample.find(total_time_str);
-    int example_total_time_pos1 = serializeExample.find(total_time_str, example_total_time_pos0 + 1);
-    int example_total_time_pos2 = serializeExample.find(total_time_str, example_total_time_pos1 + 1);
-    int example_total_time_pos3 = serializeExample.find(total_time_str, example_total_time_pos2 + 1);
-    int example_caller_name_pos0 = serializeExample.find(caller_name_str);
-    int example_caller_name_pos1 = serializeExample.find(caller_name_str, example_caller_name_pos0 + 1);
-    int example_caller_name_pos2 = serializeExample.find(caller_name_str, example_caller_name_pos1 + 1);
-    int example_caller_name_pos3 = serializeExample.find(caller_name_str, example_caller_name_pos2 + 1);
-    int example_call_count_pos0 = serializeExample.find(call_count_str);
-    int example_call_count_pos1 = serializeExample.find(call_count_str, example_call_count_pos0 + 1);
-    int example_call_count_pos2 = serializeExample.find(call_count_str, example_call_count_pos1 + 1);
-    int example_call_count_pos3 = serializeExample.find(call_count_str, example_call_count_pos2 + 1);
-
-    // Validate the serialization result except for the start_time and total_time
-    /*
-    EXPECT_EQ(ss.str().substr(0, ss_start_time_pos0 + start_time_str.size()), serializeExample.substr(0, example_start_time_pos0 + start_time_str.size()));
-    EXPECT_EQ(ss.str().substr(ss_caller_name_pos0, ss_total_time_pos0 + total_time_str.size() - ss_caller_name_pos0), serializeExample.substr(example_caller_name_pos0, example_total_time_pos0 + total_time_str.size() - example_caller_name_pos0));
-    EXPECT_EQ(ss.str().substr(ss_call_count_pos0, ss_start_time_pos1 - ss_call_count_pos0), serializeExample.substr(example_call_count_pos0, example_start_time_pos1 - example_call_count_pos0));
-    EXPECT_EQ(ss.str().substr(ss_caller_name_pos1, ss_total_time_pos1 + total_time_str.size() - ss_caller_name_pos1), serializeExample.substr(example_caller_name_pos1, example_total_time_pos1 + total_time_str.size() - example_caller_name_pos1));
-    EXPECT_EQ(ss.str().substr(ss_call_count_pos1, ss_start_time_pos2 - ss_call_count_pos1), serializeExample.substr(example_call_count_pos1, example_start_time_pos2 - example_call_count_pos1));
-    EXPECT_EQ(ss.str().substr(ss_caller_name_pos2, ss_total_time_pos2 + total_time_str.size() - ss_caller_name_pos2), serializeExample.substr(example_caller_name_pos2, example_total_time_pos2 + total_time_str.size() - example_caller_name_pos2));
-    EXPECT_EQ(ss.str().substr(ss_call_count_pos2, ss_start_time_pos3 - ss_call_count_pos2), serializeExample.substr(example_call_count_pos2, example_start_time_pos3 - example_call_count_pos2));
-    EXPECT_EQ(ss.str().substr(ss_caller_name_pos3, ss_total_time_pos3 + total_time_str.size() - ss_caller_name_pos3), serializeExample.substr(example_caller_name_pos3, example_total_time_pos3 + total_time_str.size() - example_caller_name_pos3));
-    EXPECT_EQ(ss.str().substr(ss_call_count_pos3), serializeExample.substr(example_call_count_pos3));
-    */
-   std::cout << ss.str() << std::endl;
+    std::cout << ss.str() << std::endl;
 }
 
 } // namespace detail
