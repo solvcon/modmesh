@@ -74,60 +74,57 @@ void CallProfiler::print_profiling_result(const RadixTreeNode<CallerProfile> & n
 
 void CallProfilerSerializer::serialize_call_profiler(const CallProfiler & profiler, std::ostream & outstream)
 {
-    // Example:
-    //  {
-    //      "radix_tree":
-    //      {
-    //          "nodes":[
-    //              {"key":-1,"name":"","data":{"start_time": 0,"caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children":[0]},
-    //              {"key":0,"name":"void modmesh::detail::foo1()","data":{"start_time": 17745276708555250,"caller_name": "void modmesh::detail::foo1()","total_time": 61002916,"call_count": 1,"is_running": 1},"children":[1]},
-    //              {"key":1,"name":"void modmesh::detail::foo2()","data":{"start_time": 17745276708555458,"caller_name": "void modmesh::detail::foo2()","total_time": 54002250,"call_count": 1,"is_running": 1},"children":[2]},
-    //              {"key":2,"name":"void modmesh::detail::foo3()","data":{"start_time": 17745276743555833,"caller_name": "void modmesh::detail::foo3()","total_time": 19001833,"call_count": 1,"is_running": 1},"children":[]}
-    //          ],
-    //          "current_node":-1,
-    //          "unique_id":3
-    //      }
-    //  }
-
-    outstream << R"({)";
-    outstream << R"("radix_tree": )";
+    // Serialize the RadixTree in the CallProfiler.
+    outstream << R"({)" << '\n';
     CallProfilerSerializer::serialize_radix_tree(profiler, outstream);
-    outstream << R"(})";
+    outstream << R"(})" << '\n';
 }
 
 void CallProfilerSerializer::serialize_radix_tree(const CallProfiler & profiler, std::ostream & outstream)
 {
-    // Example:
-    //  {
-    //      "nodes":[
-    //          {"key":-1,"name":"","data":{"start_time": 0,"caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},"children":[0]},
-    //          {"key":0,"name":"void modmesh::detail::foo1()","data":{"start_time": 17745276708555250,"caller_name": "void modmesh::detail::foo1()","total_time": 61002916,"call_count": 1,"is_running": 1},"children":[1]},
-    //          {"key":1,"name":"void modmesh::detail::foo2()","data":{"start_time": 17745276708555458,"caller_name": "void modmesh::detail::foo2()","total_time": 54002250,"call_count": 1,"is_running": 1},"children":[2]},
-    //          {"key":2,"name":"void modmesh::detail::foo3()","data":{"start_time": 17745276743555833,"caller_name": "void modmesh::detail::foo3()","total_time": 19001833,"call_count": 1,"is_running": 1},"children":[]}
-    //      ],
-    //      "current_node":-1,
-    //      "unique_id":3
-    //  }
-
-    outstream << R"({)";
-    outstream << R"("nodes": [)";
+    // Serialize the RadixTree.
+    outstream << R"(    "radix_tree": {)" << '\n';
+    outstream << R"(        "current_node": ")" << profiler.radix_tree().get_current_node() << R"(",)" << '\n';
     CallProfilerSerializer::serialize_radix_tree_nodes(profiler.radix_tree().get_current_node(), outstream);
-    outstream << R"(],)";
-    outstream << R"("current_node": )" << profiler.radix_tree().get_current_node()->key() << R"(,)";
-    outstream << R"("unique_id": )" << profiler.radix_tree().get_unique_node();
-    outstream << R"(})";
+    CallProfilerSerializer::serialize_id_map(profiler.radix_tree().get_id_map(RadixTree<CallerProfile>::CallProfilerPK()), outstream);
+    outstream << R"(        "unique_id": )" << profiler.radix_tree().get_unique_node() << '\n';
+    outstream << R"(    })" << '\n';
 }
+
+void CallProfilerSerializer::serialize_id_map(const std::unordered_map<std::string, CallProfilerSerializer::key_type> & id_map, std::ostream & outstream)
+{
+    // Serialize the unordered_map in RadixTree.
+    outstream << R"(        "id_map": {)" << '\n';
+
+    bool is_first = true;
+    for (const auto & [key, value] : id_map)
+    {
+        // Avoid the trailing comma for the first element.
+        if (!is_first)
+        {
+            outstream << R"(,)" << '\n';
+        }
+        is_first = false;
+        outstream << R"(            ")" << key << R"(": )" << value;
+    }
+
+    // Newline after the last element.
+    outstream << '\n';
+    outstream << R"(        },)" << '\n';
+}
+
 void CallProfilerSerializer::serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile> * node, std::ostream & outstream)
 {
+    // Serialize all the RadixTreeNodes in RadixTree in a breadth-first manner.
+    outstream << R"(        "nodes": [)";
+
     std::queue<const RadixTreeNode<CallerProfile> *> nodes_buffer;
     nodes_buffer.push(node);
     bool is_first_node = true;
-
-    // Serialize the nodes in a breadth-first manner.
     while (!nodes_buffer.empty())
     {
         const int nodes_buffer_size = nodes_buffer.size();
-        for (int i = 0; i < nodes_buffer_size; i++)
+        for (int i = 0; i < nodes_buffer_size; ++i)
         {
             const RadixTreeNode<CallerProfile> * current_node = nodes_buffer.front();
             nodes_buffer.pop();
@@ -139,63 +136,77 @@ void CallProfilerSerializer::serialize_radix_tree_nodes(const RadixTreeNode<Call
             }
         }
     }
+
+    // Newline after the last element.
+    outstream << '\n';
+    outstream << R"(        ],)" << '\n';
 }
 
 void CallProfilerSerializer::serialize_radix_tree_node(const RadixTreeNode<CallerProfile> & node, bool is_first_node, std::ostream & outstream)
 {
-    // Example:
-    //  {
-    //      "key":-1,
-    //      "name":"",
-    //      "data":{"start_time": 0,"caller_name": "","total_time": 0,"call_count": 0,"is_running": 0},
-    //      "children":[0]
-    //  }
+    // Serialize the RadixTreeNode to the json format.
 
-    // Avoid the trailing comma.
+    // Avoid the trailing comma for the first node.
     if (!is_first_node)
     {
-        outstream << R"(,)";
+        outstream << R"(,)" << '\n';
+        outstream << R"(            {)" << '\n';
     }
-    outstream << R"({)";
-    outstream << R"("key": )" << node.key() << R"(,)";
-    outstream << R"("name": ")" << node.name() << R"(",)";
-    outstream << R"("data": )";
-    CallProfilerSerializer::serialize_caller_profile(node.data(), outstream);
-    outstream << R"(,)";
-    outstream << R"("children": [)";
-    bool is_first_child = true;
-    for (const auto & child : node.children())
+    else
     {
-        // Avoid the trailing comma.
-        if (!is_first_child)
-        {
-            outstream << R"(,)";
-        }
-        is_first_child = false;
-        outstream << child->key();
+        outstream << R"({)" << '\n';
     }
-    outstream << R"(])";
-    outstream << R"(})";
+
+    outstream << R"(                "key": )" << node.key() << R"(,)" << '\n';
+    outstream << R"(                "name": ")" << node.name() << R"(",)" << '\n';
+    CallProfilerSerializer::serialize_caller_profile(node.data(), outstream);
+    outstream << R"(                "address": ")" << &node << R"(",)" << '\n';
+    CallProfilerSerializer::serialize_radix_tree_node_children(node.children(), outstream);
+
+    outstream << R"(            })";
+}
+
+void CallProfilerSerializer::serialize_radix_tree_node_children(const CallProfilerSerializer::child_list_type & children, std::ostream & outstream)
+{
+    // Serialize the children list in RadixTreeNode.
+    outstream << R"(                children": [)";
+
+    // If the children list is empty, close the list at the same line.
+    if (children.empty())
+    {
+        outstream << R"(])" << '\n';
+    }
+
+    else
+    {
+        outstream << '\n';
+
+        bool is_first_child = true;
+        for (const auto & child : children)
+        {
+            // Avoid the trailing comma.
+            if (!is_first_child)
+            {
+                outstream << R"(,)" << '\n';
+            }
+            is_first_child = false;
+            outstream << R"(                    ")" << child << R"(")";
+        }
+        outstream << '\n';
+        outstream << R"(                ])" << '\n';
+    }
 }
 
 void CallProfilerSerializer::serialize_caller_profile(const CallerProfile & profile, std::ostream & outstream)
 {
-    // Example:
-    //  {
-    //      "start_time": 0,
-    //      "caller_name": "",
-    //      "total_time": 0,
-    //      "call_count": 0,
-    //      "is_running": 0
-    //  }
-
-    outstream << R"({)";
-    outstream << R"("start_time": )" << profile.start_time.time_since_epoch().count() << R"(,)";
-    outstream << R"("caller_name": ")" << profile.caller_name << R"(",)";
-    outstream << R"("total_time": )" << profile.total_time.count() << R"(,)";
-    outstream << R"("call_count": )" << profile.call_count << R"(,)";
-    outstream << R"("is_running": )" << profile.is_running;
-    outstream << R"(})";
+    // Serialize the CallerProfile to the json format.
+    outstream << R"(                "data": {)" << '\n';
+    outstream << R"(                    "start_time": )" << profile.start_time.time_since_epoch().count() << R"(,)" << '\n';
+    outstream << R"(                    "caller_name": ")" << profile.caller_name << R"(",)" << '\n';
+    outstream << R"(                    "total_time": )" << profile.total_time.count() << R"(,)" << '\n';
+    outstream << R"(                    "call_count": )" << profile.call_count << R"(,)" << '\n';
+    outstream << R"(                    "is_running": )" << profile.is_running << '\n';
+    outstream << R"(                },)" << '\n';
 }
 
 } /* end namespace modmesh */

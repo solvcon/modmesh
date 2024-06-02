@@ -108,6 +108,9 @@ Ref:
 https://kalkicode.com/radix-tree-implementation
 https://www.algotree.org/algorithms/trie/
 */
+
+class CallProfilerSerializer; // for declaration
+
 template <typename T>
 class RadixTree
 {
@@ -161,6 +164,15 @@ public:
     RadixTreeNode<T> * get_current_node() const { return m_current_node; }
     key_type get_unique_node() const { return m_unique_id; }
 
+    class CallProfilerPK
+    {
+    private:
+        CallProfilerPK() = default;
+        friend CallProfilerSerializer;
+    };
+
+    const std::unordered_map<std::string, key_type> & get_id_map(CallProfilerPK const &) const { return m_id_map; }
+
 private:
     key_type get_id(const std::string & name)
     {
@@ -192,34 +204,6 @@ struct CallerProfile
         call_count++;
     }
 
-    // It deserialize the json format.
-    /*
-    void deserialize(const std::string & json)
-    {
-        std::stringstream ss(json);
-        std::string info;
-        // start_time
-        std::getline(ss, info, ':');
-        std::getline(ss, info, ',');
-        start_time = std::chrono::high_resolution_clock::time_point(std::chrono::nanoseconds(std::stoll(info)));
-        // caller_name
-        std::getline(ss, info, ':');
-        std::getline(ss, info, ',');
-        caller_name = info;
-        // total_time
-        std::getline(ss, info, ':');
-        std::getline(ss, info, ',');
-        total_time = std::chrono::nanoseconds(std::stoll(info));
-        // call_count
-        std::getline(ss, info, ':');
-        std::getline(ss, info, ',');
-        call_count = std::stoi(info);
-        // is_running
-        std::getline(ss, info, ':');
-        std::getline(ss, info, ',');
-        is_running = std::stoi(info);
-    }
-    */
     std::chrono::high_resolution_clock::time_point start_time;
     std::string caller_name;
     std::chrono::nanoseconds total_time = std::chrono::nanoseconds(0); /// use nanoseconds to have higher precision
@@ -341,9 +325,12 @@ private:
     CallProfiler & m_profiler;
 }; /* end struct CallProfilerProbe */
 
+/// Utility to serialize and deserialize CallProfiler.
 class CallProfilerSerializer
 {
 public:
+    using child_list_type = std::list<std::unique_ptr<RadixTreeNode<CallerProfile>>>;
+    using key_type = typename RadixTree<CallerProfile>::key_type;
     // It returns the json format of the CallProfiler.
     static void serialize(const CallProfiler & profiler, std::ostream & outstream)
     {
@@ -353,8 +340,10 @@ public:
 private:
     static void serialize_call_profiler(const CallProfiler & profiler, std::ostream & outstream);
     static void serialize_radix_tree(const CallProfiler & profiler, std::ostream & outstream);
+    static void serialize_id_map(const std::unordered_map<std::string, key_type> & id_map, std::ostream & outstream);
     static void serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile> * node, std::ostream & outstream);
     static void serialize_radix_tree_node(const RadixTreeNode<CallerProfile> & node, bool is_first_node, std::ostream & outstream);
+    static void serialize_radix_tree_node_children(const child_list_type & children, std::ostream & outstream);
     static void serialize_caller_profile(const CallerProfile & profile, std::ostream & outstream);
 }; /* end struct CallProfilerSerializer */
 
