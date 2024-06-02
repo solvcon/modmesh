@@ -338,8 +338,8 @@ inline void Euler1DCore::march_alpha(size_t steps)
     {
         march_half1_alpha<ALPHA>();
         treat_boundary_so0();
-        march_half2_alpha<ALPHA>();
         treat_boundary_so1();
+        march_half2_alpha<ALPHA>();
     }
 }
 

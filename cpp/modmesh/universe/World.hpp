@@ -57,6 +57,7 @@ public:
     using real_type = T;
     using value_type = T;
     using vector_type = Vector3d<T>;
+    using edge_type = Edge3d<T>;
     using bezier_type = Bezier3d<T>;
 
     template <typename... Args>
@@ -73,6 +74,25 @@ public:
     World & operator=(World const &) = delete;
     World & operator=(World &&) = delete;
     ~World() = default;
+
+    void add_edge(edge_type const & edge);
+    void add_edge(value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
+    {
+        add_edge(edge_type(x0, y0, z0, x1, y1, z1));
+    }
+    size_t nedge() const { return m_edges.size(); }
+    edge_type const & edge(size_t i) const { return m_edges[i]; }
+    edge_type & edge(size_t i) { return m_edges[i]; }
+    edge_type const & edge_at(size_t i) const
+    {
+        check_size(i, m_edges.size(), "edge");
+        return m_edges[i];
+    }
+    edge_type & edge_at(size_t i)
+    {
+        check_size(i, m_edges.size(), "edge");
+        return m_edges[i];
+    }
 
     void add_bezier(std::vector<vector_type> const & controls);
     size_t nbezier() const { return m_beziers.size(); }
@@ -99,9 +119,16 @@ private:
         }
     }
 
+    std::deque<Edge3d<T>> m_edges;
     std::deque<Bezier3d<T>> m_beziers;
 
 }; /* end class World */
+
+template <typename T>
+void World<T>::add_edge(edge_type const & edge)
+{
+    m_edges.emplace_back(edge);
+}
 
 template <typename T>
 void World<T>::add_bezier(std::vector<vector_type> const & controls)
