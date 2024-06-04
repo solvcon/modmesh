@@ -110,6 +110,11 @@ https://kalkicode.com/radix-tree-implementation
 https://www.algotree.org/algorithms/trie/
 */
 
+namespace detail
+{
+class CallProfilerTest; // for gtest
+} /* end namespace detail */
+
 class CallProfilerSerializer; // for declaration
 
 template <typename T>
@@ -170,6 +175,7 @@ public:
     private:
         CallProfilerPK() = default;
         friend CallProfilerSerializer;
+        friend detail::CallProfilerTest;
     };
 
     const std::unordered_map<std::string, key_type> & get_id_map(CallProfilerPK const &) const { return m_id_map; }
@@ -211,11 +217,6 @@ struct CallerProfile
     int call_count = 0;
     bool is_running = false;
 }; /* end struct CallerProfile */
-
-namespace detail
-{
-class CallProfilerTest; // for gtest
-} /* end namespace detail */
 
 /// The profiler that profiles the hierarchical caller stack.
 class CallProfiler
@@ -331,6 +332,7 @@ class CallProfilerSerializer
 {
 public:
     using child_list_type = std::list<std::unique_ptr<RadixTreeNode<CallerProfile>>>;
+    using node_to_number_map_type = std::unordered_map<const RadixTreeNode<CallerProfile> *, int>;
     using key_type = typename RadixTree<CallerProfile>::key_type;
     // It returns the json format of the CallProfiler.
     static void serialize(const CallProfiler & profiler, std::ostream & outstream)
@@ -343,8 +345,8 @@ private:
     static void serialize_radix_tree(const CallProfiler & profiler, std::ostream & outstream);
     static void serialize_id_map(const std::unordered_map<std::string, key_type> & id_map, std::ostream & outstream);
     static void serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile> * node, std::ostream & outstream);
-    static void serialize_radix_tree_node(const RadixTreeNode<CallerProfile> & node, bool is_first_node, std::ostream & outstream);
-    static void serialize_radix_tree_node_children(const child_list_type & children, std::ostream & outstream);
+    static void serialize_radix_tree_node(const RadixTreeNode<CallerProfile> & node, bool is_first_node, node_to_number_map_type & node_to_unique_number, std::ostream & outstream);
+    static void serialize_radix_tree_node_children(const child_list_type & children, node_to_number_map_type & node_to_unique_number, std::ostream & outstream);
     static void serialize_caller_profile(const CallerProfile & profile, std::ostream & outstream);
 }; /* end struct CallProfilerSerializer */
 
