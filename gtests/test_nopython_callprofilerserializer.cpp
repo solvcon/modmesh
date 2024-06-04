@@ -512,7 +512,7 @@ TEST_F(CallProfilerTest, test_serialization_1)
     std::stringstream ss;
     CallProfilerSerializer::serialize(*pProfiler, ss);
     std::vector<std::string> lines = split_str(ss.str(), '\n');
-    //std::cout << ss.str() << std::endl;
+    // std::cout << ss.str() << std::endl;
     check_call_profiler_serialization(*pProfiler, lines);
 }
 
@@ -546,7 +546,7 @@ TEST_F(CallProfilerTest, test_serialization_2)
     std::stringstream ss;
     CallProfilerSerializer::serialize(*pProfiler, ss);
     std::vector<std::string> lines = split_str(ss.str(), '\n');
-    //std::cout << ss.str() << std::endl;
+    // std::cout << ss.str() << std::endl;
     check_call_profiler_serialization(*pProfiler, lines);
 }
 
