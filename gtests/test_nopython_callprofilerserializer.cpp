@@ -118,7 +118,7 @@ void CallProfilerTest::check_id_map_serialization(const CallProfiler & profiler,
 
         // Store the serialization of the key-value pair in the hash set.
         std::unordered_set<std::string> idMapPairStrings;
-        for (int i = 5; i < lineIdMapEndIndex; i++)
+        for (int i = 5; i < lineIdMapEndIndex; ++i)
         {
             if (i < lineIdMapEndIndex - 1)
             {
@@ -296,7 +296,7 @@ std::vector<std::vector<std::string>> CallProfilerTest::split_nodes_info(const s
 
         // Unify the first line and last line of the node to make the check easier.
         nodeInfo.push_back(R"(            {)");
-        for (int i = curNodeInfoBegin + 1; i <= curNodeInfoEnd; i++)
+        for (int i = curNodeInfoBegin + 1; i <= curNodeInfoEnd; ++i)
         {
             if (i == numOfLines - 4)
                 nodeInfo.push_back(lines[i] + ",");
