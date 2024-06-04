@@ -24,6 +24,7 @@ add_executable(
     test_nopython_inout.cpp
     test_nopython_radixtree.cpp
     test_nopython_callprofiler.cpp
+    test_nopython_callprofilerserializer.cpp
     ${MODMESH_TOGGLE_SOURCES}
     ${MODMESH_BUFFER_SOURCES}
 )
