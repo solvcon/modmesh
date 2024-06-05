@@ -37,6 +37,8 @@
 #include <sstream>
 #include <stack>
 #include <unordered_map>
+#include <queue>
+#include <cstdint>
 
 namespace modmesh
 {
@@ -107,6 +109,14 @@ Ref:
 https://kalkicode.com/radix-tree-implementation
 https://www.algotree.org/algorithms/trie/
 */
+
+namespace detail
+{
+class CallProfilerTest; // for gtest
+} /* end namespace detail */
+
+class CallProfilerSerializer; // for declaration
+
 template <typename T>
 class RadixTree
 {
@@ -160,6 +170,16 @@ public:
     RadixTreeNode<T> * get_current_node() const { return m_current_node; }
     key_type get_unique_node() const { return m_unique_id; }
 
+    class CallProfilerPK
+    {
+    private:
+        CallProfilerPK() = default;
+        friend CallProfilerSerializer;
+        friend detail::CallProfilerTest;
+    };
+
+    const std::unordered_map<std::string, key_type> & get_id_map(CallProfilerPK const &) const { return m_id_map; }
+
 private:
     key_type get_id(const std::string & name)
     {
@@ -197,11 +217,6 @@ struct CallerProfile
     int call_count = 0;
     bool is_running = false;
 }; /* end struct CallerProfile */
-
-namespace detail
-{
-class CallProfilerTest; // for gtest
-} /* end namespace detail */
 
 /// The profiler that profiles the hierarchical caller stack.
 class CallProfiler
@@ -261,6 +276,8 @@ public:
         reset();
     }
 
+    const RadixTree<CallerProfile> & radix_tree() const { return m_radix_tree; }
+
 private:
     void print_profiling_result(const RadixTreeNode<CallerProfile> & node, const int depth, std::ostream & outstream) const;
 
@@ -309,6 +326,29 @@ private:
     bool m_cancel = false;
     CallProfiler & m_profiler;
 }; /* end struct CallProfilerProbe */
+
+/// Utility to serialize and deserialize CallProfiler.
+class CallProfilerSerializer
+{
+public:
+    using child_list_type = std::list<std::unique_ptr<RadixTreeNode<CallerProfile>>>;
+    using node_to_number_map_type = std::unordered_map<const RadixTreeNode<CallerProfile> *, int>;
+    using key_type = typename RadixTree<CallerProfile>::key_type;
+    // It returns the json format of the CallProfiler.
+    static void serialize(const CallProfiler & profiler, std::ostream & outstream)
+    {
+        serialize_call_profiler(profiler, outstream);
+    }
+
+private:
+    static void serialize_call_profiler(const CallProfiler & profiler, std::ostream & outstream);
+    static void serialize_radix_tree(const CallProfiler & profiler, std::ostream & outstream);
+    static void serialize_id_map(const std::unordered_map<std::string, key_type> & id_map, std::ostream & outstream);
+    static void serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile> * node, std::ostream & outstream);
+    static void serialize_radix_tree_node(const RadixTreeNode<CallerProfile> & node, bool is_first_node, node_to_number_map_type & node_to_unique_number, std::ostream & outstream);
+    static void serialize_radix_tree_node_children(const child_list_type & children, node_to_number_map_type & node_to_unique_number, std::ostream & outstream);
+    static void serialize_caller_profile(const CallerProfile & profile, std::ostream & outstream);
+}; /* end struct CallProfilerSerializer */
 
 #ifdef CALLPROFILER
 
