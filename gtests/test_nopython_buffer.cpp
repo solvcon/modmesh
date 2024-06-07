@@ -62,6 +62,24 @@ TEST(SimpleArray, abs)
     EXPECT_EQ(brr.sum(), 10.0);
 }
 
+TEST(SimpleArray, iterator)
+{
+    using namespace modmesh;
+
+    SimpleArray<double> arr(10);
+    int8_t i = 0;
+    for (auto & it : arr)
+    {
+        it = i++;
+    }
+
+    i = 0;
+    for (const auto it : arr)
+    {
+        EXPECT_EQ(it, i++);
+    }
+}
+
 TEST(SimpleArray_DataType, from_type)
 {
     modmesh::DataType dt_double = modmesh::DataType::from<double>();
@@ -81,6 +99,24 @@ TEST(SimpleArray_DataType, from_string)
 
     EXPECT_THROW(modmesh::DataType("float16"), std::invalid_argument); // float16 does not exist
     EXPECT_THROW(modmesh::DataType("bool8"), std::invalid_argument); // bool8 does not exist
+}
+
+TEST(BufferExpander, iterator)
+{
+    using namespace modmesh;
+
+    auto buffer = BufferExpander::construct(10);
+    int8_t i = 0;
+    for (auto & it : *buffer)
+    {
+        it = i++;
+    }
+
+    i = 0;
+    for (const auto it : *buffer)
+    {
+        EXPECT_EQ(it, i++);
+    }
 }
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
