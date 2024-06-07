@@ -31,10 +31,10 @@
 #include <modmesh/base.hpp>
 #include <modmesh/buffer/ConcreteBuffer.hpp>
 
-#include <stdexcept>
-#include <memory>
 #include <algorithm>
+#include <memory>
 #include <sstream>
+#include <stdexcept>
 
 namespace modmesh
 {
@@ -91,10 +91,14 @@ public:
     BufferExpander & operator=(BufferExpander &&) = delete;
     ~BufferExpander() = default;
 
+    explicit operator bool() const noexcept { return bool(m_begin); }
+
     size_type size() const noexcept
     {
         return static_cast<size_type>(this->m_end - this->m_begin);
     }
+
+    size_t nbytes() const noexcept { return size(); }
 
     size_type capacity() const noexcept
     {
@@ -126,6 +130,16 @@ public:
         validate_range(it);
         return data(it);
     }
+
+    using iterator = int8_t *;
+    using const_iterator = int8_t const *;
+
+    iterator begin() noexcept { return m_begin; }
+    iterator end() noexcept { return m_end; }
+    const_iterator begin() const noexcept { return m_begin; }
+    const_iterator end() const noexcept { return m_end; }
+    const_iterator cbegin() const noexcept { return m_begin; }
+    const_iterator cend() const noexcept { return m_end; }
 
     /* Backdoor */
     int8_t data(size_type it) const { return data()[it]; }
