@@ -17,6 +17,7 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
+# The `test_nopython` target is only for testing the C++ interface of the non-Python part of the library.
 add_executable(
     test_nopython
     test_nopython_buffer.cpp
