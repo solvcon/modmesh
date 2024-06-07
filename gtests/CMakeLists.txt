@@ -19,12 +19,12 @@ enable_testing()
 
 add_executable(
     test_nopython
-    test_buffer.cpp
-    test_modmesh.cpp
-    test_inout.cpp
-    test_radixtree.cpp
-    test_callprofiler.cpp
-    test_callprofilerserializer.cpp
+    test_nopython_buffer.cpp
+    test_nopython_modmesh.cpp
+    test_nopython_inout.cpp
+    test_nopython_radixtree.cpp
+    test_nopython_callprofiler.cpp
+    test_nopython_callprofilerserializer.cpp
     ${MODMESH_TOGGLE_SOURCES}
     ${MODMESH_BUFFER_SOURCES}
 )
