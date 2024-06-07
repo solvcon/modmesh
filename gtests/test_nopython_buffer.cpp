@@ -6,9 +6,22 @@
 #error "Python.h should not be included."
 #endif
 
-TEST(nopython_buffer, dummy)
+TEST(ConcreteBuffer, iterator)
 {
-    EXPECT_TRUE(true);
+    using namespace modmesh;
+
+    auto buffer = ConcreteBuffer::construct(10);
+    int8_t i = 0;
+    for (auto & it : *buffer)
+    {
+        it = i++;
+    }
+
+    i = 0;
+    for (const auto it : *buffer)
+    {
+        EXPECT_EQ(it, i++);
+    }
 }
 
 TEST(SimpleArray, construction)
