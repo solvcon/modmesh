@@ -117,57 +117,46 @@ void RManager::setUpMenu()
     // NOTE: All menus need to be populated or Windows may crash with
     // "exited with code -1073740791".  The reason is not yet clarified.
 
+    m_fileMenu = m_mainWindow->menuBar()->addMenu(QString("File"));
     {
-        m_fileMenu = m_mainWindow->menuBar()->addMenu(QString("File"));
-
-        {
-            auto * action = new RAction(
+        m_fileMenu->addAction(
+            new RAction(
                 QString("New file"),
                 QString("Create new file"),
                 []()
                 {
                     qDebug() << "This is only a demo: Create new file!";
-                });
-            m_fileMenu->addAction(action);
-        }
+                }));
 
-        m_eulerMenu = m_mainWindow->menuBar()->addMenu(QString("Euler"));
+        m_fileMenu->addAction(new RAction(
+            QString("Parameters"),
+            QString("Runtime parameters"),
+            []()
+            {
+                static int64_t int64V = 5566;
+                static double doubleV = 77.88;
+                auto params = createParameters();
+                addParam(params, "global.a.b.int64_foo", &int64V);
+                addParam(params, "global.a.b.double_bar", &doubleV);
+                openParameterView(params);
+            }));
 
-        {
-            auto app_name = QString("euler1d");
-            auto * action = new RAppAction(
-                QString("Load ") + app_name,
-                QString("Load ") + app_name,
-                QString("modmesh.app.") + app_name);
-            m_eulerMenu->addAction(action);
-        }
 #ifndef Q_OS_MACOS
-        {
-            // Qt for mac merges "quit" or "exit" with the default quit item in the
-            // system menu:
-            // https://doc.qt.io/qt-6/qmenubar.html#qmenubar-as-a-global-menu-bar
-            auto * action = new RAction(
-                QString("Exit"),
-                QString("Exit the application"),
-                []()
-                {
-                    RManager::instance().quit();
-                });
-            m_fileMenu->addAction(action);
-        }
+        // Qt for mac merges "quit" or "exit" with the default quit item in the
+        // system menu:
+        // https://doc.qt.io/qt-6/qmenubar.html#qmenubar-as-a-global-menu-bar
+        m_fileMenu->addAction(new RAction(
+            QString("Exit"),
+            QString("Exit the application"),
+            []()
+            {
+                RManager::instance().quit();
+            }));
 #endif
     }
 
+    m_viewMenu = m_mainWindow->menuBar()->addMenu(QString("View"));
     {
-        m_appMenu = m_mainWindow->menuBar()->addMenu(QString("Mesh"));
-
-        this->addApplication(QString("mh_3dmix"));
-        this->addApplication(QString("naca"));
-    }
-
-    {
-        m_cameraMenu = m_mainWindow->menuBar()->addMenu(QString("Camera"));
-
         auto * use_orbit_camera = new RAction(
             QString("Use Orbit Camera Controller"),
             QString("Use Oribt Camera Controller"),
@@ -217,50 +206,54 @@ void RManager::setUpMenu()
         use_fps_camera->setCheckable(true);
         use_orbit_camera->setChecked(true);
 
-        m_cameraMenu->addAction(use_orbit_camera);
-        m_cameraMenu->addAction(use_fps_camera);
+        m_viewMenu->addAction(use_orbit_camera);
+        m_viewMenu->addAction(use_fps_camera);
     }
 
-    {
-        m_appMenu = m_mainWindow->menuBar()->addMenu(QString("App"));
+    m_oneMenu = m_mainWindow->menuBar()->addMenu(QString("One"));
+    m_oneMenu->addAction(new RAppAction(
+        QString("Load euler1d"),
+        QString("Load euler1d"),
+        QString("modmesh.app.euler1d")));
 
-        this->addApplication(QString("sample_mesh"));
-        this->addApplication(QString("linear_wave"));
-        this->addApplication(QString("bad_euler1d"));
-    }
+    m_meshMenu = m_mainWindow->menuBar()->addMenu(QString("Mesh"));
+    m_meshMenu->addAction(new RAppAction(
+        QString("Load mh_3dmix"),
+        QString("Load mh_3dmix"),
+        QString("modmesh.app.mh_3dmix")));
+    m_meshMenu->addAction(new RAppAction(
+        QString("Load naca"),
+        QString("Load naca"),
+        QString("modmesh.app.naca")));
 
-    {
-        QAction * params = new RAction(
-            QString("Parameters"),
-            QString("Runtime parameters"),
-            []()
-            {
-                static int64_t int64V = 5566;
-                static double doubleV = 77.88;
-                auto params = createParameters();
-                addParam(params, "global.a.b.int64_foo", &int64V);
-                addParam(params, "global.a.b.double_bar", &doubleV);
-                openParameterView(params);
-            });
-        m_fileMenu->addAction(params);
-    }
+    m_addonMenu = m_mainWindow->menuBar()->addMenu(QString("Addon"));
+    this->addApplication(QString("sample_mesh"));
+    this->addApplication(QString("linear_wave"));
+    this->addApplication(QString("bad_euler1d"));
+
+    m_windowMenu = m_mainWindow->menuBar()->addMenu(QString("Window"));
+    m_windowMenu->addAction(
+        new RAction(
+            QString("(empty)"),
+            QString("(empty)"),
+            []() {}));
 }
 
 void RManager::clearApplications()
 {
-    for (QAction * a : this->m_appMenu->actions())
+    for (QAction * a : this->m_addonMenu->actions())
     {
         auto * p = dynamic_cast<RAppAction *>(a);
         if (nullptr != p)
         {
-            this->m_appMenu->removeAction(a);
+            this->m_addonMenu->removeAction(a);
         }
     }
 }
 
 void RManager::addApplication(QString const & name)
 {
-    m_appMenu->addAction(new RAppAction(
+    m_addonMenu->addAction(new RAppAction(
         QString("Load ") + name,
         QString("Load ") + name,
         QString("modmesh.app.") + name));
