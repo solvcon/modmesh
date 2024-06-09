@@ -727,6 +727,7 @@ class Euler1DApp():
 
         :return: None
         """
+        # stdout can be None under some conditions, ref: https://github.com/solvcon/modmesh/issues/334
         if sys.stdout is not None:
             sys.stdout.write(msg)
             sys.stdout.write('\n')
