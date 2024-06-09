@@ -33,7 +33,6 @@ import numpy as np
 
 from modmesh import core
 from modmesh import view
-from modmesh import apputil
 
 
 def calc_naca4_points(number, npoint, open_trailing_edge=False,
