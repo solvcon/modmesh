@@ -212,19 +212,31 @@ void RManager::setUpMenu()
 
     m_oneMenu = m_mainWindow->menuBar()->addMenu(QString("One"));
     m_oneMenu->addAction(new RAppAction(
-        QString("Load euler1d"),
-        QString("Load euler1d"),
+        QString("Euler solver"),
+        QString("One-dimensional shock-tube problem with Euler solver"),
         QString("modmesh.app.euler1d")));
 
     m_meshMenu = m_mainWindow->menuBar()->addMenu(QString("Mesh"));
-    m_meshMenu->addAction(new RAppAction(
-        QString("Load mh_3dmix"),
-        QString("Load mh_3dmix"),
-        QString("modmesh.app.mh_3dmix")));
-    m_meshMenu->addAction(new RAppAction(
-        QString("Load naca"),
-        QString("Load naca"),
-        QString("modmesh.app.naca")));
+    m_meshMenu->addAction(new RPythonAction(
+        QString("Sample: mesh of a triangle (2D)"),
+        QString("Create a very simple sample mesh of a triangle"),
+        QString("modmesh.gui.sample_mesh.mesh_triangle")));
+    m_meshMenu->addAction(new RPythonAction(
+        QString("Sample: mesh of a tetrahedron (3D)"),
+        QString("Create a very simple sample mesh of a tetrahedron"),
+        QString("modmesh.gui.sample_mesh.mesh_tetrahedron")));
+    m_meshMenu->addAction(new RPythonAction(
+        QString("Sample: mesh of \"solvcon\" text in 2D"),
+        QString("Create a sample mesh drawing a text string of \"solvcon\""),
+        QString("modmesh.gui.sample_mesh.mesh_solvcon_2dtext")));
+    m_meshMenu->addAction(new RPythonAction(
+        QString("Sample: 3D mesh of mixed elements"),
+        QString("Create a very simple sample mesh of mixed elements in 3D"),
+        QString("modmesh.gui.sample_mesh.mesh_3dmix")));
+    m_meshMenu->addAction(new RPythonAction(
+        QString("Sample: NACA 4-digit"),
+        QString("Draw a NACA 4-digit airfoil"),
+        QString("modmesh.gui.naca.runmain")));
 
     m_addonMenu = m_mainWindow->menuBar()->addMenu(QString("Addon"));
     this->addApplication(QString("sample_mesh"));

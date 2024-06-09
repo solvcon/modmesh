@@ -47,6 +47,22 @@ public:
         QObject * parent = nullptr);
 }; /* end class RAction */
 
+class RPythonAction
+    : public QAction
+{
+public:
+    RPythonAction(
+        QString const & text,
+        QString const & tipText,
+        QString const & appName,
+        QObject * parent = nullptr);
+
+    void run();
+
+private:
+    QString m_pyFuncName;
+}; /* end class RPythonAction */
+
 class RAppAction
     : public QAction
 {

@@ -43,6 +43,41 @@ RAction::RAction(QString const & text, QString const & tipText, std::function<vo
     }
 }
 
+RPythonAction::RPythonAction(const QString & text, const QString & tipText, const QString & pyFuncName, QObject * parent)
+    : QAction(text, parent)
+    , m_pyFuncName(pyFuncName)
+{
+    setStatusTip(tipText);
+    connect(this, &QAction::triggered, this, &RPythonAction::run);
+}
+
+void RPythonAction::run()
+{
+    std::string const fullname = m_pyFuncName.toStdString();
+    std::string::size_type const pos = fullname.rfind('.');
+    std::string modname, funcname;
+    if (pos == std::string::npos)
+    {
+        std::cerr << fullname << "does not have module" << std::endl;
+    }
+    else
+    {
+        modname = fullname.substr(0, pos);
+        funcname = fullname.substr(pos + 1);
+    }
+
+    namespace py = pybind11;
+    try
+    {
+        py::module_ appmod = py::module_::import(modname.c_str());
+        appmod.attr(funcname.c_str())();
+    }
+    catch (const pybind11::error_already_set & e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+}
+
 RAppAction::RAppAction(const QString & text, const QString & tipText, const QString & appName, QObject * parent)
     : QAction(text, parent)
     , m_appName(appName)

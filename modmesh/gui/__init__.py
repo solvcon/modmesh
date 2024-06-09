@@ -26,59 +26,9 @@
 
 
 """
-Show 3D mixed mesh
+Operations in GUI.
 """
 
-from .. import core
-from .. import view
-from .. import apputil
-
-
-def make_3dmix():
-    HEX = core.StaticMesh.HEXAHEDRON
-    TET = core.StaticMesh.TETRAHEDRON
-    PSM = core.StaticMesh.PRISM
-    PYR = core.StaticMesh.PYRAMID
-
-    mh = core.StaticMesh(ndim=3, nnode=11, nface=0, ncell=4)
-    mh.ndcrd.ndarray[:, :] = [
-        (0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0),
-        (0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1),
-        (0.5, 1.5, 0.5),
-        (1.5, 1, 0.5), (1.5, 0, 0.5),
-    ]
-    mh.cltpn.ndarray[:] = [
-        HEX, PYR, TET, PSM,
-    ]
-    mh.clnds.ndarray[:, :9] = [
-        (8, 0, 1, 2, 3, 4, 5, 6, 7), (5, 2, 3, 7, 6, 8, -1, -1, -1),
-        (4, 2, 6, 9, 8, -1, -1, -1, -1), (6, 2, 6, 9, 1, 5, 10, -1, -1),
-    ]
-    mh.build_interior()
-    mh.build_boundary()
-    mh.build_ghost()
-    return mh
-
-
-def load_app():
-    aenv = apputil.get_current_appenv()
-    symbols = (
-        'make_3dmix',
-    )
-    for k in symbols:
-        if isinstance(k, tuple):
-            k, o = k
-        else:
-            o = globals().get(k, None)
-            if o is None:
-                o = locals().get(k, None)
-        view.mgr.pycon.writeToHistory(f"Adding symbol {k}\n")
-        aenv.globals[k] = o
-    # Open a sub window for triangles and quadrilaterals:
-    w_3dmix = view.mgr.add3DWidget()
-    mh_3dmix = make_3dmix()
-    w_3dmix.updateMesh(mh_3dmix)
-    w_3dmix.showMark()
-    view.mgr.pycon.writeToHistory(f"3dmix nedge: {mh_3dmix.nedge}\n")
+__all__ = []
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
