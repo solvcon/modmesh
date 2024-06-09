@@ -31,9 +31,9 @@ Show NACA airfoil shape
 
 import numpy as np
 
-from .. import core
-from .. import view
-from .. import apputil
+from modmesh import core
+from modmesh import view
+from modmesh import apputil
 
 
 def calc_naca4_points(number, npoint, open_trailing_edge=False,
@@ -108,37 +108,15 @@ def draw_naca4(world, number, npoint, fac, off_x, off_y, **kw):
     return crds
 
 
-def app_main():
+def runmain():
     """
     A simple example for drawing a couple of cubic Bezier curves.
     """
     w = core.WorldFp64()
     draw_naca4(w, number='0012', npoint=101, fac=5.0, off_x=0.0, off_y=2.0,
                open_trailing_edge=False, cosine_spacing=True)
-    return w
-
-
-def load_app():
-    aenv = apputil.get_current_appenv()
-    w = app_main()
     wid = view.mgr.add3DWidget()
     wid.updateWorld(w)
     wid.showMark()
-    symbols = (
-        'calc_naca4_points',
-        'draw_naca4',
-        ('w', w),
-        ('wid', wid),
-        ('add3DWidget', view.mgr.add3DWidget),
-    )
-    for k in symbols:
-        if isinstance(k, tuple):
-            k, o = k
-        else:
-            o = globals().get(k, None)
-            if o is None:
-                o = locals().get(k, None)
-        view.mgr.pycon.writeToHistory(f"Adding symbol {k}\n")
-        aenv.globals[k] = o
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

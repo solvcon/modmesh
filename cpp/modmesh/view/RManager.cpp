@@ -212,19 +212,19 @@ void RManager::setUpMenu()
 
     m_oneMenu = m_mainWindow->menuBar()->addMenu(QString("One"));
     m_oneMenu->addAction(new RAppAction(
-        QString("Load euler1d"),
-        QString("Load euler1d"),
+        QString("Euler solver"),
+        QString("One-dimensional shock-tube problem with Euler solver"),
         QString("modmesh.app.euler1d")));
 
     m_meshMenu = m_mainWindow->menuBar()->addMenu(QString("Mesh"));
-    m_meshMenu->addAction(new RAppAction(
-        QString("Load mh_3dmix"),
-        QString("Load mh_3dmix"),
-        QString("modmesh.app.mh_3dmix")));
-    m_meshMenu->addAction(new RAppAction(
-        QString("Load naca"),
-        QString("Load naca"),
-        QString("modmesh.app.naca")));
+    m_meshMenu->addAction(new RPythonAction(
+        QString("Sample: 3D mesh"),
+        QString("Create a very simple sample mesh in 3D"),
+        QString("modmesh.gui.mix3dsimple.runmain")));
+    m_meshMenu->addAction(new RPythonAction(
+        QString("Sample: NACA 4-digit"),
+        QString("Draw a NACA 4-digit airfoil"),
+        QString("modmesh.gui.naca.runmain")));
 
     m_addonMenu = m_mainWindow->menuBar()->addMenu(QString("Addon"));
     this->addApplication(QString("sample_mesh"));

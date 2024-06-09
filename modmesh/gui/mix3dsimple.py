@@ -31,10 +31,9 @@ Show 3D mixed mesh
 
 from .. import core
 from .. import view
-from .. import apputil
 
 
-def make_3dmix():
+def runmain():
     HEX = core.StaticMesh.HEXAHEDRON
     TET = core.StaticMesh.TETRAHEDRON
     PSM = core.StaticMesh.PRISM
@@ -57,28 +56,11 @@ def make_3dmix():
     mh.build_interior()
     mh.build_boundary()
     mh.build_ghost()
-    return mh
 
-
-def load_app():
-    aenv = apputil.get_current_appenv()
-    symbols = (
-        'make_3dmix',
-    )
-    for k in symbols:
-        if isinstance(k, tuple):
-            k, o = k
-        else:
-            o = globals().get(k, None)
-            if o is None:
-                o = locals().get(k, None)
-        view.mgr.pycon.writeToHistory(f"Adding symbol {k}\n")
-        aenv.globals[k] = o
     # Open a sub window for triangles and quadrilaterals:
     w_3dmix = view.mgr.add3DWidget()
-    mh_3dmix = make_3dmix()
-    w_3dmix.updateMesh(mh_3dmix)
+    w_3dmix.updateMesh(mh)
     w_3dmix.showMark()
-    view.mgr.pycon.writeToHistory(f"3dmix nedge: {mh_3dmix.nedge}\n")
+    view.mgr.pycon.writeToHistory(f"3dmix nedge: {mh.nedge}\n")
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
