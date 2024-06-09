@@ -727,8 +727,9 @@ class Euler1DApp():
 
         :return: None
         """
-        sys.stdout.write(msg)
-        sys.stdout.write('\n')
+        if sys.stdout != None:
+            sys.stdout.write(msg)
+            sys.stdout.write('\n')
         view.mgr.pycon.writeToHistory(msg)
         view.mgr.pycon.writeToHistory('\n')
 
