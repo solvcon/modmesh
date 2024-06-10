@@ -29,6 +29,7 @@
  */
 
 #include <modmesh/base.hpp>
+#include <modmesh/buffer/bufferbase.hpp>
 #include <modmesh/buffer/small_vector.hpp>
 
 #include <stdexcept>
@@ -118,7 +119,8 @@ struct ConcreteBufferDataDeleter
  * Untyped and unresizeable memory buffer for contiguous data storage.
  */
 class ConcreteBuffer
-    : public std::enable_shared_from_this<ConcreteBuffer>
+    : public BufferBase
+    , public std::enable_shared_from_this<ConcreteBuffer>
 {
 
 private:
@@ -226,40 +228,26 @@ public:
         return *this;
     }
 
-    explicit operator bool() const noexcept { return bool(m_data); }
+    explicit operator bool() const noexcept override { return bool(m_data); }
 
-    size_t nbytes() const noexcept { return m_nbytes; }
-    size_t size() const noexcept { return nbytes(); }
+    size_t nbytes() const noexcept override { return m_nbytes; }
+    size_t size() const noexcept override { return nbytes(); }
+    size_type capacity() const noexcept override { return nbytes(); };
+    void reserve(size_type) override{/* do nothing */};
 
-    using iterator = int8_t *;
-    using const_iterator = int8_t const *;
-
-    iterator begin() noexcept { return data(); }
-    iterator end() noexcept { return data() + size(); }
-    const_iterator begin() const noexcept { return data(); }
-    const_iterator end() const noexcept { return data() + size(); }
-    const_iterator cbegin() const noexcept { return begin(); }
-    const_iterator cend() const noexcept { return end(); }
-
-    int8_t operator[](size_t it) const { return data(it); }
-    int8_t & operator[](size_t it) { return data(it); }
-
-    int8_t at(size_t it) const
-    {
-        validate_range(it);
-        return data(it);
-    }
-    int8_t & at(size_t it)
-    {
-        validate_range(it);
-        return data(it);
-    }
+    iterator begin() noexcept override { return data(); }
+    iterator end() noexcept override { return data() + size(); }
+    const_iterator begin() const noexcept override { return data(); }
+    const_iterator end() const noexcept override { return data() + size(); }
+    const_iterator cbegin() const noexcept override { return begin(); }
+    const_iterator cend() const noexcept override { return end(); }
 
     /* Backdoor */
-    int8_t data(size_t it) const { return data()[it]; }
-    int8_t & data(size_t it) { return data()[it]; }
-    int8_t const * data() const noexcept { return data<int8_t>(); }
-    int8_t * data() noexcept { return data<int8_t>(); }
+    int8_t data(size_t it) const override { return data()[it]; }
+    int8_t & data(size_t it) override { return data()[it]; }
+    int8_t const * data() const noexcept override { return data<int8_t>(); }
+    int8_t * data() noexcept override { return data<int8_t>(); }
+
     // clang-format off
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     template <typename T> T const * data() const noexcept { return reinterpret_cast<T *>(m_data.get()); }
@@ -275,15 +263,6 @@ public:
     using unique_ptr_type = std::unique_ptr<int8_t, data_deleter_type>;
 
 private:
-
-    void validate_range(size_t it) const
-    {
-        if (it >= size())
-        {
-            throw std::out_of_range(Formatter() << "ConcreteBuffer: index " << it << " is out of bounds with size " << size());
-        }
-    }
-
     static unique_ptr_type allocate(size_t nbytes)
     {
         unique_ptr_type ret(nullptr, data_deleter_type());
@@ -294,9 +273,12 @@ private:
         return ret;
     }
 
+    std::string const & name() const override { return m_name; }
+
     size_t m_nbytes;
     unique_ptr_type m_data;
 
+    std::string m_name = "ConcreteBuffer";
 }; /* end class ConcreteBuffer */
 
 } /* end namespace modmesh */

@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.16)
 
 set(MODMESH_BUFFER_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/bufferbase.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/small_vector.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConcreteBuffer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BufferExpander.hpp

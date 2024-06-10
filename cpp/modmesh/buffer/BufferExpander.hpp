@@ -29,6 +29,7 @@
  */
 
 #include <modmesh/base.hpp>
+#include <modmesh/buffer/bufferbase.hpp>
 #include <modmesh/buffer/ConcreteBuffer.hpp>
 
 #include <algorithm>
@@ -44,7 +45,8 @@ namespace modmesh
  * expandable memory buffer cannot be used externally.
  */
 class BufferExpander
-    : public std::enable_shared_from_this<BufferExpander>
+    : public BufferBase
+    , public std::enable_shared_from_this<BufferExpander>
 {
 
 private:
@@ -91,21 +93,21 @@ public:
     BufferExpander & operator=(BufferExpander &&) = delete;
     ~BufferExpander() = default;
 
-    explicit operator bool() const noexcept { return bool(m_begin); }
+    explicit operator bool() const noexcept override { return bool(m_begin); }
 
-    size_type size() const noexcept
+    size_type size() const noexcept override
     {
         return static_cast<size_type>(this->m_end - this->m_begin);
     }
 
-    size_t nbytes() const noexcept { return size(); }
+    size_t nbytes() const noexcept override { return size(); }
 
-    size_type capacity() const noexcept
+    size_type capacity() const noexcept override
     {
         return static_cast<size_type>(this->m_end_cap - this->m_begin);
     }
 
-    void reserve(size_type cap);
+    void reserve(size_type cap) override;
 
     void expand(size_type length)
     {
@@ -117,35 +119,19 @@ public:
     std::shared_ptr<ConcreteBuffer> const & as_concrete(size_type cap = 0);
     bool is_concrete() const { return bool(m_concrete_buffer); }
 
-    int8_t operator[](size_t it) const { return data(it); }
-    int8_t & operator[](size_t it) { return data(it); }
-
-    int8_t at(size_t it) const
-    {
-        validate_range(it);
-        return data(it);
-    }
-    int8_t & at(size_t it)
-    {
-        validate_range(it);
-        return data(it);
-    }
-
-    using iterator = int8_t *;
-    using const_iterator = int8_t const *;
-
-    iterator begin() noexcept { return m_begin; }
-    iterator end() noexcept { return m_end; }
-    const_iterator begin() const noexcept { return m_begin; }
-    const_iterator end() const noexcept { return m_end; }
-    const_iterator cbegin() const noexcept { return m_begin; }
-    const_iterator cend() const noexcept { return m_end; }
+    iterator begin() noexcept override { return m_begin; }
+    iterator end() noexcept override { return m_end; }
+    const_iterator begin() const noexcept override { return m_begin; }
+    const_iterator end() const noexcept override { return m_end; }
+    const_iterator cbegin() const noexcept override { return m_begin; }
+    const_iterator cend() const noexcept override { return m_end; }
 
     /* Backdoor */
-    int8_t data(size_type it) const { return data()[it]; }
-    int8_t & data(size_type it) { return data()[it]; }
-    int8_t const * data() const noexcept { return data<int8_t>(); }
-    int8_t * data() noexcept { return data<int8_t>(); }
+    int8_t data(size_type it) const override { return data()[it]; }
+    int8_t & data(size_type it) override { return data()[it]; }
+    int8_t const * data() const noexcept override { return data<int8_t>(); }
+    int8_t * data() noexcept override { return data<int8_t>(); }
+
     // clang-format off
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     template <typename T> T const * data() const noexcept { return reinterpret_cast<T *>(m_begin); }
@@ -154,15 +140,6 @@ public:
     // clang-format on
 
 private:
-
-    void validate_range(size_type it) const
-    {
-        if (it >= size())
-        {
-            throw std::out_of_range(Formatter() << "BufferExpander: index " << it << " is out of bounds with size " << size());
-        }
-    }
-
     static std::unique_ptr<int8_t> allocate(size_type nbytes)
     {
         std::unique_ptr<int8_t> ret(nullptr);
@@ -173,6 +150,8 @@ private:
         return ret;
     }
 
+    std::string const & name() const override { return m_name; }
+
     std::unique_ptr<int8_t> m_data_holder = nullptr;
     std::shared_ptr<ConcreteBuffer> m_concrete_buffer = nullptr;
 
@@ -180,6 +159,7 @@ private:
     int8_t * m_end = nullptr;
     int8_t * m_end_cap = nullptr;
 
+    std::string m_name = "BufferExpander";
 }; /* end class BufferExpander */
 
 } /* end namespace modmesh */
