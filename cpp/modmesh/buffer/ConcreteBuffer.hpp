@@ -171,6 +171,8 @@ public:
         : m_nbytes(nbytes)
         , m_data(allocate(nbytes))
     {
+        m_begin = m_data.get();
+        m_end = m_begin + m_nbytes;
     }
 
     /**
@@ -187,6 +189,8 @@ public:
         : m_nbytes(nbytes)
         , m_data(data, data_deleter_type(std::move(remover)))
     {
+        m_begin = m_data.get();
+        m_end = m_begin + m_nbytes;
     }
 
     ~ConcreteBuffer() = default;
@@ -209,6 +213,9 @@ public:
             throw std::out_of_range("Buffer size mismatch");
         }
         std::copy_n(other.data(), size(), data());
+
+        m_begin = m_data.get();
+        m_end = m_begin + m_nbytes;
     }
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -225,31 +232,6 @@ public:
         }
         return *this;
     }
-
-    explicit operator bool() const noexcept override { return bool(m_data); }
-
-    size_t nbytes() const noexcept override { return m_nbytes; }
-    size_t size() const noexcept override { return nbytes(); }
-
-    iterator begin() noexcept override { return data(); }
-    iterator end() noexcept override { return data() + size(); }
-    const_iterator begin() const noexcept override { return data(); }
-    const_iterator end() const noexcept override { return data() + size(); }
-    const_iterator cbegin() const noexcept override { return begin(); }
-    const_iterator cend() const noexcept override { return end(); }
-
-    /* Backdoor */
-    int8_t data(size_t it) const override { return data()[it]; }
-    int8_t & data(size_t it) override { return data()[it]; }
-    int8_t const * data() const noexcept override { return data<int8_t>(); }
-    int8_t * data() noexcept override { return data<int8_t>(); }
-
-    // clang-format off
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    template <typename T> T const * data() const noexcept { return reinterpret_cast<T *>(m_data.get()); }
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    template <typename T> T * data() noexcept { return reinterpret_cast<T *>(m_data.get()); }
-    // clang-format on
 
     bool has_remover() const noexcept { return bool(m_data.get_deleter().remover); }
     remover_type const & get_remover() const { return *m_data.get_deleter().remover; }

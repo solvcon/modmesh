@@ -42,10 +42,12 @@ public:
 
     virtual ~BufferBase() = default;
 
-    virtual explicit operator bool() const noexcept = 0;
-
-    virtual size_type size() const noexcept = 0;
-    virtual size_t nbytes() const noexcept = 0;
+    virtual explicit operator bool() const { return bool(m_begin); }
+    size_type size() const
+    {
+        return static_cast<size_type>(this->m_end - this->m_begin);
+    }
+    size_t nbytes() const { return size() * sizeof(int8_t); }
 
     int8_t operator[](size_t it) const { return data(it); }
     int8_t & operator[](size_t it) { return data(it); }
@@ -65,17 +67,25 @@ public:
     using iterator = int8_t *;
     using const_iterator = int8_t const *;
 
-    virtual iterator begin() noexcept = 0;
-    virtual iterator end() noexcept = 0;
-    virtual const_iterator begin() const noexcept = 0;
-    virtual const_iterator end() const noexcept = 0;
-    virtual const_iterator cbegin() const noexcept = 0;
-    virtual const_iterator cend() const noexcept = 0;
+    iterator begin() noexcept { return m_begin; }
+    iterator end() noexcept { return m_end; }
+    const_iterator begin() const noexcept { return m_begin; }
+    const_iterator end() const noexcept { return m_end; }
+    const_iterator cbegin() const noexcept { return m_begin; }
+    const_iterator cend() const noexcept { return m_end; }
 
-    virtual int8_t data(size_type it) const = 0;
-    virtual int8_t & data(size_type it) = 0;
-    virtual int8_t const * data() const noexcept = 0;
-    virtual int8_t * data() noexcept = 0;
+    /* Backdoor */
+    int8_t data(size_type it) const { return data()[it]; }
+    int8_t & data(size_type it) { return data()[it]; }
+    int8_t const * data() const noexcept { return data<int8_t>(); }
+    int8_t * data() noexcept { return data<int8_t>(); }
+
+    // clang-format off
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    template <typename T> T const * data() const noexcept { return reinterpret_cast<T *>(m_begin); }
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    template <typename T> T * data() noexcept { return reinterpret_cast<T *>(m_begin); }
+    // clang-format on
 
 protected:
     void validate_range(size_t it) const
@@ -87,6 +97,9 @@ protected:
     }
 
     virtual constexpr const char * name() const { return "BufferBase"; }
+
+    int8_t * m_begin = nullptr;
+    int8_t * m_end = nullptr;
 }; /* end class BufferBase */
 } /* end namespace modmesh */
 

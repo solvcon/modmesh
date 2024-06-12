@@ -71,10 +71,10 @@ public:
 
     BufferExpander(std::shared_ptr<ConcreteBuffer> const & buf, bool clone, ctor_passkey const &)
         : m_concrete_buffer(clone ? buf->clone() : buf)
-        , m_begin(m_concrete_buffer->data())
-        , m_end(m_begin + m_concrete_buffer->size())
-        , m_end_cap(m_begin + m_concrete_buffer->size())
     {
+        m_begin = m_concrete_buffer->data();
+        m_end = m_begin + m_concrete_buffer->size();
+        m_end_cap = m_begin + m_concrete_buffer->size();
     }
 
     BufferExpander(size_type nbyte, ctor_passkey const &)
@@ -90,15 +90,6 @@ public:
     BufferExpander & operator=(BufferExpander const &) = delete;
     BufferExpander & operator=(BufferExpander &&) = delete;
     ~BufferExpander() = default;
-
-    explicit operator bool() const noexcept override { return bool(m_begin); }
-
-    size_type size() const noexcept override
-    {
-        return static_cast<size_type>(this->m_end - this->m_begin);
-    }
-
-    size_t nbytes() const noexcept override { return size(); }
 
     size_type capacity() const noexcept
     {
@@ -117,26 +108,6 @@ public:
     std::shared_ptr<ConcreteBuffer> const & as_concrete(size_type cap = 0);
     bool is_concrete() const { return bool(m_concrete_buffer); }
 
-    iterator begin() noexcept override { return m_begin; }
-    iterator end() noexcept override { return m_end; }
-    const_iterator begin() const noexcept override { return m_begin; }
-    const_iterator end() const noexcept override { return m_end; }
-    const_iterator cbegin() const noexcept override { return m_begin; }
-    const_iterator cend() const noexcept override { return m_end; }
-
-    /* Backdoor */
-    int8_t data(size_type it) const override { return data()[it]; }
-    int8_t & data(size_type it) override { return data()[it]; }
-    int8_t const * data() const noexcept override { return data<int8_t>(); }
-    int8_t * data() noexcept override { return data<int8_t>(); }
-
-    // clang-format off
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    template <typename T> T const * data() const noexcept { return reinterpret_cast<T *>(m_begin); }
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    template <typename T> T * data() noexcept { return reinterpret_cast<T *>(m_begin); }
-    // clang-format on
-
 private:
     static std::unique_ptr<int8_t> allocate(size_type nbytes)
     {
@@ -153,8 +124,6 @@ private:
     std::unique_ptr<int8_t> m_data_holder = nullptr;
     std::shared_ptr<ConcreteBuffer> m_concrete_buffer = nullptr;
 
-    int8_t * m_begin = nullptr;
-    int8_t * m_end = nullptr;
     int8_t * m_end_cap = nullptr;
 }; /* end class BufferExpander */
 
