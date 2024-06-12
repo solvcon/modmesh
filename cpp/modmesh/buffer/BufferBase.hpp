@@ -96,7 +96,8 @@ protected:
         }
     }
 
-    virtual constexpr const char * name() const { return "BufferBase"; }
+    // TODO: make this constexpr virtual once C++20 is available
+    virtual const char * name() const { return "BufferBase"; }
 
     int8_t * m_begin = nullptr;
     int8_t * m_end = nullptr;

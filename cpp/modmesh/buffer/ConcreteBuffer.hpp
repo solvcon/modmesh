@@ -251,7 +251,7 @@ private:
         return ret;
     }
 
-    constexpr const char * name() const override { return "ConcreteBuffer"; }
+    const char * name() const override { return "ConcreteBuffer"; }
 
     size_t m_nbytes;
     unique_ptr_type m_data;

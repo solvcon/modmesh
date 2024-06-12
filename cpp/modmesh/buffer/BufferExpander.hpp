@@ -119,7 +119,7 @@ private:
         return ret;
     }
 
-    constexpr const char * name() const override { return "BufferExpander"; }
+    const char * name() const override { return "BufferExpander"; }
 
     std::unique_ptr<int8_t> m_data_holder = nullptr;
     std::shared_ptr<ConcreteBuffer> m_concrete_buffer = nullptr;
