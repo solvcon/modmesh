@@ -29,7 +29,7 @@
  */
 
 #include <modmesh/base.hpp>
-#include <modmesh/buffer/bufferbase.hpp>
+#include <modmesh/buffer/BufferBase.hpp>
 #include <modmesh/buffer/ConcreteBuffer.hpp>
 
 #include <algorithm>
@@ -150,7 +150,7 @@ private:
         return ret;
     }
 
-    std::string const & name() const override { return m_name; }
+    constexpr const char* name() const override { return "BufferExpander"; }
 
     std::unique_ptr<int8_t> m_data_holder = nullptr;
     std::shared_ptr<ConcreteBuffer> m_concrete_buffer = nullptr;
@@ -158,8 +158,6 @@ private:
     int8_t * m_begin = nullptr;
     int8_t * m_end = nullptr;
     int8_t * m_end_cap = nullptr;
-
-    std::string m_name = "BufferExpander";
 }; /* end class BufferExpander */
 
 } /* end namespace modmesh */

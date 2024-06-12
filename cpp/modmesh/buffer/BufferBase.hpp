@@ -88,6 +88,6 @@ protected:
         }
     }
 
-    virtual constexpr std::string const & name() const { return "BufferBase"; }
+    virtual constexpr const char* name() const { return "BufferBase"; }
 };
 } // namespace modmesh

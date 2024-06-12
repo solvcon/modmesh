@@ -29,13 +29,13 @@
  */
 
 #include <modmesh/base.hpp>
-#include <modmesh/buffer/bufferbase.hpp>
+#include <modmesh/buffer/BufferBase.hpp>
 #include <modmesh/buffer/small_vector.hpp>
 
-#include <stdexcept>
-#include <memory>
 #include <algorithm>
+#include <memory>
 #include <sstream>
+#include <stdexcept>
 
 namespace modmesh
 {
@@ -273,12 +273,10 @@ private:
         return ret;
     }
 
-    std::string const & name() const override { return m_name; }
+    constexpr const char * name() const override { return "ConcreteBuffer"; }
 
     size_t m_nbytes;
     unique_ptr_type m_data;
-
-    std::string m_name = "ConcreteBuffer";
 }; /* end class ConcreteBuffer */
 
 } /* end namespace modmesh */
