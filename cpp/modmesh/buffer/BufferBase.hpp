@@ -88,8 +88,6 @@ protected:
         }
     }
 
-    virtual std::string const & name() const { return m_name; }
-
-    std::string m_name = "BufferBase"; ///< Name of the buffer object.
+    virtual constexpr std::string const & name() const { return "BufferBase"; }
 };
 } // namespace modmesh
