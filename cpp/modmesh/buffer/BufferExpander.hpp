@@ -44,9 +44,7 @@ namespace modmesh
  * Untyped and growing memory buffer for contiguous data storage.  The internal
  * expandable memory buffer cannot be used externally.
  */
-class BufferExpander
-    : public BufferBase
-    , public std::enable_shared_from_this<BufferExpander>
+class BufferExpander : public BufferBase
 {
 
 private:

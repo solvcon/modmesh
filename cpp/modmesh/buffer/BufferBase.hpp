@@ -33,7 +33,7 @@ namespace modmesh
 {
 
 /// Base class for buffer-like objects.
-class BufferBase
+class BufferBase : public std::enable_shared_from_this<BufferBase>
 {
 public:
 
