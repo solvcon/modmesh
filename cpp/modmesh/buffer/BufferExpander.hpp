@@ -102,12 +102,12 @@ public:
 
     size_t nbytes() const noexcept override { return size(); }
 
-    size_type capacity() const noexcept override
+    size_type capacity() const noexcept
     {
         return static_cast<size_type>(this->m_end_cap - this->m_begin);
     }
 
-    void reserve(size_type cap) override;
+    void reserve(size_type cap);
 
     void expand(size_type length)
     {
@@ -150,7 +150,7 @@ private:
         return ret;
     }
 
-    constexpr const char* name() const override { return "BufferExpander"; }
+    constexpr const char * name() const override { return "BufferExpander"; }
 
     std::unique_ptr<int8_t> m_data_holder = nullptr;
     std::shared_ptr<ConcreteBuffer> m_concrete_buffer = nullptr;

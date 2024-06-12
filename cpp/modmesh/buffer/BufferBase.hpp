@@ -46,8 +46,6 @@ public:
 
     virtual size_type size() const noexcept = 0;
     virtual size_t nbytes() const noexcept = 0;
-    virtual size_type capacity() const noexcept = 0;
-    virtual void reserve(size_type cap) = 0;
 
     int8_t operator[](size_t it) const { return data(it); }
     int8_t & operator[](size_t it) { return data(it); }

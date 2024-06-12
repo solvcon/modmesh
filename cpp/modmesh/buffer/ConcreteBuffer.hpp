@@ -232,8 +232,6 @@ public:
 
     size_t nbytes() const noexcept override { return m_nbytes; }
     size_t size() const noexcept override { return nbytes(); }
-    size_type capacity() const noexcept override { return nbytes(); };
-    void reserve(size_type) override{/* do nothing */};
 
     iterator begin() noexcept override { return data(); }
     iterator end() noexcept override { return data() + size(); }
