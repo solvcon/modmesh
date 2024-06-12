@@ -88,6 +88,8 @@ protected:
         }
     }
 
-    virtual constexpr const char* name() const { return "BufferBase"; }
-};
-} // namespace modmesh
+    virtual constexpr const char * name() const { return "BufferBase"; }
+}; /* end class BufferBase */
+} /* end namespace modmesh */
+
+/* vim: set et ts=4 sw=4: */
