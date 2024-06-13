@@ -26,8 +26,10 @@ add_executable(
     test_nopython_radixtree.cpp
     test_nopython_callprofiler.cpp
     test_nopython_callprofilerserializer.cpp
+    test_nopython_serializable.cpp
     ${MODMESH_TOGGLE_SOURCES}
     ${MODMESH_BUFFER_SOURCES}
+    ${MODMESH_ROOT_SOURCES}
 )
 target_link_libraries(
     test_nopython
