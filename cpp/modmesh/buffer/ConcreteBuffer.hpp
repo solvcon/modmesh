@@ -118,7 +118,8 @@ struct ConcreteBufferDataDeleter
 /**
  * Untyped and unresizeable memory buffer for contiguous data storage.
  */
-class ConcreteBuffer : public BufferBase<ConcreteBuffer>, public std::enable_shared_from_this<ConcreteBuffer>
+class ConcreteBuffer : public BufferBase<ConcreteBuffer>
+    , public std::enable_shared_from_this<ConcreteBuffer>
 {
 
 private:
