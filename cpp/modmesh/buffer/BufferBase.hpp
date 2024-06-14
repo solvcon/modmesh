@@ -92,7 +92,7 @@ public:
     }
 
 protected:
-    // virtual ~BufferBase() = default;
+    virtual ~BufferBase() = default;
 
     void validate_range(size_t it) const
     {
