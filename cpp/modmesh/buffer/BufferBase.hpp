@@ -98,7 +98,7 @@ public:
 
     constexpr const char * name() const
     {
-        return static_cast<const Derived *>(this)->name();
+        return Derived::name();
     }
 
 protected:

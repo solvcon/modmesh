@@ -107,7 +107,7 @@ public:
     std::shared_ptr<ConcreteBuffer> const & as_concrete(size_type cap = 0);
     bool is_concrete() const { return bool(m_concrete_buffer); }
 
-    constexpr const char * name() const { return "BufferExpander"; }
+    static constexpr const char * name() { return "BufferExpander"; }
 
 private:
     static std::unique_ptr<int8_t> allocate(size_type nbytes)

@@ -236,7 +236,7 @@ public:
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
     using unique_ptr_type = std::unique_ptr<int8_t, data_deleter_type>;
 
-    constexpr const char * name() const { return "ConcreteBuffer"; }
+    static constexpr const char * name() { return "ConcreteBuffer"; }
 
 private:
     static unique_ptr_type allocate(size_t nbytes)
