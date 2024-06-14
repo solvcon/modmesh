@@ -102,4 +102,4 @@ protected:
 }; /* end class BufferBase */
 } /* end namespace modmesh */
 
-/* vim: set et ts=4 sw=4: */
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
