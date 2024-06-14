@@ -170,9 +170,8 @@ public:
     ConcreteBuffer(size_t nbytes, const ctor_passkey &)
         : m_nbytes(nbytes)
         , m_data(allocate(nbytes))
+        , BufferBase<ConcreteBuffer>(m_data.get(), m_data.get() + m_nbytes)
     {
-        m_begin = m_data.get();
-        m_end = m_begin + m_nbytes;
     }
 
     /**
@@ -188,9 +187,8 @@ public:
     ConcreteBuffer(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover, const ctor_passkey &)
         : m_nbytes(nbytes)
         , m_data(data, data_deleter_type(std::move(remover)))
+        , BufferBase<ConcreteBuffer>(m_data.get(), m_data.get() + m_nbytes)
     {
-        m_begin = m_data.get();
-        m_end = m_begin + m_nbytes;
     }
 
     ~ConcreteBuffer() = default;
@@ -207,15 +205,13 @@ public:
     ConcreteBuffer(ConcreteBuffer const & other)
         : m_nbytes(other.m_nbytes)
         , m_data(allocate(other.m_nbytes))
+        , BufferBase<ConcreteBuffer>(m_data.get(), m_data.get() + m_nbytes)
     {
         if (size() != other.size())
         {
             throw std::out_of_range("Buffer size mismatch");
         }
         std::copy_n(other.data(), size(), data());
-
-        m_begin = m_data.get();
-        m_end = m_begin + m_nbytes;
     }
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
