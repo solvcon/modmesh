@@ -72,9 +72,10 @@ public:
 
     BufferExpander(std::shared_ptr<ConcreteBuffer> const & buf, bool clone, ctor_passkey const &)
         : m_concrete_buffer(clone ? buf->clone() : buf)
-        , BufferBase<BufferExpander>(m_concrete_buffer->data(), m_begin + m_concrete_buffer->size())
-        , m_end_cap(m_begin + m_concrete_buffer->size())
     {
+        m_begin = m_concrete_buffer->data();
+        m_end = m_begin + m_concrete_buffer->size();
+        m_end_cap = m_begin + m_concrete_buffer->size();
     }
 
     BufferExpander(size_type nbyte, ctor_passkey const &)

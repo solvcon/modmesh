@@ -41,17 +41,7 @@ public:
     using size_type = std::size_t;
     using difference_type = std::ptrdiff_t;
 
-    BufferBase() = default;
-    BufferBase(int8_t * begin, int8_t * end)
-        : m_begin(begin)
-        , m_end(end)
-    {
-    }
-
-    explicit operator bool() const
-    {
-        return bool(m_begin);
-    }
+    explicit operator bool() const { return bool(m_begin); }
     size_type size() const
     {
         return static_cast<size_type>(this->m_end - this->m_begin);
@@ -102,6 +92,8 @@ public:
     }
 
 protected:
+    virtual ~BufferBase() = default;
+
     void validate_range(size_t it) const
     {
         if (it >= size())
