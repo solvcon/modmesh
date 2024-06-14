@@ -118,7 +118,7 @@ struct ConcreteBufferDataDeleter
 /**
  * Untyped and unresizeable memory buffer for contiguous data storage.
  */
-class ConcreteBuffer : public BufferBase
+class ConcreteBuffer : public BufferBase<ConcreteBuffer>
 {
 
 private:
@@ -240,6 +240,8 @@ public:
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
     using unique_ptr_type = std::unique_ptr<int8_t, data_deleter_type>;
 
+    constexpr const char * name() const { return "ConcreteBuffer"; }
+
 private:
     static unique_ptr_type allocate(size_t nbytes)
     {
@@ -250,8 +252,6 @@ private:
         }
         return ret;
     }
-
-    const char * name() const override { return "ConcreteBuffer"; }
 
     size_t m_nbytes;
     unique_ptr_type m_data;

@@ -33,7 +33,8 @@ namespace modmesh
 {
 
 /// Base class for buffer-like objects.
-class BufferBase : public std::enable_shared_from_this<BufferBase>
+template <typename Derived>
+class BufferBase : public std::enable_shared_from_this<BufferBase<Derived>>
 {
 public:
 
@@ -85,7 +86,14 @@ public:
     template <typename T> T * data() noexcept { return reinterpret_cast<T *>(m_begin); }
     // clang-format on
 
+    constexpr const char * name() const
+    {
+        return static_cast<const Derived *>(this)->name();
+    }
+
 protected:
+    // virtual ~BufferBase() = default;
+
     void validate_range(size_t it) const
     {
         if (it >= size())
@@ -93,9 +101,6 @@ protected:
             throw std::out_of_range(Formatter() << name() << ": index " << it << " is out of bounds with size " << size());
         }
     }
-
-    // TODO: make this constexpr virtual once C++20 is available
-    virtual const char * name() const { return "BufferBase"; }
 
     int8_t * m_begin = nullptr;
     int8_t * m_end = nullptr;

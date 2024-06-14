@@ -44,7 +44,7 @@ namespace modmesh
  * Untyped and growing memory buffer for contiguous data storage.  The internal
  * expandable memory buffer cannot be used externally.
  */
-class BufferExpander : public BufferBase
+class BufferExpander : public BufferBase<BufferExpander>
 {
 
 private:
@@ -108,6 +108,8 @@ public:
     std::shared_ptr<ConcreteBuffer> const & as_concrete(size_type cap = 0);
     bool is_concrete() const { return bool(m_concrete_buffer); }
 
+    constexpr const char * name() const { return "BufferExpander"; }
+
 private:
     static std::unique_ptr<int8_t> allocate(size_type nbytes)
     {
@@ -118,8 +120,6 @@ private:
         }
         return ret;
     }
-
-    const char * name() const override { return "BufferExpander"; }
 
     std::unique_ptr<int8_t> m_data_holder = nullptr;
     std::shared_ptr<ConcreteBuffer> m_concrete_buffer = nullptr;
