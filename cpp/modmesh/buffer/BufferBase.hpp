@@ -34,7 +34,7 @@ namespace modmesh
 
 /// Base class for buffer-like objects.
 template <typename Derived>
-class BufferBase : public std::enable_shared_from_this<BufferBase<Derived>>
+class BufferBase
 {
 public:
 
