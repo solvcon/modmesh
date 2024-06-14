@@ -40,9 +40,7 @@ public:
     using size_type = std::size_t;
     using difference_type = std::ptrdiff_t;
 
-    virtual ~BufferBase() = default;
-
-    virtual explicit operator bool() const { return bool(m_begin); }
+    explicit operator bool() const { return bool(m_begin); }
     size_type size() const
     {
         return static_cast<size_type>(this->m_end - this->m_begin);
