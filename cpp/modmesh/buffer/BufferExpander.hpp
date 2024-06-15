@@ -45,8 +45,8 @@ namespace modmesh
  * expandable memory buffer cannot be used externally.
  */
 class BufferExpander
-    : public BufferBase<BufferExpander>
-    , public std::enable_shared_from_this<BufferExpander>
+    : public std::enable_shared_from_this<BufferExpander>
+    , public BufferBase<BufferExpander>
 {
 
 private:
