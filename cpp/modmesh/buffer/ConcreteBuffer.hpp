@@ -174,7 +174,7 @@ public:
         , m_nbytes(nbytes)
         , m_data(allocate(nbytes))
     {
-        m_begin = m_data.get();
+        m_begin = m_data.get(); // override m_begin and m_end once we have the data
         m_end = m_begin + m_nbytes;
     }
 
@@ -193,7 +193,7 @@ public:
         , m_nbytes(nbytes)
         , m_data(data, data_deleter_type(std::move(remover)))
     {
-        m_begin = m_data.get();
+        m_begin = m_data.get(); // override m_begin and m_end once we have the data
         m_end = m_begin + m_nbytes;
     }
 
@@ -219,7 +219,7 @@ public:
         }
         std::copy_n(other.data(), size(), data());
 
-        m_begin = m_data.get();
+        m_begin = m_data.get(); // override m_begin and m_end once we have the data
         m_end = m_begin + m_nbytes;
     }
 #ifdef __GNUC__

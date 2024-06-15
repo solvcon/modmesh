@@ -75,7 +75,7 @@ public:
         : BufferBase<BufferExpander>(nullptr, nullptr) //  initialize m_begin and m_end, but since we don't have the data yet, we set them to nullptr
         , m_concrete_buffer(clone ? buf->clone() : buf)
     {
-        m_begin = m_concrete_buffer->data();
+        m_begin = m_concrete_buffer->data(); // override m_begin and m_end once we have the data
         m_end = m_begin + m_concrete_buffer->size();
         m_end_cap = m_begin + m_concrete_buffer->size();
     }
