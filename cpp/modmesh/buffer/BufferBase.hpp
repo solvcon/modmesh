@@ -1,4 +1,5 @@
 #pragma once
+
 /*
  * Copyright (c) 2024, An-Chi Liu <phy.tiger@gmail.com>
  *
@@ -37,6 +38,7 @@ template <typename Derived>
 class BufferBase
 {
 public:
+    BufferBase() = default;
 
     using size_type = std::size_t;
     using difference_type = std::ptrdiff_t;
@@ -102,7 +104,9 @@ protected:
 
     int8_t * m_begin = nullptr;
     int8_t * m_end = nullptr;
+
 }; /* end class BufferBase */
+
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
