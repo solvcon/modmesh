@@ -170,7 +170,7 @@ public:
      *      Size of the memory buffer in bytes.
      */
     ConcreteBuffer(size_t nbytes, const ctor_passkey &)
-        : BufferBase<ConcreteBuffer>(nullptr, nullptr) //  initialize m_begin and m_end, but since we don't have the data yet, we set them to nullptr
+        : BufferBase<ConcreteBuffer>() // don't delegate m_begin and m_end, which will be overwritten later
         , m_nbytes(nbytes)
         , m_data(allocate(nbytes))
     {
@@ -189,7 +189,7 @@ public:
      */
     // NOLINTNEXTLINE(readability-non-const-parameter)
     ConcreteBuffer(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover, const ctor_passkey &)
-        : BufferBase<ConcreteBuffer>(nullptr, nullptr) //  initialize m_begin and m_end, but since we don't have the data yet, we set them to nullptr
+        : BufferBase<ConcreteBuffer>() // don't delegate m_begin and m_end, which will be overwritten later
         , m_nbytes(nbytes)
         , m_data(data, data_deleter_type(std::move(remover)))
     {
@@ -209,7 +209,7 @@ public:
     // Avoid enabled_shared_from_this copy constructor
     // NOLINTNEXTLINE(bugprone-copy-constructor-init)
     ConcreteBuffer(ConcreteBuffer const & other)
-        : BufferBase<ConcreteBuffer>(nullptr, nullptr) //  initialize m_begin and m_end, but since we don't have the data yet, we set them to nullptr
+        : BufferBase<ConcreteBuffer>() // don't delegate m_begin and m_end, which will be overwritten later
         , m_nbytes(other.m_nbytes)
         , m_data(allocate(other.m_nbytes))
     {

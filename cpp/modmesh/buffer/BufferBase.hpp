@@ -38,12 +38,6 @@ template <typename Derived>
 class BufferBase
 {
 public:
-    BufferBase(int8_t * begin, int8_t * end)
-        : m_begin(begin)
-        , m_end(end)
-    {
-    }
-
     using size_type = std::size_t;
     using difference_type = std::ptrdiff_t;
 

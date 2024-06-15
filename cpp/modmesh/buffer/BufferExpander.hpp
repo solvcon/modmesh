@@ -72,7 +72,7 @@ public:
     }
 
     BufferExpander(std::shared_ptr<ConcreteBuffer> const & buf, bool clone, ctor_passkey const &)
-        : BufferBase<BufferExpander>(nullptr, nullptr) //  initialize m_begin and m_end, but since we don't have the data yet, we set them to nullptr
+        : BufferBase<BufferExpander>() // don't delegate m_begin and m_end, which will be overwritten later
         , m_concrete_buffer(clone ? buf->clone() : buf)
     {
         m_begin = m_concrete_buffer->data(); // override m_begin and m_end once we have the data
@@ -81,13 +81,13 @@ public:
     }
 
     BufferExpander(size_type nbyte, ctor_passkey const &)
-        : BufferBase<BufferExpander>(nullptr, nullptr) //  initialize m_begin and m_end, but since we don't have the data yet, we set them to nullptr
+        : BufferBase<BufferExpander>() // don't delegate m_begin and m_end, which will be overwritten later
     {
         expand(nbyte);
     }
 
     BufferExpander(ctor_passkey const &)
-        : BufferBase<BufferExpander>(nullptr, nullptr) //  initialize m_begin and m_end, but since we don't have the data yet, we set them to nullptr
+        : BufferBase<BufferExpander>() // don't delegate m_begin and m_end, which will be overwritten later
     {
     }
 
