@@ -170,7 +170,8 @@ public:
      *      Size of the memory buffer in bytes.
      */
     ConcreteBuffer(size_t nbytes, const ctor_passkey &)
-        : m_nbytes(nbytes)
+        : BufferBase<ConcreteBuffer>(nullptr, nullptr) //  initialize m_begin and m_end, but since we don't have the data yet, we set them to nullptr
+        , m_nbytes(nbytes)
         , m_data(allocate(nbytes))
     {
         m_begin = m_data.get();
@@ -188,7 +189,8 @@ public:
      */
     // NOLINTNEXTLINE(readability-non-const-parameter)
     ConcreteBuffer(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover, const ctor_passkey &)
-        : m_nbytes(nbytes)
+        : BufferBase<ConcreteBuffer>(nullptr, nullptr) //  initialize m_begin and m_end, but since we don't have the data yet, we set them to nullptr
+        , m_nbytes(nbytes)
         , m_data(data, data_deleter_type(std::move(remover)))
     {
         m_begin = m_data.get();
@@ -207,7 +209,8 @@ public:
     // Avoid enabled_shared_from_this copy constructor
     // NOLINTNEXTLINE(bugprone-copy-constructor-init)
     ConcreteBuffer(ConcreteBuffer const & other)
-        : m_nbytes(other.m_nbytes)
+        : BufferBase<ConcreteBuffer>(nullptr, nullptr) //  initialize m_begin and m_end, but since we don't have the data yet, we set them to nullptr
+        , m_nbytes(other.m_nbytes)
         , m_data(allocate(other.m_nbytes))
     {
         if (size() != other.size())

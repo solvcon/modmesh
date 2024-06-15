@@ -38,7 +38,11 @@ template <typename Derived>
 class BufferBase
 {
 public:
-    BufferBase() = default;
+    BufferBase(int8_t * begin, int8_t * end)
+        : m_begin(begin)
+        , m_end(end)
+    {
+    }
 
     using size_type = std::size_t;
     using difference_type = std::ptrdiff_t;
@@ -102,8 +106,8 @@ protected:
         }
     }
 
-    int8_t * m_begin = nullptr;
-    int8_t * m_end = nullptr;
+    int8_t * m_begin; // don't initialize, must be set by derived class
+    int8_t * m_end; // don't initialize, must be set by derived class
 
 }; /* end class BufferBase */
 
