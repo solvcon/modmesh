@@ -92,8 +92,6 @@ public:
     }
 
 protected:
-    virtual ~BufferBase() = default;
-
     void validate_range(size_t it) const
     {
         if (it >= size())
