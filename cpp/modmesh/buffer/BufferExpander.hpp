@@ -83,11 +83,11 @@ public:
     BufferExpander(size_type nbyte, ctor_passkey const &)
         : BufferBase<BufferExpander>() // don't delegate m_begin and m_end, which will be overwritten later
     {
-        expand(nbyte);
+        expand(nbyte); // override m_begin and m_end once we have the data
     }
 
     BufferExpander(ctor_passkey const &)
-        : BufferBase<BufferExpander>() // don't delegate m_begin and m_end, which will be overwritten later
+        : BufferBase<BufferExpander>(nullptr, nullptr)
     {
     }
 

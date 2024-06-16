@@ -93,6 +93,11 @@ public:
 
 protected:
     BufferBase() = default;
+
+    BufferBase(int8_t * start, int8_t * end)
+        : m_begin(start)
+        , m_end(end){};
+
     BufferBase(BufferBase const &) = delete;
     BufferBase(BufferBase &&) = delete;
     BufferBase & operator=(BufferBase const &) = delete;
