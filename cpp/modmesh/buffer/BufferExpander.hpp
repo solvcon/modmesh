@@ -81,13 +81,13 @@ public:
     }
 
     BufferExpander(size_type nbyte, ctor_passkey const &)
-        : BufferBase<BufferExpander>() // don't delegate m_begin and m_end, which will be overwritten later
+        : BufferBase<BufferExpander>(nullptr, nullptr) // initialize m_begin and m_end to nullptr, which will be overwritten later
     {
         expand(nbyte); // override m_begin and m_end once we have the data
     }
 
     BufferExpander(ctor_passkey const &)
-        : BufferBase<BufferExpander>(nullptr, nullptr)
+        : BufferBase<BufferExpander>(nullptr, nullptr) // initialize m_begin and m_end to nullptr, which will be overwritten later
     {
     }
 
@@ -100,6 +100,10 @@ public:
 
     size_type capacity() const noexcept
     {
+        if (!m_begin) // no data hence no capacity
+        {
+            return 0;
+        }
         return static_cast<size_type>(this->m_end_cap - this->m_begin);
     }
 
