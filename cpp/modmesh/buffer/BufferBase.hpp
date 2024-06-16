@@ -92,6 +92,13 @@ public:
     }
 
 protected:
+    BufferBase() = default;
+    BufferBase(BufferBase const &) = delete;
+    BufferBase(BufferBase &&) = delete;
+    BufferBase & operator=(BufferBase const &) = delete;
+    BufferBase & operator=(BufferBase &&) = delete;
+    ~BufferBase() = default;
+
     void validate_range(size_t it) const
     {
         if (it >= size())
