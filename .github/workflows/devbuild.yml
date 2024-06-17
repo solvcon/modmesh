@@ -88,6 +88,9 @@ jobs:
     env:
       QT_DEBUG_PLUGINS: 1
       QT_QPA_PLATFORM: offscreen
+      # Fix issue: https://github.com/solvcon/modmesh/issues/366
+      # Use custom config for jurplel/install-qt-action@v4
+      AQT_CONFIG: "thirdparty/aqt_settings.ini"
 
     strategy:
         matrix:
@@ -129,7 +132,7 @@ jobs:
         # fi
 
     - name: install qt
-      uses: jurplel/install-qt-action@v3
+      uses: jurplel/install-qt-action@v4
       with:
         aqtversion: '==3.1.*'
         version: '6.6.3'
@@ -138,6 +141,7 @@ jobs:
         arch: 'gcc_64'
         modules: 'qt3d'
         setup-python: 'false'
+        cache: true
 
     - name: dependency by pip
       run: |
@@ -257,6 +261,9 @@ jobs:
     env:
       QT_DEBUG_PLUGINS: 1
       PIP_BREAK_SYSTEM_PACKAGES: 1 # disabling PEP668
+      # Fix issue: https://github.com/solvcon/modmesh/issues/366
+      # Use custom config for jurplel/install-qt-action@v4
+      AQT_CONFIG: "thirdparty/aqt_settings.ini"
 
     strategy:
       matrix:
@@ -288,7 +295,7 @@ jobs:
           # brew install qt6
 
       - name: install qt
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           aqtversion: '==3.1.*'
           version: '6.6.3'
@@ -297,6 +304,7 @@ jobs:
           arch: 'clang_64'
           modules: 'qt3d'
           setup-python: 'false'
+          cache: true
 
       - name: dependency by pip
         run: |
@@ -443,6 +451,9 @@ jobs:
 
     env:
       QT_DEBUG_PLUGINS: 1
+      # Fix issue: https://github.com/solvcon/modmesh/issues/366
+      # Use custom config for jurplel/install-qt-action@v4
+      AQT_CONFIG: "thirdparty/aqt_settings.ini"
 
     strategy:
       matrix:
@@ -465,7 +476,7 @@ jobs:
           echo "github.event_name: ${{ github.event_name }}"
 
       - name: install qt
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           aqtversion: '==3.1.*'
           version: '6.6.3'
@@ -473,14 +484,15 @@ jobs:
           target: 'desktop'
           arch: 'win64_msvc2019_64'
           modules: 'qt3d'
+          cache: true
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.10' 
+          python-version: '3.12' 
 
       - name: dependency by pip
         run: |
-          pip3 install -U numpy pytest flake8 pybind11==2.11.1 pyside6==$(qmake -query QT_VERSION)
+          pip3 install -U numpy pytest flake8 pybind11 pyside6==$(qmake -query QT_VERSION)
           # Add PySide6 and Shiboken6 path into system path, that allow exe file can find
           # dll during runtime
           # If user needs to modified system path in github actions container
