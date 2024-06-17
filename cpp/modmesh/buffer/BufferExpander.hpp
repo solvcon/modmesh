@@ -75,7 +75,7 @@ public:
         : BufferBase<BufferExpander>() // don't delegate m_begin and m_end, which will be overwritten later
         , m_concrete_buffer(clone ? buf->clone() : buf)
     {
-        m_begin = m_concrete_buffer->data(); // override m_begin and m_end once we have the data
+        m_begin = m_concrete_buffer->data(); // overwrite m_begin and m_end once we have the data
         m_end = m_begin + m_concrete_buffer->size();
         m_end_cap = m_begin + m_concrete_buffer->size();
     }
@@ -83,7 +83,7 @@ public:
     BufferExpander(size_type nbyte, ctor_passkey const &)
         : BufferBase<BufferExpander>(nullptr, nullptr) // initialize m_begin and m_end to nullptr, which will be overwritten later
     {
-        expand(nbyte); // override m_begin and m_end once we have the data
+        expand(nbyte); // overwrite m_begin and m_end once we have the data
     }
 
     BufferExpander(ctor_passkey const &)

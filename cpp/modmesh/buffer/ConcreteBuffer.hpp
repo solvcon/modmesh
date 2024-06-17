@@ -174,7 +174,7 @@ public:
         , m_nbytes(nbytes)
         , m_data(allocate(nbytes))
     {
-        m_begin = m_data.get(); // override m_begin and m_end once we have the data
+        m_begin = m_data.get(); // overwrite m_begin and m_end once we have the data
         m_end = m_begin + m_nbytes;
     }
 
@@ -193,7 +193,7 @@ public:
         , m_nbytes(nbytes)
         , m_data(data, data_deleter_type(std::move(remover)))
     {
-        m_begin = m_data.get(); // override m_begin and m_end once we have the data
+        m_begin = m_data.get(); // overwrite m_begin and m_end once we have the data
         m_end = m_begin + m_nbytes;
     }
 
@@ -213,14 +213,13 @@ public:
         , m_nbytes(other.m_nbytes)
         , m_data(allocate(other.m_nbytes))
     {
+        m_begin = m_data.get(); // overwrite m_begin and m_end once we have the data
+        m_end = m_begin + m_nbytes;
         if (size() != other.size())
         {
             throw std::out_of_range("Buffer size mismatch");
         }
         std::copy_n(other.data(), size(), data());
-
-        m_begin = m_data.get(); // override m_begin and m_end once we have the data
-        m_end = m_begin + m_nbytes;
     }
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
