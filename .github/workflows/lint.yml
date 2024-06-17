@@ -43,6 +43,9 @@ jobs:
       JOB_MAKE_ARGS: VERBOSE=1 BUILD_QT=ON USE_CLANG_TIDY=ON LINT_AS_ERRORS=ON
       QT_DEBUG_PLUGINS: 1
       QT_QPA_PLATFORM: offscreen
+      # Fix issue: https://github.com/solvcon/modmesh/issues/366
+      # Use custom config for jurplel/install-qt-action@v4
+      AQT_CONFIG: "thirdparty/aqt_settings.ini"
 
     strategy:
         matrix:
@@ -87,7 +90,7 @@ jobs:
         # fi
 
     - name: install qt
-      uses: jurplel/install-qt-action@v3
+      uses: jurplel/install-qt-action@v4
       with:
         aqtversion: '==3.1.*'
         version: '6.6.3'
@@ -96,6 +99,7 @@ jobs:
         arch: 'gcc_64'
         modules: 'qt3d'
         setup-python: 'false'
+        cache: true
 
     - name: dependency by pip
       run: |
@@ -164,6 +168,9 @@ jobs:
       JOB_MAKE_ARGS: VERBOSE=1 BUILD_QT=ON USE_CLANG_TIDY=ON LINT_AS_ERRORS=ON
       QT_DEBUG_PLUGINS: 1
       PIP_BREAK_SYSTEM_PACKAGES: 1 # disabling PEP668
+      # Fix issue: https://github.com/solvcon/modmesh/issues/366
+      # Use custom config for jurplel/install-qt-action@v4
+      AQT_CONFIG: "thirdparty/aqt_settings.ini"
 
     strategy:
       matrix:
@@ -197,7 +204,7 @@ jobs:
           ln -s "$(brew --prefix llvm@16)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 
       - name: install qt
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           aqtversion: '==3.1.*'
           version: '6.6.3'
@@ -206,6 +213,7 @@ jobs:
           arch: 'clang_64'
           modules: 'qt3d'
           setup-python: 'false'
+          cache: true
 
       - name: dependency by pip
         run: |
