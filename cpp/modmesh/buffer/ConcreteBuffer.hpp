@@ -29,12 +29,13 @@
  */
 
 #include <modmesh/base.hpp>
+#include <modmesh/buffer/BufferBase.hpp>
 #include <modmesh/buffer/small_vector.hpp>
 
-#include <stdexcept>
-#include <memory>
 #include <algorithm>
+#include <memory>
 #include <sstream>
+#include <stdexcept>
 
 namespace modmesh
 {
@@ -119,6 +120,7 @@ struct ConcreteBufferDataDeleter
  */
 class ConcreteBuffer
     : public std::enable_shared_from_this<ConcreteBuffer>
+    , public BufferBase<ConcreteBuffer>
 {
 
 private:
@@ -168,9 +170,12 @@ public:
      *      Size of the memory buffer in bytes.
      */
     ConcreteBuffer(size_t nbytes, const ctor_passkey &)
-        : m_nbytes(nbytes)
+        : BufferBase<ConcreteBuffer>() // don't delegate m_begin and m_end, which will be overwritten later
+        , m_nbytes(nbytes)
         , m_data(allocate(nbytes))
     {
+        m_begin = m_data.get(); // override m_begin and m_end once we have the data
+        m_end = m_begin + m_nbytes;
     }
 
     /**
@@ -184,9 +189,12 @@ public:
      */
     // NOLINTNEXTLINE(readability-non-const-parameter)
     ConcreteBuffer(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover, const ctor_passkey &)
-        : m_nbytes(nbytes)
+        : BufferBase<ConcreteBuffer>() // don't delegate m_begin and m_end, which will be overwritten later
+        , m_nbytes(nbytes)
         , m_data(data, data_deleter_type(std::move(remover)))
     {
+        m_begin = m_data.get(); // override m_begin and m_end once we have the data
+        m_end = m_begin + m_nbytes;
     }
 
     ~ConcreteBuffer() = default;
@@ -201,7 +209,8 @@ public:
     // Avoid enabled_shared_from_this copy constructor
     // NOLINTNEXTLINE(bugprone-copy-constructor-init)
     ConcreteBuffer(ConcreteBuffer const & other)
-        : m_nbytes(other.m_nbytes)
+        : BufferBase<ConcreteBuffer>() // don't delegate m_begin and m_end, which will be overwritten later
+        , m_nbytes(other.m_nbytes)
         , m_data(allocate(other.m_nbytes))
     {
         if (size() != other.size())
@@ -209,6 +218,9 @@ public:
             throw std::out_of_range("Buffer size mismatch");
         }
         std::copy_n(other.data(), size(), data());
+
+        m_begin = m_data.get(); // override m_begin and m_end once we have the data
+        m_end = m_begin + m_nbytes;
     }
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -226,47 +238,6 @@ public:
         return *this;
     }
 
-    explicit operator bool() const noexcept { return bool(m_data); }
-
-    size_t nbytes() const noexcept { return m_nbytes; }
-    size_t size() const noexcept { return nbytes(); }
-
-    using iterator = int8_t *;
-    using const_iterator = int8_t const *;
-
-    iterator begin() noexcept { return data(); }
-    iterator end() noexcept { return data() + size(); }
-    const_iterator begin() const noexcept { return data(); }
-    const_iterator end() const noexcept { return data() + size(); }
-    const_iterator cbegin() const noexcept { return begin(); }
-    const_iterator cend() const noexcept { return end(); }
-
-    int8_t operator[](size_t it) const { return data(it); }
-    int8_t & operator[](size_t it) { return data(it); }
-
-    int8_t at(size_t it) const
-    {
-        validate_range(it);
-        return data(it);
-    }
-    int8_t & at(size_t it)
-    {
-        validate_range(it);
-        return data(it);
-    }
-
-    /* Backdoor */
-    int8_t data(size_t it) const { return data()[it]; }
-    int8_t & data(size_t it) { return data()[it]; }
-    int8_t const * data() const noexcept { return data<int8_t>(); }
-    int8_t * data() noexcept { return data<int8_t>(); }
-    // clang-format off
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    template <typename T> T const * data() const noexcept { return reinterpret_cast<T *>(m_data.get()); }
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    template <typename T> T * data() noexcept { return reinterpret_cast<T *>(m_data.get()); }
-    // clang-format on
-
     bool has_remover() const noexcept { return bool(m_data.get_deleter().remover); }
     remover_type const & get_remover() const { return *m_data.get_deleter().remover; }
     remover_type & get_remover() { return *m_data.get_deleter().remover; }
@@ -274,16 +245,9 @@ public:
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
     using unique_ptr_type = std::unique_ptr<int8_t, data_deleter_type>;
 
+    static constexpr const char * name() { return "ConcreteBuffer"; }
+
 private:
-
-    void validate_range(size_t it) const
-    {
-        if (it >= size())
-        {
-            throw std::out_of_range(Formatter() << "ConcreteBuffer: index " << it << " is out of bounds with size " << size());
-        }
-    }
-
     static unique_ptr_type allocate(size_t nbytes)
     {
         unique_ptr_type ret(nullptr, data_deleter_type());
@@ -296,7 +260,6 @@ private:
 
     size_t m_nbytes;
     unique_ptr_type m_data;
-
 }; /* end class ConcreteBuffer */
 
 } /* end namespace modmesh */
