@@ -23,6 +23,8 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
+
 import os
 import unittest
 import time
@@ -41,10 +43,11 @@ def profile_function(func):
     return wrapper
 
 
+# duration (seconds)
 def busy_loop(duration):
     end_time = time.perf_counter() + duration
     while time.perf_counter() < end_time:
-        time.sleep(0.00001)
+        pass
 
 
 class CallProfilerTC(unittest.TestCase):
