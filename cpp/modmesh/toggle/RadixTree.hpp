@@ -73,7 +73,7 @@ public:
     const T & data() const { return m_data; }
     const child_list_type & children() const { return m_children; }
 
-    bool no_children() const
+    bool empty_children() const
     {
         return m_children.empty();
     }
