@@ -184,7 +184,7 @@ protected:
             .def("result", [](CallProfiler & profiler)
                  {
             const RadixTreeNode<CallerProfile> * root = profiler.radix_tree().get_root();
-            if (root->no_children()) {
+            if (root->empty_children()) {
                 return py::dict();
             }
             py::dict result;
