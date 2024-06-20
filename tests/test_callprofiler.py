@@ -34,6 +34,12 @@ from functools import wraps
 import modmesh
 
 
+# TODO
+# 1. Implement profile_funcion somewhere else under python modmesh lib
+# 2. Add a filed in each node in profiler to distinguish where profiler run
+#    like from: C++, from: Python
+# 3. Try profile a real app that has both python and C++ codes
+#    and add a unit test for this scenario.
 def profile_function(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
