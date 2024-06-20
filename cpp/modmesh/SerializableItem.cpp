@@ -37,7 +37,7 @@ namespace detail
 std::string escape_string(std::string_view str_view)
 {
     std::ostringstream oss;
-    for (char c : str_view)
+    for (const char c : str_view)
     {
         switch (c)
         {
