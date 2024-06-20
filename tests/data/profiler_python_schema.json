@@ -22,7 +22,7 @@
             }
         }
     },
-    "required": ["name", "total_time", "count", "current_node", "children"],
+    "required": ["name", "total_time", "count", "children"],
     "definitions": {
         "child": {
             "type": "object",
