@@ -30,6 +30,7 @@
                 "name": {"type": "string"},
                 "total_time": {"type": "number"},
                 "count": {"type": "integer"},
+                "current_node": {"type": "boolean"},
                 "children": {
                     "type": "array",
                     "items": {"$ref": "#/definitions/child"}
