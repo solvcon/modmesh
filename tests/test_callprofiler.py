@@ -29,8 +29,8 @@ import os
 import unittest
 import time
 import json
-from jsonschema import validate, ValidationError
-from functools import wraps
+import jsonschema
+import functools
 import modmesh
 
 
@@ -41,7 +41,7 @@ import modmesh
 # 3. Try profile a real app that has both python and C++ codes
 #    and add a unit test for this scenario.
 def profile_function(func):
-    @wraps(func)
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         _ = modmesh.CallProfilerProbe(func.__name__)
         result = func(*args, **kwargs)
@@ -88,8 +88,8 @@ class CallProfilerTC(unittest.TestCase):
             schema = json.load(schema_file)
 
         try:
-            validate(instance=result, schema=schema)
-        except ValidationError as e:
+            jsonschema.validate(instance=result, schema=schema)
+        except jsonschema.ValidationError as e:
             self.fail(f"JSON data is invalid: {e.message}")
 
     def test_single_function_profiling(self):
