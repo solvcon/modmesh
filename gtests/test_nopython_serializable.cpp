@@ -99,6 +99,14 @@ public:
         register_member("private_info", private_info);)
 }; // end struct SecretItem
 
+struct EscapeItem : SerializableItem
+{
+    std::string escape_string = "\"\\/\b\f\n\r\t";
+
+    MM_DECL_SERIALIZABLE(
+        register_member("escape_string", escape_string);)
+}; // end struct EscapeItem
+
 } // end namespace detail
 
 TEST(Json, serialization_private_member_partial_exposure)
@@ -106,6 +114,13 @@ TEST(Json, serialization_private_member_partial_exposure)
     detail::SecretItem secret;
     std::string json = secret.to_json();
     EXPECT_EQ(json, "{\"private_info\":\"private_info\"}");
+}
+
+TEST(Json, serialization_escape)
+{
+    detail::EscapeItem escape;
+    std::string json = escape.to_json();
+    EXPECT_EQ(json, "{\"escape_string\":\"\\\"\\\\/\\b\\f\\n\\r\\t\"}");
 }
 
 TEST(Json, serialization_simple)
