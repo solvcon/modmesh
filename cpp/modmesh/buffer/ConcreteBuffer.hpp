@@ -134,6 +134,8 @@ private:
 public:
 
     using remover_type = detail::ConcreteBufferRemover;
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+    using unique_ptr_type = std::unique_ptr<int8_t, data_deleter_type>;
 
     static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes)
     {
@@ -158,25 +160,13 @@ public:
 
     static std::shared_ptr<ConcreteBuffer> construct() { return construct(0); }
 
-    std::shared_ptr<ConcreteBuffer> clone() const
-    {
-        std::shared_ptr<ConcreteBuffer> ret = construct(nbytes());
-        std::copy_n(data(), size(), (*ret).data());
-        return ret;
-    }
+    std::shared_ptr<ConcreteBuffer> clone() const;
 
     /**
      * \param[in] nbytes
      *      Size of the memory buffer in bytes.
      */
-    ConcreteBuffer(size_t nbytes, const ctor_passkey &)
-        : BufferBase<ConcreteBuffer>() // don't delegate m_begin and m_end, which will be overwritten later
-        , m_nbytes(nbytes)
-        , m_data(allocate(nbytes))
-    {
-        m_begin = m_data.get(); // overwrite m_begin and m_end once we have the data
-        m_end = m_begin + m_nbytes;
-    }
+    ConcreteBuffer(size_t nbytes, const ctor_passkey &);
 
     /**
      * \param[in] nbytes
@@ -188,14 +178,7 @@ public:
      *      The memory deallocator for the unowned data buffer passed in.
      */
     // NOLINTNEXTLINE(readability-non-const-parameter)
-    ConcreteBuffer(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover, const ctor_passkey &)
-        : BufferBase<ConcreteBuffer>() // don't delegate m_begin and m_end, which will be overwritten later
-        , m_nbytes(nbytes)
-        , m_data(data, data_deleter_type(std::move(remover)))
-    {
-        m_begin = m_data.get(); // overwrite m_begin and m_end once we have the data
-        m_end = m_begin + m_nbytes;
-    }
+    ConcreteBuffer(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover, const ctor_passkey &);
 
     ~ConcreteBuffer() = default;
 
@@ -208,54 +191,20 @@ public:
 #endif
     // Avoid enabled_shared_from_this copy constructor
     // NOLINTNEXTLINE(bugprone-copy-constructor-init)
-    ConcreteBuffer(ConcreteBuffer const & other)
-        : BufferBase<ConcreteBuffer>() // don't delegate m_begin and m_end, which will be overwritten later
-        , m_nbytes(other.m_nbytes)
-        , m_data(allocate(other.m_nbytes))
-    {
-        m_begin = m_data.get(); // overwrite m_begin and m_end once we have the data
-        m_end = m_begin + m_nbytes;
-        if (size() != other.size())
-        {
-            throw std::out_of_range("Buffer size mismatch");
-        }
-        std::copy_n(other.data(), size(), data());
-    }
+    ConcreteBuffer(ConcreteBuffer const & other);
+
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
-    ConcreteBuffer & operator=(ConcreteBuffer const & other)
-    {
-        if (this != &other)
-        {
-            if (size() != other.size())
-            {
-                throw std::out_of_range("Buffer size mismatch");
-            }
-            std::copy_n(other.data(), size(), data());
-        }
-        return *this;
-    }
+    ConcreteBuffer & operator=(ConcreteBuffer const & other);
 
     bool has_remover() const noexcept { return bool(m_data.get_deleter().remover); }
     remover_type const & get_remover() const { return *m_data.get_deleter().remover; }
     remover_type & get_remover() { return *m_data.get_deleter().remover; }
-
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-    using unique_ptr_type = std::unique_ptr<int8_t, data_deleter_type>;
-
     static constexpr const char * name() { return "ConcreteBuffer"; }
 
 private:
-    static unique_ptr_type allocate(size_t nbytes)
-    {
-        unique_ptr_type ret(nullptr, data_deleter_type());
-        if (0 != nbytes)
-        {
-            ret = unique_ptr_type(new int8_t[nbytes], data_deleter_type());
-        }
-        return ret;
-    }
+    static unique_ptr_type allocate(size_t nbytes);
 
     size_t m_nbytes;
     unique_ptr_type m_data;
