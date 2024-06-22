@@ -104,7 +104,7 @@ jobs:
     - name: dependency by pip
       run: |
         sudo pip3 install setuptools
-        sudo pip3 install numpy pytest flake8 pyside6==$(qmake6 -query QT_VERSION)
+        sudo pip3 install numpy pytest flake8 jsonschema pyside6==$(qmake6 -query QT_VERSION)
 
     - name: dependency (manual)
       run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
@@ -223,11 +223,11 @@ jobs:
             # suppress the warning of pip because brew forces PEP668 since python3.12
             python3 -m pip -v install --upgrade setuptools --break-system-packages
             python3 -m pip -v install --upgrade pip --break-system-packages
-            python3 -m pip -v install --upgrade numpy pytest flake8 pyside6==$(qmake -query QT_VERSION) --break-system-packages
+            python3 -m pip -v install --upgrade numpy pytest flake8 jsonschema pyside6==$(qmake -query QT_VERSION) --break-system-packages
           else
             python3 -m pip -v install --upgrade setuptools
             python3 -m pip -v install --upgrade pip
-            python3 -m pip -v install --upgrade numpy pytest flake8 pyside6==$(qmake -query QT_VERSION)
+            python3 -m pip -v install --upgrade numpy pytest flake8 jsonschema pyside6==$(qmake -query QT_VERSION)
           fi
   
       - name: dependency (manual)

@@ -31,6 +31,7 @@
 #include <modmesh/base.hpp>
 #include <modmesh/buffer/buffer.hpp>
 #include <modmesh/toggle/profile.hpp>
+#include <modmesh/toggle/RadixTree.hpp>
 
 #include <string>
 #include <vector>
