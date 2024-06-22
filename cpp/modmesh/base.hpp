@@ -53,6 +53,27 @@ typedef SSIZE_T ssize_t;
 namespace modmesh
 {
 
+namespace detail
+{
+
+/// Helper trait to check if a type is a specialization of a given template
+template <template <typename...> class Template, typename T>
+struct is_specialization_of : std::false_type
+{
+};
+
+/// Helper trait to check if a type is a specialization of a given template
+template <template <typename...> class Template, typename... Args>
+struct is_specialization_of<Template, Template<Args...>> : std::true_type
+{
+};
+
+/// Helper trait to check if a type is a specialization of a given template
+template <template <typename...> class Template, typename T>
+inline constexpr bool is_specialization_of_v = is_specialization_of<Template, T>::value;
+
+} /* end namespace detail */
+
 using real_type = double;
 
 #if 4 == MODMESH_INTSIZE

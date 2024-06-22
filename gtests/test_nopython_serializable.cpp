@@ -5,7 +5,7 @@
 #error "Python.h should not be included."
 #endif
 
-#include <modmesh/SerializableItem.hpp>
+#include <modmesh/serialization/SerializableItem.hpp>
 namespace modmesh
 {
 

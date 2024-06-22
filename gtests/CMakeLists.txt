@@ -29,8 +29,9 @@ add_executable(
     test_nopython_serializable.cpp
     ${MODMESH_TOGGLE_SOURCES}
     ${MODMESH_BUFFER_SOURCES}
-    ${MODMESH_ROOT_SOURCES}
+    ${MODMESH_SERIALIZATION_SOURCES}
 )
+
 target_link_libraries(
     test_nopython
     GTest::gtest_main

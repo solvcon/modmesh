@@ -35,6 +35,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include <modmesh/base.hpp> // for helper macros
+
 namespace modmesh
 {
 
@@ -49,22 +51,6 @@ public:
 
 namespace detail
 {
-
-/// Helper trait to check if a type is a specialization of a given template
-template <template <typename...> class Template, typename T>
-struct is_specialization_of : std::false_type
-{
-};
-
-/// Helper trait to check if a type is a specialization of a given template
-template <template <typename...> class Template, typename... Args>
-struct is_specialization_of<Template, Template<Args...>> : std::true_type
-{
-};
-
-/// Helper trait to check if a type is a specialization of a given template
-template <template <typename...> class Template, typename T>
-inline constexpr bool is_specialization_of_v = is_specialization_of<Template, T>::value;
 
 /// Escape special characters in a string.
 std::string escape_string(std::string_view str_view);
@@ -103,7 +89,7 @@ std::string to_json_string(const T & value)
     }
 }
 
-}; // namespace detail
+}; /* end namespace detail */
 
 /// Serialize a class with member variables.
 /// Use `register_member("key", class.member);` to add members when using this macro
@@ -115,7 +101,8 @@ public:                                                                         
         std::ostringstream oss;                                                         \
         oss << "{";                                                                     \
         const char * separator = "";                                                    \
-        auto register_member = [&](const char * name, auto && value) {                  \
+        auto register_member = [&](const char * name, auto && value)                    \
+        {                                                                               \
             oss << separator << "\"" << name << "\":" << detail::to_json_string(value); \
             separator = ",";                                                            \
         };                                                                              \
@@ -126,7 +113,9 @@ public:                                                                         
                                                                                         \
     void from_json(const std::string & json) override                                   \
     {                                                                                   \
-    }
+        /* TODO: The implemenation is in the next PR */                                 \
+    } /* end MM_DECL_SERIALIZABLE*/
+
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
