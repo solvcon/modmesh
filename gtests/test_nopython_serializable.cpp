@@ -24,7 +24,7 @@ struct Address : SerializableItem
         register_member("city", city);
         register_member("phone_numbers", phone_numbers);
         register_member("zip_codes", zip_codes);)
-};
+}; // end struct Address
 
 struct Pet : SerializableItem
 {
@@ -38,7 +38,7 @@ struct Pet : SerializableItem
         register_member("age", age);
         register_member("is_dog", is_dog);
         register_member("is_cat", is_cat);)
-};
+}; // end struct Pet
 
 struct Person : SerializableItem
 {
@@ -54,7 +54,7 @@ struct Person : SerializableItem
         register_member("is_student", is_student);
         register_member("address", address);
         register_member("pets", pets);)
-};
+}; // end struct Person
 
 Pet create_dog()
 {
@@ -86,7 +86,27 @@ Address create_address()
     return address;
 }
 
-} // namespace detail
+struct SecretItem : SerializableItem
+{
+private:
+    std::string private_info = "private_info";
+
+public:
+    std::string public_info = "public_info";
+
+    MM_DECL_SERIALIZABLE(
+        /* not expose public_info */
+        register_member("private_info", private_info);)
+}; // end struct SecretItem
+
+} // end namespace detail
+
+TEST(Json, serialization_private_member_partial_exposure)
+{
+    detail::SecretItem secret;
+    std::string json = secret.to_json();
+    EXPECT_EQ(json, "{\"private_info\":\"private_info\"}");
+}
 
 TEST(Json, serialization_simple)
 {
