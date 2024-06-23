@@ -26,11 +26,12 @@
 
 import sys
 import os
+import time
 
 lib_path = {}
 
 
-def register_library():
+def search_library_root(curr_path, lib_root_name, timeout=1):
     """
     Walk through the thridparty library and register all third-party
     library folder path into a dictionary with library name as the key,
@@ -38,10 +39,29 @@ def register_library():
 
     :return: None
     """
-    dirName = os.path.dirname(__file__)
-    for item in os.listdir(dirName):
-        if os.path.isdir(os.path.join(dirName, item)):
-            lib_path[item] = os.path.join(dirName, item)
+    # Try to find the library root, if failed to find it
+    # modmesh will raise ImportError and remind the user.
+    folder_name = os.path.join(lib_root_name)
+    _path = curr_path
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        if os.path.exists(os.path.join(_path, folder_name)):
+            break
+        if _path == os.path.dirname(_path):
+            _path = None
+            break
+        else:
+            _path = os.path.dirname(_path)
+    _pf = os.path.join(_path, folder_name) if _path else None
+    if _path is None or not os.path.exists(_pf):
+        sys.stderr.write(f'Can not find {lib_root_name}.\n')
+        return
+
+    _path = os.path.join(_path, folder_name)
+
+    for item in os.listdir(_path):
+        if os.path.isdir(os.path.join(_path, item)):
+            lib_path[item] = os.path.join(_path, item)
 
 
 def load_library(lib_name):
@@ -57,7 +77,7 @@ def load_library(lib_name):
         else:
             raise ImportError
     except ImportError:
-        sys.stderr.write(f'Can not find {lib_name} in thirdparty library.\n')
+        sys.stderr.write(f'Can not find {lib_name} in library root.\n')
         sys.exit(0)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

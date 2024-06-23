@@ -52,7 +52,7 @@ __all__ = _from_impl + [  # noqa: F822
 enable = False
 try:
     from _modmesh import view as _vimpl  # noqa: F401
-    from python_lib_management import load_library
+    from .pylibmgr import load_library
     enable = True
 except ImportError:
     pass
