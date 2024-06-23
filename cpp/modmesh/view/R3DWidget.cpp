@@ -103,6 +103,20 @@ void R3DWidget::resizeEvent(QResizeEvent * event)
     m_container->resize(event->size());
 }
 
+void R3DWidget::resetCamera(Qt3DRender::QCamera * camera)
+{
+    // Set up the camera.
+    camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
+    camera->setPosition(QVector3D(0.0f, 0.0f, 10.0f));
+    camera->setViewCenter(QVector3D(0.0f, 0.0f, 0.0f));
+
+    // Set up the camera control.
+    auto * control = m_scene->controller();
+    control->setCamera(camera);
+    control->setLinearSpeed(50.0f);
+    control->setLookSpeed(180.0f);
+}
+
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

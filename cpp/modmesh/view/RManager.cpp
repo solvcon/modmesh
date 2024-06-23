@@ -199,15 +199,44 @@ void RManager::setUpMenu()
                 }
             });
 
+        auto * reset_camera = new RAction(
+            QString("Reset (esc)"),
+            QString("Reset (esc)"),
+            [this]()
+            {
+                // implement resetting camera contorl
+                qDebug() << "Reset to initial status.";
+                for (auto subwin : m_mdiArea->subWindowList())
+                {
+                    try
+                    {
+                        R3DWidget * viewer = dynamic_cast<R3DWidget *>(subwin->widget());
+                        Qt3DRender::QCamera * camera = viewer->camera();
+                        if(camera)
+                        {
+                            viewer->resetCamera(camera);
+                        }
+                    }
+                    catch (std::bad_cast & e)
+                    {
+                        std::cerr << e.what() << std::endl;
+                    }
+                }
+            });
+
         auto * cameraGroup = new QActionGroup(m_mainWindow);
         cameraGroup->addAction(use_orbit_camera);
         cameraGroup->addAction(use_fps_camera);
+        cameraGroup->addAction(reset_camera);
+
         use_orbit_camera->setCheckable(true);
         use_fps_camera->setCheckable(true);
-        use_orbit_camera->setChecked(true);
+
+        reset_camera->setShortcut(QKeySequence(Qt::Key_Escape));
 
         m_viewMenu->addAction(use_orbit_camera);
         m_viewMenu->addAction(use_fps_camera);
+        m_viewMenu->addAction(reset_camera);
     }
 
     m_oneMenu = m_mainWindow->menuBar()->addMenu(QString("One"));
