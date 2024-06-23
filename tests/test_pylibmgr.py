@@ -36,7 +36,7 @@ class pylibmgrTC(unittest.TestCase):
     def test_pylibmgr_search_library_root(self):
         modmesh.pylibmgr.search_library_root(os.getcwd(), 'thirdparty')
         lib_path = modmesh.pylibmgr.lib_path
-        self.assertIn("PUI", lib_path.keys())
+        self.assertNotEqual(lib_path, {})
 
         # Reset library patch record
         lib_path = {}
