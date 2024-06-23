@@ -30,6 +30,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <vector>
 #include <functional>
 #include <iostream>
 #include <list>
@@ -53,8 +54,8 @@ public:
     static_assert(std::is_integral_v<key_type> && std::is_signed_v<key_type>, "signed integral required");
 
     RadixTreeNode(std::string const & name, key_type key)
-        : m_name(name)
-        , m_key(key)
+        : m_key(key)
+        , m_name(name)
         , m_prev(nullptr)
     {
     }
@@ -71,6 +72,11 @@ public:
     T & data() { return m_data; }
     const T & data() const { return m_data; }
     const child_list_type & children() const { return m_children; }
+
+    bool empty_children() const
+    {
+        return m_children.empty();
+    }
 
     RadixTreeNode<T> * add_child(std::string const & name, key_type key)
     {
@@ -167,6 +173,7 @@ public:
         return m_current_node == m_root.get();
     }
 
+    RadixTreeNode<T> * get_root() const { return m_root.get(); }
     RadixTreeNode<T> * get_current_node() const { return m_current_node; }
     key_type get_unique_node() const { return m_unique_id; }
 
@@ -238,11 +245,15 @@ public:
     CallProfiler & operator=(CallProfiler &&) = delete;
     ~CallProfiler() = default;
 
+    RadixTree<CallerProfile> & radix_tree()
+    {
+        return m_radix_tree;
+    }
+
     // Called when a function starts
     void start_caller(const std::string & caller_name, std::function<void()> cancel_callback)
     {
         m_cancel_callbacks.push_back(cancel_callback);
-        auto start_time = std::chrono::high_resolution_clock::now();
         m_radix_tree.entry(caller_name);
         CallerProfile & callProfile = m_radix_tree.get_current_node()->data();
         callProfile.caller_name = caller_name;
@@ -250,7 +261,7 @@ public:
     }
 
     // Called when a function ends
-    void end_caller(const std::string & caller_name)
+    void end_caller()
     {
         CallerProfile & call_profile = m_radix_tree.get_current_node()->data();
         call_profile.stop_stopwatch(); // Update profiling information
@@ -293,8 +304,8 @@ class CallProfilerProbe
 {
 public:
     CallProfilerProbe(CallProfiler & profiler, const char * caller_name)
-        : m_profiler(profiler)
-        , m_caller_name(caller_name)
+        : m_caller_name(caller_name)
+        , m_profiler(profiler)
     {
         auto cancel_callback = [&]()
         {
@@ -312,7 +323,7 @@ public:
     {
         if (!m_cancel)
         {
-            m_profiler.end_caller(m_caller_name);
+            m_profiler.end_caller();
         }
     }
 
