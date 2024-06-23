@@ -96,7 +96,9 @@ protected:
 
     BufferBase(int8_t * start, int8_t * end)
         : m_begin(start)
-        , m_end(end){};
+        , m_end(end)
+    {
+    }
 
     BufferBase(BufferBase const &) = delete;
     BufferBase(BufferBase &&) = delete;
