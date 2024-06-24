@@ -274,6 +274,12 @@ public:
         print_profiling_result(*(m_radix_tree.get_current_node()), 0, outstream);
     }
 
+    // Print the statistics of the profiling result
+    void print_statistics(std::ostream & outstream) const
+    {
+        print_statistics(*(m_radix_tree.get_current_node()), outstream);
+    }
+
     /// Reset the profiler
     void reset();
 
@@ -291,6 +297,7 @@ public:
 
 private:
     void print_profiling_result(const RadixTreeNode<CallerProfile> & node, const int depth, std::ostream & outstream) const;
+    static void print_statistics(const RadixTreeNode<CallerProfile> & node, std::ostream & outstream);
 
 private:
     RadixTree<CallerProfile> m_radix_tree; /// the data structure of the callers

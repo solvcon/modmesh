@@ -169,6 +169,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapCallProfiler : public WrapBase<WrapC
 {
 public:
     friend root_base_type;
+    static pybind11::dict result(CallProfiler & profiler);
 
 protected:
     WrapCallProfiler(pybind11::module & mod, char const * pyname, char const * pydoc)
@@ -181,47 +182,64 @@ protected:
                 "instance",
                 [](py::object const &) -> wrapped_type &
                 { return wrapped_type::instance(); })
-            .def("result", [](CallProfiler & profiler)
-                 {
-            const RadixTreeNode<CallerProfile> * root = profiler.radix_tree().get_root();
-            if (root->empty_children()) {
-                return py::dict();
-            }
-            py::dict result;
-            std::queue<const RadixTreeNode<CallerProfile>*> node_queue;
-            std::unordered_map<const RadixTreeNode<CallerProfile>*, py::dict> dict_storage;
-
-            node_queue.push(root);
-            dict_storage[root] = result;
-
-            while (!node_queue.empty()) {
-                const RadixTreeNode<CallerProfile>* cur_node = node_queue.front();
-                const py::dict& current_dict = dict_storage[cur_node];
-                node_queue.pop();
-
-                current_dict["name"] = cur_node->name();
-                current_dict["total_time"] = cur_node->data().total_time.count() / 1e6;
-                current_dict["count"] = cur_node->data().call_count;
-                if (cur_node == profiler.radix_tree().get_current_node()){
-                    current_dict["current_node"] = true;
-                }
-
-                py::list children_list;
-                for (const auto& child : cur_node->children()) {
-                    dict_storage[child.get()] = py::dict();
-                    py::dict& child_dict = dict_storage[child.get()];
-                    children_list.append(child_dict);
-                    node_queue.push(child.get());
-                }
-                current_dict["children"] = children_list;
-            }
-            return result; })
+            .def(
+                "stat",
+                [](CallProfiler & profiler)
+                {
+                    std::stringstream ss;
+                    profiler.print_statistics(ss);
+                    return ss.str();
+                })
+            .def("result", &result)
             .def("reset", &wrapped_type::reset);
         ;
 
         mod.attr("call_profiler") = mod.attr("CallProfiler").attr("instance");
     }
 }; /* end class WrapCallProfiler */
+
+pybind11::dict WrapCallProfiler::result(CallProfiler & profiler)
+{
+    namespace py = pybind11;
+
+    const RadixTreeNode<CallerProfile> * root = profiler.radix_tree().get_root();
+    if (root->empty_children())
+    {
+        return {};
+    }
+    py::dict result;
+    std::queue<const RadixTreeNode<CallerProfile> *> node_queue;
+    std::unordered_map<const RadixTreeNode<CallerProfile> *, py::dict> dict_storage;
+
+    node_queue.push(root);
+    dict_storage[root] = result;
+
+    while (!node_queue.empty())
+    {
+        const RadixTreeNode<CallerProfile> * cur_node = node_queue.front();
+        const py::dict & current_dict = dict_storage[cur_node];
+        node_queue.pop();
+
+        current_dict["name"] = cur_node->name();
+        current_dict["total_time"] = cur_node->data().total_time.count() / 1e6;
+        current_dict["count"] = cur_node->data().call_count;
+        if (cur_node == profiler.radix_tree().get_current_node())
+        {
+            current_dict["current_node"] = true;
+        }
+
+        py::list children_list;
+        for (const auto & child : cur_node->children())
+        {
+            dict_storage[child.get()] = py::dict();
+            py::dict & child_dict = dict_storage[child.get()];
+            children_list.append(child_dict);
+            node_queue.push(child.get());
+        }
+        current_dict["children"] = children_list;
+    }
+    return result;
+}
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapCallProfilerProbe : public WrapBase<WrapCallProfilerProbe, CallProfilerProbe>
 {
