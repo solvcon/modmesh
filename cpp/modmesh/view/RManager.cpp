@@ -212,7 +212,7 @@ void RManager::setUpMenu()
                     {
                         R3DWidget * viewer = dynamic_cast<R3DWidget *>(subwin->widget());
                         Qt3DRender::QCamera * camera = viewer->camera();
-                        if(camera)
+                        if (camera)
                         {
                             viewer->resetCamera(camera);
                         }
@@ -231,6 +231,7 @@ void RManager::setUpMenu()
 
         use_orbit_camera->setCheckable(true);
         use_fps_camera->setCheckable(true);
+        use_orbit_camera->setChecked(true);
 
         reset_camera->setShortcut(QKeySequence(Qt::Key_Escape));
 

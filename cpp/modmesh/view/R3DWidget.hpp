@@ -111,7 +111,7 @@ public:
     Qt3DExtras::Qt3DWindow * view() { return m_view; }
     RScene * scene() { return m_scene; }
     Qt3DRender::QCamera * camera() { return m_view->camera(); }
-    void resetCamera(Qt3DRender::QCamera * camera); 
+    void resetCamera(Qt3DRender::QCamera * camera);
 
     QPixmap grabPixmap() const { return m_view->screen()->grabWindow(m_view->winId()); }
 
