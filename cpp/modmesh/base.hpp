@@ -72,6 +72,11 @@ struct is_specialization_of<Template, Template<Args...>> : std::true_type
 template <template <typename...> class Template, typename T>
 inline constexpr bool is_specialization_of_v = is_specialization_of<Template, T>::value;
 
+inline bool is_whitespace(char c)
+{
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v';
+}
+
 } /* end namespace detail */
 
 using real_type = double;
