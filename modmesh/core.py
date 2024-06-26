@@ -33,6 +33,9 @@ three-dimensional space.
 
 # Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
 
+import os
+
+from . import pylibmgr
 
 __all__ = [  # noqa: F822
     'WrapperProfilerStatus',
@@ -107,6 +110,10 @@ except ImportError:
 def _load():
     for name in __all__:
         globals()[name] = getattr(_impl, name)
+
+    # Walk through the thirdparty folder and register all library
+    # into a dictionary.
+    pylibmgr.search_library_root(os.getcwd(), 'thirdparty')
 
 
 _load()
