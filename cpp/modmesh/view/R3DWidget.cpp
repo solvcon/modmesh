@@ -103,11 +103,14 @@ void R3DWidget::resizeEvent(QResizeEvent * event)
     m_container->resize(event->size());
 }
 
-void R3DWidget::resetCamera(Qt3DRender::QCamera * camera)
+void R3DWidget::resetCamera(Qt3DRender::QCamera * camera,
+                            float positionX,
+                            float positionY,
+                            float positionZ)
 {
     // Set up the camera.
     camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
-    camera->setPosition(QVector3D(0.0f, 0.0f, 10.0f));
+    camera->setPosition(QVector3D(positionX, positionY, positionZ));
     camera->setViewCenter(QVector3D(0.0f, 0.0f, 0.0f));
 
     // Set up the camera control.
