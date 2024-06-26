@@ -52,7 +52,7 @@ __all__ = _from_impl + [  # noqa: F822
 enable = False
 try:
     from _modmesh import view as _vimpl  # noqa: F401
-    from .pylibmgr import load_library
+    from . import pylibmgr
     enable = True
 except ImportError:
     pass
@@ -70,7 +70,7 @@ def _load():
         tv = tg.viewer
         tv.set_string("library", "PUI")
 
-        load_library(tv.library)
+        pylibmgr.load_library(tv.library)
 
 
 _load()

@@ -31,12 +31,18 @@ import time
 lib_path = {}
 
 
-def search_library_root(curr_path, lib_root_name, timeout=1):
+def search_library_root(curr_path, lib_root_name, timeout=1.0):
     """
     Walk through the thridparty library and register all third-party
     library folder path into a dictionary with library name as the key,
     user can select which library need to be imported by library name.
 
+    :param curr_path: The path to start searching from.
+    :type curr_path: str
+    :param lib_root_name: The name of the root folder containing libraries.
+    :type lib_root_name: str
+    :param timeout: Maximum time for root path searching. Default is 1.0 sec.
+    :type timeout: float
     :return: None
     """
     # Try to find the library root, if failed to find it

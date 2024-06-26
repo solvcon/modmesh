@@ -35,7 +35,7 @@ three-dimensional space.
 
 import os
 
-from .pylibmgr import search_library_root
+from . import pylibmgr
 
 __all__ = [  # noqa: F822
     'WrapperProfilerStatus',
@@ -110,7 +110,7 @@ def _load():
 
     # Walk through the thirdparty folder and register all library
     # into a dictionary.
-    search_library_root(os.getcwd(), 'thirdparty')
+    pylibmgr.search_library_root(os.getcwd(), 'thirdparty')
 
 
 _load()

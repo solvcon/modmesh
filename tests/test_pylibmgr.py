@@ -34,6 +34,8 @@ import modmesh
 class pylibmgrTC(unittest.TestCase):
 
     def test_pylibmgr_search_library_root(self):
+        # This test case assumes that modmesh third-party lib root's name is
+        # thirdparty, it is located at modmesh project root: /path/to/modmesh.
         modmesh.pylibmgr.search_library_root(os.getcwd(), 'thirdparty')
         lib_path = modmesh.pylibmgr.lib_path
         self.assertNotEqual(lib_path, {})
