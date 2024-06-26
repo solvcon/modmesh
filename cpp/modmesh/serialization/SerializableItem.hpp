@@ -131,10 +131,10 @@ public:
     static std::string to_json_string(const T & value);
 
     template <typename T>
-    static void from_json_string(const std::unique_ptr<JsonNode> & node, T & value);
+    static void from_json_string(const std::unique_ptr<JsonNode> & node, T & value); // TODO: have a design that can remove the output argument to increase the maintainability
 
     template <typename T>
-    static void from_json_string(const std::unique_ptr<JsonNode> & node, std::vector<T> & vec);
+    static void from_json_string(const std::unique_ptr<JsonNode> & node, std::vector<T> & vec); // TODO: have a design that can remove the output argument to increase the maintainability
 
 }; /* end class JsonHelper */
 
