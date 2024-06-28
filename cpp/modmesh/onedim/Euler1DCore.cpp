@@ -153,19 +153,19 @@ void Euler1DCore::march_half_so0(bool odd_plane)
 
 void Euler1DCore::treat_boundary_so0()
 {
-    /* Non-reflecting boundary condition (NRBC) type 3 with $\lambda=0$
+    /* Non-reflecting boundary condition (NRBC) type 2 with $\lambda=0$
      * (the third set in Chang 05) */
     // Set outside value from inside value.
     {
         // Left boundary.
-        size_t const ic = 1;
+        size_t const ic = 0;
         m_so0(ic, 0) = m_so0(ic + 1, 0);
         m_so0(ic, 1) = m_so0(ic + 1, 1);
         m_so0(ic, 2) = m_so0(ic + 1, 2);
     }
     {
         // Right boundary.
-        size_t const ic = ncoord() - 2;
+        size_t const ic = ncoord() - 1;
         m_so0(ic, 0) = m_so0(ic - 1, 0);
         m_so0(ic, 1) = m_so0(ic - 1, 1);
         m_so0(ic, 2) = m_so0(ic - 1, 2);
@@ -174,19 +174,19 @@ void Euler1DCore::treat_boundary_so0()
 
 void Euler1DCore::treat_boundary_so1()
 {
-    /* Non-reflecting boundary condition (NRBC) type 3 with $\lambda=0$
+    /* Non-reflecting boundary condition (NRBC) type 2 with $\lambda=0$
      * (the third set in Chang 05) */
     // Set outside value from inside value.
     {
         // Left boundary.
-        size_t const ic = 1;
+        size_t const ic = 0;
         m_so1(ic, 0) = m_so1(ic + 1, 0);
         m_so1(ic, 1) = m_so1(ic + 1, 1);
         m_so1(ic, 2) = m_so1(ic + 1, 2);
     }
     {
         // Right boundary.
-        size_t const ic = ncoord() - 2;
+        size_t const ic = ncoord() - 1;
         m_so1(ic, 0) = m_so1(ic - 1, 0);
         m_so1(ic, 1) = m_so1(ic - 1, 1);
         m_so1(ic, 2) = m_so1(ic - 1, 2);

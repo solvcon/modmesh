@@ -273,11 +273,11 @@ inline void BadEuler1DSolver::march_half_so1_alpha(bool odd_plane)
 template <size_t ALPHA>
 inline void BadEuler1DSolver::march_half1_alpha()
 {
-    march_half_so0(false);
     treat_boundary_so0();
+    treat_boundary_so1();
+    march_half_so0(false);
     update_cfl(true);
     march_half_so1_alpha<ALPHA>(false);
-    treat_boundary_so1();
 }
 
 template <size_t ALPHA>

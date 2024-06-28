@@ -52,12 +52,11 @@ class Euler1DSolverTC(unittest.TestCase):
 
     def test_march_fine_interface(self):
         def _march():
-            # first half step.
-            self.svr.march_half_so0(odd_plane=False)
             self.svr.treat_boundary_so0()
+            self.svr.treat_boundary_so1()
+            self.svr.march_half_so0(odd_plane=False)
             self.svr.update_cfl(odd_plane=True)
             self.svr.march_half_so1_alpha2(odd_plane=False)
-            self.svr.treat_boundary_so1()
             # second half step.
             self.svr.march_half_so0(odd_plane=True)
             self.svr.update_cfl(odd_plane=False)
