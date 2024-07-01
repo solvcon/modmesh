@@ -27,6 +27,7 @@
  */
 
 #include <modmesh/toggle/RadixTree.hpp>
+#include <modmesh/toggle/profile.hpp>
 
 namespace modmesh
 {
@@ -70,6 +71,49 @@ void CallProfiler::print_profiling_result(const RadixTreeNode<CallerProfile> & n
         // NOLINTNEXTLINE(misc-no-recursion)
         print_profiling_result(*child, depth + 1, outstream);
     }
+}
+
+void CallProfiler::print_statistics(const RadixTreeNode<CallerProfile> & node, std::ostream & outstream)
+{
+    TimeRegistry::me().clear();
+
+    std::queue<const RadixTreeNode<CallerProfile> *> nodes_buffer;
+    for (const auto & child : node.children())
+    {
+        nodes_buffer.push(child.get());
+    }
+
+    // BFS algorithm and put the node information into TimeRegistry.
+    while (!nodes_buffer.empty())
+    {
+        const int nodes_buffer_size = nodes_buffer.size();
+        for (int i = 0; i < nodes_buffer_size; ++i)
+        {
+            const RadixTreeNode<CallerProfile> * current_node = nodes_buffer.front();
+            nodes_buffer.pop();
+            TimeRegistry::me().add(
+                current_node->data().caller_name,
+                current_node->data().total_time.count() / 1e9,
+                current_node->data().total_time.count() / 1e9,
+                current_node->data().call_count);
+
+            for (const auto & child : current_node->children())
+            {
+                nodes_buffer.push(child.get());
+                TimeRegistry::me().add(
+                    current_node->data().caller_name,
+                    0,
+                    -child->data().total_time.count() / 1e9,
+                    0);
+            }
+        }
+    }
+
+    // Print the statistics.
+    outstream << TimeRegistry::me().detailed_report();
+
+    // Reset the TimeRegistry.
+    TimeRegistry::me().clear();
 }
 
 void CallProfilerSerializer::serialize_call_profiler(const CallProfiler & profiler, std::ostream & outstream)

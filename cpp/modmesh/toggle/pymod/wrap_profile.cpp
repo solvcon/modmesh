@@ -181,6 +181,11 @@ protected:
                 "instance",
                 [](py::object const &) -> wrapped_type &
                 { return wrapped_type::instance(); })
+            .def("stat", [](CallProfiler & profiler)
+                 {
+                std::stringstream ss;
+                profiler.print_statistics(ss);
+                return ss.str(); })
             .def("result", [](CallProfiler & profiler)
                  {
             const RadixTreeNode<CallerProfile> * root = profiler.radix_tree().get_root();
