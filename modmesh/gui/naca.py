@@ -94,16 +94,50 @@ def calc_naca4_points(number, npoint, open_trailing_edge=False,
     return ret
 
 
-def draw_naca4(world, number, npoint, fac, off_x, off_y, **kw):
+def calc_sample_points(points):
+    # determine the number of sample points for a cubic bezier curve
+    spacing = 0.01
+    segments = np.hypot((points[:-1, 0] - points[1:, 0]),
+                        (points[:-1, 1] - points[1:, 1])) // spacing
+    nsample = np.where(segments > 2, segments - 1, 2).astype(int)
+    return nsample
+
+
+def linear_approximate(world, points):
+    for it in range(points.shape[0] - 1):
+        world.add_edge(points[it, 0], points[it, 1], 0,
+                       points[it + 1, 0], points[it + 1, 1], 0)
+    return
+
+
+def cubic_bezier_approximate(world, points, nsample=None):
+    Vector = core.Vector3dFp64
+
+    if nsample is None:
+        nsample = calc_sample_points(points)
+    for it in range(points.shape[0] - 1):
+        p1 = points[it] + (1 / 3) * (points[it + 1] - points[it])
+        p2 = points[it] + (2 / 3) * (points[it + 1] - points[it])
+
+        b = world.add_bezier([Vector(points[it, 0], points[it, 1], 0),
+                              Vector(p1[0], p1[1], 0),
+                              Vector(p2[0], p2[1], 0),
+                              Vector(points[it + 1, 0], points[it + 1, 1], 0)])
+        b.sample(nsample[it])
+    return
+
+
+def draw_naca4(world, number, npoint, fac, off_x, off_y,
+               use_bezier=False, **kw):
     crds = calc_naca4_points(number=number, npoint=npoint, **kw)
     crds *= fac  # scaling factor
     crds[:, 0] += off_x  # offset in x
     crds[:, 1] += off_y  # offset in y
-    for it in range(crds.shape[0] - 1):
-        e = world.add_edge(crds[it, 0], crds[it, 1], 0,
-                           crds[it + 1, 0], crds[it + 1, 1], 0)
-        print(f"{it}: {e}")
-    print("nedge:", world.nedge)
+
+    if use_bezier:
+        cubic_bezier_approximate(world, crds)
+    else:
+        linear_approximate(world, crds)
     return crds
 
 
@@ -113,7 +147,7 @@ def runmain():
     """
     w = core.WorldFp64()
     draw_naca4(w, number='0012', npoint=101, fac=5.0, off_x=0.0, off_y=2.0,
-               open_trailing_edge=False, cosine_spacing=True)
+               open_trailing_edge=False, use_bezier=True, cosine_spacing=True)
     wid = view.mgr.add3DWidget()
     wid.updateWorld(w)
     wid.showMark()
