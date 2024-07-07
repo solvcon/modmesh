@@ -9,6 +9,7 @@ set(MODMESH_VIEW_PYMODHEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/RManager.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RParameter.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAxisMark.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RCameraController.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RPythonConsoleDockWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RStaticMesh.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAction.hpp
@@ -23,6 +24,7 @@ set(MODMESH_VIEW_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/RManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RParameter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAxisMark.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RCameraController.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RPythonConsoleDockWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RStaticMesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAction.cpp
