@@ -29,7 +29,7 @@
  */
 
 #include <modmesh/base.hpp>
-
+#include <iomanip>
 #include <vector>
 #include <string>
 #include <chrono>
@@ -106,6 +106,7 @@ public:
 
     size_t count() const { return m_count; }
     double time() const { return m_time; }
+    double ctime() const { return m_ctime; }
 
     double start() { return m_sw.lap(); }
     double stop()
@@ -122,10 +123,19 @@ public:
         return *this;
     }
 
+    TimedEntry & add_time_and_count(double ttime, double ctime, long long count)
+    {
+        m_count += count;
+        m_time += ttime;
+        m_ctime += ctime;
+        return *this;
+    }
+
 private:
 
     size_t m_count = 0;
     double m_time = 0.0;
+    double m_ctime = 0.0;
     StopWatch m_sw;
 
 }; /* end class TimedEntry */
@@ -166,6 +176,21 @@ public:
         add(std::string(name), time);
     }
 
+    void add(std::string const & name, double ttime, double ctime, long long count)
+    {
+        entry(name).add_time_and_count(ttime, ctime, count);
+        m_total_call_count += count;
+        m_total_time += ctime;
+    }
+
+    void add(const char * name, double ttime, double ctime, long long count)
+    {
+        add(std::string(name), ttime, ctime, count);
+    }
+
+    double total_time() const { return m_total_time; }
+    long long total_call_count() const { return m_total_call_count; }
+
     std::vector<std::string> names() const
     {
         std::vector<std::string> ret;
@@ -186,7 +211,12 @@ public:
         return it->second;
     }
 
-    void clear() { m_entry.clear(); }
+    void clear()
+    {
+        m_entry.clear();
+        m_total_call_count = 0;
+        m_total_time = 0;
+    }
 
     TimeRegistry(TimeRegistry const &) = delete;
     TimeRegistry(TimeRegistry &&) = delete;
@@ -199,10 +229,13 @@ public:
         // std::cout << report();
     }
 
+    std::string detailed_report() const;
+
 private:
 
+    long long m_total_call_count = 0;
+    double m_total_time = 0;
     TimeRegistry() = default;
-
     std::map<std::string, TimedEntry> m_entry;
 
 }; /* end struct TimeRegistry */

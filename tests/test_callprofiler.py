@@ -192,3 +192,95 @@ class CallProfilerTC(unittest.TestCase):
 
         modmesh.call_profiler.reset()
         foo()
+
+    def test_get_stat(self):
+        time1 = 0.5
+        time2 = 0.1
+        time3 = 0.2
+
+        @profile_function
+        def bar():
+            busy_loop(time1)
+
+        @profile_function
+        def foo():
+            busy_loop(time2)
+            bar()
+
+        @profile_function
+        def baz():
+            busy_loop(time3)
+            foo()
+
+        modmesh.call_profiler.reset()
+        bar()
+        bar()
+        foo()
+        baz()
+        root_stat = modmesh.call_profiler.stat()
+
+        # Check the number of lines
+        stat_line_list = root_stat.split("\n")
+        self.assertEqual(len(stat_line_list), 7)
+
+        # Check the first line
+        words = stat_line_list[0].split()
+        self.assertEqual(words[0], "7")
+        self.assertEqual(words[1], "function")
+        self.assertEqual(words[2], "calls")
+        self.assertEqual(words[3], "in")
+        ref_total_time = time1 * 4 + time2 * 2 + time3
+        self.assertGreaterEqual(float(words[4]), ref_total_time)
+        self.assertEqual(words[5], "seconds")
+
+        # Check the second line
+        self.assertEqual(stat_line_list[1], "")
+
+        # Check the third line
+        ref_line3 = (
+            "                           Function Name"
+            + "               Call Count"
+            + "           Total Time (s)"
+            + "             Per Call (s)"
+            + "      Cumulative Time (s)"
+            + "             Per Call (s)"
+        )
+        self.assertEqual(stat_line_list[2], ref_line3)
+
+        # Check remaining lines
+        stat_dict = {}
+        for line in stat_line_list[3:-1]:
+            words = line.split()
+            stat_dict[words[0]] = {
+                "call_count": int(words[1]),
+                "total_time": float(words[2]),
+                "total_per_call": float(words[3]),
+                "cumulative_time": float(words[4]),
+                "cumulative_per_call": float(words[5]),
+            }
+
+        bar_dict = stat_dict["bar"]
+
+        self.assertEqual(bar_dict["call_count"], 4)
+        self.assertGreaterEqual(bar_dict["total_time"], time1 * 4)
+        self.assertGreaterEqual(bar_dict["total_per_call"], time1)
+        self.assertGreaterEqual(bar_dict["cumulative_time"], time1 * 4)
+        self.assertGreaterEqual(bar_dict["cumulative_per_call"], time1)
+
+        foo_dict = stat_dict["foo"]
+        ref_per_call = time1 + time2
+
+        self.assertEqual(foo_dict["call_count"], 2)
+        self.assertGreaterEqual(foo_dict["total_time"], ref_per_call * 2)
+        self.assertGreaterEqual(foo_dict["total_per_call"], ref_per_call)
+        self.assertGreaterEqual(foo_dict["cumulative_time"], time2 * 2)
+        self.assertGreaterEqual(foo_dict["cumulative_per_call"], time2)
+
+        baz_dict = stat_dict["baz"]
+        ref_per_call = time1 + time2 + time3
+
+        self.assertEqual(baz_dict["call_count"], 1)
+        self.assertGreaterEqual(baz_dict["total_time"], ref_per_call)
+        self.assertGreaterEqual(baz_dict["total_per_call"], ref_per_call)
+        self.assertGreaterEqual(baz_dict["cumulative_time"], time3)
+        self.assertGreaterEqual(baz_dict["cumulative_per_call"], time3)
