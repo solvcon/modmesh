@@ -87,6 +87,8 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                     }),
                 py::arg("array"))
             .def_buffer(&property_helper::get_buffer_info)
+            .def("clone", [](wrapped_type const & self)
+                 { return wrapped_type(self); }) // cloning the object using the copy constructor. never add the clone method to the C++ class.
             .def_property_readonly(
                 "ndarray",
                 [](wrapped_type & self)

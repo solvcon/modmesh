@@ -231,6 +231,8 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                         return wrapped_type(shape, buffer, pybind11::str(arr_in.dtype()));
                     }),
                 pybind11::arg("array"))
+            .def("clone", [](wrapped_type const & self)
+                 { return wrapped_type(self); }) // cloning the object using the copy constructor. never add the clone method to the C++ class.
             .def_property_readonly("typed", &get_typed_array)
             .def_buffer(
                 [](wrapped_type & self)
