@@ -1,3 +1,30 @@
+/*
+ * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * - Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * - Neither the name of the copyright holder nor the names of its contributors
+ *   may be used to endorse or promote products derived from this software
+ *   without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <modmesh/view/RCameraController.hpp>
 
@@ -6,10 +33,6 @@
 #include <Qt3DRender/QCamera>
 
 namespace modmesh {
-
-/*
- * CameraInputListener
- */
 
 RCameraInputListener::RCameraInputListener(
     Qt3DInput::QKeyboardDevice* keyboardDevice, Qt3DInput::QMouseDevice* mouseDevice,
@@ -31,12 +54,14 @@ RCameraInputListener::RCameraInputListener(
     , m_leftMouseButtonAction(new Qt3DInput::QAction)
     , m_middleMouseButtonAction(new Qt3DInput::QAction)
     , m_rightMouseButtonAction(new Qt3DInput::QAction)
+
     , m_shiftButtonAction(new Qt3DInput::QAction)
     , m_altButtonAction(new Qt3DInput::QAction)
 
     , m_leftMouseButtonInput(new Qt3DInput::QActionInput)
     , m_middleMouseButtonInput(new Qt3DInput::QActionInput)
     , m_rightMouseButtonInput(new Qt3DInput::QActionInput)
+
     , m_shiftButtonInput(new Qt3DInput::QActionInput)
     , m_altButtonInput(new Qt3DInput::QActionInput)
 
@@ -96,6 +121,11 @@ void RCameraInputListener::init()
     m_shiftButtonInput->setButtons(QList<int> { Qt::Key_Shift });
     m_shiftButtonInput->setSourceDevice(m_keyboardDevice);
     m_shiftButtonAction->addInput(m_shiftButtonInput);
+
+    // alt button
+    m_altButtonInput->setButtons(QList<int> { Qt::Key_Alt });
+    m_altButtonInput->setSourceDevice(m_keyboardDevice);
+    m_altButtonAction->addInput(m_altButtonInput);
 
     //// Axes
 
@@ -161,20 +191,19 @@ void RCameraInputListener::init()
     m_logicalDevice->addAction(m_rightMouseButtonAction);
     m_logicalDevice->addAction(m_altButtonAction);
     m_logicalDevice->addAction(m_shiftButtonAction);
+
     m_logicalDevice->addAxis(m_rxAxis);
     m_logicalDevice->addAxis(m_ryAxis);
     m_logicalDevice->addAxis(m_txAxis);
     m_logicalDevice->addAxis(m_tyAxis);
     m_logicalDevice->addAxis(m_tzAxis);
 
-    connect(this, &QEntity::enabledChanged,
-            m_logicalDevice, &Qt3DInput::QLogicalDevice::setEnabled);
-    connect(this, &QEntity::enabledChanged,
-            m_frameAction, &Qt3DLogic::QFrameAction::setEnabled);
+    connect(this, &QEntity::enabledChanged, m_logicalDevice, &Qt3DInput::QLogicalDevice::setEnabled);
+    connect(this, &QEntity::enabledChanged, m_frameAction, &Qt3DLogic::QFrameAction::setEnabled);
 
-    for (const auto axis: {m_rxAxis, m_ryAxis, m_txAxis, m_tyAxis, m_tzAxis}) {
-        connect(this, &QEntity::enabledChanged,
-                         axis, &Qt3DInput::QAxis::setEnabled);
+    for (const auto axis: {m_rxAxis, m_ryAxis, m_txAxis, m_tyAxis, m_tzAxis})
+    {
+        connect(this, &QEntity::enabledChanged, axis, &Qt3DInput::QAxis::setEnabled);
     }
 
     addComponent(m_frameAction);
@@ -182,11 +211,8 @@ void RCameraInputListener::init()
 }
 
 
-/*
- * FirstPersonCameraController
- */
-
-RFirstPersonCameraController::RFirstPersonCameraController(QNode * parent) : QFirstPersonCameraController(parent) {
+RFirstPersonCameraController::RFirstPersonCameraController(QNode * parent) : QFirstPersonCameraController(parent)
+{
     auto callback = [this] (const InputState &state, const float dt) {
         updateCameraPosition(state, dt);
     };
@@ -194,38 +220,29 @@ RFirstPersonCameraController::RFirstPersonCameraController(QNode * parent) : QFi
     m_listener = new RCameraInputListener(keyboardDevice(), mouseDevice(), callback, this);
 }
 
-void RFirstPersonCameraController::updateCameraPosition(const InputState &state, const float dt)
+void RFirstPersonCameraController::updateCameraPosition(const InputState &input, const float dt)
 {
-    Qt3DRender::QCamera *theCamera = camera();
+    Qt3DRender::QCamera *_camera = camera();
 
-    if (theCamera == nullptr)
+    if (_camera == nullptr)
         return;
 
-    theCamera->translate(QVector3D(state.txAxisValue * linearSpeed(),
-                                  state.tyAxisValue * linearSpeed(),
-                                  state.tzAxisValue * linearSpeed()) * dt);
-    
-    if (state.leftMouseButtonActive)
+    const auto translationInput = QVector3D(input.txAxisValue, input.tyAxisValue, input.tzAxisValue);
+
+    _camera->translate(translationInput * linearSpeed() * dt);
+
+    if (input.leftMouseButtonActive)
     {
-        float theLookSpeed = lookSpeed();
-        
-        if (state.shiftKeyActive)
-        {
-            theLookSpeed *= 0.2f;
-        }
+        const float _lookSpeed = lookSpeed() * (input.shiftKeyActive ? lookSpeedFactorOnShiftPressed : 1.0f);
 
-        const QVector3D upVector(0.0f, 1.0f, 0.0f);
-
-        theCamera->pan(state.rxAxisValue * theLookSpeed * dt, upVector);
-        theCamera->tilt(state.ryAxisValue * theLookSpeed * dt);
+        _camera->pan(input.rxAxisValue * _lookSpeed * dt, upVector);
+        _camera->tilt(input.ryAxisValue * _lookSpeed * dt);
     }
 }
 
-/*
- * OrbitCameraController
- */
 
-ROrbitCameraController::ROrbitCameraController(QNode * parent) : QOrbitCameraController(parent) {
+ROrbitCameraController::ROrbitCameraController(QNode * parent) : QOrbitCameraController(parent)
+{
     auto callback = [this] (const InputState &state, const float dt) {
         updateCameraPosition(state, dt);
     };
@@ -233,83 +250,94 @@ ROrbitCameraController::ROrbitCameraController(QNode * parent) : QOrbitCameraCon
     m_listener = new RCameraInputListener(keyboardDevice(), mouseDevice(), callback, this);
 }
 
-inline float clampInputs(float input1, float input2)
+void ROrbitCameraController::updateCameraPosition(const InputState& input, const float dt)
 {
-    float axisValue = input1 + input2;
-    return (axisValue < -1) ? -1 : (axisValue > 1) ? 1 : axisValue;
-}
-
-inline float zoomDistance(QVector3D firstPoint, QVector3D secondPoint)
-{
-    return (secondPoint - firstPoint).lengthSquared();
-}
-
-void ROrbitCameraController::updateCameraPosition(const InputState& state, const float dt) {
     Qt3DRender::QCamera *_camera = camera();
-    const float _zoomInLimit = zoomInLimit();
-    const float _lookSpeed = lookSpeed();
     const float _linearSpeed = linearSpeed();
 
     if (_camera == nullptr)
         return;
 
-    // Mouse input
-    if (state.leftMouseButtonActive)
+    // mouse input
+    if (input.leftMouseButtonActive)
     {
-        if (state.rightMouseButtonActive)
+        if (input.rightMouseButtonActive)
         {
-            if ( zoomDistance(camera()->position(), _camera->viewCenter()) > _zoomInLimit * _zoomInLimit)
-            {
-                // Dolly up to limit
-                _camera->translate(QVector3D(0, 0, state.ryAxisValue), _camera->DontTranslateViewCenter);
-            }
-            else
-            {
-                _camera->translate(QVector3D(0, 0, -0.5), _camera->DontTranslateViewCenter);
-            }
-        } else
-        {
-            // Translate
-            _camera->translate(QVector3D((inverseXTranslate() ? -1.0f : 1.0f) * clampInputs(state.rxAxisValue, state.txAxisValue) * linearSpeed(),
-                                           (inverseYTranslate() ? -1.0f : 1.0f) * clampInputs(state.ryAxisValue, state.tyAxisValue) * linearSpeed(),
-                                           0) * dt);
-        }
-        return;
-    }
-    else if (state.rightMouseButtonActive)
-    {
-        // Orbit
-        _camera->panAboutViewCenter((inversePan() ? -1.0f : 1.0f) * (state.rxAxisValue * _lookSpeed) * dt, upVector());
-        _camera->tiltAboutViewCenter((inverseTilt() ? -1.0f : 1.0f) * (state.ryAxisValue * _lookSpeed) * dt);
-    }
-
-    // Keyboard Input
-    if (state.altKeyActive)
-    {
-        // Orbit
-        _camera->panAboutViewCenter((state.txAxisValue * _lookSpeed) * dt, upVector());
-        _camera->tiltAboutViewCenter((state.tyAxisValue * _lookSpeed) * dt);
-    }
-    else if (state.shiftKeyActive)
-    {
-        if (zoomDistance(camera()->position(), _camera->viewCenter()) > _zoomInLimit * _zoomInLimit)
-        {
-            // Dolly
-            _camera->translate(QVector3D(0, 0, state.tzAxisValue * linearSpeed() * dt), _camera->DontTranslateViewCenter);
+            zoom(input.tzAxisValue);
         }
         else
         {
-            _camera->translate(QVector3D(0, 0, -0.5), _camera->DontTranslateViewCenter);
+            // translate
+            const auto inversion = QVector3D(
+                inverseXTranslate() ? -1.f : 1.f,
+                inverseYTranslate() ? -1.f : 1.f,
+                1.f
+            );
+            const auto translation = QVector3D(
+                clamp(input.rxAxisValue + input.txAxisValue),
+                clamp(input.ryAxisValue + input.tyAxisValue),
+                0
+            );
+
+            _camera->translate(inversion * translation * _linearSpeed * dt);
         }
+
+        return;
+    }
+
+    if (input.rightMouseButtonActive)
+    {
+        orbit(
+            (inversePan() ? -1.0f : 1.0f) * input.rxAxisValue * dt,
+            (inverseTilt() ? -1.0f : 1.0f) * input.ryAxisValue * dt
+        );
+    }
+
+    // keyboard Input
+    if (input.altKeyActive)
+    {
+        orbit(input.txAxisValue * dt, input.tzAxisValue * dt);
+    }
+    else if (input.shiftKeyActive)
+    {
+        zoom(input.tzAxisValue * _linearSpeed * dt);
     }
     else
     {
-        // Translate
-        _camera->translate(QVector3D(clampInputs(state.leftMouseButtonActive ? state.rxAxisValue : 0, state.txAxisValue) * _linearSpeed,
-                                      clampInputs(state.leftMouseButtonActive ? state.ryAxisValue : 0, state.tyAxisValue) * _linearSpeed,
-                                      state.tzAxisValue * _linearSpeed) * dt,
-                             zoomTranslateViewCenter() ? _camera->TranslateViewCenter : _camera->DontTranslateViewCenter);
+        // translate
+        const float x = clamp(input.txAxisValue + (input.leftMouseButtonActive ? input.rxAxisValue : 0));
+        const float y = clamp(input.tyAxisValue + (input.leftMouseButtonActive ? input.ryAxisValue : 0));
+        const auto translation = QVector3D(x, y, input.tzAxisValue) * _linearSpeed * dt;
+
+        const auto option = zoomTranslateViewCenter() ? Qt3DRender::QCamera::TranslateViewCenter : Qt3DRender::QCamera::DontTranslateViewCenter;
+
+        _camera->translate(translation, option);
     }
+}
+
+void ROrbitCameraController::zoom(const float zoomValue) const {
+    const float _zoomInLimitSquared = zoomInLimit() * zoomInLimit();
+    const float _zoomDistanceSquared = zoomDistanceSquared(camera()->position(), camera()->viewCenter());
+
+    const float z = _zoomDistanceSquared > _zoomInLimitSquared ? zoomValue : -0.5f;
+
+    camera()->translate(QVector3D(0, 0, z), Qt3DRender::QCamera::DontTranslateViewCenter);
+}
+
+void ROrbitCameraController::orbit(const float pan, const float tilt) const {
+    camera()->panAboutViewCenter(pan * lookSpeed(), upVector());
+    camera()->tiltAboutViewCenter(tilt * lookSpeed());
+}
+
+float ROrbitCameraController::clamp(const float value) {
+    return std::min(std::max(value, -1.f), 1.f);
+}
+
+float ROrbitCameraController::zoomDistanceSquared(const QVector3D firstPoint, const QVector3D secondPoint)
+{
+    const QVector3D vector = secondPoint - firstPoint;
+
+    return vector.lengthSquared();
 }
 
 }
