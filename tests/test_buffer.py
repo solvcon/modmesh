@@ -207,11 +207,19 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
     def test_SimpleArray_clone(self):
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        sarr.fill(2.0)
         sarr_ref = sarr
         sarr_clone = sarr.clone()
 
         self.assertTrue(sarr_ref is sarr)
+        np.testing.assert_equal(sarr_ref.ndarray[...], sarr.ndarray[...])
+
         self.assertFalse(sarr_clone is sarr)
+        np.testing.assert_equal(sarr_clone.ndarray[...], sarr.ndarray[...])
+
+        sarr[3] = 3.0
+        self.assertEqual(sarr_ref[3], 3.0)
+        self.assertEqual(sarr_clone[3], 2.0)  # should be the original value
 
     def test_SimpleArray_ghost_1d(self):
 
@@ -873,7 +881,14 @@ class SimpleArrayPlexTC(unittest.TestCase):
         sarr_clone = sarr.clone()
 
         self.assertTrue(sarr_ref is sarr)
+        np.testing.assert_equal(sarr_ref.typed.ndarray[...], sarr.typed.ndarray[...])
+
         self.assertFalse(sarr_clone is sarr)
+        np.testing.assert_equal(sarr_clone.typed.ndarray[...], sarr.typed.ndarray[...])
+
+        sarr[3] = 3.0
+        self.assertEqual(sarr_ref[3], 3.0)
+        self.assertEqual(sarr_clone[3], 2.0)  # should be the original value
 
     def test_SimpleArrayPlex_buffer(self):
         magic_number = 3.1415
