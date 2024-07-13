@@ -205,6 +205,22 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual((1, 24), sarr.reshape((1, 24)).shape)
         self.assertEqual((12, 2), sarr.reshape((12, 2)).shape)
 
+    def test_SimpleArray_clone(self):
+        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        sarr.fill(2.0)
+        sarr_ref = sarr
+        sarr_clone = sarr.clone()
+
+        self.assertTrue(sarr_ref is sarr)
+        np.testing.assert_equal(sarr_ref.ndarray[...], sarr.ndarray[...])
+
+        self.assertFalse(sarr_clone is sarr)
+        np.testing.assert_equal(sarr_clone.ndarray[...], sarr.ndarray[...])
+
+        sarr[3] = 3.0
+        self.assertEqual(sarr_ref[3], 3.0)
+        self.assertEqual(sarr_clone[3], 2.0)  # should be the original value
+
     def test_SimpleArray_ghost_1d(self):
 
         sarr = modmesh.SimpleArrayFloat64(4 * 3 * 2)
@@ -858,6 +874,25 @@ class SimpleArrayPlexTC(unittest.TestCase):
             modmesh.SimpleArray(ndarr)
         boolean_array = np.array([True, False, True], dtype='bool')
         modmesh.SimpleArray(boolean_array)
+
+    def test_SimpleArray_clone(self):
+        sarr = modmesh.SimpleArray((2, 3, 4), value=2.0, dtype='float64')
+        sarr_ref = sarr
+        sarr_clone = sarr.clone()
+
+        self.assertTrue(sarr_ref is sarr)
+        ref_ndarr = sarr_ref.typed.ndarray[...]
+        ndarr = sarr.typed.ndarray[...]
+        np.testing.assert_equal(ref_ndarr, ndarr)
+
+        self.assertFalse(sarr_clone is sarr)
+        clone_ndarr = sarr_clone.typed.ndarray[...]
+        ndarr = sarr.typed.ndarray[...]
+        np.testing.assert_equal(clone_ndarr, ndarr)
+
+        sarr[3] = 3.0
+        self.assertEqual(sarr_ref[3], 3.0)
+        self.assertEqual(sarr_clone[3], 2.0)  # should be the original value
 
     def test_SimpleArrayPlex_buffer(self):
         magic_number = 3.1415
