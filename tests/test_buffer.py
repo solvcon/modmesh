@@ -881,10 +881,14 @@ class SimpleArrayPlexTC(unittest.TestCase):
         sarr_clone = sarr.clone()
 
         self.assertTrue(sarr_ref is sarr)
-        np.testing.assert_equal(sarr_ref.typed.ndarray[...], sarr.typed.ndarray[...])
+        ref_ndarr = sarr_ref.typed.ndarray[...]
+        ndarr = sarr.typed.ndarray[...]
+        np.testing.assert_equal(ref_ndarr, ndarr)
 
         self.assertFalse(sarr_clone is sarr)
-        np.testing.assert_equal(sarr_clone.typed.ndarray[...], sarr.typed.ndarray[...])
+        clone_ndarr = sarr_clone.typed.ndarray[...]
+        ndarr = sarr.typed.ndarray[...]
+        np.testing.assert_equal(clone_ndarr, ndarr)
 
         sarr[3] = 3.0
         self.assertEqual(sarr_ref[3], 3.0)
