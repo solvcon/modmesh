@@ -111,8 +111,12 @@ if(BUILD_METAL)
 include_directories("${CMAKE_CURRENT_LIST_DIR}/thirdparty/install/metal-cpp")
 endif()
 
+# Pybind11 2.12.0 is the first version that supports compiling for numpy 2.0.0.
+# Therefore, it is required to use pybind11 2.12.0 or later.
+# Reference: https://github.com/pybind/pybind11/releases/tag/v2.12.0
+
 option(pybind11_path "pybind11 path")
-find_package(pybind11 REQUIRED PATHS ${pybind11_path})
+find_package(pybind11 2.12.0 REQUIRED PATHS ${pybind11_path})
 message(STATUS "pybind11_INCLUDE_DIRS: ${pybind11_INCLUDE_DIRS}")
 include_directories(${pybind11_INCLUDE_DIRS})
 
