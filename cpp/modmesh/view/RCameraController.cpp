@@ -150,37 +150,37 @@ void RCameraInputListener::init()
     m_tzAxis->addInput(m_mouseTzYInput);
 
     // keyboard positive x translation
-    m_keyboardTxPosInput->setButtons(QList<int> { Qt::Key_D });
+    m_keyboardTxPosInput->setButtons(QList<int> { Qt::Key_D, Qt::Key_Right });
     m_keyboardTxPosInput->setScale(1.0f);
     m_keyboardTxPosInput->setSourceDevice(m_keyboardDevice);
     m_txAxis->addInput(m_keyboardTxPosInput);
 
     // keyboard positive z translation
-    m_keyboardTzPosInput->setButtons(QList<int> { Qt::Key_W });
+    m_keyboardTzPosInput->setButtons(QList<int> { Qt::Key_W, Qt::Key_Up });
     m_keyboardTzPosInput->setScale(1.0f);
     m_keyboardTzPosInput->setSourceDevice(m_keyboardDevice);
     m_tzAxis->addInput(m_keyboardTzPosInput);
 
     // keyboard positive y translation
-    m_keyboardTyPosInput->setButtons(QList<int> { Qt::Key_E });
+    m_keyboardTyPosInput->setButtons(QList<int> { Qt::Key_E, Qt::Key_PageUp });
     m_keyboardTyPosInput->setScale(1.0f);
     m_keyboardTyPosInput->setSourceDevice(m_keyboardDevice);
     m_tyAxis->addInput(m_keyboardTyPosInput);
 
     // keyboard negative x translation
-    m_keyboardTxNegInput->setButtons(QList<int> { Qt::Key_A });
+    m_keyboardTxNegInput->setButtons(QList<int> { Qt::Key_A, Qt::Key_Left });
     m_keyboardTxNegInput->setScale(-1.0f);
     m_keyboardTxNegInput->setSourceDevice(m_keyboardDevice);
     m_txAxis->addInput(m_keyboardTxNegInput);
 
     // keyboard negative z translation
-    m_keyboardTzNegInput->setButtons(QList<int> { Qt::Key_S });
+    m_keyboardTzNegInput->setButtons(QList<int> { Qt::Key_S, Qt::Key_Down });
     m_keyboardTzNegInput->setScale(-1.0f);
     m_keyboardTzNegInput->setSourceDevice(m_keyboardDevice);
     m_tzAxis->addInput(m_keyboardTzNegInput);
 
     // keyboard negative y translation
-    m_keyboardTyNegInput->setButtons(QList<int> { Qt::Key_Q });
+    m_keyboardTyNegInput->setButtons(QList<int> { Qt::Key_Q, Qt::Key_PageDown });
     m_keyboardTyNegInput->setScale(-1.0f);
     m_keyboardTyNegInput->setSourceDevice(m_keyboardDevice);
     m_tyAxis->addInput(m_keyboardTyNegInput);
