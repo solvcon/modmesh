@@ -51,8 +51,12 @@ class RCameraInputListener : public Qt3DCore::QEntity
 public:
     using callback_type = std::function<void (const Qt3DExtras::QAbstractCameraController::InputState&, float)>;
 
-    RCameraInputListener(Qt3DInput::QKeyboardDevice* keyboardDevice, Qt3DInput::QMouseDevice* mouseDevice,
-        callback_type callback, QNode *parent = nullptr);
+    RCameraInputListener(
+        Qt3DInput::QKeyboardDevice* keyboardDevice,
+        Qt3DInput::QMouseDevice* mouseDevice,
+        callback_type callback,
+        QNode *parent = nullptr
+    );
 
 private:
 
@@ -105,6 +109,10 @@ private:
     Qt3DInput::QButtonAxisInput *m_keyboardTzNegInput;
 
     void init();
+
+    void initMouseListeners() const;
+
+    void initKeyboardListeners() const;
 };
 
 

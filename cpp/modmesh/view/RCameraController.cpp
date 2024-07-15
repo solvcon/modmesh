@@ -35,8 +35,11 @@
 namespace modmesh {
 
 RCameraInputListener::RCameraInputListener(
-    Qt3DInput::QKeyboardDevice* keyboardDevice, Qt3DInput::QMouseDevice* mouseDevice,
-    callback_type callback, QNode * parent)
+    Qt3DInput::QKeyboardDevice* keyboardDevice,
+    Qt3DInput::QMouseDevice* mouseDevice,
+    callback_type callback,
+    QNode * parent
+)
     : QEntity(parent)
     , m_frameAction(new Qt3DLogic::QFrameAction)
     , m_logicalDevice(new Qt3DInput::QLogicalDevice)
@@ -102,90 +105,9 @@ RCameraInputListener::RCameraInputListener(
 
 void RCameraInputListener::init()
 {
-    // left mouse button
-    m_leftMouseButtonInput->setButtons(QList<int> { Qt::LeftButton });
-    m_leftMouseButtonInput->setSourceDevice(m_mouseDevice);
-    m_leftMouseButtonAction->addInput(m_leftMouseButtonInput);
+    initMouseListeners();
+    initKeyboardListeners();
 
-    // middle mouse button
-    m_middleMouseButtonInput->setButtons(QList<int> { Qt::MiddleButton });
-    m_middleMouseButtonInput->setSourceDevice(m_mouseDevice);
-    m_middleMouseButtonAction->addInput(m_middleMouseButtonInput);
-
-    // right mouse button
-    m_rightMouseButtonInput->setButtons(QList<int> { Qt::RightButton });
-    m_rightMouseButtonInput->setSourceDevice(m_mouseDevice);
-    m_rightMouseButtonAction->addInput(m_rightMouseButtonInput);
-
-    // shift button
-    m_shiftButtonInput->setButtons(QList<int> { Qt::Key_Shift });
-    m_shiftButtonInput->setSourceDevice(m_keyboardDevice);
-    m_shiftButtonAction->addInput(m_shiftButtonInput);
-
-    // alt button
-    m_altButtonInput->setButtons(QList<int> { Qt::Key_Alt });
-    m_altButtonInput->setSourceDevice(m_keyboardDevice);
-    m_altButtonAction->addInput(m_altButtonInput);
-
-    //// Axes
-
-    // mouse x rotation
-    m_mouseRxInput->setAxis(Qt3DInput::QMouseDevice::X);
-    m_mouseRxInput->setSourceDevice(m_mouseDevice);
-    m_rxAxis->addInput(m_mouseRxInput);
-
-    // mouse y rotation
-    m_mouseRyInput->setAxis(Qt3DInput::QMouseDevice::Y);
-    m_mouseRyInput->setSourceDevice(m_mouseDevice);
-    m_ryAxis->addInput(m_mouseRyInput);
-
-    // mouse x translation
-    m_mouseTzXInput->setAxis(Qt3DInput::QMouseDevice::WheelX);
-    m_mouseTzXInput->setSourceDevice(m_mouseDevice);
-    m_tzAxis->addInput(m_mouseTzXInput);
-
-    // mouse z translation
-    m_mouseTzYInput->setAxis(Qt3DInput::QMouseDevice::WheelY);
-    m_mouseTzYInput->setSourceDevice(m_mouseDevice);
-    m_tzAxis->addInput(m_mouseTzYInput);
-
-    // keyboard positive x translation
-    m_keyboardTxPosInput->setButtons(QList<int> { Qt::Key_D, Qt::Key_Right });
-    m_keyboardTxPosInput->setScale(1.0f);
-    m_keyboardTxPosInput->setSourceDevice(m_keyboardDevice);
-    m_txAxis->addInput(m_keyboardTxPosInput);
-
-    // keyboard positive z translation
-    m_keyboardTzPosInput->setButtons(QList<int> { Qt::Key_W, Qt::Key_Up });
-    m_keyboardTzPosInput->setScale(1.0f);
-    m_keyboardTzPosInput->setSourceDevice(m_keyboardDevice);
-    m_tzAxis->addInput(m_keyboardTzPosInput);
-
-    // keyboard positive y translation
-    m_keyboardTyPosInput->setButtons(QList<int> { Qt::Key_E, Qt::Key_PageUp });
-    m_keyboardTyPosInput->setScale(1.0f);
-    m_keyboardTyPosInput->setSourceDevice(m_keyboardDevice);
-    m_tyAxis->addInput(m_keyboardTyPosInput);
-
-    // keyboard negative x translation
-    m_keyboardTxNegInput->setButtons(QList<int> { Qt::Key_A, Qt::Key_Left });
-    m_keyboardTxNegInput->setScale(-1.0f);
-    m_keyboardTxNegInput->setSourceDevice(m_keyboardDevice);
-    m_txAxis->addInput(m_keyboardTxNegInput);
-
-    // keyboard negative z translation
-    m_keyboardTzNegInput->setButtons(QList<int> { Qt::Key_S, Qt::Key_Down });
-    m_keyboardTzNegInput->setScale(-1.0f);
-    m_keyboardTzNegInput->setSourceDevice(m_keyboardDevice);
-    m_tzAxis->addInput(m_keyboardTzNegInput);
-
-    // keyboard negative y translation
-    m_keyboardTyNegInput->setButtons(QList<int> { Qt::Key_Q, Qt::Key_PageDown });
-    m_keyboardTyNegInput->setScale(-1.0f);
-    m_keyboardTyNegInput->setSourceDevice(m_keyboardDevice);
-    m_tyAxis->addInput(m_keyboardTyNegInput);
-
-    // logical device
     m_logicalDevice->addAction(m_leftMouseButtonAction);
     m_logicalDevice->addAction(m_middleMouseButtonAction);
     m_logicalDevice->addAction(m_rightMouseButtonAction);
@@ -208,6 +130,91 @@ void RCameraInputListener::init()
 
     addComponent(m_frameAction);
     addComponent(m_logicalDevice);
+}
+
+void RCameraInputListener::initMouseListeners() const {
+    // left mouse button
+    m_leftMouseButtonInput->setButtons(QList<int> { Qt::LeftButton });
+    m_leftMouseButtonInput->setSourceDevice(m_mouseDevice);
+    m_leftMouseButtonAction->addInput(m_leftMouseButtonInput);
+
+    // middle mouse button
+    m_middleMouseButtonInput->setButtons(QList<int> { Qt::MiddleButton });
+    m_middleMouseButtonInput->setSourceDevice(m_mouseDevice);
+    m_middleMouseButtonAction->addInput(m_middleMouseButtonInput);
+
+    // right mouse button
+    m_rightMouseButtonInput->setButtons(QList<int> { Qt::RightButton });
+    m_rightMouseButtonInput->setSourceDevice(m_mouseDevice);
+    m_rightMouseButtonAction->addInput(m_rightMouseButtonInput);
+
+    // mouse x rotation - reads mouse movement in x direction
+    m_mouseRxInput->setAxis(Qt3DInput::QMouseDevice::X);
+    m_mouseRxInput->setSourceDevice(m_mouseDevice);
+    m_rxAxis->addInput(m_mouseRxInput);
+
+    // mouse y rotation - reads mouse movement in y direction
+    m_mouseRyInput->setAxis(Qt3DInput::QMouseDevice::Y);
+    m_mouseRyInput->setSourceDevice(m_mouseDevice);
+    m_ryAxis->addInput(m_mouseRyInput);
+
+    // mouse x translation - need for mouses with trackball
+    m_mouseTzXInput->setAxis(Qt3DInput::QMouseDevice::WheelX);
+    m_mouseTzXInput->setSourceDevice(m_mouseDevice);
+    m_tzAxis->addInput(m_mouseTzXInput);
+
+    // mouse z translation - mouse wheel
+    m_mouseTzYInput->setAxis(Qt3DInput::QMouseDevice::WheelY);
+    m_mouseTzYInput->setSourceDevice(m_mouseDevice);
+    m_tzAxis->addInput(m_mouseTzYInput);
+}
+
+void RCameraInputListener::initKeyboardListeners() const {
+    // shift button
+    m_shiftButtonInput->setButtons(QList<int> { Qt::Key_Shift });
+    m_shiftButtonInput->setSourceDevice(m_keyboardDevice);
+    m_shiftButtonAction->addInput(m_shiftButtonInput);
+
+    // alt button
+    m_altButtonInput->setButtons(QList<int> { Qt::Key_Alt });
+    m_altButtonInput->setSourceDevice(m_keyboardDevice);
+    m_altButtonAction->addInput(m_altButtonInput);
+
+    // keyboard positive x translation
+    m_keyboardTxPosInput->setButtons(QList<int> { Qt::Key_D, Qt::Key_Right });
+    m_keyboardTxPosInput->setScale(1.0f);
+    m_keyboardTxPosInput->setSourceDevice(m_keyboardDevice);
+    m_txAxis->addInput(m_keyboardTxPosInput);
+
+    // keyboard positive y translation
+    m_keyboardTyPosInput->setButtons(QList<int> { Qt::Key_E, Qt::Key_PageUp });
+    m_keyboardTyPosInput->setScale(1.0f);
+    m_keyboardTyPosInput->setSourceDevice(m_keyboardDevice);
+    m_tyAxis->addInput(m_keyboardTyPosInput);
+
+    // keyboard positive z translation
+    m_keyboardTzPosInput->setButtons(QList<int> { Qt::Key_W, Qt::Key_Up });
+    m_keyboardTzPosInput->setScale(1.0f);
+    m_keyboardTzPosInput->setSourceDevice(m_keyboardDevice);
+    m_tzAxis->addInput(m_keyboardTzPosInput);
+
+    // keyboard negative x translation
+    m_keyboardTxNegInput->setButtons(QList<int> { Qt::Key_A, Qt::Key_Left });
+    m_keyboardTxNegInput->setScale(-1.0f);
+    m_keyboardTxNegInput->setSourceDevice(m_keyboardDevice);
+    m_txAxis->addInput(m_keyboardTxNegInput);
+    
+    // keyboard negative y translation
+    m_keyboardTyNegInput->setButtons(QList<int> { Qt::Key_Q, Qt::Key_PageDown });
+    m_keyboardTyNegInput->setScale(-1.0f);
+    m_keyboardTyNegInput->setSourceDevice(m_keyboardDevice);
+    m_tyAxis->addInput(m_keyboardTyNegInput);
+
+    // keyboard negative z translation
+    m_keyboardTzNegInput->setButtons(QList<int> { Qt::Key_S, Qt::Key_Down });
+    m_keyboardTzNegInput->setScale(-1.0f);
+    m_keyboardTzNegInput->setSourceDevice(m_keyboardDevice);
+    m_tzAxis->addInput(m_keyboardTzNegInput);
 }
 
 
