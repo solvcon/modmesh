@@ -111,6 +111,16 @@ struct EscapeItem : SerializableItem
         register_member("escape_string", escape_string);)
 }; // end struct EscapeItem
 
+struct TestUnorderedMapItem : SerializableItem
+{
+    std::unordered_map<std::string, int> numer_map;
+    std::unordered_map<std::string, Pet> pet_map;
+
+    MM_DECL_SERIALIZABLE(
+        register_member("numer_map", numer_map);
+        register_member("pet_map", pet_map);)
+}; // end struct TestUnorderedMapItem
+
 } // end namespace detail
 
 TEST(Json, serialize_private_member_partial_exposure)
@@ -165,6 +175,21 @@ TEST(Json, serialize_with_object)
     std::string answer = std::string("{\"name\":\"John Doe\",\"age\":30,\"is_student\":true,") +
                          "\"address\":{\"country\":\"USA\",\"city\":\"New York\",\"phone_numbers\":[\"123-456-7890\",\"098-765-4321\"],\"zip_codes\":[10001,10002]}," +
                          "\"pets\":[{\"name\":\"Fluffy\",\"age\":3,\"is_dog\":true,\"is_cat\":false},{\"name\":\"Whiskers\",\"age\":8,\"is_dog\":false,\"is_cat\":true}]}";
+}
+
+TEST(Json, serialize_with_unordered_map)
+{
+    detail::TestUnorderedMapItem item;
+    item.numer_map["one"] = 1;
+    item.numer_map["two"] = 2;
+    item.numer_map["three"] = 3;
+    item.pet_map["dog"] = detail::create_dog();
+    item.pet_map["cat"] = detail::create_cat();
+
+    std::string json = item.to_json();
+
+    // the key of numer_map is sorted
+    EXPECT_EQ(json, "{\"numer_map\":{\"one\":1,\"three\":3,\"two\":2},\"pet_map\":{\"cat\":{\"name\":\"Whiskers\",\"age\":8,\"is_dog\":false,\"is_cat\":true},\"dog\":{\"name\":\"Fluffy\",\"age\":3,\"is_dog\":true,\"is_cat\":false}}}");
 }
 
 TEST(Json, deserialize_private_member_partial_exposure)
@@ -272,6 +297,29 @@ TEST(json, deserialize_with_object)
     EXPECT_EQ(person.pets[1].age, 8);
     EXPECT_EQ(person.pets[1].is_dog, false);
     EXPECT_EQ(person.pets[1].is_cat, true);
+}
+
+TEST(Json, deserialize_with_unordered_map)
+{
+    std::string json = "{\"numer_map\":{\"one\":1,\"three\":3,\"two\":2},\"pet_map\":{\"cat\":{\"name\":\"Whiskers\",\"age\":8,\"is_dog\":false,\"is_cat\":true},\"dog\":{\"name\":\"Fluffy\",\"age\":3,\"is_dog\":true,\"is_cat\":false}}}";
+    detail::TestUnorderedMapItem item;
+    item.from_json(json);
+
+    EXPECT_EQ(item.numer_map.size(), 3);
+    EXPECT_EQ(item.numer_map["one"], 1);
+    EXPECT_EQ(item.numer_map["two"], 2);
+    EXPECT_EQ(item.numer_map["three"], 3);
+
+    EXPECT_EQ(item.pet_map.size(), 2);
+    EXPECT_EQ(item.pet_map["dog"].name, "Fluffy");
+    EXPECT_EQ(item.pet_map["dog"].age, 3);
+    EXPECT_EQ(item.pet_map["dog"].is_dog, true);
+    EXPECT_EQ(item.pet_map["dog"].is_cat, false);
+
+    EXPECT_EQ(item.pet_map["cat"].name, "Whiskers");
+    EXPECT_EQ(item.pet_map["cat"].age, 8);
+    EXPECT_EQ(item.pet_map["cat"].is_dog, false);
+    EXPECT_EQ(item.pet_map["cat"].is_cat, true);
 }
 
 } // namespace modmesh
