@@ -156,7 +156,7 @@ std::string JsonHelper::to_json_string(const T & value)
     {
         return value ? "true" : "false";
     }
-    else if constexpr (is_specialization_of<std::vector, T>::value)
+    else if constexpr (is_specialization_of_v<std::vector, T>)
     {
         std::ostringstream oss;
         oss << "[";
@@ -168,6 +168,29 @@ std::string JsonHelper::to_json_string(const T & value)
             separator = ",";
         }
         oss << "]";
+        return oss.str();
+    }
+    else if constexpr (is_specialization_of_v<std::unordered_map, T>)
+    {
+        static_assert(std::is_same_v<typename T::key_type, std::string>, "Only support std::unordered_map<std::string, ...>.");
+
+        std::vector<std::string> keys;
+        for (const auto & kv : value)
+        {
+            keys.push_back(kv.first);
+        }
+        std::sort(keys.begin(), keys.end()); // TODO: the sorting may not be necessary. This is more for the testing purpose.
+
+        std::ostringstream oss;
+        oss << "{";
+        const char * separator = "";
+        for (const auto & key : keys)
+        {
+            // NOLINTNEXTLINE(misc-no-recursion)
+            oss << separator << "\"" << key << "\":" << to_json_string(value.at(key)); /* recursive here */
+            separator = ",";
+        }
+        oss << "}";
         return oss.str();
     }
     else
@@ -241,6 +264,19 @@ void JsonHelper::from_json_string(const std::unique_ptr<JsonNode> & node, T & va
         }
         // NOLINTNEXTLINE(misc-no-recursion)
         value.from_json(std::get<JsonMap>(node->value)); /* recursive here */
+    }
+    else if constexpr (is_specialization_of_v<std::unordered_map, T>)
+    {
+        if (node->type != detail::JsonType::Object)
+        {
+            throw std::runtime_error("Invalid JSON format: invalid object type.");
+        }
+        auto & obj = std::get<detail::JsonMap>(node->value);
+        for (const auto & [key, jsonNode] : obj)
+        {
+            // NOLINTNEXTLINE(misc-no-recursion)
+            from_json_string(jsonNode, value[key]); /* recursive here */
+        }
     }
     else
     {
