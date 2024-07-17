@@ -179,7 +179,7 @@ std::string JsonHelper::to_json_string(const T & value)
         {
             keys.push_back(kv.first);
         }
-        std::sort(keys.begin(), keys.end());
+        std::sort(keys.begin(), keys.end()); // TODO: the sorting may not be necessary. This is more for the testing purpose.
 
         std::ostringstream oss;
         oss << "{";
