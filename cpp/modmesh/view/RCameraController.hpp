@@ -60,67 +60,52 @@ public:
 
 private:
 
-    Qt3DLogic::QFrameAction * m_frameAction;
-    Qt3DInput::QLogicalDevice * m_logicalDevice;
-
-    Qt3DInput::QKeyboardDevice * m_keyboardDevice;
-    Qt3DInput::QMouseDevice * m_mouseDevice;
-
-    // invoked each frame to update the camera position
-    callback_type m_callback;
-
-    // rotation
-    Qt3DInput::QAxis * m_rxAxis;
-    Qt3DInput::QAxis * m_ryAxis;
-
-    // translation
-    Qt3DInput::QAxis * m_txAxis;
-    Qt3DInput::QAxis * m_tyAxis;
-    Qt3DInput::QAxis * m_tzAxis;
-
-    Qt3DInput::QAction * m_leftMouseButtonAction;
-    Qt3DInput::QAction * m_middleMouseButtonAction;
-    Qt3DInput::QAction * m_rightMouseButtonAction;
-
-    Qt3DInput::QAction * m_shiftButtonAction;
-    Qt3DInput::QAction * m_altButtonAction;
-
-    Qt3DInput::QActionInput * m_leftMouseButtonInput;
-    Qt3DInput::QActionInput * m_middleMouseButtonInput;
-    Qt3DInput::QActionInput * m_rightMouseButtonInput;
-
-    Qt3DInput::QActionInput * m_shiftButtonInput;
-    Qt3DInput::QActionInput * m_altButtonInput;
-
-    // mouse rotation input
-    Qt3DInput::QAnalogAxisInput * m_mouseRxInput;
-    Qt3DInput::QAnalogAxisInput * m_mouseRyInput;
-
-    // mouse translation input (wheel)
-    Qt3DInput::QAnalogAxisInput * m_mouseTzXInput;
-    Qt3DInput::QAnalogAxisInput * m_mouseTzYInput;
-
-    // keyboard translation input
-    Qt3DInput::QButtonAxisInput * m_keyboardTxPosInput;
-    Qt3DInput::QButtonAxisInput * m_keyboardTyPosInput;
-    Qt3DInput::QButtonAxisInput * m_keyboardTzPosInput;
-    Qt3DInput::QButtonAxisInput * m_keyboardTxNegInput;
-    Qt3DInput::QButtonAxisInput * m_keyboardTyNegInput;
-    Qt3DInput::QButtonAxisInput * m_keyboardTzNegInput;
-
     void init();
 
     void initMouseListeners() const;
 
     void initKeyboardListeners() const;
+
+    Qt3DLogic::QFrameAction * m_frame_action;
+    Qt3DInput::QLogicalDevice * m_logical_device;
+    Qt3DInput::QKeyboardDevice * m_keyboard_device;
+    Qt3DInput::QMouseDevice * m_mouse_device;
+    // invoked each frame to update the camera position
+    callback_type m_callback;
+    // rotation
+    Qt3DInput::QAxis * m_rx_axis;
+    Qt3DInput::QAxis * m_ry_axis;
+    // translation
+    Qt3DInput::QAxis * m_tx_axis;
+    Qt3DInput::QAxis * m_ty_axis;
+    Qt3DInput::QAxis * m_tz_axis;
+    Qt3DInput::QAction * m_left_mouse_button_action;
+    Qt3DInput::QAction * m_middle_mouse_button_action;
+    Qt3DInput::QAction * m_right_mouse_button_action;
+    Qt3DInput::QAction * m_shift_button_action;
+    Qt3DInput::QAction * m_alt_button_action;
+    Qt3DInput::QActionInput * m_left_mouse_button_input;
+    Qt3DInput::QActionInput * m_middle_mouse_button_input;
+    Qt3DInput::QActionInput * m_right_mouse_button_input;
+    Qt3DInput::QActionInput * m_shift_button_input;
+    Qt3DInput::QActionInput * m_alt_button_input;
+    // mouse rotation input
+    Qt3DInput::QAnalogAxisInput * m_mouse_rx_input;
+    Qt3DInput::QAnalogAxisInput * m_mouse_ry_input;
+    // mouse translation input (wheel)
+    Qt3DInput::QAnalogAxisInput * m_mouse_tz_x_input;
+    Qt3DInput::QAnalogAxisInput * m_mouse_tz_y_input;
+    // keyboard translation input
+    Qt3DInput::QButtonAxisInput * m_keyboard_tx_pos_input;
+    Qt3DInput::QButtonAxisInput * m_keyboard_ty_pos_input;
+    Qt3DInput::QButtonAxisInput * m_keyboard_tz_pos_input;
+    Qt3DInput::QButtonAxisInput * m_keyboard_tx_neg_input;
+    Qt3DInput::QButtonAxisInput * m_keyboard_ty_neg_input;
+    Qt3DInput::QButtonAxisInput * m_keyboard_tz_neg_input;
 };
 
 class CameraController
 {
-
-protected:
-    RCameraInputListener * m_listener = nullptr;
-
 public:
     virtual ~CameraController() = default;
 
@@ -137,6 +122,9 @@ public:
     QVector3D viewVector() { return getCamera()->viewVector(); }
 
     QVector3D viewCenter() { return getCamera()->viewCenter(); }
+
+protected:
+    RCameraInputListener * m_listener = nullptr;
 
 private:
     Qt3DExtras::QAbstractCameraController * asQtCameraController()
@@ -191,4 +179,6 @@ private:
     static float zoomDistanceSquared(QVector3D firstPoint, QVector3D secondPoint);
 };
 
-} // namespace modmesh
+} /* end namespace modmesh */
+
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

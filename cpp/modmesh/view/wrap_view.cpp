@@ -205,8 +205,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
                 py::arg("positionX") = 0.0f,
                 py::arg("positionY") = 0.0f,
                 py::arg("positionZ") = 10.0f)
-            .def(
-                "cameraController", &wrapped_type::cameraController);
+            .def("cameraController", &wrapped_type::cameraController);
 
 #define DECL_QVECTOR3D_PROPERTY(NAME, GETTER, SETTER)          \
     .def_property(                                             \
@@ -505,10 +504,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                     return py::make_tuple(position.x(), position.y(), position.z());
                 })
             .def(
-                "linear_speed", [](wrapped_base_type & self)
+                "linear_speed",
+                [](wrapped_base_type & self)
                 { return self.getLinearSpeed(); })
             .def(
-                "look_speed", [](wrapped_base_type & self)
+                "look_speed",
+                [](wrapped_base_type & self)
                 { return self.getLookSpeed(); })
             .def(
                 "view_center",
