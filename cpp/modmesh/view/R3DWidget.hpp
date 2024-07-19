@@ -98,7 +98,7 @@ public:
     RScene * scene() { return m_scene; }
     Qt3DRender::QCamera * camera() { return m_view->camera(); }
     Qt3DExtras::QAbstractCameraController * qtCameraController() { return m_scene->controller(); }
-    CameraController * cameraController() { return dynamic_cast<CameraController*>(m_scene->controller()); }
+    CameraController * cameraController() { return dynamic_cast<CameraController *>(m_scene->controller()); }
 
     void resetCamera(Qt3DRender::QCamera * camera,
                      float positionX = 0.0f,

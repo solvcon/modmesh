@@ -206,8 +206,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
                 py::arg("positionY") = 0.0f,
                 py::arg("positionZ") = 10.0f)
             .def(
-                "cameraController", &wrapped_type::cameraController)
-            ;
+                "cameraController", &wrapped_type::cameraController);
 
 #define DECL_QVECTOR3D_PROPERTY(NAME, GETTER, SETTER)          \
     .def_property(                                             \
@@ -457,12 +456,16 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                 "updateCameraPosition",
                 [](
                     wrapped_type & self,
-                    float const & x, float const & y, float const & z,
-                    float const & pitch, float const & yaw,
-                    bool const & left_mouse_button, bool const & right_mouse_button,
-                    bool const & alt_key, bool const & shift_key,
-                    float const & dt
-                )
+                    float const & x,
+                    float const & y,
+                    float const & z,
+                    float const & pitch,
+                    float const & yaw,
+                    bool const & left_mouse_button,
+                    bool const & right_mouse_button,
+                    bool const & alt_key,
+                    bool const & shift_key,
+                    float const & dt)
                 {
                     Qt3DExtras::QAbstractCameraController::InputState input{};
 
@@ -493,37 +496,34 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                 py::arg("right_mouse_button") = false,
                 py::arg("alt_key") = false,
                 py::arg("shift_key") = false,
-                py::arg("dt")
-            )
+                py::arg("dt"))
             .def(
                 "position",
                 [](wrapped_type & self)
                 {
                     const auto position = self.position();
                     return py::make_tuple(position.x(), position.y(), position.z());
-                }
-            )
+                })
             .def(
-                "linear_speed", [](wrapped_base_type & self) { return self.getLinearSpeed(); }
-            )
+                "linear_speed", [](wrapped_base_type & self)
+                { return self.getLinearSpeed(); })
             .def(
-                "look_speed", [](wrapped_base_type & self) { return self.getLookSpeed(); }
-            )
+                "look_speed", [](wrapped_base_type & self)
+                { return self.getLookSpeed(); })
             .def(
                 "view_center",
-                [](wrapped_base_type & self) {
+                [](wrapped_base_type & self)
+                {
                     const auto center = self.viewCenter();
                     return py::make_tuple(center.x(), center.y(), center.z());
-                }
-            )
+                })
             .def(
                 "view_vector",
-                [](wrapped_base_type & self) {
+                [](wrapped_base_type & self)
+                {
                     const auto vector = self.viewVector();
                     return py::make_tuple(vector.x(), vector.y(), vector.z());
-                }
-            )
-        ;
+                });
     }
 };
 

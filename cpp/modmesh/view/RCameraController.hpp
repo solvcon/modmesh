@@ -42,71 +42,71 @@
 #include <Qt3DInput/QAxis>
 #include <Qt3DInput/QLogicalDevice>
 
-namespace modmesh {
+namespace modmesh
+{
 
 class RCameraInputListener : public Qt3DCore::QEntity
 {
     Q_OBJECT
 
 public:
-    using callback_type = std::function<void (const Qt3DExtras::QAbstractCameraController::InputState&, float)>;
+    using callback_type = std::function<void(const Qt3DExtras::QAbstractCameraController::InputState &, float)>;
 
     RCameraInputListener(
-        Qt3DInput::QKeyboardDevice* keyboardDevice,
-        Qt3DInput::QMouseDevice* mouseDevice,
+        Qt3DInput::QKeyboardDevice * keyboardDevice,
+        Qt3DInput::QMouseDevice * mouseDevice,
         callback_type callback,
-        QNode *parent = nullptr
-    );
+        QNode * parent = nullptr);
 
 private:
 
-    Qt3DLogic::QFrameAction *m_frameAction;
-    Qt3DInput::QLogicalDevice *m_logicalDevice;
+    Qt3DLogic::QFrameAction * m_frameAction;
+    Qt3DInput::QLogicalDevice * m_logicalDevice;
 
-    Qt3DInput::QKeyboardDevice* m_keyboardDevice;
-    Qt3DInput::QMouseDevice* m_mouseDevice;
+    Qt3DInput::QKeyboardDevice * m_keyboardDevice;
+    Qt3DInput::QMouseDevice * m_mouseDevice;
 
     // invoked each frame to update the camera position
     callback_type m_callback;
 
     // rotation
-    Qt3DInput::QAxis *m_rxAxis;
-    Qt3DInput::QAxis *m_ryAxis;
+    Qt3DInput::QAxis * m_rxAxis;
+    Qt3DInput::QAxis * m_ryAxis;
 
     // translation
-    Qt3DInput::QAxis *m_txAxis;
-    Qt3DInput::QAxis *m_tyAxis;
-    Qt3DInput::QAxis *m_tzAxis;
+    Qt3DInput::QAxis * m_txAxis;
+    Qt3DInput::QAxis * m_tyAxis;
+    Qt3DInput::QAxis * m_tzAxis;
 
-    Qt3DInput::QAction *m_leftMouseButtonAction;
-    Qt3DInput::QAction *m_middleMouseButtonAction;
-    Qt3DInput::QAction *m_rightMouseButtonAction;
+    Qt3DInput::QAction * m_leftMouseButtonAction;
+    Qt3DInput::QAction * m_middleMouseButtonAction;
+    Qt3DInput::QAction * m_rightMouseButtonAction;
 
-    Qt3DInput::QAction *m_shiftButtonAction;
-    Qt3DInput::QAction *m_altButtonAction;
+    Qt3DInput::QAction * m_shiftButtonAction;
+    Qt3DInput::QAction * m_altButtonAction;
 
-    Qt3DInput::QActionInput *m_leftMouseButtonInput;
-    Qt3DInput::QActionInput *m_middleMouseButtonInput;
-    Qt3DInput::QActionInput *m_rightMouseButtonInput;
+    Qt3DInput::QActionInput * m_leftMouseButtonInput;
+    Qt3DInput::QActionInput * m_middleMouseButtonInput;
+    Qt3DInput::QActionInput * m_rightMouseButtonInput;
 
-    Qt3DInput::QActionInput *m_shiftButtonInput;
-    Qt3DInput::QActionInput *m_altButtonInput;
+    Qt3DInput::QActionInput * m_shiftButtonInput;
+    Qt3DInput::QActionInput * m_altButtonInput;
 
     // mouse rotation input
-    Qt3DInput::QAnalogAxisInput *m_mouseRxInput;
-    Qt3DInput::QAnalogAxisInput *m_mouseRyInput;
+    Qt3DInput::QAnalogAxisInput * m_mouseRxInput;
+    Qt3DInput::QAnalogAxisInput * m_mouseRyInput;
 
     // mouse translation input (wheel)
-    Qt3DInput::QAnalogAxisInput *m_mouseTzXInput;
-    Qt3DInput::QAnalogAxisInput *m_mouseTzYInput;
+    Qt3DInput::QAnalogAxisInput * m_mouseTzXInput;
+    Qt3DInput::QAnalogAxisInput * m_mouseTzYInput;
 
     // keyboard translation input
-    Qt3DInput::QButtonAxisInput *m_keyboardTxPosInput;
-    Qt3DInput::QButtonAxisInput *m_keyboardTyPosInput;
-    Qt3DInput::QButtonAxisInput *m_keyboardTzPosInput;
-    Qt3DInput::QButtonAxisInput *m_keyboardTxNegInput;
-    Qt3DInput::QButtonAxisInput *m_keyboardTyNegInput;
-    Qt3DInput::QButtonAxisInput *m_keyboardTzNegInput;
+    Qt3DInput::QButtonAxisInput * m_keyboardTxPosInput;
+    Qt3DInput::QButtonAxisInput * m_keyboardTyPosInput;
+    Qt3DInput::QButtonAxisInput * m_keyboardTzPosInput;
+    Qt3DInput::QButtonAxisInput * m_keyboardTxNegInput;
+    Qt3DInput::QButtonAxisInput * m_keyboardTyNegInput;
+    Qt3DInput::QButtonAxisInput * m_keyboardTzNegInput;
 
     void init();
 
@@ -115,19 +115,18 @@ private:
     void initKeyboardListeners() const;
 };
 
-
 class CameraController
 {
 
 protected:
-    RCameraInputListener* m_listener = nullptr;
+    RCameraInputListener * m_listener = nullptr;
 
 public:
     virtual ~CameraController() = default;
 
-    virtual void updateCameraPosition(const Qt3DExtras::QAbstractCameraController::InputState &state, float dt) = 0;
+    virtual void updateCameraPosition(const Qt3DExtras::QAbstractCameraController::InputState & state, float dt) = 0;
 
-    virtual Qt3DRender::QCamera* getCamera() = 0;
+    virtual Qt3DRender::QCamera * getCamera() = 0;
 
     virtual float getLinearSpeed() = 0;
 
@@ -140,20 +139,21 @@ public:
     QVector3D viewCenter() { return getCamera()->viewCenter(); }
 
 private:
-    Qt3DExtras::QAbstractCameraController* asQtCameraController() {
-        return dynamic_cast<Qt3DExtras::QAbstractCameraController*>(this);
+    Qt3DExtras::QAbstractCameraController * asQtCameraController()
+    {
+        return dynamic_cast<Qt3DExtras::QAbstractCameraController *>(this);
     }
 };
 
-
-class RFirstPersonCameraController : public Qt3DExtras::QFirstPersonCameraController, public CameraController
+class RFirstPersonCameraController : public Qt3DExtras::QFirstPersonCameraController
+    , public CameraController
 {
     Q_OBJECT
 
 public:
-    explicit RFirstPersonCameraController(QNode *parent = nullptr);
+    explicit RFirstPersonCameraController(QNode * parent = nullptr);
 
-    Qt3DRender::QCamera* getCamera() override { return camera(); }
+    Qt3DRender::QCamera * getCamera() override { return camera(); }
     float getLinearSpeed() override { return linearSpeed(); }
     float getLookSpeed() override { return lookSpeed(); }
 
@@ -161,27 +161,27 @@ private:
     static constexpr auto upVector = QVector3D(0.f, 1.f, 0.f);
     static constexpr auto lookSpeedFactorOnShiftPressed = 0.2f;
 
-    void moveCamera(const InputState &state, float dt) override {}
+    void moveCamera(const InputState & state, float dt) override {}
 
-    void updateCameraPosition(const InputState &input, float dt) override;
+    void updateCameraPosition(const InputState & input, float dt) override;
 };
 
-
-class ROrbitCameraController : public Qt3DExtras::QOrbitCameraController, public CameraController
+class ROrbitCameraController : public Qt3DExtras::QOrbitCameraController
+    , public CameraController
 {
     Q_OBJECT
 
 public:
-    explicit ROrbitCameraController(QNode *parent = nullptr);
+    explicit ROrbitCameraController(QNode * parent = nullptr);
 
-    Qt3DRender::QCamera* getCamera() override { return camera(); }
+    Qt3DRender::QCamera * getCamera() override { return camera(); }
     float getLinearSpeed() override { return linearSpeed(); }
     float getLookSpeed() override { return lookSpeed(); }
 
 private:
-    void moveCamera(const InputState &state, float dt) override {}
+    void moveCamera(const InputState & state, float dt) override {}
 
-    void updateCameraPosition(const InputState &input, float dt) override;
+    void updateCameraPosition(const InputState & input, float dt) override;
 
     void zoom(float zoomValue) const;
 
@@ -192,4 +192,4 @@ private:
     static float zoomDistanceSquared(QVector3D firstPoint, QVector3D secondPoint);
 };
 
-}
+} // namespace modmesh
