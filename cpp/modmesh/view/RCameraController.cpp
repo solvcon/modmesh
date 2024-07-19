@@ -231,6 +231,8 @@ RFirstPersonCameraController::RFirstPersonCameraController(QNode * parent)
 
 void RFirstPersonCameraController::updateCameraPosition(const InputState & input, const float dt)
 {
+    constexpr auto upVector = QVector3D(0.f, 1.f, 0.f);
+
     Qt3DRender::QCamera * _camera = camera();
 
     if (_camera == nullptr)
@@ -277,17 +279,12 @@ void ROrbitCameraController::updateCameraPosition(const InputState & input, cons
         }
         else
         {
-            // translate
-            const auto inversion = QVector3D(
-                inverseXTranslate() ? -1.f : 1.f,
-                inverseYTranslate() ? -1.f : 1.f,
-                1.f);
             const auto translation = QVector3D(
                 clamp(input.rxAxisValue + input.txAxisValue),
                 clamp(input.ryAxisValue + input.tyAxisValue),
                 0);
 
-            _camera->translate(inversion * translation * _linearSpeed * dt);
+            _camera->translate(translation * _linearSpeed * dt);
         }
 
         return;
@@ -295,9 +292,7 @@ void ROrbitCameraController::updateCameraPosition(const InputState & input, cons
 
     if (input.rightMouseButtonActive)
     {
-        orbit(
-            (inversePan() ? -1.0f : 1.0f) * input.rxAxisValue * dt,
-            (inverseTilt() ? -1.0f : 1.0f) * input.ryAxisValue * dt);
+        orbit(input.rxAxisValue * dt, input.ryAxisValue * dt);
     }
 
     // keyboard Input
@@ -311,14 +306,11 @@ void ROrbitCameraController::updateCameraPosition(const InputState & input, cons
     }
     else
     {
-        // translate
         const float x = clamp(input.txAxisValue + (input.leftMouseButtonActive ? input.rxAxisValue : 0));
         const float y = clamp(input.tyAxisValue + (input.leftMouseButtonActive ? input.ryAxisValue : 0));
         const auto translation = QVector3D(x, y, input.tzAxisValue) * _linearSpeed * dt;
 
-        const auto option = zoomTranslateViewCenter() ? Qt3DRender::QCamera::TranslateViewCenter : Qt3DRender::QCamera::DontTranslateViewCenter;
-
-        _camera->translate(translation, option);
+        _camera->translate(translation);
     }
 }
 
@@ -334,7 +326,9 @@ void ROrbitCameraController::zoom(const float zoomValue) const
 
 void ROrbitCameraController::orbit(const float pan, const float tilt) const
 {
-    camera()->panAboutViewCenter(pan * lookSpeed(), upVector());
+    constexpr auto upVector = QVector3D(0.f, 1.f, 0.f);
+
+    camera()->panAboutViewCenter(pan * lookSpeed(), upVector);
     camera()->tiltAboutViewCenter(tilt * lookSpeed());
 }
 

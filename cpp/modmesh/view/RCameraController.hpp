@@ -158,7 +158,6 @@ public:
     float getLookSpeed() override { return lookSpeed(); }
 
 private:
-    static constexpr auto upVector = QVector3D(0.f, 1.f, 0.f);
     static constexpr auto lookSpeedFactorOnShiftPressed = 0.2f;
 
     void moveCamera(const InputState & state, float dt) override {}
