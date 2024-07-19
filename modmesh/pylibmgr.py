@@ -27,8 +27,33 @@
 import sys
 import os
 import time
+import importlib.abc
+import importlib.machinery
 
 lib_path = {}
+
+
+class mm_path_finder(importlib.abc.MetaPathFinder):
+    def find_spec(self, lib_name, path, target=None):
+        if lib_name in lib_path:
+            _ = os.path.abspath(lib_path[lib_name])
+            pkg_path = os.path.join(_, lib_name)
+            init_path = os.path.join(pkg_path, '__init__.py')
+
+            if not os.path.exists(init_path):
+                return None
+
+            loader = importlib.machinery.SourceFileLoader(lib_name, init_path)
+            spec = importlib.machinery.ModuleSpec(
+                                                  lib_name,
+                                                  loader,
+                                                  origin=init_path,
+                                                  is_package=True
+                                                 )
+            spec.submodule_search_locations = [pkg_path]
+            return spec
+
+        return None
 
 
 def search_library_root(curr_path, lib_root_name, timeout=1.0):
@@ -70,20 +95,10 @@ def search_library_root(curr_path, lib_root_name, timeout=1.0):
             lib_path[item] = os.path.join(_path, item)
 
 
-def load_library(lib_name):
-    """
-    Append library path into python path by user input library name
+def _register_mm_path_finder():
+    sys.meta_path.append(mm_path_finder())
 
-    :param lib_name: library name that need to be imported.
-    :return: None
-    """
-    try:
-        if lib_name in lib_path:
-            sys.path.append(lib_path[lib_name])
-        else:
-            raise ImportError
-    except ImportError:
-        sys.stderr.write(f'Can not find {lib_name} in library root.\n')
-        sys.exit(0)
 
+_register_mm_path_finder()
+del _register_mm_path_finder
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
