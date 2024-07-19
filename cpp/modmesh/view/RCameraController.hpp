@@ -32,7 +32,7 @@
 
 #include <QOrbitCameraController>
 #include <QFirstPersonCameraController>
-#include <QVector3D>
+#include <QCamera>
 
 #include <Qt3DLogic/QFrameAction>
 #include <Qt3DInput/QActionInput>
@@ -116,24 +116,46 @@ private:
 };
 
 
-class CameraControllerMixin
+class CameraController
 {
-public:
-    virtual ~CameraControllerMixin() = default;
-
-    virtual void updateCameraPosition(const Qt3DExtras::QAbstractCameraController::InputState &state, float dt) = 0;
 
 protected:
     RCameraInputListener* m_listener = nullptr;
+
+public:
+    virtual ~CameraController() = default;
+
+    virtual void updateCameraPosition(const Qt3DExtras::QAbstractCameraController::InputState &state, float dt) = 0;
+
+    virtual Qt3DRender::QCamera* getCamera() = 0;
+
+    virtual float getLinearSpeed() = 0;
+
+    virtual float getLookSpeed() = 0;
+
+    QVector3D position() { return getCamera()->position(); }
+
+    QVector3D viewVector() { return getCamera()->viewVector(); }
+
+    QVector3D viewCenter() { return getCamera()->viewCenter(); }
+
+private:
+    Qt3DExtras::QAbstractCameraController* asQtCameraController() {
+        return dynamic_cast<Qt3DExtras::QAbstractCameraController*>(this);
+    }
 };
 
 
-class RFirstPersonCameraController : public Qt3DExtras::QFirstPersonCameraController, public CameraControllerMixin
+class RFirstPersonCameraController : public Qt3DExtras::QFirstPersonCameraController, public CameraController
 {
     Q_OBJECT
 
 public:
     explicit RFirstPersonCameraController(QNode *parent = nullptr);
+
+    Qt3DRender::QCamera* getCamera() override { return camera(); }
+    float getLinearSpeed() override { return linearSpeed(); }
+    float getLookSpeed() override { return lookSpeed(); }
 
 private:
     static constexpr auto upVector = QVector3D(0.f, 1.f, 0.f);
@@ -145,12 +167,16 @@ private:
 };
 
 
-class ROrbitCameraController : public Qt3DExtras::QOrbitCameraController, public CameraControllerMixin
+class ROrbitCameraController : public Qt3DExtras::QOrbitCameraController, public CameraController
 {
     Q_OBJECT
 
 public:
     explicit ROrbitCameraController(QNode *parent = nullptr);
+
+    Qt3DRender::QCamera* getCamera() override { return camera(); }
+    float getLinearSpeed() override { return linearSpeed(); }
+    float getLookSpeed() override { return lookSpeed(); }
 
 private:
     void moveCamera(const InputState &state, float dt) override {}

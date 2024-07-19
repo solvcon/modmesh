@@ -205,7 +205,8 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
                 py::arg("positionX") = 0.0f,
                 py::arg("positionY") = 0.0f,
                 py::arg("positionZ") = 10.0f)
-            //
+            .def(
+                "cameraController", &wrapped_type::cameraController)
             ;
 
 #define DECL_QVECTOR3D_PROPERTY(NAME, GETTER, SETTER)          \
@@ -440,6 +441,92 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
 
 }; /* end class WrapRManager */
 
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
+    : public WrapBase<WrapRCameraController, CameraController>
+{
+
+    friend root_base_type;
+
+    WrapRCameraController(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : root_base_type(mod, pyname, pydoc)
+    {
+        namespace py = pybind11;
+
+        (*this)
+            .def(
+                "updateCameraPosition",
+                [](
+                    wrapped_type & self,
+                    float const & x, float const & y, float const & z,
+                    float const & pitch, float const & yaw,
+                    bool const & left_mouse_button, bool const & right_mouse_button,
+                    bool const & alt_key, bool const & shift_key,
+                    float const & dt
+                )
+                {
+                    Qt3DExtras::QAbstractCameraController::InputState input{};
+
+                    input.txAxisValue = x;
+                    input.tyAxisValue = y;
+                    input.tzAxisValue = z;
+
+                    // yaw is for rotation around y-axis. horizontal movement of mouse rotates camera around y-axis
+                    input.rxAxisValue = yaw;
+                    // pitch is for rotation around x-axis. vertical movement of mouse rotates camera around x-axis
+                    input.ryAxisValue = pitch;
+
+                    input.leftMouseButtonActive = left_mouse_button;
+                    input.rightMouseButtonActive = right_mouse_button;
+
+                    input.altKeyActive = alt_key;
+                    input.shiftKeyActive = shift_key;
+
+                    self.updateCameraPosition(input, dt);
+                },
+
+                py::arg("x") = 0.f,
+                py::arg("y") = 0.f,
+                py::arg("z") = 0.f,
+                py::arg("pitch") = 0.f,
+                py::arg("yaw") = 0.f,
+                py::arg("left_mouse_button") = false,
+                py::arg("right_mouse_button") = false,
+                py::arg("alt_key") = false,
+                py::arg("shift_key") = false,
+                py::arg("dt")
+            )
+            .def(
+                "position",
+                [](wrapped_type & self)
+                {
+                    const auto position = self.position();
+                    return py::make_tuple(position.x(), position.y(), position.z());
+                }
+            )
+            .def(
+                "linear_speed", [](wrapped_base_type & self) { return self.getLinearSpeed(); }
+            )
+            .def(
+                "look_speed", [](wrapped_base_type & self) { return self.getLookSpeed(); }
+            )
+            .def(
+                "view_center",
+                [](wrapped_base_type & self) {
+                    const auto center = self.viewCenter();
+                    return py::make_tuple(center.x(), center.y(), center.z());
+                }
+            )
+            .def(
+                "view_vector",
+                [](wrapped_base_type & self) {
+                    const auto vector = self.viewVector();
+                    return py::make_tuple(vector.x(), vector.y(), vector.z());
+                }
+            )
+        ;
+    }
+};
+
 struct RManagerProxy
 {
 };
@@ -477,6 +564,7 @@ void wrap_view(pybind11::module & mod)
     WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
     WrapRLine::commit(mod, "RLine", "RLine");
     WrapRPythonConsoleDockWidget::commit(mod, "RPythonConsoleDockWidget", "RPythonConsoleDockWidget");
+    WrapRCameraController::commit(mod, "RCameraController", "RCameraController");
     WrapRManager::commit(mod, "RManager", "RManager");
     WrapRManagerProxy::commit(mod, "RManagerProxy", "RManagerProxy");
 
