@@ -33,7 +33,7 @@ import importlib.machinery
 lib_path = {}
 
 
-class mm_path_finder(importlib.abc.MetaPathFinder):
+class MMPathFinder(importlib.abc.MetaPathFinder):
     def find_spec(self, lib_name, path, target=None):
         if lib_name in lib_path:
             _ = os.path.abspath(lib_path[lib_name])
@@ -45,11 +45,7 @@ class mm_path_finder(importlib.abc.MetaPathFinder):
 
             loader = importlib.machinery.SourceFileLoader(lib_name, init_path)
             spec = importlib.machinery.ModuleSpec(
-                                                  lib_name,
-                                                  loader,
-                                                  origin=init_path,
-                                                  is_package=True
-                                                 )
+                    lib_name, loader, origin=init_path, is_package=True)
             spec.submodule_search_locations = [pkg_path]
             return spec
 
@@ -96,7 +92,7 @@ def search_library_root(curr_path, lib_root_name, timeout=1.0):
 
 
 def _register_mm_path_finder():
-    sys.meta_path.append(mm_path_finder())
+    sys.meta_path.append(MMPathFinder())
 
 
 _register_mm_path_finder()
