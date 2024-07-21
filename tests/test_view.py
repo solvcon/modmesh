@@ -81,7 +81,7 @@ def angle_axis(angle_deg, axis):
     return rotation
 
 
-@unittest.skipUnless(modmesh.HAS_VIEW, "Qt view is not built")
+@unittest.skip("GUI is not yet available for testing")
 class ViewFPSCameraTC(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -147,7 +147,7 @@ class ViewFPSCameraTC(unittest.TestCase):
         self.assertAlmostEqual(rotated_vector[2], view_vector[2], delta=1e-2)
 
 
-@unittest.skipUnless(modmesh.HAS_VIEW, "Qt view is not built")
+@unittest.skip("GUI is not yet available for testing")
 class ViewOrbitCameraTC(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
