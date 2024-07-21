@@ -33,7 +33,7 @@ import importlib.machinery
 lib_path = {}
 
 
-class MMPathFinder(importlib.abc.MetaPathFinder):
+class ModmeshPathFinder(importlib.abc.MetaPathFinder):
     def find_spec(self, lib_name, path, target=None):
         if lib_name in lib_path:
             _ = os.path.abspath(lib_path[lib_name])
@@ -43,9 +43,26 @@ class MMPathFinder(importlib.abc.MetaPathFinder):
             if not os.path.exists(init_path):
                 return None
 
+            # Create a loader instance for the given package name and
+            # it's __init__.py
             loader = importlib.machinery.SourceFileLoader(lib_name, init_path)
+
+            # Create a module spec instance for the given module name,
+            # specific loader and the path of module file.
+            # If the module is a package the argument is_package should be
+            # set to True.
+            # Ref:
+            # https://docs.python.org/3/library/importlib.html#importlib.
+            # machinery.ModuleSpec
             spec = importlib.machinery.ModuleSpec(
                     lib_name, loader, origin=init_path, is_package=True)
+
+            # This attribute tells the import system where to look for
+            # submodules or subpackages, it should not be set to None
+            # for a package modules.
+            # Ref:
+            # https://docs.python.org/3/library/importlib.html#importlib.
+            # machinery.ModuleSpec.submodule_search_locations
             spec.submodule_search_locations = [pkg_path]
             return spec
 
@@ -92,7 +109,7 @@ def search_library_root(curr_path, lib_root_name, timeout=1.0):
 
 
 def _register_mm_path_finder():
-    sys.meta_path.append(MMPathFinder())
+    sys.meta_path.append(ModmeshPathFinder())
 
 
 _register_mm_path_finder()
