@@ -26,6 +26,7 @@
 
 
 import unittest
+import numpy as np
 
 import modmesh
 try:
@@ -58,5 +59,157 @@ class ViewTC(unittest.TestCase):
         view.mgr.pycon.python_redirect = False
         self.assertFalse(view.mgr.pycon.python_redirect)
 
+
+def angle_axis(angle_deg, axis):
+    a = axis
+    angle = np.radians(angle_deg)
+
+    cos_angle = np.cos(angle)
+    sin_angle = np.sin(angle)
+
+    rotation = np.identity(3) * cos_angle
+
+    m = np.outer(a, a) * (1 - cos_angle)
+    n = np.array([
+        [0, -a[2], a[1]],
+        [a[2], 0, -a[0]],
+        [-a[1], a[0], 0]
+    ]) * sin_angle
+
+    rotation += m + n
+
+    return rotation
+
+
+@unittest.skipUnless(modmesh.HAS_VIEW, "Qt view is not built")
+class ViewFPSCameraTC(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        widget = view.RManager.instance.setUp().add3DWidget()
+        widget.setCameraType("fps")
+
+        cls.widget = widget
+        cls.controller = widget.cameraController()
+
+        cls.move = cls.controller.updateCameraPosition
+        cls.get_pos = cls.controller.position
+
+    def test_translation(self):
+        dt = 0.01
+        linear_speed = self.controller.linear_speed()
+
+        delta = dt * linear_speed
+        new_pos = np.array(self.get_pos()) + [delta, delta, -delta]
+
+        self.move(x=1, dt=dt)
+        self.assertAlmostEqual(self.get_pos()[0], new_pos[0], delta=1e-2)
+
+        self.move(y=1, dt=dt)
+        self.assertAlmostEqual(self.get_pos()[1], new_pos[1], delta=1e-2)
+
+        # camera moves in negative z direction
+        self.move(z=1, dt=dt)
+        self.assertAlmostEqual(self.get_pos()[2], new_pos[2], delta=1e-2)
+
+    def test_rotation(self):
+        dt = 0.01
+        rotation = 0.5
+        look_speed = self.controller.look_speed()
+
+        initial_view_center = self.controller.view_center()
+        initial_view_vector = self.controller.view_vector()
+
+        # test camera does not rotate when left mouse button is not pressed
+        self.move(yaw=rotation, pitch=rotation, dt=dt)
+        self.assertEqual(self.controller.view_vector(), initial_view_vector)
+        self.assertEqual(self.controller.view_center(), initial_view_center)
+
+        # test camera rotates around y-axis
+        self.move(yaw=rotation, dt=dt, left_mouse_button=True)
+
+        rotation_matrix = angle_axis(rotation * dt * look_speed, (0, 1, 0))
+        rotated_vector = np.array(initial_view_vector) @ rotation_matrix
+        view_vector = self.controller.view_vector()
+
+        self.assertAlmostEqual(rotated_vector[0], view_vector[0], delta=1e-2)
+        self.assertAlmostEqual(rotated_vector[1], view_vector[1], delta=1e-2)
+        self.assertAlmostEqual(rotated_vector[2], view_vector[2], delta=1e-2)
+
+        # test camera rotates around x-axis
+        self.move(pitch=rotation, dt=dt, left_mouse_button=True)
+
+        rotation_matrix = angle_axis(rotation * dt * look_speed, (-1, 0, 0))
+        rotated_vector = np.array(rotated_vector) @ rotation_matrix
+        view_vector = self.controller.view_vector()
+
+        self.assertAlmostEqual(rotated_vector[0], view_vector[0], delta=1e-2)
+        self.assertAlmostEqual(rotated_vector[1], view_vector[1], delta=1e-2)
+        self.assertAlmostEqual(rotated_vector[2], view_vector[2], delta=1e-2)
+
+
+@unittest.skipUnless(modmesh.HAS_VIEW, "Qt view is not built")
+class ViewOrbitCameraTC(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        widget = view.RManager.instance.setUp().add3DWidget()
+        widget.setCameraType("orbit")
+
+        cls.widget = widget
+        cls.controller = widget.cameraController()
+
+        cls.move = cls.controller.updateCameraPosition
+        cls.get_pos = cls.controller.position
+
+    def test_translation(self):
+        dt = 0.01
+        linear_speed = self.controller.linear_speed()
+
+        delta = dt * linear_speed
+        new_pos = np.array(self.get_pos()) + [delta, delta, -delta]
+
+        self.move(x=1, dt=dt)
+        self.assertAlmostEqual(self.get_pos()[0], new_pos[0], delta=1e-2)
+
+        self.move(y=1, dt=dt)
+        self.assertAlmostEqual(self.get_pos()[1], new_pos[1], delta=1e-2)
+
+        # camera moves in negative z direction
+        self.move(z=1, dt=dt)
+        self.assertAlmostEqual(self.get_pos()[2], new_pos[2], delta=1e-2)
+
+    def test_rotation(self):
+        dt = 0.01
+        rotation = 0.5
+        look_speed = self.controller.look_speed()
+
+        initial_view_center = self.controller.view_center()
+        initial_view_vector = self.controller.view_vector()
+
+        # test camera does not rotate when right mouse button is not pressed
+        self.move(yaw=rotation, pitch=rotation, dt=dt)
+        self.assertEqual(self.controller.view_vector(), initial_view_vector)
+        self.assertEqual(self.controller.view_center(), initial_view_center)
+
+        # test camera rotates around y-axis
+        self.move(yaw=rotation, dt=dt, right_mouse_button=True)
+
+        rotation_matrix = angle_axis(rotation * dt * look_speed, (0, -1, 0))
+        rotated_vector = np.array(initial_view_vector) @ rotation_matrix
+        view_vector = self.controller.view_vector()
+
+        self.assertAlmostEqual(rotated_vector[0], view_vector[0], delta=1e-2)
+        self.assertAlmostEqual(rotated_vector[1], view_vector[1], delta=1e-2)
+        self.assertAlmostEqual(rotated_vector[2], view_vector[2], delta=1e-2)
+
+        # test camera rotates around x-axis
+        self.move(pitch=rotation, dt=dt, right_mouse_button=True)
+
+        rotation_matrix = angle_axis(rotation * dt * look_speed, (1, 0, 0))
+        rotated_vector = np.array(rotated_vector) @ rotation_matrix
+        view_vector = self.controller.view_vector()
+
+        self.assertAlmostEqual(rotated_vector[0], view_vector[0], delta=1e-2)
+        self.assertAlmostEqual(rotated_vector[1], view_vector[1], delta=1e-2)
+        self.assertAlmostEqual(rotated_vector[2], view_vector[2], delta=1e-2)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
