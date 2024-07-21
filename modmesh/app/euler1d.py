@@ -511,6 +511,8 @@ class Euler1DApp():
         self.interval = self.solver_config.get_var("timer_interval", "value")
         self.max_steps = self.solver_config.get_var("max_steps", "value")
         self.profiling = self.solver_config.get_var("profiling", "value")
+        ncoord = self.solver_config.get_var("ncoord", "value")
+        self.plot_point = np.linspace(2, (ncoord - 3), num=((ncoord - 3) // 2), dtype=int)
 
     def setup_timer(self):
         """
@@ -530,7 +532,7 @@ class Euler1DApp():
 
         :return: FigureCanvas
         """
-        x = self.st.svr.coord[::2]
+        x = self.st.svr.coord[self.plot_point]
         fig = Figure()
         canvas = FigureCanvas(fig)
         ax = canvas.figure.subplots(3, 2)
@@ -574,7 +576,7 @@ class Euler1DApp():
 
         :return: FigureCanvas
         """
-        x = self.st.svr.coord[::2]
+        x = self.st.svr.coord[self.plot_point]
         fig = Figure()
         canvas = FigureCanvas(fig)
         ax = canvas.figure.subplots()
@@ -744,23 +746,23 @@ class Euler1DApp():
         """
         if self.use_grid_layout:
             self.density.update(adata=self.st.density_field,
-                                ndata=self.st.svr.density[::2])
+                                ndata=self.st.svr.density[self.plot_point])
             self.pressure.update(adata=self.st.pressure_field,
-                                 ndata=self.st.svr.pressure[::2])
+                                 ndata=self.st.svr.pressure[self.plot_point])
             self.velocity.update(adata=self.st.velocity_field,
-                                 ndata=self.st.svr.velocity[::2])
+                                 ndata=self.st.svr.velocity[self.plot_point])
             self.temperature.update(adata=self.st.temperature_field,
-                                    ndata=self.st.svr.temperature[::2])
+                                    ndata=self.st.svr.temperature[self.plot_point])
             self.internal_energy.update(adata=(self.st.internal_energy_field),
                                         ndata=(self.st.svr.
-                                               internal_energy[::2]))
+                                               internal_energy[self.plot_point]))
             self.entropy.update(adata=self.st.entropy_field,
-                                ndata=self.st.svr.entropy[::2])
+                                ndata=self.st.svr.entropy[self.plot_point])
         else:
             for name, is_selected, *_ in self.plot_config.state:
                 if is_selected:
                     eval(f'(self.{name}.update(adata=self.st.{name}_field,'
-                         f' ndata=self.st.svr.{name}[::2]))')
+                         f' ndata=self.st.svr.{name}[self.plot_point]))')
 
 
 class PlotArea(PuiInQt):

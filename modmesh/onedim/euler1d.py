@@ -311,7 +311,8 @@ class ShockTube:
         :return: None
         """
         if None is coord:
-            coord = self.svr.coord[::2]  # Use the numerical solver.
+            plot_point = np.linspace(2, (self.svr.ncoord - 3), num=((self.svr.ncoord - 3) // 2), dtype=int)
+            coord = self.svr.coord[plot_point]  # Use the numerical solver.
         self.coord = coord.copy()  # Make a copy; no write back to argument.
 
         # Determine the zone location and the Boolean selection arrays.
