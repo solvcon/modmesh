@@ -22,7 +22,8 @@ An experimental Windows binary (portable) can be downloaded from the `devbuild
 Github Action
 <https://github.com/solvcon/modmesh/actions/workflows/devbuild.yml?query=event%3Aschedule+is%3Asuccess+branch%3Amaster>`__.
 Click the Windows release run and scroll down to the "artifacts" section to
-download the ZIP file (Login is required).
+download the zip file (login to `GitHub <https://github.com/>`__ is required).
+A direct download link can be found in https://doc.solvcon.net/.
 
 Refenreces
 ==========
