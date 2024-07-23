@@ -5,21 +5,8 @@ modmesh: modules to solve conservation laws with unstructured meshes
 modmesh is a modularized code implementing `the space-time conservation element
 and solution element (CESE) method
 <https://yyc.solvcon.net/en/latest/cese/index.html>`__ based on unstructured
-meshes of mixed element.  The CESE method is a method for solving conservation
-laws:
-
-.. math::
-
-  \frac{\partial\mathbf{u}}{\partial t}
-  + \sum_{k=1}^3 \mathrm{A}^{(k)}(\mathbf{u})
-                 \frac{\partial\mathbf{u}}{\partial x_k}
-  = 0
-
-where :math:`\mathbf{u}` is the unknown vector and :math:`\mathrm{A}^{(1)}`,
-:math:`\mathrm{A}^{(2)}`, and :math:`\mathrm{A}^{(3)}` are the Jacobian
-matrices.
-
-modmesh is developed by using C++ and Python to provide:
+meshes of mixed element to solve conservation laws. It is developed by using
+C++ and Python to provide:
 
 1. Contiguous buffers and multi-dimensional arrays.
 2. One-dimensional solvers for demonstrating the CESE method.
