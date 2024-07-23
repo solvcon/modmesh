@@ -31,11 +31,11 @@ modmesh is developed by using C++ and Python to provide:
 6. A graphical user interface (GUI) application based on Qt for the spatial data
    and analysis.
 
-Windows portable binaries are now available for download from the
-`devbuild (Github Actions)
+An experimental Windows binary (portable) can be downloaded from the `devbuild
+Github Action
 <https://github.com/solvcon/modmesh/actions/workflows/devbuild.yml?query=event%3Aschedule+is%3Asuccess+branch%3Amaster>`__.
-Click on a run result and scroll down to the Artifacts section to download the
-ZIP file (Login is required).
+Click the Windows release run and scroll down to the "artifacts" section to
+download the ZIP file (Login is required).
 
 Refenreces
 ==========
