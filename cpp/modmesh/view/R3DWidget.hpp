@@ -111,6 +111,8 @@ public:
     void updateMesh(std::shared_ptr<StaticMesh> const & mesh);
     void updateWorld(std::shared_ptr<WorldFp64> const & world);
 
+    void closeAndDestroy();
+
     std::shared_ptr<StaticMesh> mesh() const { return m_mesh; }
 
 private:

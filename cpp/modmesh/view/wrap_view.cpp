@@ -171,6 +171,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
                 },
                 py::arg("filename"))
             .def(
+                "close_and_destroy",
+                [](wrapped_base_type & self)
+                { return self.closeAndDestroy(); })
+            .def(
                 "setCameraType",
                 [](wrapped_type & self, std::string const & name)
                 {
@@ -455,31 +459,27 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                 "updateCameraPosition",
                 [](
                     wrapped_type & self,
-                    float const & x,
-                    float const & y,
-                    float const & z,
-                    float const & pitch,
-                    float const & yaw,
-                    bool const & left_mouse_button,
-                    bool const & right_mouse_button,
-                    bool const & alt_key,
-                    bool const & shift_key,
-                    float const & dt)
+                    float x,
+                    float y,
+                    float z,
+                    float pitch,
+                    float yaw,
+                    bool left_mouse_button,
+                    bool right_mouse_button,
+                    bool alt_key,
+                    bool shift_key,
+                    float dt)
                 {
                     Qt3DExtras::QAbstractCameraController::InputState input{};
-
                     input.txAxisValue = x;
                     input.tyAxisValue = y;
                     input.tzAxisValue = z;
-
                     // yaw is for rotation around y-axis. horizontal movement of mouse rotates camera around y-axis
                     input.rxAxisValue = yaw;
                     // pitch is for rotation around x-axis. vertical movement of mouse rotates camera around x-axis
                     input.ryAxisValue = pitch;
-
                     input.leftMouseButtonActive = left_mouse_button;
                     input.rightMouseButtonActive = right_mouse_button;
-
                     input.altKeyActive = alt_key;
                     input.shiftKeyActive = shift_key;
 
@@ -504,29 +504,29 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                     return py::make_tuple(position.x(), position.y(), position.z());
                 })
             .def(
-                "linear_speed",
+                "linearSpeed",
                 [](wrapped_base_type & self)
                 { return self.getLinearSpeed(); })
             .def(
-                "look_speed",
+                "lookSpeed",
                 [](wrapped_base_type & self)
                 { return self.getLookSpeed(); })
             .def(
-                "view_center",
+                "viewCenter",
                 [](wrapped_base_type & self)
                 {
                     const auto center = self.viewCenter();
                     return py::make_tuple(center.x(), center.y(), center.z());
                 })
             .def(
-                "view_vector",
+                "viewVector",
                 [](wrapped_base_type & self)
                 {
                     const auto vector = self.viewVector();
                     return py::make_tuple(vector.x(), vector.y(), vector.z());
                 })
             .def(
-                "up_vector",
+                "upVector",
                 [](wrapped_base_type & self)
                 {
                     const auto vector = self.upVector();

@@ -60,43 +60,54 @@ class ViewTC(unittest.TestCase):
         self.assertFalse(view.mgr.pycon.python_redirect)
 
 
-def angle_axis(angle_deg, axis):
-    a = axis
-    angle = np.radians(angle_deg)
+class ViewCameraTB:
+    camera_type = None
 
-    cos_angle = np.cos(angle)
-    sin_angle = np.sin(angle)
-
-    rotation = np.identity(3) * cos_angle
-
-    m = np.outer(a, a) * (1 - cos_angle)
-    n = np.array([
-        [0, -a[2], a[1]],
-        [a[2], 0, -a[0]],
-        [-a[1], a[0], 0]
-    ]) * sin_angle
-
-    rotation += m + n
-
-    return rotation
-
-
-@unittest.skip("GUI is not yet available for testing")
-class ViewFPSCameraTC(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         widget = view.RManager.instance.setUp().add3DWidget()
-        widget.setCameraType("fps")
+        widget.setCameraType(cls.camera_type)
 
         cls.widget = widget
         cls.controller = widget.cameraController()
 
         cls.move = cls.controller.updateCameraPosition
-        
+
         cls.pos = cls.controller.position
-        cls.view_vector = cls.controller.view_vector
-        cls.view_center = cls.controller.view_center
-        cls.up_vector = cls.controller.up_vector
+        cls.look_speed = cls.controller.lookSpeed
+        cls.linear_speed = cls.controller.linearSpeed
+        cls.view_vector = cls.controller.viewVector
+        cls.view_center = cls.controller.viewCenter
+        cls.up_vector = cls.controller.upVector
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.widget.close_and_destroy()
+
+    def angle_axis(self, angle_deg, axis):
+        a = axis
+        angle = np.radians(angle_deg)
+
+        cos_angle = np.cos(angle)
+        sin_angle = np.sin(angle)
+
+        rotation = np.identity(3) * cos_angle
+
+        m = np.outer(a, a) * (1 - cos_angle)
+        n = np.array([
+            [0, -a[2], a[1]],
+            [a[2], 0, -a[0]],
+            [-a[1], a[0], 0]
+        ]) * sin_angle
+
+        rotation += m + n
+
+        return rotation
+
+
+@unittest.skip("GUI is not yet available for testing")
+class ViewFPSCameraTC(ViewCameraTB, unittest.TestCase):
+    camera_type = "fps"
 
     def setUp(self):
         self.widget.resetCamera()
@@ -107,7 +118,7 @@ class ViewFPSCameraTC(unittest.TestCase):
         initial_view_vector = self.view_vector()
         initial_view_center = self.view_center()
         initial_up_vector = self.up_vector()
-        
+
         self.move(x=1, y=1, z=1, dt=dt)
         self.move(yaw=1, pitch=1, dt=dt, left_mouse_button=True)
 
@@ -117,7 +128,7 @@ class ViewFPSCameraTC(unittest.TestCase):
         self.assertNotEqual(self.up_vector(), initial_up_vector)
 
         self.widget.resetCamera()
-        
+
         self.assertEqual(self.pos(), initial_pos)
         self.assertEqual(self.view_vector(), initial_view_vector)
         self.assertEqual(self.view_center(), initial_view_center)
@@ -125,51 +136,48 @@ class ViewFPSCameraTC(unittest.TestCase):
 
     def test_translation(self):
         dt = 0.01
-        linear_speed = self.controller.linear_speed()
-
-        delta = dt * linear_speed
+        delta = dt * self.linear_speed()
         new_pos = np.array(self.pos()) + [delta, delta, -delta]
 
         self.move(x=1, dt=dt)
-        self.assertAlmostEqual(self.pos()[0], new_pos[0], delta=1e-2)
+        self.assertEqual(self.pos()[0], new_pos[0])
 
         self.move(y=1, dt=dt)
-        self.assertAlmostEqual(self.pos()[1], new_pos[1], delta=1e-2)
+        self.assertEqual(self.pos()[1], new_pos[1])
 
         # camera moves in negative z direction
         self.move(z=1, dt=dt)
-        self.assertAlmostEqual(self.pos()[2], new_pos[2], delta=1e-2)
+        self.assertEqual(self.pos()[2], new_pos[2])
 
     def test_rotation(self):
         dt = 0.01
-        rotation = 0.5
-        look_speed = self.controller.look_speed()
+        angle = dt * self.look_speed()
 
-        initial_view_center = self.controller.view_center()
-        initial_view_vector = self.controller.view_vector()
+        initial_view_center = self.view_center()
+        initial_view_vector = self.view_vector()
 
         # test camera does not rotate when left mouse button is not pressed
-        self.move(yaw=rotation, pitch=rotation, dt=dt)
-        self.assertEqual(self.controller.view_vector(), initial_view_vector)
-        self.assertEqual(self.controller.view_center(), initial_view_center)
+        self.move(yaw=1, pitch=1, dt=dt)
+        self.assertEqual(self.view_vector(), initial_view_vector)
+        self.assertEqual(self.view_center(), initial_view_center)
 
         # test camera rotates around y-axis
-        self.move(yaw=rotation, dt=dt, left_mouse_button=True)
+        self.move(yaw=1, dt=dt, left_mouse_button=True)
 
-        rotation_matrix = angle_axis(rotation * dt * look_speed, (0, 1, 0))
+        rotation_matrix = self.angle_axis(angle, (0, 1, 0))
         rotated_vector = np.array(initial_view_vector) @ rotation_matrix
-        view_vector = self.controller.view_vector()
+        view_vector = self.view_vector()
 
         self.assertAlmostEqual(rotated_vector[0], view_vector[0], delta=1e-2)
         self.assertAlmostEqual(rotated_vector[1], view_vector[1], delta=1e-2)
         self.assertAlmostEqual(rotated_vector[2], view_vector[2], delta=1e-2)
 
         # test camera rotates around x-axis
-        self.move(pitch=rotation, dt=dt, left_mouse_button=True)
+        self.move(pitch=1, dt=dt, left_mouse_button=True)
 
-        rotation_matrix = angle_axis(rotation * dt * look_speed, (-1, 0, 0))
+        rotation_matrix = self.angle_axis(angle, (-1, 0, 0))
         rotated_vector = np.array(rotated_vector) @ rotation_matrix
-        view_vector = self.controller.view_vector()
+        view_vector = self.view_vector()
 
         self.assertAlmostEqual(rotated_vector[0], view_vector[0], delta=1e-2)
         self.assertAlmostEqual(rotated_vector[1], view_vector[1], delta=1e-2)
@@ -177,21 +185,8 @@ class ViewFPSCameraTC(unittest.TestCase):
 
 
 @unittest.skip("GUI is not yet available for testing")
-class ViewOrbitCameraTC(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        widget = view.RManager.instance.setUp().add3DWidget()
-        widget.setCameraType("orbit")
-
-        cls.widget = widget
-        cls.controller = widget.cameraController()
-
-        cls.move = cls.controller.updateCameraPosition
-
-        cls.pos = cls.controller.position
-        cls.view_vector = cls.controller.view_vector
-        cls.view_center = cls.controller.view_center
-        cls.up_vector = cls.controller.up_vector
+class ViewOrbitCameraTC(ViewCameraTB, unittest.TestCase):
+    camera_type = "orbit"
 
     def setUp(self):
         self.widget.resetCamera()
@@ -220,51 +215,50 @@ class ViewOrbitCameraTC(unittest.TestCase):
 
     def test_translation(self):
         dt = 0.01
-        linear_speed = self.controller.linear_speed()
+        linear_speed = self.linear_speed()
 
         delta = dt * linear_speed
         new_pos = np.array(self.pos()) + [delta, delta, -delta]
 
         self.move(x=1, dt=dt)
-        self.assertAlmostEqual(self.pos()[0], new_pos[0], delta=1e-2)
+        self.assertEqual(self.pos()[0], new_pos[0])
 
         self.move(y=1, dt=dt)
-        self.assertAlmostEqual(self.pos()[1], new_pos[1], delta=1e-2)
+        self.assertEqual(self.pos()[1], new_pos[1])
 
         # camera moves in negative z direction
         self.move(z=1, dt=dt)
-        self.assertAlmostEqual(self.pos()[2], new_pos[2], delta=1e-2)
+        self.assertEqual(self.pos()[2], new_pos[2])
 
     def test_rotation(self):
         dt = 0.01
-        rotation = 0.5
-        look_speed = self.controller.look_speed()
+        angle = dt * self.look_speed()
 
-        initial_view_center = self.controller.view_center()
-        initial_view_vector = self.controller.view_vector()
+        initial_view_center = self.view_center()
+        initial_view_vector = self.view_vector()
 
         # test camera does not rotate when right mouse button is not pressed
-        self.move(yaw=rotation, pitch=rotation, dt=dt)
-        self.assertEqual(self.controller.view_vector(), initial_view_vector)
-        self.assertEqual(self.controller.view_center(), initial_view_center)
+        self.move(yaw=1, pitch=1, dt=dt)
+        self.assertEqual(self.view_vector(), initial_view_vector)
+        self.assertEqual(self.view_center(), initial_view_center)
 
         # test camera rotates around y-axis
-        self.move(yaw=rotation, dt=dt, right_mouse_button=True)
+        self.move(yaw=1, dt=dt, right_mouse_button=True)
 
-        rotation_matrix = angle_axis(rotation * dt * look_speed, (0, -1, 0))
+        rotation_matrix = self.angle_axis(angle, (0, -1, 0))
         rotated_vector = np.array(initial_view_vector) @ rotation_matrix
-        view_vector = self.controller.view_vector()
+        view_vector = self.view_vector()
 
         self.assertAlmostEqual(rotated_vector[0], view_vector[0], delta=1e-2)
         self.assertAlmostEqual(rotated_vector[1], view_vector[1], delta=1e-2)
         self.assertAlmostEqual(rotated_vector[2], view_vector[2], delta=1e-2)
 
         # test camera rotates around x-axis
-        self.move(pitch=rotation, dt=dt, right_mouse_button=True)
+        self.move(pitch=1, dt=dt, right_mouse_button=True)
 
-        rotation_matrix = angle_axis(rotation * dt * look_speed, (1, 0, 0))
+        rotation_matrix = self.angle_axis(angle, (1, 0, 0))
         rotated_vector = np.array(rotated_vector) @ rotation_matrix
-        view_vector = self.controller.view_vector()
+        view_vector = self.view_vector()
 
         self.assertAlmostEqual(rotated_vector[0], view_vector[0], delta=1e-2)
         self.assertAlmostEqual(rotated_vector[1], view_vector[1], delta=1e-2)
