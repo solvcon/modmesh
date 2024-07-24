@@ -28,7 +28,9 @@ import unittest
 
 import os
 
-import modmesh
+import sys
+
+from modmesh import pylibmgr
 
 
 class pylibmgrTC(unittest.TestCase):
@@ -36,14 +38,15 @@ class pylibmgrTC(unittest.TestCase):
     def test_pylibmgr_search_library_root(self):
         # This test case assumes that modmesh third-party lib root's name is
         # thirdparty, it is located at modmesh project root: /path/to/modmesh.
-        modmesh.pylibmgr.search_library_root(os.getcwd(), 'thirdparty')
-        lib_path = modmesh.pylibmgr.lib_path
-        self.assertNotEqual(lib_path, {})
+        pylibmgr.search_library_root(os.getcwd(), 'thirdparty')
+        finder = next(finder for finder in sys.meta_path
+                      if isinstance(finder, pylibmgr.ModmeshPathFinder))
+        self.assertNotEqual(finder.lib_paths, {})
 
         # Reset library patch record
-        lib_path = {}
+        finder.lib_paths = {}
 
-        modmesh.pylibmgr.search_library_root(os.getcwd(), "Can_not_find")
-        self.assertEqual(lib_path, {})
+        pylibmgr.search_library_root(os.getcwd(), "Can_not_find")
+        self.assertEqual(finder.lib_paths, {})
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
