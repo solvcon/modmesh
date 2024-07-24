@@ -123,6 +123,8 @@ public:
 
     QVector3D viewCenter() { return getCamera()->viewCenter(); }
 
+    QVector3D upVector() { return getCamera()->upVector(); }
+
 protected:
     RCameraInputListener * m_listener = nullptr;
 

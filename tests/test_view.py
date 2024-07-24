@@ -92,24 +92,53 @@ class ViewFPSCameraTC(unittest.TestCase):
         cls.controller = widget.cameraController()
 
         cls.move = cls.controller.updateCameraPosition
-        cls.get_pos = cls.controller.position
+        
+        cls.pos = cls.controller.position
+        cls.view_vector = cls.controller.view_vector
+        cls.view_center = cls.controller.view_center
+        cls.up_vector = cls.controller.up_vector
+
+    def setUp(self):
+        self.widget.resetCamera()
+
+    def test_reset(self):
+        dt = 0.01
+        initial_pos = self.pos()
+        initial_view_vector = self.view_vector()
+        initial_view_center = self.view_center()
+        initial_up_vector = self.up_vector()
+        
+        self.move(x=1, y=1, z=1, dt=dt)
+        self.move(yaw=1, pitch=1, dt=dt, left_mouse_button=True)
+
+        self.assertNotEqual(self.pos(), initial_pos)
+        self.assertNotEqual(self.view_vector(), initial_view_vector)
+        self.assertNotEqual(self.view_center(), initial_view_center)
+        self.assertNotEqual(self.up_vector(), initial_up_vector)
+
+        self.widget.resetCamera()
+        
+        self.assertEqual(self.pos(), initial_pos)
+        self.assertEqual(self.view_vector(), initial_view_vector)
+        self.assertEqual(self.view_center(), initial_view_center)
+        self.assertEqual(self.up_vector(), initial_up_vector)
 
     def test_translation(self):
         dt = 0.01
         linear_speed = self.controller.linear_speed()
 
         delta = dt * linear_speed
-        new_pos = np.array(self.get_pos()) + [delta, delta, -delta]
+        new_pos = np.array(self.pos()) + [delta, delta, -delta]
 
         self.move(x=1, dt=dt)
-        self.assertAlmostEqual(self.get_pos()[0], new_pos[0], delta=1e-2)
+        self.assertAlmostEqual(self.pos()[0], new_pos[0], delta=1e-2)
 
         self.move(y=1, dt=dt)
-        self.assertAlmostEqual(self.get_pos()[1], new_pos[1], delta=1e-2)
+        self.assertAlmostEqual(self.pos()[1], new_pos[1], delta=1e-2)
 
         # camera moves in negative z direction
         self.move(z=1, dt=dt)
-        self.assertAlmostEqual(self.get_pos()[2], new_pos[2], delta=1e-2)
+        self.assertAlmostEqual(self.pos()[2], new_pos[2], delta=1e-2)
 
     def test_rotation(self):
         dt = 0.01
@@ -158,24 +187,53 @@ class ViewOrbitCameraTC(unittest.TestCase):
         cls.controller = widget.cameraController()
 
         cls.move = cls.controller.updateCameraPosition
-        cls.get_pos = cls.controller.position
+
+        cls.pos = cls.controller.position
+        cls.view_vector = cls.controller.view_vector
+        cls.view_center = cls.controller.view_center
+        cls.up_vector = cls.controller.up_vector
+
+    def setUp(self):
+        self.widget.resetCamera()
+
+    def test_reset(self):
+        dt = 0.01
+        initial_pos = self.pos()
+        initial_view_vector = self.view_vector()
+        initial_view_center = self.view_center()
+        initial_up_vector = self.up_vector()
+
+        self.move(x=1, y=1, z=1, dt=dt)
+        self.move(yaw=1, pitch=1, dt=dt, right_mouse_button=True)
+
+        self.assertNotEqual(self.pos(), initial_pos)
+        self.assertNotEqual(self.view_vector(), initial_view_vector)
+        self.assertNotEqual(self.view_center(), initial_view_center)
+        self.assertNotEqual(self.up_vector(), initial_up_vector)
+
+        self.widget.resetCamera()
+
+        self.assertEqual(self.pos(), initial_pos)
+        self.assertEqual(self.view_vector(), initial_view_vector)
+        self.assertEqual(self.view_center(), initial_view_center)
+        self.assertEqual(self.up_vector(), initial_up_vector)
 
     def test_translation(self):
         dt = 0.01
         linear_speed = self.controller.linear_speed()
 
         delta = dt * linear_speed
-        new_pos = np.array(self.get_pos()) + [delta, delta, -delta]
+        new_pos = np.array(self.pos()) + [delta, delta, -delta]
 
         self.move(x=1, dt=dt)
-        self.assertAlmostEqual(self.get_pos()[0], new_pos[0], delta=1e-2)
+        self.assertAlmostEqual(self.pos()[0], new_pos[0], delta=1e-2)
 
         self.move(y=1, dt=dt)
-        self.assertAlmostEqual(self.get_pos()[1], new_pos[1], delta=1e-2)
+        self.assertAlmostEqual(self.pos()[1], new_pos[1], delta=1e-2)
 
         # camera moves in negative z direction
         self.move(z=1, dt=dt)
-        self.assertAlmostEqual(self.get_pos()[2], new_pos[2], delta=1e-2)
+        self.assertAlmostEqual(self.pos()[2], new_pos[2], delta=1e-2)
 
     def test_rotation(self):
         dt = 0.01

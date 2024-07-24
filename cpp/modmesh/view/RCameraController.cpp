@@ -228,7 +228,7 @@ RFirstPersonCameraController::RFirstPersonCameraController(QNode * parent)
 
 void RFirstPersonCameraController::updateCameraPosition(const InputState & input, const float dt)
 {
-    constexpr auto upVector = QVector3D(0.f, 1.f, 0.f);
+    constexpr auto positiveY = QVector3D(0.f, 1.f, 0.f);
 
     if (camera() == nullptr)
         return;
@@ -241,7 +241,7 @@ void RFirstPersonCameraController::updateCameraPosition(const InputState & input
     {
         const float adjustedLookSpeed = lookSpeed() * (input.shiftKeyActive ? lookSpeedFactorOnShiftPressed : 1.0f);
 
-        camera()->pan(input.rxAxisValue * adjustedLookSpeed * dt, upVector);
+        camera()->pan(input.rxAxisValue * adjustedLookSpeed * dt, positiveY);
         camera()->tilt(input.ryAxisValue * adjustedLookSpeed * dt);
     }
 }
@@ -318,9 +318,9 @@ void ROrbitCameraController::zoom(const float zoomValue) const
 
 void ROrbitCameraController::orbit(const float pan, const float tilt) const
 {
-    constexpr auto upVector = QVector3D(0.f, 1.f, 0.f);
+    constexpr auto positiveY = QVector3D(0.f, 1.f, 0.f);
 
-    camera()->panAboutViewCenter(pan * lookSpeed(), upVector);
+    camera()->panAboutViewCenter(pan * lookSpeed(), positiveY);
     camera()->tiltAboutViewCenter(tilt * lookSpeed());
 }
 

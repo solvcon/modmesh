@@ -524,6 +524,13 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                 {
                     const auto vector = self.viewVector();
                     return py::make_tuple(vector.x(), vector.y(), vector.z());
+                })
+            .def(
+                "up_vector",
+                [](wrapped_base_type & self)
+                {
+                    const auto vector = self.upVector();
+                    return py::make_tuple(vector.x(), vector.y(), vector.z());
                 });
     }
 };
