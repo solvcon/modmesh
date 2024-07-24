@@ -32,7 +32,6 @@ Viewer
 
 # Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
 
-from . import core
 
 _from_impl = [  # noqa: F822
     'R3DWidget',
@@ -52,7 +51,6 @@ __all__ = _from_impl + [  # noqa: F822
 enable = False
 try:
     from _modmesh import view as _vimpl  # noqa: F401
-    from . import pylibmgr
     enable = True
 except ImportError:
     pass
@@ -62,15 +60,6 @@ def _load():
     if enable:
         for name in _from_impl:
             globals()[name] = getattr(_vimpl, name)
-    if core.HAS_VIEW:
-        # The viewer is using PUI as a third-party library,
-        # registering it into toggle system
-        tg = core.Toggle.instance
-        tg.add_subkey("viewer")
-        tv = tg.viewer
-        tv.set_string("library", "PUI")
-
-        pylibmgr.load_library(tv.library)
 
 
 _load()
