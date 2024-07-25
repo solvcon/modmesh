@@ -137,7 +137,9 @@ class ViewFPSCameraTC(ViewCameraTB, unittest.TestCase):
     def test_translation(self):
         dt = 0.01
         delta = dt * self.linear_speed()
-        new_pos = np.array(self.pos()) + [delta, delta, -delta]
+        delta_vec = np.array([delta, delta, -delta])
+        new_pos = np.array(self.pos()) + delta_vec
+        new_view_center = np.array(self.view_center()) + delta_vec
 
         self.move(x=1, dt=dt)
         self.assertEqual(self.pos()[0], new_pos[0])
@@ -148,6 +150,12 @@ class ViewFPSCameraTC(ViewCameraTB, unittest.TestCase):
         # camera moves in negative z direction
         self.move(z=1, dt=dt)
         self.assertEqual(self.pos()[2], new_pos[2])
+
+        # camera view center should move with camera
+        view_center = self.view_center()
+        self.assertEqual(view_center[0], new_view_center[0])
+        self.assertEqual(view_center[1], new_view_center[1])
+        self.assertEqual(view_center[2], new_view_center[2])
 
     def test_rotation(self):
         dt = 0.01
@@ -183,6 +191,14 @@ class ViewFPSCameraTC(ViewCameraTB, unittest.TestCase):
         self.assertAlmostEqual(rotated_vector[1], view_vector[1], delta=1e-2)
         self.assertAlmostEqual(rotated_vector[2], view_vector[2], delta=1e-2)
 
+        # test view center moved with the camera
+        new_view_center = rotated_vector + np.array(self.pos())
+        view_center = self.view_center()
+
+        self.assertAlmostEqual(view_center[0], new_view_center[0], delta=1e-2)
+        self.assertAlmostEqual(view_center[1], new_view_center[1], delta=1e-2)
+        self.assertAlmostEqual(view_center[2], new_view_center[2], delta=1e-2)
+
 
 @unittest.skip("GUI is not yet available for testing")
 class ViewOrbitCameraTC(ViewCameraTB, unittest.TestCase):
@@ -215,10 +231,10 @@ class ViewOrbitCameraTC(ViewCameraTB, unittest.TestCase):
 
     def test_translation(self):
         dt = 0.01
-        linear_speed = self.linear_speed()
-
-        delta = dt * linear_speed
-        new_pos = np.array(self.pos()) + [delta, delta, -delta]
+        delta = dt * self.linear_speed()
+        delta_vec = np.array([delta, delta, -delta])
+        new_pos = np.array(self.pos()) + delta_vec
+        new_view_center = np.array(self.view_center()) + delta_vec
 
         self.move(x=1, dt=dt)
         self.assertEqual(self.pos()[0], new_pos[0])
@@ -229,6 +245,12 @@ class ViewOrbitCameraTC(ViewCameraTB, unittest.TestCase):
         # camera moves in negative z direction
         self.move(z=1, dt=dt)
         self.assertEqual(self.pos()[2], new_pos[2])
+
+        # camera view center should move with camera
+        view_center = self.view_center()
+        self.assertEqual(view_center[0], new_view_center[0])
+        self.assertEqual(view_center[1], new_view_center[1])
+        self.assertEqual(view_center[2], new_view_center[2])
 
     def test_rotation(self):
         dt = 0.01
@@ -263,5 +285,8 @@ class ViewOrbitCameraTC(ViewCameraTB, unittest.TestCase):
         self.assertAlmostEqual(rotated_vector[0], view_vector[0], delta=1e-2)
         self.assertAlmostEqual(rotated_vector[1], view_vector[1], delta=1e-2)
         self.assertAlmostEqual(rotated_vector[2], view_vector[2], delta=1e-2)
+
+        # camera view center should not change
+        self.assertEqual(self.view_center(), initial_view_center)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
