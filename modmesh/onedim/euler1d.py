@@ -302,7 +302,7 @@ class ShockTube:
     def calc_entropy(self, pressure, density):
         return pressure / (density ** self.gamma)
 
-    def build_field(self, t, coord=None):
+    def build_field(self, t, coord=None, keep_edge=False):
         """
         Populate the field data using the analytical solution.
 
@@ -310,9 +310,13 @@ class ShockTube:
         :param coord: If None, take the coordinate from the numerical solver.
         :return: None
         """
+        _ = self.svr.ncoord
+        if keep_edge:
+            self.xindices = np.linspace(0, (_ - 1), num=((_ + 1) // 2), dtype=int)
+        else:
+            self.xindices = np.linspace(2, (_ - 3), num=((_ - 3) // 2), dtype=int) 
         if None is coord:
-            plot_point = np.linspace(2, (self.svr.ncoord - 3), num=((self.svr.ncoord - 3) // 2), dtype=int)
-            coord = self.svr.coord[plot_point]  # Use the numerical solver.
+            coord = self.svr.coord[self.xindices]  # Use the numerical solver.
         self.coord = coord.copy()  # Make a copy; no write back to argument.
 
         # Determine the zone location and the Boolean selection arrays.
