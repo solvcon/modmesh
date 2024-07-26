@@ -43,6 +43,8 @@ except ImportError:
     # or not.
     pass
 
+GITHUB_ACTIONS = os.getenv('GITHUB_ACTIONS', False)
+
 
 @unittest.skipUnless(modmesh.HAS_VIEW, "Qt view is not built")
 class ViewTC(unittest.TestCase):
@@ -109,7 +111,7 @@ class ViewCameraTB:
         return vec / np.linalg.norm(vec)
 
 
-@unittest.skipIf(os.getenv('GITHUB_ACTIONS'), "GUI is not available in GitHub Actions")
+@unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")
 class ViewFPSCameraTC(ViewCameraTB, unittest.TestCase):
     camera_type = "fps"
 
@@ -205,7 +207,7 @@ class ViewFPSCameraTC(ViewCameraTB, unittest.TestCase):
         self.assertAlmostEqual(view_center[2], new_view_center[2], delta=1e-5)
 
 
-@unittest.skipIf(os.getenv('GITHUB_ACTIONS'), "GUI is not available in GitHub Actions")
+@unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")
 class ViewOrbitCameraTC(ViewCameraTB, unittest.TestCase):
     camera_type = "orbit"
 
