@@ -27,6 +27,7 @@
 
 import unittest
 import numpy as np
+import os
 
 import modmesh
 try:
@@ -108,7 +109,7 @@ class ViewCameraTB:
         return vec / np.linalg.norm(vec)
 
 
-@unittest.skip("GUI is not yet available for testing")
+@unittest.skipIf(os.getenv('GITHUB_ACTIONS'), "GUI is not available in GitHub Actions")
 class ViewFPSCameraTC(ViewCameraTB, unittest.TestCase):
     camera_type = "fps"
 
@@ -204,7 +205,7 @@ class ViewFPSCameraTC(ViewCameraTB, unittest.TestCase):
         self.assertAlmostEqual(view_center[2], new_view_center[2], delta=1e-5)
 
 
-@unittest.skip("GUI is not yet available for testing")
+@unittest.skipIf(os.getenv('GITHUB_ACTIONS'), "GUI is not available in GitHub Actions")
 class ViewOrbitCameraTC(ViewCameraTB, unittest.TestCase):
     camera_type = "orbit"
 
