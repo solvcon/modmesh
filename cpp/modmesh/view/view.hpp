@@ -33,6 +33,7 @@
 #include <modmesh/view/R3DWidget.hpp>
 #include <modmesh/view/RManager.hpp>
 #include <modmesh/view/RPythonConsoleDockWidget.hpp>
+#include <modmesh/view/RCameraController.hpp>
 #include <modmesh/view/RStaticMesh.hpp>
 #include <modmesh/view/RWorld.hpp>
 #include <modmesh/view/RAxisMark.hpp>

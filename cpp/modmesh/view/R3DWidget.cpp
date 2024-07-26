@@ -41,17 +41,7 @@ R3DWidget::R3DWidget(Qt3DExtras::Qt3DWindow * window, RScene * scene, QWidget * 
 {
     m_view->setRootEntity(m_scene);
 
-    // Set up the camera.
-    Qt3DRender::QCamera * camera = m_view->camera();
-    camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
-    camera->setPosition(QVector3D(0.0f, 0.0f, 10.0f));
-    camera->setViewCenter(QVector3D(0.0f, 0.0f, 0.0f));
-
-    // Set up the camera control.
-    auto * control = m_scene->controller();
-    control->setCamera(camera);
-    control->setLinearSpeed(50.0f);
-    control->setLookSpeed(180.0f);
+    resetCamera(m_view->camera());
 
     if (Toggle::instance().fixed().get_show_axis())
     {
@@ -96,6 +86,12 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
     new RWorld(world, m_scene);
 }
 
+void R3DWidget::closeAndDestroy()
+{
+    this->close();
+    this->deleteLater();
+}
+
 void R3DWidget::resizeEvent(QResizeEvent * event)
 {
     QWidget::resizeEvent(event);
@@ -112,6 +108,7 @@ void R3DWidget::resetCamera(Qt3DRender::QCamera * camera,
     camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
     camera->setPosition(QVector3D(positionX, positionY, positionZ));
     camera->setViewCenter(QVector3D(0.0f, 0.0f, 0.0f));
+    camera->setUpVector(QVector3D(0.f, 1.f, 0.f));
 
     // Set up the camera control.
     auto * control = m_scene->controller();

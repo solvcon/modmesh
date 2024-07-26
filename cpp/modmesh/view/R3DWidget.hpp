@@ -39,26 +39,12 @@
 #include <Qt3DCore/QEntity>
 #include <Qt3DRender/QCamera>
 
-#include <QAbstractCameraController>
-#include <QOrbitCameraController>
-#include <QFirstPersonCameraController>
+#include <modmesh/view/RCameraController.hpp>
 
 #include <QResizeEvent>
 
 namespace modmesh
 {
-
-class RFirstPersonCameraController
-    : public Qt3DExtras::QFirstPersonCameraController
-{
-    using Qt3DExtras::QFirstPersonCameraController::QFirstPersonCameraController;
-}; /* end class RFirstPersonCameraController */
-
-class ROrbitCameraController
-    : public Qt3DExtras::QOrbitCameraController
-{
-    using Qt3DExtras::QOrbitCameraController::QOrbitCameraController;
-}; /* end class ROrbitCameraController */
 
 class RScene
     : public Qt3DCore::QEntity
@@ -111,6 +97,9 @@ public:
     Qt3DExtras::Qt3DWindow * view() { return m_view; }
     RScene * scene() { return m_scene; }
     Qt3DRender::QCamera * camera() { return m_view->camera(); }
+    Qt3DExtras::QAbstractCameraController * qtCameraController() { return m_scene->controller(); }
+    CameraController * cameraController() { return dynamic_cast<CameraController *>(m_scene->controller()); }
+
     void resetCamera(Qt3DRender::QCamera * camera,
                      float positionX = 0.0f,
                      float positionY = 0.0f,
@@ -121,6 +110,8 @@ public:
     void showMark();
     void updateMesh(std::shared_ptr<StaticMesh> const & mesh);
     void updateWorld(std::shared_ptr<WorldFp64> const & world);
+
+    void closeAndDestroy();
 
     std::shared_ptr<StaticMesh> mesh() const { return m_mesh; }
 

@@ -38,6 +38,7 @@ _from_impl = [  # noqa: F822
     'RLine',
     'RPythonConsoleDockWidget',
     'RManager',
+    'RCameraController',
     'mgr',
 ]
 
