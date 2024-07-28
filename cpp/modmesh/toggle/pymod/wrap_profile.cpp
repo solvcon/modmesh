@@ -27,6 +27,7 @@
  */
 
 #include <modmesh/toggle/pymod/toggle_pymod.hpp> // Must be the first include.
+#include <modmesh/toggle/SerializableProfiler.hpp>
 #include <modmesh/modmesh.hpp>
 #include <queue>
 #include <unordered_map>
@@ -191,8 +192,8 @@ protected:
                     return ss.str();
                 })
             .def("result", &result)
-            .def("reset", &wrapped_type::reset);
-        ;
+            .def("reset", &wrapped_type::reset)
+            .def("serialize", &CallProfilerSerializer::serialize);
 
         mod.attr("call_profiler") = mod.attr("CallProfiler").attr("instance");
     }

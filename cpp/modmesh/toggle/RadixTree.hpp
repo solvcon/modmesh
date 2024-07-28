@@ -40,6 +40,7 @@
 #include <unordered_map>
 #include <queue>
 #include <cstdint>
+#include <set>
 
 namespace modmesh
 {
@@ -121,8 +122,7 @@ namespace detail
 class CallProfilerTest; // for gtest
 } /* end namespace detail */
 
-class CallProfilerSerializer; // for declaration
-
+class SerializableRadixTree; // forward declaration
 template <typename T>
 class RadixTree
 {
@@ -165,7 +165,9 @@ public:
         m_root = std::move(std::make_unique<RadixTreeNode<T>>());
         m_current_node = m_root.get();
         m_id_map.clear();
+        m_stable_id_map.clear();
         m_unique_id = 0;
+        m_stable_unique_id = 0;
     }
 
     bool is_root() const
@@ -173,19 +175,18 @@ public:
         return m_current_node == m_root.get();
     }
 
+    void update_stable_items()
+    {
+        m_stable_id_map = m_id_map;
+        m_stable_unique_id = m_unique_id;
+    }
+
     RadixTreeNode<T> * get_root() const { return m_root.get(); }
     RadixTreeNode<T> * get_current_node() const { return m_current_node; }
-    key_type get_unique_node() const { return m_unique_id; }
-
-    class CallProfilerPK
-    {
-    private:
-        CallProfilerPK() = default;
-        friend CallProfilerSerializer;
-        friend detail::CallProfilerTest;
-    };
-
-    const std::unordered_map<std::string, key_type> & get_id_map(CallProfilerPK const &) const { return m_id_map; }
+    const key_type get_unique_node() const { return m_unique_id; }
+    const key_type get_stable_unique_node() const { return m_stable_unique_id; }
+    const std::unordered_map<std::string, key_type> & get_stable_id_map() const { return m_stable_id_map; }
+    const std::unordered_map<std::string, key_type> & get_id_map() const { return m_id_map; }
 
 private:
     key_type get_id(const std::string & name)
@@ -198,7 +199,9 @@ private:
     std::unique_ptr<RadixTreeNode<T>> m_root;
     RadixTreeNode<T> * m_current_node;
     std::unordered_map<std::string, key_type> m_id_map;
+    std::unordered_map<std::string, key_type> m_stable_id_map; // Re-entrant safe
     key_type m_unique_id = 0;
+    key_type m_stable_unique_id = 0; // Re-entrant safe
 }; /* end class RadixTree */
 
 // The profiling result of the caller
@@ -218,10 +221,18 @@ struct CallerProfile
         call_count++;
     }
 
+    void update_stable_items()
+    {
+        stable_total_time = total_time;
+        stable_call_count = call_count;
+    }
+
     std::chrono::high_resolution_clock::time_point start_time;
     std::string caller_name;
     std::chrono::nanoseconds total_time = std::chrono::nanoseconds(0); /// use nanoseconds to have higher precision
+    std::chrono::nanoseconds stable_total_time = std::chrono::nanoseconds(0); // Re-entrant safe
     int call_count = 0;
+    int stable_call_count = 0; // Re-entrant safe
     bool is_running = false;
 }; /* end struct CallerProfile */
 
@@ -250,23 +261,11 @@ public:
         return m_radix_tree;
     }
 
-    // Called when a function starts
-    void start_caller(const std::string & caller_name, std::function<void()> cancel_callback)
-    {
-        m_cancel_callbacks.push_back(cancel_callback);
-        m_radix_tree.entry(caller_name);
-        CallerProfile & callProfile = m_radix_tree.get_current_node()->data();
-        callProfile.caller_name = caller_name;
-        callProfile.start_stopwatch();
-    }
+    /// Called when a function starts
+    void start_caller(const std::string & caller_name, const std::function<void()> & cancel_callback);
 
-    // Called when a function ends
-    void end_caller()
-    {
-        CallerProfile & call_profile = m_radix_tree.get_current_node()->data();
-        call_profile.stop_stopwatch(); // Update profiling information
-        m_radix_tree.move_current_to_parent(); // Pop the caller from the call stack
-    }
+    /// Called when a function ends
+    void end_caller();
 
     /// Print the profiling information
     void print_profiling_result(std::ostream & outstream) const
@@ -274,7 +273,7 @@ public:
         print_profiling_result(*(m_radix_tree.get_current_node()), 0, outstream);
     }
 
-    // Print the statistics of the profiling result
+    /// Print the statistics of the profiling result
     void print_statistics(std::ostream & outstream) const
     {
         print_statistics(*(m_radix_tree.get_current_node()), outstream);
@@ -299,10 +298,19 @@ private:
     void print_profiling_result(const RadixTreeNode<CallerProfile> & node, const int depth, std::ostream & outstream) const;
     static void print_statistics(const RadixTreeNode<CallerProfile> & node, std::ostream & outstream);
 
+    void update_pending_nodes()
+    {
+        for (auto & node : m_pending_nodes)
+        {
+            node->data().update_stable_items();
+        }
+        m_pending_nodes.clear();
+    }
+
 private:
     RadixTree<CallerProfile> m_radix_tree; /// the data structure of the callers
     std::vector<std::function<void()>> m_cancel_callbacks; /// the callback to cancel the profiling from all probes
-
+    std::set<RadixTreeNode<CallerProfile> *> m_pending_nodes; /// The nodes that are not yet updated
     friend detail::CallProfilerTest;
 }; /* end class CallProfiler */
 
@@ -344,29 +352,6 @@ private:
     bool m_cancel = false;
     CallProfiler & m_profiler;
 }; /* end struct CallProfilerProbe */
-
-/// Utility to serialize and deserialize CallProfiler.
-class CallProfilerSerializer
-{
-public:
-    using child_list_type = std::list<std::unique_ptr<RadixTreeNode<CallerProfile>>>;
-    using node_to_number_map_type = std::unordered_map<const RadixTreeNode<CallerProfile> *, int>;
-    using key_type = typename RadixTree<CallerProfile>::key_type;
-    // It returns the json format of the CallProfiler.
-    static void serialize(const CallProfiler & profiler, std::ostream & outstream)
-    {
-        serialize_call_profiler(profiler, outstream);
-    }
-
-private:
-    static void serialize_call_profiler(const CallProfiler & profiler, std::ostream & outstream);
-    static void serialize_radix_tree(const CallProfiler & profiler, std::ostream & outstream);
-    static void serialize_id_map(const std::unordered_map<std::string, key_type> & id_map, std::ostream & outstream);
-    static void serialize_radix_tree_nodes(const RadixTreeNode<CallerProfile> * node, std::ostream & outstream);
-    static void serialize_radix_tree_node(const RadixTreeNode<CallerProfile> & node, bool is_first_node, node_to_number_map_type & node_to_unique_number, std::ostream & outstream);
-    static void serialize_radix_tree_node_children(const child_list_type & children, node_to_number_map_type & node_to_unique_number, std::ostream & outstream);
-    static void serialize_caller_profile(const CallerProfile & profile, std::ostream & outstream);
-}; /* end struct CallProfilerSerializer */
 
 #ifdef CALLPROFILER
 

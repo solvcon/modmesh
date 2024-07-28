@@ -284,3 +284,100 @@ class CallProfilerTC(unittest.TestCase):
         self.assertGreaterEqual(baz_dict["total_per_call"], ref_per_call)
         self.assertGreaterEqual(baz_dict["cumulative_time"], time3)
         self.assertGreaterEqual(baz_dict["cumulative_per_call"], time3)
+
+    def test_zero_callers_serializing(self):
+        modmesh.call_profiler.reset()
+        sdict = json.loads(modmesh.call_profiler.serialize())
+
+        # There are 3 keys in the serialization_dict
+        self.assertEqual(sdict["id_map"], {})
+        self.assertEqual(sdict["unique_id"], 0)
+        self.assertIn("radix_tree", sdict)
+
+        radix_tree = sdict["radix_tree"]
+        self.assertEqual(radix_tree["key"], -1)
+        self.assertEqual(radix_tree["name"], "")
+        self.assertEqual(radix_tree["call_count"], 0)
+        self.assertEqual(radix_tree["total_time"], 0)
+        self.assertEqual(radix_tree["children"], [])
+
+    def test_two_callers_serializing(self):
+
+        @profile_function
+        def bar():
+            busy_loop(0.5)
+
+        @profile_function
+        def foo():
+            busy_loop(0.1)
+            bar()
+
+        modmesh.call_profiler.reset()
+        bar()
+        foo()
+        sdict = json.loads(modmesh.call_profiler.serialize())
+
+        # There are 3 keys in the serialization_dict
+        self.assertEqual(sdict["id_map"], {'bar': 0, 'foo': 1})
+        self.assertEqual(sdict["unique_id"], 3)
+        self.assertIn("radix_tree", sdict)
+
+        radix_tree = sdict["radix_tree"]
+        self.assertEqual(radix_tree["key"], -1)
+        self.assertEqual(radix_tree["name"], "")
+        self.assertEqual(radix_tree["call_count"], 0)
+        self.assertEqual(radix_tree["total_time"], 0)
+        self.assertIn("children", radix_tree)
+
+        children = radix_tree["children"]
+        self.assertEqual(len(children), 2)
+
+        bar_child = children[0]
+        self.assertEqual(bar_child["key"], 0)
+        self.assertEqual(bar_child["name"], "bar")
+        self.assertEqual(bar_child["call_count"], 1)
+        self.assertGreaterEqual(bar_child["total_time"], 5e8)
+        self.assertEqual(bar_child["children"], [])
+
+        foo_child = children[1]
+        self.assertEqual(foo_child["key"], 1)
+        self.assertEqual(foo_child["name"], "foo")
+        self.assertEqual(foo_child["call_count"], 1)
+        self.assertGreaterEqual(foo_child["total_time"], 1e8)
+        self.assertEqual(len(foo_child["children"]), 1)
+
+        foo_bar_child = foo_child["children"][0]
+        self.assertEqual(foo_bar_child["key"], 0)
+        self.assertEqual(foo_bar_child["name"], "bar")
+        self.assertEqual(foo_bar_child["call_count"], 1)
+        self.assertGreaterEqual(foo_bar_child["total_time"], 5e8)
+        self.assertEqual(foo_bar_child["children"], [])
+
+    def test_serialize_during_profiling(self):
+
+        @profile_function
+        def bar():
+            busy_loop(0.5)
+
+        @profile_function
+        def foo():
+            bar()
+            busy_loop(0.1)
+            sdict = json.loads(modmesh.call_profiler.serialize())
+
+            # There are 3 keys in the serialization_dict
+            self.assertEqual(sdict["id_map"], {})
+            self.assertEqual(sdict["unique_id"], 0)
+            self.assertIn("radix_tree", sdict)
+
+            radix_tree = sdict["radix_tree"]
+            self.assertEqual(radix_tree["key"], -1)
+            self.assertEqual(radix_tree["name"], "")
+            self.assertEqual(radix_tree["call_count"], 0)
+            self.assertEqual(radix_tree["total_time"], 0)
+            self.assertEqual(radix_tree["children"], [])
+
+        modmesh.call_profiler.reset()
+        foo()
+
+# vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
