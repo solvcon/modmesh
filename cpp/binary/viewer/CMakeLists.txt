@@ -25,10 +25,23 @@ find_package(Qt6 COMPONENTS 3DRender)
 find_package(Qt6 COMPONENTS 3DInput)
 find_package(Qt6 COMPONENTS 3DExtras)
 
-qt_add_executable(
-    viewer
-    viewer.cpp
-)
+if(APPLE)
+    set(MACOSX_BUNDLE_ICON_FILE solvcon.icns)
+    set(app_icon_macos ${PROJECT_ROOT_DIR}/resources/viewer/solvcon.icns)
+    set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+    qt_add_executable(
+        viewer
+        MACOSX_BUNDLE
+        viewer.cpp
+        ${app_icon_macos}
+    )
+else()
+    qt_add_executable(
+        viewer
+        viewer.cpp
+    )
+endif()
 
 target_link_libraries(
     viewer PUBLIC
