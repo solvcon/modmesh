@@ -10,7 +10,7 @@ jobs:
 
   nouse_install_ubuntu:
 
-    if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
+    if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
 
     name: nouse_install_${{ matrix.os }}_Release
 
@@ -98,7 +98,7 @@ jobs:
 
   nouse_install_macos:
 
-    if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
+    if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
 
     name: nouse_install_${{ matrix.os }}_Release
 

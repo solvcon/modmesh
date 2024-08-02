@@ -12,6 +12,8 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
+
     strategy:
       matrix:
         path:
@@ -35,7 +37,7 @@ jobs:
 
   tidy_flake8_ubuntu:
 
-    if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
+    if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
 
     runs-on: ${{ matrix.os }}
 
@@ -160,7 +162,7 @@ jobs:
 
   tidy_flake8_macos:
 
-    if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
+    if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
 
     runs-on: ${{ matrix.os }}
 
