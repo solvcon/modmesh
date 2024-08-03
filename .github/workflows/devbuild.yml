@@ -10,7 +10,7 @@ jobs:
 
   standalone_buffer:
 
-    if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
+    if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
 
     name: standalone_buffer_${{ matrix.os }}
 
@@ -79,7 +79,7 @@ jobs:
 
   build_ubuntu:
 
-    if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
+    if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
 
     name: build_${{ matrix.os }}_${{ matrix.cmake_build_type }}
 
@@ -252,7 +252,7 @@ jobs:
 
   build_macos:
 
-    if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
+    if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
 
     name: build_${{ matrix.os }}_${{ matrix.cmake_build_type }}
 
@@ -443,7 +443,7 @@ jobs:
 
   build_windows:
 
-    if: ${{ github.event_name != '' || (github.event_name == '' && github.repository_owner == 'solvcon') }}
+    if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
 
     name: build_${{ matrix.os }}_${{ matrix.cmake_build_type }}
 
