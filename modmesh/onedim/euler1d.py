@@ -310,13 +310,14 @@ class ShockTube:
         :param coord: If None, take the coordinate from the numerical solver.
         :return: None
         """
-        _ = self.svr.ncoord
-        if keep_edge:
-            self.xindices = np.linspace(0, (_ - 1), num=((_ + 1) // 2), dtype=int)
-        else:
-            self.xindices = np.linspace(2, (_ - 3), num=((_ - 3) // 2), dtype=int) 
+
         if None is coord:
-            coord = self.svr.coord[self.xindices]  # Use the numerical solver.
+            _ = self.svr.ncoord
+            if keep_edge:
+                self.svr.xindices = np.linspace(0, (_ - 1), num=((_ + 1) // 2), dtype=int)
+            else:
+                self.svr.xindices = np.linspace(2, (_ - 3), num=((_ - 3) // 2), dtype=int)
+            coord = self.svr.coord[self.svr.xindices]  # Use the numerical solver.
         self.coord = coord.copy()  # Make a copy; no write back to argument.
 
         # Determine the zone location and the Boolean selection arrays.

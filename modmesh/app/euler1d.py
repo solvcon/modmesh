@@ -530,7 +530,7 @@ class Euler1DApp():
 
         :return: FigureCanvas
         """
-        x = self.st.svr.coord[self.st.xindices]
+        x = self.st.svr.coord[self.st.svr.xindices]
         fig = Figure()
         canvas = FigureCanvas(fig)
         ax = canvas.figure.subplots(3, 2)
@@ -574,7 +574,7 @@ class Euler1DApp():
 
         :return: FigureCanvas
         """
-        x = self.st.svr.coord[self.st.xindices]
+        x = self.st.svr.coord[self.st.svr.xindices]
         fig = Figure()
         canvas = FigureCanvas(fig)
         ax = canvas.figure.subplots()
@@ -744,23 +744,23 @@ class Euler1DApp():
         """
         if self.use_grid_layout:
             self.density.update(adata=self.st.density_field,
-                                ndata=self.st.svr.density[self.st.xindices])
+                                ndata=self.st.svr.density[self.st.svr.xindices])
             self.pressure.update(adata=self.st.pressure_field,
-                                 ndata=self.st.svr.pressure[self.st.xindices])
+                                 ndata=self.st.svr.pressure[self.st.svr.xindices])
             self.velocity.update(adata=self.st.velocity_field,
-                                 ndata=self.st.svr.velocity[self.st.xindices])
+                                 ndata=self.st.svr.velocity[self.st.svr.xindices])
             self.temperature.update(adata=self.st.temperature_field,
-                                    ndata=self.st.svr.temperature[self.st.xindices])
+                                    ndata=self.st.svr.temperature[self.st.svr.xindices])
             self.internal_energy.update(adata=(self.st.internal_energy_field),
                                         ndata=(self.st.svr.
-                                               internal_energy[self.st.xindices]))
+                                               internal_energy[self.st.svr.xindices]))
             self.entropy.update(adata=self.st.entropy_field,
-                                ndata=self.st.svr.entropy[self.st.xindices])
+                                ndata=self.st.svr.entropy[self.st.svr.xindices])
         else:
             for name, is_selected, *_ in self.plot_config.state:
                 if is_selected:
                     eval(f'(self.{name}.update(adata=self.st.{name}_field,'
-                         f' ndata=self.st.svr.{name}[self.st.xindices]))')
+                         f' ndata=self.st.svr.{name}[self.st.svr.xindices]))')
 
 
 class PlotArea(PuiInQt):
