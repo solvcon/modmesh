@@ -743,19 +743,30 @@ class Euler1DApp():
         :return: None
         """
         if self.use_grid_layout:
-            self.density.update(adata=self.st.density_field,
-                                ndata=self.st.svr.density[self.st.svr.xindices])
-            self.pressure.update(adata=self.st.pressure_field,
-                                 ndata=self.st.svr.pressure[self.st.svr.xindices])
-            self.velocity.update(adata=self.st.velocity_field,
-                                 ndata=self.st.svr.velocity[self.st.svr.xindices])
-            self.temperature.update(adata=self.st.temperature_field,
-                                    ndata=self.st.svr.temperature[self.st.svr.xindices])
-            self.internal_energy.update(adata=(self.st.internal_energy_field),
-                                        ndata=(self.st.svr.
-                                               internal_energy[self.st.svr.xindices]))
-            self.entropy.update(adata=self.st.entropy_field,
-                                ndata=self.st.svr.entropy[self.st.svr.xindices])
+            self.density.update(
+                adata=self.st.density_field,
+                ndata=self.st.svr.density[self.st.svr.xindices]
+            )
+            self.pressure.update(
+                adata=self.st.pressure_field,
+                ndata=self.st.svr.pressure[self.st.svr.xindices]
+            )
+            self.velocity.update(
+                adata=self.st.velocity_field,
+                ndata=self.st.svr.velocity[self.st.svr.xindices]
+            )
+            self.temperature.update(
+                adata=self.st.temperature_field,
+                ndata=self.st.svr.temperature[self.st.svr.xindices]
+            )
+            self.internal_energy.update(
+                adata=(self.st.internal_energy_field),
+                ndata=(self.st.svr.internal_energy[self.st.svr.xindices])
+            )
+            self.entropy.update(
+                adata=self.st.entropy_field,
+                ndata=self.st.svr.entropy[self.st.svr.xindices]
+            )
         else:
             for name, is_selected, *_ in self.plot_config.state:
                 if is_selected:

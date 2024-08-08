@@ -314,10 +314,15 @@ class ShockTube:
         if None is coord:
             _ = self.svr.ncoord
             if keep_edge:
-                self.svr.xindices = np.linspace(0, (_ - 1), num=((_ + 1) // 2), dtype=int)
+                self.svr.xindices = np.linspace(
+                    0, (_ - 1), num=((_ + 1) // 2), dtype=int
+                )
             else:
-                self.svr.xindices = np.linspace(2, (_ - 3), num=((_ - 3) // 2), dtype=int)
-            coord = self.svr.coord[self.svr.xindices]  # Use the numerical solver.
+                self.svr.xindices = np.linspace(
+                    2, (_ - 3), num=((_ - 3) // 2), dtype=int
+                )
+            # Use the numerical solver.
+            coord = self.svr.coord[self.svr.xindices]
         self.coord = coord.copy()  # Make a copy; no write back to argument.
 
         # Determine the zone location and the Boolean selection arrays.
