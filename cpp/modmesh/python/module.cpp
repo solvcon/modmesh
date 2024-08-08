@@ -25,6 +25,7 @@
 #include <modmesh/inout/pymod/inout_pymod.hpp>
 #include <modmesh/mesh/pymod/mesh_pymod.hpp>
 #include <modmesh/onedim/pymod/onedim_pymod.hpp>
+#include <modmesh/multidim/pymod/multidim_pymod.hpp>
 #include <modmesh/python/module.hpp>
 #include <modmesh/spacetime/pymod/spacetime_pymod.hpp>
 #include <modmesh/toggle/pymod/toggle_pymod.hpp>
@@ -48,6 +49,7 @@ void initialize(pybind11::module_ mod)
     initialize_buffer(mod);
     initialize_universe(mod);
     initialize_mesh(mod);
+    initialize_multidim(mod);
     initialize_inout(mod);
     pybind11::module_ spacetime_mod = mod.def_submodule("spacetime", "spacetime");
     initialize_spacetime(spacetime_mod);
