@@ -36,8 +36,6 @@ namespace modmesh
 namespace python
 {
 
-using namespace modmesh; // NOLINT(google-build-using-namespace)
-
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapEulerCore
     : public WrapBase<WrapEulerCore, EulerCore, std::shared_ptr<EulerCore>>
 {
