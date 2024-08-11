@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Yung-Yu Chen <yyc@solvcon.net>
+# Copyright (c) 2024, Yung-Yu Chen <yyc@solvcon.net>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -26,29 +26,13 @@
 
 
 """
-Show NACA airfoil shape
+Drawing and visualization sub-system of modmesh.
 """
 
-from modmesh import core
-from modmesh import view
-from modmesh.pilot import airfoil
+from . import airfoil  # noqa: F401
 
-
-def runmain():
-    """
-    A simple example for drawing a couple of cubic Bezier curves.
-    """
-    w = core.WorldFp64()
-    naca4 = airfoil.Naca4(number='0012', open_trailing_edge=False,
-                          cosine_spacing=False)
-    sampler = airfoil.Naca4Sampler(w, naca4)
-    sampler.populate_points(npoint=101, fac=5.0, off_x=0.0, off_y=2.0)
-    if False:
-        sampler.draw_line()
-    else:
-        sampler.draw_cbc()
-    wid = view.mgr.add3DWidget()
-    wid.updateWorld(w)
-    wid.showMark()
+__all__ = [
+    'airfoil',
+]
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
