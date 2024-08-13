@@ -202,7 +202,8 @@ void RManager::setUpMenu()
             []() {}));
 }
 
-void RManager::setUpCameraControllersMenuItems() const {
+void RManager::setUpCameraControllersMenuItems() const
+{
     auto * use_orbit_camera = new RAction(
         QString("Use Orbit Camera Controller"),
         QString("Use Oribt Camera Controller"),
@@ -257,118 +258,89 @@ void RManager::setUpCameraControllersMenuItems() const {
     m_viewMenu->addAction(use_fps_camera);
 }
 
-void RManager::setUpCameraMovementsMenuItems() const {
+void RManager::setUpCameraMovementsMenuItems() const
+{
     auto * reset_camera = new RAction(
-         QString("Reset (esc)"),
-         QString("Reset (esc)"),
-         [this]()
-         {
-             // implement resetting camera control
-             qDebug() << "Reset to initial status.";
-             try
-             {
-                 auto * viewer = dynamic_cast<R3DWidget *>(m_mdiArea->currentSubWindow()->widget());
-                 Qt3DRender::QCamera * camera = viewer->camera();
-                 if (camera)
-                 {
-                     viewer->resetCamera(camera);
-                 }
-             }
-             catch (std::bad_cast & e)
-             {
-                 std::cerr << e.what() << std::endl;
-             }
-         });
+        QString("Reset (esc)"),
+        QString("Reset (esc)"),
+        [this]()
+        {
+            // implement resetting camera control
+            qDebug() << "Reset to initial status.";
+            try
+            {
+                auto * viewer = dynamic_cast<R3DWidget *>(m_mdiArea->currentSubWindow()->widget());
+                Qt3DRender::QCamera * camera = viewer->camera();
+                if (camera)
+                {
+                    viewer->resetCamera(camera);
+                }
+            }
+            catch (std::bad_cast & e)
+            {
+                std::cerr << e.what() << std::endl;
+            }
+        });
 
     auto * move_camera_up = new RAction(
         QString("Move camera up (W/⬆)"),
         QString("Move camera up (W/⬆)"),
         createCameraTranslateItemHandler([](CameraInputState & input)
-        {
-            input.tyAxisValue = 1.0;
-        })
-    );
+                                         { input.tyAxisValue = 1.0; }));
 
     auto * move_camera_down = new RAction(
         QString("Move camera down (S/⬇)"),
         QString("Move camera down (S/⬇)"),
         createCameraTranslateItemHandler([](CameraInputState & input)
-        {
-            input.tyAxisValue = -1.0;
-        })
-    );
+                                         { input.tyAxisValue = -1.0; }));
 
     auto * move_camera_right = new RAction(
         QString("Move camera right (D/➡)"),
         QString("Move camera right (D/➡)"),
         createCameraTranslateItemHandler([](CameraInputState & input)
-        {
-            input.txAxisValue = 1.0;
-        })
-    );
+                                         { input.txAxisValue = 1.0; }));
 
     auto * move_camera_left = new RAction(
         QString("Move camera left (A/⬅)"),
         QString("Move camera left (A/⬅)"),
         createCameraTranslateItemHandler([](CameraInputState & input)
-        {
-            input.txAxisValue = -1.0;
-        })
-    );
+                                         { input.txAxisValue = -1.0; }));
 
     auto * move_camera_forward = new RAction(
         QString("Move camera forward (Ctrl+W/⬆)"),
         QString("Move camera forward (Ctrl+W/⬆)"),
         createCameraTranslateItemHandler([](CameraInputState & input)
-        {
-            input.tzAxisValue = 1.0;
-        })
-    );
+                                         { input.tzAxisValue = 1.0; }));
 
     auto * move_camera_backward = new RAction(
         QString("Move camera down (Ctrl+S/⬇)"),
         QString("Move camera down (Ctrl+S/⬇)"),
         createCameraTranslateItemHandler([](CameraInputState & input)
-        {
-            input.tzAxisValue = -1.0;
-        })
-    );
+                                         { input.tzAxisValue = -1.0; }));
 
     auto * rotate_camera_positive_yaw = new RAction(
         QString("Rotate camera positive yaw"),
         QString("Rotate camera positive yaw"),
         createCameraRotateItemHandler([](CameraInputState & input)
-        {
-            input.rxAxisValue = 1.0;
-        })
-    );
+                                      { input.rxAxisValue = 1.0; }));
 
     auto * rotate_camera_negative_yaw = new RAction(
         QString("Rotate camera negative yaw"),
         QString("Rotate camera negative yaw"),
         createCameraRotateItemHandler([](CameraInputState & input)
-        {
-            input.rxAxisValue = -1.0;
-        })
-    );
+                                      { input.rxAxisValue = -1.0; }));
 
     auto * rotate_camera_positive_pitch = new RAction(
         QString("Rotate camera positive pitch"),
         QString("Rotate camera positive pitch"),
         createCameraRotateItemHandler([](CameraInputState & input)
-        {
-            input.ryAxisValue = 1.0;
-        })
-    );
+                                      { input.ryAxisValue = 1.0; }));
 
     auto * rotate_camera_negative_pitch = new RAction(
         QString("Rotate camera negative pitch"),
         QString("Rotate camera negative pitch"),
         createCameraRotateItemHandler([](CameraInputState & input)
-        {
-            input.ryAxisValue = -1.0;
-        })
-    );
+                                      { input.ryAxisValue = -1.0; }));
 
     reset_camera->setShortcut(QKeySequence(Qt::Key_Escape));
 
@@ -385,8 +357,10 @@ void RManager::setUpCameraMovementsMenuItems() const {
     m_viewMenu->addAction(rotate_camera_negative_pitch);
 }
 
-std::function<void()> RManager::createCameraTranslateItemHandler(const std::function<void(CameraInputState&)> &func) const {
-    return [this, func]() {
+std::function<void()> RManager::createCameraTranslateItemHandler(const std::function<void(CameraInputState &)> & func) const
+{
+    return [this, func]()
+    {
         try
         {
             auto * viewer = dynamic_cast<R3DWidget *>(m_mdiArea->currentSubWindow()->widget());
@@ -405,8 +379,10 @@ std::function<void()> RManager::createCameraTranslateItemHandler(const std::func
     };
 }
 
-std::function<void()> RManager::createCameraRotateItemHandler(const std::function<void(CameraInputState&)> &func) const {
-    return [this, func]() {
+std::function<void()> RManager::createCameraRotateItemHandler(const std::function<void(CameraInputState &)> & func) const
+{
+    return [this, func]()
+    {
         try
         {
             auto * viewer = dynamic_cast<R3DWidget *>(m_mdiArea->currentSubWindow()->widget());
@@ -418,11 +394,11 @@ std::function<void()> RManager::createCameraRotateItemHandler(const std::functio
                 CameraInputState input{};
                 func(input);
 
-                if(controller->getType() == CameraControllerType::Orbit)
+                if (controller->getType() == CameraControllerType::Orbit)
                 {
                     input.rightMouseButtonActive = true;
                 }
-                else if(controller->getType() == CameraControllerType::FirstPerson)
+                else if (controller->getType() == CameraControllerType::FirstPerson)
                 {
                     input.leftMouseButtonActive = true;
                 }

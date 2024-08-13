@@ -105,7 +105,8 @@ RCameraInputListener::RCameraInputListener(
         });
 }
 
-void RCameraInputListener::init() {
+void RCameraInputListener::init()
+{
     initMouseListeners();
     initKeyboardListeners();
 

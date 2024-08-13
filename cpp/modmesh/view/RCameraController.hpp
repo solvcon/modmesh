@@ -45,7 +45,8 @@
 namespace modmesh
 {
 
-struct CameraInputState {
+struct CameraInputState
+{
     float rxAxisValue = 0;
     float ryAxisValue = 0;
     float txAxisValue = 0;
@@ -60,7 +61,8 @@ struct CameraInputState {
     bool shiftKeyActive = false;
 };
 
-enum class CameraControllerType {
+enum class CameraControllerType
+{
     FirstPerson,
     Orbit
 };
