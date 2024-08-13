@@ -470,7 +470,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                     bool shift_key,
                     float dt)
                 {
-                    Qt3DExtras::QAbstractCameraController::InputState input{};
+                    CameraInputState input{};
                     input.txAxisValue = x;
                     input.tyAxisValue = y;
                     input.tzAxisValue = z;

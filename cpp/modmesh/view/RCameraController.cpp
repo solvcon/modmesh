@@ -85,7 +85,7 @@ RCameraInputListener::RCameraInputListener(
         this,
         [this](const float dt)
         {
-            Qt3DExtras::QAbstractCameraController::InputState state{};
+            CameraInputState state{};
             const bool isCtrlPressed = m_ctrl_button_action->isActive();
 
             state.rxAxisValue = m_rx_axis->value();
@@ -217,7 +217,7 @@ void RCameraInputListener::initKeyboardListeners() const
 RFirstPersonCameraController::RFirstPersonCameraController(QNode * parent)
     : QFirstPersonCameraController(parent)
 {
-    auto callback = [this](const InputState & state, const float dt)
+    auto callback = [this](const CameraInputState & state, const float dt)
     {
         updateCameraPosition(state, dt);
     };
@@ -225,7 +225,7 @@ RFirstPersonCameraController::RFirstPersonCameraController(QNode * parent)
     m_listener = new RCameraInputListener(keyboardDevice(), mouseDevice(), callback, this);
 }
 
-void RFirstPersonCameraController::updateCameraPosition(const InputState & input, const float dt)
+void RFirstPersonCameraController::updateCameraPosition(const CameraInputState & input, const float dt)
 {
     constexpr auto positiveY = QVector3D(0.f, 1.f, 0.f);
 
@@ -248,7 +248,7 @@ void RFirstPersonCameraController::updateCameraPosition(const InputState & input
 ROrbitCameraController::ROrbitCameraController(QNode * parent)
     : QOrbitCameraController(parent)
 {
-    auto callback = [this](const InputState & state, const float dt)
+    auto callback = [this](const CameraInputState & state, const float dt)
     {
         updateCameraPosition(state, dt);
     };
@@ -256,7 +256,7 @@ ROrbitCameraController::ROrbitCameraController(QNode * parent)
     m_listener = new RCameraInputListener(keyboardDevice(), mouseDevice(), callback, this);
 }
 
-void ROrbitCameraController::updateCameraPosition(const InputState & input, const float dt)
+void ROrbitCameraController::updateCameraPosition(const CameraInputState & input, const float dt)
 {
     if (camera() == nullptr)
         return;

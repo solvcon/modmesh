@@ -45,12 +45,32 @@
 namespace modmesh
 {
 
+struct CameraInputState {
+    float rxAxisValue = 0;
+    float ryAxisValue = 0;
+    float txAxisValue = 0;
+    float tyAxisValue = 0;
+    float tzAxisValue = 0;
+
+    bool leftMouseButtonActive = false;
+    bool middleMouseButtonActive = false;
+    bool rightMouseButtonActive = false;
+
+    bool altKeyActive = false;
+    bool shiftKeyActive = false;
+};
+
+enum class CameraControllerType {
+    FirstPerson,
+    Orbit
+};
+
 class RCameraInputListener : public Qt3DCore::QEntity
 {
     Q_OBJECT
 
 public:
-    using callback_type = std::function<void(const Qt3DExtras::QAbstractCameraController::InputState &, float)>;
+    using callback_type = std::function<void(const CameraInputState &, float)>;
 
     RCameraInputListener(
         Qt3DInput::QKeyboardDevice * keyboardDevice,
@@ -111,13 +131,15 @@ class CameraController
 public:
     virtual ~CameraController() = default;
 
-    virtual void updateCameraPosition(const Qt3DExtras::QAbstractCameraController::InputState & state, float dt) = 0;
+    virtual void updateCameraPosition(const CameraInputState & state, float dt) = 0;
 
     virtual Qt3DRender::QCamera * getCamera() = 0;
 
     virtual float getLinearSpeed() = 0;
 
     virtual float getLookSpeed() = 0;
+
+    virtual CameraControllerType getType() = 0;
 
     QVector3D position() { return getCamera()->position(); }
 
@@ -154,7 +176,9 @@ private:
 
     void moveCamera(const InputState & state, float dt) override {}
 
-    void updateCameraPosition(const InputState & input, float dt) override;
+    void updateCameraPosition(const CameraInputState & input, float dt) override;
+
+    CameraControllerType getType() override { return CameraControllerType::FirstPerson; }
 };
 
 class ROrbitCameraController : public Qt3DExtras::QOrbitCameraController
@@ -172,7 +196,7 @@ public:
 private:
     void moveCamera(const InputState & state, float dt) override {}
 
-    void updateCameraPosition(const InputState & input, float dt) override;
+    void updateCameraPosition(const CameraInputState & input, float dt) override;
 
     void zoom(float zoomValue) const;
 
@@ -181,6 +205,8 @@ private:
     static float clamp(float value);
 
     static float zoomDistanceSquared(QVector3D firstPoint, QVector3D secondPoint);
+
+    CameraControllerType getType() override { return CameraControllerType::Orbit; }
 };
 
 } /* end namespace modmesh */
