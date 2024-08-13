@@ -84,11 +84,13 @@ private:
     Qt3DInput::QAction * m_right_mouse_button_action;
     Qt3DInput::QAction * m_shift_button_action;
     Qt3DInput::QAction * m_alt_button_action;
+    Qt3DInput::QAction * m_ctrl_button_action;
     Qt3DInput::QActionInput * m_left_mouse_button_input;
     Qt3DInput::QActionInput * m_middle_mouse_button_input;
     Qt3DInput::QActionInput * m_right_mouse_button_input;
     Qt3DInput::QActionInput * m_shift_button_input;
     Qt3DInput::QActionInput * m_alt_button_input;
+    Qt3DInput::QActionInput * m_ctrl_button_input;
     // mouse rotation input
     Qt3DInput::QAnalogAxisInput * m_mouse_rx_input;
     Qt3DInput::QAnalogAxisInput * m_mouse_ry_input;
