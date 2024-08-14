@@ -83,10 +83,9 @@ private:
     void setUpMenu();
 
     void setUpCameraControllersMenuItems() const;
-    void setUpCameraMovementsMenuItems() const;
+    void setUpCameraMovementMenuItems() const;
 
-    std::function<void()> createCameraTranslateItemHandler(const std::function<void(CameraInputState &)> &) const;
-    std::function<void()> createCameraRotateItemHandler(const std::function<void(CameraInputState &)> &) const;
+    std::function<void()> createCameraMovementItemHandler(const std::function<void(CameraInputState &)> &) const;
 
     bool m_already_setup = false;
 

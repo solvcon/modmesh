@@ -28,12 +28,9 @@
 
 #include <modmesh/view/RCameraController.hpp>
 
-#include <QShortcut>
 #include <Qt3DInput/QKeyboardDevice>
 #include <Qt3DInput/QMouseDevice>
 #include <Qt3DRender/QCamera>
-
-#include "R3DWidget.hpp"
 
 namespace modmesh
 {
