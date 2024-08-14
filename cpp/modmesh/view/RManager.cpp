@@ -265,20 +265,15 @@ void RManager::setUpCameraMovementMenuItems() const
         QString("Reset (esc)"),
         [this]()
         {
-            qDebug() << "Reset to initial status.";
-            try
-            {
-                auto * viewer = dynamic_cast<R3DWidget *>(m_mdiArea->currentSubWindow()->widget());
-                Qt3DRender::QCamera * camera = viewer->camera();
-                if (camera)
-                {
-                    viewer->resetCamera(camera);
-                }
-            }
-            catch (std::bad_cast & e)
-            {
-                std::cerr << e.what() << std::endl;
-            }
+            const auto * subwin = m_mdiArea->currentSubWindow();
+            if (subwin == nullptr)
+                return;
+
+            auto * viewer = dynamic_cast<R3DWidget *>(subwin->widget());
+            if (viewer == nullptr || viewer->camera() == nullptr)
+                return;
+
+            viewer->resetCamera();
         });
 
     auto * move_camera_up = new RAction(
