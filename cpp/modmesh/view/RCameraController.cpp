@@ -89,7 +89,7 @@ RCameraInputListener::RCameraInputListener(
             state.ryAxisValue = m_ry_axis->value();
             state.txAxisValue = m_tx_axis->value();
             state.tyAxisValue = isCtrlPressed ? 0.0f : m_ty_axis->value();
-            state.tzAxisValue = isCtrlPressed ? m_ty_axis->value() : 0.0f;
+            state.tzAxisValue = (isCtrlPressed ? m_ty_axis->value() : 0.0f) + m_tz_axis->value();
 
             state.leftMouseButtonActive = m_left_mouse_button_action->isActive();
             state.middleMouseButtonActive = m_middle_mouse_button_action->isActive();
@@ -182,7 +182,7 @@ void RCameraInputListener::initKeyboardListeners() const
     m_alt_button_input->setSourceDevice(m_keyboard_device);
     m_alt_button_action->addInput(m_alt_button_input);
 
-    // ctrl button
+    // ctrl button - On Windows Ctrl key, on Macs Cmd key
     m_ctrl_button_input->setButtons(QList<int>{Qt::Key_Control});
     m_ctrl_button_input->setSourceDevice(m_keyboard_device);
     m_ctrl_button_action->addInput(m_ctrl_button_input);
@@ -295,9 +295,9 @@ void ROrbitCameraController::updateCameraPosition(const CameraInputState & input
     }
     else
     {
-        const float x = clamp(input.txAxisValue + (input.leftMouseButtonActive ? input.rxAxisValue : 0));
-        const float y = clamp(input.tyAxisValue + (input.leftMouseButtonActive ? input.ryAxisValue : 0));
-        const auto translation = QVector3D(x, y, input.tzAxisValue) * linearSpeed() * dt;
+        const auto translation = QVector3D(
+                                     input.txAxisValue, input.tyAxisValue, input.tzAxisValue) *
+                                 linearSpeed() * dt;
 
         camera()->translate(translation);
     }

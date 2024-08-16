@@ -301,8 +301,8 @@ void RManager::setUpCameraMovementMenuItems() const
                                         { input.tzAxisValue = 1.0; }));
 
     auto * move_camera_backward = new RAction(
-        QString("Move camera down (Ctrl+S/⬇)"),
-        QString("Move camera down (Ctrl+S/⬇)"),
+        QString("Move camera backward (Ctrl+S/⬇)"),
+        QString("Move camera backward (Ctrl+S/⬇)"),
         createCameraMovementItemHandler([](CameraInputState & input)
                                         { input.tzAxisValue = -1.0; }));
 
@@ -332,17 +332,18 @@ void RManager::setUpCameraMovementMenuItems() const
 
     reset_camera->setShortcut(QKeySequence(Qt::Key_Escape));
 
-    m_viewMenu->addAction(reset_camera);
-    m_viewMenu->addAction(move_camera_up);
-    m_viewMenu->addAction(move_camera_down);
-    m_viewMenu->addAction(move_camera_right);
-    m_viewMenu->addAction(move_camera_left);
-    m_viewMenu->addAction(move_camera_forward);
-    m_viewMenu->addAction(move_camera_backward);
-    m_viewMenu->addAction(rotate_camera_positive_yaw);
-    m_viewMenu->addAction(rotate_camera_negative_yaw);
-    m_viewMenu->addAction(rotate_camera_positive_pitch);
-    m_viewMenu->addAction(rotate_camera_negative_pitch);
+    auto cameraMoveSubmenu = m_viewMenu->addMenu("Camera move");
+    cameraMoveSubmenu->addAction(reset_camera);
+    cameraMoveSubmenu->addAction(move_camera_up);
+    cameraMoveSubmenu->addAction(move_camera_down);
+    cameraMoveSubmenu->addAction(move_camera_right);
+    cameraMoveSubmenu->addAction(move_camera_left);
+    cameraMoveSubmenu->addAction(move_camera_forward);
+    cameraMoveSubmenu->addAction(move_camera_backward);
+    cameraMoveSubmenu->addAction(rotate_camera_positive_yaw);
+    cameraMoveSubmenu->addAction(rotate_camera_negative_yaw);
+    cameraMoveSubmenu->addAction(rotate_camera_positive_pitch);
+    cameraMoveSubmenu->addAction(rotate_camera_negative_pitch);
 }
 
 std::function<void()> RManager::createCameraMovementItemHandler(const std::function<void(CameraInputState &)> & func) const
@@ -366,6 +367,10 @@ std::function<void()> RManager::createCameraMovementItemHandler(const std::funct
         {
             if (controllerType == CameraControllerType::Orbit)
             {
+                constexpr float orbitRotationSpeed = 5.0f;
+
+                input.rxAxisValue *= orbitRotationSpeed;
+                input.ryAxisValue *= orbitRotationSpeed;
                 input.rightMouseButtonActive = true;
             }
             else if (controllerType == CameraControllerType::FirstPerson)
