@@ -287,11 +287,11 @@ void ROrbitCameraController::updateCameraPosition(const CameraInputState & input
     // keyboard Input
     if (input.altKeyActive)
     {
-        orbit(input.txAxisValue * dt, input.tzAxisValue * dt);
+        orbit(input.txAxisValue * dt, input.tyAxisValue * dt);
     }
     else if (input.shiftKeyActive)
     {
-        zoom(input.tzAxisValue * linearSpeed() * dt);
+        zoom(input.tyAxisValue * linearSpeed() * dt);
     }
     else
     {
