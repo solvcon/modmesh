@@ -82,6 +82,11 @@ private:
     void setUpCentral();
     void setUpMenu();
 
+    void setUpCameraControllersMenuItems() const;
+    void setUpCameraMovementMenuItems() const;
+
+    std::function<void()> createCameraMovementItemHandler(const std::function<void(CameraInputState &)> &) const;
+
     bool m_already_setup = false;
 
     QCoreApplication * m_core = nullptr;

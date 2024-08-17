@@ -41,7 +41,7 @@ R3DWidget::R3DWidget(Qt3DExtras::Qt3DWindow * window, RScene * scene, QWidget * 
 {
     m_view->setRootEntity(m_scene);
 
-    resetCamera(m_view->camera());
+    resetCamera();
 
     if (Toggle::instance().fixed().get_show_axis())
     {
@@ -99,14 +99,13 @@ void R3DWidget::resizeEvent(QResizeEvent * event)
     m_container->resize(event->size());
 }
 
-void R3DWidget::resetCamera(Qt3DRender::QCamera * camera,
-                            float positionX,
-                            float positionY,
-                            float positionZ)
+void R3DWidget::resetCamera() const
 {
+    Qt3DRender::QCamera * camera = m_view->camera();
+
     // Set up the camera.
     camera->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
-    camera->setPosition(QVector3D(positionX, positionY, positionZ));
+    camera->setPosition(QVector3D(0.0f, 0.0f, 10.0f));
     camera->setViewCenter(QVector3D(0.0f, 0.0f, 0.0f));
     camera->setUpVector(QVector3D(0.f, 1.f, 0.f));
 

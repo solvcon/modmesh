@@ -56,11 +56,13 @@ RCameraInputListener::RCameraInputListener(
     , m_right_mouse_button_action(new Qt3DInput::QAction)
     , m_shift_button_action(new Qt3DInput::QAction)
     , m_alt_button_action(new Qt3DInput::QAction)
+    , m_ctrl_button_action(new Qt3DInput::QAction)
     , m_left_mouse_button_input(new Qt3DInput::QActionInput)
     , m_middle_mouse_button_input(new Qt3DInput::QActionInput)
     , m_right_mouse_button_input(new Qt3DInput::QActionInput)
     , m_shift_button_input(new Qt3DInput::QActionInput)
     , m_alt_button_input(new Qt3DInput::QActionInput)
+    , m_ctrl_button_input(new Qt3DInput::QActionInput)
     , m_mouse_rx_input(new Qt3DInput::QAnalogAxisInput)
     , m_mouse_ry_input(new Qt3DInput::QAnalogAxisInput)
     , m_mouse_tz_x_input(new Qt3DInput::QAnalogAxisInput)
@@ -80,13 +82,14 @@ RCameraInputListener::RCameraInputListener(
         this,
         [this](const float dt)
         {
-            Qt3DExtras::QAbstractCameraController::InputState state{};
+            CameraInputState state{};
+            const bool isCtrlPressed = m_ctrl_button_action->isActive();
 
             state.rxAxisValue = m_rx_axis->value();
             state.ryAxisValue = m_ry_axis->value();
             state.txAxisValue = m_tx_axis->value();
-            state.tyAxisValue = m_ty_axis->value();
-            state.tzAxisValue = m_tz_axis->value();
+            state.tyAxisValue = isCtrlPressed ? 0.0f : m_ty_axis->value();
+            state.tzAxisValue = (isCtrlPressed ? m_ty_axis->value() : 0.0f) + m_tz_axis->value();
 
             state.leftMouseButtonActive = m_left_mouse_button_action->isActive();
             state.middleMouseButtonActive = m_middle_mouse_button_action->isActive();
@@ -109,6 +112,7 @@ void RCameraInputListener::init()
     m_logical_device->addAction(m_right_mouse_button_action);
     m_logical_device->addAction(m_alt_button_action);
     m_logical_device->addAction(m_shift_button_action);
+    m_logical_device->addAction(m_ctrl_button_action);
 
     m_logical_device->addAxis(m_rx_axis);
     m_logical_device->addAxis(m_ry_axis);
@@ -178,6 +182,11 @@ void RCameraInputListener::initKeyboardListeners() const
     m_alt_button_input->setSourceDevice(m_keyboard_device);
     m_alt_button_action->addInput(m_alt_button_input);
 
+    // ctrl button - On Windows Ctrl key, on Macs Cmd key
+    m_ctrl_button_input->setButtons(QList<int>{Qt::Key_Control});
+    m_ctrl_button_input->setSourceDevice(m_keyboard_device);
+    m_ctrl_button_action->addInput(m_ctrl_button_input);
+
     // keyboard positive x translation
     m_keyboard_tx_pos_input->setButtons(QList<int>{Qt::Key_D, Qt::Key_Right});
     m_keyboard_tx_pos_input->setScale(1.0f);
@@ -185,16 +194,10 @@ void RCameraInputListener::initKeyboardListeners() const
     m_tx_axis->addInput(m_keyboard_tx_pos_input);
 
     // keyboard positive y translation
-    m_keyboard_ty_pos_input->setButtons(QList<int>{Qt::Key_E, Qt::Key_PageUp});
+    m_keyboard_ty_pos_input->setButtons(QList<int>{Qt::Key_W, Qt::Key_Up});
     m_keyboard_ty_pos_input->setScale(1.0f);
     m_keyboard_ty_pos_input->setSourceDevice(m_keyboard_device);
     m_ty_axis->addInput(m_keyboard_ty_pos_input);
-
-    // keyboard positive z translation
-    m_keyboard_tz_pos_input->setButtons(QList<int>{Qt::Key_W, Qt::Key_Up});
-    m_keyboard_tz_pos_input->setScale(1.0f);
-    m_keyboard_tz_pos_input->setSourceDevice(m_keyboard_device);
-    m_tz_axis->addInput(m_keyboard_tz_pos_input);
 
     // keyboard negative x translation
     m_keyboard_tx_neg_input->setButtons(QList<int>{Qt::Key_A, Qt::Key_Left});
@@ -203,22 +206,16 @@ void RCameraInputListener::initKeyboardListeners() const
     m_tx_axis->addInput(m_keyboard_tx_neg_input);
 
     // keyboard negative y translation
-    m_keyboard_ty_neg_input->setButtons(QList<int>{Qt::Key_Q, Qt::Key_PageDown});
+    m_keyboard_ty_neg_input->setButtons(QList<int>{Qt::Key_S, Qt::Key_Down});
     m_keyboard_ty_neg_input->setScale(-1.0f);
     m_keyboard_ty_neg_input->setSourceDevice(m_keyboard_device);
     m_ty_axis->addInput(m_keyboard_ty_neg_input);
-
-    // keyboard negative z translation
-    m_keyboard_tz_neg_input->setButtons(QList<int>{Qt::Key_S, Qt::Key_Down});
-    m_keyboard_tz_neg_input->setScale(-1.0f);
-    m_keyboard_tz_neg_input->setSourceDevice(m_keyboard_device);
-    m_tz_axis->addInput(m_keyboard_tz_neg_input);
 }
 
 RFirstPersonCameraController::RFirstPersonCameraController(QNode * parent)
     : QFirstPersonCameraController(parent)
 {
-    auto callback = [this](const InputState & state, const float dt)
+    auto callback = [this](const CameraInputState & state, const float dt)
     {
         updateCameraPosition(state, dt);
     };
@@ -226,7 +223,7 @@ RFirstPersonCameraController::RFirstPersonCameraController(QNode * parent)
     m_listener = new RCameraInputListener(keyboardDevice(), mouseDevice(), callback, this);
 }
 
-void RFirstPersonCameraController::updateCameraPosition(const InputState & input, const float dt)
+void RFirstPersonCameraController::updateCameraPosition(const CameraInputState & input, const float dt)
 {
     constexpr auto positiveY = QVector3D(0.f, 1.f, 0.f);
 
@@ -249,7 +246,7 @@ void RFirstPersonCameraController::updateCameraPosition(const InputState & input
 ROrbitCameraController::ROrbitCameraController(QNode * parent)
     : QOrbitCameraController(parent)
 {
-    auto callback = [this](const InputState & state, const float dt)
+    auto callback = [this](const CameraInputState & state, const float dt)
     {
         updateCameraPosition(state, dt);
     };
@@ -257,7 +254,7 @@ ROrbitCameraController::ROrbitCameraController(QNode * parent)
     m_listener = new RCameraInputListener(keyboardDevice(), mouseDevice(), callback, this);
 }
 
-void ROrbitCameraController::updateCameraPosition(const InputState & input, const float dt)
+void ROrbitCameraController::updateCameraPosition(const CameraInputState & input, const float dt)
 {
     if (camera() == nullptr)
         return;
@@ -290,17 +287,17 @@ void ROrbitCameraController::updateCameraPosition(const InputState & input, cons
     // keyboard Input
     if (input.altKeyActive)
     {
-        orbit(input.txAxisValue * dt, input.tzAxisValue * dt);
+        orbit(input.txAxisValue * dt, input.tyAxisValue * dt);
     }
     else if (input.shiftKeyActive)
     {
-        zoom(input.tzAxisValue * linearSpeed() * dt);
+        zoom(input.tyAxisValue * linearSpeed() * dt);
     }
     else
     {
-        const float x = clamp(input.txAxisValue + (input.leftMouseButtonActive ? input.rxAxisValue : 0));
-        const float y = clamp(input.tyAxisValue + (input.leftMouseButtonActive ? input.ryAxisValue : 0));
-        const auto translation = QVector3D(x, y, input.tzAxisValue) * linearSpeed() * dt;
+        const auto translation = QVector3D(
+                                     input.txAxisValue, input.tyAxisValue, input.tzAxisValue) *
+                                 linearSpeed() * dt;
 
         camera()->translate(translation);
     }

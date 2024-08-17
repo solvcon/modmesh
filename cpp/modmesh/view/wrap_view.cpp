@@ -198,17 +198,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
                 py::arg("name"))
             .def(
                 "resetCamera",
-                [](wrapped_type & self, float const & positionX, float const & positionY, float const & positionZ)
+                [](wrapped_type & self)
                 {
-                    Qt3DRender::QCamera * camera = self.camera();
-                    if (camera)
-                    {
-                        self.resetCamera(camera, positionX, positionY, positionZ);
-                    }
-                },
-                py::arg("positionX") = 0.0f,
-                py::arg("positionY") = 0.0f,
-                py::arg("positionZ") = 10.0f)
+                    self.resetCamera();
+                })
             .def("cameraController", &wrapped_type::cameraController);
 
 #define DECL_QVECTOR3D_PROPERTY(NAME, GETTER, SETTER)          \
@@ -470,7 +463,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                     bool shift_key,
                     float dt)
                 {
-                    Qt3DExtras::QAbstractCameraController::InputState input{};
+                    CameraInputState input{};
                     input.txAxisValue = x;
                     input.tyAxisValue = y;
                     input.tzAxisValue = z;
