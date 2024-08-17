@@ -59,7 +59,7 @@ struct CameraInputState
 
     bool altKeyActive = false;
     bool shiftKeyActive = false;
-};
+}; /* end struct CameraInputState */
 
 enum class CameraControllerType
 {
@@ -126,7 +126,7 @@ private:
     Qt3DInput::QButtonAxisInput * m_keyboard_tx_neg_input;
     Qt3DInput::QButtonAxisInput * m_keyboard_ty_neg_input;
     Qt3DInput::QButtonAxisInput * m_keyboard_tz_neg_input;
-};
+}; /* end class RCameraInputListener */
 
 class CameraController
 {
@@ -159,7 +159,7 @@ private:
     {
         return dynamic_cast<Qt3DExtras::QAbstractCameraController *>(this);
     }
-};
+}; /* end class CameraController */
 
 class RFirstPersonCameraController : public Qt3DExtras::QFirstPersonCameraController
     , public CameraController
@@ -181,7 +181,7 @@ private:
     void updateCameraPosition(const CameraInputState & input, float dt) override;
 
     CameraControllerType getType() override { return CameraControllerType::FirstPerson; }
-};
+}; /* end class RFirstPersonCameraController */
 
 class ROrbitCameraController : public Qt3DExtras::QOrbitCameraController
     , public CameraController
@@ -209,7 +209,7 @@ private:
     static float zoomDistanceSquared(QVector3D firstPoint, QVector3D secondPoint);
 
     CameraControllerType getType() override { return CameraControllerType::Orbit; }
-};
+}; /* end class ROrbitCameraController */
 
 } /* end namespace modmesh */
 
