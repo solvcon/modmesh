@@ -104,16 +104,16 @@ class QuantityLine:
         self.num.figure.canvas.draw()
 
 
-class SolverConfig():
+class GUIConfig:
     """
-    Configuration class for the solver.
+    Configuration class for the GUI.
 
-    This class provides a configuration interface for the solver, allowing
+    This class provides a configuration interface for the GUI, allowing
     users to set and retrieve parameters related to the simulation.
 
     Attributes:
         - `state` (:class:`State`): The state object holding configuration
-          data in the form of [variable_name, value, description].
+          data.
         - `_tbl_content` (:class:`State`): The content of the
           configuration table.
         - `_col_header` (list): The header for the configuration
@@ -132,13 +132,40 @@ class SolverConfig():
           table.
         - :meth:`columnCount()`: Get the number of columns in the
           configuration table.
-        - :meth:`get_var(key_row, key_col)`: Get the value of a configuration
-          variable based on its key.
     """
-    def __init__(self, input_data):
+    class Accessor:
+        """
+        Helper calss to access data within the configuration table using
+        multiple dimensions, currenlty only support 2-dimensions table.
+
+        This class allows users to access data by chaining multiple [],
+        supporting string-based.
+        """
+        def __init__(self, data, dimIdx=0, header=None):
+            self._data = data
+            self._header = header
+            self._dimIdx = dimIdx
+
+        def __getitem__(self, key):
+            if self._dimIdx == 0:
+                for row_idx, row in enumerate(self._data):
+                    if key == row[0]:
+                        return GUIConfig.Accessor(self._data[row_idx],
+                                                  self._dimIdx+1,
+                                                  self._header)
+            else:
+                for idx, ele in enumerate(self._header):
+                    if key == ele:
+                        return self._data[idx]
+            raise KeyError(f'Invaild key: {key} not found in table')
+
+    def __init__(self, input_data, col_headers):
         self.state = State(input_data)
         self._tbl_content = self.state
-        self._col_header = ["variable", "value", "description"]
+        self._col_header = col_headers
+
+    def __getitem__(self, key):
+        return self.Accessor(self._tbl_content, 0, self._col_header)[key]
 
     def data(self, row, col):
         """
@@ -209,25 +236,27 @@ class SolverConfig():
         """
         return len(self._tbl_content[0])
 
-    def get_var(self, key_row, key_col):
-        """
-        Get the value of a configuration variable based on its key.
 
-        :param key_row: The row key of the variable.
-        :type key_row: str
-        :param key_col: The col key of the variable.
-        :type key_col: str
-        :return: The value of the specified variable.
-        """
-        for ele in self.state:
-            if key_row == ele[0]:
-                for idx, name in enumerate(self._col_header):
-                    if key_col == name:
-                        return ele[idx]
-        return None
+class SolverConfig(GUIConfig):
+    """
+    Configuration class for the solver.
+
+    This class provides a configuration interface for the solver, allowing
+    users to set and retrieve parameters related to the simulation.
+
+    Attributes:
+        - `state` (:class:`State`): The state object holding configuration
+          data in the form of [variable_name, value, description].
+        - `_tbl_content` (:class:`State`): The content of the
+          configuration table.
+        - `_col_header` (list): The header for the configuration
+          table columns.
+    """
+    def __init__(self, input_data):
+        super().__init__(input_data, ["variable", "value", "description"])
 
 
-class PlotConfig():
+class PlotConfig(GUIConfig):
     """
     Configuration class for the plot.
 
@@ -242,66 +271,12 @@ class PlotConfig():
           configuration table.
         - `_col_header` (list): The header for the configuration
           table columns.
-
-    Methods:
-        - :meth:`data(row, col)`: Get the value at a specific row and column
-          in the configuration table.
-        - :meth:`setData(row, col, value)`: Set the value at a specific row
-          and column in the configuration table.
-        - :meth:`columnHeader(col)`: Get the header for a specific column
-          in the configuration table.
-        - :meth:`editable(row, col)`: Check if a cell in the configuration
-          table is editable.
-        - :meth:`rowCount()`: Get the number of rows in the configuration
-          table.
-        - :meth:`columnCount()`: Get the number of columns in the
-          configuration table.
-        - :meth:`get_var(key, key_row, key_col)`: Get the value of a
-          configuration variable based on its key.
     """
     def __init__(self, input_data):
-        self.state = State(input_data)
-        self._tbl_content = self.state
-        self._col_header = ["variable",
-                            "line_selection",
-                            "y_axis_upper_limit",
-                            "y_axis_bottom_limit"]
-
-    def data(self, row, col):
-        """
-        Get the value at a specific row and column in the configuration table.
-
-        :param row: Row index.
-        :type row: int
-        :param col: Column index.
-        :type col: int
-        :return: The value at the specified location in
-        the configuration table.
-        """
-        return self._tbl_content[row][col]
-
-    def setData(self, row, col, value):
-        """
-        Set the value at a specific row and column in the configuration table.
-
-        :param row: Row index.
-        :type row: int
-        :param col: Column index.
-        :type col: int
-        :prarm value: Any
-        :return None
-        """
-        self._tbl_content[row][col] = value
-
-    def columnHeader(self, col):
-        """
-        Get the specific column header in the configuration table.
-
-        :param col: Column index.
-        :type col: int
-        :return: The header for the specific column.
-        """
-        return self._col_header[col]
+        super().__init__(input_data, ["variable",
+                                      "line_selection",
+                                      "y_axis_upper_limit",
+                                      "y_axis_bottom_limit"])
 
     def editable(self, row, col):
         """
@@ -316,42 +291,6 @@ class PlotConfig():
         if col >= 1:
             return True
         return False
-
-    # Delete row header
-    rowHeader = None
-
-    def rowCount(self):
-        """
-        Get the number of rows in the configuration table.
-
-        :return: The number of rows.
-        """
-        return len(self._tbl_content)
-
-    def columnCount(self):
-        """
-        Get the number of columns in the configuration table.
-
-        :return: The number of columns.
-        """
-        return len(self._tbl_content[0])
-
-    def get_var(self, key_row, key_col):
-        """
-        Get the value of a configuration variable based on its key.
-
-        :param key_row: The row key of the variable.
-        :type key_row: str
-        :param key_col: The col key of the variable.
-        :type key_col: str
-        :return: The value of the specified variable.
-        """
-        for ele in self.state:
-            if key_row == ele[0]:
-                for idx, name in enumerate(self._col_header):
-                    if key_col == name:
-                        return ele[idx]
-        return None
 
 
 class Euler1DApp():
@@ -493,24 +432,21 @@ class Euler1DApp():
 
         :return None
         """
-        self.init_solver(gamma=self.solver_config.get_var("gamma", "value"),
-                         pressure_left=self.solver_config.get_var("p_left",
-                                                                  "value"),
-                         density_left=self.solver_config.get_var("rho_left",
-                                                                 "value"),
-                         pressure_right=self.solver_config.get_var("p_right",
-                                                                   "value"),
-                         density_right=self.solver_config.get_var("rho_right",
-                                                                  "value"),
-                         xmin=self.solver_config.get_var("xmin", "value"),
-                         xmax=self.solver_config.get_var("xmax", "value"),
-                         ncoord=self.solver_config.get_var("ncoord", "value"),
-                         time_increment=(self.solver_config.
-                                         get_var("time_increment", "value")))
+        self.init_solver(gamma=self.solver_config["gamma"]["value"],
+                         pressure_left=self.solver_config["p_left"]["value"],
+                         density_left=self.solver_config["rho_left"]["value"],
+                         pressure_right=self.solver_config["p_right"]["value"],
+                         density_right=self.solver_config["rho_right"]
+                                                         ["value"],
+                         xmin=self.solver_config["xmin"]["value"],
+                         xmax=self.solver_config["xmax"]["value"],
+                         ncoord=self.solver_config["ncoord"]["value"],
+                         time_increment=(self.solver_config["time_increment"][
+                                                            "value"]))
         self.current_step = 0
-        self.interval = self.solver_config.get_var("timer_interval", "value")
-        self.max_steps = self.solver_config.get_var("max_steps", "value")
-        self.profiling = self.solver_config.get_var("profiling", "value")
+        self.interval = self.solver_config["timer_interval"]["value"]
+        self.max_steps = self.solver_config["max_steps"]["value"]
+        self.profiling = self.solver_config["profiling"]["value"]
 
     def setup_timer(self):
         """
@@ -592,7 +528,7 @@ class Euler1DApp():
         ):
             # Plot multiple data line with same X axis, it need to plot a
             # data line on main axis first
-            if self.plot_config.get_var(data.name, "line_selection"):
+            if self.plot_config[data.name]["line_selection"]:
                 data.axis = ax
                 data.ana, = ax.plot(x, np.zeros_like(x),
                                     f'{color}-',
@@ -683,10 +619,10 @@ class Euler1DApp():
             self.internal_energy,
             self.entropy
         ):
-            line.y_upper_lim = self.plot_config.get_var(line.name,
-                                                        "y_axis_upper_limit")
-            line.y_bottom_lim = self.plot_config.get_var(line.name,
-                                                         "y_axis_bottom_limit")
+            line.y_upper_lim = self.plot_config[line.name][
+                    "y_axis_upper_limit"]
+            line.y_bottom_lim = self.plot_config[line.name][
+                    "y_axis_bottom_limit"]
 
         if self.use_grid_layout:
             self.plot_holder.plot = self.build_grid_figure()
