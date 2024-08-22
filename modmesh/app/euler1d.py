@@ -104,7 +104,41 @@ class QuantityLine:
         self.num.figure.canvas.draw()
 
 
-class GUIConfig:
+class _Accessor:
+    """
+    Helper calss to access data within the configuration table using
+    multiple dimensions, currenlty only support 2-dimensions table.
+
+    This class allows users to access data by chaining multiple [],
+    supporting string-based.
+
+    Attributes:
+        :ivar: _data: handle input data that allow user can using
+            index or string to access it.
+        :ivar: _header (list): list of data's column header name.
+        :ivar: _dimIdx (int): using to indicate which dimension is
+            currenlty being accessed by __getitem__.
+    """
+    def __init__(self, data, dimIdx=0, header=None):
+        self._data = data
+        self._header = header
+        self._dimIdx = dimIdx
+
+    def __getitem__(self, key):
+        if self._dimIdx == 0:
+            for row_idx, row in enumerate(self._data):
+                if key == row[0]:
+                    return _Accessor(self._data[row_idx],
+                                     self._dimIdx+1,
+                                     self._header)
+        else:
+            for idx, ele in enumerate(self._header):
+                if key == ele:
+                    return self._data[idx]
+        raise KeyError(f'Invaild key: {key} not found in table')
+
+
+class GUIConfig(object):
     """
     Configuration class for the GUI.
 
@@ -112,52 +146,27 @@ class GUIConfig:
     users to set and retrieve parameters related to the simulation.
 
     Attributes:
-        - `state` (:class:`State`): The state object holding configuration
-          data.
-        - `_tbl_content` (:class:`State`): The content of the
-          configuration table.
-        - `_col_header` (list): The header for the configuration
-          table columns.
+        :ivar: state (:class:`State`): The state object holding configuration
+            data.
+        :ivar: _tbl_content (:class:`State`): The content of the
+            configuration table.
+        :ivar: _col_header (list): The header for the configuration
+            table columns.
 
     Methods:
-        - :meth:`data(row, col)`: Get the value at a specific row and column
-          in the configuration table.
-        - :meth:`setData(row, col, value)`: Set the value at a specific row
-          and column in the configuration table.
-        - :meth:`columnHeader(col)`: Get the header for a specific column
-          in the configuration table.
-        - :meth:`editable(row, col)`: Check if a cell in the configuration
-          table is editable.
-        - :meth:`rowCount()`: Get the number of rows in the configuration
-          table.
-        - :meth:`columnCount()`: Get the number of columns in the
-          configuration table.
+        :meth:`data(row, col)`: Get the value at a specific row and column
+            in the configuration table.
+        :meth:`setData(row, col, value)`: Set the value at a specific row
+            and column in the configuration table.
+        :meth:`columnHeader(col)`: Get the header for a specific column
+            in the configuration table.
+        :meth:`editable(row, col)`: Check if a cell in the configuration
+            table is editable.
+        :meth:`rowCount()`: Get the number of rows in the configuration
+            table.
+        :meth:`columnCount()`: Get the number of columns in the
+            configuration table.
     """
-    class Accessor:
-        """
-        Helper calss to access data within the configuration table using
-        multiple dimensions, currenlty only support 2-dimensions table.
-
-        This class allows users to access data by chaining multiple [],
-        supporting string-based.
-        """
-        def __init__(self, data, dimIdx=0, header=None):
-            self._data = data
-            self._header = header
-            self._dimIdx = dimIdx
-
-        def __getitem__(self, key):
-            if self._dimIdx == 0:
-                for row_idx, row in enumerate(self._data):
-                    if key == row[0]:
-                        return GUIConfig.Accessor(self._data[row_idx],
-                                                  self._dimIdx+1,
-                                                  self._header)
-            else:
-                for idx, ele in enumerate(self._header):
-                    if key == ele:
-                        return self._data[idx]
-            raise KeyError(f'Invaild key: {key} not found in table')
 
     def __init__(self, input_data, col_headers):
         self.state = State(input_data)
@@ -165,7 +174,7 @@ class GUIConfig:
         self._col_header = col_headers
 
     def __getitem__(self, key):
-        return self.Accessor(self._tbl_content, 0, self._col_header)[key]
+        return _Accessor(self._tbl_content, 0, self._col_header)[key]
 
     def data(self, row, col):
         """
