@@ -159,10 +159,19 @@ public:
 
     void reset();
 
+    QVector3D defaultPosition() const { return m_default_position; }
     void setDefaultPosition(QVector3D value) { m_default_position = value; }
+
+    QVector3D defaultViewCenter() const { return m_default_view_center; }
     void setDefaultViewCenter(QVector3D value) { m_default_view_center = value; }
+
+    QVector3D defaultUpVector() const { return m_default_up_vector; }
     void setDefaultUpVector(QVector3D value) { m_default_up_vector = value; }
+
+    float defaultLinearSpeed() const { return m_default_linear_speed; }
     void setDefaultLinearSpeed(float value) { m_default_linear_speed = value; }
+
+    float defaultLookSpeed() const { return m_default_look_speed; }
     void setDefaultLookSpeed(float value) { m_default_look_speed = value; }
 
     Qt3DExtras::QAbstractCameraController * asQtCameraController()

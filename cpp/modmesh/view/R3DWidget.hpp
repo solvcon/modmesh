@@ -59,7 +59,8 @@ public:
     CameraController * controller() const { return m_controller; }
     Qt3DExtras::QAbstractCameraController * qtController() const { return m_controller->asQtCameraController(); }
 
-    void setCameraController(CameraController * controller) {
+    void setCameraController(CameraController * controller)
+    {
         qtController()->deleteLater();
         m_controller = controller;
     }
@@ -70,7 +71,7 @@ public:
 
 private:
 
-    CameraController* m_controller;
+    CameraController * m_controller;
 
 }; /* end class RScene */
 
