@@ -159,6 +159,12 @@ public:
 
     void reset();
 
+    void setDefaultPosition(QVector3D value) { m_default_position = value; }
+    void setDefaultViewCenter(QVector3D value) { m_default_view_center = value; }
+    void setDefaultUpVector(QVector3D value) { m_default_up_vector = value; }
+    void setDefaultLinearSpeed(float value) { m_default_linear_speed = value; }
+    void setDefaultLookSpeed(float value) { m_default_look_speed = value; }
+
 protected:
     RCameraInputListener * m_listener = nullptr;
 
@@ -167,6 +173,12 @@ private:
     {
         return dynamic_cast<Qt3DExtras::QAbstractCameraController *>(this);
     }
+
+    QVector3D m_default_position = QVector3D(0.0f, 0.0f, 10.0f);
+    QVector3D m_default_view_center = QVector3D(0.0f, 0.0f, 0.0f);
+    QVector3D m_default_up_vector = QVector3D(0.0f, 1.0f, 0.0f);
+    float m_default_linear_speed = 50.0f;
+    float m_default_look_speed = 180.0f;
 }; /* end class CameraController */
 
 class RFirstPersonCameraController : public Qt3DExtras::QFirstPersonCameraController

@@ -216,12 +216,12 @@ void CameraController::reset()
 {
     camera()->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
 
-    setPosition(QVector3D(0.0f, 0.0f, 10.0f));
-    setViewCenter(QVector3D(0.0f, 0.0f, 0.0f));
-    setUpVector(QVector3D(0.f, 1.f, 0.f));
+    setPosition(m_default_position);
+    setViewCenter(m_default_view_center);
+    setUpVector(m_default_up_vector);
 
-    setLinearSpeed(50.0f);
-    setLookSpeed(180.0f);
+    setLinearSpeed(m_default_linear_speed);
+    setLookSpeed(m_default_look_speed);
 }
 
 RFirstPersonCameraController::RFirstPersonCameraController(QNode * parent)

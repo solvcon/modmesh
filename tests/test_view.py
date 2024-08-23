@@ -95,6 +95,12 @@ class ViewCameraTB:
         cls.up_vector = cls.controller.upVector
         cls.set_up_vector = cls.controller.setUpVector
 
+        cls.set_default_pos = cls.controller.setDefaultPosition
+        cls.set_default_view_center = cls.controller.setDefaultViewCenter
+        cls.set_default_up_vector = cls.controller.setDefaultUpVector
+        cls.set_default_linear_speed = cls.controller.setDefaultLinearSpeed
+        cls.set_default_look_speed = cls.controller.setDefaultLookSpeed
+
     @classmethod
     def tearDownClass(cls):
         cls.widget.close_and_destroy()
@@ -146,6 +152,21 @@ class ViewCommonCameraTC(ViewCameraTB, unittest.TestCase):
 
         self.set_up_vector(x=7, y=8, z=9)
         self.assertEqual(self.up_vector(), (7, 8, 9))
+
+    def test_default_values(self):
+        self.set_default_pos(x=1, y=2, z=3)
+        self.set_default_view_center(x=4, y=5, z=6)
+        self.set_default_up_vector(x=7, y=8, z=9)
+        self.set_default_linear_speed(123.0)
+        self.set_default_look_speed(456.0)
+
+        self.resetCamera()
+
+        self.assertEqual(self.pos(), (1, 2, 3))
+        self.assertEqual(self.view_center(), (4, 5, 6))
+        self.assertEqual(self.up_vector(), (7, 8, 9))
+        self.assertEqual(self.linear_speed(), 123.0)
+        self.assertEqual(self.look_speed(), 456.0)
 
 
 @unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")

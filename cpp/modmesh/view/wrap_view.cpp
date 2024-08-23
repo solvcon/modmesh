@@ -563,7 +563,48 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                 },
                 py::arg("x"),
                 py::arg("y"),
-                py::arg("z"));
+                py::arg("z"))
+            .def(
+                "setDefaultPosition",
+                [](wrapped_type & self, float x, float y, float z)
+                {
+                    self.setDefaultPosition(QVector3D(x, y, z));
+                },
+                py::arg("x"),
+                py::arg("y"),
+                py::arg("z"))
+            .def(
+                "setDefaultViewCenter",
+                [](wrapped_type & self, float x, float y, float z)
+                {
+                    self.setDefaultViewCenter(QVector3D(x, y, z));
+                },
+                py::arg("x"),
+                py::arg("y"),
+                py::arg("z"))
+            .def(
+                "setDefaultUpVector",
+                [](wrapped_type & self, float x, float y, float z)
+                {
+                    self.setDefaultUpVector(QVector3D(x, y, z));
+                },
+                py::arg("x"),
+                py::arg("y"),
+                py::arg("z"))
+            .def(
+                "setDefaultLinearSpeed",
+                [](wrapped_base_type & self, float value)
+                {
+                    self.setDefaultLinearSpeed(value);
+                },
+                py::arg("value"))
+            .def(
+                "setDefaultLookSpeed",
+                [](wrapped_base_type & self, float value)
+                {
+                    self.setDefaultLookSpeed(value);
+                },
+                py::arg("value"));
     }
 };
 
