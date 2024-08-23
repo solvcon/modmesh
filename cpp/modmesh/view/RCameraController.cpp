@@ -212,6 +212,18 @@ void RCameraInputListener::initKeyboardListeners() const
     m_ty_axis->addInput(m_keyboard_ty_neg_input);
 }
 
+void CameraController::reset()
+{
+    camera()->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
+
+    setPosition(QVector3D(0.0f, 0.0f, 10.0f));
+    setViewCenter(QVector3D(0.0f, 0.0f, 0.0f));
+    setUpVector(QVector3D(0.f, 1.f, 0.f));
+
+    setLinearSpeed(50.0f);
+    setLookSpeed(180.0f);
+}
+
 RFirstPersonCameraController::RFirstPersonCameraController(QNode * parent)
     : QFirstPersonCameraController(parent)
 {

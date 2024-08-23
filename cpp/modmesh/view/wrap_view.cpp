@@ -196,12 +196,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
                     }
                 },
                 py::arg("name"))
-            .def(
-                "resetCamera",
-                [](wrapped_type & self)
-                {
-                    self.resetCamera();
-                })
             .def("cameraController", &wrapped_type::cameraController);
 
 #define DECL_QVECTOR3D_PROPERTY(NAME, GETTER, SETTER)          \
@@ -449,6 +443,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
 
         (*this)
             .def(
+                "reset",
+                [](wrapped_type & self)
+                { self.reset(); })
+            .def(
                 "updateCameraPosition",
                 [](
                     wrapped_type & self,
@@ -497,13 +495,36 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                     return py::make_tuple(position.x(), position.y(), position.z());
                 })
             .def(
+                "setPosition",
+                [](wrapped_type & self, float x, float y, float z)
+                {
+                    self.setPosition(QVector3D(x, y, z));
+                },
+                py::arg("x"),
+                py::arg("y"),
+                py::arg("z"))
+            .def(
                 "linearSpeed",
                 [](wrapped_base_type & self)
-                { return self.getLinearSpeed(); })
+                { return self.linearSpeed(); })
+            .def(
+                "setLinearSpeed",
+                [](wrapped_base_type & self, float value)
+                {
+                    self.setLinearSpeed(value);
+                },
+                py::arg("value"))
             .def(
                 "lookSpeed",
                 [](wrapped_base_type & self)
-                { return self.getLookSpeed(); })
+                { return self.lookSpeed(); })
+            .def(
+                "setLookSpeed",
+                [](wrapped_base_type & self, float value)
+                {
+                    self.setLookSpeed(value);
+                },
+                py::arg("value"))
             .def(
                 "viewCenter",
                 [](wrapped_base_type & self)
@@ -511,6 +532,15 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                     const auto center = self.viewCenter();
                     return py::make_tuple(center.x(), center.y(), center.z());
                 })
+            .def(
+                "setViewCenter",
+                [](wrapped_type & self, float x, float y, float z)
+                {
+                    self.setViewCenter(QVector3D(x, y, z));
+                },
+                py::arg("x"),
+                py::arg("y"),
+                py::arg("z"))
             .def(
                 "viewVector",
                 [](wrapped_base_type & self)
@@ -524,7 +554,16 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                 {
                     const auto vector = self.upVector();
                     return py::make_tuple(vector.x(), vector.y(), vector.z());
-                });
+                })
+            .def(
+                "setUpVector",
+                [](wrapped_type & self, float x, float y, float z)
+                {
+                    self.setUpVector(QVector3D(x, y, z));
+                },
+                py::arg("x"),
+                py::arg("y"),
+                py::arg("z"));
     }
 };
 

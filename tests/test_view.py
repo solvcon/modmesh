@@ -30,6 +30,7 @@ import numpy as np
 import os
 
 import modmesh
+
 try:
     from modmesh import view
 except ImportError:
@@ -75,13 +76,24 @@ class ViewCameraTB:
         cls.controller = widget.cameraController()
 
         cls.move = cls.controller.updateCameraPosition
+        cls.resetCamera = cls.controller.reset
 
         cls.pos = cls.controller.position
+        cls.set_pos = cls.controller.setPosition
+
         cls.look_speed = cls.controller.lookSpeed
+        cls.set_look_speed = cls.controller.setLookSpeed
+
         cls.linear_speed = cls.controller.linearSpeed
+        cls.set_linear_speed = cls.controller.setLinearSpeed
+
         cls.view_vector = cls.controller.viewVector
+
         cls.view_center = cls.controller.viewCenter
+        cls.set_view_center = cls.controller.setViewCenter
+
         cls.up_vector = cls.controller.upVector
+        cls.set_up_vector = cls.controller.setUpVector
 
     @classmethod
     def tearDownClass(cls):
@@ -112,11 +124,36 @@ class ViewCameraTB:
 
 
 @unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")
+class ViewCommonCameraTC(ViewCameraTB, unittest.TestCase):
+    camera_type = "fps"  # no difference when use orbit camera
+
+    def setUp(self):
+        self.resetCamera()
+
+    def test_value_get_set(self):
+        self.set_linear_speed(123.0)
+        self.assertEqual(self.linear_speed(), 123.0)
+
+        self.set_look_speed(456.0)
+        self.assertEqual(self.look_speed(), 456.0)
+
+    def test_vector_get_set(self):
+        self.set_pos(x=1, y=2, z=3)
+        self.assertEqual(self.pos(), (1, 2, 3))
+
+        self.set_view_center(x=4, y=5, z=6)
+        self.assertEqual(self.view_center(), (4, 5, 6))
+
+        self.set_up_vector(x=7, y=8, z=9)
+        self.assertEqual(self.up_vector(), (7, 8, 9))
+
+
+@unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")
 class ViewFPSCameraTC(ViewCameraTB, unittest.TestCase):
     camera_type = "fps"
 
     def setUp(self):
-        self.widget.resetCamera()
+        self.resetCamera()
 
     def test_reset(self):
         dt = 0.01
@@ -133,7 +170,7 @@ class ViewFPSCameraTC(ViewCameraTB, unittest.TestCase):
         self.assertNotEqual(self.view_center(), initial_view_center)
         self.assertNotEqual(self.up_vector(), initial_up_vector)
 
-        self.widget.resetCamera()
+        self.resetCamera()
 
         self.assertEqual(self.pos(), initial_pos)
         self.assertEqual(self.view_vector(), initial_view_vector)
@@ -212,7 +249,7 @@ class ViewOrbitCameraTC(ViewCameraTB, unittest.TestCase):
     camera_type = "orbit"
 
     def setUp(self):
-        self.widget.resetCamera()
+        self.resetCamera()
 
     def test_reset(self):
         dt = 0.01
@@ -229,7 +266,7 @@ class ViewOrbitCameraTC(ViewCameraTB, unittest.TestCase):
         self.assertNotEqual(self.view_center(), initial_view_center)
         self.assertNotEqual(self.up_vector(), initial_up_vector)
 
-        self.widget.resetCamera()
+        self.resetCamera()
 
         self.assertEqual(self.pos(), initial_pos)
         self.assertEqual(self.view_vector(), initial_view_vector)

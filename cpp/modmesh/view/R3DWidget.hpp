@@ -100,8 +100,6 @@ public:
     Qt3DExtras::QAbstractCameraController * qtCameraController() { return m_scene->controller(); }
     CameraController * cameraController() { return dynamic_cast<CameraController *>(m_scene->controller()); }
 
-    void resetCamera() const;
-
     QPixmap grabPixmap() const { return m_view->screen()->grabWindow(m_view->winId()); }
 
     void showMark();

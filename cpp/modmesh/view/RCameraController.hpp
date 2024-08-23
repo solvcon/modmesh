@@ -135,21 +135,29 @@ public:
 
     virtual void updateCameraPosition(const CameraInputState & state, float dt) = 0;
 
-    virtual Qt3DRender::QCamera * getCamera() = 0;
+    virtual Qt3DRender::QCamera * camera() const = 0;
+    virtual void setCamera(Qt3DRender::QCamera * camera) = 0;
 
-    virtual float getLinearSpeed() = 0;
+    virtual float linearSpeed() const = 0;
+    virtual void setLinearSpeed(float value) = 0;
 
-    virtual float getLookSpeed() = 0;
+    virtual float lookSpeed() const = 0;
+    virtual void setLookSpeed(float value) = 0;
 
     virtual CameraControllerType getType() = 0;
 
-    QVector3D position() { return getCamera()->position(); }
+    QVector3D position() const { return camera()->position(); }
+    void setPosition(const QVector3D & value) const { camera()->setPosition(value); }
 
-    QVector3D viewVector() { return getCamera()->viewVector(); }
+    QVector3D viewVector() const { return camera()->viewVector(); }
 
-    QVector3D viewCenter() { return getCamera()->viewCenter(); }
+    QVector3D viewCenter() const { return camera()->viewCenter(); }
+    void setViewCenter(const QVector3D & value) const { camera()->setViewCenter(value); }
 
-    QVector3D upVector() { return getCamera()->upVector(); }
+    QVector3D upVector() const { return camera()->upVector(); }
+    void setUpVector(const QVector3D & value) const { camera()->setUpVector(value); }
+
+    void reset();
 
 protected:
     RCameraInputListener * m_listener = nullptr;
@@ -169,9 +177,14 @@ class RFirstPersonCameraController : public Qt3DExtras::QFirstPersonCameraContro
 public:
     explicit RFirstPersonCameraController(QNode * parent = nullptr);
 
-    Qt3DRender::QCamera * getCamera() override { return camera(); }
-    float getLinearSpeed() override { return linearSpeed(); }
-    float getLookSpeed() override { return lookSpeed(); }
+    Qt3DRender::QCamera * camera() const override { return QFirstPersonCameraController::camera(); }
+    void setCamera(Qt3DRender::QCamera * camera) override { QFirstPersonCameraController::setCamera(camera); }
+
+    float linearSpeed() const override { return QFirstPersonCameraController::linearSpeed(); }
+    void setLinearSpeed(float value) override { QFirstPersonCameraController::setLinearSpeed(value); }
+
+    float lookSpeed() const override { return QFirstPersonCameraController::lookSpeed(); }
+    void setLookSpeed(float value) override { QFirstPersonCameraController::setLookSpeed(value); }
 
 private:
     static constexpr auto lookSpeedFactorOnShiftPressed = 0.2f;
@@ -191,9 +204,14 @@ class ROrbitCameraController : public Qt3DExtras::QOrbitCameraController
 public:
     explicit ROrbitCameraController(QNode * parent = nullptr);
 
-    Qt3DRender::QCamera * getCamera() override { return camera(); }
-    float getLinearSpeed() override { return linearSpeed(); }
-    float getLookSpeed() override { return lookSpeed(); }
+    Qt3DRender::QCamera * camera() const override { return QOrbitCameraController::camera(); }
+    void setCamera(Qt3DRender::QCamera * camera) override { QOrbitCameraController::setCamera(camera); }
+
+    float linearSpeed() const override { return QOrbitCameraController::linearSpeed(); }
+    void setLinearSpeed(float value) override { QOrbitCameraController::setLinearSpeed(value); }
+
+    float lookSpeed() const override { return QOrbitCameraController::lookSpeed(); }
+    void setLookSpeed(float value) override { QOrbitCameraController::setLookSpeed(value); }
 
 private:
     void moveCamera(const InputState & state, float dt) override {}
