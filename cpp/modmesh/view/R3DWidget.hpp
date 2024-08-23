@@ -46,24 +46,21 @@
 namespace modmesh
 {
 
-class RScene
-    : public Qt3DCore::QEntity
+class RScene : public Qt3DCore::QEntity
 {
-
 public:
 
-    explicit RScene(Qt3DCore::QNode * parent = nullptr)
-        : Qt3DCore::QEntity(parent)
-        , m_controller(new ROrbitCameraController(this))
+    explicit RScene(QNode * parent = nullptr)
+        : QEntity(parent)
     {
+        m_controller = new ROrbitCameraController(this);
     }
 
-    Qt3DExtras::QAbstractCameraController const * controller() const { return m_controller; }
-    Qt3DExtras::QAbstractCameraController * controller() { return m_controller; }
+    CameraController * controller() const { return m_controller; }
+    Qt3DExtras::QAbstractCameraController * qtController() const { return m_controller->asQtCameraController(); }
 
-    void setCameraController(Qt3DExtras::QAbstractCameraController * controller)
-    {
-        m_controller->deleteLater();
+    void setCameraController(CameraController * controller) {
+        qtController()->deleteLater();
         m_controller = controller;
     }
 
@@ -73,7 +70,7 @@ public:
 
 private:
 
-    Qt3DExtras::QAbstractCameraController * m_controller = nullptr;
+    CameraController* m_controller;
 
 }; /* end class RScene */
 
@@ -97,8 +94,9 @@ public:
     Qt3DExtras::Qt3DWindow * view() { return m_view; }
     RScene * scene() { return m_scene; }
     Qt3DRender::QCamera * camera() { return m_view->camera(); }
-    Qt3DExtras::QAbstractCameraController * qtCameraController() { return m_scene->controller(); }
-    CameraController * cameraController() { return dynamic_cast<CameraController *>(m_scene->controller()); }
+
+    CameraController * cameraController() const { return m_scene->controller(); }
+    Qt3DExtras::QAbstractCameraController * qtCameraController() const { return m_scene->qtController(); }
 
     QPixmap grabPixmap() const { return m_view->screen()->grabWindow(m_view->winId()); }
 

@@ -165,15 +165,15 @@ public:
     void setDefaultLinearSpeed(float value) { m_default_linear_speed = value; }
     void setDefaultLookSpeed(float value) { m_default_look_speed = value; }
 
-protected:
-    RCameraInputListener * m_listener = nullptr;
-
-private:
     Qt3DExtras::QAbstractCameraController * asQtCameraController()
     {
         return dynamic_cast<Qt3DExtras::QAbstractCameraController *>(this);
     }
 
+protected:
+    RCameraInputListener * m_listener = nullptr;
+
+private:
     QVector3D m_default_position = QVector3D(0.0f, 0.0f, 10.0f);
     QVector3D m_default_view_center = QVector3D(0.0f, 0.0f, 0.0f);
     QVector3D m_default_up_vector = QVector3D(0.0f, 1.0f, 0.0f);
