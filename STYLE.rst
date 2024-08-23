@@ -440,6 +440,26 @@ hundreds of lines) to keep track of.
 
   } /* end namespace modmesh */
 
+C++ Curly Braces
+====
+
+Always add curly braces and always add them in standalone lines:
+
+.. code-block:: cpp
+
+  if (condition)
+  {
+      return;
+  }
+
+That is, never drop curly braces even when you can:
+
+.. code-block:: cpp
+
+  // NEVER DROP CURLY BRACES
+  if (condition)
+      return;
+
 Copyright Notice
 ====
 
