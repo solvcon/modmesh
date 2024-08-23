@@ -214,7 +214,7 @@ void RCameraInputListener::initKeyboardListeners() const
 
 void CameraController::reset()
 {
-    camera()->lens()->setPerspectiveProjection(45.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
+    camera()->lens()->setPerspectiveProjection(45.0f, camera()->lens()->aspectRatio(), 0.1f, 1000.0f);
 
     setPosition(m_default_position);
     setViewCenter(m_default_view_center);
