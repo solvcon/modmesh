@@ -104,7 +104,7 @@ class QuantityLine:
         self.num.figure.canvas.draw()
 
 
-class _Accessor:
+class _Accessor(object):
     """
     Helper calss to access data within the configuration table using
     multiple dimensions, currenlty only support 2-dimensions table.
