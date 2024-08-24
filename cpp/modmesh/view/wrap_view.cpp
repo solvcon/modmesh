@@ -448,7 +448,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                     input.shiftKeyActive = shift_key;
 
                     constexpr float dt = 1.0f;
-                    self.updateCameraPosition(input, dt);
+                    self.moveCamera(input, dt);
                 },
 
                 py::arg("x") = 0.f,
@@ -468,7 +468,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                     return py::make_tuple(vector.x(), vector.y(), vector.z());
                 });
 
-#define DECL_QVECTOR3D_PROPERTY(NAME, GETTER, SETTER)          \
+#define MM_DECL_QVECTOR3D_PROPERTY(NAME, GETTER, SETTER)       \
     .def_property(                                             \
         #NAME,                                                 \
         [](wrapped_type & self)                                \
@@ -486,37 +486,37 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
 
         (*this)
             // clang-format off
-                    DECL_QVECTOR3D_PROPERTY(position, position, setPosition)
-                    DECL_QVECTOR3D_PROPERTY(up_vector, upVector, setUpVector)
-                    DECL_QVECTOR3D_PROPERTY(view_center, viewCenter, setViewCenter)
-                    DECL_QVECTOR3D_PROPERTY(default_position, defaultPosition, setDefaultPosition)
-                    DECL_QVECTOR3D_PROPERTY(default_view_center, defaultViewCenter, setDefaultViewCenter)
-                    DECL_QVECTOR3D_PROPERTY(default_up_vector, defaultUpVector, setDefaultUpVector)
+                    MM_DECL_QVECTOR3D_PROPERTY(position, position, setPosition)
+                    MM_DECL_QVECTOR3D_PROPERTY(up_vector, upVector, setUpVector)
+                    MM_DECL_QVECTOR3D_PROPERTY(view_center, viewCenter, setViewCenter)
+                    MM_DECL_QVECTOR3D_PROPERTY(default_position, defaultPosition, setDefaultPosition)
+                    MM_DECL_QVECTOR3D_PROPERTY(default_view_center, defaultViewCenter, setDefaultViewCenter)
+                    MM_DECL_QVECTOR3D_PROPERTY(default_up_vector, defaultUpVector, setDefaultUpVector)
             // clang-format on
             ;
-#undef DECL_QVECTOR3D_PROPERTY
+#undef MM_DECL_QVECTOR3D_PROPERTY
 
-#define DECL_FLOAT_PROPERTY(NAME, GETTER, SETTER) \
-    .def_property(                                \
-        #NAME,                                    \
-        [](wrapped_type & self)                   \
-        {                                         \
-            return self.GETTER();                 \
-        },                                        \
-        [](wrapped_type & self, float v)          \
-        {                                         \
-            self.SETTER(v);                       \
+#define MM_DECL_FLOAT_PROPERTY(NAME, GETTER, SETTER) \
+    .def_property(                                   \
+        #NAME,                                       \
+        [](wrapped_type & self)                      \
+        {                                            \
+            return self.GETTER();                    \
+        },                                           \
+        [](wrapped_type & self, float v)             \
+        {                                            \
+            self.SETTER(v);                          \
         })
 
         (*this)
             // clang-format off
-                DECL_FLOAT_PROPERTY(linear_speed, linearSpeed, setLinearSpeed)
-                DECL_FLOAT_PROPERTY(look_speed, lookSpeed, setLookSpeed)
-                DECL_FLOAT_PROPERTY(default_linear_speed, defaultLinearSpeed, setDefaultLinearSpeed)
-                DECL_FLOAT_PROPERTY(default_look_speed, defaultLookSpeed, setDefaultLookSpeed)
+                MM_DECL_FLOAT_PROPERTY(linear_speed, linearSpeed, setLinearSpeed)
+                MM_DECL_FLOAT_PROPERTY(look_speed, lookSpeed, setLookSpeed)
+                MM_DECL_FLOAT_PROPERTY(default_linear_speed, defaultLinearSpeed, setDefaultLinearSpeed)
+                MM_DECL_FLOAT_PROPERTY(default_look_speed, defaultLookSpeed, setDefaultLookSpeed)
             // clang-format on
             ;
-#undef DECL_FLOAT_PROPERTY
+#undef MM_DECL_FLOAT_PROPERTY
     }
 };
 

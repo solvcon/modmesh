@@ -379,7 +379,7 @@ std::function<void()> RManager::createCameraMovementItemHandler(const std::funct
             }
         }
 
-        viewer->cameraController()->updateCameraPosition(input, 0.01);
+        viewer->cameraController()->moveCamera(input, 0.01);
     };
 }
 

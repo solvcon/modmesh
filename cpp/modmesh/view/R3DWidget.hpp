@@ -46,7 +46,8 @@
 namespace modmesh
 {
 
-class RScene : public Qt3DCore::QEntity
+class RScene
+    : public Qt3DCore::QEntity
 {
 public:
 
@@ -57,11 +58,10 @@ public:
     }
 
     CameraController * controller() const { return m_controller; }
-    Qt3DExtras::QAbstractCameraController * qtController() const { return m_controller->asQtCameraController(); }
 
     void setCameraController(CameraController * controller)
     {
-        qtController()->deleteLater();
+        m_controller->deleteLater();
         m_controller = controller;
     }
 
@@ -97,7 +97,6 @@ public:
     Qt3DRender::QCamera * camera() { return m_view->camera(); }
 
     CameraController * cameraController() const { return m_scene->controller(); }
-    Qt3DExtras::QAbstractCameraController * qtCameraController() const { return m_scene->qtController(); }
 
     QPixmap grabPixmap() const { return m_view->screen()->grabWindow(m_view->winId()); }
 

@@ -30,7 +30,6 @@ import numpy as np
 import os
 
 import modmesh
-
 try:
     from modmesh import view
 except ImportError:
@@ -70,7 +69,9 @@ class ViewCameraTB:
     @classmethod
     def setUpClass(cls):
         widget = view.RManager.instance.setUp().add3DWidget()
-        widget.setCameraType(cls.camera_type)
+
+        if cls.camera_type is not None:
+            widget.setCameraType(cls.camera_type)
 
         cls.widget = widget
         cls.camera = widget.camera
@@ -105,47 +106,51 @@ class ViewCameraTB:
 
 @unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")
 class ViewCommonCameraTC(ViewCameraTB, unittest.TestCase):
-    camera_type = "fps"  # no difference when use orbit camera
-
-    def setUp(self):
-        self.camera.reset()
-
     def test_value_get_set(self):
         c = self.camera
 
-        c.linear_speed = 123.0
-        self.assertEqual(c.linear_speed, 123.0)
+        for camera_type in ["fps", "orbit"]:
+            self.widget.setCameraType(camera_type)
 
-        c.look_speed = 456.0
-        self.assertEqual(c.look_speed, 456.0)
+            c.linear_speed = 123.0
+            self.assertEqual(c.linear_speed, 123.0)
+
+            c.look_speed = 456.0
+            self.assertEqual(c.look_speed, 456.0)
 
     def test_vector_get_set(self):
         c = self.camera
 
-        c.position = (1, 2, 3)
-        c.view_center = (4, 5, 6)
-        c.up_vector = (7, 8, 9)
+        for camera_type in ["fps", "orbit"]:
+            self.widget.setCameraType(camera_type)
 
-        self.assertEqual(c.position, (1, 2, 3))
-        self.assertEqual(c.view_center, (4, 5, 6))
-        self.assertEqual(c.up_vector, (7, 8, 9))
+            c.position = (1, 2, 3)
+            c.view_center = (4, 5, 6)
+            c.up_vector = (7, 8, 9)
+
+            self.assertEqual(c.position, (1, 2, 3))
+            self.assertEqual(c.view_center, (4, 5, 6))
+            self.assertEqual(c.up_vector, (7, 8, 9))
 
     def test_default_values(self):
         c = self.camera
 
-        c.default_position = (1, 2, 3)
-        c.default_view_center = (4, 5, 6)
-        c.default_up_vector = (7, 8, 9)
-        c.default_linear_speed = 123.0
-        c.default_look_speed = 456.0
+        for camera_type in ["fps", "orbit"]:
+            self.widget.setCameraType(camera_type)
 
-        c.reset()
+            c.default_position = (1, 2, 3)
+            c.default_view_center = (4, 5, 6)
+            c.default_up_vector = (7, 8, 9)
+            c.default_linear_speed = 123.0
+            c.default_look_speed = 456.0
 
-        self.assertEqual(c.position, (1, 2, 3))
-        self.assertEqual(c.view_center, (4, 5, 6))
-        self.assertEqual(c.up_vector, (7, 8, 9))
-        self.assertEqual(c.linear_speed, 123.0)
-        self.assertEqual(c.look_speed, 456.0)
+            c.reset()
+
+            self.assertEqual(c.position, (1, 2, 3))
+            self.assertEqual(c.view_center, (4, 5, 6))
+            self.assertEqual(c.up_vector, (7, 8, 9))
+            self.assertEqual(c.linear_speed, 123.0)
+            self.assertEqual(c.look_speed, 456.0)
 
 
 @unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")
