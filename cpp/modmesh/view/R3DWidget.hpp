@@ -57,9 +57,9 @@ public:
         m_controller = new ROrbitCameraController(this);
     }
 
-    CameraController * controller() const { return m_controller; }
+    RCameraController * controller() const { return m_controller; }
 
-    void setCameraController(CameraController * controller)
+    void setCameraController(RCameraController * controller)
     {
         m_controller->deleteLater();
         m_controller = controller;
@@ -71,7 +71,7 @@ public:
 
 private:
 
-    CameraController * m_controller;
+    RCameraController * m_controller;
 
 }; /* end class RScene */
 
@@ -96,7 +96,7 @@ public:
     RScene * scene() { return m_scene; }
     Qt3DRender::QCamera * camera() { return m_view->camera(); }
 
-    CameraController * cameraController() const { return m_scene->controller(); }
+    RCameraController * cameraController() const { return m_scene->controller(); }
 
     QPixmap grabPixmap() const { return m_view->screen()->grabWindow(m_view->winId()); }
 

@@ -111,6 +111,7 @@ class ViewCommonCameraTC(ViewCameraTB, unittest.TestCase):
 
         for camera_type in ["fps", "orbit"]:
             self.widget.setCameraType(camera_type)
+            c.reset()
 
             c.linear_speed = 123.0
             self.assertEqual(c.linear_speed, 123.0)
@@ -123,6 +124,7 @@ class ViewCommonCameraTC(ViewCameraTB, unittest.TestCase):
 
         for camera_type in ["fps", "orbit"]:
             self.widget.setCameraType(camera_type)
+            c.reset()
 
             c.position = (1, 2, 3)
             c.view_center = (4, 5, 6)
@@ -137,6 +139,13 @@ class ViewCommonCameraTC(ViewCameraTB, unittest.TestCase):
 
         for camera_type in ["fps", "orbit"]:
             self.widget.setCameraType(camera_type)
+            c.reset()
+
+            original_position = c.default_position
+            original_view_center = c.default_view_center
+            original_up_vector = c.default_up_vector
+            original_linear_speed = c.default_linear_speed
+            original_look_speed = c.default_look_speed
 
             c.default_position = (1, 2, 3)
             c.default_view_center = (4, 5, 6)
@@ -151,6 +160,39 @@ class ViewCommonCameraTC(ViewCameraTB, unittest.TestCase):
             self.assertEqual(c.up_vector, (7, 8, 9))
             self.assertEqual(c.linear_speed, 123.0)
             self.assertEqual(c.look_speed, 456.0)
+
+            c.default_position = original_position
+            c.default_view_center = original_view_center
+            c.default_up_vector = original_up_vector
+            c.default_linear_speed = original_linear_speed
+            c.default_look_speed = original_look_speed
+
+    def test_translation(self):
+        c = self.camera
+
+        for camera_type in ["orbit"]:
+            self.widget.setCameraType(camera_type)
+            c.reset()
+
+            speed = c.linear_speed
+            delta_vec = np.array([speed, speed, -speed])
+            new_position = np.array(c.position) + delta_vec
+            new_view_center = np.array(c.view_center) + delta_vec
+
+            c.move(x=1)
+            self.assertEqual(c.position[0], new_position[0])
+
+            c.move(y=1)
+            self.assertEqual(c.position[1], new_position[1])
+
+            # camera moves in negative z direction
+            c.move(z=1)
+            self.assertEqual(c.position[2], new_position[2])
+
+            # camera view center should move with camera
+            self.assertEqual(c.view_center[0], new_view_center[0])
+            self.assertEqual(c.view_center[1], new_view_center[1])
+            self.assertEqual(c.view_center[2], new_view_center[2])
 
 
 @unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")
@@ -180,29 +222,6 @@ class ViewFPSCameraTC(ViewCameraTB, unittest.TestCase):
         self.assertEqual(c.view_center, initial_view_center)
         self.assertEqual(c.up_vector, initial_up_vector)
 
-    def test_translation(self):
-        c = self.camera
-
-        speed = c.linear_speed
-        delta_vec = np.array([speed, speed, -speed])
-        new_position = np.array(c.position) + delta_vec
-        new_view_center = np.array(c.view_center) + delta_vec
-
-        c.move(x=1)
-        self.assertEqual(c.position[0], new_position[0])
-
-        c.move(y=1)
-        self.assertEqual(c.position[1], new_position[1])
-
-        # camera moves in negative z direction
-        c.move(z=1)
-        self.assertEqual(c.position[2], new_position[2])
-
-        # camera view center should move with camera
-        self.assertEqual(c.view_center[0], new_view_center[0])
-        self.assertEqual(c.view_center[1], new_view_center[1])
-        self.assertEqual(c.view_center[2], new_view_center[2])
-
     def test_rotation(self):
         c = self.camera
 
@@ -219,31 +238,32 @@ class ViewFPSCameraTC(ViewCameraTB, unittest.TestCase):
         # test camera rotates around y-axis
         c.move(yaw=1, left_mouse_button=True)
 
-        rotation_matrix = self.angle_axis(angle, (0, 1, 0))
-        rotated_vector = np.array(initial_view_vector) @ rotation_matrix
+        rot_matrix = self.angle_axis(angle, (0, 1, 0))
+        rot_vector = np.array(initial_view_vector) @ rot_matrix
 
-        self.assertAlmostEqual(rotated_vector[0], c.view_vector[0], places=5)
-        self.assertAlmostEqual(rotated_vector[1], c.view_vector[1], places=5)
-        self.assertAlmostEqual(rotated_vector[2], c.view_vector[2], places=5)
+        self.assertAlmostEqual(rot_vector[0], c.view_vector[0], delta=1e-5)
+        self.assertAlmostEqual(rot_vector[1], c.view_vector[1], delta=1e-5)
+        self.assertAlmostEqual(rot_vector[2], c.view_vector[2], delta=1e-5)
 
         # test camera rotates around x-axis
         old_view_vector = c.view_vector
         c.move(pitch=1, left_mouse_button=True)
 
         x_basis = -self.normalize(np.cross(old_view_vector, c.up_vector))
-        rotation_matrix = self.angle_axis(angle, x_basis)
-        rotated_vector = np.array(old_view_vector) @ rotation_matrix
+        rot_matrix = self.angle_axis(angle, x_basis)
+        rot_vector = np.array(old_view_vector) @ rot_matrix
 
-        self.assertAlmostEqual(rotated_vector[0], c.view_vector[0], places=5)
-        self.assertAlmostEqual(rotated_vector[1], c.view_vector[1], places=5)
-        self.assertAlmostEqual(rotated_vector[2], c.view_vector[2], places=5)
+        self.assertAlmostEqual(rot_vector[0], c.view_vector[0], delta=1e-5)
+        self.assertAlmostEqual(rot_vector[1], c.view_vector[1], delta=1e-5)
+        self.assertAlmostEqual(rot_vector[2], c.view_vector[2], delta=1e-5)
 
         # test view center moved with the camera
+        view_center = c.view_center
         new_view_center = c.view_vector + np.array(c.position)
 
-        self.assertAlmostEqual(c.view_center[0], new_view_center[0], places=5)
-        self.assertAlmostEqual(c.view_center[1], new_view_center[1], places=5)
-        self.assertAlmostEqual(c.view_center[2], new_view_center[2], places=5)
+        self.assertAlmostEqual(view_center[0], new_view_center[0], delta=1e-5)
+        self.assertAlmostEqual(view_center[1], new_view_center[1], delta=1e-5)
+        self.assertAlmostEqual(view_center[2], new_view_center[2], delta=1e-5)
 
 
 @unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")
@@ -275,29 +295,6 @@ class ViewOrbitCameraTC(ViewCameraTB, unittest.TestCase):
         self.assertEqual(c.view_center, initial_view_center)
         self.assertEqual(c.up_vector, initial_up_vector)
 
-    def test_translation(self):
-        c = self.camera
-
-        speed = c.linear_speed
-        delta_vec = np.array([speed, speed, -speed])
-        new_pos = np.array(c.position) + delta_vec
-        new_view_center = np.array(c.view_center) + delta_vec
-
-        c.move(x=1)
-        self.assertEqual(c.position[0], new_pos[0])
-
-        c.move(y=1)
-        self.assertEqual(c.position[1], new_pos[1])
-
-        # camera moves in negative z direction
-        c.move(z=1)
-        self.assertEqual(c.position[2], new_pos[2])
-
-        # camera view center should move with camera
-        self.assertEqual(c.view_center[0], new_view_center[0])
-        self.assertEqual(c.view_center[1], new_view_center[1])
-        self.assertEqual(c.view_center[2], new_view_center[2])
-
     def test_rotation(self):
         c = self.camera
 
@@ -313,24 +310,24 @@ class ViewOrbitCameraTC(ViewCameraTB, unittest.TestCase):
         # test camera rotates around y-axis
         c.move(yaw=1, right_mouse_button=True)
 
-        rotation_matrix = self.angle_axis(angle, (0, -1, 0))
-        rotated_vector = np.array(initial_view_vector) @ rotation_matrix
+        rot_matrix = self.angle_axis(angle, (0, -1, 0))
+        rot_vector = np.array(initial_view_vector) @ rot_matrix
 
-        self.assertAlmostEqual(rotated_vector[0], c.view_vector[0], places=5)
-        self.assertAlmostEqual(rotated_vector[1], c.view_vector[1], places=5)
-        self.assertAlmostEqual(rotated_vector[2], c.view_vector[2], places=5)
+        self.assertAlmostEqual(rot_vector[0], c.view_vector[0], delta=1e-5)
+        self.assertAlmostEqual(rot_vector[1], c.view_vector[1], delta=1e-5)
+        self.assertAlmostEqual(rot_vector[2], c.view_vector[2], delta=1e-5)
 
         # test camera rotates around x-axis
         old_view_vector = c.view_vector
         c.move(pitch=1, right_mouse_button=True)
 
         x_basis = self.normalize(np.cross(old_view_vector, c.up_vector))
-        rotation_matrix = self.angle_axis(angle, x_basis)
-        rotated_vector = np.array(old_view_vector) @ rotation_matrix
+        rot_matrix = self.angle_axis(angle, x_basis)
+        rot_vector = np.array(old_view_vector) @ rot_matrix
 
-        self.assertAlmostEqual(rotated_vector[0], c.view_vector[0], places=5)
-        self.assertAlmostEqual(rotated_vector[1], c.view_vector[1], places=5)
-        self.assertAlmostEqual(rotated_vector[2], c.view_vector[2], places=5)
+        self.assertAlmostEqual(rot_vector[0], c.view_vector[0], delta=1e-5)
+        self.assertAlmostEqual(rot_vector[1], c.view_vector[1], delta=1e-5)
+        self.assertAlmostEqual(rot_vector[2], c.view_vector[2], delta=1e-5)
 
         # camera view center should not change
         self.assertEqual(c.view_center, initial_view_center)

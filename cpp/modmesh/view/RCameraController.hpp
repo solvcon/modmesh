@@ -126,18 +126,20 @@ private:
     Qt3DInput::QButtonAxisInput * m_keyboard_tz_neg_input;
 }; /* end class RCameraInputListener */
 
-class CameraController : public Qt3DExtras::QAbstractCameraController
+class RCameraController : public Qt3DExtras::QAbstractCameraController
 {
     Q_OBJECT
 
 public:
-    explicit CameraController(Qt3DCore::QNode * parent = nullptr)
+    explicit RCameraController(Qt3DCore::QNode * parent = nullptr)
         : QAbstractCameraController(parent)
     {
     }
 
-    // Do nothing in QAbstractCameraController's moveCamera
-    void moveCamera(const InputState & state, float dt) override {}
+    void moveCamera(const InputState & state, float dt) override
+    {
+        // Do nothing in QAbstractCameraController's moveCamera
+    }
 
     virtual void moveCamera(const CameraInputState & state, float dt) = 0;
 
@@ -191,7 +193,7 @@ private:
     float m_default_look_speed = 180.0f;
 }; /* end class CameraController */
 
-class RFirstPersonCameraController : public CameraController
+class RFirstPersonCameraController : public RCameraController
 {
     Q_OBJECT
 
@@ -206,7 +208,7 @@ private:
     CameraControllerType getType() override { return CameraControllerType::FirstPerson; }
 }; /* end class RFirstPersonCameraController */
 
-class ROrbitCameraController : public CameraController
+class ROrbitCameraController : public RCameraController
 {
     Q_OBJECT
 

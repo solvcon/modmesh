@@ -405,7 +405,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
 }; /* end class WrapRManager */
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
-    : public WrapBase<WrapRCameraController, CameraController>
+    : public WrapBase<WrapRCameraController, RCameraController>
 {
 
     friend root_base_type;

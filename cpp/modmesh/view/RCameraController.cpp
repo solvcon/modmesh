@@ -212,7 +212,7 @@ void RCameraInputListener::initKeyboardListeners() const
     m_ty_axis->addInput(m_keyboard_ty_neg_input);
 }
 
-void CameraController::reset()
+void RCameraController::reset()
 {
     constexpr float fov_deg = 45.0f;
     constexpr float nearPlane = 0.1f;
@@ -228,7 +228,7 @@ void CameraController::reset()
 }
 
 RFirstPersonCameraController::RFirstPersonCameraController(QNode * parent)
-    : CameraController(parent)
+    : RCameraController(parent)
 {
     auto callback = [this](const CameraInputState & state, const float dt)
     {
@@ -259,7 +259,7 @@ void RFirstPersonCameraController::moveCamera(const CameraInputState & input, co
 }
 
 ROrbitCameraController::ROrbitCameraController(QNode * parent)
-    : CameraController(parent)
+    : RCameraController(parent)
 {
     auto callback = [this](const CameraInputState & state, const float dt)
     {
