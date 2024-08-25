@@ -196,39 +196,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
                     }
                 },
                 py::arg("name"))
-            .def(
-                "resetCamera",
-                [](wrapped_type & self)
-                {
-                    self.resetCamera();
-                })
-            .def("cameraController", &wrapped_type::cameraController);
-
-#define DECL_QVECTOR3D_PROPERTY(NAME, GETTER, SETTER)          \
-    .def_property(                                             \
-        #NAME,                                                 \
-        [](wrapped_type & self)                                \
-        {                                                      \
-            QVector3D const v = self.camera()->GETTER();       \
-            return py::make_tuple(v.x(), v.y(), v.z());        \
-        },                                                     \
-        [](wrapped_type & self, std::vector<double> const & v) \
-        {                                                      \
-            double const x = v.at(0);                          \
-            double const y = v.at(1);                          \
-            double const z = v.at(2);                          \
-            self.camera()->SETTER(QVector3D(x, y, z));         \
-        })
-
-        (*this)
-            // clang-format off
-            DECL_QVECTOR3D_PROPERTY(position, position, setPosition)
-            DECL_QVECTOR3D_PROPERTY(up_vector, upVector, setUpVector)
-            DECL_QVECTOR3D_PROPERTY(view_center, viewCenter, setViewCenter)
-            // clang-format on
-            ;
-
-#undef DECL_QVECTOR3D_PROPERTY
+            .def_property_readonly("camera", &wrapped_type::cameraController);
     }
 
 }; /* end class WrapR3DWidget */
@@ -437,7 +405,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
 }; /* end class WrapRManager */
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
-    : public WrapBase<WrapRCameraController, CameraController>
+    : public WrapBase<WrapRCameraController, RCameraController>
 {
 
     friend root_base_type;
@@ -449,7 +417,11 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
 
         (*this)
             .def(
-                "updateCameraPosition",
+                "reset",
+                [](wrapped_type & self)
+                { self.reset(); })
+            .def(
+                "move",
                 [](
                     wrapped_type & self,
                     float x,
@@ -460,8 +432,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                     bool left_mouse_button,
                     bool right_mouse_button,
                     bool alt_key,
-                    bool shift_key,
-                    float dt)
+                    bool shift_key)
                 {
                     CameraInputState input{};
                     input.txAxisValue = x;
@@ -476,7 +447,8 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                     input.altKeyActive = alt_key;
                     input.shiftKeyActive = shift_key;
 
-                    self.updateCameraPosition(input, dt);
+                    constexpr float dt = 1.0f;
+                    self.moveCamera(input, dt);
                 },
 
                 py::arg("x") = 0.f,
@@ -487,44 +459,64 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
                 py::arg("left_mouse_button") = false,
                 py::arg("right_mouse_button") = false,
                 py::arg("alt_key") = false,
-                py::arg("shift_key") = false,
-                py::arg("dt"))
-            .def(
-                "position",
-                [](wrapped_type & self)
-                {
-                    const auto position = self.position();
-                    return py::make_tuple(position.x(), position.y(), position.z());
-                })
-            .def(
-                "linearSpeed",
-                [](wrapped_base_type & self)
-                { return self.getLinearSpeed(); })
-            .def(
-                "lookSpeed",
-                [](wrapped_base_type & self)
-                { return self.getLookSpeed(); })
-            .def(
-                "viewCenter",
-                [](wrapped_base_type & self)
-                {
-                    const auto center = self.viewCenter();
-                    return py::make_tuple(center.x(), center.y(), center.z());
-                })
-            .def(
-                "viewVector",
+                py::arg("shift_key") = false)
+            .def_property_readonly(
+                "view_vector",
                 [](wrapped_base_type & self)
                 {
                     const auto vector = self.viewVector();
                     return py::make_tuple(vector.x(), vector.y(), vector.z());
-                })
-            .def(
-                "upVector",
-                [](wrapped_base_type & self)
-                {
-                    const auto vector = self.upVector();
-                    return py::make_tuple(vector.x(), vector.y(), vector.z());
                 });
+
+#define MM_DECL_QVECTOR3D_PROPERTY(NAME, GETTER, SETTER)       \
+    .def_property(                                             \
+        #NAME,                                                 \
+        [](wrapped_type & self)                                \
+        {                                                      \
+            QVector3D const v = self.GETTER();                 \
+            return py::make_tuple(v.x(), v.y(), v.z());        \
+        },                                                     \
+        [](wrapped_type & self, std::vector<double> const & v) \
+        {                                                      \
+            double const x = v.at(0);                          \
+            double const y = v.at(1);                          \
+            double const z = v.at(2);                          \
+            self.SETTER(QVector3D(x, y, z));                   \
+        })
+
+        (*this)
+            // clang-format off
+                    MM_DECL_QVECTOR3D_PROPERTY(position, position, setPosition)
+                    MM_DECL_QVECTOR3D_PROPERTY(up_vector, upVector, setUpVector)
+                    MM_DECL_QVECTOR3D_PROPERTY(view_center, viewCenter, setViewCenter)
+                    MM_DECL_QVECTOR3D_PROPERTY(default_position, defaultPosition, setDefaultPosition)
+                    MM_DECL_QVECTOR3D_PROPERTY(default_view_center, defaultViewCenter, setDefaultViewCenter)
+                    MM_DECL_QVECTOR3D_PROPERTY(default_up_vector, defaultUpVector, setDefaultUpVector)
+            // clang-format on
+            ;
+#undef MM_DECL_QVECTOR3D_PROPERTY
+
+#define MM_DECL_FLOAT_PROPERTY(NAME, GETTER, SETTER) \
+    .def_property(                                   \
+        #NAME,                                       \
+        [](wrapped_type & self)                      \
+        {                                            \
+            return self.GETTER();                    \
+        },                                           \
+        [](wrapped_type & self, float v)             \
+        {                                            \
+            self.SETTER(v);                          \
+        })
+
+        (*this)
+            // clang-format off
+                MM_DECL_FLOAT_PROPERTY(linear_speed, linearSpeed, setLinearSpeed)
+                MM_DECL_FLOAT_PROPERTY(look_speed, lookSpeed, setLookSpeed)
+                MM_DECL_FLOAT_PROPERTY(default_linear_speed, defaultLinearSpeed, setDefaultLinearSpeed)
+                MM_DECL_FLOAT_PROPERTY(default_look_speed, defaultLookSpeed, setDefaultLookSpeed)
+            // clang-format on
+            ;
+#undef MM_DECL_FLOAT_PROPERTY
     }
 };
 

@@ -267,7 +267,7 @@ void RManager::setUpCameraMovementMenuItems() const
             if (viewer == nullptr || viewer->camera() == nullptr)
                 return;
 
-            viewer->resetCamera();
+            viewer->cameraController()->reset();
         });
 
     auto * move_camera_up = new RAction(
@@ -379,7 +379,7 @@ std::function<void()> RManager::createCameraMovementItemHandler(const std::funct
             }
         }
 
-        viewer->cameraController()->updateCameraPosition(input, 0.01);
+        viewer->cameraController()->moveCamera(input, 0.01);
     };
 }
 

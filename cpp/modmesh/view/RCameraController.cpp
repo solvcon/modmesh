@@ -212,18 +212,33 @@ void RCameraInputListener::initKeyboardListeners() const
     m_ty_axis->addInput(m_keyboard_ty_neg_input);
 }
 
+void RCameraController::reset()
+{
+    constexpr float fov_deg = 45.0f;
+    constexpr float nearPlane = 0.1f;
+    constexpr float farPlane = 1000.0f;
+    camera()->lens()->setPerspectiveProjection(fov_deg, camera()->lens()->aspectRatio(), nearPlane, farPlane);
+
+    setPosition(m_default_position);
+    setViewCenter(m_default_view_center);
+    setUpVector(m_default_up_vector);
+
+    setLinearSpeed(m_default_linear_speed);
+    setLookSpeed(m_default_look_speed);
+}
+
 RFirstPersonCameraController::RFirstPersonCameraController(QNode * parent)
-    : QFirstPersonCameraController(parent)
+    : RCameraController(parent)
 {
     auto callback = [this](const CameraInputState & state, const float dt)
     {
-        updateCameraPosition(state, dt);
+        moveCamera(state, dt);
     };
 
     m_listener = new RCameraInputListener(keyboardDevice(), mouseDevice(), callback, this);
 }
 
-void RFirstPersonCameraController::updateCameraPosition(const CameraInputState & input, const float dt)
+void RFirstPersonCameraController::moveCamera(const CameraInputState & input, const float dt)
 {
     constexpr auto positiveY = QVector3D(0.f, 1.f, 0.f);
 
@@ -244,17 +259,17 @@ void RFirstPersonCameraController::updateCameraPosition(const CameraInputState &
 }
 
 ROrbitCameraController::ROrbitCameraController(QNode * parent)
-    : QOrbitCameraController(parent)
+    : RCameraController(parent)
 {
     auto callback = [this](const CameraInputState & state, const float dt)
     {
-        updateCameraPosition(state, dt);
+        moveCamera(state, dt);
     };
 
     m_listener = new RCameraInputListener(keyboardDevice(), mouseDevice(), callback, this);
 }
 
-void ROrbitCameraController::updateCameraPosition(const CameraInputState & input, const float dt)
+void ROrbitCameraController::moveCamera(const CameraInputState & input, const float dt)
 {
     if (camera() == nullptr)
         return;
@@ -305,7 +320,9 @@ void ROrbitCameraController::updateCameraPosition(const CameraInputState & input
 
 void ROrbitCameraController::zoom(const float zoomValue) const
 {
-    const float limitSquared = zoomInLimit() * zoomInLimit();
+    constexpr float zoomInLimit = 2.0f; // Default Qt zoomInLimit value
+
+    const float limitSquared = zoomInLimit * zoomInLimit;
     const float distanceSquared = zoomDistanceSquared(camera()->position(), camera()->viewCenter());
 
     const float z = distanceSquared > limitSquared ? zoomValue : -0.5f;
