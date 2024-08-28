@@ -839,3 +839,5 @@ def load_app():
     config_window.redraw()
     plotting_area.redraw()
     _subwin.show()
+
+# vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

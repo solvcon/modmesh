@@ -33,3 +33,5 @@ class GmshTC(unittest.TestCase):
         self.assertEqual(blk.clnds.ndarray[3:, :4].tolist(), [[3, 0, 1, 2],
                                                               [3, 0, 2, 3],
                                                               [3, 0, 3, 1]])
+
+# vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

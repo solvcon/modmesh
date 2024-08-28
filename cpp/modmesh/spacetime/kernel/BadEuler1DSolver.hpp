@@ -301,3 +301,5 @@ inline void BadEuler1DSolver::march_alpha(size_t steps)
 
 } /* end namespace spacetime */
 } /* end namespace modmesh */
+
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

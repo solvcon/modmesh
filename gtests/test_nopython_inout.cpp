@@ -314,3 +314,5 @@ TEST(Gmsh_Parser, Hexahedron125NodeDefinition)
     EXPECT_EQ(ele_def.mmtpn(), 5);
     EXPECT_THAT(ele_def.mmcl(), testing::ElementsAre(0, 1, 2, 3, 4, 5, 6, 7));
 }
+
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
