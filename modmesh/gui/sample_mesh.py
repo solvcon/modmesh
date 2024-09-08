@@ -29,6 +29,9 @@
 Show example meshes.
 """
 
+import os
+
+import modmesh as mm
 from .. import core
 from .. import view
 
@@ -200,5 +203,26 @@ def mesh_3dmix():
     w_3dmix.updateMesh(mh)
     w_3dmix.showMark()
     view.mgr.pycon.writeToHistory(f"3dmix nedge: {mh.nedge}\n")
+
+
+def mesh_rectangle():
+    fn = os.path.join(os.path.dirname(mm.__file__), '..')
+    fn = os.path.abspath(fn)
+    fn = os.path.join(fn, "tests", "data", "rectangle.msh")
+    if not os.path.exists(fn):
+        view.mgr.pycon.writeToHistory(f"{fn} does not exist\n")
+        return
+
+    with open(fn, 'rb') as fobj:
+        data = fobj.read()
+    view.mgr.pycon.writeToHistory(f"gmsh mesh file {fn} is read\n")
+    gmsh = mm.Gmsh(data)
+    mh = gmsh.to_block()
+    view.mgr.pycon.writeToHistory("StaticMesh object created from gmsh\n")
+    # Open a sub window for triangles and quadrilaterals:
+    w = view.mgr.add3DWidget()
+    w.updateMesh(mh)
+    w.showMark()
+    view.mgr.pycon.writeToHistory(f"nedge: {mh.nedge}\n")
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
