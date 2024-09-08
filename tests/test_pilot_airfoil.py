@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Yung-Yu Chen <yyc@solvcon.net>
+# Copyright (c) 2024, Yung-Yu Chen <yyc@solvcon.net>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -25,30 +25,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-"""
-Show NACA airfoil shape
-"""
+import unittest
 
-from modmesh import core
-from modmesh import view
+import modmesh as mm
 from modmesh.pilot import airfoil
 
 
-def runmain():
-    """
-    A simple example for drawing a couple of cubic Bezier curves.
-    """
-    w = core.WorldFp64()
-    naca4 = airfoil.Naca4(number='0012', open_trailing_edge=False,
-                          cosine_spacing=False)
-    sampler = airfoil.Naca4Sampler(w, naca4)
-    sampler.populate_points(npoint=101, fac=5.0, off_x=0.0, off_y=2.0)
-    if False:
-        sampler.draw_line()
-    else:
-        sampler.draw_cbc()
-    wid = view.mgr.add3DWidget()
-    wid.updateWorld(w)
-    wid.showMark()
+class Naca4TC(unittest.TestCase):
+    def test_npoint(self):
+        def _check_size(naca4):
+            points = naca4.calc_points(5)
+            self.assertEqual((11, 2), points.shape)
+            points = naca4.calc_points(11)
+            self.assertEqual((23, 2), points.shape)
+
+        _check_size(airfoil.Naca4(number='0012', open_trailing_edge=False,
+                                  cosine_spacing=False))
+        _check_size(airfoil.Naca4(number='0012', open_trailing_edge=True,
+                                  cosine_spacing=False))
+        _check_size(airfoil.Naca4(number='0012', open_trailing_edge=True,
+                                  cosine_spacing=False))
+        _check_size(airfoil.Naca4(number='0012', open_trailing_edge=True,
+                                  cosine_spacing=True))
+
+
+class Naca4SamplerTC(unittest.TestCase):
+    def test_construction(self):
+        w = mm.WorldFp64()
+        naca4 = airfoil.Naca4(number='0012', open_trailing_edge=False,
+                              cosine_spacing=False)
+        airfoil.Naca4Sampler(w, naca4)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -177,7 +177,12 @@ jobs:
     strategy:
       matrix:
         # https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
-        os: [macos-13, macos-14]
+        # https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
+        # 20240811: clang-tidy (llvm@16) runs extremely slowly on macos-14
+        # (i.e., macos-14-arm64), but not macos-13. Temporarily turn off the
+        # linter run on macos-14 and revisit in the future.
+        #os: [macos-13, macos-14]
+        os: [macos-13]
         cmake_build_type: [Debug]
 
       fail-fast: false

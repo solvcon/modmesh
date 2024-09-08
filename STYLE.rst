@@ -15,7 +15,7 @@ style when adding new code and changing existing code. The rules of thumb are:
 1. The linters must be clean. Before creating and updating a
    `pull request <https://docs.github.com/en/pull-requests/>`__, run:
 
-   .. code-block::
+   .. code-block:: bash
 
      make lint
 
@@ -259,7 +259,7 @@ The inclusion guard uses ``#pragma once`` in the first line before everything.
 Always use path-first inclusion (angle branket). Do not use current-first
 (double quote).
 
-.. code-block::
+.. code-block:: cpp
 
   // Use this: search for include file start with the paths to the compiler.
   #include <modmesh/base.hpp>
@@ -440,6 +440,26 @@ hundreds of lines) to keep track of.
 
   } /* end namespace modmesh */
 
+C++ Curly Braces
+====
+
+Always add curly braces and always add them in standalone lines:
+
+.. code-block:: cpp
+
+  if (condition)
+  {
+      return;
+  }
+
+That is, never drop curly braces even when you can:
+
+.. code-block:: cpp
+
+  // NEVER DROP CURLY BRACES
+  if (condition)
+      return;
+
 Copyright Notice
 ====
 
@@ -448,7 +468,7 @@ When creating a new file, put the following text at the top of the file
 (replace ``<Year>`` with the year you create the file and ``<Your Name>`` with
 your name and maybe email).  The license text formatted for C++ files:
 
-.. code-block::
+.. code-block:: cpp
 
   /*
    * Copyright (c) <Year>, <Your Name>
@@ -480,7 +500,7 @@ your name and maybe email).  The license text formatted for C++ files:
 
 The license text formatted for Python files:
 
-.. code-block::
+.. code-block:: python
 
   # -*- coding: UTF-8 -*-
   #

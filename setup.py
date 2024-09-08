@@ -68,6 +68,9 @@ def main():
             'modmesh',
             'modmesh.onedim',
             'modmesh.app',
+            'modmesh.gui',
+            'modmesh.pilot',
+            'modmesh.pilot.airfoil',
         ],
         ext_modules=[CMakeExtension("_modmesh")],
         cmdclass={'build_ext': cmake_build_ext},
@@ -76,3 +79,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

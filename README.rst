@@ -25,7 +25,7 @@ Click the Windows release run and scroll down to the "artifacts" section to
 download the zip file (login to `GitHub <https://github.com/>`__ is required).
 A direct download link can be found in https://doc.solvcon.net/.
 
-Refenreces
+References
 ==========
 
 * The numerical notes: https://github.com/solvcon/mmnote.
