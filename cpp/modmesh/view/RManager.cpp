@@ -181,6 +181,10 @@ void RManager::setUpMenu()
         QString("Create a sample mesh drawing a text string of \"solvcon\""),
         QString("modmesh.gui.sample_mesh.mesh_solvcon_2dtext")));
     m_meshMenu->addAction(new RPythonAction(
+        QString("Sample: 2D mesh in a rectangle"),
+        QString("Triangular mesh in a rectangle"),
+        QString("modmesh.gui.sample_mesh.mesh_rectangle")));
+    m_meshMenu->addAction(new RPythonAction(
         QString("Sample: 3D mesh of mixed elements"),
         QString("Create a very simple sample mesh of mixed elements in 3D"),
         QString("modmesh.gui.sample_mesh.mesh_3dmix")));
