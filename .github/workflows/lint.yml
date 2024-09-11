@@ -135,6 +135,13 @@ jobs:
         echo "flake8 path: $(which flake8)"
         echo "flake8 version: $(flake8 --version)"
 
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ${{ runner.os }}-tidy-${{ matrix.cmake_build_type }}
+        restore-keys: ${{ runner.os }}-tidy-${{ matrix.cmake_build_type }}
+        create-symlink: true
+
     - name: make cinclude (check_include)
       run: make cinclude
 
@@ -263,6 +270,13 @@ jobs:
           echo "clang-tidy version: $(clang-tidy -version)"
           echo "flake8 path: $(which flake8)"
           echo "flake8 version: $(flake8 --version)"
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ runner.os }}-tidy-${{ matrix.cmake_build_type }}
+          restore-keys: ${{ runner.os }}-tidy-${{ matrix.cmake_build_type }}
+          create-symlink: true
 
       - name: make cinclude (check_include)
         run: make cinclude
