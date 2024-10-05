@@ -744,30 +744,19 @@ class Euler1DApp():
         """
         if self.use_grid_layout:
             _s = self.st.svr.xindices
-            self.density.update(
-                adata=self.st.density_field,
-                ndata=self.st.svr.density[_s]
-            )
-            self.pressure.update(
-                adata=self.st.pressure_field,
-                ndata=self.st.svr.pressure[_s]
-            )
-            self.velocity.update(
-                adata=self.st.velocity_field,
-                ndata=self.st.svr.velocity[_s]
-            )
-            self.temperature.update(
-                adata=self.st.temperature_field,
-                ndata=self.st.svr.temperature[_s]
-            )
-            self.internal_energy.update(
-                adata=(self.st.internal_energy_field),
-                ndata=(self.st.svr.internal_energy[_s])
-            )
-            self.entropy.update(
-                adata=self.st.entropy_field,
-                ndata=self.st.svr.entropy[_s]
-            )
+            self.density.update(adata=self.st.density_field,
+                                ndata=self.st.svr.density[_s])
+            self.pressure.update(adata=self.st.pressure_field,
+                                 ndata=self.st.svr.pressure[_s])
+            self.velocity.update(adata=self.st.velocity_field,
+                                 ndata=self.st.svr.velocity[_s])
+            self.temperature.update(adata=self.st.temperature_field,
+                                    ndata=self.st.svr.temperature[_s])
+            self.internal_energy.update(adata=(self.st.internal_energy_field),
+                                        ndata=(self.st.svr.
+                                               internal_energy[_s]))
+            self.entropy.update(adata=self.st.entropy_field,
+                                ndata=self.st.svr.entropy[_s])
         else:
             for name, is_selected, *_ in self.plot_config.state:
                 if is_selected:

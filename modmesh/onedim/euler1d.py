@@ -122,7 +122,7 @@ class ShockTube:
         self.svr = None
 
     def build_numerical(self, xmin, xmax, ncoord, time_increment=0.05,
-                        xdiaphragm=0.0):
+                        xdiaphragm=0.0, keep_edge=False):
         """
         After :py:meth:`build_constant` is done, optionally build the
         numerical solver :py:attr:`svr`.
@@ -139,7 +139,8 @@ class ShockTube:
 
         # Initialize the numerical solver.
         self.svr = Euler1DSolver(xmin, xmax, ncoord,
-                                 time_increment=time_increment)
+                                 time_increment=time_increment,
+                                 keep_edge=keep_edge)
 
         # Fill gamma.
         self.svr.gamma.fill(self.gamma)
@@ -308,7 +309,7 @@ class ShockTube:
     def calc_entropy(self, pressure, density):
         return pressure / (density ** self.gamma)
 
-    def build_field(self, t, coord=None, keep_edge=False):
+    def build_field(self, t, coord=None):
         """
         Populate the field data using the analytical solution.
 
@@ -317,11 +318,6 @@ class ShockTube:
         :return: None
         """
         if coord is None:
-            _ = self.svr.ncoord - 1
-            start = 0 if keep_edge else 2
-            stop = _ if keep_edge else (_ - 2)
-            num = (stop - start) // 2 + 1
-            self.svr.xindices = np.linspace(start, stop, num, dtype='int32')
             # set the x-coordinate for numerical solver.
             coord = self.svr.coord[self.svr.xindices]
         self.coord = coord.copy()  # Make a copy; no write back to argument.
