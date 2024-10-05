@@ -104,7 +104,7 @@ class ShockTubeTC(unittest.TestCase):
 
     def test_field_with_numerical(self):
         self.st.build_numerical(xmin=-1, xmax=1, ncoord=21,
-                                time_increment=0.05)
+                                time_increment=0.05, keep_edge=True)
         self.st.build_field(t=0.0)
         self.assertIsInstance(self.st.svr, euler1d.Euler1DSolver)
         self.assertEqual(len(self.st.coord), 11)

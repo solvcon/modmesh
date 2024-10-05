@@ -24,10 +24,16 @@ class Euler1DSolver:
     method.
     """
 
-    def __init__(self, xmin, xmax, ncoord, time_increment=0.05):
+    def __init__(self, xmin, xmax, ncoord, time_increment=0.05,
+                 keep_edge=False):
         self._core = self.init_solver(xmin, xmax, ncoord, time_increment,
                                       gamma=1.4)
         # gamma is 1.4 for air.
+        _ = self.ncoord - 1
+        start = 0 if keep_edge else 2
+        stop = _ if keep_edge else (_ - 2)
+        num = (stop - start) // 2 + 1
+        self.xindices = np.linspace(start, stop, num, dtype='int32')
 
     def __getattr__(self, name):
         return getattr(self._core, name)
@@ -116,7 +122,7 @@ class ShockTube:
         self.svr = None
 
     def build_numerical(self, xmin, xmax, ncoord, time_increment=0.05,
-                        xdiaphragm=0.0):
+                        xdiaphragm=0.0, keep_edge=False):
         """
         After :py:meth:`build_constant` is done, optionally build the
         numerical solver :py:attr:`svr`.
@@ -133,7 +139,8 @@ class ShockTube:
 
         # Initialize the numerical solver.
         self.svr = Euler1DSolver(xmin, xmax, ncoord,
-                                 time_increment=time_increment)
+                                 time_increment=time_increment,
+                                 keep_edge=keep_edge)
 
         # Fill gamma.
         self.svr.gamma.fill(self.gamma)
@@ -310,8 +317,9 @@ class ShockTube:
         :param coord: If None, take the coordinate from the numerical solver.
         :return: None
         """
-        if None is coord:
-            coord = self.svr.coord[::2]  # Use the numerical solver.
+        if coord is None:
+            # set the x-coordinate for numerical solver.
+            coord = self.svr.coord[self.svr.xindices]
         self.coord = coord.copy()  # Make a copy; no write back to argument.
 
         # Determine the zone location and the Boolean selection arrays.
