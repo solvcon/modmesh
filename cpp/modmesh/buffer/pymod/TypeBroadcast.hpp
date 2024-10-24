@@ -151,6 +151,34 @@ struct TypeBroadcast
         }
     }
 
+    static void broadcast(SimpleArray<T> & arr_out, std::vector<slice_type> const & slices, pybind11::object const & py_number)
+    {
+        const T assigned_value = py_number.cast<T>();
+
+        shape_type out_shape(arr_out.ndim());
+        for (size_t i = 0; i < arr_out.ndim(); i++)
+        {
+            slice_type const & slice = slices[i];
+            if ((slice[1] - slice[0]) % slice[2] == 0)
+            {
+                out_shape[i] = (slice[1] - slice[0]) / slice[2];
+            }
+            else
+            {
+                out_shape[i] = (slice[1] - slice[0]) / slice[2] + 1;
+            }
+        }
+
+        shape_type sidx_init(arr_out.ndim());
+
+        for (size_t i = 0; i < arr_out.ndim(); ++i)
+        {
+            sidx_init[i] = 0;
+        }
+
+        assigned_idx(arr_out, slices, assigned_value, out_shape, sidx_init, static_cast<int>(arr_out.ndim()) - 1);
+    }
+
     static void broadcast(SimpleArray<T> & arr_out, std::vector<slice_type> const & slices, pybind11::array const & arr_in)
     {
         if (dtype_is_type<bool>(arr_in))
@@ -229,6 +257,34 @@ struct TypeBroadcast
         msg << ")";
 
         throw std::runtime_error(msg.str());
+    }
+
+private:
+    // NOLINTNEXTLINE(misc-no-recursion)
+    static void assigned_idx(SimpleArray<T> & arr_out, std::vector<slice_type> const & slices, const T value, shape_type out_shape, shape_type sidx, int dim)
+    {
+        if (dim < 0)
+        {
+            return;
+        }
+
+        for (size_t i = 0; i < out_shape[dim]; ++i)
+        {
+            sidx[dim] = i;
+
+            size_t offset_out = 0;
+            for (size_t it = 0; it < arr_out.ndim(); ++it)
+            {
+                auto step = slices[it][2];
+                offset_out += arr_out.stride(it) * sidx[it] * step;
+            }
+
+            // NOLINTNEXTLINE(bugprone-signed-char-misuse, cert-str34-c)
+            arr_out.at(offset_out) = value;
+
+            // recursion here
+            assigned_idx(arr_out, slices, value, out_shape, sidx, dim - 1);
+        }
     }
 }; /* end struct TypeBroadCast */
 
