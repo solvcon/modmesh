@@ -324,25 +324,13 @@ jobs:
         run: |
           echo "which python3: $(which python3)"
           ls -al $(which python3)
-          if [ "${{ matrix.os }}" == "macos-13" ] ; then
-            # suppress the warning of pip because brew forces PEP668 since python3.12
-            python3 -m pip -v install --upgrade setuptools  --break-system-packages
-            python3 -m pip -v install --upgrade pip  --break-system-packages
-            python3 -m pip -v install --upgrade numpy pytest flake8 jsonschema  --break-system-packages
-            python3 -m pip -v install --upgrade pyside6==$(qmake -query QT_VERSION)  --break-system-packages
-          elif [ "${{ matrix.os }}" == "macos-14" ] ; then
-            python3 -m pip -v install --upgrade setuptools
-            python3 -m pip -v install --upgrade pip
-            python3 -m pip -v install --upgrade numpy pytest flake8 jsonschema
-            # For now (2024/10/22), pyside6 6.6.3 does not support Python 3.13.
-            # Use --ignore-requires-python to force installation.
-            python3 -m pip -v install --upgrade pyside6==$(qmake -query QT_VERSION)  --break-system-packages --ignore-requires-python
-          else
-            python3 -m pip -v install --upgrade setuptools
-            python3 -m pip -v install --upgrade pip
-            python3 -m pip -v install --upgrade numpy pytest flake8 jsonschema
-            python3 -m pip -v install --upgrade pyside6==$(qmake -query QT_VERSION)
-          fi  
+          # suppress the warning of pip because brew forces PEP668 since python3.12
+          python3 -m pip -v install --upgrade setuptools
+          python3 -m pip -v install --upgrade pip
+          python3 -m pip -v install --upgrade numpy pytest flake8 jsonschema
+          # For now (2024/10/22), pyside6 6.6.3 does not support Python 3.13.
+          # Use --ignore-requires-python to force installation.
+          python3 -m pip -v install --upgrade pyside6==$(qmake -query QT_VERSION) --ignore-requires-python
 
       - name: dependency by manual script
         run: |
