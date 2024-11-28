@@ -450,6 +450,27 @@ class SimpleArrayBasicTC(unittest.TestCase):
         sarr.ndarray.fill(100)
         self.assertTrue((ndarr == 100).all())
 
+    def test_SimpleArray_from_ndarray_slice(self):
+        ndarr = np.arange(1000, dtype='float64').reshape((10, 10, 10))
+        parr = ndarr[1:7:3, 6:2:-1, 3:9]
+        sarr = modmesh.SimpleArrayFloat64(array=ndarr[1:7:3, 6:2:-1, 3:9])
+
+        for i in range(2):
+            for j in range(4):
+                for k in range(6):
+                    self.assertEqual(parr[i, j, k], sarr[i, j, k])
+
+    def test_SimpleArray_from_ndarray_transpose(self):
+        ndarr = np.arange(350, dtype='float64').reshape((5, 7, 10))
+        # The following array is F contiguous.
+        parr = ndarr[2:4].T
+        sarr = modmesh.SimpleArrayFloat64(array=ndarr[2:4].T)
+
+        for i in range(10):
+            for j in range(7):
+                for k in range(2):
+                    self.assertEqual(parr[i, j, k], sarr[i, j, k])
+
     def test_SimpleArray_broadcast_ellipsis_shape(self):
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
         ndarr = np.arange(2 * 3 * 4, dtype='float64').reshape((2, 3, 4))

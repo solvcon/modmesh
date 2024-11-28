@@ -74,16 +74,24 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                         {
                             throw std::runtime_error("dtype mismatch");
                         }
+
                         modmesh::detail::shape_type shape;
+                        modmesh::detail::shape_type stride;
+                        constexpr size_t itemsize = wrapped_type::itemsize();
                         for (ssize_t i = 0; i < arr_in.ndim(); ++i)
                         {
                             shape.push_back(arr_in.shape(i));
+                            stride.push_back(arr_in.strides(i) / itemsize);
                         }
+
+                        const bool is_c_contiguous = (arr_in.flags() & py::array::c_style) == py::array::c_style;
+                        const bool is_f_contiguous = (arr_in.flags() & py::array::f_style) == py::array::f_style;
+
                         std::shared_ptr<ConcreteBuffer> const buffer = ConcreteBuffer::construct(
                             arr_in.nbytes(),
                             arr_in.mutable_data(),
                             std::make_unique<ConcreteBufferNdarrayRemover>(arr_in));
-                        return wrapped_type(shape, buffer);
+                        return wrapped_type(shape, stride, buffer, is_c_contiguous, is_f_contiguous);
                     }),
                 py::arg("array"))
             .def_buffer(&property_helper::get_buffer_info)
