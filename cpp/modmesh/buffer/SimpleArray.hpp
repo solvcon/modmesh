@@ -32,6 +32,8 @@
 
 #include <limits>
 #include <stdexcept>
+#include <functional>
+#include <numeric>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -304,6 +306,65 @@ public:
                 throw std::runtime_error(Formatter() << "SimpleArray: shape byte count " << nbytes
                                                      << " differs from buffer " << buffer->nbytes());
             }
+        }
+    }
+
+    explicit SimpleArray(small_vector<size_t> const & shape,
+                         small_vector<size_t> const & stride,
+                         std::shared_ptr<buffer_type> const & buffer,
+                         bool is_c_contiguous = true,
+                         bool is_f_contiguous = false)
+        : SimpleArray(buffer)
+    {
+        if (buffer)
+        {
+            if (shape.size() != stride.size())
+            {
+                throw std::runtime_error("SimpleArray: shape and stride size mismatch");
+            }
+
+            if (is_c_contiguous)
+            {
+                if (stride[stride.size() - 1] != 1)
+                {
+                    throw std::runtime_error("SimpleArray: C contiguous stride must end with 1");
+                }
+                for (size_t it = 0; it < shape.size() - 1; ++it)
+                {
+                    if (stride[it] != shape[it + 1] * stride[it + 1])
+                    {
+                        throw std::runtime_error("SimpleArray: C contiguous stride must match shape");
+                    }
+                }
+            }
+            if (is_f_contiguous)
+            {
+                if (stride[0] != 1)
+                {
+                    throw std::runtime_error("SimpleArray: Fortran contiguous stride must start with 1");
+                }
+                for (size_t it = 0; it < shape.size() - 1; ++it)
+                {
+                    if (stride[it + 1] != shape[it] * stride[it])
+                    {
+                        throw std::runtime_error("SimpleArray: Fortran contiguous stride must match shape");
+                    }
+                }
+            }
+
+            const size_t nbytes = ITEMSIZE *
+                                  std::accumulate(shape.begin(),
+                                                  shape.end(),
+                                                  static_cast<size_t>(1),
+                                                  std::multiplies<size_t>());
+            if (nbytes != buffer->nbytes())
+            {
+                throw std::runtime_error(Formatter() << "SimpleArray: shape byte count " << nbytes
+                                                     << " differs from buffer " << buffer->nbytes());
+            }
+
+            m_shape = shape;
+            m_stride = stride;
         }
     }
 
