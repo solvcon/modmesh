@@ -312,46 +312,31 @@ public:
     explicit SimpleArray(small_vector<size_t> const & shape,
                          small_vector<size_t> const & stride,
                          std::shared_ptr<buffer_type> const & buffer,
-                         bool is_c_contiguous = true,
-                         bool is_f_contiguous = false)
+                         bool c_contiguous,
+                         bool f_contiguous)
+        : SimpleArray(shape, stride, buffer)
+    {
+        if (shape.size() != stride.size())
+        {
+            throw std::runtime_error("SimpleArray: shape and stride size mismatch");
+        }
+        if (c_contiguous)
+        {
+            check_c_contiguous(shape, stride);
+        }
+        if (f_contiguous)
+        {
+            check_f_contiguous(shape, stride);
+        }
+    }
+
+    explicit SimpleArray(small_vector<size_t> const & shape,
+                         small_vector<size_t> const & stride,
+                         std::shared_ptr<buffer_type> const & buffer)
         : SimpleArray(buffer)
     {
         if (buffer)
         {
-            if (shape.size() != stride.size())
-            {
-                throw std::runtime_error("SimpleArray: shape and stride size mismatch");
-            }
-
-            if (is_c_contiguous)
-            {
-                if (stride[stride.size() - 1] != 1)
-                {
-                    throw std::runtime_error("SimpleArray: C contiguous stride must end with 1");
-                }
-                for (size_t it = 0; it < shape.size() - 1; ++it)
-                {
-                    if (stride[it] != shape[it + 1] * stride[it + 1])
-                    {
-                        throw std::runtime_error("SimpleArray: C contiguous stride must match shape");
-                    }
-                }
-            }
-            if (is_f_contiguous)
-            {
-                if (stride[0] != 1)
-                {
-                    throw std::runtime_error("SimpleArray: Fortran contiguous stride must start with 1");
-                }
-                for (size_t it = 0; it < shape.size() - 1; ++it)
-                {
-                    if (stride[it + 1] != shape[it] * stride[it])
-                    {
-                        throw std::runtime_error("SimpleArray: Fortran contiguous stride must match shape");
-                    }
-                }
-            }
-
             const size_t nbytes = ITEMSIZE *
                                   std::accumulate(shape.begin(),
                                                   shape.end(),
@@ -623,6 +608,37 @@ public:
     value_type * body() { return m_body; }
 
 private:
+    void check_c_contiguous(small_vector<size_t> const & shape,
+                            small_vector<size_t> const & stride) const
+    {
+        if (stride[stride.size() - 1] != 1)
+        {
+            throw std::runtime_error("SimpleArray: C contiguous stride must end with 1");
+        }
+        for (size_t it = 0; it < shape.size() - 1; ++it)
+        {
+            if (stride[it] != shape[it + 1] * stride[it + 1])
+            {
+                throw std::runtime_error("SimpleArray: C contiguous stride must match shape");
+            }
+        }
+    }
+
+    void check_f_contiguous(small_vector<size_t> const & shape,
+                            small_vector<size_t> const & stride) const
+    {
+        if (stride[0] != 1)
+        {
+            throw std::runtime_error("SimpleArray: Fortran contiguous stride must start with 1");
+        }
+        for (size_t it = 0; it < shape.size() - 1; ++it)
+        {
+            if (stride[it + 1] != shape[it] * stride[it])
+            {
+                throw std::runtime_error("SimpleArray: Fortran contiguous stride must match shape");
+            }
+        }
+    }
 
     void validate_range(ssize_t it) const
     {
