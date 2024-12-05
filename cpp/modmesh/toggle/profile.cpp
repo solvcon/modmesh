@@ -36,7 +36,7 @@ std::string TimeRegistry::detailed_report() const
     std::ostringstream ostm;
     /// Header
     ostm
-        << std::setw(40) << total_call_count()
+        << std::setw(79) << total_call_count()
         << " function calls in " << total_time()
         << " seconds" << std::endl;
     ostm
@@ -50,6 +50,7 @@ std::string TimeRegistry::detailed_report() const
         << std::endl;
 
     /// Body
+    ostm << std::fixed << std::setprecision(6);
     for (auto it = m_entry.begin(); it != m_entry.end(); ++it)
     {
         ostm
