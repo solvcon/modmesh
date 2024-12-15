@@ -9,7 +9,7 @@ namespace transform
 namespace detail
 {
 
-size_t bit_reverse(size_t n, size_t bits)
+size_t bit_reverse(size_t n, const size_t bits)
 {
     size_t reversed = 0;
     for (size_t i = 0; i < bits; i++)

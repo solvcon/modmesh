@@ -12,7 +12,7 @@ namespace transform
 namespace detail
 {
 
-size_t bit_reverse(size_t n, size_t bits);
+size_t bit_reverse(size_t n, const size_t bits);
 
 } /* end namespace detail */
 
@@ -38,7 +38,7 @@ template <template <typename> class T1, typename T2>
 void fft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
 {
     auto N = in.size();
-    unsigned int bits = static_cast<unsigned int>(std::log2(N));
+    const unsigned int bits = static_cast<unsigned int>(std::log2(N));
 
     // bit reversed reordering
     for (size_t i = 0; i < N; ++i)
