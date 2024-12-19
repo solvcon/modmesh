@@ -118,92 +118,15 @@ void RManager::setUpMenu()
     // "exited with code -1073740791".  The reason is not yet clarified.
 
     m_fileMenu = m_mainWindow->menuBar()->addMenu(QString("File"));
-    {
-        m_fileMenu->addAction(
-            new RAction(
-                QString("New file"),
-                QString("Create new file"),
-                []()
-                {
-                    qDebug() << "This is only a demo: Create new file!";
-                }));
-
-        m_fileMenu->addAction(new RAction(
-            QString("Parameters"),
-            QString("Runtime parameters"),
-            []()
-            {
-                static int64_t int64V = 5566;
-                static double doubleV = 77.88;
-                auto params = createParameters();
-                addParam(params, "global.a.b.int64_foo", &int64V);
-                addParam(params, "global.a.b.double_bar", &doubleV);
-                openParameterView(params);
-            }));
-
-#ifndef Q_OS_MACOS
-        // Qt for mac merges "quit" or "exit" with the default quit item in the
-        // system menu:
-        // https://doc.qt.io/qt-6/qmenubar.html#qmenubar-as-a-global-menu-bar
-        m_fileMenu->addAction(new RAction(
-            QString("Exit"),
-            QString("Exit the application"),
-            []()
-            {
-                RManager::instance().quit();
-            }));
-#endif
-    }
-
     m_viewMenu = m_mainWindow->menuBar()->addMenu(QString("View"));
     {
         setUpCameraControllersMenuItems();
         setUpCameraMovementMenuItems();
     }
-
     m_oneMenu = m_mainWindow->menuBar()->addMenu(QString("One"));
-    m_oneMenu->addAction(new RAppAction(
-        QString("Euler solver"),
-        QString("One-dimensional shock-tube problem with Euler solver"),
-        QString("modmesh.app.euler1d")));
-
     m_meshMenu = m_mainWindow->menuBar()->addMenu(QString("Mesh"));
-    m_meshMenu->addAction(new RPythonAction(
-        QString("Sample: mesh of a triangle (2D)"),
-        QString("Create a very simple sample mesh of a triangle"),
-        QString("modmesh.gui.sample_mesh.mesh_triangle")));
-    m_meshMenu->addAction(new RPythonAction(
-        QString("Sample: mesh of a tetrahedron (3D)"),
-        QString("Create a very simple sample mesh of a tetrahedron"),
-        QString("modmesh.gui.sample_mesh.mesh_tetrahedron")));
-    m_meshMenu->addAction(new RPythonAction(
-        QString("Sample: mesh of \"solvcon\" text in 2D"),
-        QString("Create a sample mesh drawing a text string of \"solvcon\""),
-        QString("modmesh.gui.sample_mesh.mesh_solvcon_2dtext")));
-    m_meshMenu->addAction(new RPythonAction(
-        QString("Sample: 2D mesh in a rectangle"),
-        QString("Triangular mesh in a rectangle"),
-        QString("modmesh.gui.sample_mesh.mesh_rectangle")));
-    m_meshMenu->addAction(new RPythonAction(
-        QString("Sample: 3D mesh of mixed elements"),
-        QString("Create a very simple sample mesh of mixed elements in 3D"),
-        QString("modmesh.gui.sample_mesh.mesh_3dmix")));
-    m_meshMenu->addAction(new RPythonAction(
-        QString("Sample: NACA 4-digit"),
-        QString("Draw a NACA 4-digit airfoil"),
-        QString("modmesh.gui.naca.runmain")));
-
     m_addonMenu = m_mainWindow->menuBar()->addMenu(QString("Addon"));
-    this->addApplication(QString("sample_mesh"));
-    this->addApplication(QString("linear_wave"));
-    this->addApplication(QString("bad_euler1d"));
-
     m_windowMenu = m_mainWindow->menuBar()->addMenu(QString("Window"));
-    m_windowMenu->addAction(
-        new RAction(
-            QString("(empty)"),
-            QString("(empty)"),
-            []() {}));
 }
 
 void RManager::setUpCameraControllersMenuItems() const

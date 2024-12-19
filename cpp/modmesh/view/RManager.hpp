@@ -67,6 +67,13 @@ public:
     template <typename... Args>
     QMdiSubWindow * addSubWindow(Args &&... args);
 
+    QMenu * fileMenu() { return m_fileMenu; }
+    QMenu * viewMenu() { return m_viewMenu; }
+    QMenu * oneMenu() { return m_oneMenu; }
+    QMenu * meshMenu() { return m_meshMenu; }
+    QMenu * addonMenu() { return m_addonMenu; }
+    QMenu * windowMenu() { return m_windowMenu; }
+
     void quit() { m_core->quit(); }
 
 public slots:
