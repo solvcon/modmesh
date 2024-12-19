@@ -57,8 +57,6 @@ _from_impl = [  # noqa: F822
 ]
 
 __all__ = _from_impl + [  # noqa: F822
-    'populateApplications',
-    'resetApplications',
     'launch',
 ]
 
@@ -71,20 +69,6 @@ def _load():
 
 _load()
 del _load
-
-
-def populate_applications():
-    mw = _vimpl.RManager.instance.mainWindow
-    mw.addApplication("sample_mesh")
-    mw.addApplication("euler1d")
-    mw.addApplication("linear_wave")
-    mw.addApplication("bad_euler1d")
-
-
-def reset_applications():
-    mw = _vimpl.RManager.instance.mainWindow
-    mw.clearApplications()
-    populate_applications()
 
 
 def populate_menu():

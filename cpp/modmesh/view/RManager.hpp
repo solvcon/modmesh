@@ -76,11 +76,6 @@ public:
 
     void quit() { m_core->quit(); }
 
-public slots:
-
-    void clearApplications();
-    void addApplication(QString const & name);
-
 private:
 
     RManager();

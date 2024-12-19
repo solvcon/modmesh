@@ -304,7 +304,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
                     return self.core()->exec();
                 })
             .wrap_widget()
-            .wrap_app()
             .wrap_mainWindow()
             //
             ;
@@ -327,26 +326,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
                 {
                     return self.add3DWidget();
                 })
-            //
-            ;
-
-        return *this;
-    }
-
-    wrapper_type & wrap_app()
-    {
-        namespace py = pybind11;
-
-        (*this)
-            .wrap_mainWindow()
-            .def("clearApplications", &wrapped_type::clearApplications)
-            .def(
-                "addApplication",
-                [](wrapped_type & self, std::string const & name)
-                {
-                    self.addApplication(QString::fromStdString(name));
-                },
-                py::arg("name"))
             //
             ;
 

@@ -310,26 +310,6 @@ std::function<void()> RManager::createCameraMovementItemHandler(const std::funct
     };
 }
 
-void RManager::clearApplications()
-{
-    for (QAction * a : this->m_addonMenu->actions())
-    {
-        auto * p = dynamic_cast<RAppAction *>(a);
-        if (nullptr != p)
-        {
-            this->m_addonMenu->removeAction(a);
-        }
-    }
-}
-
-void RManager::addApplication(QString const & name)
-{
-    m_addonMenu->addAction(new RAppAction(
-        QString("Load ") + name,
-        QString("Load ") + name,
-        QString("modmesh.app.") + name));
-}
-
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

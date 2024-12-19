@@ -47,43 +47,6 @@ public:
         QObject * parent = nullptr);
 }; /* end class RAction */
 
-class RPythonAction
-    : public QAction
-{
-public:
-    RPythonAction(
-        QString const & text,
-        QString const & tipText,
-        QString const & appName,
-        QObject * parent = nullptr);
-
-    void run();
-
-private:
-    QString m_pyFuncName;
-}; /* end class RPythonAction */
-
-class RAppAction
-    : public QAction
-{
-public:
-
-    RAppAction(
-        QString const & text,
-        QString const & tipText,
-        QString const & appName,
-        QObject * parent = nullptr);
-
-    void run();
-
-    QString const & appName() const { return m_appName; }
-
-private:
-
-    QString m_appName;
-
-}; /* end class RAppAction */
-
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
