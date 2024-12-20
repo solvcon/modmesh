@@ -120,6 +120,7 @@ void RManager::setUpMenu()
     m_fileMenu = m_mainWindow->menuBar()->addMenu(QString("File"));
     m_viewMenu = m_mainWindow->menuBar()->addMenu(QString("View"));
     {
+        // Code for controlling camera is not exposed to Python yet
         setUpCameraControllersMenuItems();
         setUpCameraMovementMenuItems();
     }
