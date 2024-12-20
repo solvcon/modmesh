@@ -26,7 +26,7 @@
 
 
 """
-Viewer
+Graphical-user interface code
 """
 
 # Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
@@ -179,7 +179,7 @@ def populate_menu():
     )
 
 
-def launch(name="Modmesh Viewer", size=(1000, 600)):
+def launch(name="pilot", size=(1000, 600)):
     """
     The entry point of the pilot GUI application.
 

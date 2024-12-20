@@ -30,7 +30,7 @@ Show NACA airfoil shape
 """
 
 from modmesh import core
-from modmesh import view
+from modmesh import pilot
 from modmesh.pilot import airfoil
 
 
@@ -47,7 +47,7 @@ def runmain():
         sampler.draw_line()
     else:
         sampler.draw_cbc()
-    wid = view.mgr.add3DWidget()
+    wid = pilot.mgr.add3DWidget()
     wid.updateWorld(w)
     wid.showMark()
 

@@ -65,11 +65,13 @@ void initialize(pybind11::module_ mod)
 #endif
 
 #ifdef QT_CORE_LIB
-    mod.attr("HAS_VIEW") = true;
+    mod.attr("HAS_VIEW") = true; // backward compatibility
+    mod.attr("HAS_PILOT") = true;
     pybind11::module_ view_mod = mod.def_submodule("view", "view");
     initialize_view(view_mod);
 #else // QT_CORE_LIB
-    mod.attr("HAS_VIEW") = false;
+    mod.attr("HAS_VIEW") = false; // backward compatibility
+    mod.attr("HAS_PILOT") = false;
 #endif // QT_CORE_LIB
 }
 

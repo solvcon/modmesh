@@ -30,7 +30,7 @@ Show sample mesh
 """
 
 from .. import core
-from .. import view
+from .. import pilot
 from .. import apputil
 
 
@@ -43,9 +43,9 @@ w_tri.updateMesh(mh_tri)
 w_tri.showMark()
 print("tri nedge:", mh_tri.nedge)
 """
-    view.mgr.pycon.writeToHistory(cmd)
+    pilot.mgr.pycon.writeToHistory(cmd)
     if set_command:
-        view.mgr.pycon.command = cmd.strip()
+        pilot.mgr.pycon.command = cmd.strip()
 
 
 def help_tet(set_command=False):
@@ -57,9 +57,9 @@ w_tet.updateMesh(mh_tet)
 w_tet.showMark()
 print("tet nedge:", mh_tet.nedge)
 """
-    view.mgr.pycon.writeToHistory(cmd)
+    pilot.mgr.pycon.writeToHistory(cmd)
     if set_command:
-        view.mgr.pycon.command = cmd.strip()
+        pilot.mgr.pycon.command = cmd.strip()
 
 
 def help_2dmix(set_command=False):
@@ -71,9 +71,9 @@ w_2dmix.updateMesh(mh_2dmix)
 w_2dmix.showMark()
 print("2dmix nedge:", mh_2dmix.nedge)
 """
-    view.mgr.pycon.writeToHistory(cmd)
+    pilot.mgr.pycon.writeToHistory(cmd)
     if set_command:
-        view.mgr.pycon.command = cmd.strip()
+        pilot.mgr.pycon.command = cmd.strip()
 
 
 def help_3dmix(set_command=False):
@@ -85,9 +85,9 @@ w_3dmix.updateMesh(mh_3dmix)
 w_3dmix.showMark()
 print("3dmix nedge:", mh_3dmix.nedge)
 """
-    view.mgr.pycon.writeToHistory(cmd)
+    pilot.mgr.pycon.writeToHistory(cmd)
     if set_command:
-        view.mgr.pycon.command = cmd.strip()
+        pilot.mgr.pycon.command = cmd.strip()
 
 
 def help_solvcon(set_command=False):
@@ -99,9 +99,9 @@ w_solvcon.updateMesh(mh_solvcon)
 w_solvcon.showMark()
 print("solvcon nedge:", mh_solvcon.nedge)
 """
-    view.mgr.pycon.writeToHistory(cmd)
+    pilot.mgr.pycon.writeToHistory(cmd)
     if set_command:
-        view.mgr.pycon.command = cmd.strip()
+        pilot.mgr.pycon.command = cmd.strip()
 
 
 def help_other(set_command=False):
@@ -117,12 +117,12 @@ w_tri.position = (-10, -10, -20)
 w_tri.view_center = (0, 0, 0)
 
 # Outdated and may not work:
-# line = mm.view.RLine(-1, -1, -1, -2, -2, -2, 0, 128, 128)
+# line = mm.pilot.RLine(-1, -1, -1, -2, -2, -2, 0, 128, 128)
 # print(line)
 """
-    view.mgr.pycon.writeToHistory(cmd)
+    pilot.mgr.pycon.writeToHistory(cmd)
     if set_command:
-        view.mgr.pycon.command = cmd.strip()
+        pilot.mgr.pycon.command = cmd.strip()
 
 
 def help_gmsh_viewer(path, set_command=False):
@@ -133,9 +133,9 @@ mh_viewer = make_gmsh_viewer("{path}")
 w_mh_viewer.updateMesh(mh_viewer)
 w_mh_viewer.showMark()
 """
-    view.mgr.pycon.writeToHistory(cmd)
+    pilot.mgr.pycon.writeToHistory(cmd)
     if set_command:
-        view.mgr.pycon.command = cmd.strip()
+        pilot.mgr.pycon.command = cmd.strip()
 
 
 def help_plot3d_viewer(path, set_command=False):
@@ -146,9 +146,9 @@ mh_viewer = make_plot3d_viewer("{path}")
 w_mh_viewer.updateMesh(mh_viewer)
 w_mh_viewer.showMark()
 """
-    view.mgr.pycon.writeToHistory(cmd)
+    pilot.mgr.pycon.writeToHistory(cmd)
     if set_command:
-        view.mgr.pycon.command = cmd.strip()
+        pilot.mgr.pycon.command = cmd.strip()
 
 
 def help_bezier(set_command=False):
@@ -156,9 +156,9 @@ def help_bezier(set_command=False):
 # Open a sub window for some bezier curves:
 w = make_bezier()
 """
-    view.mgr.pycon.writeToHistory(cmd)
+    pilot.mgr.pycon.writeToHistory(cmd)
     if set_command:
-        view.mgr.pycon.command = cmd.strip()
+        pilot.mgr.pycon.command = cmd.strip()
 
 
 def make_gmsh_viewer(path):
@@ -392,7 +392,7 @@ def make_bezier():
         [Vector(0, 2, 0), Vector(1, 3, 0), Vector(3, 3, 0),
          Vector(4, 2, 0)])
     b3.sample(9)
-    wid = view.mgr.add3DWidget()
+    wid = pilot.mgr.add3DWidget()
     wid.updateWorld(w)
     wid.showMark()
     return wid
@@ -418,7 +418,7 @@ def load_app():
         'make_gmsh_viewer',
         'make_bezier',
         'make_plot3d_viewer',
-        ('add3DWidget', view.mgr.add3DWidget),
+        ('add3DWidget', pilot.mgr.add3DWidget),
     )
     for k in symbols:
         if isinstance(k, tuple):
@@ -427,9 +427,9 @@ def load_app():
             o = globals().get(k, None)
             if o is None:
                 o = locals().get(k, None)
-        view.mgr.pycon.writeToHistory(f"Adding symbol {k}\n")
+        pilot.mgr.pycon.writeToHistory(f"Adding symbol {k}\n")
         aenv.globals[k] = o
-    view.mgr.pycon.writeToHistory("""
+    pilot.mgr.pycon.writeToHistory("""
 # Use the functions for more examples:
 help_tri(set_command=False)  # or True
 help_tet(set_command=False)  # or True
