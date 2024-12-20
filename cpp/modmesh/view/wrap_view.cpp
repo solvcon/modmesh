@@ -34,6 +34,7 @@
 
 #include <QPointer>
 #include <QClipboard>
+#include <QMenu>
 
 // Usually MODMESH_PYSIDE6_FULL is not defined unless for debugging.
 #ifdef MODMESH_PYSIDE6_FULL
@@ -122,6 +123,7 @@ public:
     }
 
 QT_TYPE_CASTER(QWidget, _("QWidget"));
+QT_TYPE_CASTER(QMenu, _("QMenu"));
 QT_TYPE_CASTER(QCoreApplication, _("QCoreApplication"));
 QT_TYPE_CASTER(QApplication, _("QApplication"));
 QT_TYPE_CASTER(QMainWindow, _("QMainWindow"));
@@ -302,7 +304,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
                     return self.core()->exec();
                 })
             .wrap_widget()
-            .wrap_app()
             .wrap_mainWindow()
             //
             ;
@@ -331,26 +332,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
         return *this;
     }
 
-    wrapper_type & wrap_app()
-    {
-        namespace py = pybind11;
-
-        (*this)
-            .wrap_mainWindow()
-            .def("clearApplications", &wrapped_type::clearApplications)
-            .def(
-                "addApplication",
-                [](wrapped_type & self, std::string const & name)
-                {
-                    self.addApplication(QString::fromStdString(name));
-                },
-                py::arg("name"))
-            //
-            ;
-
-        return *this;
-    }
-
     wrapper_type & wrap_mainWindow()
     {
         namespace py = pybind11;
@@ -361,6 +342,18 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
                 [](wrapped_type & self) -> QMainWindow *
                 {
                     return self.mainWindow();
+                })
+            .def_property_readonly("fileMenu", &wrapped_type::fileMenu)
+            .def_property_readonly("viewMenu", &wrapped_type::viewMenu)
+            .def_property_readonly("oneMenu", &wrapped_type::oneMenu)
+            .def_property_readonly("meshMenu", &wrapped_type::meshMenu)
+            .def_property_readonly("addonMenu", &wrapped_type::addonMenu)
+            .def_property_readonly("windowMenu", &wrapped_type::windowMenu)
+            .def(
+                "quit",
+                [](wrapped_type & self)
+                {
+                    self.quit();
                 })
             .def(
                 "show",
