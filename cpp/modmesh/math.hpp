@@ -27,7 +27,7 @@ inline constexpr T pow(T base, std::integral_constant<size_t, N> /*unused*/)
 }
 
 template <typename T>
-inline constexpr T pi_v = std::enable_if_t<std::is_floating_point_v<T>, T>(3.141592653589793238462643383279502884L);
+constexpr T pi_v = std::enable_if_t<std::is_floating_point_v<T>, T>(3.141592653589793238462643383279502884L);
 
 template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
 struct ComplexImpl
@@ -108,7 +108,7 @@ inline constexpr T pow(T base)
 }
 
 template <typename T>
-inline constexpr T pi = detail::pi_v<T>;
+constexpr T pi = detail::pi_v<T>;
 
 template <typename T>
 using Complex = detail::ComplexImpl<T>;
