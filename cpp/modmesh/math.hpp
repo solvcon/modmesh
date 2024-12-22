@@ -98,6 +98,7 @@ struct ComplexImpl
 
     T real() const { return real_v; }
     T imag() const { return imag_v; }
+    T norm() const { return real_v * real_v + imag_v * imag_v; }
 }; /* end class ComplexImpl */
 
 } /* end namespace detail */
@@ -114,8 +115,6 @@ constexpr T pi = detail::pi_v<T>;
 template <typename T>
 using Complex = detail::ComplexImpl<T>;
 
-template <template <typename> typename T1, typename T2>
-inline T2 norm(const T1<T2> & input) { return input.real() * input.real() + input.imag() * input.imag(); }
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

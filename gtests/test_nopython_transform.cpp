@@ -37,8 +37,8 @@ protected:
 
         for (unsigned int i = 0; i < VN; ++i)
         {
-            psd_sig += modmesh::norm<modmesh::Complex, T>(signal[i]);
-            psd_out += modmesh::norm<modmesh::Complex, T>(out[i]);
+            psd_sig += signal[i].norm();
+            psd_out += out[i].norm();
         }
 
         // Expect the total energy in the time and frequency domains to be equal
@@ -71,7 +71,7 @@ protected:
 
         for (unsigned int i = 0; i < VN; ++i)
         {
-            T mag = modmesh::norm<modmesh::Complex, T>(out[i]);
+            T mag = out[i].norm();
             EXPECT_NEAR(mag, expected_mag, (std::is_same<T, float>::value ? (T)1e-3 : (T)1e-10));
         }
     }
