@@ -141,7 +141,7 @@ public:
             }
             else
             {
-                if (m_capacity < other.m_size)
+                if (m_capacity < other.m_size && m_head != m_data.data())
                 {
                     delete[] m_head;
                     m_head = nullptr;
