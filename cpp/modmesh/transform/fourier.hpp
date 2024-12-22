@@ -16,6 +16,7 @@ size_t bit_reverse(size_t n, const size_t bits);
 
 } /* end namespace detail */
 
+// TODO: The template of template is too complicate, we should find a way to make it easier.
 template <template <typename> typename T1, typename T2>
 void dft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
 {
