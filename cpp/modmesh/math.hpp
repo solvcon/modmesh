@@ -35,30 +35,33 @@ struct ComplexImpl
     T real_v;
     T imag_v;
 
-    explicit ComplexImpl(T r = 0.0, T i = 0.0)
+    explicit ComplexImpl()
+        : ComplexImpl(0.0, 0.0)
+    {
+    }
+
+    explicit ComplexImpl(T r, T i)
         : real_v(r)
         , imag_v(i)
     {
     }
+
     explicit ComplexImpl(const ComplexImpl & other)
         : real_v(other.real_v)
         , imag_v(other.imag_v)
     {
     }
 
-    // ComplexImpl addition
     ComplexImpl operator+(const ComplexImpl & other) const
     {
         return ComplexImpl(real_v + other.real_v, imag_v + other.imag_v);
     }
 
-    // ComplexImpl subtraction
     ComplexImpl operator-(const ComplexImpl & other) const
     {
         return ComplexImpl(real_v - other.real_v, imag_v - other.imag_v);
     }
 
-    // ComplexImpl multiplication
     ComplexImpl operator*(const ComplexImpl & other) const
     {
         return ComplexImpl(real_v * other.real_v - imag_v * other.imag_v, real_v * other.imag_v + imag_v * other.real_v);
@@ -69,7 +72,6 @@ struct ComplexImpl
         return ComplexImpl(real_v / other, imag_v / other);
     }
 
-    // Assignment operator
     ComplexImpl & operator=(const ComplexImpl & other)
     {
         if (this != &other) // Check for self-assignment
@@ -87,7 +89,6 @@ struct ComplexImpl
         return *this;
     }
 
-    // In-place subtraction
     ComplexImpl & operator-=(const ComplexImpl & other)
     {
         real_v -= other.real_v;
@@ -97,7 +98,7 @@ struct ComplexImpl
 
     T real() const { return real_v; }
     T imag() const { return imag_v; }
-};
+}; /* end class ComplexImpl */
 
 } /* end namespace detail */
 
