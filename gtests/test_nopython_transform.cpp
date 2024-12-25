@@ -41,7 +41,10 @@ protected:
             psd_out += out[i].norm();
         }
 
-        // TODO: When FFT / DFT is using float, the accumulation error grows rapidly, we should fix it.
+        // TODO: When FFT / DFT uses float, the accumulation error is around 1e-3,
+        // but when using double, the accumulation error is around 1e-12.
+        // We need to investigate the root cause to determine whether this is an issue
+        // or if there is a way to optimize it.
         // Expect the total energy in the time and frequency domains to be equal
         EXPECT_NEAR(psd_sig, psd_out, (std::is_same<T, float>::value ? (T)1e-2 : (T)1e-10));
     }
