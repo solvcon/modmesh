@@ -37,7 +37,7 @@ import argparse
 import traceback
 
 import modmesh
-from . import view
+from . import pilot
 from . import apputil
 
 
@@ -63,10 +63,10 @@ class ModmeshArgumentParser(argparse.ArgumentParser):
 
 
 def _parse_command_line(argv):
-    parser = ModmeshArgumentParser(description="Viewer")
+    parser = ModmeshArgumentParser(description="Pilot")
     parser.add_argument('--mode', dest='mode', action='store',
-                        default='viewer',
-                        choices=['viewer', 'python', 'pytest'],
+                        default='pilot',
+                        choices=['pilot', 'python', 'pytest'],
                         help='mode selection (default = %(default)s)')
     args = parser.parse_args(argv[1:])
     if parser.exited:
@@ -76,9 +76,9 @@ def _parse_command_line(argv):
     return args
 
 
-def _run_viewer(argv=None):
-    """Run the viewer application."""
-    return view.launch()
+def _run_pilot(argv=None):
+    """Run the pilot application."""
+    return pilot.launch()
 
 
 def _run_pytest():
@@ -102,8 +102,9 @@ def enter_main(argv):
     ret = 0
     if args.exit:
         ret = args.exit[0]
-    elif 'viewer' == args.mode:
-        ret = _run_viewer(argv)
+    elif 'pilot' == args.mode or 'viewer' == args.mode:
+        # 'viewer' is for backward compatibility
+        ret = _run_pilot(argv)
     elif 'pytest' == args.mode:
         ret = _run_pytest()
     elif 'python' == args.mode:

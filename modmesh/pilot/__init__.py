@@ -29,10 +29,38 @@
 Drawing and visualization sub-system of modmesh.
 """
 
-from . import airfoil  # noqa: F401
+# The "pilot" sub-package houses all GUI related code and should not be
+# imported to the top-level "modmesh" namespace.
 
-__all__ = [
+from . import airfoil  # noqa: F401
+from . import _gui
+from ._gui import launch
+
+_from_impl = [  # noqa: F822
+    'R3DWidget',
+    'RLine',
+    'RPythonConsoleDockWidget',
+    'RManager',
+    'RCameraController',
+    'mgr',
+]
+
+__all__ = _from_impl + [  # noqa: F822
+    'launch',
     'airfoil',
 ]
+
+
+enable = _gui.enable
+
+
+def _load():
+    if enable:
+        for name in _from_impl:
+            globals()[name] = getattr(_gui, name)
+
+
+_load()
+del _load
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

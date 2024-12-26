@@ -33,7 +33,7 @@ import os
 
 import modmesh as mm
 from .. import core
-from .. import view
+from .. import pilot
 
 
 def mesh_triangle():
@@ -44,7 +44,7 @@ def mesh_triangle():
     mh.build_interior()
     mh.build_boundary()
     mh.build_ghost()
-    w_tri = view.mgr.add3DWidget()
+    w_tri = pilot.mgr.add3DWidget()
     w_tri.updateMesh(mh)
     w_tri.showMark()
     print("tri nedge:", mh.nedge)
@@ -58,7 +58,7 @@ def mesh_tetrahedron():
     mh.build_interior()
     mh.build_boundary()
     mh.build_ghost()
-    w_tet = view.mgr.add3DWidget()
+    w_tet = pilot.mgr.add3DWidget()
     w_tet.updateMesh(mh)
     w_tet.showMark()
     print("tet nedge:", mh.nedge)
@@ -168,7 +168,7 @@ def mesh_solvcon_2dtext():
     mh.build_boundary()
     mh.build_ghost()
     # Open a sub window for solvcon icon:
-    w_solvcon = view.mgr.add3DWidget()
+    w_solvcon = pilot.mgr.add3DWidget()
     w_solvcon.updateMesh(mh)
     w_solvcon.showMark()
     print("solvcon nedge:", mh.nedge)
@@ -199,10 +199,10 @@ def mesh_3dmix():
     mh.build_ghost()
 
     # Open a sub window for triangles and quadrilaterals:
-    w_3dmix = view.mgr.add3DWidget()
+    w_3dmix = pilot.mgr.add3DWidget()
     w_3dmix.updateMesh(mh)
     w_3dmix.showMark()
-    view.mgr.pycon.writeToHistory(f"3dmix nedge: {mh.nedge}\n")
+    pilot.mgr.pycon.writeToHistory(f"3dmix nedge: {mh.nedge}\n")
 
 
 def mesh_rectangle():
@@ -210,19 +210,19 @@ def mesh_rectangle():
     fn = os.path.abspath(fn)
     fn = os.path.join(fn, "tests", "data", "rectangle.msh")
     if not os.path.exists(fn):
-        view.mgr.pycon.writeToHistory(f"{fn} does not exist\n")
+        pilot.mgr.pycon.writeToHistory(f"{fn} does not exist\n")
         return
 
     with open(fn, 'rb') as fobj:
         data = fobj.read()
-    view.mgr.pycon.writeToHistory(f"gmsh mesh file {fn} is read\n")
+    pilot.mgr.pycon.writeToHistory(f"gmsh mesh file {fn} is read\n")
     gmsh = mm.Gmsh(data)
     mh = gmsh.to_block()
-    view.mgr.pycon.writeToHistory("StaticMesh object created from gmsh\n")
+    pilot.mgr.pycon.writeToHistory("StaticMesh object created from gmsh\n")
     # Open a sub window for triangles and quadrilaterals:
-    w = view.mgr.add3DWidget()
+    w = pilot.mgr.add3DWidget()
     w.updateMesh(mh)
     w.showMark()
-    view.mgr.pycon.writeToHistory(f"nedge: {mh.nedge}\n")
+    pilot.mgr.pycon.writeToHistory(f"nedge: {mh.nedge}\n")
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

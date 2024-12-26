@@ -32,13 +32,13 @@ from matplotlib.backends.backend_qtagg import (
     FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.figure import Figure
 
-from .. import view
+from .. import pilot
 from .. import spacetime as libst
 
 
 def load_app():
     cmd = "win, svr = mm.app.linear_wave.run_linear(animate=True, interval=10)"
-    view.mgr.pycon.command = cmd
+    pilot.mgr.pycon.command = cmd
 
 
 class ApplicationWindow(QtWidgets.QMainWindow):

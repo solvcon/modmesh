@@ -31,9 +31,9 @@ import os
 
 import modmesh
 try:
-    from modmesh import view
+    from modmesh import pilot
 except ImportError:
-    view = None
+    pilot = None
 try:
     import PUI.PySide6
 except ImportError:
@@ -46,11 +46,11 @@ except ImportError:
 GITHUB_ACTIONS = os.getenv('GITHUB_ACTIONS', False)
 
 
-@unittest.skipUnless(modmesh.HAS_VIEW, "Qt view is not built")
+@unittest.skipUnless(modmesh.HAS_PILOT, "Qt pilot is not built")
 class ViewTC(unittest.TestCase):
 
     def test_import(self):
-        self.assertTrue(hasattr(modmesh.view, "mgr"))
+        self.assertTrue(hasattr(modmesh.pilot, "mgr"))
         self.assertTrue(hasattr(PUI.PySide6, "PUINode"))
         self.assertTrue(hasattr(PUI.PySide6, "PUIView"))
         self.assertEqual(PUI.PySide6.PUI_BACKEND, "PySide6",
@@ -58,9 +58,9 @@ class ViewTC(unittest.TestCase):
 
     @unittest.skip("headless testing is not ready")
     def test_pycon(self):
-        self.assertTrue(view.mgr.pycon.python_redirect)
-        view.mgr.pycon.python_redirect = False
-        self.assertFalse(view.mgr.pycon.python_redirect)
+        self.assertTrue(pilot.mgr.pycon.python_redirect)
+        pilot.mgr.pycon.python_redirect = False
+        self.assertFalse(pilot.mgr.pycon.python_redirect)
 
 
 class ViewCameraTB:
@@ -68,7 +68,7 @@ class ViewCameraTB:
 
     @classmethod
     def setUpClass(cls):
-        widget = view.RManager.instance.setUp().add3DWidget()
+        widget = pilot.RManager.instance.setUp().add3DWidget()
 
         if cls.camera_type is not None:
             widget.setCameraType(cls.camera_type)

@@ -53,7 +53,7 @@ from PUI.PySide6.table import Table
 from PUI.PySide6.toolbar import ToolBar
 from PUI.PySide6.modal import Modal
 from ..onedim import euler1d
-from .. import view
+from .. import pilot
 
 
 @dataclass
@@ -677,8 +677,8 @@ class Euler1DApp():
         if sys.stdout is not None:
             sys.stdout.write(msg)
             sys.stdout.write('\n')
-        view.mgr.pycon.writeToHistory(msg)
-        view.mgr.pycon.writeToHistory('\n')
+        pilot.mgr.pycon.writeToHistory(msg)
+        pilot.mgr.pycon.writeToHistory('\n')
 
     def update_lines(self):
         """
@@ -833,8 +833,8 @@ def load_app():
     config_widget = QDockWidget("config")
     config_widget.setWidget(config_window.ui.ui)
 
-    view.mgr.mainWindow.addDockWidget(Qt.LeftDockWidgetArea, config_widget)
-    _subwin = view.mgr.addSubWindow(plotting_area.ui.ui)
+    pilot.mgr.mainWindow.addDockWidget(Qt.LeftDockWidgetArea, config_widget)
+    _subwin = pilot.mgr.addSubWindow(plotting_area.ui.ui)
     _subwin.showMaximized()
 
     config_window.redraw()
