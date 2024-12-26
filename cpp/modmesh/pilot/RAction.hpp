@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
@@ -16,7 +18,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * A*RE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -26,22 +28,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/RAction.hpp> // Must be the first include.
+#include <modmesh/pilot/common_detail.hpp> // Must be the first include.
 
-#include <functional>
+#include <QAction>
 
 namespace modmesh
 {
 
-RAction::RAction(QString const & text, QString const & tipText, std::function<void(void)> callback, QObject * parent)
-    : QAction(text, parent)
+class RAction
+    : public QAction
 {
-    setStatusTip(tipText);
-    if (callback != nullptr)
-    {
-        connect(this, &QAction::triggered, this, callback);
-    }
-}
+public:
+
+    RAction(
+        QString const & text,
+        QString const & tipText,
+        std::function<void(void)> callback,
+        QObject * parent = nullptr);
+}; /* end class RAction */
 
 } /* end namespace modmesh */
 

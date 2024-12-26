@@ -186,7 +186,7 @@ endif()
 
 add_subdirectory(cpp/binary/pymod_modmesh)
 if(BUILD_QT)
-add_subdirectory(cpp/binary/viewer)
+add_subdirectory(cpp/binary/pilot)
 endif()
 
 add_custom_target(flake8)

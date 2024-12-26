@@ -28,9 +28,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/common_detail.hpp> // Must be the first include.
+#include <modmesh/pilot/common_detail.hpp> // Must be the first include.
 
-#include <modmesh/view/RWorld.hpp>
+#include <modmesh/pilot/RWorld.hpp>
 
 #include <Qt>
 #include <QWidget>
@@ -39,7 +39,7 @@
 #include <Qt3DCore/QEntity>
 #include <Qt3DRender/QCamera>
 
-#include <modmesh/view/RCameraController.hpp>
+#include <modmesh/pilot/RCameraController.hpp>
 
 #include <QResizeEvent>
 

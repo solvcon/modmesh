@@ -26,12 +26,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/RManager.hpp> // Must be the first include.
+#include <modmesh/pilot/RManager.hpp> // Must be the first include.
 
 #include <vector>
 
-#include <modmesh/view/RAction.hpp>
-#include <modmesh/view/RParameter.hpp>
+#include <modmesh/pilot/RAction.hpp>
+#include <modmesh/pilot/RParameter.hpp>
 #include <Qt>
 #include <QMenuBar>
 #include <QMenu>
@@ -52,7 +52,7 @@ RManager::RManager()
 {
     m_core = QApplication::instance();
     static int argc = 1;
-    static char exename[] = "viewer";
+    static char exename[] = "pilot";
     static char * argv[] = {exename};
     if (nullptr == m_core)
     {

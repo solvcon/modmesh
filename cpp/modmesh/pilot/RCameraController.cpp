@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/RCameraController.hpp>
+#include <modmesh/pilot/RCameraController.hpp>
 
 #include <Qt3DInput/QKeyboardDevice>
 #include <Qt3DInput/QMouseDevice>

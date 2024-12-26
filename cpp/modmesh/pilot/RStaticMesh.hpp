@@ -28,18 +28,50 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/python/python.hpp> // Must be the first include.
+#include <modmesh/pilot/common_detail.hpp> // Must be the first include.
+
+#include <modmesh/modmesh.hpp>
+
+#include <Qt>
+#include <QWidget>
+#include <Qt3DWindow>
+
+#include <QByteArray>
+#include <QGeometryRenderer>
+
+#include <Qt3DCore/QBuffer>
+#include <Qt3DCore/QEntity>
+#include <Qt3DCore/QGeometry>
+#include <Qt3DCore/QAttribute>
+#include <Qt3DCore/QTransform>
+
+#include <Qt3DExtras/QDiffuseSpecularMaterial>
 
 namespace modmesh
 {
 
-namespace python
+class RStaticMesh
+    : public Qt3DCore::QEntity
 {
 
-void initialize_view(pybind11::module & mod);
-void wrap_view(pybind11::module & mod);
+public:
 
-} /* end namespace python */
+    RStaticMesh(std::shared_ptr<StaticMesh> const & static_mesh, Qt3DCore::QNode * parent = nullptr);
+
+    void update_geometry(StaticMesh const & mh)
+    {
+        update_geometry_impl(mh, m_geometry);
+    }
+
+private:
+
+    static void update_geometry_impl(StaticMesh const & mh, Qt3DCore::QGeometry * geom);
+
+    Qt3DCore::QGeometry * m_geometry = nullptr;
+    Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
+    Qt3DRender::QMaterial * m_material = nullptr;
+
+}; /* end class RStaticMesh */
 
 } /* end namespace modmesh */
 

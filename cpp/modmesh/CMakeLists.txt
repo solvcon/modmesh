@@ -38,7 +38,7 @@ add_subdirectory(onedim)
 add_subdirectory(multidim)
 add_subdirectory(python)
 add_subdirectory(spacetime)
-add_subdirectory(view)
+add_subdirectory(pilot)
 add_subdirectory(inout)
 add_subdirectory(serialization)
 add_subdirectory(transform)
@@ -98,7 +98,7 @@ set(MODMESH_TERMINAL_FILES
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_GRAPHIC_FILES
-    ${MODMESH_VIEW_FILES}
+    ${MODMESH_PILOT_FILES}
     CACHE FILEPATH "" FORCE)
 
 if (BUILD_QT)

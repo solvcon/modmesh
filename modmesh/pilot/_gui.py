@@ -35,10 +35,10 @@ Graphical-user interface code
 import sys
 import importlib
 
-# Try to import the viewer code but easily give up.
+# Try to import the C++ pilot code but easily give up.
 enable = False
 try:
-    from _modmesh import view as _vimpl  # noqa: F401
+    from _modmesh import pilot as _vimpl  # noqa: F401
     enable = True
 except ImportError:
     pass

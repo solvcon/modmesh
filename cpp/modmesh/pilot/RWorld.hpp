@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2023, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,14 +28,56 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/common_detail.hpp> // Must be the first include.
+#include <modmesh/pilot/common_detail.hpp> // Must be the first include.
 
-#include <modmesh/view/R3DWidget.hpp>
-#include <modmesh/view/RManager.hpp>
-#include <modmesh/view/RPythonConsoleDockWidget.hpp>
-#include <modmesh/view/RCameraController.hpp>
-#include <modmesh/view/RStaticMesh.hpp>
-#include <modmesh/view/RWorld.hpp>
-#include <modmesh/view/RAxisMark.hpp>
+#include <modmesh/universe/universe.hpp>
+
+#include <Qt>
+#include <QWidget>
+#include <Qt3DWindow>
+
+#include <QByteArray>
+#include <QGeometryRenderer>
+
+#include <Qt3DCore/QBuffer>
+#include <Qt3DCore/QEntity>
+#include <Qt3DCore/QGeometry>
+#include <Qt3DCore/QAttribute>
+#include <Qt3DCore/QTransform>
+
+#include <Qt3DExtras/QDiffuseSpecularMaterial>
+
+namespace modmesh
+{
+
+/**
+ * Make a world viewable.
+ */
+class RWorld
+    : public Qt3DCore::QEntity
+{
+
+public:
+
+    RWorld(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * parent = nullptr);
+
+    void set_world(std::shared_ptr<WorldFp64> const & world) { m_world = world; }
+    bool has_world() const { return bool(m_world); }
+    WorldFp64 const & world() const { return *m_world; }
+    WorldFp64 & world() { return *m_world; }
+
+    void update_geometry();
+
+private:
+
+    std::shared_ptr<WorldFp64> m_world;
+
+    Qt3DCore::QGeometry * m_geometry = nullptr;
+    Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
+    Qt3DRender::QMaterial * m_material = nullptr;
+
+}; /* end class R3DWorld */
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

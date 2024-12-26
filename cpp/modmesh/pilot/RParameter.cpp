@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2023, Buganini Chiu <buganini@b612.tw>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -18,7 +16,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * A*RE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -28,24 +26,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/common_detail.hpp> // Must be the first include.
-
-#include <QAction>
+#include <modmesh/pilot/RParameter.hpp> // Must be the first include.
 
 namespace modmesh
 {
-
-class RAction
-    : public QAction
+pybind11::tuple createParameters(void)
 {
-public:
+    pybind11::module pui_module = pybind11::module::import("PUI");
+    return pybind11::make_tuple(
+        pui_module.attr("StateDict")(), pybind11::list());
+}
 
-    RAction(
-        QString const & text,
-        QString const & tipText,
-        std::function<void(void)> callback,
-        QObject * parent = nullptr);
-}; /* end class RAction */
+void openParameterView(pybind11::tuple & params)
+{
+    pybind11::module params_module = pybind11::module::import("modmesh.params");
+    params_module.attr("openParameterView")(params[1]);
+}
 
 } /* end namespace modmesh */
 
