@@ -145,17 +145,17 @@ jobs:
     - name: make cinclude (check_include)
       run: make cinclude
 
-    - name: make viewer
+    - name: make pilot
       run: |
-        make viewer \
+        make pilot \
           ${JOB_MAKE_ARGS} \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
 
-    - name: make run_viewer_pytest
+    - name: make run_pilot_pytest
       run: |
         export LD_LIBRARY_PATH=$(python3 -c "import sys, os, shiboken6; sys.stdout.write(os.path.dirname(shiboken6.__file__))")
-        make run_viewer_pytest \
+        make run_pilot_pytest \
           ${JOB_MAKE_ARGS} \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
@@ -278,28 +278,28 @@ jobs:
       - name: make cinclude (check_include)
         run: make cinclude
 
-      - name: make viewer USE_PYTEST_HELPER_BINDING=OFF
+      - name: make pilot USE_PYTEST_HELPER_BINDING=OFF
         run: |
-          make viewer \
+          make pilot \
             ${JOB_MAKE_ARGS} \
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
             CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
 
-      - name: make viewer USE_PYTEST_HELPER_BINDING=ON
+      - name: make pilot USE_PYTEST_HELPER_BINDING=ON
         run: |
           rm -f build/*/Makefile
-          make viewer \
+          make pilot \
             ${JOB_MAKE_ARGS} \
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
             CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
 
-      - name: make run_viewer_pytest
+      - name: make run_pilot_pytest
         run: |
           # PySide6 installed by pip will bundle with a prebuilt Qt,
           # this will cause duplicated symbol.
           # Solve this issue by removed PySide6 prebuilt Qt library
           rm -rf $(python3 -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))")/Qt/lib/*.framework
-          make run_viewer_pytest \
+          make run_pilot_pytest \
             ${JOB_MAKE_ARGS} \
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
             CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"

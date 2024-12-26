@@ -118,16 +118,16 @@ pytest: buildext
 	env $(RUNENV) \
 		$(PYTEST) $(PYTEST_OPTS) tests/
 
-.PHONY: viewer
-viewer: cmake
+.PHONY: pilot
+pilot: cmake
 	cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)
 
 .PHONY: gtest
 gtest: cmake
 	cmake --build $(BUILD_PATH) --target run_gtest VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)
 
-.PHONY: run_viewer_pytest
-run_viewer_pytest: viewer
+.PHONY: run_pilot_pytest
+run_pilot_pytest: pilot
 	cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE)
 
 .PHONY: standalone_buffer_setup

@@ -398,7 +398,7 @@ class CommandLineInfoTC(unittest.TestCase):
         self.cmdline = modmesh.ProcessInfo.instance.command_line
 
     def test_populated(self):
-        if "viewer" in modmesh.clinfo.executable_basename:
+        if "pilot" in modmesh.clinfo.executable_basename:
             self.assertTrue(self.cmdline.populated)
             self.assertNotEqual(len(self.cmdline.populated_argv), 0)
         else:

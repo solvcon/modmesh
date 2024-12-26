@@ -2,7 +2,7 @@
 # BSD-style license; see COPYING
 
 cmake_minimum_required(VERSION 3.16)
-project(viewer LANGUAGES CXX)
+project(pilot LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -10,7 +10,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(PROJECT_ROOT_DIR ${PROJECT_SOURCE_DIR}/../../../)
 
 if(NOT DEFINED INSTALL_VIEWERDIR)
-    set(INSTALL_VIEWERDIR "viewer")
+    set(INSTALL_VIEWERDIR "pilot")
 endif()
 
 set(CMAKE_AUTOMOC ON)
@@ -31,33 +31,33 @@ if(APPLE)
     set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
     qt_add_executable(
-        viewer
+        pilot
         MACOSX_BUNDLE
         viewer.cpp
         ${app_icon_macos}
     )
 else()
     qt_add_executable(
-        viewer
+        pilot
         viewer.cpp
     )
 endif()
 
 target_link_libraries(
-    viewer PUBLIC
+    pilot PUBLIC
     pybind11::embed
     modmesh_primary
 )
 if(WIN32)
     set_target_properties(
-        viewer
+        pilot
         PROPERTIES
         LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE" # open the console for debug mode
     )
 endif(WIN32)
 
 qt_add_resources(
-    viewer "app_icon"
+    pilot "app_icon"
     PREFIX "/"
     BASE ${PROJECT_ROOT_DIR}/resources/viewer
     FILES
@@ -65,32 +65,32 @@ qt_add_resources(
 )
 
 if(HIDE_SYMBOL)
-    set_target_properties(viewer PROPERTIES CXX_VISIBILITY_PRESET "hidden")
+    set_target_properties(pilot PROPERTIES CXX_VISIBILITY_PRESET "hidden")
 else()
-    set_target_properties(viewer PROPERTIES CXX_VISIBILITY_PRESET "default")
+    set_target_properties(pilot PROPERTIES CXX_VISIBILITY_PRESET "default")
 endif()
 
 target_compile_options(
-    viewer PRIVATE
+    pilot PRIVATE
     ${COMMON_COMPILER_OPTIONS}
 )
 
 if(CLANG_TIDY_EXE AND USE_CLANG_TIDY)
     set_target_properties(
-        viewer PROPERTIES
+        pilot PROPERTIES
         CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
     )
 endif()
 
 # Hack: add a .clang-tidy file in the generated .rcc directory.
 # See https://gitlab.kitware.com/cmake/cmake/-/merge_requests/777
-file(WRITE "${viewer_BINARY_DIR}/.rcc/.clang-tidy" "---
+file(WRITE "${pilot_BINARY_DIR}/.rcc/.clang-tidy" "---
 Checks: '-*,llvm-twine-local'")
-file(WRITE "${viewer_BINARY_DIR}/viewer_autogen/.clang-tidy" "---
+file(WRITE "${pilot_BINARY_DIR}/viewer_autogen/.clang-tidy" "---
 Checks: '-bugprone-suspicious-include,llvm-twine-local'")
 
 set_target_properties(
-    viewer PROPERTIES
+    pilot PROPERTIES
     WIN32_EXECUTABLE TRUE
     MACOSX_BUNDLE TRUE
 )
@@ -101,16 +101,16 @@ if(APPLE)
     find_library(APPLE_FWK_METAL Metal REQUIRED)
 
     target_link_libraries(
-        viewer PUBLIC
+        pilot PUBLIC
         ${APPLE_FWK_FOUNDATION}
         ${APPLE_FWK_QUARTZ_CORE}
         ${APPLE_FWK_METAL}
     )
 endif()
 
-add_custom_target(run_viewer_pytest $<TARGET_FILE:viewer> --mode=pytest)
+add_custom_target(run_pilot_pytest $<TARGET_FILE:pilot> --mode=pytest)
 
-install(TARGETS viewer
+install(TARGETS pilot
     RUNTIME DESTINATION "${INSTALL_VIEWERDIR}"
     BUNDLE DESTINATION "${INSTALL_VIEWERDIR}"
     LIBRARY DESTINATION "${INSTALL_VIEWERDIR}"

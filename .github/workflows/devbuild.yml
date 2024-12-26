@@ -237,19 +237,19 @@ jobs:
         python3 -c "import modmesh; assert modmesh.HAS_VIEW == True"
         make pytest VERBOSE=1
 
-    - name: make viewer
+    - name: make pilot
       run: |
         rm -f build/*/Makefile
-        make viewer \
+        make pilot \
           VERBOSE=1 USE_CLANG_TIDY=OFF \
           BUILD_QT=ON \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
 
-    - name: make run_viewer_pytest
+    - name: make run_pilot_pytest
       run: |
         export LD_LIBRARY_PATH=$(python3 -c "import sys, os, shiboken6; sys.stdout.write(os.path.dirname(shiboken6.__file__))")
-        make run_viewer_pytest VERBOSE=0
+        make run_pilot_pytest VERBOSE=0
 
     # FIXME: turn off until all issues resolved
     - name: make cmake USE_SANITIZER=ON & make pytest
@@ -431,18 +431,18 @@ jobs:
           fi
           make pytest ${JOB_MAKE_ARGS}
 
-      - name: make viewer
+      - name: make pilot
         run: |
           rm -f build/*/Makefile
-          make viewer \
+          make pilot \
             VERBOSE=1 USE_CLANG_TIDY=OFF \
             BUILD_QT=ON \
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
             CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
 
-      - name: make run_viewer_pytest
+      - name: make run_pilot_pytest
         run: |
-          make run_viewer_pytest VERBOSE=1
+          make run_pilot_pytest VERBOSE=1
 
       # FIXME: turn off until all issues resolved
       - name: make cmake USE_SANITIZER=ON & make pytest
@@ -563,11 +563,11 @@ jobs:
             --config ${{ matrix.cmake_build_type }} `
             --target run_gtest
 
-      - name: cmake run_viewer_pytest
+      - name: cmake run_pilot_pytest
         run: |
           cmake --build ${{ github.workspace }}/build `
             --config ${{ matrix.cmake_build_type }} `
-            --target run_viewer_pytest
+            --target run_pilot_pytest
 
       - name: generate portable
         if: ${{ matrix.cmake_build_type == 'Release' }}
@@ -575,7 +575,7 @@ jobs:
           # Get the Python version installed and extract the major+minor version components
           $py_ver=$(python3 -V | awk '{print $2}')
           $py_main_ver=$(echo $py_ver | awk -F. '{print $1$2}')
-          $destination=".\modmesh-viewer-win64\modmesh-viewer-win64"
+          $destination=".\modmesh-pilot-win64\modmesh-pilot-win64"
           $py_exec="$destination\python.exe"
 
           # Create the destination directory
@@ -597,11 +597,11 @@ jobs:
           Invoke-WebRequest -Uri $get_pip_url -OutFile $get_pip_script
           & $py_exec $get_pip_script
 
-          # Install necessary packages for the viewer
+          # Install necessary packages for the pilot
           $qt_ver=$(qmake -query QT_VERSION)
           & $py_exec -m pip install numpy matplotlib PySide6==$qt_ver shiboken6-generator==$qt_ver
 
-          # Copy pyside6 and shiboken6 DLLs alongside the viewer executable
+          # Copy pyside6 and shiboken6 DLLs alongside the pilot executable
           $pyside6_path=$(& $py_exec -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))") 
           $shiboken6_path=$(& $py_exec -c "import sys, os, shiboken6; sys.stdout.write(os.path.dirname(shiboken6.__file__))")
           copy "$pyside6_path\pyside6.abi3.dll" $destination
@@ -609,13 +609,13 @@ jobs:
           # Remove redundant Qt DLLs from PySide6
           Remove-Item -Path $pyside6_path\Qt*.dll
 
-          # Configure and build the viewer
+          # Configure and build the pilot
           cmake -Dpybind11_DIR="$(pybind11-config --cmakedir)" -S . -B build
-          cmake --build build --config Release --target viewer
+          cmake --build build --config Release --target pilot
 
-          # Deploy the Qt environment for the viewer executable and copy necessary files
-          Copy-Item -Path ".\build\cpp\binary\viewer\Release\viewer.exe" -Destination $destination
-          windeployqt --release "$destination\viewer.exe"
+          # Deploy the Qt environment for the pilot executable and copy necessary files
+          Copy-Item -Path ".\build\cpp\binary\viewer\Release\pilot.exe" -Destination $destination
+          windeployqt --release "$destination\pilot.exe"
           Copy-Item -Path ".\modmesh" -Destination $destination -Recurse
           # PUI is necessary
           Copy-Item -Path ".\thirdparty" -Destination $destination -Recurse
@@ -624,5 +624,5 @@ jobs:
         if: ${{ matrix.cmake_build_type == 'Release' }}
         uses: actions/upload-artifact@v4
         with:
-          name: modmesh-viewer-win64
-          path: modmesh-viewer-win64/
+          name: modmesh-pilot-win64
+          path: modmesh-pilot-win64/
