@@ -39,7 +39,7 @@ try:
 except ImportError:
     # Bypass PUI import error if modmesh is built without Qt PUI may not be
     # installed in this case.
-    # If modmesh is built with Qt, the ViewTC will check if PUI is working
+    # If modmesh is built with Qt, the PilotTC will check if PUI is working
     # or not.
     pass
 
@@ -47,7 +47,7 @@ GITHUB_ACTIONS = os.getenv('GITHUB_ACTIONS', False)
 
 
 @unittest.skipUnless(modmesh.HAS_PILOT, "Qt pilot is not built")
-class ViewTC(unittest.TestCase):
+class PilotTC(unittest.TestCase):
 
     def test_import(self):
         self.assertTrue(hasattr(modmesh.pilot, "mgr"))
@@ -63,7 +63,7 @@ class ViewTC(unittest.TestCase):
         self.assertFalse(pilot.mgr.pycon.python_redirect)
 
 
-class ViewCameraTB:
+class PilotCameraTB:
     camera_type = None
 
     @classmethod
@@ -105,7 +105,7 @@ class ViewCameraTB:
 
 
 @unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")
-class ViewCommonCameraTC(ViewCameraTB, unittest.TestCase):
+class PilotCommonCameraTC(PilotCameraTB, unittest.TestCase):
     def test_value_get_set(self):
         c = self.camera
 
@@ -196,7 +196,7 @@ class ViewCommonCameraTC(ViewCameraTB, unittest.TestCase):
 
 
 @unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")
-class ViewFPSCameraTC(ViewCameraTB, unittest.TestCase):
+class PilotFPSCameraTC(PilotCameraTB, unittest.TestCase):
     camera_type = "fps"
 
     def setUp(self):
@@ -267,7 +267,7 @@ class ViewFPSCameraTC(ViewCameraTB, unittest.TestCase):
 
 
 @unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")
-class ViewOrbitCameraTC(ViewCameraTB, unittest.TestCase):
+class PilotOrbitCameraTC(PilotCameraTB, unittest.TestCase):
     camera_type = "orbit"
 
     def setUp(self):
