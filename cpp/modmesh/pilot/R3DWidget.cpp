@@ -26,9 +26,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/R3DWidget.hpp> // Must be the first include.
-#include <modmesh/view/RAxisMark.hpp>
-#include <modmesh/view/RStaticMesh.hpp>
+#include <modmesh/pilot/R3DWidget.hpp> // Must be the first include.
+#include <modmesh/pilot/RAxisMark.hpp>
+#include <modmesh/pilot/RStaticMesh.hpp>
 
 namespace modmesh
 {

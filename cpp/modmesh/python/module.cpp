@@ -32,9 +32,9 @@
 #include <modmesh/universe/pymod/universe_pymod.hpp>
 #ifdef USE_PYTEST_HELPER_BINDING
 #include <modmesh/testhelper/pymod/testbuffer_pymod.hpp>
-#endif
+#endif // USE_PYTEST_HELPER_BINDING
 #ifdef QT_CORE_LIB
-#include <modmesh/view/wrap_view.hpp>
+#include <modmesh/pilot/wrap_pilot.hpp>
 #endif // QT_CORE_LIB
 
 namespace modmesh
@@ -65,12 +65,10 @@ void initialize(pybind11::module_ mod)
 #endif
 
 #ifdef QT_CORE_LIB
-    mod.attr("HAS_VIEW") = true; // backward compatibility
     mod.attr("HAS_PILOT") = true;
-    pybind11::module_ view_mod = mod.def_submodule("view", "view");
-    initialize_view(view_mod);
+    pybind11::module_ view_mod = mod.def_submodule("pilot", "pilot");
+    initialize_pilot(view_mod);
 #else // QT_CORE_LIB
-    mod.attr("HAS_VIEW") = false; // backward compatibility
     mod.attr("HAS_PILOT") = false;
 #endif // QT_CORE_LIB
 }

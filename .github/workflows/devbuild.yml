@@ -208,7 +208,7 @@ jobs:
 
     - name: make pytest BUILD_QT=OFF
       run: |
-        python3 -c "import modmesh; assert modmesh.HAS_VIEW == False"
+        python3 -c "import modmesh; assert modmesh.HAS_PILOT == False"
         make pytest VERBOSE=1
 
     - name: make buildext BUILD_QT=ON USE_PYTEST_HELPER_BINDING=OFF
@@ -234,7 +234,7 @@ jobs:
 
     - name: make pytest BUILD_QT=ON USE_PYTEST_HELPER_BINDING=ON
       run: |
-        python3 -c "import modmesh; assert modmesh.HAS_VIEW == True"
+        python3 -c "import modmesh; assert modmesh.HAS_PILOT == True"
         make pytest VERBOSE=1
 
     - name: make pilot
@@ -614,7 +614,7 @@ jobs:
           cmake --build build --config Release --target pilot
 
           # Deploy the Qt environment for the pilot executable and copy necessary files
-          Copy-Item -Path ".\build\cpp\binary\viewer\Release\pilot.exe" -Destination $destination
+          Copy-Item -Path ".\build\cpp\binary\pilot\Release\pilot.exe" -Destination $destination
           windeployqt --release "$destination\pilot.exe"
           Copy-Item -Path ".\modmesh" -Destination $destination -Recurse
           # PUI is necessary

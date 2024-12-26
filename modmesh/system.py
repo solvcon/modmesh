@@ -102,8 +102,7 @@ def enter_main(argv):
     ret = 0
     if args.exit:
         ret = args.exit[0]
-    elif 'pilot' == args.mode or 'viewer' == args.mode:
-        # 'viewer' is for backward compatibility
+    elif 'pilot' == args.mode:
         ret = _run_pilot(argv)
     elif 'pytest' == args.mode:
         ret = _run_pytest()

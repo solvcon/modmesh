@@ -9,8 +9,8 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # get the root of the modmdesh project
 set(PROJECT_ROOT_DIR ${PROJECT_SOURCE_DIR}/../../../)
 
-if(NOT DEFINED INSTALL_VIEWERDIR)
-    set(INSTALL_VIEWERDIR "pilot")
+if(NOT DEFINED INSTALL_PILOTDIR)
+    set(INSTALL_PILOTDIR "pilot")
 endif()
 
 set(CMAKE_AUTOMOC ON)
@@ -27,19 +27,19 @@ find_package(Qt6 COMPONENTS 3DExtras)
 
 if(APPLE)
     set(MACOSX_BUNDLE_ICON_FILE solvcon.icns)
-    set(app_icon_macos ${PROJECT_ROOT_DIR}/resources/viewer/solvcon.icns)
+    set(app_icon_macos ${PROJECT_ROOT_DIR}/resources/pilot/solvcon.icns)
     set_source_files_properties(${app_icon_macos} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
     qt_add_executable(
         pilot
         MACOSX_BUNDLE
-        viewer.cpp
+        pilot.cpp
         ${app_icon_macos}
     )
 else()
     qt_add_executable(
         pilot
-        viewer.cpp
+        pilot.cpp
     )
 endif()
 
@@ -59,9 +59,9 @@ endif(WIN32)
 qt_add_resources(
     pilot "app_icon"
     PREFIX "/"
-    BASE ${PROJECT_ROOT_DIR}/resources/viewer
+    BASE ${PROJECT_ROOT_DIR}/resources/pilot
     FILES
-    ${PROJECT_ROOT_DIR}/resources/viewer/icon.ico
+    ${PROJECT_ROOT_DIR}/resources/pilot/icon.ico
 )
 
 if(HIDE_SYMBOL)
@@ -86,7 +86,7 @@ endif()
 # See https://gitlab.kitware.com/cmake/cmake/-/merge_requests/777
 file(WRITE "${pilot_BINARY_DIR}/.rcc/.clang-tidy" "---
 Checks: '-*,llvm-twine-local'")
-file(WRITE "${pilot_BINARY_DIR}/viewer_autogen/.clang-tidy" "---
+file(WRITE "${pilot_BINARY_DIR}/pilot_autogen/.clang-tidy" "---
 Checks: '-bugprone-suspicious-include,llvm-twine-local'")
 
 set_target_properties(
@@ -111,7 +111,7 @@ endif()
 add_custom_target(run_pilot_pytest $<TARGET_FILE:pilot> --mode=pytest)
 
 install(TARGETS pilot
-    RUNTIME DESTINATION "${INSTALL_VIEWERDIR}"
-    BUNDLE DESTINATION "${INSTALL_VIEWERDIR}"
-    LIBRARY DESTINATION "${INSTALL_VIEWERDIR}"
+    RUNTIME DESTINATION "${INSTALL_PILOTDIR}"
+    BUNDLE DESTINATION "${INSTALL_PILOTDIR}"
+    LIBRARY DESTINATION "${INSTALL_PILOTDIR}"
 )

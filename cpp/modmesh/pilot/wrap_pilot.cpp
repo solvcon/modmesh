@@ -26,11 +26,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/wrap_view.hpp> // Must be the first include.
+#include <modmesh/pilot/wrap_pilot.hpp> // Must be the first include.
 #include <modmesh/python/common.hpp>
 #include <pybind11/stl.h>
 
-#include <modmesh/view/view.hpp>
+#include <modmesh/pilot/pilot.hpp>
 
 #include <QPointer>
 #include <QClipboard>
@@ -543,7 +543,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManagerProxy
 
 }; /* end class WrapRManagerProxy */
 
-void wrap_view(pybind11::module & mod)
+void wrap_pilot(pybind11::module & mod)
 {
     namespace py = pybind11;
 
@@ -581,11 +581,11 @@ OneTimeInitializer<view_pymod_tag> & OneTimeInitializer<view_pymod_tag>::me()
     return instance;
 }
 
-void initialize_view(pybind11::module & mod)
+void initialize_pilot(pybind11::module & mod)
 {
     auto initialize_impl = [](pybind11::module & mod)
     {
-        wrap_view(mod);
+        wrap_pilot(mod);
     };
 
     if (Toggle::instance().solid().use_pyside())

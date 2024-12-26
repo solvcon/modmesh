@@ -1,5 +1,7 @@
+#pragma once
+
 /*
- * Copyright (c) 2023, Buganini Chiu <buganini@b612.tw>
+ * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,23 +28,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/RParameter.hpp> // Must be the first include.
+#include <modmesh/pilot/common_detail.hpp> // Must be the first include.
 
-namespace modmesh
-{
-pybind11::tuple createParameters(void)
-{
-    pybind11::module pui_module = pybind11::module::import("PUI");
-    return pybind11::make_tuple(
-        pui_module.attr("StateDict")(), pybind11::list());
-}
-
-void openParameterView(pybind11::tuple & params)
-{
-    pybind11::module params_module = pybind11::module::import("modmesh.params");
-    params_module.attr("openParameterView")(params[1]);
-}
-
-} /* end namespace modmesh */
+#include <modmesh/pilot/R3DWidget.hpp>
+#include <modmesh/pilot/RManager.hpp>
+#include <modmesh/pilot/RPythonConsoleDockWidget.hpp>
+#include <modmesh/pilot/RCameraController.hpp>
+#include <modmesh/pilot/RStaticMesh.hpp>
+#include <modmesh/pilot/RWorld.hpp>
+#include <modmesh/pilot/RAxisMark.hpp>
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

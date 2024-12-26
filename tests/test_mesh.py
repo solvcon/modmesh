@@ -159,7 +159,7 @@ class StaticMeshTC(unittest.TestCase):
                           nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
                           nedge=6)
         # TODO: I have not verified the numbers.  But the mesh looks OK in
-        # viewer.
+        # pilot.
         np.testing.assert_almost_equal(
             mh.fccnd,
             [[-0.3333333,  0.6666667,  0.       ],  # noqa

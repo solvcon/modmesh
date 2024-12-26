@@ -85,7 +85,6 @@ __all__ = [  # noqa: F822
     'ProcessInfo',
     'METAL_BUILT',
     'metal_running',
-    'HAS_VIEW',  # backward compatibility
     'HAS_PILOT',
     'calc_bernstein_polynomial',
     'interpolate_bernstein',

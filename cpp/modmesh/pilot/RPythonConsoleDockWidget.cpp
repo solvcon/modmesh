@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/RPythonConsoleDockWidget.hpp>
+#include <modmesh/pilot/RPythonConsoleDockWidget.hpp>
 #include <QVBoxLayout>
 #include <QKeyEvent>
 

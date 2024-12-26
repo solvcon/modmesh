@@ -28,11 +28,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/view/common_detail.hpp> // Must be the first include.
+#include <modmesh/pilot/common_detail.hpp> // Must be the first include.
 
-#include <modmesh/view/RPythonConsoleDockWidget.hpp>
-#include <modmesh/view/R3DWidget.hpp>
-#include <modmesh/view/RAction.hpp>
+#include <modmesh/pilot/RPythonConsoleDockWidget.hpp>
+#include <modmesh/pilot/R3DWidget.hpp>
+#include <modmesh/pilot/RAction.hpp>
 
 #include <QMainWindow>
 #include <QMdiArea>
