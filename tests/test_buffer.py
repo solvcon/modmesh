@@ -204,6 +204,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         self.assertEqual((1, 24), sarr.reshape((1, 24)).shape)
         self.assertEqual((12, 2), sarr.reshape((12, 2)).shape)
+        self.assertEqual((2, 2, 2, 3), sarr.reshape((2, 2, 2, 3)).shape)
 
     def test_SimpleArray_clone(self):
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
@@ -435,6 +436,22 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         sarr_from_cpp = modmesh.SimpleArrayFloat64(shape=(2, 3, 4))
         self.assertFalse(sarr_from_cpp.is_from_python)
+
+        shape = (2, 3, 5, 7)
+        np_sarr = np.empty(shape, dtype='float64')
+        py_sarr = modmesh.SimpleArrayFloat64(array=np_sarr)
+        self.assertTupleEqual(shape, py_sarr.shape)
+
+        shape = (5, 5, 5, 5)
+        np_sarr = np.empty(shape, dtype='float64')
+        for i in range(5):
+            for j in range(5):
+                for k in range(5):
+                    for x in range(5):
+                        np_sarr[i, j, k, x] = i * 1000 + j * 100 + k * 10 + x
+
+        py_sarr = modmesh.SimpleArrayFloat64(array=np_sarr)
+        self.assertTupleEqual(shape, py_sarr.shape)
 
     def test_SimpleArray_from_ndarray_content(self):
 
