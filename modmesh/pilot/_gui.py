@@ -109,53 +109,14 @@ def populate_menu():
         funcname="modmesh.app.euler1d.load_app",
     )
 
-    _addAction(
-        menu=wm.meshMenu,
-        text="Sample: mesh of a triangle (2D)",
-        tip="Create a very simple sample mesh of a triangle",
-        funcname="modmesh.gui.sample_mesh.mesh_triangle",
-    )
-
-    _addAction(
-        menu=wm.meshMenu,
-        text="Sample: mesh of a tetrahedron (3D)",
-        tip="Create a very simple sample mesh of a tetrahedron",
-        funcname="modmesh.gui.sample_mesh.mesh_tetrahedron",
-    )
-
-    _addAction(
-        menu=wm.meshMenu,
-        text="Sample: mesh of \"solvcon\" text in 2D",
-        tip="Create a sample mesh drawing a text string of \"solvcon\"",
-        funcname="modmesh.gui.sample_mesh.mesh_solvcon_2dtext",
-    )
-
-    _addAction(
-        menu=wm.meshMenu,
-        text="Sample: 2D mesh in a rectangle",
-        tip="Triangular mesh in a rectangle",
-        funcname="modmesh.gui.sample_mesh.mesh_rectangle",
-    )
-
-    _addAction(
-        menu=wm.meshMenu,
-        text="Sample: 3D mesh of mixed elements",
-        tip="Create a very simple sample mesh of mixed elements in 3D",
-        funcname="modmesh.gui.sample_mesh.mesh_3dmix",
-    )
+    _holder['sample_mesh'] = _mesh.SampleMesh(mgr=wm)
+    _holder['sample_mesh'].populate_menu()
 
     _addAction(
         menu=wm.meshMenu,
         text="Sample: NACA 4-digit",
         tip="Draw a NACA 4-digit airfoil",
         funcname="modmesh.gui.naca.runmain",
-    )
-
-    _addAction(
-        menu=wm.addonMenu,
-        text="Load sample_mesh",
-        tip="Load sample_mesh",
-        funcname="modmesh.app.sample_mesh.load_app",
     )
 
     _addAction(
