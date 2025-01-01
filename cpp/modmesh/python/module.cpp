@@ -30,6 +30,7 @@
 #include <modmesh/spacetime/pymod/spacetime_pymod.hpp>
 #include <modmesh/toggle/pymod/toggle_pymod.hpp>
 #include <modmesh/universe/pymod/universe_pymod.hpp>
+#include <modmesh/mathtype/pymod/mathtype_pymod.hpp>
 #ifdef USE_PYTEST_HELPER_BINDING
 #include <modmesh/testhelper/pymod/testbuffer_pymod.hpp>
 #endif // USE_PYTEST_HELPER_BINDING
@@ -51,6 +52,7 @@ void initialize(pybind11::module_ mod)
     initialize_mesh(mod);
     initialize_multidim(mod);
     initialize_inout(mod);
+    initialize_mathtype(mod);
     pybind11::module_ spacetime_mod = mod.def_submodule("spacetime", "spacetime");
     initialize_spacetime(spacetime_mod);
     pybind11::module_ onedim_mod = mod.def_submodule("onedim", "onedim");
