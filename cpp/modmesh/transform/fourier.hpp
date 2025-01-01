@@ -1,6 +1,6 @@
 #pragma once
 
-#include <modmesh/math.hpp>
+#include <modmesh/math/math.hpp>
 #include <modmesh/buffer/buffer.hpp>
 
 namespace modmesh

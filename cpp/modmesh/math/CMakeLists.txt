@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.16)
+
+set(MODMESH_MATH_HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/math.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Complex.hpp
+    CACHE FILEPATH "" FORCE)
+
+set(MODMESH_MATH_PYMODHEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/math_pymod.hpp
+    CACHE FILEPATH "" FORCE)
+
+set(MODMESH_MATH_PYMODSOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/math_pymod.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_Complex.cpp
+    CACHE FILEPATH "" FORCE)
+
+set(MODMESH_MATH_FILES
+    ${MODMESH_MATH_HEADERS}
+    ${MODMESH_MATH_PYMODHEADERS}
+    ${MODMESH_MATH_PYMODSOURCES}
+    CACHE FILEPATH "" FORCE)
+
+# vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

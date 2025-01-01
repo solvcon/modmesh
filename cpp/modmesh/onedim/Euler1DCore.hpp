@@ -30,7 +30,7 @@
 
 #include <modmesh/onedim/core.hpp>
 #include <modmesh/base.hpp>
-#include <modmesh/math.hpp>
+#include <modmesh/math/math.hpp>
 #include <modmesh/buffer/buffer.hpp>
 #include <modmesh/toggle/profile.hpp>
 #include <memory>

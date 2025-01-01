@@ -51,6 +51,8 @@ __all__ = [  # noqa: F822
     'BufferExpander',
     'Gmsh',
     'Plot3d',
+    'ComplexFloat32',
+    'ComplexFloat64',
     'SimpleArray',
     'SimpleArrayBool',
     'SimpleArrayInt8',
@@ -96,7 +98,7 @@ __all__ = [  # noqa: F822
     'Bezier3dFp64',
     'WorldFp32',
     'WorldFp64',
-    'testhelper',
+    'testhelper'
 ]
 
 
