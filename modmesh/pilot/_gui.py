@@ -35,49 +35,21 @@ Graphical-user interface code
 import sys
 import importlib
 
-# Try to import the C++ pilot code but easily give up.
-enable = False
-try:
-    from _modmesh import pilot as _vimpl  # noqa: F401
+from . import _pilot_core as _pcore
 
-    enable = True
-except ImportError:
-    pass
-
-if enable:
+if _pcore.enable:
     from PySide6.QtGui import QAction
-
     from . import _mesh
 
-_from_impl = [  # noqa: F822
-    'R3DWidget',
-    'RLine',
-    'RPythonConsoleDockWidget',
-    'RManager',
-    'RCameraController',
-    'mgr',
-]
-
-__all__ = _from_impl + [  # noqa: F822
+__all__ = [  # noqa: F822
     'launch',
 ]
-
-
-def _load():
-    if enable:
-        for name in _from_impl:
-            globals()[name] = getattr(_vimpl, name)
-
-
-_load()
-del _load
-
 
 _holder = {}
 
 
 def populate_menu():
-    wm = _vimpl.RManager.instance
+    wm = _pcore.RManager.instance
 
     def _addAction(menu, text, tip, funcname):
         act = QAction(text, wm.mainWindow)
@@ -149,7 +121,7 @@ def launch(name="pilot", size=(1000, 600)):
     :param size: Main window size.
     :return: nothing
     """
-    wm = _vimpl.RManager.instance
+    wm = _pcore.RManager.instance
     wm.setUp()
     wm.windowTitle = name
     wm.resize(w=size[0], h=size[1])
