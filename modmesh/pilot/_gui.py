@@ -39,6 +39,7 @@ import importlib
 enable = False
 try:
     from _modmesh import pilot as _vimpl  # noqa: F401
+
     enable = True
 except ImportError:
     pass
@@ -46,6 +47,7 @@ except ImportError:
 if enable:
     from PySide6.QtGui import QAction
 
+    from . import _mesh
 
 _from_impl = [  # noqa: F822
     'R3DWidget',
@@ -71,6 +73,9 @@ _load()
 del _load
 
 
+_holder = {}
+
+
 def populate_menu():
     wm = _vimpl.RManager.instance
 
@@ -86,12 +91,8 @@ def populate_menu():
             act.triggered.connect(lambda *a: func())
         menu.addAction(act)
 
-    _addAction(
-        menu=wm.fileMenu,
-        text="New file (dummy)",
-        tip="Create new file",
-        funcname=lambda: print("This is only a demo: Create new file!"),
-    )
+    _holder['gmsh_dialog'] = _mesh.GmshFileDialog(mgr=wm)
+    _holder['gmsh_dialog'].populate_menu()
 
     if sys.platform != 'darwin':
         _addAction(

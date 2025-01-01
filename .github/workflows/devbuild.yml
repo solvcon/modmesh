@@ -153,7 +153,7 @@ jobs:
     - name: dependency by pip
       run: |
         sudo pip3 install setuptools
-        sudo pip3 install numpy pytest flake8 jsonschema
+        sudo pip3 install numpy matplotlib pytest flake8 jsonschema
         sudo pip3 install pyside6==$(qmake6 -query QT_VERSION)
 
     - name: dependency by manual script
@@ -327,7 +327,7 @@ jobs:
           # suppress the warning of pip because brew forces PEP668 since python3.12
           python3 -m pip -v install --upgrade setuptools
           python3 -m pip -v install --upgrade pip
-          python3 -m pip -v install --upgrade numpy pytest flake8 jsonschema
+          python3 -m pip -v install --upgrade numpy matplotlib pytest flake8 jsonschema
           # For now (2024/10/22), pyside6 6.6.3 does not support Python 3.13.
           # Use --ignore-requires-python to force installation.
           python3 -m pip -v install --upgrade pyside6==$(qmake -query QT_VERSION) --ignore-requires-python
@@ -495,10 +495,10 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           aqtversion: '==3.1.*'
-          version: '6.6.3'
+          version: '6.8.1'
           host: 'windows'
           target: 'desktop'
-          arch: 'win64_msvc2019_64'
+          arch: 'win64_msvc2022_64'
           modules: 'qt3d'
           cache: true
 
@@ -508,7 +508,7 @@ jobs:
 
       - name: dependency by pip
         run: |
-          pip3 install -U numpy pytest jsonschema flake8 pybind11 pyside6==$(qmake -query QT_VERSION)
+          pip3 install -U numpy matplotlib pytest jsonschema flake8 pybind11 pyside6==$(qmake -query QT_VERSION)
           # Add PySide6 and Shiboken6 path into system path, that allow exe file can find
           # dll during runtime
           # If user needs to modified system path in github actions container
