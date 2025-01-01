@@ -68,17 +68,19 @@ class PilotCameraTB:
 
     @classmethod
     def setUpClass(cls):
-        widget = pilot.RManager.instance.setUp().add3DWidget()
+        if modmesh.HAS_PILOT:
+            widget = pilot.RManager.instance.setUp().add3DWidget()
 
-        if cls.camera_type is not None:
-            widget.setCameraType(cls.camera_type)
+            if cls.camera_type is not None:
+                widget.setCameraType(cls.camera_type)
 
-        cls.widget = widget
-        cls.camera = widget.camera
+            cls.widget = widget
+            cls.camera = widget.camera
 
     @classmethod
     def tearDownClass(cls):
-        cls.widget.close_and_destroy()
+        if modmesh.HAS_PILOT:
+            cls.widget.close_and_destroy()
 
     def angle_axis(self, angle_deg, axis):
         a = axis
@@ -104,7 +106,8 @@ class PilotCameraTB:
         return vec / np.linalg.norm(vec)
 
 
-@unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")
+@unittest.skipIf(GITHUB_ACTIONS or not modmesh.HAS_PILOT,
+                 "GUI is not available in GitHub Actions")
 class PilotCommonCameraTC(PilotCameraTB, unittest.TestCase):
     def test_value_get_set(self):
         c = self.camera
@@ -195,7 +198,8 @@ class PilotCommonCameraTC(PilotCameraTB, unittest.TestCase):
             self.assertEqual(c.view_center[2], new_view_center[2])
 
 
-@unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")
+@unittest.skipIf(GITHUB_ACTIONS or not modmesh.HAS_PILOT,
+                 "GUI is not available in GitHub Actions")
 class PilotFPSCameraTC(PilotCameraTB, unittest.TestCase):
     camera_type = "fps"
 
@@ -266,7 +270,8 @@ class PilotFPSCameraTC(PilotCameraTB, unittest.TestCase):
         self.assertAlmostEqual(view_center[2], new_view_center[2], delta=1e-5)
 
 
-@unittest.skipIf(GITHUB_ACTIONS, "GUI is not available in GitHub Actions")
+@unittest.skipIf(GITHUB_ACTIONS or not modmesh.HAS_PILOT,
+                 "GUI is not available in GitHub Actions")
 class PilotOrbitCameraTC(PilotCameraTB, unittest.TestCase):
     camera_type = "orbit"
 
