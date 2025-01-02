@@ -66,12 +66,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapComplex
                     [](const wrapped_type & other)
                     { return std::make_shared<wrapped_type>(other); }),
                 py::arg("other"))
-            .def(py::self + py::self)
-            .def(py::self - py::self)
-            .def(py::self * py::self)
-            .def(py::self / value_type())
-            .def(py::self += py::self)
-            .def(py::self -= py::self)
+            .def(py::self + py::self) // NOLINT(misc-redundant-expression)
+            .def(py::self - py::self) // NOLINT(misc-redundant-expression)
+            .def(py::self * py::self) // NOLINT(misc-redundant-expression)
+            .def(py::self / value_type()) // NOLINT(misc-redundant-expression)
+            .def(py::self += py::self) // NOLINT(misc-redundant-expression)
+            .def(py::self -= py::self) // NOLINT(misc-redundant-expression)
             .def_property_readonly("real", &wrapped_type::real)
             .def_property_readonly("imag", &wrapped_type::imag)
             .def("norm", &wrapped_type::norm);
