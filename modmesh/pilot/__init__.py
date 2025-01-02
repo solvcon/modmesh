@@ -43,6 +43,7 @@ from ._pilot_core import (  # noqa: F401
     RCameraController,
 )
 from ._gui import (  # noqa: F401
+    controller,
     launch,
 )
 

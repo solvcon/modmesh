@@ -42,6 +42,7 @@ if _pcore.enable:
     from . import _mesh
 
 __all__ = [  # noqa: F822
+    'controller',
     'launch',
 ]
 
@@ -113,7 +114,7 @@ def populate_menu():
     )
 
 
-def launch(name="pilot", size=(1000, 600)):
+def launch_unused(name="pilot", size=(1000, 600)):
     """
     The entry point of the pilot GUI application.
 
@@ -128,5 +129,106 @@ def launch(name="pilot", size=(1000, 600)):
     populate_menu()
     wm.show()
     return wm.exec()
+
+
+def launch():
+    return controller.launch()
+
+
+class _Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kw):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kw)
+        return cls._instances[cls]
+
+
+class _Controller(metaclass=_Singleton):
+    def __init__(self):
+        # Do not construct any Qt member objects before launching or Windows
+        # may "exited with code -1073740791."
+        self._rmgr = None
+        self.gmsh_dialog = None
+        self.sample_mesh = None
+
+    def __getattr__(self, name):
+        return None if self._rmgr is None else getattr(self._rmgr, name)
+
+    def launch(self, name="pilot", size=(1000, 600)):
+        self._rmgr = _pcore.RManager.instance
+        self._rmgr.setUp()
+        self._rmgr.windowTitle = name
+        self._rmgr.resize(w=size[0], h=size[1])
+        self.gmsh_dialog = _mesh.GmshFileDialog(mgr=self._rmgr)
+        self.sample_mesh = _mesh.SampleMesh(mgr=self._rmgr)
+        self.populate_menu()
+        self._rmgr.show()
+        return self._rmgr.exec()
+
+    def populate_menu(self):
+        wm = self._rmgr
+
+        def _addAction(menu, text, tip, func):
+            act = QAction(text, wm.mainWindow)
+            act.setStatusTip(tip)
+            if callable(func):
+                act.triggered.connect(lambda *a: func())
+            elif func:
+                modname, funcname = func.rsplit('.', maxsplit=1)
+                mod = importlib.import_module(modname)
+                func = getattr(mod, funcname)
+                act.triggered.connect(lambda *a: func())
+            menu.addAction(act)
+
+        self.gmsh_dialog.populate_menu()
+
+        if sys.platform != 'darwin':
+            _addAction(
+                menu=wm.fileMenu,
+                text="Exit",
+                tip="Exit the application",
+                func=lambda: wm.quit(),
+            )
+
+        _addAction(
+            menu=wm.oneMenu,
+            text="Euler solver",
+            tip="One-dimensional shock-tube problem with Euler solver",
+            func="modmesh.app.euler1d.load_app",
+        )
+
+        self.sample_mesh.populate_menu()
+
+        _addAction(
+            menu=wm.meshMenu,
+            text="Sample: NACA 4-digit",
+            tip="Draw a NACA 4-digit airfoil",
+            func="modmesh.gui.naca.runmain",
+        )
+
+        _addAction(
+            menu=wm.addonMenu,
+            text="Load linear_wave",
+            tip="Load linear_wave",
+            func="modmesh.app.linear_wave.load_app",
+        )
+
+        _addAction(
+            menu=wm.addonMenu,
+            text="Load bad_euler1d",
+            tip="Load bad_euler1d",
+            func="modmesh.app.bad_euler1d.load_app",
+        )
+
+        _addAction(
+            menu=wm.windowMenu,
+            text="(empty)",
+            tip="(empty)",
+            func=None,
+        )
+
+
+controller = _Controller()
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
