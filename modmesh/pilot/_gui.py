@@ -35,165 +35,116 @@ Graphical-user interface code
 import sys
 import importlib
 
-# Try to import the C++ pilot code but easily give up.
-enable = False
-try:
-    from _modmesh import pilot as _vimpl  # noqa: F401
+from . import _pilot_core as _pcore
 
-    enable = True
-except ImportError:
-    pass
-
-if enable:
+if _pcore.enable:
     from PySide6.QtGui import QAction
-
     from . import _mesh
 
-_from_impl = [  # noqa: F822
-    'R3DWidget',
-    'RLine',
-    'RPythonConsoleDockWidget',
-    'RManager',
-    'RCameraController',
-    'mgr',
-]
-
-__all__ = _from_impl + [  # noqa: F822
+__all__ = [  # noqa: F822
+    'controller',
     'launch',
 ]
 
 
-def _load():
-    if enable:
-        for name in _from_impl:
-            globals()[name] = getattr(_vimpl, name)
+def launch():
+    return controller.launch()
 
 
-_load()
-del _load
+class _Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kw):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kw)
+        return cls._instances[cls]
 
 
-_holder = {}
+class _Controller(metaclass=_Singleton):
+    def __init__(self):
+        # Do not construct any Qt member objects before calling launch(), or
+        # Windows may "exited with code -1073740791."
+        self._rmgr = None
+        self.gmsh_dialog = None
+        self.sample_mesh = None
 
+    def __getattr__(self, name):
+        return None if self._rmgr is None else getattr(self._rmgr, name)
 
-def populate_menu():
-    wm = _vimpl.RManager.instance
+    def launch(self, name="pilot", size=(1000, 600)):
+        self._rmgr = _pcore.RManager.instance
+        self._rmgr.setUp()
+        self._rmgr.windowTitle = name
+        self._rmgr.resize(w=size[0], h=size[1])
+        self.gmsh_dialog = _mesh.GmshFileDialog(mgr=self._rmgr)
+        self.sample_mesh = _mesh.SampleMesh(mgr=self._rmgr)
+        self.populate_menu()
+        self._rmgr.show()
+        return self._rmgr.exec()
 
-    def _addAction(menu, text, tip, funcname):
-        act = QAction(text, wm.mainWindow)
-        act.setStatusTip(tip)
-        if callable(funcname):
-            act.triggered.connect(lambda *a: funcname())
-        elif funcname:
-            modname, funcname = funcname.rsplit('.', maxsplit=1)
-            mod = importlib.import_module(modname)
-            func = getattr(mod, funcname)
-            act.triggered.connect(lambda *a: func())
-        menu.addAction(act)
+    def populate_menu(self):
+        wm = self._rmgr
 
-    _holder['gmsh_dialog'] = _mesh.GmshFileDialog(mgr=wm)
-    _holder['gmsh_dialog'].populate_menu()
+        def _addAction(menu, text, tip, func):
+            act = QAction(text, wm.mainWindow)
+            act.setStatusTip(tip)
+            if callable(func):
+                act.triggered.connect(lambda *a: func())
+            elif func:
+                modname, funcname = func.rsplit('.', maxsplit=1)
+                mod = importlib.import_module(modname)
+                func = getattr(mod, funcname)
+                act.triggered.connect(lambda *a: func())
+            menu.addAction(act)
 
-    if sys.platform != 'darwin':
+        self.gmsh_dialog.populate_menu()
+
+        if sys.platform != 'darwin':
+            _addAction(
+                menu=wm.fileMenu,
+                text="Exit",
+                tip="Exit the application",
+                func=lambda: wm.quit(),
+            )
+
         _addAction(
-            menu=wm.fileMenu,
-            text="Exit",
-            tip="Exit the application",
-            funcname=lambda: wm.quit(),
+            menu=wm.oneMenu,
+            text="Euler solver",
+            tip="One-dimensional shock-tube problem with Euler solver",
+            func="modmesh.app.euler1d.load_app",
         )
 
-    _addAction(
-        menu=wm.oneMenu,
-        text="Euler solver",
-        tip="One-dimensional shock-tube problem with Euler solver",
-        funcname="modmesh.app.euler1d.load_app",
-    )
+        self.sample_mesh.populate_menu()
 
-    _addAction(
-        menu=wm.meshMenu,
-        text="Sample: mesh of a triangle (2D)",
-        tip="Create a very simple sample mesh of a triangle",
-        funcname="modmesh.gui.sample_mesh.mesh_triangle",
-    )
+        _addAction(
+            menu=wm.meshMenu,
+            text="Sample: NACA 4-digit",
+            tip="Draw a NACA 4-digit airfoil",
+            func="modmesh.gui.naca.runmain",
+        )
 
-    _addAction(
-        menu=wm.meshMenu,
-        text="Sample: mesh of a tetrahedron (3D)",
-        tip="Create a very simple sample mesh of a tetrahedron",
-        funcname="modmesh.gui.sample_mesh.mesh_tetrahedron",
-    )
+        _addAction(
+            menu=wm.addonMenu,
+            text="Load linear_wave",
+            tip="Load linear_wave",
+            func="modmesh.app.linear_wave.load_app",
+        )
 
-    _addAction(
-        menu=wm.meshMenu,
-        text="Sample: mesh of \"solvcon\" text in 2D",
-        tip="Create a sample mesh drawing a text string of \"solvcon\"",
-        funcname="modmesh.gui.sample_mesh.mesh_solvcon_2dtext",
-    )
+        _addAction(
+            menu=wm.addonMenu,
+            text="Load bad_euler1d",
+            tip="Load bad_euler1d",
+            func="modmesh.app.bad_euler1d.load_app",
+        )
 
-    _addAction(
-        menu=wm.meshMenu,
-        text="Sample: 2D mesh in a rectangle",
-        tip="Triangular mesh in a rectangle",
-        funcname="modmesh.gui.sample_mesh.mesh_rectangle",
-    )
-
-    _addAction(
-        menu=wm.meshMenu,
-        text="Sample: 3D mesh of mixed elements",
-        tip="Create a very simple sample mesh of mixed elements in 3D",
-        funcname="modmesh.gui.sample_mesh.mesh_3dmix",
-    )
-
-    _addAction(
-        menu=wm.meshMenu,
-        text="Sample: NACA 4-digit",
-        tip="Draw a NACA 4-digit airfoil",
-        funcname="modmesh.gui.naca.runmain",
-    )
-
-    _addAction(
-        menu=wm.addonMenu,
-        text="Load sample_mesh",
-        tip="Load sample_mesh",
-        funcname="modmesh.app.sample_mesh.load_app",
-    )
-
-    _addAction(
-        menu=wm.addonMenu,
-        text="Load linear_wave",
-        tip="Load linear_wave",
-        funcname="modmesh.app.linear_wave.load_app",
-    )
-
-    _addAction(
-        menu=wm.addonMenu,
-        text="Load bad_euler1d",
-        tip="Load bad_euler1d",
-        funcname="modmesh.app.bad_euler1d.load_app",
-    )
-
-    _addAction(
-        menu=wm.windowMenu,
-        text="(empty)",
-        tip="(empty)",
-        funcname=None,
-    )
+        _addAction(
+            menu=wm.windowMenu,
+            text="(empty)",
+            tip="(empty)",
+            func=None,
+        )
 
 
-def launch(name="pilot", size=(1000, 600)):
-    """
-    The entry point of the pilot GUI application.
-
-    :param name: Main window name.
-    :param size: Main window size.
-    :return: nothing
-    """
-    wm = _vimpl.RManager.instance
-    wm.setUp()
-    wm.windowTitle = name
-    wm.resize(w=size[0], h=size[1])
-    populate_menu()
-    wm.show()
-    return wm.exec()
+controller = _Controller()
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

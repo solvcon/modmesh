@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Yung-Yu Chen <yyc@solvcon.net>
+# Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -26,28 +26,45 @@
 
 
 """
-Drawing and visualization sub-system of modmesh.
+Import C++ implementation.
 """
 
-# The "pilot" sub-package houses all GUI related code and should not be
-# imported to the top-level "modmesh" namespace.
+# Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
 
-# Import _pilot_core first for C++ code.
-from ._pilot_core import (  # noqa: F401
-    enable,
-    mgr,
-    R3DWidget,
-    RLine,
-    RPythonConsoleDockWidget,
-    RManager,
-    RCameraController,
-)
-from ._gui import (  # noqa: F401
-    controller,
-    launch,
-)
-from . import airfoil  # noqa: F401
 
-# NOTE: intentionally omit __all__ for now
+# Try to import the C++ pilot code but easily give up.
+enable = False
+try:
+    from _modmesh import pilot as _pilot_impl  # noqa: F401
+
+    enable = True
+except ImportError:
+    pass
+
+_from_impl = [  # noqa: F822
+    'R3DWidget',
+    'RLine',
+    'RPythonConsoleDockWidget',
+    'RManager',
+    'RCameraController',
+    'mgr',
+]
+
+__all__ = _from_impl + [  # noqa: F822
+    'enable',
+]
+
+
+def _load():
+    if enable:
+        for name in _from_impl:
+            globals()[name] = getattr(_pilot_impl, name)
+    else:
+        for name in _from_impl:
+            globals()[name] = None
+
+
+_load()
+del _load
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
