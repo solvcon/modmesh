@@ -74,7 +74,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapComplex
             .def(py::self -= py::self) // NOLINT(misc-redundant-expression)
             .def_property_readonly("real", &wrapped_type::real)
             .def_property_readonly("imag", &wrapped_type::imag)
-            .def("norm", &wrapped_type::norm);
+            .def("norm", &wrapped_type::norm)
+            .def("__complex__",
+                 [](wrapped_type const & self)
+                 { return std::complex<T>(self.real(), self.imag()); });
     }
 
 }; /* end class WrapComplex */
