@@ -32,7 +32,7 @@ Drawing and visualization sub-system of modmesh.
 # The "pilot" sub-package houses all GUI related code and should not be
 # imported to the top-level "modmesh" namespace.
 
-from . import airfoil  # noqa: F401
+# Import _pilot_core first for C++ code.
 from ._pilot_core import (  # noqa: F401
     enable,
     mgr,
@@ -46,6 +46,7 @@ from ._gui import (  # noqa: F401
     controller,
     launch,
 )
+from . import airfoil  # noqa: F401
 
 # NOTE: intentionally omit __all__ for now
 

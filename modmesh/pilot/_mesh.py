@@ -56,6 +56,10 @@ class SampleMesh(object):
     def __init__(self, mgr):
         self._mgr = mgr
 
+    @property
+    def _pycon(self):
+        return self._mgr.pycon
+
     def populate_menu(self):
         _add_menu_item(
             mainWindow=self._mgr.mainWindow,

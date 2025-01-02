@@ -46,90 +46,6 @@ __all__ = [  # noqa: F822
     'launch',
 ]
 
-_holder = {}
-
-
-def populate_menu():
-    wm = _pcore.RManager.instance
-
-    def _addAction(menu, text, tip, funcname):
-        act = QAction(text, wm.mainWindow)
-        act.setStatusTip(tip)
-        if callable(funcname):
-            act.triggered.connect(lambda *a: funcname())
-        elif funcname:
-            modname, funcname = funcname.rsplit('.', maxsplit=1)
-            mod = importlib.import_module(modname)
-            func = getattr(mod, funcname)
-            act.triggered.connect(lambda *a: func())
-        menu.addAction(act)
-
-    _holder['gmsh_dialog'] = _mesh.GmshFileDialog(mgr=wm)
-    _holder['gmsh_dialog'].populate_menu()
-
-    if sys.platform != 'darwin':
-        _addAction(
-            menu=wm.fileMenu,
-            text="Exit",
-            tip="Exit the application",
-            funcname=lambda: wm.quit(),
-        )
-
-    _addAction(
-        menu=wm.oneMenu,
-        text="Euler solver",
-        tip="One-dimensional shock-tube problem with Euler solver",
-        funcname="modmesh.app.euler1d.load_app",
-    )
-
-    _holder['sample_mesh'] = _mesh.SampleMesh(mgr=wm)
-    _holder['sample_mesh'].populate_menu()
-
-    _addAction(
-        menu=wm.meshMenu,
-        text="Sample: NACA 4-digit",
-        tip="Draw a NACA 4-digit airfoil",
-        funcname="modmesh.gui.naca.runmain",
-    )
-
-    _addAction(
-        menu=wm.addonMenu,
-        text="Load linear_wave",
-        tip="Load linear_wave",
-        funcname="modmesh.app.linear_wave.load_app",
-    )
-
-    _addAction(
-        menu=wm.addonMenu,
-        text="Load bad_euler1d",
-        tip="Load bad_euler1d",
-        funcname="modmesh.app.bad_euler1d.load_app",
-    )
-
-    _addAction(
-        menu=wm.windowMenu,
-        text="(empty)",
-        tip="(empty)",
-        funcname=None,
-    )
-
-
-def launch_unused(name="pilot", size=(1000, 600)):
-    """
-    The entry point of the pilot GUI application.
-
-    :param name: Main window name.
-    :param size: Main window size.
-    :return: nothing
-    """
-    wm = _pcore.RManager.instance
-    wm.setUp()
-    wm.windowTitle = name
-    wm.resize(w=size[0], h=size[1])
-    populate_menu()
-    wm.show()
-    return wm.exec()
-
 
 def launch():
     return controller.launch()
@@ -146,8 +62,8 @@ class _Singleton(type):
 
 class _Controller(metaclass=_Singleton):
     def __init__(self):
-        # Do not construct any Qt member objects before launching or Windows
-        # may "exited with code -1073740791."
+        # Do not construct any Qt member objects before calling launch(), or
+        # Windows may "exited with code -1073740791."
         self._rmgr = None
         self.gmsh_dialog = None
         self.sample_mesh = None
