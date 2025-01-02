@@ -97,6 +97,8 @@ __all__ = [  # noqa: F822
     'WorldFp32',
     'WorldFp64',
     'testhelper',
+    'ComplexFloat32',
+    'ComplexFloat64'
 ]
 
 

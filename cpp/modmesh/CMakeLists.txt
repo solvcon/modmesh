@@ -42,6 +42,7 @@ add_subdirectory(pilot)
 add_subdirectory(inout)
 add_subdirectory(serialization)
 add_subdirectory(transform)
+add_subdirectory(mathtype)
 
 if(USE_PYTEST_HELPER_BINDING)
     add_subdirectory(testhelper)
@@ -95,6 +96,7 @@ set(MODMESH_TERMINAL_FILES
     ${MODMESH_TESTHELPER_FILES}
     ${MODMESH_SERIALIZATION_FILES}
     ${MODMESH_TRANSFORM_FILES}
+    ${MODMESH_MATHTYPE_FILES}
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_GRAPHIC_FILES
