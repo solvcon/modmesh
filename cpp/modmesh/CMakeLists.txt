@@ -42,6 +42,7 @@ add_subdirectory(pilot)
 add_subdirectory(inout)
 add_subdirectory(serialization)
 add_subdirectory(transform)
+add_subdirectory(math)
 
 if(USE_PYTEST_HELPER_BINDING)
     add_subdirectory(testhelper)
@@ -50,7 +51,6 @@ endif() # USE_PYTEST_HELPER_BINDING
 set(MODMESH_ROOT_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/modmesh.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/base.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/math.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/grid.hpp
     CACHE FILEPATH "" FORCE)
 
@@ -95,6 +95,7 @@ set(MODMESH_TERMINAL_FILES
     ${MODMESH_TESTHELPER_FILES}
     ${MODMESH_SERIALIZATION_FILES}
     ${MODMESH_TRANSFORM_FILES}
+    ${MODMESH_MATH_FILES}
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_GRAPHIC_FILES

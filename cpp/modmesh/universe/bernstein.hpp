@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/math.hpp>
+#include <modmesh/math/math.hpp>
 #include <vector>
 
 namespace modmesh
