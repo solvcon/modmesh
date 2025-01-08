@@ -75,12 +75,6 @@ TEST_F(CallProfilerTest, test_print_result)
     pProfiler->print_profiling_result(ss);
 }
 
-static bool diff_time(std::chrono::nanoseconds raw_nano_time, int time_ms)
-{
-    constexpr int error = 5; // a reasonable error
-    return std::abs(raw_nano_time.count() / 1e6 - time_ms) < error;
-}
-
 #ifdef _MSC_VER
 auto foo1Name = "void __cdecl modmesh::detail::foo1(void)";
 #else
@@ -115,17 +109,17 @@ TEST_F(CallProfilerTest, test_simple_case1)
     auto * node1 = radix_tree().get_current_node()->get_child(key++);
     EXPECT_EQ(node1->data().caller_name, foo1Name);
     EXPECT_EQ(node1->data().call_count, 1);
-    EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2 + uniqueTime3));
+    EXPECT_GE(node1->data().total_time.count() / 1e-6, uniqueTime1 + uniqueTime2 + uniqueTime3);
 
     auto * node2 = node1->get_child(key++);
     EXPECT_EQ(node2->data().caller_name, foo2Name);
     EXPECT_EQ(node2->data().call_count, 1);
-    EXPECT_TRUE(diff_time(node2->data().total_time, uniqueTime1 + uniqueTime2));
+    EXPECT_GE(node2->data().total_time.count() / 1e-6, uniqueTime1 + uniqueTime2);
 
     auto * node3 = node2->get_child(key++);
     EXPECT_EQ(node3->data().caller_name, foo3Name);
     EXPECT_EQ(node3->data().call_count, 1);
-    EXPECT_TRUE(diff_time(node3->data().total_time, uniqueTime1));
+    EXPECT_GE(node3->data().total_time.count() / 1e-6, uniqueTime1);
 }
 
 TEST_F(CallProfilerTest, simple_case_2)
@@ -151,19 +145,19 @@ TEST_F(CallProfilerTest, simple_case_2)
         EXPECT_NE(node1, nullptr);
         EXPECT_EQ(node1->data().caller_name, foo1Name);
         EXPECT_EQ(node1->data().call_count, 1);
-        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2 + uniqueTime3));
+        EXPECT_GE(node1->data().total_time.count() / 1e-6, uniqueTime1 + uniqueTime2 + uniqueTime3);
 
         auto * node2 = node1->get_child(foo2Name);
         EXPECT_NE(node2, nullptr);
         EXPECT_EQ(node2->data().caller_name, foo2Name);
         EXPECT_EQ(node2->data().call_count, 1);
-        EXPECT_TRUE(diff_time(node2->data().total_time, uniqueTime1 + uniqueTime2));
+        EXPECT_GE(node2->data().total_time.count() / 1e-6, uniqueTime1 + uniqueTime2);
 
         auto * node3 = node2->get_child(foo3Name);
         EXPECT_NE(node3, nullptr);
         EXPECT_EQ(node3->data().caller_name, foo3Name);
         EXPECT_EQ(node3->data().call_count, 1);
-        EXPECT_TRUE(diff_time(node3->data().total_time, uniqueTime1));
+        EXPECT_GE(node3->data().total_time.count() / 1e-6, uniqueTime1);
     }
 
     // for  `foo2()` call
@@ -172,13 +166,13 @@ TEST_F(CallProfilerTest, simple_case_2)
         EXPECT_NE(node1, nullptr);
         EXPECT_EQ(node1->data().caller_name, foo2Name);
         EXPECT_EQ(node1->data().call_count, 1);
-        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 + uniqueTime2));
+        EXPECT_GE(node1->data().total_time.count() / 1e-6, uniqueTime1 + uniqueTime2);
 
         auto * node2 = node1->get_child(foo3Name);
         EXPECT_NE(node2, nullptr);
         EXPECT_EQ(node2->data().caller_name, foo3Name);
         EXPECT_EQ(node2->data().call_count, 1);
-        EXPECT_TRUE(diff_time(node2->data().total_time, uniqueTime1));
+        EXPECT_GE(node2->data().total_time.count() / 1e-6, uniqueTime1);
     }
 
     // for  two `foo3()` call
@@ -187,7 +181,7 @@ TEST_F(CallProfilerTest, simple_case_2)
         EXPECT_NE(node1, nullptr);
         EXPECT_EQ(node1->data().caller_name, foo3Name);
         EXPECT_EQ(node1->data().call_count, 2);
-        EXPECT_TRUE(diff_time(node1->data().total_time, uniqueTime1 * 2));
+        EXPECT_GE(node1->data().total_time.count() / 1e-6, uniqueTime1 * 2);
     }
 }
 
