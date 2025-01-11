@@ -824,6 +824,80 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual(
             str(type(arrayplex_int32_2)), "<class '_modmesh.SimpleArray'>")
 
+    def test_sort(self):
+        # Note: tests on array with ghost indices should be added
+        #       in the future
+
+        test_data = [
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            [10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            [1, 5, 10, 2, 6, 9, 7, 8, 4, 3],
+            [1,  0,  1, -3, -4, -1,  1,  9,  5, -4],
+            [-1.3, -4.8,  1.5,  0.3,  7.1,  2.5,  4.8, -0.1,  9.4,  7.6]
+        ]
+
+        def _check(arr, use_float=False):
+            if use_float:
+                narr = np.array(arr, dtype='float64')
+                sarr = modmesh.SimpleArrayFloat64(array=narr)
+            else:
+                narr = np.array(arr, dtype='int32')
+                sarr = modmesh.SimpleArrayInt32(array=narr)
+
+            args = sarr.argsort()
+            for i in range(1, len(args)):
+                self.assertLessEqual(sarr[args[i]], sarr[args[i]])
+
+            sorted_arr = sarr.take_along_axis(args)
+            for i in range(1, len(sorted_arr)):
+                self.assertLessEqual(sorted_arr[i - 1], sorted_arr[i])
+
+            sarr.sort()
+            for i in range(1, len(sarr)):
+                self.assertLessEqual(sarr[i - 1], sarr[i])
+
+        _check(test_data[0])
+        _check(test_data[1])
+        _check(test_data[2])
+        _check(test_data[3])
+        _check(test_data[4], True)
+
+    def test_talk_along_axis(self):
+        data = [1, 5, 10, 2, 6, 9, 7, 8, 4, 3]
+        narr = np.array(data, dtype='int32')
+        data_arr = modmesh.SimpleArrayInt32(array=narr)
+
+        # test 1-D indices
+        idx = [0, 2, 4, 6, 1, 3, 5, 7]
+        narr = np.array(idx, dtype='uint64')
+        idx_arr = modmesh.SimpleArrayUint64(array=narr)
+
+        ret_arr = data_arr.take_along_axis(idx_arr)
+        for i in range(len(idx)):
+            self.assertEqual(ret_arr[i], data[idx[i]])
+
+        # test 2-D indices
+        idx = [[0, 2, 4, 6], [1, 3, 5, 7]]
+        narr = np.array(idx, dtype='uint64')
+        idx_arr = modmesh.SimpleArrayUint64(array=narr)
+
+        ret_arr = data_arr.take_along_axis(idx_arr)
+        for i in range(len(idx)):
+            for j in range(len(idx[i])):
+                self.assertEqual(ret_arr[i, j], data[idx_arr[i, j]])
+
+        # test out-of-range index
+        idx = [[0, 1], [2, 3], [4, 20]]
+        narr = np.array(idx, dtype='uint64')
+        idx_arr = modmesh.SimpleArrayUint64(array=narr)
+
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::take_along_axis\(\): indices\[2, 1\] is 20, " +
+            "which is out of range of the array size 10"
+        ):
+            ret_arr = data_arr.take_along_axis(idx_arr)
+
 
 class SimpleArrayCalculatorsTC(unittest.TestCase):
 
