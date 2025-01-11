@@ -29,6 +29,7 @@
  */
 
 #include <modmesh/buffer/ConcreteBuffer.hpp>
+#include <modmesh/buffer/Algorithm.hpp>
 
 #include <limits>
 #include <stdexcept>
@@ -583,6 +584,14 @@ public:
             std::swap(m_nghost, other.m_nghost);
             std::swap(m_body, other.m_body);
         }
+    }
+
+    void sort(void)
+    {
+        if (ndim() != 1){
+            throw std::runtime_error("SimpleArray: Sorting is only supported in 1D array.");
+        }
+        detail::qsort(begin(), end());
     }
 
     template <typename... Args>
