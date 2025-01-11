@@ -120,7 +120,7 @@ class _Controller(metaclass=_Singleton):
             menu=wm.meshMenu,
             text="Sample: NACA 4-digit",
             tip="Draw a NACA 4-digit airfoil",
-            func="modmesh.gui.naca.runmain",
+            func="modmesh.pilot.airfoil.sample_airfoil_window",
         )
 
         _addAction(

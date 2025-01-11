@@ -26,9 +26,31 @@
 
 
 """
-Operations in GUI.
+GUI for NACA airfoil shape
 """
 
-__all__ = []
+from modmesh import core
+
+from .. import _pilot_core as _pcore
+from . import _naca
+
+
+def sample_airfoil_window():
+    """
+    A simple example for drawing a couple of cubic Bezier curves based on an
+    airfoil.
+    """
+    w = core.WorldFp64()
+    naca4 = _naca.Naca4(number='0012', open_trailing_edge=False,
+                        cosine_spacing=False)
+    sampler = _naca.Naca4Sampler(w, naca4)
+    sampler.populate_points(npoint=101, fac=5.0, off_x=0.0, off_y=2.0)
+    if False:
+        sampler.draw_line()
+    else:
+        sampler.draw_cbc()
+    wid = _pcore.mgr.add3DWidget()
+    wid.updateWorld(w)
+    wid.showMark()
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
