@@ -30,12 +30,12 @@ Airfoil shape
 """
 
 from ._naca import Naca4, Naca4Sampler
-from ._airfoil_gui import sample_airfoil_window
+from ._airfoil_gui import Naca4Airfoil
 
 __all__ = [
     'Naca4',
     'Naca4Sampler',
-    'sample_airfoil_window',
+    'Naca4Airfoil',
 ]
 
 
