@@ -27,6 +27,7 @@
  */
 
 #include <modmesh/buffer/SimpleArray.hpp>
+#include <modmesh/math/math.hpp>
 
 #include <unordered_map>
 
@@ -65,7 +66,9 @@ static std::unordered_map<std::string, DataType, DataTypeHasher> string_data_typ
     {"uint32", DataType::Uint32},
     {"uint64", DataType::Uint64},
     {"float32", DataType::Float32},
-    {"float64", DataType::Float64}};
+    {"float64", DataType::Float64},
+    {"ComplexFloat32", DataType::ComplexFloat32},
+    {"ComplexFloat64", DataType::ComplexFloat64}};
 
 } /* end namespace detail */
 
@@ -145,6 +148,18 @@ DataType DataType::from<double>()
     return DataType::Float64;
 }
 
+template <>
+DataType DataType::from<Complex<float>>()
+{
+    return DataType::ComplexFloat32;
+}
+
+template <>
+DataType DataType::from<Complex<double>>()
+{
+    return DataType::ComplexFloat64;
+}
+
 // According to the `DataType`, create the corresponding `SimpleArray<T>` instance
 // and assign it to `m_instance_ptr`. The `m_instance_ptr` is a void pointer, so
 // we need to use `reinterpret_cast` to convert the pointer of the array instance.
@@ -171,6 +186,8 @@ SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const DataType data_t
         DECL_MM_CREATE_SIMPLE_ARRAY(DataType::Uint64, SimpleArrayUint64, shape)
         DECL_MM_CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape)
         DECL_MM_CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape)
+        DECL_MM_CREATE_SIMPLE_ARRAY(DataType::ComplexFloat32, SimpleArrayComplexFloat32, shape)
+        DECL_MM_CREATE_SIMPLE_ARRAY(DataType::ComplexFloat64, SimpleArrayComplexFloat64, shape)
     default:
         throw std::invalid_argument("Unsupported datatype");
     }
@@ -193,6 +210,8 @@ SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const std::shared_ptr
         DECL_MM_CREATE_SIMPLE_ARRAY(DataType::Uint64, SimpleArrayUint64, shape, buffer)
         DECL_MM_CREATE_SIMPLE_ARRAY(DataType::Float32, SimpleArrayFloat32, shape, buffer)
         DECL_MM_CREATE_SIMPLE_ARRAY(DataType::Float64, SimpleArrayFloat64, shape, buffer)
+        DECL_MM_CREATE_SIMPLE_ARRAY(DataType::ComplexFloat32, SimpleArrayComplexFloat32, shape, buffer)
+        DECL_MM_CREATE_SIMPLE_ARRAY(DataType::ComplexFloat64, SimpleArrayComplexFloat64, shape, buffer)
     default:
         throw std::invalid_argument("Unsupported datatype");
     }
@@ -287,6 +306,20 @@ SimpleArrayPlex::SimpleArrayPlex(SimpleArrayPlex const & other)
         const auto * array = static_cast<SimpleArrayFloat64 *>(other.m_instance_ptr);
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayFloat64(*array));
+        break;
+    }
+    case DataType::ComplexFloat32:
+    {
+        const auto * array = static_cast<SimpleArrayComplexFloat32 *>(other.m_instance_ptr);
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayComplexFloat32(*array));
+        break;
+    }
+    case DataType::ComplexFloat64:
+    {
+        const auto * array = static_cast<SimpleArrayComplexFloat64 *>(other.m_instance_ptr);
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayComplexFloat64(*array));
         break;
     }
     default:
@@ -406,6 +439,20 @@ SimpleArrayPlex & SimpleArrayPlex::operator=(SimpleArrayPlex const & other)
         m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayFloat64(*array));
         break;
     }
+    case DataType::ComplexFloat32:
+    {
+        const auto * array = static_cast<SimpleArrayComplexFloat32 *>(other.m_instance_ptr);
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayComplexFloat32(*array));
+        break;
+    }
+    case DataType::ComplexFloat64:
+    {
+        const auto * array = static_cast<SimpleArrayComplexFloat64 *>(other.m_instance_ptr);
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        m_instance_ptr = reinterpret_cast<void *>(new SimpleArrayComplexFloat64(*array));
+        break;
+    }
     default:
     {
         throw std::invalid_argument("Unsupported datatype");
@@ -504,6 +551,18 @@ SimpleArrayPlex::~SimpleArrayPlex()
     {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         delete reinterpret_cast<SimpleArrayFloat64 *>(m_instance_ptr);
+        break;
+    }
+    case DataType::ComplexFloat32:
+    {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        delete reinterpret_cast<SimpleArrayComplexFloat32 *>(m_instance_ptr);
+        break;
+    }
+    case DataType::ComplexFloat64:
+    {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        delete reinterpret_cast<SimpleArrayComplexFloat64 *>(m_instance_ptr);
         break;
     }
     default:

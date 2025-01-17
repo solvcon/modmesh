@@ -28,6 +28,7 @@
 
 #include <type_traits>
 #include <cmath>
+#include <stdexcept>
 
 namespace modmesh
 {
@@ -40,50 +41,68 @@ struct ComplexImpl
     T real_v;
     T imag_v;
 
-    explicit ComplexImpl()
-        : ComplexImpl(0.0, 0.0)
+    ComplexImpl<T> operator+(const ComplexImpl<T> & other) const
     {
+        ComplexImpl<T> ret(*this);
+        return ret += other;
     }
 
-    explicit ComplexImpl(T r, T i)
-        : real_v(r)
-        , imag_v(i)
+    ComplexImpl<T> operator-(const ComplexImpl<T> & other) const
     {
+        ComplexImpl<T> ret(*this);
+        return ret -= other;
     }
 
-    explicit ComplexImpl(const ComplexImpl & other)
-        : real_v(other.real_v)
-        , imag_v(other.imag_v)
+    ComplexImpl<T> operator*(const ComplexImpl<T> & other) const
     {
+        ComplexImpl<T> ret(*this);
+        ret *= other;
+        return ret;
     }
 
-    ComplexImpl operator+(const ComplexImpl & other) const
+    ComplexImpl<T> operator/(const ComplexImpl<T> & other) const
     {
-        return ComplexImpl(real_v + other.real_v, imag_v + other.imag_v);
+        ComplexImpl<T> ret(*this);
+        return ret /= other;
     }
 
-    ComplexImpl operator-(const ComplexImpl & other) const
+    ComplexImpl<T> operator/(const T & other) const
     {
-        return ComplexImpl(real_v - other.real_v, imag_v - other.imag_v);
+        ComplexImpl<T> ret(*this);
+        return ret /= other;
     }
 
-    ComplexImpl operator*(const ComplexImpl & other) const
+    ComplexImpl<T> & operator*=(const ComplexImpl<T> & rhs)
     {
-        return ComplexImpl(real_v * other.real_v - imag_v * other.imag_v, real_v * other.imag_v + imag_v * other.real_v);
+        T real_v_copy = real_v;
+        real_v = real_v * rhs.real_v - imag_v * rhs.imag_v;
+        imag_v = real_v_copy * rhs.imag_v + imag_v * rhs.real_v;
+        return *this;
     }
 
-    ComplexImpl operator/(const T & other) const
+    ComplexImpl<T> & operator/=(const ComplexImpl<T> & rhs)
     {
-        return ComplexImpl(real_v / other, imag_v / other);
-    }
+        T denominator = rhs.norm();
+        T real_v_copy = real_v;
 
-    ComplexImpl & operator=(const ComplexImpl & other)
-    {
-        if (this != &other) // Check for self-assignment
+        if (denominator == 0.0)
         {
-            real_v = other.real_v;
-            imag_v = other.imag_v;
+            throw std::runtime_error("Division by zero in complex number");
         }
+
+        real_v = (real_v * rhs.real_v + imag_v * rhs.imag_v) / denominator;
+        imag_v = (imag_v * rhs.real_v - real_v_copy * rhs.imag_v) / denominator;
+        return *this;
+    }
+
+    ComplexImpl<T> & operator/=(const T & rhs)
+    {
+        if (rhs == 0.0)
+        {
+            throw std::runtime_error("Division by zero in complex number");
+        }
+        real_v /= rhs;
+        imag_v /= rhs;
         return *this;
     }
 
@@ -101,6 +120,16 @@ struct ComplexImpl
         return *this;
     }
 
+    bool operator<(const ComplexImpl<T> & rhs)
+    {
+        return this->norm() < rhs.norm();
+    }
+
+    bool operator>(const ComplexImpl<T> & rhs)
+    {
+        return this->norm() > rhs.norm();
+    }
+
     T real() const { return real_v; }
     T imag() const { return imag_v; }
     T norm() const { return real_v * real_v + imag_v * imag_v; }
@@ -110,6 +139,29 @@ struct ComplexImpl
 
 template <typename T>
 using Complex = detail::ComplexImpl<T>;
+
+template <typename T>
+bool operator<(const Complex<T> & lhs, const Complex<T> & rhs)
+{
+    return lhs.norm() < rhs.norm();
+}
+
+template <typename T>
+bool operator>(const Complex<T> & lhs, const Complex<T> & rhs)
+{
+    return lhs.norm() > rhs.norm();
+}
+
+// clang-format off
+template <typename T>
+struct is_complex : std::false_type {};
+
+template <typename T>
+struct is_complex<Complex<T>> : std::true_type {};
+// clang-format on
+
+template <typename T>
+constexpr bool is_complex_v = is_complex<T>::value;
 
 } /* end namespace modmesh */
 

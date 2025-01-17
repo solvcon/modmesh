@@ -32,6 +32,7 @@
 
 #include <modmesh/buffer/SimpleArray.hpp>
 #include <modmesh/buffer/pymod/TypeBroadcast.hpp>
+#include <modmesh/math/math.hpp>
 
 // We faced an issue where the template specialization for the caster of
 // SimpleArray<T> doesn't function correctly on both macOS and Windows.
@@ -98,7 +99,7 @@ public:
             const py::object & py_key = args[0];
             const py::object & py_value = args[1];
 
-            const bool is_number = py::isinstance<py::bool_>(py_value) || py::isinstance<py::int_>(py_value) || py::isinstance<py::float_>(py_value);
+            const bool is_number = py::isinstance<py::bool_>(py_value) || py::isinstance<py::int_>(py_value) || py::isinstance<py::float_>(py_value) || is_complex_v<T>;
 
             // sarr[K] = V
             if (py::isinstance<py::int_>(py_key) && is_number)
