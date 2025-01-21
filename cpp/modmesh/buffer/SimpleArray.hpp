@@ -595,6 +595,77 @@ public:
         std::sort(begin(), end());
     }
 
+    SimpleArray<size_t> argsort(void)
+    {
+        if (ndim() != 1){
+            throw std::runtime_error("SimpleArray: Sorting is only supported in 1D array.");
+        }
+
+        SimpleArray<size_t> ret(shape());
+
+        {   // Return array initialization
+            size_t cnt = 0;
+            std::for_each(ret.begin(), ret.end(), [&cnt](size_t &v){v = cnt++;});
+        }   
+
+        value_type const *buf = body();
+        auto cmp = [buf](size_t a, size_t b) {
+            return buf[a] < buf[b];
+        };
+        std::sort(ret.begin(), ret.end(), cmp);
+        return ret;
+    }
+
+    void apply_argsort(SimpleArray<size_t> const &sorted_args)
+    {
+        if (ndim() != 1 || sorted_args.ndim() != 1){
+            throw std::runtime_error("SimpleArray: Sorting is only supported in 1D array.");
+        }
+        if (shape()[0] != sorted_args.shape()[0]){
+            throw std::runtime_error("SimpleArray: argsort only support same shape");
+        }
+        if (shape()[0] < 2) {
+            return;
+        }
+
+        std::vector<bool> applied_arg(shape()[0], false);
+
+        auto all = [](std::vector<bool> &vec) {
+            for (auto i : vec) {
+                if (i == false) return false;
+            }
+            return true;
+        };
+
+        auto next = [](std::vector<bool> &vec, ssize_t last) {
+            for (ssize_t i = last; i < static_cast<ssize_t>(vec.size()); i++) {
+                if (vec[i] == false) return i;
+            }
+            return static_cast<ssize_t>(-1);
+        };
+
+        ssize_t idx = 0;
+        while (!all(applied_arg)) {
+            idx = next(applied_arg, idx);
+            if (idx == -1) break;
+
+            value_type val = at(idx);
+
+            ssize_t dst_idx = idx;
+            ssize_t src_idx = sorted_args[dst_idx];
+
+            while(src_idx != idx) {
+                at(dst_idx) = at(src_idx);
+                applied_arg.at(dst_idx) = true;
+                dst_idx = src_idx;
+                src_idx = sorted_args[dst_idx];
+            }
+
+            at(dst_idx) = val;
+            applied_arg.at(dst_idx) = true;
+        }
+    }
+
     template <typename... Args>
     value_type const & operator()(Args... args) const { return *vptr(args...); }
     template <typename... Args>
