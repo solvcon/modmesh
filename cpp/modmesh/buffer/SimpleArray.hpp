@@ -29,12 +29,12 @@
  */
 
 #include <modmesh/buffer/ConcreteBuffer.hpp>
-#include <modmesh/buffer/Algorithm.hpp>
 
 #include <limits>
 #include <stdexcept>
 #include <functional>
 #include <numeric>
+#include <algorithm>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -591,7 +591,8 @@ public:
         if (ndim() != 1){
             throw std::runtime_error("SimpleArray: Sorting is only supported in 1D array.");
         }
-        detail::qsort(begin(), end());
+
+        std::sort(begin(), end());
     }
 
     template <typename... Args>
