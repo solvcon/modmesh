@@ -824,6 +824,18 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual(
             str(type(arrayplex_int32_2)), "<class '_modmesh.SimpleArray'>")
 
+    def test_sort(self):
+        narr = np.random.randint(0, 100, 20, dtype='int32')
+        sarr = modmesh.SimpleArrayInt32(array=narr);
+        args = sarr.argsort()
+        for i in range(1, len(args)):
+            self.assertLessEqual(sarr[args[i]], sarr[args[i]])
+
+        sarr.sort()
+        for i in range(1, len(args)):
+            self.assertLessEqual(sarr[i - 1], sarr[i])
+
+
 
 class SimpleArrayCalculatorsTC(unittest.TestCase):
 
@@ -1068,5 +1080,7 @@ class SimpleCollectorTC(unittest.TestCase):
         for it in range(6):
             ct[it] = it + 10
         self.assertEqual(list(it + 10 for it in range(6)), list(ct))
+    
+
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
