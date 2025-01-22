@@ -151,6 +151,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 "sort",
                 [](wrapped_type & self)
                 { self.sort(); })
+            .def(
+                "argsort",
+                [](wrapped_type & self)
+                { return pybind11::cast(self.argsort()); })
             .def_property_readonly("has_ghost", &wrapped_type::has_ghost)
             .def_property("nghost", &wrapped_type::nghost, &wrapped_type::set_nghost)
             .def_property_readonly("nbody", &wrapped_type::nbody)

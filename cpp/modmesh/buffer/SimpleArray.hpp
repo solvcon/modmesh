@@ -595,28 +595,28 @@ public:
         std::sort(begin(), end());
     }
 
-    SimpleArray<size_t> argsort(void)
+    SimpleArray<uint64_t> argsort(void)
     {
         if (ndim() != 1){
             throw std::runtime_error("SimpleArray: Sorting is only supported in 1D array.");
         }
 
-        SimpleArray<size_t> ret(shape());
+        SimpleArray<uint64_t> ret(shape());
 
         {   // Return array initialization
-            size_t cnt = 0;
-            std::for_each(ret.begin(), ret.end(), [&cnt](size_t &v){v = cnt++;});
+            uint64_t cnt = 0;
+            std::for_each(ret.begin(), ret.end(), [&cnt](uint64_t &v){v = cnt++;});
         }   
 
         value_type const *buf = body();
-        auto cmp = [buf](size_t a, size_t b) {
+        auto cmp = [buf](uint64_t a, uint64_t b) {
             return buf[a] < buf[b];
         };
         std::sort(ret.begin(), ret.end(), cmp);
         return ret;
     }
 
-    void apply_argsort(SimpleArray<size_t> const &sorted_args)
+    void apply_argsort(SimpleArray<uint64_t> const &sorted_args)
     {
         if (ndim() != 1 || sorted_args.ndim() != 1){
             throw std::runtime_error("SimpleArray: Sorting is only supported in 1D array.");
