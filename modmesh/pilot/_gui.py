@@ -36,6 +36,7 @@ import sys
 import importlib
 
 from . import _pilot_core as _pcore
+from . import airfoil
 
 if _pcore.enable:
     from PySide6.QtGui import QAction
@@ -67,6 +68,7 @@ class _Controller(metaclass=_Singleton):
         self._rmgr = None
         self.gmsh_dialog = None
         self.sample_mesh = None
+        self.naca4airfoil = None
 
     def __getattr__(self, name):
         return None if self._rmgr is None else getattr(self._rmgr, name)
@@ -78,6 +80,7 @@ class _Controller(metaclass=_Singleton):
         self._rmgr.resize(w=size[0], h=size[1])
         self.gmsh_dialog = _mesh.GmshFileDialog(mgr=self._rmgr)
         self.sample_mesh = _mesh.SampleMesh(mgr=self._rmgr)
+        self.naca4airfoil = airfoil.Naca4Airfoil(mgr=self._rmgr)
         self.populate_menu()
         self._rmgr.show()
         return self._rmgr.exec()
@@ -115,13 +118,7 @@ class _Controller(metaclass=_Singleton):
         )
 
         self.sample_mesh.populate_menu()
-
-        _addAction(
-            menu=wm.meshMenu,
-            text="Sample: NACA 4-digit",
-            tip="Draw a NACA 4-digit airfoil",
-            func="modmesh.gui.naca.runmain",
-        )
+        self.naca4airfoil.populate_menu()
 
         _addAction(
             menu=wm.addonMenu,

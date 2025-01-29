@@ -68,7 +68,6 @@ def main():
             'modmesh',
             'modmesh.onedim',
             'modmesh.app',
-            'modmesh.gui',
             'modmesh.pilot',
             'modmesh.pilot.airfoil',
         ],
