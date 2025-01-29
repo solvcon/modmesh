@@ -46,6 +46,10 @@ def _add_menu_item(mainWindow, menu, text, tip, func):
 
 
 class Naca4Airfoil(object):
+    """
+    Provide pilot GUI control for the NACA 4-digit airfoil shape.
+    """
+
     def __init__(self, mgr):
         self._mgr = mgr
 
