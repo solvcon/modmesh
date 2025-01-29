@@ -42,11 +42,12 @@ from ._pilot_core import (  # noqa: F401
     RManager,
     RCameraController,
 )
-from ._gui import (  # noqa: F401
-    controller,
-    launch,
-)
-from . import airfoil  # noqa: F401
+if enable:
+    from ._gui import (  # noqa: F401
+        controller,
+        launch,
+    )
+    from . import airfoil  # noqa: F401
 
 # NOTE: intentionally omit __all__ for now
 

@@ -28,7 +28,7 @@
 import unittest
 
 import modmesh as mm
-from modmesh.pilot import airfoil
+from modmesh.pilot.airfoil import _naca
 
 
 class Naca4TC(unittest.TestCase):
@@ -39,21 +39,21 @@ class Naca4TC(unittest.TestCase):
             points = naca4.calc_points(11)
             self.assertEqual((23, 2), points.shape)
 
-        _check_size(airfoil.Naca4(number='0012', open_trailing_edge=False,
-                                  cosine_spacing=False))
-        _check_size(airfoil.Naca4(number='0012', open_trailing_edge=True,
-                                  cosine_spacing=False))
-        _check_size(airfoil.Naca4(number='0012', open_trailing_edge=True,
-                                  cosine_spacing=False))
-        _check_size(airfoil.Naca4(number='0012', open_trailing_edge=True,
-                                  cosine_spacing=True))
+        _check_size(_naca.Naca4(number='0012', open_trailing_edge=False,
+                                cosine_spacing=False))
+        _check_size(_naca.Naca4(number='0012', open_trailing_edge=True,
+                                cosine_spacing=False))
+        _check_size(_naca.Naca4(number='0012', open_trailing_edge=True,
+                                cosine_spacing=False))
+        _check_size(_naca.Naca4(number='0012', open_trailing_edge=True,
+                                cosine_spacing=True))
 
 
 class Naca4SamplerTC(unittest.TestCase):
     def test_construction(self):
         w = mm.WorldFp64()
-        naca4 = airfoil.Naca4(number='0012', open_trailing_edge=False,
-                              cosine_spacing=False)
-        airfoil.Naca4Sampler(w, naca4)
+        naca4 = _naca.Naca4(number='0012', open_trailing_edge=False,
+                            cosine_spacing=False)
+        _naca.Naca4Sampler(w, naca4)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

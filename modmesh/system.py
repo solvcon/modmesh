@@ -37,7 +37,6 @@ import argparse
 import traceback
 
 import modmesh
-from . import pilot
 from . import apputil
 
 
@@ -78,6 +77,10 @@ def _parse_command_line(argv):
 
 def _run_pilot(argv=None):
     """Run the pilot application."""
+    # The local importing pilot delays loading GUI/Qt code. GUI/Qt may be
+    # unavailable in some execution modes and the module modmesh.pilot and
+    # PySide6 should not be imported at module level.
+    from . import pilot
     return pilot.launch()
 
 

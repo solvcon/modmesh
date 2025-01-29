@@ -31,35 +31,17 @@ GUI for NACA airfoil shape
 
 from ... import core
 
-from .. import _pilot_core as _pcore
+from .._gui_common import PilotFeature
 from . import _naca
 
-if _pcore.enable:
-    from PySide6 import QtGui
 
-
-def _add_menu_item(mainWindow, menu, text, tip, func):
-    act = QtGui.QAction(text, mainWindow)
-    act.setStatusTip(tip)
-    act.triggered.connect(func)
-    menu.addAction(act)
-
-
-class Naca4Airfoil(object):
+class Naca4Airfoil(PilotFeature):
     """
     Provide pilot GUI control for the NACA 4-digit airfoil shape.
     """
 
-    def __init__(self, mgr):
-        self._mgr = mgr
-
-    @property
-    def _pycon(self):
-        return self._mgr.pycon
-
     def populate_menu(self):
-        _add_menu_item(
-            mainWindow=self._mgr.mainWindow,
+        self._add_menu_item(
             menu=self._mgr.meshMenu,
             text="Sample: NACA 4-digit",
             tip="Draw a NACA 4-digit airfoil",
@@ -80,7 +62,7 @@ class Naca4Airfoil(object):
             sampler.draw_line()
         else:
             sampler.draw_cbc()
-        wid = _pcore.mgr.add3DWidget()
+        wid = self._mgr.add3DWidget()
         wid.updateWorld(w)
         wid.showMark()
 

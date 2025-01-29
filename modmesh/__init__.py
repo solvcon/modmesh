@@ -36,7 +36,6 @@ modmesh: the description of the package is intentionally left blank
 from . import core
 from .core import *  # noqa: F401, F403
 from . import apputil  # noqa: F401
-from . import pilot  # noqa: F401
 from . import spacetime  # noqa: F401
 from . import onedim  # noqa: F401
 from . import system  # noqa: F401
