@@ -41,6 +41,7 @@ from . import airfoil
 if _pcore.enable:
     from PySide6.QtGui import QAction
     from . import _mesh
+    from . import _euler1d
 
 __all__ = [  # noqa: F822
     'controller',
@@ -69,6 +70,7 @@ class _Controller(metaclass=_Singleton):
         self.gmsh_dialog = None
         self.sample_mesh = None
         self.naca4airfoil = None
+        self.eulerone = None
 
     def __getattr__(self, name):
         return None if self._rmgr is None else getattr(self._rmgr, name)
@@ -81,6 +83,7 @@ class _Controller(metaclass=_Singleton):
         self.gmsh_dialog = _mesh.GmshFileDialog(mgr=self._rmgr)
         self.sample_mesh = _mesh.SampleMesh(mgr=self._rmgr)
         self.naca4airfoil = airfoil.Naca4Airfoil(mgr=self._rmgr)
+        self.eulerone = _euler1d.Euler1DApp(mgr=self._rmgr)
         self.populate_menu()
         self._rmgr.show()
         return self._rmgr.exec()
@@ -101,6 +104,9 @@ class _Controller(metaclass=_Singleton):
             menu.addAction(act)
 
         self.gmsh_dialog.populate_menu()
+        self.sample_mesh.populate_menu()
+        self.naca4airfoil.populate_menu()
+        self.eulerone.populate_menu()
 
         if sys.platform != 'darwin':
             _addAction(
@@ -111,25 +117,15 @@ class _Controller(metaclass=_Singleton):
             )
 
         _addAction(
-            menu=wm.oneMenu,
-            text="Euler solver",
-            tip="One-dimensional shock-tube problem with Euler solver",
-            func="modmesh.app.euler1d.load_app",
-        )
-
-        self.sample_mesh.populate_menu()
-        self.naca4airfoil.populate_menu()
-
-        _addAction(
             menu=wm.addonMenu,
-            text="Load linear_wave",
+            text="(To be deprecated) load linear_wave",
             tip="Load linear_wave",
             func="modmesh.app.linear_wave.load_app",
         )
 
         _addAction(
             menu=wm.addonMenu,
-            text="Load bad_euler1d",
+            text="(To be deprecated) load bad_euler1d",
             tip="Load bad_euler1d",
             func="modmesh.app.bad_euler1d.load_app",
         )

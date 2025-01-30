@@ -318,7 +318,7 @@ class SampleMesh(PilotFeature):
 
 class GmshFileDialog(PilotFeature):
     def __init__(self, *args, **kw):
-        super(GmshFileDialog, self).__init__(*args, **kw)
+        super().__init__(*args, **kw)
         self._diag = QtWidgets.QFileDialog()
         self._diag.setFileMode(QtWidgets.QFileDialog.ExistingFile)
         self._diag.setDirectory(self._get_initial_path())

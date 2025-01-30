@@ -25,22 +25,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-# This is a hack to make this file runs directly from command line.
-__package__ = "modmesh.app"
-
 import sys
+from dataclasses import dataclass
+
+import numpy as np
+
 import matplotlib
 import matplotlib.pyplot
-import numpy as np
-import modmesh as mm
-
-from dataclasses import dataclass
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 from matplotlib.pyplot import setp
+
 from PySide6.QtCore import QTimer, Slot, Qt
 from PySide6.QtWidgets import QDockWidget
+
 from PUI.state import State
 from PUI.PySide6.base import PuiInQt, QtInPui
 from PUI.PySide6.button import Button
@@ -52,12 +51,14 @@ from PUI.PySide6.label import Label
 from PUI.PySide6.table import Table
 from PUI.PySide6.toolbar import ToolBar
 from PUI.PySide6.modal import Modal
+
+from .. import core as mcore
 from ..onedim import euler1d
-from .. import pilot
+from ._gui_common import PilotFeature
 
 
 @dataclass
-class QuantityLine:
+class QuantityLine(object):
     """
     A class representing a quantity line with associated data.
 
@@ -116,20 +117,21 @@ class _Accessor(object):
         :ivar: _data: handle input data that allow user can using
             index or string to access it.
         :ivar: _header (list): list of data's column header name.
-        :ivar: _dimIdx (int): using to indicate which dimension is
+        :ivar: _dim_idx (int): using to indicate which dimension is
             currenlty being accessed by __getitem__.
     """
-    def __init__(self, data, dimIdx=0, header=None):
+
+    def __init__(self, data, dim_idx=0, header=None):
         self._data = data
         self._header = header
-        self._dimIdx = dimIdx
+        self._dim_idx = dim_idx
 
     def __getitem__(self, key):
-        if self._dimIdx == 0:
+        if self._dim_idx == 0:
             for row_idx, row in enumerate(self._data):
                 if key == row[0]:
                     return _Accessor(self._data[row_idx],
-                                     self._dimIdx+1,
+                                     self._dim_idx + 1,
                                      self._header)
         else:
             for idx, ele in enumerate(self._header):
@@ -184,8 +186,8 @@ class GUIConfig(object):
         :type row: int
         :param col: Column index.
         :type col: int
-        :return: The value at the specified location in
-        the configuration table.
+        :return:
+            The value at the specified location in the configuration table.
         """
         return self._tbl_content[row][col]
 
@@ -261,6 +263,7 @@ class SolverConfig(GUIConfig):
         - `_col_header` (list): The header for the configuration
           table columns.
     """
+
     def __init__(self, input_data):
         super().__init__(input_data, ["variable", "value", "description"])
 
@@ -281,6 +284,7 @@ class PlotConfig(GUIConfig):
         - `_col_header` (list): The header for the configuration
           table columns.
     """
+
     def __init__(self, input_data):
         super().__init__(input_data, ["variable",
                                       "line_selection",
@@ -302,7 +306,7 @@ class PlotConfig(GUIConfig):
         return False
 
 
-class Euler1DApp():
+class Euler1DApp(PilotFeature):
     """
     Main application class for the Euler 1D solver.
 
@@ -348,21 +352,47 @@ class Euler1DApp():
         - :meth:`update_lines()`: Update all data lines after the solver
           finishes computation.
     """
-    def __init__(self):
+
+    def populate_menu(self):
+        self._add_menu_item(
+            menu=self._mgr.oneMenu,
+            text="Euler solver",
+            tip="One-dimensional shock-tube problem with Euler solver",
+            func=self.run,
+        )
+
+    def run(self):
+        self.setup_app()
+        plotting_area = PlotArea(Window(), self)
+
+        config_window = ConfigWindow(Window(), self)
+        config_widget = QDockWidget("config")
+        config_widget.setWidget(config_window.ui.ui)
+
+        self._mgr.mainWindow.addDockWidget(Qt.LeftDockWidgetArea,
+                                           config_widget)
+        _subwin = self._mgr.addSubWindow(plotting_area.ui.ui)
+        _subwin.showMaximized()
+
+        config_window.redraw()
+        plotting_area.redraw()
+        _subwin.show()
+
+    def setup_app(self):
         self.solver_config_data = [
-                ["gamma", 1.4, "The ratio of the specific heats."],
-                ["p_left", 1.0, "The pressure of left hand side."],
-                ["rho_left", 1.0, "The density of left hand side."],
-                ["p_right", 0.1, "The pressure of right hand side."],
-                ["rho_right", 0.125, "The density of right hand side."],
-                ["xmin", -10, "The most left point of x axis."],
-                ["xmax", 10, "The most right point of x axis."],
-                ["ncoord", 201, "Number of grid point."],
-                ["time_increment", 0.05, "The density of right hand side."],
-                ["timer_interval", 10, "Qt timer interval"],
-                ["max_steps", 50, "Maximum step"],
-                ["profiling", False, "Turn on / off solver profiling"],
-                ]
+            ["gamma", 1.4, "The ratio of the specific heats."],
+            ["p_left", 1.0, "The pressure of left hand side."],
+            ["rho_left", 1.0, "The density of left hand side."],
+            ["p_right", 0.1, "The pressure of right hand side."],
+            ["rho_right", 0.125, "The density of right hand side."],
+            ["xmin", -10, "The most left point of x axis."],
+            ["xmax", 10, "The most right point of x axis."],
+            ["ncoord", 201, "Number of grid point."],
+            ["time_increment", 0.05, "The density of right hand side."],
+            ["timer_interval", 10, "Qt timer interval"],
+            ["max_steps", 50, "Maximum step"],
+            ["profiling", False, "Turn on / off solver profiling"],
+        ]
         self.solver_config = SolverConfig(self.solver_config_data)
         self.plot_config_data = []
         self.density = QuantityLine(name="density",
@@ -446,12 +476,12 @@ class Euler1DApp():
                          density_left=self.solver_config["rho_left"]["value"],
                          pressure_right=self.solver_config["p_right"]["value"],
                          density_right=self.solver_config["rho_right"]
-                                                         ["value"],
+                         ["value"],
                          xmin=self.solver_config["xmin"]["value"],
                          xmax=self.solver_config["xmax"]["value"],
                          ncoord=self.solver_config["ncoord"]["value"],
                          time_increment=(self.solver_config["time_increment"][
-                                                            "value"]))
+                             "value"]))
         self.current_step = 0
         self.interval = self.solver_config["timer_interval"]["value"]
         self.max_steps = self.solver_config["max_steps"]["value"]
@@ -528,12 +558,12 @@ class Euler1DApp():
         y_bottom_lim_min = sys.float_info.max
 
         for data, color in (
-            (self.density, 'r'),
-            (self.velocity, 'g'),
-            (self.pressure, 'b'),
-            (self.temperature, 'c'),
-            (self.internal_energy, 'k'),
-            (self.entropy, 'm')
+                (self.density, 'r'),
+                (self.velocity, 'g'),
+                (self.pressure, 'b'),
+                (self.temperature, 'c'),
+                (self.internal_energy, 'k'),
+                (self.entropy, 'm')
         ):
             # Plot multiple data line with same X axis, it need to plot a
             # data line on main axis first
@@ -576,7 +606,7 @@ class Euler1DApp():
         self.log(f"CFL: min {cfl.min()} max {cfl.max()}")
         self.update_lines()
         if self.profiling:
-            self.log(mm.time_registry.report())
+            self.log(mcore.time_registry.report())
 
     def step(self, steps=1):
         """
@@ -621,17 +651,17 @@ class Euler1DApp():
         :return: None
         """
         for line in (
-            self.density,
-            self.velocity,
-            self.pressure,
-            self.temperature,
-            self.internal_energy,
-            self.entropy
+                self.density,
+                self.velocity,
+                self.pressure,
+                self.temperature,
+                self.internal_energy,
+                self.entropy
         ):
             line.y_upper_lim = self.plot_config[line.name][
-                    "y_axis_upper_limit"]
+                "y_axis_upper_limit"]
             line.y_bottom_lim = self.plot_config[line.name][
-                    "y_axis_bottom_limit"]
+                "y_axis_bottom_limit"]
 
         if self.use_grid_layout:
             self.plot_holder.plot = self.build_grid_figure()
@@ -665,8 +695,7 @@ class Euler1DApp():
         """
         self.step()
 
-    @staticmethod
-    def log(msg):
+    def log(self, msg):
         """
         Print log in both console window and standard output.
 
@@ -677,8 +706,8 @@ class Euler1DApp():
         if sys.stdout is not None:
             sys.stdout.write(msg)
             sys.stdout.write('\n')
-        pilot.mgr.pycon.writeToHistory(msg)
-        pilot.mgr.pycon.writeToHistory('\n')
+        self._pycon.writeToHistory(msg)
+        self._pycon.writeToHistory('\n')
 
     def update_lines(self):
         """
@@ -699,7 +728,7 @@ class Euler1DApp():
                                     ndata=self.st.svr.temperature[_s])
             self.internal_energy.update(adata=(self.st.internal_energy_field),
                                         ndata=(self.st.svr.
-                                               internal_energy[_s]))
+                                        internal_energy[_s]))
             self.entropy.update(adata=self.st.entropy_field,
                                 ndata=self.st.svr.entropy[_s])
         else:
@@ -724,6 +753,7 @@ class PlotArea(PuiInQt):
         - :meth:`content()`: Method for defining the content of the plot area,
           including a toolbar and the actual plot.
     """
+
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
@@ -768,6 +798,7 @@ class ConfigWindow(PuiInQt):
         - :meth:`on_close()`: Callback function when plot configure modal
           windows is closed.
     """
+
     def __init__(self, parent, app):
         super().__init__(parent)
         self.app = app
@@ -812,8 +843,8 @@ class ConfigWindow(PuiInQt):
                 Button("Step").click(self.app.step)
             with (Modal(self.state("plot_config_open"),
                         title="Plot configuration")
-                  .open(self.on_open)
-                  .close(self.on_close)):
+                    .open(self.on_open)
+                    .close(self.on_close)):
                 with VBox():
                     with HBox():
                         Label("Layout selection")
@@ -823,22 +854,5 @@ class ConfigWindow(PuiInQt):
                     Label("Data line configuration")
                     Table(self.plot_config)
                     Button("Save").click(lambda: self.app.update_layout())
-
-
-def load_app():
-    app = Euler1DApp()
-    plotting_area = PlotArea(Window(), app)
-
-    config_window = ConfigWindow(Window(), app)
-    config_widget = QDockWidget("config")
-    config_widget.setWidget(config_window.ui.ui)
-
-    pilot.mgr.mainWindow.addDockWidget(Qt.LeftDockWidgetArea, config_widget)
-    _subwin = pilot.mgr.addSubWindow(plotting_area.ui.ui)
-    _subwin.showMaximized()
-
-    config_window.redraw()
-    plotting_area.redraw()
-    _subwin.show()
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
