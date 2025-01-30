@@ -30,7 +30,11 @@ Airfoil shape
 """
 
 from ._naca import Naca4, Naca4Sampler
-from ._airfoil_gui import Naca4Airfoil
+from .. import _pilot_core as _pcore
+if _pcore.enable:
+    from ._airfoil_gui import Naca4Airfoil
+else:
+    Naca4Airfoil = None
 
 __all__ = [
     'Naca4',

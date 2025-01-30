@@ -31,9 +31,10 @@ Show meshes.
 
 import os
 
-from PySide6 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets
 
 from .. import core
+from ._gui_common import PilotFeature
 
 __all__ = [  # noqa: F822
     'SampleMesh',
@@ -41,77 +42,53 @@ __all__ = [  # noqa: F822
 ]
 
 
-def _add_menu_item(mainWindow, menu, text, tip, func):
-    act = QtGui.QAction(text, mainWindow)
-    act.setStatusTip(tip)
-    act.triggered.connect(func)
-    menu.addAction(act)
-
-
-class SampleMesh(object):
+class SampleMesh(PilotFeature):
     """
     Create sample mesh windows.
     """
 
-    def __init__(self, mgr):
-        self._mgr = mgr
-
-    @property
-    def _pycon(self):
-        return self._mgr.pycon
-
     def populate_menu(self):
-        _add_menu_item(
-            mainWindow=self._mgr.mainWindow,
+        self._add_menu_item(
             menu=self._mgr.meshMenu,
             text="Sample: mesh of a triangle (2D)",
             tip="Create a very simple sample mesh of a triangle",
             func=self.mesh_triangle,
         )
 
-        _add_menu_item(
-            mainWindow=self._mgr.mainWindow,
+        self._add_menu_item(
             menu=self._mgr.meshMenu,
             text="Sample: mesh of a tetrahedron (3D)",
             tip="Create a very simple sample mesh of a tetrahedron",
             func=self.mesh_tetrahedron,
         )
 
-        _add_menu_item(
-            mainWindow=self._mgr.mainWindow,
+        self._add_menu_item(
             menu=self._mgr.meshMenu,
             text="Sample: mesh of \"solvcon\" text in 2D",
             tip="Create a sample mesh drawing a text string of \"solvcon\"",
             func=self.mesh_solvcon_2dtext,
         )
 
-        _add_menu_item(
-            mainWindow=self._mgr.mainWindow,
+        self._add_menu_item(
             menu=self._mgr.meshMenu,
             text="Sample: small 2D mesh of mixed elements",
             tip="Create a small sample mesh of mixed elements in 2D",
             func=self.mesh_2dmix_small,
         )
 
-        _add_menu_item(
-            mainWindow=self._mgr.mainWindow,
+        self._add_menu_item(
             menu=self._mgr.meshMenu,
             text="Sample: larger 2D mesh of mixed elements",
             tip="Create a larger simple sample mesh of mixed elements in 2D",
             func=self.mesh_2dmix_large,
         )
 
-        _add_menu_item(
-            mainWindow=self._mgr.mainWindow,
+        self._add_menu_item(
             menu=self._mgr.meshMenu,
             text="Sample: 3D mesh of mixed elements",
             tip="Create a very simple sample mesh of mixed elements in 3D",
             func=self.mesh_3dmix,
         )
-
-    @property
-    def mainWindow(self):
-        return self._mgr.mainWindow
 
     def mesh_triangle(self):
         mh = core.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
@@ -339,9 +316,8 @@ class SampleMesh(object):
         self._mgr.pycon.writeToHistory(f"3dmix nedge: {mh.nedge}\n")
 
 
-class GmshFileDialog(QtCore.QObject):
+class GmshFileDialog(PilotFeature):
     def __init__(self, *args, **kw):
-        self._mgr = kw.pop('mgr')
         super(GmshFileDialog, self).__init__(*args, **kw)
         self._diag = QtWidgets.QFileDialog()
         self._diag.setFileMode(QtWidgets.QFileDialog.ExistingFile)
@@ -352,8 +328,7 @@ class GmshFileDialog(QtCore.QObject):
         self._diag.open(self, QtCore.SLOT('on_finished()'))
 
     def populate_menu(self):
-        _add_menu_item(
-            mainWindow=self._mgr.mainWindow,
+        self._add_menu_item(
             menu=self._mgr.fileMenu,
             text="Open Gmsh file",
             tip="Open Gmsh file",
@@ -407,9 +382,5 @@ class GmshFileDialog(QtCore.QObject):
         w.updateMesh(mh)
         w.showMark()
         self._pycon.writeToHistory(f"nedge: {mh.nedge}\n")
-
-    @property
-    def _pycon(self):
-        return self._mgr.pycon
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
