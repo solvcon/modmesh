@@ -1090,6 +1090,11 @@ class SimpleCollectorTC(unittest.TestCase):
         self.assertEqual(3, len(ct))
         self.assertEqual(ct[2], 3.14159 * 3)
 
+        for it in range(10):
+            ct.push_back(3.14159 * (3 + it + 1))
+            self.assertEqual(3 + it + 1, len(ct))
+            self.assertEqual(ct[3 + it], 3.14159 * (3 + it + 1))
+
         # Starting from non-zero and not power of 2.
         ct = modmesh.SimpleCollectorFloat64(10)
         self.assertEqual(10, ct.capacity)

@@ -452,6 +452,11 @@ class WorldTB(ModMeshTB):
                 IndexError, "World: \\(vertex\\) i 2 >= size 2"):
             w.vertex(2)
 
+        # Add many vertices
+        for it in range(10):
+            w.add_vertex(3.1415 + it, 3.1416 + it, 3.1417 + it)
+            self.assertEqual(w.nvertex, 2 + it + 1)
+
 
 class WorldFp32TC(WorldTB, unittest.TestCase):
 
