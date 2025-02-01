@@ -56,7 +56,9 @@ public:
 
     using real_type = T;
     using value_type = T;
+    using size_type = typename NumberBase<int32_t, T>::size_type;
     using vector_type = Vector3d<T>;
+    using vertex_type = vector_type;
     using edge_type = Edge3d<T>;
     using bezier_type = Bezier3d<T>;
 
@@ -74,6 +76,25 @@ public:
     World & operator=(World const &) = delete;
     World & operator=(World &&) = delete;
     ~World() = default;
+
+    void add_vertex(vertex_type const & vertex);
+    void add_vertex(value_type x, value_type y, value_type z)
+    {
+        add_vertex(vertex_type(x, y, z));
+    }
+    size_t nvertex() const { return m_vertices.size(); }
+    vertex_type const & vertex(size_t i) const { return m_vertices[i]; }
+    vertex_type & vertex(size_t i) { return m_vertices[i]; }
+    vertex_type const & vertex_at(size_t i) const
+    {
+        check_size(i, m_vertices.size(), "vertex");
+        return m_vertices[i];
+    }
+    vertex_type & vertex_at(size_t i)
+    {
+        check_size(i, m_vertices.size(), "vertex");
+        return m_vertices[i];
+    }
 
     void add_edge(edge_type const & edge);
     void add_edge(value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
@@ -119,10 +140,17 @@ private:
         }
     }
 
+    SimpleCollector<vertex_type> m_vertices;
     std::deque<Edge3d<T>> m_edges;
     std::deque<Bezier3d<T>> m_beziers;
 
 }; /* end class World */
+
+template <typename T>
+void World<T>::add_vertex(vertex_type const & vertex)
+{
+    m_vertices.push_back(vertex);
+}
 
 template <typename T>
 void World<T>::add_edge(edge_type const & edge)
