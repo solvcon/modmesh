@@ -156,17 +156,16 @@ private:
         if (capacity() == 0)
         {
             reserve(1);
-            m_expander->push_size(ITEMSIZE);
         }
         else if (size() == capacity())
         {
             reserve(size() * 2);
-            m_expander->push_size(ITEMSIZE);
         }
         else
         {
             // do nothing
         }
+        m_expander->push_size(ITEMSIZE);
     }
 
     std::shared_ptr<expander_type> m_expander;
