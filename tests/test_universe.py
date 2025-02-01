@@ -429,6 +429,38 @@ class WorldTB(ModMeshTB):
         # Confirm we worked on the internal instead of copy
         self.assertEqual(w.bezier(0).nlocus, 5)
 
+    def test_vertex(self):
+        Vector = self.vkls
+        World = self.wkls
+
+        w = World()
+
+        # Empty
+        self.assertEqual(w.nvertex, 0)
+        with self.assertRaisesRegex(
+                IndexError, "World: \\(vertex\\) i 0 >= size 0"):
+            w.vertex(0)
+
+        # Add a vertex by object
+        v = w.add_vertex(Vector(0, 1, 2))
+        self.assertEqual(list(v), [0, 1, 2])
+        self.assertEqual(list(w.vertex(0)), [0, 1, 2])
+        self.assertEqual(v, w.vertex(0))
+        self.assertEqual(w.nvertex, 1)
+        with self.assertRaisesRegex(
+                IndexError, "World: \\(vertex\\) i 1 >= size 1"):
+            w.vertex(1)
+
+        # Add a vertex by coordinate
+        v = w.add_vertex(3.1415, 3.1416, 3.1417)
+        self.assert_allclose(list(v), [3.1415, 3.1416, 3.1417])
+        self.assert_allclose(list(w.vertex(1)), [3.1415, 3.1416, 3.1417])
+        self.assertEqual(v, w.vertex(1))
+        self.assertEqual(w.nvertex, 2)
+        with self.assertRaisesRegex(
+                IndexError, "World: \\(vertex\\) i 2 >= size 2"):
+            w.vertex(2)
+
 
 class WorldFp32TC(WorldTB, unittest.TestCase):
 

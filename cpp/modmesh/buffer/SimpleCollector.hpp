@@ -115,6 +115,20 @@ public:
         return SimpleArray<T>(expander().as_concrete());
     }
 
+    void push_back(value_type const & value)
+    {
+        size_t const it = size();
+        push_size();
+        (*this)[it] = value;
+    }
+
+    void push_back(value_type && value)
+    {
+        size_t const it = size();
+        push_size();
+        (*this)[it] = value;
+    }
+
     /* Backdoor */
     value_type const & data(size_t it) const { return data()[it]; }
     value_type & data(size_t it) { return data()[it]; }
@@ -131,6 +145,27 @@ private:
         if (it >= size())
         {
             throw std::out_of_range(Formatter() << "SimpleCollector: index " << it << " is out of bounds with size " << size());
+        }
+    }
+
+    /**
+     * Push up the size of the underneath expander by one ITEMSIZE.
+     */
+    void push_size()
+    {
+        if (capacity() == 0)
+        {
+            reserve(1);
+            m_expander->push_size(ITEMSIZE);
+        }
+        else if (size() == capacity())
+        {
+            reserve(size() * 2);
+            m_expander->push_size(ITEMSIZE);
+        }
+        else
+        {
+            // do nothing
         }
     }
 

@@ -115,6 +115,25 @@ public:
         m_end = m_begin + length;
     }
 
+    /**
+     * Push up the size by amount.
+     * @param amount
+     *  Number of bytes to push up.
+     */
+    void push_size(size_type amount)
+    {
+        if (size() + amount > capacity())
+        {
+            throw std::out_of_range(
+                Formatter()
+                << name() << ": "
+                << "size() " << size() << " + "
+                << "amount " << amount << " > "
+                << "capacity() " << capacity());
+        }
+        m_end += amount;
+    }
+
     std::shared_ptr<ConcreteBuffer> copy_concrete(size_type cap = 0) const;
     std::shared_ptr<ConcreteBuffer> const & as_concrete(size_type cap = 0);
     bool is_concrete() const { return bool(m_concrete_buffer); }

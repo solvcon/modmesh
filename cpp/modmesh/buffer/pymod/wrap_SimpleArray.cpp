@@ -233,6 +233,10 @@ WrapSimpleCollector<T>::WrapSimpleCollector(pybind11::module & mod, char const *
             "__setitem__",
             [](wrapped_type & self, size_t key, value_type val)
             { self.at(key) = val; })
+        .def(
+            "push_back",
+            [](wrapped_type & self, value_type value)
+            { self.push_back(value); })
         .def_timed("as_array", &wrapped_type::as_array)
         //
         ;

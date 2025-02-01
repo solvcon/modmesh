@@ -304,6 +304,7 @@ public:
 
     using value_type = typename wrapped_type::value_type;
     using vector_type = typename wrapped_type::vector_type;
+    using vertex_type = typename wrapped_type::vertex_type;
     using edge_type = typename wrapped_type::edge_type;
     using bezier_type = typename wrapped_type::bezier_type;
 
@@ -331,6 +332,34 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
 
     // Bezier curves
     (*this)
+        .def(
+            "add_vertex",
+            [](wrapped_type & self, vertex_type const & vertex) -> auto &
+            {
+                self.add_vertex(vertex);
+                return self.vertex_at(self.nvertex() - 1);
+            },
+            py::arg("vertex"),
+            py::return_value_policy::reference_internal)
+        .def(
+            "add_vertex",
+            [](wrapped_type & self, value_type x, value_type y, value_type z) -> auto &
+            {
+                self.add_vertex(x, y, z);
+                return self.vertex_at(self.nvertex() - 1);
+            },
+            py::arg("x"),
+            py::arg("y"),
+            py::arg("z"),
+            py::return_value_policy::reference_internal)
+        .def_property_readonly("nvertex", &wrapped_type::nvertex)
+        .def(
+            "vertex",
+            [](wrapped_type & self, size_t i) -> auto &
+            {
+                return self.vertex_at(i);
+            },
+            py::return_value_policy::reference_internal)
         .def(
             "add_edge",
             [](wrapped_type & self, edge_type const & edge) -> auto &

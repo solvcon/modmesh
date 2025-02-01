@@ -1069,4 +1069,35 @@ class SimpleCollectorTC(unittest.TestCase):
             ct[it] = it + 10
         self.assertEqual(list(it + 10 for it in range(6)), list(ct))
 
+    def test_push_back(self):
+        # Starting from 0.
+        ct = modmesh.SimpleCollectorFloat64()
+        self.assertEqual(0, ct.capacity)
+        self.assertEqual(0, len(ct))
+
+        ct.push_back(3.14159)
+        self.assertEqual(1, ct.capacity)
+        self.assertEqual(1, len(ct))
+        self.assertEqual(ct[0], 3.14159)
+
+        ct.push_back(3.14159 * 2)
+        self.assertEqual(2, ct.capacity)
+        self.assertEqual(2, len(ct))
+        self.assertEqual(ct[1], 3.14159 * 2)
+
+        ct.push_back(3.14159 * 3)
+        self.assertEqual(4, ct.capacity)
+        self.assertEqual(3, len(ct))
+        self.assertEqual(ct[2], 3.14159 * 3)
+
+        # Starting from non-zero and not power of 2.
+        ct = modmesh.SimpleCollectorFloat64(10)
+        self.assertEqual(10, ct.capacity)
+        self.assertEqual(10, len(ct))
+
+        ct.push_back(3.14159 * 4)
+        self.assertEqual(20, ct.capacity)  # double capacity but not power of 2
+        self.assertEqual(11, len(ct))
+        self.assertEqual(ct[10], 3.14159 * 4)
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
