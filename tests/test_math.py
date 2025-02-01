@@ -31,7 +31,17 @@ import numpy as np
 import modmesh as mm
 
 
-class ComplexTC(unittest.TestCase):
+class ComplexTC(unittest.TestCase, mm.testing.TestBase):
+
+    def assert_allclose32(self, *args, **kw):
+        if 'rtol' not in kw:
+            kw['rtol'] = 1.e-7
+        return super().assert_allclose(*args, **kw)
+
+    def assert_allclose64(self, *args, **kw):
+        if 'rtol' not in kw:
+            kw['rtol'] = 1.e-15
+        return super().assert_allclose(*args, **kw)
 
     def setUp(self):
         self.real1_32 = np.float32(0.7)
@@ -46,23 +56,23 @@ class ComplexTC(unittest.TestCase):
 
     def test_construct_float32_default(self):
         cplx = mm.ComplexFloat32()
-        self.assertAlmostEqual(cplx.real, 0.0)
-        self.assertAlmostEqual(cplx.imag, 0.0)
+        self.assert_allclose32(cplx.real, 0.0)
+        self.assert_allclose32(cplx.imag, 0.0)
 
     def test_construct_float64_default(self):
         cplx = mm.ComplexFloat64()
-        self.assertAlmostEqual(cplx.real, 0.0)
-        self.assertAlmostEqual(cplx.imag, 0.0)
+        self.assert_allclose64(cplx.real, 0.0)
+        self.assert_allclose64(cplx.imag, 0.0)
 
     def test_construct_float32_random(self):
         cplx = mm.ComplexFloat32(self.real1_32, self.imag1_32)
-        self.assertAlmostEqual(cplx.real, self.real1_32)
-        self.assertAlmostEqual(cplx.imag, self.imag1_32)
+        self.assert_allclose32(cplx.real, self.real1_32)
+        self.assert_allclose32(cplx.imag, self.imag1_32)
 
     def test_construct_float64_random(self):
         cplx = mm.ComplexFloat64(self.real1_64, self.imag1_64)
-        self.assertAlmostEqual(cplx.real, self.real1_64)
-        self.assertAlmostEqual(cplx.imag, self.imag1_64)
+        self.assert_allclose64(cplx.real, self.real1_64)
+        self.assert_allclose64(cplx.imag, self.imag1_64)
 
     def test_operator_add_float32(self):
         cplx1 = mm.ComplexFloat32(self.real1_32, self.imag1_32)
@@ -73,8 +83,8 @@ class ComplexTC(unittest.TestCase):
         expected_real = self.real1_32 + self.real2_32
         expected_imag = self.imag1_32 + self.imag2_32
 
-        self.assertAlmostEqual(result.real, expected_real)
-        self.assertAlmostEqual(result.imag, expected_imag)
+        self.assert_allclose32(result.real, expected_real)
+        self.assert_allclose32(result.imag, expected_imag)
 
     def test_operator_add_float64(self):
         cplx1 = mm.ComplexFloat64(self.real1_64, self.imag1_64)
@@ -85,8 +95,8 @@ class ComplexTC(unittest.TestCase):
         expected_real = self.real1_64 + self.real2_64
         expected_imag = self.imag1_64 + self.imag2_64
 
-        self.assertAlmostEqual(result.real, expected_real)
-        self.assertAlmostEqual(result.imag, expected_imag)
+        self.assert_allclose64(result.real, expected_real)
+        self.assert_allclose64(result.imag, expected_imag)
 
     def test_operator_sub_float32(self):
         cplx1 = mm.ComplexFloat32(self.real1_32, self.imag1_32)
@@ -97,8 +107,8 @@ class ComplexTC(unittest.TestCase):
         expected_real = self.real1_32 - self.real2_32
         expected_imag = self.imag1_32 - self.imag2_32
 
-        self.assertAlmostEqual(result.real, expected_real)
-        self.assertAlmostEqual(result.imag, expected_imag)
+        self.assert_allclose32(result.real, expected_real)
+        self.assert_allclose32(result.imag, expected_imag)
 
     def test_operator_sub_float64(self):
         cplx1 = mm.ComplexFloat64(self.real1_64, self.imag1_64)
@@ -109,8 +119,8 @@ class ComplexTC(unittest.TestCase):
         expected_real = self.real1_64 - self.real2_64
         expected_imag = self.imag1_64 - self.imag2_64
 
-        self.assertAlmostEqual(result.real, expected_real)
-        self.assertAlmostEqual(result.imag, expected_imag)
+        self.assert_allclose64(result.real, expected_real)
+        self.assert_allclose64(result.imag, expected_imag)
 
     def test_operator_mul_float32(self):
         cplx1 = mm.ComplexFloat32(self.real1_32, self.imag1_32)
@@ -123,8 +133,8 @@ class ComplexTC(unittest.TestCase):
         expected_imag = (self.real1_32 * self.imag2_32
                          + self.imag1_32 * self.real2_32)
 
-        self.assertAlmostEqual(result.real, expected_real)
-        self.assertAlmostEqual(result.imag, expected_imag)
+        self.assert_allclose32(result.real, expected_real)
+        self.assert_allclose32(result.imag, expected_imag)
 
     def test_operator_mul_float64(self):
         cplx1 = mm.ComplexFloat64(self.real1_64, self.imag1_64)
@@ -137,8 +147,8 @@ class ComplexTC(unittest.TestCase):
         expected_imag = (self.real1_64 * self.imag2_64
                          + self.imag1_64 * self.real2_64)
 
-        self.assertAlmostEqual(result.real, expected_real)
-        self.assertAlmostEqual(result.imag, expected_imag)
+        self.assert_allclose64(result.real, expected_real)
+        self.assert_allclose64(result.imag, expected_imag)
 
     def test_operator_div_float32_scalar(self):
         cplx = mm.ComplexFloat32(self.real1_32, self.imag1_32)
@@ -150,8 +160,8 @@ class ComplexTC(unittest.TestCase):
         expected_real = self.real1_32 / divisor
         expected_imag = self.imag1_32 / divisor
 
-        self.assertAlmostEqual(result.real, expected_real)
-        self.assertAlmostEqual(result.imag, expected_imag)
+        self.assert_allclose32(result.real, expected_real)
+        self.assert_allclose32(result.imag, expected_imag)
 
     def test_operator_div_float64_scalar(self):
         cplx = mm.ComplexFloat64(self.real1_64, self.imag1_64)
@@ -162,8 +172,8 @@ class ComplexTC(unittest.TestCase):
         expected_real = self.real1_64 / divisor
         expected_imag = self.imag1_64 / divisor
 
-        self.assertAlmostEqual(result.real, expected_real)
-        self.assertAlmostEqual(result.imag, expected_imag)
+        self.assert_allclose64(result.real, expected_real)
+        self.assert_allclose64(result.imag, expected_imag)
 
     def test_norm_float32(self):
         cplx = mm.ComplexFloat32(self.real1_32, self.imag1_32)
@@ -172,7 +182,7 @@ class ComplexTC(unittest.TestCase):
 
         expected_val = self.real1_32 ** 2 + self.imag1_32 ** 2
 
-        self.assertAlmostEqual(result, expected_val)
+        self.assert_allclose32(result, expected_val)
 
     def test_norm_float64(self):
         cplx = mm.ComplexFloat64(self.real1_64, self.imag1_64)
@@ -181,4 +191,4 @@ class ComplexTC(unittest.TestCase):
 
         expected_val = self.real1_64 ** 2 + self.imag1_64 ** 2
 
-        self.assertAlmostEqual(result, expected_val)
+        self.assert_allclose64(result, expected_val)

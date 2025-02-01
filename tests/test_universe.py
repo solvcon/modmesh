@@ -27,17 +27,8 @@
 
 import unittest
 
-import numpy as np
-
 import modmesh
-
-
-class ModMeshTB:
-
-    def assert_allclose(self, *args, **kw):
-        if 'rtol' not in kw:
-            kw['rtol'] = 1.e-12
-        return np.testing.assert_allclose(*args, **kw)
+from modmesh.testing import TestBase as ModMeshTB
 
 
 class BernsteinTB(ModMeshTB):

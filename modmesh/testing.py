@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+# Copyright (c) 2023, Yung-Yu Chen <yyc@solvcon.net>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -24,26 +24,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
-"""
-modmesh: the description of the package is intentionally left blank
-"""
+import numpy as np
 
 
-# Use flake8 http://flake8.pycqa.org/en/latest/user/error-codes.html
+class TestBase:
 
-
-from . import core
-from .core import *  # noqa: F401, F403
-from . import apputil  # noqa: F401
-from . import spacetime  # noqa: F401
-from . import onedim  # noqa: F401
-from . import system  # noqa: F401
-from . import testing  # noqa: F401
-from . import toggle  # noqa: F401
-
-
-clinfo = core.ProcessInfo.instance.command_line
-
+    def assert_allclose(self, *args, **kw):
+        if 'rtol' not in kw:
+            kw['rtol'] = 1.e-12
+        return np.testing.assert_allclose(*args, **kw)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
