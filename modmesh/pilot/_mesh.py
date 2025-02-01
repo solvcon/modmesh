@@ -441,6 +441,8 @@ class RectangularDomain(PilotFeature):
 
     def _create_world(self) -> core.WorldFp64:
         w = core.WorldFp64()
+        for pt in self.points:
+            w.add_vertex(pt[0], pt[1], 0.0)
         for ed in self.edges:
             p0 = self.points[ed[0]]
             p1 = self.points[ed[1]]
