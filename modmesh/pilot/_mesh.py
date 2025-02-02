@@ -383,4 +383,79 @@ class GmshFileDialog(PilotFeature):
         w.showMark()
         self._pycon.writeToHistory(f"nedge: {mh.nedge}\n")
 
+
+class RectangularDomain(PilotFeature):
+    """
+    Placeholder for prototyping code for generating triangular mesh in a
+    rectangular domain.
+    """
+
+    def __init__(self, *args, **kw) -> None:
+        super().__init__(*args, **kw)
+        self.world: core.WorldFp64 = None
+        self.mesh: core.StaticMesh = None
+        self.points = list()
+        self.edges = list()
+        self.triangles = list()
+
+    def populate_menu(self):
+        self._add_menu_item(
+            menu=self._mgr.meshMenu,
+            text="Create triangle mesh in rectangular domain",
+            tip="Create triangle mesh in rectangular domain",
+            func=self.run,
+        )
+
+    def setup(self):
+        pass
+
+    def _update_edges(self, x0=0.0, y0=0.0, x1=4.0, y1=2.0,
+                      dx=0.1, dy=0.1) -> None:
+        # basic coordinates
+        nx = (x1 - x0) / dx
+        nx = int(round(nx))
+        ny = (y1 - y0) / dy
+        ny = int(round(ny))
+        # populate points
+        points = list()
+        # lower line
+        for it in range(nx):
+            points.append((x0 + dx * it, y0))
+        # right line
+        for it in range(ny):
+            points.append((x1, y0 + dy * it))
+        # upper line
+        for it in range(nx):
+            points.append((x1 - dx * it, y1))
+        # left line
+        for it in range(ny):
+            points.append((x0, y1 - dy * it))
+        # populate edges
+        edges = list()
+        for ip in range(len(points)):
+            idx0 = ip
+            idx1 = ip + 1 if ip < len(points) - 1 else 0
+            edges.append((idx0, idx1))
+        self.points = points
+        self.edges = edges
+
+    def _create_world(self) -> core.WorldFp64:
+        w = core.WorldFp64()
+        for pt in self.points:
+            w.add_vertex(pt[0], pt[1], 0.0)
+        for ed in self.edges:
+            p0 = self.points[ed[0]]
+            p1 = self.points[ed[1]]
+            w.add_edge(p0[0], p0[1], 0, p1[0], p1[1], 0)
+        return w
+
+    def run(self):
+        self._update_edges()
+        w = self.world = self._create_world()
+
+        # Open a sub window for triangles and quadrilaterals:
+        w_3dmix = self._mgr.add3DWidget()
+        w_3dmix.updateWorld(w)
+        w_3dmix.showMark()
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

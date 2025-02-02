@@ -50,33 +50,41 @@
 namespace modmesh
 {
 
-/**
- * Make a world viewable.
- */
-class RWorld
+class RVertices
     : public Qt3DCore::QEntity
 {
+    Q_OBJECT
 
 public:
 
-    RWorld(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * parent = nullptr);
-
-    void set_world(std::shared_ptr<WorldFp64> const & world) { m_world = world; }
-    bool has_world() const { return bool(m_world); }
-    WorldFp64 const & world() const { return *m_world; }
-    WorldFp64 & world() { return *m_world; }
-
-    void update_geometry();
+    RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * parent = nullptr);
 
 private:
-
-    std::shared_ptr<WorldFp64> m_world;
 
     Qt3DCore::QGeometry * m_geometry = nullptr;
     Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
     Qt3DRender::QMaterial * m_material = nullptr;
 
-}; /* end class R3DWorld */
+}; /* end class RVertices */
+
+class RLines
+    : public Qt3DCore::QEntity
+{
+    Q_OBJECT
+
+public:
+
+    RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * parent = nullptr);
+
+    void update();
+
+private:
+
+    Qt3DCore::QGeometry * m_geometry = nullptr;
+    Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
+    Qt3DRender::QMaterial * m_material = nullptr;
+
+}; /* end class RLines */
 
 } /* end namespace modmesh */
 

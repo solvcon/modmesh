@@ -79,12 +79,13 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
 {
     for (Qt3DCore::QNode * child : m_scene->childNodes())
     {
-        if (typeid(*child) == typeid(RWorld))
+        if ((typeid(*child) == typeid(RLines)) || (typeid(*child) == typeid(RVertices)))
         {
             child->deleteLater();
         }
     }
-    new RWorld(world, m_scene);
+    new RVertices(world, m_scene);
+    new RLines(world, m_scene);
 }
 
 void R3DWidget::closeAndDestroy()

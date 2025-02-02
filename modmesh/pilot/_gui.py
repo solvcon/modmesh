@@ -69,6 +69,7 @@ class _Controller(metaclass=_Singleton):
         self._rmgr = None
         self.gmsh_dialog = None
         self.sample_mesh = None
+        self.recdom = None
         self.naca4airfoil = None
         self.eulerone = None
 
@@ -82,6 +83,7 @@ class _Controller(metaclass=_Singleton):
         self._rmgr.resize(w=size[0], h=size[1])
         self.gmsh_dialog = _mesh.GmshFileDialog(mgr=self._rmgr)
         self.sample_mesh = _mesh.SampleMesh(mgr=self._rmgr)
+        self.recdom = _mesh.RectangularDomain(mgr=self._rmgr)
         self.naca4airfoil = airfoil.Naca4Airfoil(mgr=self._rmgr)
         self.eulerone = _euler1d.Euler1DApp(mgr=self._rmgr)
         self.populate_menu()
@@ -106,6 +108,7 @@ class _Controller(metaclass=_Singleton):
         self.gmsh_dialog.populate_menu()
         self.sample_mesh.populate_menu()
         self.naca4airfoil.populate_menu()
+        self.recdom.populate_menu()
         self.eulerone.populate_menu()
 
         if sys.platform != 'darwin':
