@@ -199,8 +199,8 @@ public:
         auto athis = static_cast<A *>(this);
         if (athis->ndim() != 1)
         {
-            throw std::runtime_error(Formatter() << "SimpleArray: sorting is only supported in 1D array. " 
-                                        << athis->ndim() << "D array is currently not supported");
+            throw std::runtime_error(Formatter() << "SimpleArray: sorting is only supported in 1D array. "
+                                                 << athis->ndim() << "D array is currently not supported");
         }
 
         std::sort(athis->begin(), athis->end());
@@ -622,7 +622,7 @@ public:
         return ret;
     }
 
-    void apply_argsort(SimpleArray<uint64_t> const & sorted_args);
+    void take_along_axis(SimpleArray<uint64_t> const & sorted_args);
 
     template <typename... Args>
     value_type const & operator()(Args... args) const { return *vptr(args...); }
@@ -769,7 +769,7 @@ private:
 }; /* end class SimpleArray */
 
 template <typename T>
-void SimpleArray<T>::apply_argsort(SimpleArray<uint64_t> const & sorted_args)
+void SimpleArray<T>::take_along_axis(SimpleArray<uint64_t> const & sorted_args)
 {
     if (ndim() != 1 || sorted_args.ndim() != 1)
     {
