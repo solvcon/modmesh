@@ -602,7 +602,8 @@ public:
     {
         if (ndim() != 1)
         {
-            throw std::runtime_error("SimpleArray: Sorting is only supported in 1D array.");
+            throw std::runtime_error(Formatter() << "SimpleArray: sorting is only supported in 1D array. "
+                                                 << ndim() << "D array is currently not supported");
         }
 
         SimpleArray<uint64_t> ret(shape());
@@ -622,7 +623,7 @@ public:
         return ret;
     }
 
-    void take_along_axis(SimpleArray<uint64_t> const & sorted_args);
+    void take_along_axis(SimpleArray<uint64_t> const & indices);
 
     template <typename... Args>
     value_type const & operator()(Args... args) const { return *vptr(args...); }
@@ -769,15 +770,22 @@ private:
 }; /* end class SimpleArray */
 
 template <typename T>
-void SimpleArray<T>::take_along_axis(SimpleArray<uint64_t> const & sorted_args)
+void SimpleArray<T>::take_along_axis(SimpleArray<uint64_t> const & indices)
 {
-    if (ndim() != 1 || sorted_args.ndim() != 1)
+    if (indices.ndim() != 1)
     {
-        throw std::runtime_error("SimpleArray: Sorting is only supported in 1D array.");
+        throw std::runtime_error(Formatter() << "SimpleArray: sorting is only supported in 1D array. "
+                                             << indices.ndim() << "D indices is not supported.");
     }
-    if (shape()[0] != sorted_args.shape()[0])
+    if (ndim() != 1)
     {
-        throw std::runtime_error("SimpleArray: argsort only support same shape");
+        throw std::runtime_error(Formatter() << "SimpleArray: sorting is only supported in 1D array. "
+                                             << ndim() << "D array is not supported to be sorted.");
+    }
+    if (shape()[0] != indices.shape()[0])
+    {
+        throw std::runtime_error(Formatter() << "SimpleArray: take_along_axis only support same shape of indices and array."
+                                             << "Array size " << shape()[0] << " != indices shape " << indices.shape()[0]);
     }
     if (shape()[0] < 2)
     {
@@ -804,14 +812,14 @@ void SimpleArray<T>::take_along_axis(SimpleArray<uint64_t> const & sorted_args)
         value_type val = at(idx);
 
         ssize_t dst_idx = idx;
-        ssize_t src_idx = sorted_args[dst_idx];
+        ssize_t src_idx = indices[dst_idx];
 
         while (src_idx != idx)
         {
             at(dst_idx) = at(src_idx);
             applied_arg.at(dst_idx) = true;
             dst_idx = src_idx;
-            src_idx = sorted_args[dst_idx];
+            src_idx = indices[dst_idx];
         }
 
         at(dst_idx) = val;
