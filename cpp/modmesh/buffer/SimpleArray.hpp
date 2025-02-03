@@ -193,6 +193,17 @@ public:
         }
         return ret;
     }
+
+    void sort(void)
+    {
+        auto athis = static_cast<A *>(this);
+        if (athis->ndim() != 1)
+        {
+            throw std::runtime_error(Formatter() << "SimpleArray: sorting is only supported in 1D array. " << athis->ndim() << "D array is currently not supported");
+        }
+
+        std::sort(athis->begin(), athis->end());
+    }
 }; /* end class SimpleArrayMixinCalculators */
 
 } /* end namespace detail */
@@ -584,16 +595,6 @@ public:
             std::swap(m_nghost, other.m_nghost);
             std::swap(m_body, other.m_body);
         }
-    }
-
-    void sort(void)
-    {
-        if (ndim() != 1)
-        {
-            throw std::runtime_error("SimpleArray: Sorting is only supported in 1D array.");
-        }
-
-        std::sort(begin(), end());
     }
 
     SimpleArray<uint64_t> argsort(void)
