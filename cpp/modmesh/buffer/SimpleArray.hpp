@@ -29,6 +29,7 @@
  */
 
 #include <modmesh/buffer/ConcreteBuffer.hpp>
+#include <modmesh/math/math.hpp>
 
 #include <limits>
 #include <stdexcept>
@@ -160,7 +161,16 @@ public:
 
     value_type sum() const
     {
-        value_type initial = 0;
+        value_type initial;
+        if constexpr (is_complex_v<value_type>)
+        {
+            initial = value_type();
+        }
+        else
+        {
+            initial = 0;
+        }
+
         auto athis = static_cast<A const *>(this);
         if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
         {
@@ -748,6 +758,8 @@ using SimpleArrayUint32 = SimpleArray<uint32_t>;
 using SimpleArrayUint64 = SimpleArray<uint64_t>;
 using SimpleArrayFloat32 = SimpleArray<float>;
 using SimpleArrayFloat64 = SimpleArray<double>;
+using SimpleArrayComplexFloat32 = SimpleArray<Complex<float>>;
+using SimpleArrayComplexFloat64 = SimpleArray<Complex<double>>;
 
 class DataType
 {
@@ -766,6 +778,8 @@ public:
         Uint64,
         Float32,
         Float64,
+        ComplexFloat32,
+        ComplexFloat64
     }; /* end enum enum_type */
 
     DataType() = default;

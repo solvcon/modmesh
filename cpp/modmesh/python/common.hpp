@@ -60,7 +60,7 @@ std::string to_str(T const & self) { return Formatter() << self >> Formatter::to
 template <typename T>
 bool dtype_is_type(pybind11::array const & arr)
 {
-    return pybind11::detail::npy_format_descriptor<T>::dtype().is(arr.dtype());
+    return pybind11::detail::npy_format_descriptor<T>::dtype().equal(arr.dtype());
 }
 
 class WrapperProfilerStatus
