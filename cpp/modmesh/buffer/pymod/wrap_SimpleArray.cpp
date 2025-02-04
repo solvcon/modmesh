@@ -148,10 +148,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 [](wrapped_type const & self, py::object const & shape)
                 { return self.reshape(make_shape(shape)); })
             .def(
-                "sort",
-                [](wrapped_type & self)
-                { self.sort(); })
-            .def(
                 "argsort",
                 [](wrapped_type & self)
                 { return pybind11::cast(self.argsort()); })
@@ -193,6 +189,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def("max", &wrapped_type::max)
             .def("sum", &wrapped_type::sum)
             .def("abs", &wrapped_type::abs)
+            .def("sort", &wrapped_type::sort)
             //
             ;
 

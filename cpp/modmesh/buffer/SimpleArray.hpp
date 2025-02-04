@@ -44,6 +44,9 @@ typedef SSIZE_T ssize_t;
 namespace modmesh
 {
 
+template <typename T>
+class SimpleArray; // forward declaration
+
 namespace detail
 {
 
@@ -194,17 +197,9 @@ public:
         return ret;
     }
 
-    void sort(void)
-    {
-        auto athis = static_cast<A *>(this);
-        if (athis->ndim() != 1)
-        {
-            throw std::runtime_error(Formatter() << "SimpleArray: sorting is only supported in 1D array. "
-                                                 << athis->ndim() << "D array is currently not supported");
-        }
+    void sort(void);
+    SimpleArray<uint64_t> argsort(void);
 
-        std::sort(athis->begin(), athis->end());
-    }
 }; /* end class SimpleArrayMixinCalculators */
 
 } /* end namespace detail */
@@ -598,32 +593,8 @@ public:
         }
     }
 
-    SimpleArray<uint64_t> argsort(void)
-    {
-        if (ndim() != 1)
-        {
-            throw std::runtime_error(Formatter() << "SimpleArray: sorting is only supported in 1D array. "
-                                                 << ndim() << "D array is currently not supported");
-        }
-
-        SimpleArray<uint64_t> ret(shape());
-
-        { // Return array initialization
-            uint64_t cnt = 0;
-            std::for_each(ret.begin(), ret.end(), [&cnt](uint64_t & v)
-                          { v = cnt++; });
-        }
-
-        value_type const * buf = body();
-        auto cmp = [buf](uint64_t a, uint64_t b)
-        {
-            return buf[a] < buf[b];
-        };
-        std::sort(ret.begin(), ret.end(), cmp);
-        return ret;
-    }
-
-    void take_along_axis(SimpleArray<uint64_t> const & indices);
+    template <typename I>
+    SimpleArray take_along_axis(SimpleArray<I> const & indices);
 
     template <typename... Args>
     value_type const & operator()(Args... args) const { return *vptr(args...); }
@@ -770,61 +741,78 @@ private:
 }; /* end class SimpleArray */
 
 template <typename T>
-void SimpleArray<T>::take_along_axis(SimpleArray<uint64_t> const & indices)
+template <typename I>
+SimpleArray<T> SimpleArray<T>::take_along_axis(SimpleArray<I> const & indices)
 {
+    static_assert(std::is_integral_v<I>, "I must be integral type");
     if (indices.ndim() != 1)
     {
-        throw std::runtime_error(Formatter() << "SimpleArray: sorting is only supported in 1D array. "
-                                             << indices.ndim() << "D indices is not supported.");
+        throw std::runtime_error(Formatter() << "SimpleArray: take_along_axis() supports only "
+                                                "in 1D array but the index array is "
+                                             << indices.ndim() << " dimension");
     }
     if (ndim() != 1)
     {
-        throw std::runtime_error(Formatter() << "SimpleArray: sorting is only supported in 1D array. "
-                                             << ndim() << "D array is not supported to be sorted.");
+        throw std::runtime_error(Formatter() << "SimpleArray: take_along_axis() supports only "
+                                                "in 1D array but the array is "
+                                             << ndim() << " dimension");
     }
     if (shape()[0] != indices.shape()[0])
     {
-        throw std::runtime_error(Formatter() << "SimpleArray: take_along_axis only support same shape of indices and array."
-                                             << "Array size " << shape()[0] << " != indices shape " << indices.shape()[0]);
-    }
-    if (shape()[0] < 2)
-    {
-        return;
+        throw std::runtime_error(Formatter() << "SimpleArray: take_along_axis() supports same "
+                                                "shape of indices and array. Array size "
+                                             << shape()[0] << " != indices array size " << indices.shape()[0]);
     }
 
-    std::vector<bool> applied_arg(shape()[0], false);
-
-    auto next = [](std::vector<bool> & vec, ssize_t last)
+    SimpleArray<T> ret(*this);
+    for (size_t i = 0; i < shape()[0]; ++i)
     {
-        for (ssize_t i = last; i < static_cast<ssize_t>(vec.size()); ++i)
-        {
-            if (vec.at(i) == false)
-            {
-                return i;
-            }
-        }
-        return static_cast<ssize_t>(-1);
+        ret.at(i) = at(static_cast<size_t>(indices[i]));
+    }
+
+    return ret;
+}
+
+template <typename A, typename T>
+void detail::SimpleArrayMixinCalculators<A, T>::sort(void)
+{
+    auto athis = static_cast<A *>(this);
+    if (athis->ndim() != 1)
+    {
+        throw std::runtime_error(Formatter() << "SimpleArray: sort() supports only in 1D array "
+                                                " but the array is "
+                                             << athis->ndim() << " dimension");
+    }
+
+    std::sort(athis->begin(), athis->end());
+}
+
+template <typename A, typename T>
+SimpleArray<uint64_t> detail::SimpleArrayMixinCalculators<A, T>::argsort(void)
+{
+    auto athis = static_cast<A *>(this);
+    if (athis->ndim() != 1)
+    {
+        throw std::runtime_error(Formatter() << "SimpleArray: argsort() supports only in 1D array "
+                                                " but the array is "
+                                             << athis->ndim() << " dimension");
+    }
+
+    SimpleArray<uint64_t> ret(athis->shape());
+
+    { // Return array initialization
+        uint64_t cnt = 0;
+        std::for_each(ret.begin(), ret.end(), [&cnt](uint64_t & v)
+                      { v = cnt++; });
+    }
+
+    value_type const * buf = athis->body();
+    auto cmp = [buf](uint64_t a, uint64_t b)
+    {
+        return buf[a] < buf[b];
     };
-
-    ssize_t idx = 0;
-    while ((idx = next(applied_arg, idx)) != -1)
-    {
-        value_type val = at(idx);
-
-        ssize_t dst_idx = idx;
-        ssize_t src_idx = indices[dst_idx];
-
-        while (src_idx != idx)
-        {
-            at(dst_idx) = at(src_idx);
-            applied_arg.at(dst_idx) = true;
-            dst_idx = src_idx;
-            src_idx = indices[dst_idx];
-        }
-
-        at(dst_idx) = val;
-        applied_arg.at(dst_idx) = true;
-    }
+    std::sort(ret.begin(), ret.end(), cmp);
+    return ret;
 }
 
 template <typename S>
