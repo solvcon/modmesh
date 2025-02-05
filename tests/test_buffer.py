@@ -825,19 +825,26 @@ class SimpleArrayBasicTC(unittest.TestCase):
             str(type(arrayplex_int32_2)), "<class '_modmesh.SimpleArray'>")
 
     def test_sort(self):
-        narr = np.random.randint(0, 100, 20, dtype='int32')
-        sarr = modmesh.SimpleArrayInt32(array=narr)
-        args = sarr.argsort()
-        for i in range(1, len(args)):
-            self.assertLessEqual(sarr[args[i]], sarr[args[i]])
+        test_data = [
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            [10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
+            [1, 5, 10, 2, 6, 9, 7, 8, 4, 3]
+        ]
 
-        sorted_arr = sarr.take_along_axis(args)
-        for i in range(1, len(sorted_arr)):
-            self.assertLessEqual(sorted_arr[i - 1], sorted_arr[i])
+        for arr in test_data:
+            narr = np.random.randint(arr, dtype='int32')
+            sarr = modmesh.SimpleArrayInt32(array=narr)
+            args = sarr.argsort()
+            for i in range(1, len(args)):
+                self.assertLessEqual(sarr[args[i]], sarr[args[i]])
 
-        sarr.sort()
-        for i in range(1, len(sarr)):
-            self.assertLessEqual(sarr[i - 1], sarr[i])
+            sorted_arr = sarr.take_along_axis(args)
+            for i in range(1, len(sorted_arr)):
+                self.assertLessEqual(sorted_arr[i - 1], sorted_arr[i])
+
+            sarr.sort()
+            for i in range(1, len(sarr)):
+                self.assertLessEqual(sarr[i - 1], sarr[i])
 
 
 class SimpleArrayCalculatorsTC(unittest.TestCase):
