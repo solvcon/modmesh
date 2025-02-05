@@ -196,9 +196,24 @@ public:
         }
         return ret;
     }
+}; /* end class SimpleArrayMixinCalculators */
+
+template <typename A, typename T>
+class SimpleArrayMixinSorters
+{
+
+private:
+
+    using internal_types = detail::SimpleArrayInternalTypes<T>;
+
+public:
+
+    using value_type = typename internal_types::value_type;
 
     void sort(void);
     SimpleArray<uint64_t> argsort(void);
+    template <typename I>
+    A take_along_axis(SimpleArray<I> const & indices);
 
 }; /* end class SimpleArrayMixinCalculators */
 
@@ -213,6 +228,7 @@ template <typename T>
 class SimpleArray
     : public detail::SimpleArrayMixinModifiers<SimpleArray<T>, T>
     , public detail::SimpleArrayMixinCalculators<SimpleArray<T>, T>
+    , public detail::SimpleArrayMixinSorters<SimpleArray<T>, T>
 {
 
 private:
@@ -593,9 +609,6 @@ public:
         }
     }
 
-    template <typename I>
-    SimpleArray take_along_axis(SimpleArray<I> const & indices);
-
     template <typename... Args>
     value_type const & operator()(Args... args) const { return *vptr(args...); }
     template <typename... Args>
@@ -740,41 +753,8 @@ private:
     value_type * m_body = nullptr;
 }; /* end class SimpleArray */
 
-template <typename T>
-template <typename I>
-SimpleArray<T> SimpleArray<T>::take_along_axis(SimpleArray<I> const & indices)
-{
-    static_assert(std::is_integral_v<I>, "I must be integral type");
-    if (indices.ndim() != 1)
-    {
-        throw std::runtime_error(Formatter() << "SimpleArray: take_along_axis() supports only "
-                                                "in 1D array but the index array is "
-                                             << indices.ndim() << " dimension");
-    }
-    if (ndim() != 1)
-    {
-        throw std::runtime_error(Formatter() << "SimpleArray: take_along_axis() supports only "
-                                                "in 1D array but the array is "
-                                             << ndim() << " dimension");
-    }
-    if (shape()[0] != indices.shape()[0])
-    {
-        throw std::runtime_error(Formatter() << "SimpleArray: take_along_axis() supports same "
-                                                "shape of indices and array. Array size "
-                                             << shape()[0] << " != indices array size " << indices.shape()[0]);
-    }
-
-    SimpleArray<T> ret(*this);
-    for (size_t i = 0; i < shape()[0]; ++i)
-    {
-        ret.at(i) = at(static_cast<size_t>(indices[i]));
-    }
-
-    return ret;
-}
-
 template <typename A, typename T>
-void detail::SimpleArrayMixinCalculators<A, T>::sort(void)
+void detail::SimpleArrayMixinSorters<A, T>::sort(void)
 {
     auto athis = static_cast<A *>(this);
     if (athis->ndim() != 1)
@@ -788,7 +768,7 @@ void detail::SimpleArrayMixinCalculators<A, T>::sort(void)
 }
 
 template <typename A, typename T>
-SimpleArray<uint64_t> detail::SimpleArrayMixinCalculators<A, T>::argsort(void)
+SimpleArray<uint64_t> detail::SimpleArrayMixinSorters<A, T>::argsort(void)
 {
     auto athis = static_cast<A *>(this);
     if (athis->ndim() != 1)
@@ -812,6 +792,26 @@ SimpleArray<uint64_t> detail::SimpleArrayMixinCalculators<A, T>::argsort(void)
         return buf[a] < buf[b];
     };
     std::sort(ret.begin(), ret.end(), cmp);
+    return ret;
+}
+
+template <typename A, typename T>
+template <typename I>
+A detail::SimpleArrayMixinSorters<A, T>::take_along_axis(SimpleArray<I> const & indices)
+{
+    static_assert(std::is_integral_v<I>, "I must be integral type");
+    auto athis = static_cast<A *>(this);
+    if (athis->ndim() != 1)
+    {
+        throw std::runtime_error(Formatter() << "SimpleArray: take_along_axis() supports currently only in 1D array "
+                                                " but the array is " << athis->ndim() << " dimension");
+    }
+
+    SimpleArray<T> ret(indices.shape());
+    std::transform(indices.begin(), indices.end(), ret.begin(), 
+        [athis](I idx)
+        { return athis->at(static_cast<size_t>(idx)); });
+
     return ret;
 }
 
