@@ -832,7 +832,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ]
 
         for arr in test_data:
-            narr = np.random.randint(arr, dtype='int32')
+            narr = np.array(arr, dtype='int32')
             sarr = modmesh.SimpleArrayInt32(array=narr)
             args = sarr.argsort()
             for i in range(1, len(args)):
