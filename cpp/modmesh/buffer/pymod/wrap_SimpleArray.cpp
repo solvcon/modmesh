@@ -147,13 +147,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 "reshape",
                 [](wrapped_type const & self, py::object const & shape)
                 { return self.reshape(make_shape(shape)); })
-            .def(
-                "argsort",
-                [](wrapped_type & self)
-                { return pybind11::cast(self.argsort()); })
-            .def("take_along_axis",
-                 [](wrapped_type & self, py::object const & indices)
-                 { return pybind11::cast(self.take_along_axis(indices.cast<SimpleArrayUint64>())); })
             .def_property_readonly("has_ghost", &wrapped_type::has_ghost)
             .def_property("nghost", &wrapped_type::nghost, &wrapped_type::set_nghost)
             .def_property_readonly("nbody", &wrapped_type::nbody)
@@ -161,6 +154,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                                    { return pybind11::cast(SimpleArrayPlex(arr)); })
             .wrap_modifiers()
             .wrap_calculators()
+            .wrap_sort()
             // ATTENTION: always keep the same interface between WrapSimpleArrayPlex and WrapSimpleArray
             ;
     }
@@ -192,7 +186,25 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def("max", &wrapped_type::max)
             .def("sum", &wrapped_type::sum)
             .def("abs", &wrapped_type::abs)
+            //
+            ;
+
+        return *this;
+    }
+
+    wrapper_type & wrap_sort()
+    {
+        namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
+
+        (*this)
             .def("sort", &wrapped_type::sort)
+            .def(
+                "argsort",
+                [](wrapped_type & self)
+                { return pybind11::cast(self.argsort()); })
+            .def("take_along_axis",
+                 [](wrapped_type & self, py::object const & indices)
+                 { return pybind11::cast(self.take_along_axis(indices.cast<SimpleArrayUint64>())); })
             //
             ;
 

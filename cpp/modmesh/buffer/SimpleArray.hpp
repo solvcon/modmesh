@@ -199,7 +199,7 @@ public:
 }; /* end class SimpleArrayMixinCalculators */
 
 template <typename A, typename T>
-class SimpleArrayMixinSorters
+class SimpleArrayMixinSort
 {
 
 private:
@@ -215,7 +215,8 @@ public:
     template <typename I>
     A take_along_axis(SimpleArray<I> const & indices);
 
-}; /* end class SimpleArrayMixinCalculators */
+}; /* end class SimpleArrayMixinSort */
+
 
 } /* end namespace detail */
 
@@ -228,7 +229,7 @@ template <typename T>
 class SimpleArray
     : public detail::SimpleArrayMixinModifiers<SimpleArray<T>, T>
     , public detail::SimpleArrayMixinCalculators<SimpleArray<T>, T>
-    , public detail::SimpleArrayMixinSorters<SimpleArray<T>, T>
+    , public detail::SimpleArrayMixinSort<SimpleArray<T>, T>
 {
 
 private:
@@ -754,7 +755,7 @@ private:
 }; /* end class SimpleArray */
 
 template <typename A, typename T>
-void detail::SimpleArrayMixinSorters<A, T>::sort(void)
+void detail::SimpleArrayMixinSort<A, T>::sort(void)
 {
     auto athis = static_cast<A *>(this);
     if (athis->ndim() != 1)
@@ -768,7 +769,7 @@ void detail::SimpleArrayMixinSorters<A, T>::sort(void)
 }
 
 template <typename A, typename T>
-SimpleArray<uint64_t> detail::SimpleArrayMixinSorters<A, T>::argsort(void)
+SimpleArray<uint64_t> detail::SimpleArrayMixinSort<A, T>::argsort(void)
 {
     auto athis = static_cast<A *>(this);
     if (athis->ndim() != 1)
@@ -797,7 +798,7 @@ SimpleArray<uint64_t> detail::SimpleArrayMixinSorters<A, T>::argsort(void)
 
 template <typename A, typename T>
 template <typename I>
-A detail::SimpleArrayMixinSorters<A, T>::take_along_axis(SimpleArray<I> const & indices)
+A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & indices)
 {
     static_assert(std::is_integral_v<I>, "I must be integral type");
     auto athis = static_cast<A *>(this);
@@ -809,9 +810,12 @@ A detail::SimpleArrayMixinSorters<A, T>::take_along_axis(SimpleArray<I> const & 
     }
 
     SimpleArray<T> ret(indices.shape());
-    std::transform(indices.begin(), indices.end(), ret.begin(), [athis](I idx)
-                   { return athis->at(static_cast<size_t>(idx)); });
 
+    auto val_iter = ret.begin();
+    for (auto idx: indices){
+        *val_iter = athis->at(static_cast<size_t>(idx));
+        ++val_iter;
+    }
     return ret;
 }
 
