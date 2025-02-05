@@ -804,13 +804,13 @@ A detail::SimpleArrayMixinSorters<A, T>::take_along_axis(SimpleArray<I> const & 
     if (athis->ndim() != 1)
     {
         throw std::runtime_error(Formatter() << "SimpleArray: take_along_axis() supports currently only in 1D array "
-                                                " but the array is " << athis->ndim() << " dimension");
+                                                " but the array is "
+                                             << athis->ndim() << " dimension");
     }
 
     SimpleArray<T> ret(indices.shape());
-    std::transform(indices.begin(), indices.end(), ret.begin(), 
-        [athis](I idx)
-        { return athis->at(static_cast<size_t>(idx)); });
+    std::transform(indices.begin(), indices.end(), ret.begin(), [athis](I idx)
+                   { return athis->at(static_cast<size_t>(idx)); });
 
     return ret;
 }
