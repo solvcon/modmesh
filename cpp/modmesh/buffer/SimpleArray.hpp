@@ -217,7 +217,6 @@ public:
 
 }; /* end class SimpleArrayMixinSort */
 
-
 } /* end namespace detail */
 
 /**
@@ -812,7 +811,8 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
     SimpleArray<T> ret(indices.shape());
 
     auto val_iter = ret.begin();
-    for (auto idx: indices){
+    for (auto idx : indices)
+    {
         *val_iter = athis->at(static_cast<size_t>(idx));
         ++val_iter;
     }
