@@ -34,6 +34,7 @@
 #include <stdexcept>
 #include <functional>
 #include <numeric>
+#include <algorithm>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -42,6 +43,9 @@ typedef SSIZE_T ssize_t;
 
 namespace modmesh
 {
+
+template <typename T>
+class SimpleArray; // forward declaration
 
 namespace detail
 {
@@ -194,6 +198,25 @@ public:
     }
 }; /* end class SimpleArrayMixinCalculators */
 
+template <typename A, typename T>
+class SimpleArrayMixinSort
+{
+
+private:
+
+    using internal_types = detail::SimpleArrayInternalTypes<T>;
+
+public:
+
+    using value_type = typename internal_types::value_type;
+
+    void sort(void);
+    SimpleArray<uint64_t> argsort(void);
+    template <typename I>
+    A take_along_axis(SimpleArray<I> const & indices);
+
+}; /* end class SimpleArrayMixinSort */
+
 } /* end namespace detail */
 
 /**
@@ -205,6 +228,7 @@ template <typename T>
 class SimpleArray
     : public detail::SimpleArrayMixinModifiers<SimpleArray<T>, T>
     , public detail::SimpleArrayMixinCalculators<SimpleArray<T>, T>
+    , public detail::SimpleArrayMixinSort<SimpleArray<T>, T>
 {
 
 private:
@@ -728,6 +752,72 @@ private:
     size_t m_nghost = 0;
     value_type * m_body = nullptr;
 }; /* end class SimpleArray */
+
+template <typename A, typename T>
+void detail::SimpleArrayMixinSort<A, T>::sort(void)
+{
+    auto athis = static_cast<A *>(this);
+    if (athis->ndim() != 1)
+    {
+        throw std::runtime_error(Formatter() << "SimpleArray: sort() supports only in 1D array "
+                                                " but the array is "
+                                             << athis->ndim() << " dimension");
+    }
+
+    std::sort(athis->begin(), athis->end());
+}
+
+template <typename A, typename T>
+SimpleArray<uint64_t> detail::SimpleArrayMixinSort<A, T>::argsort(void)
+{
+    auto athis = static_cast<A *>(this);
+    if (athis->ndim() != 1)
+    {
+        throw std::runtime_error(Formatter() << "SimpleArray: argsort() supports only in 1D array "
+                                                " but the array is "
+                                             << athis->ndim() << " dimension");
+    }
+
+    SimpleArray<uint64_t> ret(athis->shape());
+
+    { // Return array initialization
+        uint64_t cnt = 0;
+        std::for_each(ret.begin(), ret.end(), [&cnt](uint64_t & v)
+                      { v = cnt++; });
+    }
+
+    value_type const * buf = athis->body();
+    auto cmp = [buf](uint64_t a, uint64_t b)
+    {
+        return buf[a] < buf[b];
+    };
+    std::sort(ret.begin(), ret.end(), cmp);
+    return ret;
+}
+
+template <typename A, typename T>
+template <typename I>
+A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & indices)
+{
+    static_assert(std::is_integral_v<I>, "I must be integral type");
+    auto athis = static_cast<A *>(this);
+    if (athis->ndim() != 1)
+    {
+        throw std::runtime_error(Formatter() << "SimpleArray: take_along_axis() supports currently only in 1D array "
+                                                " but the array is "
+                                             << athis->ndim() << " dimension");
+    }
+
+    SimpleArray<T> ret(indices.shape());
+
+    auto val_iter = ret.begin();
+    for (auto idx : indices)
+    {
+        *val_iter = athis->at(static_cast<size_t>(idx));
+        ++val_iter;
+    }
+    return ret;
+}
 
 template <typename S>
 using is_simple_array = std::is_same<

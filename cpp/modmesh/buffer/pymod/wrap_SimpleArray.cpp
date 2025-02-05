@@ -154,6 +154,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                                    { return pybind11::cast(SimpleArrayPlex(arr)); })
             .wrap_modifiers()
             .wrap_calculators()
+            .wrap_sort()
             // ATTENTION: always keep the same interface between WrapSimpleArrayPlex and WrapSimpleArray
             ;
     }
@@ -185,6 +186,25 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def("max", &wrapped_type::max)
             .def("sum", &wrapped_type::sum)
             .def("abs", &wrapped_type::abs)
+            //
+            ;
+
+        return *this;
+    }
+
+    wrapper_type & wrap_sort()
+    {
+        namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
+
+        (*this)
+            .def("sort", &wrapped_type::sort)
+            .def(
+                "argsort",
+                [](wrapped_type & self)
+                { return pybind11::cast(self.argsort()); })
+            .def("take_along_axis",
+                 [](wrapped_type & self, py::object const & indices)
+                 { return pybind11::cast(self.take_along_axis(indices.cast<SimpleArrayUint64>())); })
             //
             ;
 
