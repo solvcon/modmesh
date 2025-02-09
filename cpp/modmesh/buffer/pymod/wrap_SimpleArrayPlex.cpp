@@ -70,8 +70,8 @@ static auto execute_callback_with_typed_array(A & arrayplex, C && callback)
         DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Uint64, SimpleArrayUint64)
         DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Float32, SimpleArrayFloat32)
         DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Float64, SimpleArrayFloat64)
-        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::ComplexFloat32, SimpleArrayComplexFloat32)
-        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::ComplexFloat64, SimpleArrayComplexFloat64)
+        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Complex64, SimpleArrayComplex64)
+        DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType::Complex128, SimpleArrayComplex128)
     default:
     {
         throw std::invalid_argument("Unsupported datatype");
@@ -119,14 +119,14 @@ static void verify_python_value_datatype(pybind11::object const & value, DataTyp
         }
         break;
     }
-    case DataType::ComplexFloat32:
+    case DataType::Complex64:
     {
         if (!pybind11::isinstance<Complex<float>>(value))
         {
             throw pybind11::type_error("Data type mismatch, expected complex float");
         }
     }
-    case DataType::ComplexFloat64:
+    case DataType::Complex128:
     {
         if (!pybind11::isinstance<Complex<double>>(value))
         {
@@ -165,8 +165,8 @@ static pybind11::object get_typed_array_value(const SimpleArrayPlex & array_plex
         DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Uint64, SimpleArrayUint64)
         DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Float32, SimpleArrayFloat32)
         DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Float64, SimpleArrayFloat64)
-        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::ComplexFloat32, SimpleArrayComplexFloat32)
-        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::ComplexFloat64, SimpleArrayComplexFloat64)
+        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Complex64, SimpleArrayComplex64)
+        DECL_MM_GET_TYPED_ARRAY_VALUE_BY_INDEX(DataType::Complex128, SimpleArrayComplex128)
     default:
     {
         throw std::runtime_error("Unsupported datatype");
@@ -199,8 +199,8 @@ static pybind11::object get_typed_array(const SimpleArrayPlex & array_plex)
         DECL_MM_GET_TYPED_ARRAY(DataType::Uint64, SimpleArrayUint64)
         DECL_MM_GET_TYPED_ARRAY(DataType::Float32, SimpleArrayFloat32)
         DECL_MM_GET_TYPED_ARRAY(DataType::Float64, SimpleArrayFloat64)
-        DECL_MM_GET_TYPED_ARRAY(DataType::ComplexFloat32, SimpleArrayComplexFloat32)
-        DECL_MM_GET_TYPED_ARRAY(DataType::ComplexFloat64, SimpleArrayComplexFloat64)
+        DECL_MM_GET_TYPED_ARRAY(DataType::Complex64, SimpleArrayComplex64)
+        DECL_MM_GET_TYPED_ARRAY(DataType::Complex128, SimpleArrayComplex128)
     default:
     {
         throw std::runtime_error("Unsupported datatype");

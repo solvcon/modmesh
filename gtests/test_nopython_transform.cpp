@@ -14,9 +14,9 @@ protected:
     const size_t VN = 1024;
 
     modmesh::SimpleArray<modmesh::Complex<T>> signal{
-        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{.real_v = 0.0, .imag_v = 0.0}};
+        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{0.0, 0.0}};
     modmesh::SimpleArray<modmesh::Complex<T>> out{
-        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{.real_v = 0.0, .imag_v = 0.0}};
+        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{0.0, 0.0}};
 
     // Set up the test fixture: generate the signal once
     void SetUp() override
@@ -26,7 +26,7 @@ protected:
         for (unsigned int i = 0; i < VN; ++i)
         {
             T val = val_dist(rng);
-            signal[i] = modmesh::Complex<T>{.real_v = val, .imag_v = 0.0};
+            signal[i] = modmesh::Complex<T>{val, 0.0};
         }
     }
 
@@ -59,13 +59,13 @@ protected:
     std::mt19937 rng{std::random_device{}()};
 
     modmesh::SimpleArray<modmesh::Complex<T>> signal{
-        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{.real_v = 0.0, .imag_v = 0.0}};
+        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{0.0, 0.0}};
     modmesh::SimpleArray<modmesh::Complex<T>> out{
-        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{.real_v = 0.0, .imag_v = 0.0}};
+        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{0.0, 0.0}};
 
     void SetUp() override
     {
-        signal[0] = modmesh::Complex<T>{.real_v = 1.0, .imag_v = 0.0};
+        signal[0] = modmesh::Complex<T>{1.0, 0.0};
     }
 
     void verify_delta_function()

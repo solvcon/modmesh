@@ -26,7 +26,7 @@ void dft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
         for (size_t j = 0; j < N; ++j)
         {
             T2 tmp = -2.0 * pi<T2> * i * j / N;
-            T1<T2> twiddle_factor{.real_v = std::cos(tmp), .imag_v = std::sin(tmp)};
+            T1<T2> twiddle_factor{std::cos(tmp), std::sin(tmp)};
             out[i] += in[j] * twiddle_factor;
         }
 
@@ -59,7 +59,7 @@ void fft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
             {
                 // Twiddle factor = exp(-2 * pi * i * k / N)
                 T2 angle = angle_inc * k;
-                T1<T2> twiddle_factor{.real_v = std::cos(angle), .imag_v = std::sin(angle)};
+                T1<T2> twiddle_factor{std::cos(angle), std::sin(angle)};
 
                 T1<T2> even(out[i + k]);
                 T1<T2> odd(out[i + k + half_size] * twiddle_factor);

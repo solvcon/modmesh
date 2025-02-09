@@ -758,8 +758,8 @@ using SimpleArrayUint32 = SimpleArray<uint32_t>;
 using SimpleArrayUint64 = SimpleArray<uint64_t>;
 using SimpleArrayFloat32 = SimpleArray<float>;
 using SimpleArrayFloat64 = SimpleArray<double>;
-using SimpleArrayComplexFloat32 = SimpleArray<Complex<float>>;
-using SimpleArrayComplexFloat64 = SimpleArray<Complex<double>>;
+using SimpleArrayComplex64 = SimpleArray<Complex<float>>;
+using SimpleArrayComplex128 = SimpleArray<Complex<double>>;
 
 class DataType
 {
@@ -778,8 +778,8 @@ public:
         Uint64,
         Float32,
         Float64,
-        ComplexFloat32,
-        ComplexFloat64
+        Complex64,
+        Complex128
     }; /* end enum enum_type */
 
     DataType() = default;

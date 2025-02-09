@@ -63,13 +63,13 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapComplex
             .def(
                 py::init(
                     [](const value_type & real, const value_type & imag)
-                    { return std::make_shared<wrapped_type>(wrapped_type{.real_v = real, .imag_v = imag}); }),
+                    { return std::make_shared<wrapped_type>(wrapped_type{real, imag}); }),
                 py::arg("real"),
                 py::arg("imag"))
             .def(
                 py::init(
                     [](const wrapped_type & other)
-                    { return std::make_shared<wrapped_type>(wrapped_type{.real_v = other.real_v, .imag_v = other.imag_v}); }),
+                    { return std::make_shared<wrapped_type>(wrapped_type{other.real_v, other.imag_v}); }),
                 py::arg("other"))
             .def(py::self + py::self) // NOLINT(misc-redundant-expression)
             .def(py::self - py::self) // NOLINT(misc-redundant-expression)
@@ -98,8 +98,8 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapComplex
 
 void wrap_Complex(pybind11::module & mod)
 {
-    WrapComplex<float>::commit(mod, "ComplexFloat32", "ComplexFloat32");
-    WrapComplex<double>::commit(mod, "ComplexFloat64", "ComplexFloat64");
+    WrapComplex<float>::commit(mod, "complex64", "complex64");
+    WrapComplex<double>::commit(mod, "complex128", "complex128");
 }
 
 } /* end namespace python */
