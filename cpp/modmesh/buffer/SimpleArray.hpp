@@ -34,6 +34,7 @@
 #include <stdexcept>
 #include <functional>
 #include <numeric>
+#include <algorithm>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -42,6 +43,9 @@ typedef SSIZE_T ssize_t;
 
 namespace modmesh
 {
+
+template <typename T>
+class SimpleArray; // forward declaration
 
 namespace detail
 {
@@ -194,6 +198,38 @@ public:
     }
 }; /* end class SimpleArrayMixinCalculators */
 
+template <typename A, typename T>
+class SimpleArrayMixinSort
+{
+
+private:
+
+    using internal_types = detail::SimpleArrayInternalTypes<T>;
+
+public:
+
+    using value_type = typename internal_types::value_type;
+
+    void sort(void);
+    SimpleArray<uint64_t> argsort(void);
+    template <typename I>
+    A take_along_axis(SimpleArray<I> const & indices);
+
+}; /* end class SimpleArrayMixinSort */
+
+template <typename A, typename T>
+void SimpleArrayMixinSort<A, T>::sort(void)
+{
+    auto athis = static_cast<A *>(this);
+    if (athis->ndim() != 1)
+    {
+        throw std::runtime_error(Formatter() << "SimpleArray::sort(): currently only support 1D array but the array is "
+                                             << athis->ndim() << " dimension");
+    }
+
+    std::sort(athis->begin(), athis->end());
+}
+
 } /* end namespace detail */
 
 /**
@@ -205,6 +241,7 @@ template <typename T>
 class SimpleArray
     : public detail::SimpleArrayMixinModifiers<SimpleArray<T>, T>
     , public detail::SimpleArrayMixinCalculators<SimpleArray<T>, T>
+    , public detail::SimpleArrayMixinSort<SimpleArray<T>, T>
 {
 
 private:
@@ -524,6 +561,28 @@ public:
         return data(offset);
     }
 
+    shape_type first_sidx() const noexcept
+    {
+        return shape_type(shape().size(), 0);
+    }
+
+    bool next_sidx(shape_type & sidx) const noexcept
+    {
+        ssize_t dim = shape().size() - 1;
+        while (dim >= 0)
+        {
+            sidx[dim] += 1;
+            if (sidx[dim] == shape()[dim])
+            {
+                sidx[dim] = 0;
+                dim -= 1;
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
     size_t ndim() const noexcept { return m_shape.size(); }
     shape_type const & shape() const { return m_shape; }
     size_t shape(size_t it) const noexcept { return m_shape[it]; }
@@ -728,6 +787,68 @@ private:
     size_t m_nghost = 0;
     value_type * m_body = nullptr;
 }; /* end class SimpleArray */
+
+template <typename A, typename T>
+SimpleArray<uint64_t> detail::SimpleArrayMixinSort<A, T>::argsort(void)
+{
+    auto athis = static_cast<A *>(this);
+    if (athis->ndim() != 1)
+    {
+        throw std::runtime_error(Formatter() << "SimpleArray::argsort(): currently only support 1D array"
+                                             << " but the array is " << athis->ndim() << " dimension");
+    }
+
+    SimpleArray<uint64_t> ret(athis->shape());
+
+    { // Return array initialization
+        uint64_t cnt = 0;
+        std::for_each(ret.begin(), ret.end(), [&cnt](uint64_t & v)
+                      { v = cnt++; });
+    }
+
+    value_type const * buf = athis->body();
+    auto cmp = [buf](uint64_t a, uint64_t b)
+    {
+        return buf[a] < buf[b];
+    };
+    std::sort(ret.begin(), ret.end(), cmp);
+    return ret;
+}
+
+template <typename A, typename T>
+template <typename I>
+A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & indices)
+{
+    static_assert(std::is_integral_v<I>, "I must be integral type");
+    auto athis = static_cast<A *>(this);
+    if (athis->ndim() != 1)
+    {
+        throw std::runtime_error(Formatter() << "SimpleArray::take_along_axis(): currently only support 1D array"
+                                             << " but the array is " << athis->ndim() << " dimension");
+    }
+
+    A ret(indices.shape());
+
+    auto sidx = indices.first_sidx();
+    do {
+        I idx = indices.at(sidx);
+        if (idx < 0 || idx > athis->shape()[0])
+        {
+            Formatter err_msg;
+            err_msg << "SimpleArray::take_along_axis(): indices[" << sidx[0];
+            for (size_t dim = 1; dim < sidx.size(); ++dim)
+            {
+                err_msg << ", " << sidx[dim];
+            }
+            err_msg << "] is " << idx << ", which is out of range of the array size "
+                    << athis->shape()[0];
+
+            throw std::out_of_range(err_msg);
+        }
+        ret.at(sidx) = (*athis)[static_cast<size_t>(idx)];
+    } while (indices.next_sidx(sidx));
+    return ret;
+}
 
 template <typename S>
 using is_simple_array = std::is_same<
