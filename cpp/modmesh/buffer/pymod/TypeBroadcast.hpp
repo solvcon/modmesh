@@ -29,6 +29,7 @@
  */
 
 #include <modmesh/buffer/SimpleArray.hpp>
+#include <modmesh/math/math.hpp>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h> // Must be the first include.
 
@@ -71,8 +72,17 @@ struct TypeBroadcastImpl
                 offset_out += arr_out.stride(it) * sidx[it] * step;
             }
 
-            // NOLINTNEXTLINE(bugprone-signed-char-misuse, cert-str34-c)
-            arr_out.at(offset_out) = static_cast<out_type>(*ptr_in);
+            constexpr bool valid_conversion = (!is_complex_v<T> && !is_complex_v<D>) || (is_complex_v<T> && is_complex_v<D> && std::is_same_v<T, D>);
+
+            if constexpr (valid_conversion)
+            {
+                arr_out.at(offset_out) = static_cast<out_type>(*ptr_in);
+            }
+            else
+            {
+                throw std::runtime_error("Cannot convert between complex and non-complex types");
+            }
+
             // recursion here
             copy_idx(arr_out, slices, arr_in, left_shape, sidx, dim - 1);
         }
@@ -196,6 +206,14 @@ struct TypeBroadcast
         else if (dtype_is_type<double>(arr_in))
         {
             TypeBroadcastImpl<T, double>::broadcast(arr_out, slices, arr_in);
+        }
+        else if (dtype_is_type<Complex<float>>(arr_in))
+        {
+            TypeBroadcastImpl<T, Complex<float>>::broadcast(arr_out, slices, arr_in);
+        }
+        else if (dtype_is_type<Complex<double>>(arr_in))
+        {
+            TypeBroadcastImpl<T, Complex<double>>::broadcast(arr_out, slices, arr_in);
         }
         else
         {

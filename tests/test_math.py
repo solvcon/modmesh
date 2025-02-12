@@ -175,6 +175,58 @@ class ComplexTC(unittest.TestCase, mm.testing.TestBase):
         self.assert_allclose64(result.real, expected_real)
         self.assert_allclose64(result.imag, expected_imag)
 
+    def test_operator_div_float32(self):
+        cplx1 = mm.ComplexFloat32(self.real1_32, self.imag1_32)
+        cplx2 = mm.ComplexFloat32(self.real2_32, self.imag2_32)
+
+        result = cplx1 / cplx2
+
+        denominator = (self.real2_32 * self.real2_32 + self.imag2_32 *
+                       self.imag2_32)
+        expected_real = (self.real1_32 * self.real2_32 +
+                         self.imag1_32 * self.imag2_32) / denominator
+        expected_imag = (self.imag1_32 * self.real2_32 -
+                         self.real1_32 * self.imag2_32) / denominator
+
+        self.assert_allclose32(result.real, expected_real)
+        self.assert_allclose32(result.imag, expected_imag)
+
+    def test_operator_div_float64(self):
+        cplx1 = mm.ComplexFloat64(self.real1_64, self.imag1_64)
+        cplx2 = mm.ComplexFloat64(self.real2_64, self.imag2_64)
+
+        result = cplx1 / cplx2
+
+        denominator = (self.real2_64 * self.real2_64 + self.imag2_64 *
+                       self.imag2_64)
+        expected_real = (self.real1_64 * self.real2_64 + self.imag1_64 *
+                         self.imag2_64) / denominator
+        expected_imag = (self.imag1_64 * self.real2_64 - self.real1_64 *
+                         self.imag2_64) / denominator
+
+        self.assert_allclose64(result.real, expected_real)
+        self.assert_allclose64(result.imag, expected_imag)
+
+    def test_operator_comparison_float32(self):
+        cplx1 = mm.ComplexFloat32(self.real1_32, self.imag1_32)
+        cplx2 = mm.ComplexFloat32(self.real2_32, self.imag2_32)
+
+        norm1 = cplx1.norm()
+        norm2 = cplx2.norm()
+
+        self.assertEqual(cplx1 < cplx2, norm1 < norm2)
+        self.assertEqual(cplx1 > cplx2, norm1 > norm2)
+
+    def test_operator_comparison_float64(self):
+        cplx1 = mm.ComplexFloat64(self.real1_64, self.imag1_64)
+        cplx2 = mm.ComplexFloat64(self.real2_64, self.imag2_64)
+
+        norm1 = cplx1.norm()
+        norm2 = cplx2.norm()
+
+        self.assertEqual(cplx1 < cplx2, norm1 < norm2)
+        self.assertEqual(cplx1 > cplx2, norm1 > norm2)
+
     def test_norm_float32(self):
         cplx = mm.ComplexFloat32(self.real1_32, self.imag1_32)
 
@@ -192,3 +244,43 @@ class ComplexTC(unittest.TestCase, mm.testing.TestBase):
         expected_val = self.real1_64 ** 2 + self.imag1_64 ** 2
 
         self.assert_allclose64(result, expected_val)
+
+    def test_dtype_verification_float32(self):
+        dtype = mm.ComplexFloat32.dtype()
+        expected_dtype = np.dtype([('real_v', np.float32),
+                                   ('imag_v', np.float32)])
+
+        self.assertEqual(dtype, expected_dtype)
+
+    def test_dtype_verification_float64(self):
+        dtype = mm.ComplexFloat64.dtype()
+        expected_dtype = np.dtype([('real_v', np.float64),
+                                   ('imag_v', np.float64)])
+
+        self.assertEqual(dtype, expected_dtype)
+
+    def test_complex_array_float32(self):
+        cplx = mm.ComplexFloat32(self.real1_32, self.imag1_32)
+        sarr = mm.SimpleArrayComplexFloat32(10)
+        sarr.fill(cplx)
+        ndarr = np.array(sarr, copy=False, dtype=mm.ComplexFloat32.dtype())
+
+        self.assertEqual(ndarr.dtype, mm.ComplexFloat32.dtype())
+
+        sarr = mm.SimpleArrayComplexFloat32(array=ndarr)
+
+        self.assertEqual(sarr.ndarray.dtype, ndarr.dtype)
+        self.assertEqual(10 * 4 * 2, sarr.nbytes)
+
+    def test_complex_array_float64(self):
+        cplx = mm.ComplexFloat64(self.real1_64, self.imag1_64)
+        sarr = mm.SimpleArrayComplexFloat64(10)
+        sarr.fill(cplx)
+        ndarr = np.array(sarr, copy=False, dtype=mm.ComplexFloat64.dtype())
+
+        self.assertEqual(ndarr.dtype, mm.ComplexFloat64.dtype())
+
+        sarr = mm.SimpleArrayComplexFloat64(array=ndarr)
+
+        self.assertEqual(sarr.ndarray.dtype, ndarr.dtype)
+        self.assertEqual(10 * 8 * 2, sarr.nbytes)
