@@ -128,6 +128,69 @@ class TimeSeriesDataFrame(object):
     def index(self):
         return self._index_data.ndarray
 
+    def sort(self, columns=None, index_column=None, inplace=True):
+        """
+        Sort the dataframe along the given index column
+
+        :param columns: column names required in reordered TimeSeriesDataFrame
+        :type columns: Option[List[str]]
+        :param index_column: column name treated as the index, if None is
+                                given, sort along the index
+        :type index_column: Option[str]
+        :param inplace: flag indicates whether to sort inplace or out-of-place
+        :type inplace: bool
+        :return: sorted TimeSeriesDataFrame (return self if inplace is set to
+                 True)
+        """
+
+        if index_column is None and self._index_data is None:
+            raise ValueError("TimeSeriesDataFrame: data frame has no index, "
+                             "please provide index column")
+
+        index_data = self._index_data if (
+            index_column is None
+            ) else self._data[self._columns.index(index_column)]
+        indices = index_data.argsort()
+
+        if inplace:
+            for i, col in enumerate(self._data):
+                self._data[i] = col.take_along_axis(indices)
+
+            if self._index_data is not None:
+                self._index_data = self._index_data.take_along_axis(indices)
+
+            return self
+        else:
+            if columns is None:
+                columns = []
+
+            ret = TimeSeriesDataFrame()
+            ret._index_name = self._index_name
+            ret._index_data = self._index_data.take_along_axis(indices)
+
+            for name in columns:
+                if name not in self._columns:
+                    raise ValueError("Column '{}' does not exist".format(name))
+                idx = self._columns.index(name)
+                new_col = self._data[idx].take_along_axis(indices)
+                ret._columns.append(name)
+                ret._data.append(new_col)
+
+            return ret
+
+    def sort_by_index(self, columns=None, inplace=True):
+        """
+        Sort the dataframe along the index column
+
+        :param columns: column names required in reordered TimeSeriesDataFrame
+        :type columns: List[str]
+        :param inplace: flag indicates whether to sort inplace or out-of-place
+        :type inplace: bool
+        :return: sorted TimeSeriesDataFrame (return self if inplace is set to
+                True)
+        """
+        return self.sort(columns=columns, index_column=None, inplace=inplace)
+
 
 class TimeSeriesDataFrameTC(unittest.TestCase):
 
@@ -157,6 +220,18 @@ class TimeSeriesDataFrameTC(unittest.TestCase):
 -0.1895751953125,-0.00128173828125,1602596010369299968,-0.04925537109375
 -0.18841552734375,6.103515625e-05,1602596010389309952,-0.0489501953125
 -0.1884765625,-0.00042724609375,1602596010409309952,-0.04840087890625
+"""
+    unsorted_dlc_data = """EPOCH ,DELTA_VEL[1] ,DELTA_VEL[2] ,DELTA_VEL[3]
+1.60259601024931e+18,-0.1903076171875,-0.0009765625,-0.0489501953125
+1.60259601034931e+18,-0.18902587890625,-0.000732421875,-0.0489501953125
+1.60259601040931e+18,-0.1884765625,-0.00042724609375,-0.04840087890625
+1.60259601032931e+18,-0.18951416015625,-0.000732421875,-0.0489501953125
+1.6025960102293e+18,-0.18792724609375,-0.00048828125,-0.0478515625
+1.6025960103693e+18,-0.1895751953125,-0.00128173828125,-0.04925537109375
+1.60259601030931e+18,-0.188720703125,-0.00103759765625,-0.0504150390625
+1.60259601026931e+18,-0.18743896484375,0.0006103515625,-0.0498046875
+1.60259601028932e+18,-0.18927001953125,-0.0009765625,-0.04840087890625
+1.60259601038931e+18,-0.18841552734375,6.103515625e-05,-0.0489501953125
 """
 
     def test_read_from_text_file_basic(self):
@@ -220,4 +295,31 @@ class TimeSeriesDataFrameTC(unittest.TestCase):
 
         nd_arr = np.genfromtxt(StringIO(self.dlc_data), delimiter=',')[1:]
 
+        self.assertEqual(list(col_data), list(nd_arr[:, 1]))
+
+    def test_dataframe_sort(self):
+        tsdf = TimeSeriesDataFrame()
+        tsdf.read_from_text_file(StringIO(self.unsorted_dlc_data))
+
+        # Test out-of-place sort
+        reordered_tsdf = tsdf.sort(tsdf.columns, index_column=None,
+                                   inplace=False)
+        col_data = reordered_tsdf['DELTA_VEL[1]']
+        nd_arr = np.genfromtxt(StringIO(self.dlc_data), delimiter=',')[1:]
+        self.assertEqual(list(col_data), list(nd_arr[:, 1]))
+
+        # Test inplace sort_by_index
+        tsdf.sort_by_index()
+        col_data = tsdf['DELTA_VEL[1]']
+        nd_arr = np.genfromtxt(StringIO(self.dlc_data), delimiter=',')[1:]
+        self.assertEqual(list(col_data), list(nd_arr[:, 1]))
+
+        # Test out-of-place sort with index_column
+        tsdf.read_from_text_file(StringIO(self.unsorted_dlc_data),
+                                 timestamp_in_file=False)
+
+        reordered_tsdf = tsdf.sort(['EPOCH', 'DELTA_VEL[1]'],
+                                   index_column='EPOCH', inplace=False)
+        col_data = reordered_tsdf['DELTA_VEL[1]']
+        nd_arr = np.genfromtxt(StringIO(self.dlc_data), delimiter=',')[1:]
         self.assertEqual(list(col_data), list(nd_arr[:, 1]))
