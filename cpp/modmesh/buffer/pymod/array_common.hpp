@@ -42,6 +42,53 @@
 // See more details in the issue: https://github.com/solvcon/modmesh/issues/283
 #include <modmesh/buffer/pymod/SimpleArrayCaster.hpp>
 
+namespace pybind11
+{
+
+namespace detail
+{
+
+template <typename T>
+struct format_descriptor;
+
+template <>
+struct npy_format_descriptor<modmesh::Complex<double>>
+{
+    static constexpr auto name = const_name("complex128");
+    static constexpr int value = npy_api::NPY_CDOUBLE_;
+
+    static pybind11::dtype dtype()
+    {
+        return pybind11::dtype("complex128");
+    }
+
+    static std::string format()
+    {
+        return "=Zd";
+    }
+};
+
+template <>
+struct npy_format_descriptor<modmesh::Complex<float>>
+{
+    static constexpr auto name = const_name("complex64");
+    static constexpr int value = npy_api::NPY_CFLOAT_;
+
+    static pybind11::dtype dtype()
+    {
+        return pybind11::dtype("complex64");
+    }
+
+    static std::string format()
+    {
+        return "=Zf";
+    }
+};
+
+} /* end namespace detail */
+
+} /* end namespace pybind11 */
+
 namespace modmesh
 {
 
@@ -165,10 +212,29 @@ public:
         {
             stride.push_back(i * sizeof(T));
         }
+
+        // Special handling for Complex types
+        std::string format;
+        if constexpr (is_complex_v<T>)
+        {
+            if constexpr (std::is_same_v<T, Complex<double>>)
+            {
+                format = "=Zd";
+            }
+            else
+            {
+                format = "=Zf";
+            }
+        }
+        else
+        {
+            format = pybind11::format_descriptor<T>::format();
+        }
+
         return pybind11::buffer_info(
             array.data(), /* Pointer to buffer */
             sizeof(T), /* Size of one scalar */
-            pybind11::format_descriptor<T>::format(), /* Python struct-style format descriptor */
+            format, /* Python struct-style format descriptor */
             array.ndim(), /* Number of dimensions */
             std::vector<size_t>(array.shape().begin(), array.shape().end()), /* Buffer dimensions */
             stride /* Strides (in bytes) for each index */

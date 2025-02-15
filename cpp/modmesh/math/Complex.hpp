@@ -140,6 +140,7 @@ struct ComplexImpl
 template <typename T>
 using Complex = detail::ComplexImpl<T>;
 
+// These comparison operator would be used in SimpleArray::min(), SimpleArray::max().
 template <typename T>
 bool operator<(const Complex<T> & lhs, const Complex<T> & rhs)
 {

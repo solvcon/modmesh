@@ -247,15 +247,13 @@ class ComplexTC(unittest.TestCase, mm.testing.TestBase):
 
     def test_dtype_verification_float32(self):
         dtype = mm.complex64.dtype()
-        expected_dtype = np.dtype([('real_v', np.float32),
-                                   ('imag_v', np.float32)])
+        expected_dtype = np.dtype('complex64')
 
         self.assertEqual(dtype, expected_dtype)
 
     def test_dtype_verification_float64(self):
         dtype = mm.complex128.dtype()
-        expected_dtype = np.dtype([('real_v', np.float64),
-                                   ('imag_v', np.float64)])
+        expected_dtype = np.dtype('complex128')
 
         self.assertEqual(dtype, expected_dtype)
 

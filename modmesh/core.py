@@ -65,7 +65,7 @@ __all__ = [  # noqa: F822
     'SimpleArrayUint64',
     'SimpleArrayFloat32',
     'SimpleArrayFloat64',
-    'SimpleArrayComplex64',  
+    'SimpleArrayComplex64',
     'SimpleArrayComplex128',
     'SimpleCollectorBool',
     'SimpleCollectorInt8',

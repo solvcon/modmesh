@@ -52,6 +52,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapComplex
         : WrapBase<WrapComplex<value_type>, modmesh::Complex<value_type>, std::shared_ptr<modmesh::Complex<value_type>>>(mod, pyname, pydoc)
     {
         namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
+        static py::dtype complex_dtype = py::dtype(std::string(std::is_same<value_type, float>::value ? "complex64" : "complex128"));
 
         PYBIND11_NUMPY_DTYPE(wrapped_type, real_v, imag_v);
 
@@ -88,10 +89,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapComplex
             .def("norm", &wrapped_type::norm)
             .def("dtype",
                  []()
-                 { return py::dtype::of<wrapped_type>(); })
-            .def("__complex__",
-                 [](wrapped_type const & self)
-                 { return std::complex<T>(self.real(), self.imag()); });
+                 { return complex_dtype; });
     }
 
 }; /* end class WrapComplex */
