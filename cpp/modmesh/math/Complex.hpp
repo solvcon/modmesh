@@ -120,12 +120,12 @@ struct ComplexImpl
         return *this;
     }
 
-    bool operator<(const ComplexImpl<T> & rhs)
+    bool operator<(const ComplexImpl<T> & rhs) const
     {
         return this->norm() < rhs.norm();
     }
 
-    bool operator>(const ComplexImpl<T> & rhs)
+    bool operator>(const ComplexImpl<T> & rhs) const
     {
         return this->norm() > rhs.norm();
     }
