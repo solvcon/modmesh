@@ -263,9 +263,17 @@ class ComplexTC(unittest.TestCase, mm.testing.TestBase):
         sarr.fill(cplx)
         ndarr = np.array(sarr, copy=False, dtype=mm.complex64.dtype())
 
+        for i in range(10):
+            self.assertEqual(ndarr[i].real, self.real1_32)
+            self.assertEqual(ndarr[i].imag, self.imag1_32)
+
         self.assertEqual(ndarr.dtype, mm.complex64.dtype())
 
         sarr = mm.SimpleArrayComplex64(array=ndarr)
+
+        for i in range(10):
+            self.assertEqual(sarr[i].real, self.real1_32)
+            self.assertEqual(sarr[i].imag, self.imag1_32)
 
         self.assertEqual(sarr.ndarray.dtype, ndarr.dtype)
         self.assertEqual(10 * 4 * 2, sarr.nbytes)
@@ -276,9 +284,17 @@ class ComplexTC(unittest.TestCase, mm.testing.TestBase):
         sarr.fill(cplx)
         ndarr = np.array(sarr, copy=False, dtype=mm.complex128.dtype())
 
+        for i in range(10):
+            self.assertEqual(ndarr[i].real, self.real1_64)
+            self.assertEqual(ndarr[i].imag, self.imag1_64)
+
         self.assertEqual(ndarr.dtype, mm.complex128.dtype())
 
         sarr = mm.SimpleArrayComplex128(array=ndarr)
+
+        for i in range(10):
+            self.assertEqual(sarr[i].real, self.real1_64)
+            self.assertEqual(sarr[i].imag, self.imag1_64)
 
         self.assertEqual(sarr.ndarray.dtype, ndarr.dtype)
         self.assertEqual(10 * 8 * 2, sarr.nbytes)

@@ -123,14 +123,14 @@ static void verify_python_value_datatype(pybind11::object const & value, DataTyp
     {
         if (!pybind11::isinstance<Complex<float>>(value))
         {
-            throw pybind11::type_error("Data type mismatch, expected complex float");
+            throw pybind11::type_error("Data type mismatch, expected Complex64");
         }
     }
     case DataType::Complex128:
     {
         if (!pybind11::isinstance<Complex<double>>(value))
         {
-            throw pybind11::type_error("Data type mismatch, expected complex double");
+            throw pybind11::type_error("Data type mismatch, expected Complex128");
         }
     }
 
