@@ -33,6 +33,7 @@
 #include <modmesh/buffer/SimpleArray.hpp>
 #include <modmesh/buffer/pymod/TypeBroadcast.hpp>
 #include <modmesh/math/math.hpp>
+#include <modmesh/math/pymod/wrap_Complex.hpp>
 
 // We faced an issue where the template specialization for the caster of
 // SimpleArray<T> doesn't function correctly on both macOS and Windows.

@@ -32,15 +32,15 @@ struct npy_format_descriptor<modmesh::Complex<double>>
     }
 
 private:
-    static PyObject *dtype_ptr()
+    static PyObject * dtype_ptr()
     {
-        static PyObject *ptr = get_numpy_internals().get_type_info<modmesh::Complex<double>>(true)->dtype_ptr;
+        static PyObject * ptr = get_numpy_internals().get_type_info<modmesh::Complex<double>>(true)->dtype_ptr;
         return ptr;
     }
 
-    static bool direct_converter(PyObject *obj, void *&value)
+    static bool direct_converter(PyObject * obj, void *& value)
     {
-        auto &api = npy_api::get();
+        auto & api = npy_api::get();
         if (!PyObject_TypeCheck(obj, api.PyVoidArrType_Type_))
         {
             return false;
@@ -49,7 +49,7 @@ private:
         {
             if (api.PyArray_EquivTypes_(dtype_ptr(), descr.ptr()))
             {
-                value = ((PyVoidScalarObject_Proxy *) obj)->obval;
+                value = ((PyVoidScalarObject_Proxy *)obj)->obval;
                 return true;
             }
         }
@@ -82,15 +82,15 @@ struct npy_format_descriptor<modmesh::Complex<float>>
     }
 
 private:
-    static PyObject *dtype_ptr()
+    static PyObject * dtype_ptr()
     {
-        static PyObject *ptr = get_numpy_internals().get_type_info<modmesh::Complex<double>>(true)->dtype_ptr;
+        static PyObject * ptr = get_numpy_internals().get_type_info<modmesh::Complex<double>>(true)->dtype_ptr;
         return ptr;
     }
 
-    static bool direct_converter(PyObject *obj, void *&value)
+    static bool direct_converter(PyObject * obj, void *& value)
     {
-        auto &api = npy_api::get();
+        auto & api = npy_api::get();
         if (!PyObject_TypeCheck(obj, api.PyVoidArrType_Type_))
         {
             return false;
@@ -99,7 +99,7 @@ private:
         {
             if (api.PyArray_EquivTypes_(dtype_ptr(), descr.ptr()))
             {
-                value = ((PyVoidScalarObject_Proxy *) obj)->obval;
+                value = ((PyVoidScalarObject_Proxy *)obj)->obval;
                 return true;
             }
         }
@@ -110,5 +110,3 @@ private:
 } /* end namespace detail */
 
 } /* end namespace pybind11 */
-
-
