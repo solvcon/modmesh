@@ -42,53 +42,6 @@
 // See more details in the issue: https://github.com/solvcon/modmesh/issues/283
 #include <modmesh/buffer/pymod/SimpleArrayCaster.hpp>
 
-namespace pybind11
-{
-
-namespace detail
-{
-
-template <typename T>
-struct format_descriptor;
-
-template <>
-struct npy_format_descriptor<modmesh::Complex<double>>
-{
-    static constexpr auto name = const_name("complex128");
-    static constexpr int value = npy_api::NPY_CDOUBLE_;
-
-    static pybind11::dtype dtype()
-    {
-        return pybind11::dtype("complex128");
-    }
-
-    static std::string format()
-    {
-        return "=Zd";
-    }
-};
-
-template <>
-struct npy_format_descriptor<modmesh::Complex<float>>
-{
-    static constexpr auto name = const_name("complex64");
-    static constexpr int value = npy_api::NPY_CFLOAT_;
-
-    static pybind11::dtype dtype()
-    {
-        return pybind11::dtype("complex64");
-    }
-
-    static std::string format()
-    {
-        return "=Zf";
-    }
-};
-
-} /* end namespace detail */
-
-} /* end namespace pybind11 */
-
 namespace modmesh
 {
 

@@ -6,6 +6,7 @@
  */
 
 #include <modmesh/math/Complex.hpp>
+#include <modmesh/math/pymod/wrap_Complex.hpp>
 
 #include <type_traits>
 #include <cmath>
