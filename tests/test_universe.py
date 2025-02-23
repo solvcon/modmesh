@@ -402,6 +402,19 @@ class PointPadTB(ModMeshTB):
         self.assert_allclose(list(pp[1]), (200.2, 5, 0))
         self.assert_allclose(list(pp[2]), (3, 6, 0))
 
+        pp2 = self.pkls(ndim=2, nelem=3)
+        for i in range(len(pp)):
+            pp2.set_at(i, pp.get_at(i).x, pp.get_at(i).y)
+        self.assert_allclose(pp2.x, [1, 200.2, 3])
+        self.assert_allclose(pp2.y, [-700.3, 5, 6])
+        self.assertEqual(len(pp2.z), 0)
+
+        packed = pp2.pack_array().ndarray
+        self.assertEqual(packed.shape, (3, 2))
+        self.assert_allclose(list(packed[0]), (1, -700.3))
+        self.assert_allclose(list(packed[1]), (200.2, 5))
+        self.assert_allclose(list(packed[2]), (3, 6))
+
     def test_construct_3d(self):
         xarr = self.akls(array=np.array([1, 2, 3], dtype=self.dtype))
         yarr = self.akls(array=np.array([4, 5, 6], dtype=self.dtype))
@@ -419,6 +432,19 @@ class PointPadTB(ModMeshTB):
         self.assert_allclose(list(pp[0]), (1, -700.3, 7))
         self.assert_allclose(list(pp[1]), (200.2, 5, 8))
         self.assert_allclose(list(pp[2]), (3, 6, 213.9))
+
+        pp2 = self.pkls(ndim=3, nelem=3)
+        for i in range(len(pp)):
+            pp2.set_at(i, pp.get_at(i).x, pp.get_at(i).y, pp.get_at(i).z)
+        self.assert_allclose(pp2.x, [1, 200.2, 3])
+        self.assert_allclose(pp2.y, [-700.3, 5, 6])
+        self.assert_allclose(pp2.z, [7, 8, 213.9])
+
+        packed = pp2.pack_array().ndarray
+        self.assertEqual(packed.shape, (3, 3))
+        self.assert_allclose(list(packed[0]), (1, -700.3, 7))
+        self.assert_allclose(list(packed[1]), (200.2, 5, 8))
+        self.assert_allclose(list(packed[2]), (3, 6, 213.9))
 
     def test_append_2d(self):
         pp = self.pkls(ndim=2)

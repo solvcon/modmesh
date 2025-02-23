@@ -35,9 +35,13 @@ class Naca4TC(unittest.TestCase):
     def test_npoint(self):
         def _check_size(naca4):
             points = naca4.calc_points(5)
-            self.assertEqual((11, 2), points.shape)
+            self.assertEqual(points.ndim, 2)
+            self.assertEqual(len(points), 11)
+            self.assertEqual((11, 2), points.pack_array().shape)
             points = naca4.calc_points(11)
-            self.assertEqual((23, 2), points.shape)
+            self.assertEqual(points.ndim, 2)
+            self.assertEqual(len(points), 23)
+            self.assertEqual((23, 2), points.pack_array().shape)
 
         _check_size(_naca.Naca4(number='0012', open_trailing_edge=False,
                                 cosine_spacing=False))

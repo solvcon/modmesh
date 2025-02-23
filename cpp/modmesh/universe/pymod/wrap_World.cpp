@@ -115,6 +115,7 @@ public:
     using wrapped_type = typename base_type::wrapped_type;
 
     using value_type = typename base_type::wrapped_type::value_type;
+    using vector_type = typename base_type::wrapped_type::vector_type;
 
     friend typename base_type::root_base_type;
 
@@ -133,15 +134,16 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
     // Constructors
     (*this)
         .def(py::init<uint8_t>(), py::arg("ndim"))
-        .def(py::init<SimpleArray<T> &, SimpleArray<T> &, bool>(),
-             py::arg("x"),
-             py::arg("y"),
-             py::arg("clone"))
-        .def(py::init<SimpleArray<T> &, SimpleArray<T> &, SimpleArray<T> &, bool>(),
-             py::arg("x"),
-             py::arg("y"),
-             py::arg("z"),
-             py::arg("clone"))
+        .def_timed(py::init<uint8_t, size_t>(), py::arg("ndim"), py::arg("nelem"))
+        .def_timed(py::init<SimpleArray<T> &, SimpleArray<T> &, bool>(),
+                   py::arg("x"),
+                   py::arg("y"),
+                   py::arg("clone"))
+        .def_timed(py::init<SimpleArray<T> &, SimpleArray<T> &, SimpleArray<T> &, bool>(),
+                   py::arg("x"),
+                   py::arg("y"),
+                   py::arg("z"),
+                   py::arg("clone"))
         //
         ;
 
@@ -164,11 +166,33 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
             py::arg("x"),
             py::arg("y"),
             py::arg("z"))
+        .def_timed("pack_array", &wrapped_type::pack_array)
+        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
         .def("__len__", &wrapped_type::size)
         .def("__getitem__",
              [](wrapped_type const & self, size_t it)
              {
                  return self.get_at(it);
+             })
+        .def("get_at",
+             [](wrapped_type const & self, size_t it)
+             {
+                 return self.get_at(it);
+             })
+        .def("set_at",
+             [](wrapped_type & self, size_t it, vector_type const & v)
+             {
+                 self.set_at(it, v);
+             })
+        .def("set_at",
+             [](wrapped_type & self, size_t it, value_type x, value_type y)
+             {
+                 self.set_at(it, x, y);
+             })
+        .def("set_at",
+             [](wrapped_type & self, size_t it, value_type x, value_type y, value_type z)
+             {
+                 self.set_at(it, x, y, z);
              })
         //
         ;

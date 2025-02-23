@@ -134,6 +134,25 @@ public:
         }
     }
 
+    PointPad(uint8_t ndim, size_t nelem)
+        : m_ndim(ndim)
+        , m_x(nelem)
+        , m_y(nelem)
+        , m_z()
+    {
+        if (ndim == 3)
+        {
+            m_z.expand(nelem);
+        }
+        else if (ndim > 3)
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "PointPad::PointPad: "
+                << "ndim = " << ndim << " > 3");
+        }
+    }
+
     PointPad(SimpleArray<T> & x, SimpleArray<T> & y, bool clone)
         : m_ndim(2)
         , m_x(x, clone)
@@ -198,6 +217,30 @@ public:
 
     size_t size() const { return m_x.size(); }
 
+    SimpleArray<T> pack_array() const
+    {
+        using shape_type = typename SimpleArray<T>::shape_type;
+        SimpleArray<T> ret(shape_type{m_x.size(), m_ndim});
+        if (m_ndim == 3)
+        {
+            for (size_t i = 0; i < m_x.size(); ++i)
+            {
+                ret(i, 0) = m_x[i];
+                ret(i, 1) = m_y[i];
+                ret(i, 2) = m_z[i];
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < m_x.size(); ++i)
+            {
+                ret(i, 0) = m_x[i];
+                ret(i, 1) = m_y[i];
+            }
+        }
+        return ret;
+    }
+
     void expand(size_t length)
     {
         m_x.expand(length);
@@ -246,6 +289,20 @@ public:
             m_z.at(i) = v.z();
         }
     }
+    void set_at(size_t i, value_type x, value_type y)
+    {
+        m_x.at(i) = x;
+        m_y.at(i) = y;
+    }
+    void set_at(size_t i, value_type x, value_type y, value_type z)
+    {
+        m_x.at(i) = x;
+        m_y.at(i) = y;
+        if (m_ndim == 3)
+        {
+            m_z.at(i) = z;
+        }
+    }
 
     vector_type get(size_t i) const
     {
@@ -265,6 +322,20 @@ public:
         if (m_ndim == 3)
         {
             m_z[i] = v.z();
+        }
+    }
+    void set(size_t i, value_type x, value_type y)
+    {
+        m_x[i] = x;
+        m_y[i] = y;
+    }
+    void set(size_t i, value_type x, value_type y, value_type z)
+    {
+        m_x[i] = x;
+        m_y[i] = y;
+        if (m_ndim == 3)
+        {
+            m_z[i] = z;
         }
     }
 

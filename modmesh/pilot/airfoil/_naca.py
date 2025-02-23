@@ -186,18 +186,14 @@ class Naca4(object):
             xcarr = 0.5 * (1.0 - np.cos(_))
         else:
             xcarr = np.linspace(0.0, 1.0, npoint + 1, dtype='float64')
-        # Prepare and populate arrays for (xu, yu), (xl, yl)
-        xuarr = np.empty_like(xcarr)
-        yuarr = np.empty_like(xcarr)
-        xlarr = np.empty_like(xcarr)
-        ylarr = np.empty_like(xcarr)
+        nmid = len(xcarr)
+        pp = core.PointPadFp64(ndim=2, nelem=nmid * 2 - 1)
         for i, xc in enumerate(xcarr):
-            xuarr[i], yuarr[i], xlarr[i], ylarr[i] = self.calc_ul(xc)
-        # Make return array.
-        xrarr = np.concatenate([xuarr[::-1], xlarr[1:]])
-        yrarr = np.concatenate([yuarr[::-1], ylarr[1:]])
-        ret = np.vstack([xrarr, yrarr]).T.copy()
-        return ret
+            xu, yu, xl, yl = self.calc_ul(xc)
+            pp.set_at(nmid - 1 - i, xu, yu)
+            if i > 0:
+                pp.set_at(nmid - 1 + i, xl, yl)
+        return pp
 
 
 class Naca4Sampler(object):
@@ -221,9 +217,10 @@ class Naca4Sampler(object):
         :return: None
         """
         self.points = self.naca4.calc_points(npoint)
-        self.points *= fac
-        self.points[:, 0] += off_x
-        self.points[:, 1] += off_y
+        self.points.x.ndarray[:] *= fac
+        self.points.y.ndarray[:] *= fac
+        self.points.x.ndarray[:] += off_x
+        self.points.y.ndarray[:] += off_y
 
     def draw_line(self):
         """
@@ -233,9 +230,10 @@ class Naca4Sampler(object):
         """
         points = self.points
         world = self.world
-        for it in range(points.shape[0] - 1):
-            world.add_edge(points[it, 0], points[it, 1], 0,
-                           points[it + 1, 0], points[it + 1, 1], 0)
+        for it in range(len(points) - 1):
+            p0 = points.get_at(it)
+            p1 = points.get_at(it + 1)
+            world.add_edge(p0.x, p0.y, 0, p1.x, p1.y, 0)
 
     def draw_cbc(self, spacing=0.01):
         """
@@ -248,17 +246,20 @@ class Naca4Sampler(object):
         points = self.points
         world = self.world
 
-        segments = np.hypot((points[:-1, 0] - points[1:, 0]),
-                            (points[:-1, 1] - points[1:, 1])) // spacing
+        ptsx = points.x.ndarray
+        ptsy = points.x.ndarray
+        segments = np.hypot(ptsx[:-1] - ptsx[1:],
+                            ptsy[:-1] - ptsy[1:]) // spacing
         nsample = np.where(segments > 2, segments - 1, 2).astype(int)
-        for it in range(points.shape[0] - 1):
-            p1 = points[it] + (1 / 3) * (points[it + 1] - points[it])
-            p2 = points[it] + (2 / 3) * (points[it + 1] - points[it])
-            b = world.add_bezier([Vector(points[it, 0], points[it, 1], 0),
+        for it in range(len(points) - 1):
+            p0 = np.array(points[it])
+            p3 = np.array(points[it + 1])
+            p1 = p0 + (1 / 3) * (p3 - p0)
+            p2 = p0 + (2 / 3) * (p3 - p0)
+            b = world.add_bezier([Vector(p0[0], p0[1], 0),
                                   Vector(p1[0], p1[1], 0),
                                   Vector(p2[0], p2[1], 0),
-                                  Vector(points[it + 1, 0], points[it + 1, 1],
-                                         0)])
+                                  Vector(p3[0], p3[1], 0)])
             b.sample(nsample[it])
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
