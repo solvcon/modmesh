@@ -27,6 +27,7 @@
  */
 
 #include <modmesh/universe/pymod/universe_pymod.hpp> // Must be the first include.
+#include <pybind11/operators.h>
 
 namespace modmesh
 {
@@ -86,37 +87,14 @@ WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const c
         //
         ;
 
+    // Wrap for operators.
     (*this)
-        .def(
-            "__iadd__",
-            [](wrapped_type & self, wrapped_type const & o) -> auto &
-            {
-                self += o;
-                return self;
-            })
-        .def(
-            "__iadd__",
-            [](wrapped_type & self, value_type v) -> auto &
-            {
-                self += v;
-                return self;
-            })
-        .def(
-            "__isub__",
-            [](wrapped_type & self, wrapped_type const & o) -> auto &
-            {
-                self -= o;
-                return self;
-            })
-        .def(
-            "__isub__",
-            [](wrapped_type & self, value_type v) -> auto &
-            {
-                self -= v;
-                return self;
-            })
-        .def("__imul__", &wrapped_type::operator*=)
-        .def("__itruediv__", &wrapped_type::operator/=)
+        .def(py::self += py::self)
+        .def(py::self += value_type())
+        .def(py::self -= py::self)
+        .def(py::self -= value_type())
+        .def(py::self *= value_type())
+        .def(py::self /= value_type())
         //
         ;
 
