@@ -128,6 +128,34 @@ class TimeSeriesDataFrame(object):
     def index(self):
         return self._index_data.ndarray
 
+    def reorder(self, columns):
+        """
+        Reorder the data frame based on the index
+
+        :param columns: column names required in reordered TimeSeriesDataFrame
+        :type columns: Iterable[str]
+        :return: reordered TimeSeriesDataFrame
+        """
+        if self._index_data is None:
+            raise Exception("TimeSeriesDataFrame: data frame has no index")
+
+        sorted_indices = self._index_data.argsort()
+
+        ret = TimeSeriesDataFrame()
+
+        ret._index_name = self._index_name
+        ret._index_data = self._index_data.take_along_axis(sorted_indices)
+
+        for name in columns:
+            if name not in self._columns:
+                raise Exception("Column '{}' does not exist".format(name))
+            new_col = self._data[self._columns.index(name)].take_along_axis(
+                sorted_indices)
+            ret._columns.append(name)
+            ret._data.append(new_col)
+
+        return ret
+
 
 class TimeSeriesDataFrameTC(unittest.TestCase):
 
@@ -157,6 +185,18 @@ class TimeSeriesDataFrameTC(unittest.TestCase):
 -0.1895751953125,-0.00128173828125,1602596010369299968,-0.04925537109375
 -0.18841552734375,6.103515625e-05,1602596010389309952,-0.0489501953125
 -0.1884765625,-0.00042724609375,1602596010409309952,-0.04840087890625
+"""
+    unsorted_dlc_data = """EPOCH ,DELTA_VEL[1] ,DELTA_VEL[2] ,DELTA_VEL[3]
+1.60259601024931e+18,-0.1903076171875,-0.0009765625,-0.0489501953125
+1.60259601034931e+18,-0.18902587890625,-0.000732421875,-0.0489501953125
+1.60259601040931e+18,-0.1884765625,-0.00042724609375,-0.04840087890625
+1.60259601032931e+18,-0.18951416015625,-0.000732421875,-0.0489501953125
+1.6025960102293e+18,-0.18792724609375,-0.00048828125,-0.0478515625
+1.6025960103693e+18,-0.1895751953125,-0.00128173828125,-0.04925537109375
+1.60259601030931e+18,-0.188720703125,-0.00103759765625,-0.0504150390625
+1.60259601026931e+18,-0.18743896484375,0.0006103515625,-0.0498046875
+1.60259601028932e+18,-0.18927001953125,-0.0009765625,-0.04840087890625
+1.60259601038931e+18,-0.18841552734375,6.103515625e-05,-0.0489501953125
 """
 
     def test_read_from_text_file_basic(self):
@@ -217,6 +257,17 @@ class TimeSeriesDataFrameTC(unittest.TestCase):
         tsdf.read_from_text_file(StringIO(self.dlc_data))
 
         col_data = tsdf['DELTA_VEL[1]']
+
+        nd_arr = np.genfromtxt(StringIO(self.dlc_data), delimiter=',')[1:]
+
+        self.assertEqual(list(col_data), list(nd_arr[:, 1]))
+
+    def test_dataframe_reorder(self):
+        tsdf = TimeSeriesDataFrame()
+        tsdf.read_from_text_file(StringIO(self.unsorted_dlc_data))
+        reordered_tsdf = tsdf.reorder(tsdf.columns)
+
+        col_data = reordered_tsdf['DELTA_VEL[1]']
 
         nd_arr = np.genfromtxt(StringIO(self.dlc_data), delimiter=',')[1:]
 
