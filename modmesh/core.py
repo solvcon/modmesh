@@ -96,6 +96,8 @@ __all__ = [  # noqa: F822
     'Edge3dFp64',
     'Bezier3dFp32',
     'Bezier3dFp64',
+    'PointPadFp32',
+    'PointPadFp64',
     'WorldFp32',
     'WorldFp64',
     'testhelper'
