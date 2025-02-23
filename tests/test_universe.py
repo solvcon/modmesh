@@ -386,6 +386,25 @@ class PointPadTB(ModMeshTB):
         pp3d = self.pkls(ndim=3)
         self.assertEqual(pp3d.ndim, 3)
 
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 0 < 2"):
+            self.pkls(ndim=0)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 0 < 2"):
+            self.pkls(ndim=0, nelem=2)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 1 < 2"):
+            self.pkls(ndim=1)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 1 < 2"):
+            self.pkls(ndim=1, nelem=3)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 4 > 3"):
+            self.pkls(ndim=4)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 4 > 3"):
+            self.pkls(ndim=4, nelem=5)
+
     def test_construct_2d(self):
         xarr = self.akls(array=np.array([1, 2, 3], dtype=self.dtype))
         yarr = self.akls(array=np.array([4, 5, 6], dtype=self.dtype))
@@ -402,6 +421,19 @@ class PointPadTB(ModMeshTB):
         self.assert_allclose(list(pp[1]), (200.2, 5, 0))
         self.assert_allclose(list(pp[2]), (3, 6, 0))
 
+        pp2 = self.pkls(ndim=2, nelem=3)
+        for i in range(len(pp)):
+            pp2.set_at(i, pp.get_at(i).x, pp.get_at(i).y)
+        self.assert_allclose(pp2.x, [1, 200.2, 3])
+        self.assert_allclose(pp2.y, [-700.3, 5, 6])
+        self.assertEqual(len(pp2.z), 0)
+
+        packed = pp2.pack_array().ndarray
+        self.assertEqual(packed.shape, (3, 2))
+        self.assert_allclose(list(packed[0]), (1, -700.3))
+        self.assert_allclose(list(packed[1]), (200.2, 5))
+        self.assert_allclose(list(packed[2]), (3, 6))
+
     def test_construct_3d(self):
         xarr = self.akls(array=np.array([1, 2, 3], dtype=self.dtype))
         yarr = self.akls(array=np.array([4, 5, 6], dtype=self.dtype))
@@ -412,6 +444,27 @@ class PointPadTB(ModMeshTB):
         self.assert_allclose(pp.y, [4, 5, 6])
         self.assert_allclose(pp.z, [7, 8, 9])
 
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 3 is out of bounds with size 3"):
+            pp.x_at(3)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 3 is out of bounds with size 3"):
+            pp.y_at(3)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 3 is out of bounds with size 3"):
+            pp.z_at(3)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 3 is out of bounds with size 3"):
+            pp.get_at(3)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 3 is out of bounds with size 3"):
+            pp.set_at(3, self.vkls(0, 0, 0))
+
         # Test zero-copy writing
         pp.x[1] = 200.2
         pp.y[0] = -700.3
@@ -419,6 +472,19 @@ class PointPadTB(ModMeshTB):
         self.assert_allclose(list(pp[0]), (1, -700.3, 7))
         self.assert_allclose(list(pp[1]), (200.2, 5, 8))
         self.assert_allclose(list(pp[2]), (3, 6, 213.9))
+
+        pp2 = self.pkls(ndim=3, nelem=3)
+        for i in range(len(pp)):
+            pp2.set_at(i, pp.get_at(i).x, pp.get_at(i).y, pp.get_at(i).z)
+        self.assert_allclose(pp2.x, [1, 200.2, 3])
+        self.assert_allclose(pp2.y, [-700.3, 5, 6])
+        self.assert_allclose(pp2.z, [7, 8, 213.9])
+
+        packed = pp2.pack_array().ndarray
+        self.assertEqual(packed.shape, (3, 3))
+        self.assert_allclose(list(packed[0]), (1, -700.3, 7))
+        self.assert_allclose(list(packed[1]), (200.2, 5, 8))
+        self.assert_allclose(list(packed[2]), (3, 6, 213.9))
 
     def test_append_2d(self):
         pp = self.pkls(ndim=2)
