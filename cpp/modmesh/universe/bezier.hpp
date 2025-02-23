@@ -130,7 +130,14 @@ public:
             throw std::invalid_argument(
                 Formatter()
                 << "PointPad::PointPad: "
-                << "ndim = " << ndim << " > 3");
+                << "ndim = " << int(ndim) << " > 3");
+        }
+        else if (ndim < 2)
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "PointPad::PointPad: "
+                << "ndim = " << int(ndim) << " < 2");
         }
     }
 
@@ -149,7 +156,14 @@ public:
             throw std::invalid_argument(
                 Formatter()
                 << "PointPad::PointPad: "
-                << "ndim = " << ndim << " > 3");
+                << "ndim = " << int(ndim) << " > 3");
+        }
+        else if (ndim < 2)
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "PointPad::PointPad: "
+                << "ndim = " << int(ndim) << " < 2");
         }
     }
 
