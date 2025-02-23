@@ -242,7 +242,7 @@ class Naca4Sampler(object):
         :param spacing: Spacing for sampling cubic Bezier curve.
         :return: None
         """
-        Vector = core.Vector3dFp64
+        Point = core.Point3dFp64
         points = self.points
         world = self.world
 
@@ -256,10 +256,10 @@ class Naca4Sampler(object):
             p3 = np.array(points[it + 1])
             p1 = p0 + (1 / 3) * (p3 - p0)
             p2 = p0 + (2 / 3) * (p3 - p0)
-            b = world.add_bezier([Vector(p0[0], p0[1], 0),
-                                  Vector(p1[0], p1[1], 0),
-                                  Vector(p2[0], p2[1], 0),
-                                  Vector(p3[0], p3[1], 0)])
+            b = world.add_bezier([Point(p0[0], p0[1], 0),
+                                  Point(p1[0], p1[1], 0),
+                                  Point(p2[0], p2[1], 0),
+                                  Point(p3[0], p3[1], 0)])
             b.sample(nsample[it])
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

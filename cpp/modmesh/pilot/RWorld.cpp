@@ -62,7 +62,7 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
                 SimpleArray<float> sarr = makeSimpleArray<float>(barray, small_vector<size_t>{npoint, 3}, /*view*/ true);
                 for (size_t i = 0; i < world->nvertex(); ++i)
                 {
-                    Vector3dFp64 const & v = world->vertex(i);
+                    Point3dFp64 const & v = world->vertex(i);
                     sarr(i, 0) = v[0];
                     sarr(i, 1) = v[1];
                     sarr(i, 2) = v[2];
@@ -130,7 +130,7 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
     , m_renderer(new Qt3DRender::QGeometryRenderer())
     , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
 {
-    size_t npoint = world->nedge() * 2;
+    size_t npoint = world->nsegment() * 2;
     for (size_t i = 0; i < world->nbezier(); ++i)
     {
         npoint += world->bezier(i).nlocus();
@@ -157,9 +157,9 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
                 barray.resize(npoint * 3 * sizeof(float));
                 SimpleArray<float> sarr = makeSimpleArray<float>(barray, small_vector<size_t>{npoint, 3}, /*view*/ true);
                 size_t ipt = 0;
-                for (size_t i = 0; i < world->nedge(); ++i)
+                for (size_t i = 0; i < world->nsegment(); ++i)
                 {
-                    Edge3dFp64 const & e = world->edge(i);
+                    Segment3dFp64 const & e = world->segment(i);
                     sarr(ipt, 0) = e.v0()[0];
                     sarr(ipt, 1) = e.v0()[1];
                     sarr(ipt, 2) = e.v0()[2];
@@ -174,7 +174,7 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
                     Bezier3dFp64 const & b = world->bezier(i);
                     for (size_t j = 0; j < b.nlocus(); ++j)
                     {
-                        Vector3dFp64 const & v = b.locus(j);
+                        Point3dFp64 const & v = b.locus(j);
                         sarr(ipt, 0) = v[0];
                         sarr(ipt, 1) = v[1];
                         sarr(ipt, 2) = v[2];
@@ -197,7 +197,7 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
             indices->setVertexBaseType(Qt3DCore::QAttribute::UnsignedInt);
             indices->setAttributeType(Qt3DCore::QAttribute::IndexAttribute);
 
-            size_t nedge = world->nedge();
+            size_t nedge = world->nsegment();
             {
                 for (size_t i = 0; i < world->nbezier(); ++i)
                 {
@@ -213,7 +213,7 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
                 SimpleArray<uint32_t> sarr = makeSimpleArray<uint32_t>(barray, small_vector<size_t>{nedge, 2}, /*view*/ true);
                 size_t ied = 0;
                 size_t ipt = 0;
-                for (size_t i = 0; i < world->nedge(); ++i)
+                for (size_t i = 0; i < world->nsegment(); ++i)
                 {
                     sarr(ied, 0) = ipt++;
                     sarr(ied, 1) = ipt++;

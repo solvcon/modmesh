@@ -446,7 +446,7 @@ class RectangularDomain(PilotFeature):
         for ed in self.edges:
             p0 = self.points[ed[0]]
             p1 = self.points[ed[1]]
-            w.add_edge(p0[0], p0[1], 0, p1[0], p1[1], 0)
+            w.add_segment(p0[0], p0[1], 0, p1[0], p1[1], 0)
         return w
 
     def run(self):

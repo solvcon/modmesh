@@ -57,9 +57,9 @@ public:
     using real_type = T;
     using value_type = T;
     using size_type = typename NumberBase<int32_t, T>::size_type;
-    using vector_type = Vector3d<T>;
+    using vector_type = Point3d<T>;
     using vertex_type = vector_type;
-    using edge_type = Edge3d<T>;
+    using segment_type = Segment3d<T>;
     using bezier_type = Bezier3d<T>;
 
     template <typename... Args>
@@ -96,23 +96,23 @@ public:
         return m_vertices[i];
     }
 
-    void add_edge(edge_type const & edge);
-    void add_edge(value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
+    void add_segment(segment_type const & segment);
+    void add_segment(value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
     {
-        add_edge(edge_type(x0, y0, z0, x1, y1, z1));
+        add_segment(segment_type(x0, y0, z0, x1, y1, z1));
     }
-    size_t nedge() const { return m_edges.size(); }
-    edge_type const & edge(size_t i) const { return m_edges[i]; }
-    edge_type & edge(size_t i) { return m_edges[i]; }
-    edge_type const & edge_at(size_t i) const
+    size_t nsegment() const { return m_segments.size(); }
+    segment_type const & segment(size_t i) const { return m_segments[i]; }
+    segment_type & segment(size_t i) { return m_segments[i]; }
+    segment_type const & segment_at(size_t i) const
     {
-        check_size(i, m_edges.size(), "edge");
-        return m_edges[i];
+        check_size(i, m_segments.size(), "edge");
+        return m_segments[i];
     }
-    edge_type & edge_at(size_t i)
+    segment_type & segment_at(size_t i)
     {
-        check_size(i, m_edges.size(), "edge");
-        return m_edges[i];
+        check_size(i, m_segments.size(), "edge");
+        return m_segments[i];
     }
 
     void add_bezier(std::vector<vector_type> const & controls);
@@ -141,7 +141,7 @@ private:
     }
 
     SimpleCollector<vertex_type> m_vertices;
-    std::deque<Edge3d<T>> m_edges;
+    std::deque<Segment3d<T>> m_segments;
     std::deque<Bezier3d<T>> m_beziers;
 
 }; /* end class World */
@@ -153,9 +153,9 @@ void World<T>::add_vertex(vertex_type const & vertex)
 }
 
 template <typename T>
-void World<T>::add_edge(edge_type const & edge)
+void World<T>::add_segment(segment_type const & segment)
 {
-    m_edges.emplace_back(edge);
+    m_segments.emplace_back(segment);
 }
 
 template <typename T>
