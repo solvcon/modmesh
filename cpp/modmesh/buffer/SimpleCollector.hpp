@@ -57,6 +57,11 @@ public:
     {
     }
 
+    SimpleCollector(SimpleArray<T> & arr, bool clone)
+        : m_expander(BufferExpander::construct(arr.buffer().shared_from_this(), clone))
+    {
+    }
+
     SimpleCollector()
         : m_expander(BufferExpander::construct())
     {

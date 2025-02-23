@@ -27,6 +27,8 @@
 
 import unittest
 
+import numpy as np
+
 import modmesh
 from modmesh.testing import TestBase as ModMeshTB
 
@@ -369,6 +371,159 @@ class Bezier3dFp64TC(Bezier3dTB, unittest.TestCase):
     def setUp(self):
         self.vkls = modmesh.Vector3dFp64
         self.bkls = modmesh.Bezier3dFp64
+
+    def assert_allclose(self, *args, **kw):
+        if 'rtol' not in kw:
+            kw['rtol'] = 1.e-15
+        return super().assert_allclose(*args, **kw)
+
+
+class PointPadTB(ModMeshTB):
+
+    def test_ndim(self):
+        pp2d = self.pkls(ndim=2)
+        self.assertEqual(pp2d.ndim, 2)
+        pp3d = self.pkls(ndim=3)
+        self.assertEqual(pp3d.ndim, 3)
+
+    def test_construct_2d(self):
+        xarr = self.akls(array=np.array([1, 2, 3], dtype=self.dtype))
+        yarr = self.akls(array=np.array([4, 5, 6], dtype=self.dtype))
+        pp = self.pkls(x=xarr, y=yarr, clone=False)
+        self.assertEqual(pp.ndim, 2)
+        self.assert_allclose(pp.x, [1, 2, 3])
+        self.assert_allclose(pp.y, [4, 5, 6])
+        self.assertEqual(len(pp.z), 0)
+
+        # Test zero-copy writing
+        pp.x[1] = 200.2
+        pp.y[0] = -700.3
+        self.assert_allclose(list(pp[0]), (1, -700.3, 0))
+        self.assert_allclose(list(pp[1]), (200.2, 5, 0))
+        self.assert_allclose(list(pp[2]), (3, 6, 0))
+
+    def test_construct_3d(self):
+        xarr = self.akls(array=np.array([1, 2, 3], dtype=self.dtype))
+        yarr = self.akls(array=np.array([4, 5, 6], dtype=self.dtype))
+        zarr = self.akls(array=np.array([7, 8, 9], dtype=self.dtype))
+        pp = self.pkls(x=xarr, y=yarr, z=zarr, clone=False)
+        self.assertEqual(pp.ndim, 3)
+        self.assert_allclose(pp.x, [1, 2, 3])
+        self.assert_allclose(pp.y, [4, 5, 6])
+        self.assert_allclose(pp.z, [7, 8, 9])
+
+        # Test zero-copy writing
+        pp.x[1] = 200.2
+        pp.y[0] = -700.3
+        pp.z[2] = 213.9
+        self.assert_allclose(list(pp[0]), (1, -700.3, 7))
+        self.assert_allclose(list(pp[1]), (200.2, 5, 8))
+        self.assert_allclose(list(pp[2]), (3, 6, 213.9))
+
+    def test_append_2d(self):
+        pp = self.pkls(ndim=2)
+        self.assertEqual(pp.ndim, 2)
+        self.assertEqual(len(pp), 0)
+        pp.append(1.1, 2.2)
+        self.assertEqual(len(pp), 1)
+        self.assert_allclose(pp.x_at(0), 1.1)
+        self.assert_allclose(pp.y_at(0), 2.2)
+        pp.append(1.1 * 3, 2.2 * 3)
+        self.assertEqual(len(pp), 2)
+        self.assert_allclose(pp.x_at(1), 1.1 * 3)
+        self.assert_allclose(pp.y_at(1), 2.2 * 3)
+        pp.append(1.1 * 3.1, 2.2 * 3.1)
+        self.assertEqual(len(pp), 3)
+        self.assert_allclose(pp.x_at(2), 1.1 * 3.1)
+        self.assert_allclose(pp.y_at(2), 2.2 * 3.1)
+
+        with self.assertRaisesRegex(
+                IndexError, "PointPad::append: ndim must be 3 but is 2"):
+            pp.append(3.2, 4.1, 5.7)
+        self.assertEqual(len(pp), 3)
+
+        # Test batch interface
+        self.assert_allclose(pp.x, [1.1, 1.1 * 3, 1.1 * 3.1])
+        self.assert_allclose(pp.y, [2.2, 2.2 * 3, 2.2 * 3.1])
+        pp.x[0] = -10.9
+        pp.x.ndarray[2] = -13.2
+        self.assert_allclose(pp.x_at(0), -10.9)
+        self.assert_allclose(pp.x_at(1), 1.1 * 3)
+        self.assert_allclose(pp.x_at(2), -13.2)
+        pp.y[1] = -0.93
+        pp.y.ndarray[2] = 29.1
+        self.assert_allclose(pp.y_at(0), 2.2)
+        self.assert_allclose(pp.y_at(1), -0.93)
+        self.assert_allclose(pp.y_at(2), 29.1)
+        self.assertEqual(len(pp.z), 0)
+
+    def test_append_3d(self):
+        pp = self.pkls(ndim=3)
+        self.assertEqual(pp.ndim, 3)
+        self.assertEqual(len(pp), 0)
+        pp.append(1.1, 2.2, 3.3)
+        self.assertEqual(len(pp), 1)
+        self.assert_allclose(pp.x_at(0), 1.1)
+        self.assert_allclose(pp.y_at(0), 2.2)
+        self.assert_allclose(pp.z_at(0), 3.3)
+        pp.append(1.1 * 5, 2.2 * 5, 3.3 * 5)
+        self.assertEqual(len(pp), 2)
+        self.assert_allclose(pp.x_at(1), 1.1 * 5)
+        self.assert_allclose(pp.y_at(1), 2.2 * 5)
+        self.assert_allclose(pp.z_at(1), 3.3 * 5)
+        pp.append(1.1 * 5.1, 2.2 * 5.1, 3.3 * 5.1)
+        self.assertEqual(len(pp), 3)
+        self.assert_allclose(pp.x_at(2), 1.1 * 5.1)
+        self.assert_allclose(pp.y_at(2), 2.2 * 5.1)
+        self.assert_allclose(pp.z_at(2), 3.3 * 5.1)
+
+        with self.assertRaisesRegex(
+                IndexError, "PointPad::append: ndim must be 2 but is 3"):
+            pp.append(3.2, 4.1)
+        self.assertEqual(len(pp), 3)
+
+        # Test batch interface
+        self.assert_allclose(pp.x, [1.1, 1.1 * 5, 1.1 * 5.1])
+        self.assert_allclose(pp.y, [2.2, 2.2 * 5, 2.2 * 5.1])
+        self.assert_allclose(pp.z, [3.3, 3.3 * 5, 3.3 * 5.1])
+        pp.x[0] = -10.9
+        pp.x.ndarray[2] = -13.2
+        self.assert_allclose(pp.x_at(0), -10.9)
+        self.assert_allclose(pp.x_at(1), 1.1 * 5)
+        self.assert_allclose(pp.x_at(2), -13.2)
+        pp.y[1] = -0.93
+        pp.y.ndarray[2] = 29.1
+        self.assert_allclose(pp.y_at(0), 2.2)
+        self.assert_allclose(pp.y_at(1), -0.93)
+        self.assert_allclose(pp.y_at(2), 29.1)
+        pp.z[0] = 2.31
+        pp.z.ndarray[1] = 8.23
+        self.assert_allclose(pp.z_at(0), 2.31)
+        self.assert_allclose(pp.z_at(1), 8.23)
+        self.assert_allclose(pp.z_at(2), 3.3 * 5.1)
+
+
+class PointPadFp32TC(PointPadTB, unittest.TestCase):
+
+    def setUp(self):
+        self.dtype = 'float32'
+        self.akls = modmesh.SimpleArrayFloat32
+        self.vkls = modmesh.Vector3dFp32
+        self.pkls = modmesh.PointPadFp32
+
+    def assert_allclose(self, *args, **kw):
+        if 'rtol' not in kw:
+            kw['rtol'] = 1.e-7
+        return super().assert_allclose(*args, **kw)
+
+
+class PointPadFp64TC(PointPadTB, unittest.TestCase):
+
+    def setUp(self):
+        self.dtype = 'float64'
+        self.akls = modmesh.SimpleArrayFloat64
+        self.vkls = modmesh.Vector3dFp64
+        self.pkls = modmesh.PointPadFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:

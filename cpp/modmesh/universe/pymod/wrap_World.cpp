@@ -52,7 +52,7 @@ protected:
 
     WrapVector3d(pybind11::module & mod, char const * pyname, char const * pydoc);
 };
-/* end class WrapVector3dF32 */
+/* end class WrapVector3d */
 
 template <typename T>
 WrapVector3d<T>::WrapVector3d(pybind11::module & mod, const char * pyname, const char * pydoc)
@@ -100,6 +100,106 @@ WrapVector3d<T>::WrapVector3d(pybind11::module & mod, const char * pyname, const
        DECL_WRAP(y)
        DECL_WRAP(z)
        ;
+#undef DECL_WRAP
+    // clang-format on
+}
+
+template <typename T>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapPointPad
+    : public WrapBase<WrapPointPad<T>, PointPad<T>>
+{
+
+public:
+
+    using base_type = WrapBase<WrapPointPad<T>, PointPad<T>>;
+    using wrapped_type = typename base_type::wrapped_type;
+
+    using value_type = typename base_type::wrapped_type::value_type;
+
+    friend typename base_type::root_base_type;
+
+protected:
+
+    WrapPointPad(pybind11::module & mod, char const * pyname, char const * pydoc);
+};
+/* end class WrapPointPad */
+
+template <typename T>
+WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const char * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    // Constructors
+    (*this)
+        .def(py::init<uint8_t>(), py::arg("ndim"))
+        .def(py::init<SimpleArray<T> &, SimpleArray<T> &, bool>(),
+             py::arg("x"),
+             py::arg("y"),
+             py::arg("clone"))
+        .def(py::init<SimpleArray<T> &, SimpleArray<T> &, SimpleArray<T> &, bool>(),
+             py::arg("x"),
+             py::arg("y"),
+             py::arg("z"),
+             py::arg("clone"))
+        //
+        ;
+
+    (*this)
+        .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def(
+            "append",
+            [](wrapped_type & self, value_type x, value_type y)
+            {
+                self.append(x, y);
+            },
+            py::arg("x"),
+            py::arg("y"))
+        .def(
+            "append",
+            [](wrapped_type & self, value_type x, value_type y, value_type z)
+            {
+                self.append(x, y, z);
+            },
+            py::arg("x"),
+            py::arg("y"),
+            py::arg("z"))
+        .def("__len__", &wrapped_type::size)
+        .def("__getitem__",
+             [](wrapped_type const & self, size_t it)
+             {
+                 return self.get_at(it);
+             })
+        //
+        ;
+
+    // x, y, z element accessors.
+#define DECL_WRAP(NAME)                         \
+    .def(                                       \
+        #NAME,                                  \
+        [](wrapped_type const & self, size_t i) \
+        { return self.NAME(i); })
+    // clang-format off
+    (*this)
+        DECL_WRAP(x_at)
+        DECL_WRAP(y_at)
+        DECL_WRAP(z_at)
+        ;
+#undef DECL_WRAP
+    // clang-format on
+
+    // x, y, z array/batch accessors.
+#define DECL_WRAP(NAME)         \
+    .def_property_readonly(     \
+        #NAME,                  \
+        [](wrapped_type & self) \
+        { return self.NAME(); })
+    // clang-format off
+    (*this)
+        DECL_WRAP(x)
+        DECL_WRAP(y)
+        DECL_WRAP(z)
+        ;
 #undef DECL_WRAP
     // clang-format on
 }
@@ -416,6 +516,8 @@ void wrap_World(pybind11::module & mod)
 {
     WrapVector3d<float>::commit(mod, "Vector3dFp32", "Vector3dFp32");
     WrapVector3d<double>::commit(mod, "Vector3dFp64", "Vector3dFp64");
+    WrapPointPad<float>::commit(mod, "PointPadFp32", "PointPadFp32");
+    WrapPointPad<double>::commit(mod, "PointPadFp64", "PointPadFp64");
     WrapEdge3d<float>::commit(mod, "Edge3dFp32", "Edge3dFp32");
     WrapEdge3d<double>::commit(mod, "Edge3dFp64", "Edge3dFp64");
     WrapBezier3d<float>::commit(mod, "Bezier3dFp32", "Bezier3dFp32");

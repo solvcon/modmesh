@@ -32,13 +32,12 @@
 #include <modmesh/buffer/buffer.hpp>
 #include <modmesh/universe/bernstein.hpp>
 
-#include <deque>
-
 namespace modmesh
 {
 
+// TODO: Vector3d should be renamed as Point3d
 /**
- * Vector or point in three-dimensional space.
+ * Point in three-dimensional space.
  *
  * @tparam T floating-point type
  */
@@ -110,8 +109,181 @@ private:
 using Vector3dFp32 = Vector3d<float>;
 using Vector3dFp64 = Vector3d<double>;
 
+template <typename T>
+class PointPad
+    : public NumberBase<int32_t, T>
+{
+
+public:
+
+    using real_type = T;
+    using value_type = T;
+    using vector_type = Vector3d<T>;
+
+    PointPad() = delete;
+
+    PointPad(uint8_t ndim)
+        : m_ndim(ndim)
+    {
+        if (ndim > 3)
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "PointPad::PointPad: "
+                << "ndim = " << ndim << " > 3");
+        }
+    }
+
+    PointPad(SimpleArray<T> & x, SimpleArray<T> & y, bool clone)
+        : m_ndim(2)
+        , m_x(x, clone)
+        , m_y(y, clone)
+    {
+        if (x.size() != y.size())
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "PointPad::PointPad: "
+                << "x.size() " << x.size() << " y.size() " << y.size()
+                << " are not the same");
+        }
+    }
+
+    PointPad(SimpleArray<T> & x, SimpleArray<T> & y, SimpleArray<T> & z, bool clone)
+        : m_ndim(3)
+        , m_x(x, clone)
+        , m_y(y, clone)
+        , m_z(z, clone)
+    {
+        if (x.size() != y.size() || x.size() != z.size() || y.size() != z.size())
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "PointPad::PointPad: "
+                << "x.size() " << x.size() << " y.size() " << y.size() << " z.size() " << z.size()
+                << " are not the same");
+        }
+    }
+
+    PointPad(PointPad const &) = default;
+    PointPad(PointPad &&) = default;
+    PointPad & operator=(PointPad const &) = default;
+    PointPad & operator=(PointPad &&) = default;
+
+    ~PointPad() = default;
+
+    void append(T x, T y)
+    {
+        if (m_ndim != 2)
+        {
+            throw std::out_of_range(Formatter() << "PointPad::append: ndim must be 2 but is " << int(m_ndim));
+        }
+        m_x.push_back(x);
+        m_y.push_back(y);
+    }
+
+    void append(T x, T y, T z)
+    {
+        if (m_ndim != 3)
+        {
+            throw std::out_of_range(Formatter() << "PointPad::append: ndim must be 3 but is " << int(m_ndim));
+        }
+        m_x.push_back(x);
+        m_y.push_back(y);
+        m_z.push_back(z);
+    }
+
+    // Do not implement setter of m_ndim. It should not be changed after construction.
+    uint8_t ndim() const { return m_ndim; }
+
+    size_t size() const { return m_x.size(); }
+
+    void expand(size_t length)
+    {
+        m_x.expand(length);
+        m_y.expand(length);
+        if (m_ndim == 3)
+        {
+            m_z.expand(length);
+        }
+    }
+
+    real_type x_at(size_t i) const { return m_x.at(i); }
+    real_type y_at(size_t i) const { return m_y.at(i); }
+    real_type z_at(size_t i) const { return m_z.at(i); }
+    real_type & x_at(size_t i) { return m_x.at(i); }
+    real_type & y_at(size_t i) { return m_y.at(i); }
+    real_type & z_at(size_t i) { return m_z.at(i); }
+
+    real_type x(size_t i) const { return m_x[i]; }
+    real_type y(size_t i) const { return m_y[i]; }
+    real_type z(size_t i) const { return m_z[i]; }
+    real_type & x(size_t i) { return m_x[i]; }
+    real_type & y(size_t i) { return m_y[i]; }
+    real_type & z(size_t i) { return m_z[i]; }
+
+    SimpleArray<value_type> x() { return m_x.as_array(); }
+    SimpleArray<value_type> y() { return m_y.as_array(); }
+    SimpleArray<value_type> z() { return m_z.as_array(); }
+
+    vector_type get_at(size_t i) const
+    {
+        if (m_ndim == 3)
+        {
+            return vector_type(m_x.at(i), m_y.at(i), m_z.at(i));
+        }
+        else
+        {
+            return vector_type(m_x.at(i), m_y.at(i), 0.0);
+        }
+    }
+    void set_at(size_t i, vector_type const & v)
+    {
+        m_x.at(i) = v.x();
+        m_y.at(i) = v.y();
+        if (m_ndim == 3)
+        {
+            m_z.at(i) = v.z();
+        }
+    }
+
+    vector_type get(size_t i) const
+    {
+        if (m_ndim == 3)
+        {
+            return vector_type(m_x[i], m_y[i], m_z[i]);
+        }
+        else
+        {
+            return vector_type(m_x[i], m_y[i], 0.0);
+        }
+    }
+    void set(size_t i, vector_type const & v)
+    {
+        m_x[i] = v.x();
+        m_y[i] = v.y();
+        if (m_ndim == 3)
+        {
+            m_z[i] = v.z();
+        }
+    }
+
+private:
+
+    uint8_t m_ndim;
+    SimpleCollector<value_type> m_x;
+    SimpleCollector<value_type> m_y;
+    // For 2D point pads, m_z should remain unused and empty.
+    SimpleCollector<value_type> m_z;
+
+}; /* end class PointPad */
+
+using PointPadFp32 = PointPad<float>;
+using PointPadFp64 = PointPad<double>;
+
+// TODO: Edge3d should be renamed as Segment3d
 /**
- * Vector or point in three-dimensional space.
+ * Segment in three-dimensional space.
  *
  * @tparam T floating-point type
  */
@@ -307,18 +479,6 @@ void Bezier3d<T>::sample(size_t nlocus)
 
 using Bezier3dFp32 = Bezier3d<float>;
 using Bezier3dFp64 = Bezier3d<double>;
-
-class PointCloud
-{
-
-public:
-private:
-
-    SimpleCollector<double> m_x;
-    SimpleCollector<double> m_y;
-    SimpleCollector<double> m_z;
-
-}; /* end class PointCloud */
 
 } /* end namespace modmesh */
 
