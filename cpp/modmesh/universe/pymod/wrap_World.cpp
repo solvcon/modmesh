@@ -35,13 +35,13 @@ namespace python
 {
 
 template <typename T>
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapVector3d
-    : public WrapBase<WrapVector3d<T>, Vector3d<T>>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapPoint3d
+    : public WrapBase<WrapPoint3d<T>, Point3d<T>>
 {
 
 public:
 
-    using base_type = WrapBase<WrapVector3d<T>, Vector3d<T>>;
+    using base_type = WrapBase<WrapPoint3d<T>, Point3d<T>>;
     using wrapped_type = typename base_type::wrapped_type;
 
     using value_type = typename base_type::wrapped_type::value_type;
@@ -50,12 +50,12 @@ public:
 
 protected:
 
-    WrapVector3d(pybind11::module & mod, char const * pyname, char const * pydoc);
+    WrapPoint3d(pybind11::module & mod, char const * pyname, char const * pydoc);
 };
-/* end class WrapVector3d */
+/* end class WrapPoint3d */
 
 template <typename T>
-WrapVector3d<T>::WrapVector3d(pybind11::module & mod, const char * pyname, const char * pydoc)
+WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
 {
     namespace py = pybind11;
@@ -83,6 +83,40 @@ WrapVector3d<T>::WrapVector3d(pybind11::module & mod, const char * pyname, const
             [](wrapped_type & self, size_t it, value_type val)
             { self.at(it) = val; })
         .def("fill", &wrapped_type::fill, py::arg("value"))
+        //
+        ;
+
+    (*this)
+        .def(
+            "__iadd__",
+            [](wrapped_type & self, wrapped_type const & o) -> auto &
+            {
+                self += o;
+                return self;
+            })
+        .def(
+            "__iadd__",
+            [](wrapped_type & self, value_type v) -> auto &
+            {
+                self += v;
+                return self;
+            })
+        .def(
+            "__isub__",
+            [](wrapped_type & self, wrapped_type const & o) -> auto &
+            {
+                self -= o;
+                return self;
+            })
+        .def(
+            "__isub__",
+            [](wrapped_type & self, value_type v) -> auto &
+            {
+                self -= v;
+                return self;
+            })
+        .def("__imul__", &wrapped_type::operator*=)
+        .def("__itruediv__", &wrapped_type::operator/=)
         //
         ;
 
@@ -115,7 +149,7 @@ public:
     using wrapped_type = typename base_type::wrapped_type;
 
     using value_type = typename base_type::wrapped_type::value_type;
-    using vector_type = typename base_type::wrapped_type::vector_type;
+    using point_type = typename base_type::wrapped_type::point_type;
 
     friend typename base_type::root_base_type;
 
@@ -180,7 +214,7 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
                  return self.get_at(it);
              })
         .def("set_at",
-             [](wrapped_type & self, size_t it, vector_type const & v)
+             [](wrapped_type & self, size_t it, point_type const & v)
              {
                  self.set_at(it, v);
              })
@@ -229,34 +263,34 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
 }
 
 template <typename T>
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapEdge3d
-    : public WrapBase<WrapEdge3d<T>, Edge3d<T>>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSegment3d
+    : public WrapBase<WrapSegment3d<T>, Segment3d<T>>
 {
 
 public:
 
-    using base_type = WrapBase<WrapEdge3d<T>, Edge3d<T>>;
+    using base_type = WrapBase<WrapSegment3d<T>, Segment3d<T>>;
     using wrapped_type = typename base_type::wrapped_type;
 
-    using vector_type = typename base_type::wrapped_type::vector_type;
-    using value_type = typename base_type::wrapped_type::value_type;
+    using point_type = typename wrapped_type::point_type;
+    using value_type = typename wrapped_type::value_type;
 
     friend typename base_type::root_base_type;
 
 protected:
 
-    WrapEdge3d(pybind11::module & mod, char const * pyname, char const * pydoc);
+    WrapSegment3d(pybind11::module & mod, char const * pyname, char const * pydoc);
 };
-/* end class WrapEdge3dF32 */
+/* end class WrapSegment3d */
 
 template <typename T>
-WrapEdge3d<T>::WrapEdge3d(pybind11::module & mod, const char * pyname, const char * pydoc)
+WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
 {
     namespace py = pybind11;
 
     (*this)
-        .def(py::init<vector_type const &, vector_type const &>(),
+        .def(py::init<point_type const &, point_type const &>(),
              py::arg("v0"),
              py::arg("v1"))
         .def(py::init<value_type, value_type, value_type, value_type, value_type, value_type>(),
@@ -286,18 +320,18 @@ WrapEdge3d<T>::WrapEdge3d(pybind11::module & mod, const char * pyname, const cha
             { return self.at(it); })
         .def(
             "__setitem__",
-            [](wrapped_type & self, size_t it, vector_type const & vec)
+            [](wrapped_type & self, size_t it, point_type const & vec)
             { self.at(it) = vec; })
         //
         ;
 
     // v0 (tail) and v1 (head) accessors.
-#define DECL_WRAP(NAME)                                                       \
-    .def_property(                                                            \
-        #NAME,                                                                \
-        [](wrapped_type const & self)                                         \
-        { return self.NAME(); },                                              \
-        [](wrapped_type & self, typename wrapped_type::vector_type const & v) \
+#define DECL_WRAP(NAME)                               \
+    .def_property(                                    \
+        #NAME,                                        \
+        [](wrapped_type const & self)                 \
+        { return self.NAME(); },                      \
+        [](wrapped_type & self, point_type const & v) \
         { self.NAME() = v; })
     // clang-format off
     (*this)
@@ -338,6 +372,8 @@ public:
     using base_type = WrapBase<WrapBezier3d<T>, Bezier3d<T>>;
     using wrapped_type = typename base_type::wrapped_type;
 
+    using point_type = typename wrapped_type::point_type;
+
     friend typename base_type::root_base_type;
 
 protected:
@@ -353,7 +389,7 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
     namespace py = pybind11;
 
     (*this)
-        .def(py::init<std::vector<typename wrapped_type::vector_type> const &>(), py::arg("controls"))
+        .def(py::init<std::vector<point_type> const &>(), py::arg("controls"))
         .def(
             "__len__",
             [](wrapped_type const & self)
@@ -364,7 +400,7 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
             { return self.at(it); })
         .def(
             "__setitem__",
-            [](wrapped_type & self, size_t it, typename wrapped_type::vector_type val)
+            [](wrapped_type & self, size_t it, point_type val)
             { self.at(it) = val; })
         //
         ;
@@ -375,14 +411,14 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
             "control_points",
             [](wrapped_type const & self)
             {
-                std::vector<typename wrapped_type::vector_type> ret(self.ncontrol());
+                std::vector<point_type> ret(self.ncontrol());
                 for (size_t i = 0; i < self.ncontrol(); ++i)
                 {
                     ret[i] = self.control(i);
                 }
                 return ret;
             },
-            [](wrapped_type & self, std::vector<typename wrapped_type::vector_type> const & points)
+            [](wrapped_type & self, std::vector<point_type> const & points)
             {
                 if (points.size() != self.ncontrol())
                 {
@@ -405,7 +441,7 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
             "locus_points",
             [](wrapped_type const & self)
             {
-                std::vector<typename wrapped_type::vector_type> ret(self.nlocus());
+                std::vector<typename wrapped_type::point_type> ret(self.nlocus());
                 for (size_t i = 0; i < self.nlocus(); ++i)
                 {
                     ret[i] = self.locus(i);
@@ -429,7 +465,7 @@ public:
     using value_type = typename wrapped_type::value_type;
     using vector_type = typename wrapped_type::vector_type;
     using vertex_type = typename wrapped_type::vertex_type;
-    using edge_type = typename wrapped_type::edge_type;
+    using segment_type = typename wrapped_type::segment_type;
     using bezier_type = typename wrapped_type::bezier_type;
 
     friend typename base_type::root_base_type;
@@ -485,20 +521,20 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
             },
             py::return_value_policy::reference_internal)
         .def(
-            "add_edge",
-            [](wrapped_type & self, edge_type const & edge) -> auto &
+            "add_segment",
+            [](wrapped_type & self, segment_type const & edge) -> auto &
             {
-                self.add_edge(edge);
-                return self.edge_at(self.nedge() - 1);
+                self.add_segment(edge);
+                return self.segment_at(self.nsegment() - 1);
             },
             py::arg("edge"),
             py::return_value_policy::reference_internal)
         .def(
-            "add_edge",
+            "add_segment",
             [](wrapped_type & self, value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1) -> auto &
             {
-                self.add_edge(x0, y0, z0, x1, y1, z1);
-                return self.edge_at(self.nedge() - 1);
+                self.add_segment(x0, y0, z0, x1, y1, z1);
+                return self.segment_at(self.nsegment() - 1);
             },
             py::arg("x0"),
             py::arg("y0"),
@@ -507,12 +543,12 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
             py::arg("y1"),
             py::arg("z1"),
             py::return_value_policy::reference_internal)
-        .def_property_readonly("nedge", &wrapped_type::nedge)
+        .def_property_readonly("nsegment", &wrapped_type::nsegment)
         .def(
             "edge",
             [](wrapped_type & self, size_t i) -> auto &
             {
-                return self.edge_at(i);
+                return self.segment_at(i);
             },
             py::return_value_policy::reference_internal)
         .def(
@@ -538,12 +574,12 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
 
 void wrap_World(pybind11::module & mod)
 {
-    WrapVector3d<float>::commit(mod, "Vector3dFp32", "Vector3dFp32");
-    WrapVector3d<double>::commit(mod, "Vector3dFp64", "Vector3dFp64");
+    WrapPoint3d<float>::commit(mod, "Point3dFp32", "Point3dFp32");
+    WrapPoint3d<double>::commit(mod, "Point3dFp64", "Point3dFp64");
     WrapPointPad<float>::commit(mod, "PointPadFp32", "PointPadFp32");
     WrapPointPad<double>::commit(mod, "PointPadFp64", "PointPadFp64");
-    WrapEdge3d<float>::commit(mod, "Edge3dFp32", "Edge3dFp32");
-    WrapEdge3d<double>::commit(mod, "Edge3dFp64", "Edge3dFp64");
+    WrapSegment3d<float>::commit(mod, "Segment3dFp32", "Segment3dFp32");
+    WrapSegment3d<double>::commit(mod, "Segment3dFp64", "Segment3dFp64");
     WrapBezier3d<float>::commit(mod, "Bezier3dFp32", "Bezier3dFp32");
     WrapBezier3d<double>::commit(mod, "Bezier3dFp64", "Bezier3dFp64");
     WrapWorld<float>::commit(mod, "WorldFp32", "WorldFp32");

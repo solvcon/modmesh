@@ -165,7 +165,7 @@ class BernsteinInterpolationTC(BernsteinTB, unittest.TestCase):
         _check(t=0.9, values=values)
 
 
-class Vector3dTB(ModMeshTB):
+class Point3dTB(ModMeshTB):
 
     def test_construct(self):
         Vector = self.kls
@@ -185,7 +185,7 @@ class Vector3dTB(ModMeshTB):
         self.assertEqual(len(vec), 3)
 
         # Range error in C++
-        with self.assertRaisesRegex(IndexError, "Vector3d: i 3 >= size 3"):
+        with self.assertRaisesRegex(IndexError, "Point3d: i 3 >= size 3"):
             vec[3]
 
     def test_fill(self):
@@ -195,11 +195,31 @@ class Vector3dTB(ModMeshTB):
         vec.fill(10.0)
         self.assertEqual(list(vec), [10, 10, 10])
 
+    def test_arithmetic(self):
+        Point = self.kls
+        p1 = Point(1, 2, 3)
+        p2 = Point(4, 5, 6)
 
-class Vector3dFp32TC(Vector3dTB, unittest.TestCase):
+        p1 += p2
+        self.assertEqual(list(p1), [5, 7, 9])
+        p1 -= p2
+        self.assertEqual(list(p1), [1, 2, 3])
+
+        p1 += 4
+        self.assertEqual(list(p1), [5, 6, 7])
+        p1 -= 2
+        self.assertEqual(list(p1), [3, 4, 5])
+
+        p1 *= 8
+        self.assertEqual(list(p1), [24, 32, 40])
+        p1 /= 4
+        self.assertEqual(list(p1), [6, 8, 10])
+
+
+class Point3dFp32TC(Point3dTB, unittest.TestCase):
 
     def setUp(self):
-        self.kls = modmesh.Vector3dFp32
+        self.kls = modmesh.Point3dFp32
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -207,13 +227,13 @@ class Vector3dFp32TC(Vector3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_type(self):
-        self.assertIs(modmesh.Vector3dFp32, self.kls)
+        self.assertIs(modmesh.Point3dFp32, self.kls)
 
 
-class Vector3dFp64TC(Vector3dTB, unittest.TestCase):
+class Point3dFp64TC(Point3dTB, unittest.TestCase):
 
     def setUp(self):
-        self.kls = modmesh.Vector3dFp64
+        self.kls = modmesh.Point3dFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -221,10 +241,10 @@ class Vector3dFp64TC(Vector3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_type(self):
-        self.assertIs(modmesh.Vector3dFp64, self.kls)
+        self.assertIs(modmesh.Point3dFp64, self.kls)
 
 
-class Edge3dTB(ModMeshTB):
+class Segment3dTB(ModMeshTB):
 
     def test_construct(self):
         Vector = self.vkls
@@ -249,11 +269,11 @@ class Edge3dTB(ModMeshTB):
         self.assert_allclose(tuple(e.v1), (-1.2, -4.1, 9.2))
 
 
-class Edge3dFp32TC(Edge3dTB, unittest.TestCase):
+class Segment3dFp32TC(Segment3dTB, unittest.TestCase):
 
     def setUp(self):
-        self.vkls = modmesh.Vector3dFp32
-        self.ekls = modmesh.Edge3dFp32
+        self.vkls = modmesh.Point3dFp32
+        self.ekls = modmesh.Segment3dFp32
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -261,11 +281,11 @@ class Edge3dFp32TC(Edge3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
 
-class Edge3dFp64TC(Edge3dTB, unittest.TestCase):
+class Segment3dFp64TC(Segment3dTB, unittest.TestCase):
 
     def setUp(self):
-        self.vkls = modmesh.Vector3dFp64
-        self.ekls = modmesh.Edge3dFp64
+        self.vkls = modmesh.Point3dFp64
+        self.ekls = modmesh.Segment3dFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -357,7 +377,7 @@ class Bezier3dTB(ModMeshTB):
 class Bezier3dFp32TC(Bezier3dTB, unittest.TestCase):
 
     def setUp(self):
-        self.vkls = modmesh.Vector3dFp32
+        self.vkls = modmesh.Point3dFp32
         self.bkls = modmesh.Bezier3dFp32
 
     def assert_allclose(self, *args, **kw):
@@ -369,7 +389,7 @@ class Bezier3dFp32TC(Bezier3dTB, unittest.TestCase):
 class Bezier3dFp64TC(Bezier3dTB, unittest.TestCase):
 
     def setUp(self):
-        self.vkls = modmesh.Vector3dFp64
+        self.vkls = modmesh.Point3dFp64
         self.bkls = modmesh.Bezier3dFp64
 
     def assert_allclose(self, *args, **kw):
@@ -574,7 +594,7 @@ class PointPadFp32TC(PointPadTB, unittest.TestCase):
     def setUp(self):
         self.dtype = 'float32'
         self.akls = modmesh.SimpleArrayFloat32
-        self.vkls = modmesh.Vector3dFp32
+        self.vkls = modmesh.Point3dFp32
         self.pkls = modmesh.PointPadFp32
 
     def assert_allclose(self, *args, **kw):
@@ -588,7 +608,7 @@ class PointPadFp64TC(PointPadTB, unittest.TestCase):
     def setUp(self):
         self.dtype = 'float64'
         self.akls = modmesh.SimpleArrayFloat64
-        self.vkls = modmesh.Vector3dFp64
+        self.vkls = modmesh.Point3dFp64
         self.pkls = modmesh.PointPadFp64
 
     def assert_allclose(self, *args, **kw):
@@ -682,7 +702,7 @@ class WorldTB(ModMeshTB):
 class WorldFp32TC(WorldTB, unittest.TestCase):
 
     def setUp(self):
-        self.vkls = modmesh.Vector3dFp32
+        self.vkls = modmesh.Point3dFp32
         self.wkls = modmesh.WorldFp32
 
     def assert_allclose(self, *args, **kw):
@@ -697,7 +717,7 @@ class WorldFp32TC(WorldTB, unittest.TestCase):
 class WorldFp64TC(WorldTB, unittest.TestCase):
 
     def setUp(self):
-        self.vkls = modmesh.Vector3dFp64
+        self.vkls = modmesh.Point3dFp64
         self.wkls = modmesh.WorldFp64
 
     def assert_allclose(self, *args, **kw):

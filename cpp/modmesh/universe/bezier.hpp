@@ -35,14 +35,13 @@
 namespace modmesh
 {
 
-// TODO: Vector3d should be renamed as Point3d
 /**
  * Point in three-dimensional space.
  *
  * @tparam T floating-point type
  */
 template <typename T>
-class Vector3d
+class Point3d
     : public NumberBase<int32_t, T>
 {
 
@@ -50,17 +49,17 @@ public:
 
     using value_type = T;
 
-    Vector3d(T x, T y, T z)
+    Point3d(T x, T y, T z)
         : m_coord{x, y, z}
     {
     }
 
-    Vector3d() = default;
-    Vector3d(Vector3d const &) = default;
-    Vector3d(Vector3d &&) = default;
-    Vector3d & operator=(Vector3d const &) = default;
-    Vector3d & operator=(Vector3d &&) = default;
-    ~Vector3d() = default;
+    Point3d() = default;
+    Point3d(Point3d const &) = default;
+    Point3d(Point3d &&) = default;
+    Point3d & operator=(Point3d const &) = default;
+    Point3d & operator=(Point3d &&) = default;
+    ~Point3d() = default;
 
     value_type x() const { return m_coord[0]; }
     value_type & x() { return m_coord[0]; }
@@ -92,22 +91,70 @@ public:
 
     void fill(T v) { m_coord[0] = m_coord[1] = m_coord[2] = v; }
 
+    Point3d & operator+=(Point3d const & o)
+    {
+        m_coord[0] += o.m_coord[0];
+        m_coord[1] += o.m_coord[1];
+        m_coord[2] += o.m_coord[2];
+        return *this;
+    }
+
+    Point3d & operator-=(Point3d const & o)
+    {
+        m_coord[0] -= o.m_coord[0];
+        m_coord[1] -= o.m_coord[1];
+        m_coord[2] -= o.m_coord[2];
+        return *this;
+    }
+
+    Point3d & operator+=(value_type v)
+    {
+        m_coord[0] += v;
+        m_coord[1] += v;
+        m_coord[2] += v;
+        return *this;
+    }
+
+    Point3d & operator-=(value_type v)
+    {
+        m_coord[0] -= v;
+        m_coord[1] -= v;
+        m_coord[2] -= v;
+        return *this;
+    }
+
+    Point3d & operator*=(value_type v)
+    {
+        m_coord[0] *= v;
+        m_coord[1] *= v;
+        m_coord[2] *= v;
+        return *this;
+    }
+
+    Point3d & operator/=(value_type v)
+    {
+        m_coord[0] /= v;
+        m_coord[1] /= v;
+        m_coord[2] /= v;
+        return *this;
+    }
+
 private:
 
     void check_size(size_t i, size_t s) const
     {
         if (i >= s)
         {
-            throw std::out_of_range(Formatter() << "Vector3d: i " << i << " >= size " << s);
+            throw std::out_of_range(Formatter() << "Point3d: i " << i << " >= size " << s);
         }
     }
 
     T m_coord[3];
 
-}; /* end class Vector3d */
+}; /* end class Point3d */
 
-using Vector3dFp32 = Vector3d<float>;
-using Vector3dFp64 = Vector3d<double>;
+using Point3dFp32 = Point3d<float>;
+using Point3dFp64 = Point3d<double>;
 
 template <typename T>
 class PointPad
@@ -118,7 +165,7 @@ public:
 
     using real_type = T;
     using value_type = T;
-    using vector_type = Vector3d<T>;
+    using point_type = Point3d<T>;
 
     PointPad() = delete;
 
@@ -283,18 +330,18 @@ public:
     SimpleArray<value_type> y() { return m_y.as_array(); }
     SimpleArray<value_type> z() { return m_z.as_array(); }
 
-    vector_type get_at(size_t i) const
+    point_type get_at(size_t i) const
     {
         if (m_ndim == 3)
         {
-            return vector_type(m_x.at(i), m_y.at(i), m_z.at(i));
+            return point_type(m_x.at(i), m_y.at(i), m_z.at(i));
         }
         else
         {
-            return vector_type(m_x.at(i), m_y.at(i), 0.0);
+            return point_type(m_x.at(i), m_y.at(i), 0.0);
         }
     }
-    void set_at(size_t i, vector_type const & v)
+    void set_at(size_t i, point_type const & v)
     {
         m_x.at(i) = v.x();
         m_y.at(i) = v.y();
@@ -318,18 +365,18 @@ public:
         }
     }
 
-    vector_type get(size_t i) const
+    point_type get(size_t i) const
     {
         if (m_ndim == 3)
         {
-            return vector_type(m_x[i], m_y[i], m_z[i]);
+            return point_type(m_x[i], m_y[i], m_z[i]);
         }
         else
         {
-            return vector_type(m_x[i], m_y[i], 0.0);
+            return point_type(m_x[i], m_y[i], 0.0);
         }
     }
-    void set(size_t i, vector_type const & v)
+    void set(size_t i, point_type const & v)
     {
         m_x[i] = v.x();
         m_y[i] = v.y();
@@ -366,45 +413,44 @@ private:
 using PointPadFp32 = PointPad<float>;
 using PointPadFp64 = PointPad<double>;
 
-// TODO: Edge3d should be renamed as Segment3d
 /**
  * Segment in three-dimensional space.
  *
  * @tparam T floating-point type
  */
 template <typename T>
-class Edge3d
+class Segment3d
     : public NumberBase<int32_t, T>
 {
 
 public:
 
-    using vector_type = Vector3d<T>;
-    using value_type = typename vector_type::value_type;
+    using point_type = Point3d<T>;
+    using value_type = typename point_type::value_type;
 
-    Edge3d(vector_type const & v0, vector_type const & v1)
+    Segment3d(point_type const & v0, point_type const & v1)
         : m_vec{v0, v1}
     {
     }
 
-    Edge3d(value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
-        : m_vec{vector_type{x0, y0, z0}, vector_type{x1, y1, z1}}
+    Segment3d(value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
+        : m_vec{point_type{x0, y0, z0}, point_type{x1, y1, z1}}
     {
     }
 
-    Edge3d() = default;
-    Edge3d(Edge3d const &) = default;
-    Edge3d & operator=(Edge3d const &) = default;
-    Edge3d(Edge3d &&) = default;
-    Edge3d & operator=(Edge3d &&) = default;
-    ~Edge3d() = default;
+    Segment3d() = default;
+    Segment3d(Segment3d const &) = default;
+    Segment3d & operator=(Segment3d const &) = default;
+    Segment3d(Segment3d &&) = default;
+    Segment3d & operator=(Segment3d &&) = default;
+    ~Segment3d() = default;
 
-    vector_type const & v0() const { return m_vec[0]; }
-    vector_type & v0() { return m_vec[0]; }
-    void set_v0(vector_type const & v) { m_vec[0] = v; }
-    vector_type const & v1() const { return m_vec[1]; }
-    vector_type & v1() { return m_vec[1]; }
-    void set_v1(vector_type const & v) { m_vec[1] = v; }
+    point_type const & v0() const { return m_vec[0]; }
+    point_type & v0() { return m_vec[0]; }
+    void set_v0(point_type const & v) { m_vec[0] = v; }
+    point_type const & v1() const { return m_vec[1]; }
+    point_type & v1() { return m_vec[1]; }
+    void set_v1(point_type const & v) { m_vec[1] = v; }
 
     value_type x0() const { return m_vec[0].x(); }
     value_type & x0() { return m_vec[0].x(); }
@@ -430,15 +476,15 @@ public:
     value_type & z1() { return m_vec[1].z(); }
     void set_z1(value_type v) { m_vec[1].set_z(v); }
 
-    vector_type const & operator[](size_t i) const { return m_vec[i]; }
-    vector_type & operator[](size_t i) { return m_vec[i]; }
+    point_type const & operator[](size_t i) const { return m_vec[i]; }
+    point_type & operator[](size_t i) { return m_vec[i]; }
 
-    vector_type const & at(size_t i) const
+    point_type const & at(size_t i) const
     {
         check_size(i, 2);
         return m_vec[i];
     }
-    vector_type & at(size_t i)
+    point_type & at(size_t i)
     {
         check_size(i, 2);
         return m_vec[i];
@@ -452,16 +498,16 @@ private:
     {
         if (i >= s)
         {
-            throw std::out_of_range(Formatter() << "Edge3d: i " << i << " >= size " << s);
+            throw std::out_of_range(Formatter() << "Segment3d: i " << i << " >= size " << s);
         }
     }
 
-    vector_type m_vec[2];
+    point_type m_vec[2];
 
-}; /* end class Edge3d */
+}; /* end class Segment3d */
 
-using Edge3dFp32 = Edge3d<float>;
-using Edge3dFp64 = Edge3d<double>;
+using Segment3dFp32 = Segment3d<float>;
+using Segment3dFp64 = Segment3d<double>;
 
 /**
  * Bezier curve in three-dimensional space.
@@ -475,9 +521,9 @@ class Bezier3d
 
 public:
 
-    using vector_type = Vector3d<T>;
+    using point_type = Point3d<T>;
 
-    explicit Bezier3d(std::vector<vector_type> const & controls)
+    explicit Bezier3d(std::vector<point_type> const & controls)
         : m_controls(controls)
     {
     }
@@ -490,32 +536,32 @@ public:
     ~Bezier3d() = default;
 
     size_t size() const { return ncontrol(); }
-    vector_type const & operator[](size_t i) const { return control(i); }
-    vector_type & operator[](size_t i) { return control(i); }
-    vector_type const & at(size_t i) const { return control_at(i); }
-    vector_type & at(size_t i) { return control_at(i); }
+    point_type const & operator[](size_t i) const { return control(i); }
+    point_type & operator[](size_t i) { return control(i); }
+    point_type const & at(size_t i) const { return control_at(i); }
+    point_type & at(size_t i) { return control_at(i); }
 
     size_t ncontrol() const { return m_controls.size(); }
-    vector_type const & control(size_t i) const { return m_controls[i]; }
-    vector_type & control(size_t i) { return m_controls[i]; }
-    vector_type const & control_at(size_t i) const
+    point_type const & control(size_t i) const { return m_controls[i]; }
+    point_type & control(size_t i) { return m_controls[i]; }
+    point_type const & control_at(size_t i) const
     {
         check_size(i, m_controls.size(), "control");
         return m_controls[i];
     }
-    vector_type & control_at(size_t i)
+    point_type & control_at(size_t i)
     {
         check_size(i, m_controls.size(), "control");
         return m_controls[i];
     }
 
     size_t nlocus() const { return m_loci.size(); }
-    vector_type const & locus(size_t i) const
+    point_type const & locus(size_t i) const
     {
         check_size(i, m_loci.size(), "locus");
         return m_loci[i];
     }
-    vector_type & locus(size_t i)
+    point_type & locus(size_t i)
     {
         check_size(i, m_loci.size(), "locus");
         return m_loci[i];
@@ -533,8 +579,8 @@ private:
         }
     }
 
-    std::vector<vector_type> m_controls;
-    std::vector<vector_type> m_loci;
+    std::vector<point_type> m_controls;
+    std::vector<point_type> m_loci;
 
 }; /* end class Bezier3d */
 
