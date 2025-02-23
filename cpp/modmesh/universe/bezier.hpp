@@ -91,7 +91,7 @@ public:
 
     void fill(T v) { m_coord[0] = m_coord[1] = m_coord[2] = v; }
 
-    Point3d & operator +=(Point3d const & o)
+    Point3d & operator+=(Point3d const & o)
     {
         m_coord[0] += o.m_coord[0];
         m_coord[1] += o.m_coord[1];
@@ -99,7 +99,7 @@ public:
         return *this;
     }
 
-    Point3d & operator -=(Point3d const & o)
+    Point3d & operator-=(Point3d const & o)
     {
         m_coord[0] -= o.m_coord[0];
         m_coord[1] -= o.m_coord[1];
@@ -107,7 +107,7 @@ public:
         return *this;
     }
 
-    Point3d & operator +=(value_type v)
+    Point3d & operator+=(value_type v)
     {
         m_coord[0] += v;
         m_coord[1] += v;
@@ -115,7 +115,7 @@ public:
         return *this;
     }
 
-    Point3d & operator -=(value_type v)
+    Point3d & operator-=(value_type v)
     {
         m_coord[0] -= v;
         m_coord[1] -= v;
@@ -123,7 +123,7 @@ public:
         return *this;
     }
 
-    Point3d & operator *=(value_type v)
+    Point3d & operator*=(value_type v)
     {
         m_coord[0] *= v;
         m_coord[1] *= v;
@@ -131,7 +131,7 @@ public:
         return *this;
     }
 
-    Point3d & operator /=(value_type v)
+    Point3d & operator/=(value_type v)
     {
         m_coord[0] /= v;
         m_coord[1] /= v;
