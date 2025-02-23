@@ -77,5 +77,7 @@ copy:
 	cp $(MMROOT)/cpp/modmesh/python/common.hpp $(SETUPROOT)/modmesh/python/common.hpp
 	cp -a $(MMROOT)/cpp/modmesh/toggle $(SETUPROOT)/modmesh/toggle
 	rm -rf $(SETUPROOT)/modmesh/toggle/pymod
+	cp -a $(MMROOT)/cpp/modmesh/math $(SETUPROOT)/modmesh/math
+	rm -rf $(SETUPROOT)/modmesh/math/pymod
 	cp $(MMROOT)/cpp/modmesh/base.hpp $(SETUPROOT)/modmesh/
 	find $(SETUPROOT) -name CMakeLists.txt -delete
