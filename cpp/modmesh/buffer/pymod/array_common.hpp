@@ -90,7 +90,7 @@ private:
         {
             if (api.PyArray_EquivTypes_(dtype_ptr(), descr.ptr()))
             {
-                value = ((PyVoidScalarObject_Proxy *)obj)->obval;
+                value = (reinterpret_cast<PyVoidScalarObject_Proxy *>(obj))->obval;
                 return true;
             }
         }
@@ -140,7 +140,7 @@ private:
         {
             if (api.PyArray_EquivTypes_(dtype_ptr(), descr.ptr()))
             {
-                value = ((PyVoidScalarObject_Proxy *)obj)->obval;
+                value = (reinterpret_cast<PyVoidScalarObject_Proxy *>(obj))->obval;
                 return true;
             }
         }
@@ -282,11 +282,11 @@ public:
         {
             if constexpr (std::is_same_v<T, Complex<double>>)
             {
-                format = "=Zd";
+                format = pybind11::format_descriptor<Complex<double>>::format();
             }
             else
             {
-                format = "=Zf";
+                format = pybind11::format_descriptor<Complex<float>>::format();
             }
         }
         else
