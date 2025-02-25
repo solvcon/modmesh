@@ -38,7 +38,9 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 from matplotlib.pyplot import setp
 
 from PySide6.QtCore import QTimer, Slot, Qt
-from PySide6.QtWidgets import QDockWidget
+from PySide6.QtWidgets import (QDockWidget, QLabel, QVBoxLayout, QHBoxLayout, 
+    QComboBox, QScrollArea, QTableWidget, QPushButton, QSpacerItem,
+    QSizePolicy, QDialog, QWidget)
 
 from PUI.state import State
 from PUI.PySide6.base import PuiInQt, QtInPui
@@ -365,16 +367,19 @@ class Euler1DApp(PilotFeature):
         self.setup_app()
         plotting_area = PlotArea(Window(), self)
 
-        config_window = ConfigWindow(Window(), self)
+        # config_window = ConfigWindow(Window(), self)
+        config_window = ConfigWindow_wo_PUI(self)
         config_widget = QDockWidget("config")
-        config_widget.setWidget(config_window.ui.ui)
+        # config_widget.setWidget(config_window.ui.ui)
+        config_widget.setWidget(config_window)
+
 
         self._mgr.mainWindow.addDockWidget(Qt.LeftDockWidgetArea,
                                            config_widget)
         _subwin = self._mgr.addSubWindow(plotting_area.ui.ui)
         _subwin.showMaximized()
 
-        config_window.redraw()
+        # config_window.redraw()
         plotting_area.redraw()
         _subwin.show()
 
@@ -770,6 +775,170 @@ class PlotArea(PuiInQt):
         with ToolBar():
             QtInPui(NavigationToolbar2QT(self.app.plot_holder.plot, None))
         QtInPui(self.app.plot_holder.plot)
+
+
+class PlotConfigDialog(QDialog):
+    """
+    PlotConfigDialog class for managing plot configuration.
+
+    This class inherits from the QDialog class and provides a GUI for managing
+    plot configuration. It will pop up when clicking "Option" button. It
+    includes options for selecting the layout and setting data line config.
+    """
+    def __init__(self, app, parent=None):
+        super().__init__(parent)
+        self.app = app
+        self.init_UI()
+
+    def init_UI(self):
+        self.setWindowTitle("Plot Configuration")
+        layout = QVBoxLayout()
+
+        layout_selection_label = QLabel("Layout selection")
+        layout.addWidget(layout_selection_label)
+
+        hbox = QHBoxLayout()
+        grid_button = QPushButton("Grid")
+        grid_button.clicked.connect(self.app.grid_layout)
+        hbox.addWidget(grid_button)
+
+        single_button = QPushButton("Single")
+        single_button.clicked.connect(self.app.single_layout)
+        hbox.addWidget(single_button)
+
+        layout.addLayout(hbox)
+
+        data_line_config_label = QLabel("Data line configuration")
+        layout.addWidget(data_line_config_label)
+
+        # TODO: Modify the data structure in config object and draw the table
+        plot_config_table = QTableWidget()
+        layout.addWidget(plot_config_table)
+
+        save_button = QPushButton("Save")
+        save_button.clicked.connect(self.app.update_layout)
+        layout.addWidget(save_button)
+
+        self.setLayout(layout)
+
+
+class ConfigWindow_wo_PUI(QWidget):
+    """
+    ConfigWindow class for managing solver and plotting area configurations.
+
+    This class inherit from the QWidget class and provides a graphical user
+    interface for managing solver configurations. It includes options to set
+    the solver type, view and edit configuration parameters, and control the
+    solver's behavior.
+
+    Attributes:
+        - `app`: The app want to plot something in plotting area.
+        - `solver_config` (:class:`SolverConfig`): Configuration object
+          for the solver.
+        - `plot_config` (:class:`PlotConfig`): Configuration object
+          for the plotting area.
+
+    Methods:
+        - :meth:`setup()`: Setup method to configure the window.
+        - :meth:`content()`: Method to define the content of the window.
+        - :meth:`on_open()`: Callback function when plot configure modal
+          window is opened.
+        - :meth:`on_close()`: Callback function when plot configure modal
+          windows is closed.
+        - :meth:`init_UI()`: Define the GUI layout of the window.
+    """
+
+    def __init__(self, app, parent=None):
+        super().__init__(parent)
+        self.app = app
+        self.plot_config_open = False
+        self.setup()
+        self.init_UI()
+
+
+    def setup(self):
+        """
+        Assign the configure object from app
+
+        :return: nothing
+        """
+        self.solver_config = self.app.solver_config
+        self.plot_config = self.app.plot_config
+
+    def on_open(self):
+        self.plot_config_open = True
+        if not self.plot_config_dialog:
+            self.plot_config_dialog = PlotConfigDialog(self.app, self)
+        self.plot_config_dialog.exec_()
+
+    def on_close(self):
+        self.plot_config_open = False
+        if self.plot_config_dialog:
+            self.plot_config_dialog.close()
+
+    def init_UI(self):
+        """
+        Define the GUI layout of the window for this class
+
+        :return: QWidget
+        """
+        main_layout = QVBoxLayout(self)
+
+        # First VBox, handle operation about solver configuration, weight=4
+        vbox1 = QVBoxLayout()
+        vbox1.setStretch(0, 4)
+
+        solver_label = QLabel("Solver")
+        vbox1.addWidget(solver_label)
+
+        combo_box = QComboBox()
+        combo_box.addItem("Euler1D-CESE")
+        vbox1.addWidget(combo_box)
+
+        config_label = QLabel("Configuration")
+        vbox1.addWidget(config_label)
+
+        # TODO: Modify the data structure in config object and draw the table
+        scroll_area = QScrollArea()
+        table = QTableWidget()
+        scroll_area.setWidget(table)
+        vbox1.addWidget(scroll_area)
+
+        set_button = QPushButton("Set")
+        set_button.clicked.connect(self.app.set)
+        vbox1.addWidget(set_button)
+
+        option_button = QPushButton("Option")
+        option_button.clicked.connect(self.on_open)
+        vbox1.addWidget(option_button)
+
+        main_layout.addLayout(vbox1)
+
+        # Second VBox, handle operation about calculation, weight=1
+        vbox2 = QVBoxLayout()
+        vbox2.setStretch(0, 1)
+
+        spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        vbox2.addItem(spacer)
+
+        start_button = QPushButton("Start")
+        start_button.clicked.connect(self.app.start)
+        vbox2.addWidget(start_button)
+
+        stop_button = QPushButton("Stop")
+        stop_button.clicked.connect(self.app.stop)
+        vbox2.addWidget(stop_button)
+
+        step_button = QPushButton("Step")
+        step_button.clicked.connect(self.app.step)
+        vbox2.addWidget(step_button)
+
+        main_layout.addLayout(vbox2)
+
+        # Modal window for plot configuration
+        self.plot_config_dialog = PlotConfigDialog(self.app, self)
+
+        self.setLayout(main_layout)
 
 
 class ConfigWindow(PuiInQt):
