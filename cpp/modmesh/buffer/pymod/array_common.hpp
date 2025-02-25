@@ -59,6 +59,8 @@ struct npy_format_descriptor<modmesh::Complex<double>>
         return pybind11::dtype("complex128");
     }
 
+    // The format string is used by numpy to correctly interpret the memory layout
+    // of Complex<T> when converting between c++ and python.
     static std::string format()
     {
         return "=Zd";
