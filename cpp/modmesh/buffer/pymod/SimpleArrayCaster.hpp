@@ -29,6 +29,7 @@
 #include <pybind11/pybind11.h>
 
 #include <modmesh/buffer/buffer.hpp>
+#include <modmesh/math/math.hpp>
 
 /**
  * The purpose of including this header is to facilitate implicit casting of
@@ -97,6 +98,8 @@ DECL_MM_SIMPLE_ARRAY_CASTER(Uint32);
 DECL_MM_SIMPLE_ARRAY_CASTER(Uint64);
 DECL_MM_SIMPLE_ARRAY_CASTER(Float32);
 DECL_MM_SIMPLE_ARRAY_CASTER(Float64);
+DECL_MM_SIMPLE_ARRAY_CASTER(Complex64);
+DECL_MM_SIMPLE_ARRAY_CASTER(Complex128);
 
 #undef DECL_MM_SIMPLE_ARRAY_CASTER
 

@@ -30,6 +30,7 @@
 
 #include <modmesh/modmesh.hpp>
 
+#include <pybind11/numpy.h>
 #include <pybind11/operators.h>
 
 namespace modmesh
@@ -51,43 +52,52 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapComplex
         : WrapBase<WrapComplex<value_type>, modmesh::Complex<value_type>, std::shared_ptr<modmesh::Complex<value_type>>>(mod, pyname, pydoc)
     {
         namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
+        static const auto complex_dtype = py::dtype(std::is_same<value_type, float>::value ? "complex64" : "complex128");
+
+        PYBIND11_NUMPY_DTYPE(wrapped_type, real_v, imag_v);
 
         (*this)
-            .def(
-                py::init(
-                    [](const value_type & real_v, const value_type & imag_v)
-                    { return std::make_shared<wrapped_type>(real_v, imag_v); }),
-                py::arg("real_v"),
-                py::arg("imag_v"))
             .def(
                 py::init(
                     []()
                     { return std::make_shared<wrapped_type>(); }))
             .def(
                 py::init(
+                    [](const value_type & real, const value_type & imag)
+                    { return std::make_shared<wrapped_type>(wrapped_type{real, imag}); }),
+                py::arg("real"),
+                py::arg("imag"))
+            .def(
+                py::init(
                     [](const wrapped_type & other)
-                    { return std::make_shared<wrapped_type>(other); }),
+                    { return std::make_shared<wrapped_type>(wrapped_type{other.real_v, other.imag_v}); }),
                 py::arg("other"))
             .def(py::self + py::self) // NOLINT(misc-redundant-expression)
             .def(py::self - py::self) // NOLINT(misc-redundant-expression)
             .def(py::self * py::self) // NOLINT(misc-redundant-expression)
+            .def(py::self / py::self) // NOLINT(misc-redundant-expression)
             .def(py::self / value_type()) // NOLINT(misc-redundant-expression)
             .def(py::self += py::self) // NOLINT(misc-redundant-expression)
             .def(py::self -= py::self) // NOLINT(misc-redundant-expression)
-            .def_property_readonly("real", &wrapped_type::real)
-            .def_property_readonly("imag", &wrapped_type::imag)
+            .def(py::self *= py::self) // NOLINT(misc-redundant-expression)
+            .def(py::self /= py::self) // NOLINT(misc-redundant-expression)
+            .def(py::self /= value_type()) // NOLINT(misc-redundant-expression)
+            .def("__lt__", &wrapped_type::operator<)
+            .def("__gt__", &wrapped_type::operator>)
+            .def_readonly("real", &wrapped_type::real_v)
+            .def_readonly("imag", &wrapped_type::imag_v)
             .def("norm", &wrapped_type::norm)
-            .def("__complex__",
-                 [](wrapped_type const & self)
-                 { return std::complex<T>(self.real(), self.imag()); });
+            .def("dtype",
+                 []()
+                 { return complex_dtype; });
     }
 
 }; /* end class WrapComplex */
 
 void wrap_Complex(pybind11::module & mod)
 {
-    WrapComplex<float>::commit(mod, "ComplexFloat32", "ComplexFloat32");
-    WrapComplex<double>::commit(mod, "ComplexFloat64", "ComplexFloat64");
+    WrapComplex<float>::commit(mod, "complex64", "complex64");
+    WrapComplex<double>::commit(mod, "complex128", "complex128");
 }
 
 } /* end namespace python */

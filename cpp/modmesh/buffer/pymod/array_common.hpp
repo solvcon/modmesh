@@ -32,6 +32,7 @@
 
 #include <modmesh/buffer/SimpleArray.hpp>
 #include <modmesh/buffer/pymod/TypeBroadcast.hpp>
+#include <modmesh/math/math.hpp>
 
 // We faced an issue where the template specialization for the caster of
 // SimpleArray<T> doesn't function correctly on both macOS and Windows.
@@ -40,6 +41,118 @@
 // wrap_SimpleArray.cpp.
 // See more details in the issue: https://github.com/solvcon/modmesh/issues/283
 #include <modmesh/buffer/pymod/SimpleArrayCaster.hpp>
+
+namespace pybind11
+{
+
+namespace detail
+{
+
+template <>
+struct npy_format_descriptor<modmesh::Complex<double>>
+{
+    static constexpr auto name = const_name("complex128");
+    static constexpr int value = npy_api::NPY_CDOUBLE_;
+
+    static pybind11::dtype dtype()
+    {
+        return pybind11::dtype("complex128");
+    }
+
+    // The format string is used by numpy to correctly interpret the memory layout
+    // of Complex<T> when converting between c++ and python.
+    static std::string format()
+    {
+        return "=Zd";
+    }
+
+    static void register_dtype(any_container<field_descriptor> fields)
+    {
+        register_structured_dtype(std::move(fields),
+                                  typeid(typename std::remove_cv<modmesh::Complex<double>>::type),
+                                  sizeof(modmesh::Complex<double>),
+                                  &direct_converter);
+    }
+
+private:
+    static PyObject * dtype_ptr()
+    {
+        static PyObject * ptr = get_numpy_internals().get_type_info<modmesh::Complex<double>>(true)->dtype_ptr;
+        return ptr;
+    }
+
+    static bool direct_converter(PyObject * obj, void *& value)
+    {
+        auto & api = npy_api::get();
+        if (!PyObject_TypeCheck(obj, api.PyVoidArrType_Type_))
+        {
+            return false;
+        }
+        if (auto descr = reinterpret_steal<object>(api.PyArray_DescrFromScalar_(obj)))
+        {
+            if (api.PyArray_EquivTypes_(dtype_ptr(), descr.ptr()))
+            {
+                value = (reinterpret_cast<PyVoidScalarObject_Proxy *>(obj))->obval;
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+template <>
+struct npy_format_descriptor<modmesh::Complex<float>>
+{
+    static constexpr auto name = const_name("complex64");
+    static constexpr int value = npy_api::NPY_CFLOAT_;
+
+    static pybind11::dtype dtype()
+    {
+        return pybind11::dtype("complex64");
+    }
+
+    static std::string format()
+    {
+        return "=Zf";
+    }
+
+    static void register_dtype(any_container<field_descriptor> fields)
+    {
+        register_structured_dtype(std::move(fields),
+                                  typeid(typename std::remove_cv<modmesh::Complex<float>>::type),
+                                  sizeof(modmesh::Complex<float>),
+                                  &direct_converter);
+    }
+
+private:
+    static PyObject * dtype_ptr()
+    {
+        static PyObject * ptr = get_numpy_internals().get_type_info<modmesh::Complex<double>>(true)->dtype_ptr;
+        return ptr;
+    }
+
+    static bool direct_converter(PyObject * obj, void *& value)
+    {
+        auto & api = npy_api::get();
+        if (!PyObject_TypeCheck(obj, api.PyVoidArrType_Type_))
+        {
+            return false;
+        }
+        if (auto descr = reinterpret_steal<object>(api.PyArray_DescrFromScalar_(obj)))
+        {
+            if (api.PyArray_EquivTypes_(dtype_ptr(), descr.ptr()))
+            {
+                value = (reinterpret_cast<PyVoidScalarObject_Proxy *>(obj))->obval;
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+} /* end namespace detail */
+
+} /* end namespace pybind11 */
 
 namespace modmesh
 {
@@ -98,7 +211,7 @@ public:
             const py::object & py_key = args[0];
             const py::object & py_value = args[1];
 
-            const bool is_number = py::isinstance<py::bool_>(py_value) || py::isinstance<py::int_>(py_value) || py::isinstance<py::float_>(py_value);
+            const bool is_number = py::isinstance<py::bool_>(py_value) || py::isinstance<py::int_>(py_value) || py::isinstance<py::float_>(py_value) || is_complex_v<T>;
 
             // sarr[K] = V
             if (py::isinstance<py::int_>(py_key) && is_number)
@@ -164,10 +277,29 @@ public:
         {
             stride.push_back(i * sizeof(T));
         }
+
+        // Special handling for Complex types
+        std::string format;
+        if constexpr (is_complex_v<T>)
+        {
+            if constexpr (std::is_same_v<T, Complex<double>>)
+            {
+                format = pybind11::format_descriptor<Complex<double>>::format();
+            }
+            else
+            {
+                format = pybind11::format_descriptor<Complex<float>>::format();
+            }
+        }
+        else
+        {
+            format = pybind11::format_descriptor<T>::format();
+        }
+
         return pybind11::buffer_info(
             array.data(), /* Pointer to buffer */
             sizeof(T), /* Size of one scalar */
-            pybind11::format_descriptor<T>::format(), /* Python struct-style format descriptor */
+            format, /* Python struct-style format descriptor */
             array.ndim(), /* Number of dimensions */
             std::vector<size_t>(array.shape().begin(), array.shape().end()), /* Buffer dimensions */
             stride /* Strides (in bytes) for each index */
