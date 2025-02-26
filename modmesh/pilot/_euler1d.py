@@ -37,20 +37,15 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 from matplotlib.pyplot import setp
 
-from PySide6.QtCore import QTimer, Slot, Qt
-from PySide6.QtWidgets import QDockWidget
+from PySide6.QtCore import QTimer, Slot, Qt, QAbstractTableModel
+from PySide6.QtWidgets import (QDockWidget, QLabel, QVBoxLayout, QHBoxLayout,
+                               QComboBox, QPushButton, QSpacerItem,
+                               QSizePolicy, QDialog, QWidget, QTableView)
 
 from PUI.state import State
 from PUI.PySide6.base import PuiInQt, QtInPui
-from PUI.PySide6.button import Button
-from PUI.PySide6.layout import VBox, Spacer, HBox
-from PUI.PySide6.scroll import Scroll
 from PUI.PySide6.window import Window
-from PUI.PySide6.combobox import ComboBox, ComboBoxItem
-from PUI.PySide6.label import Label
-from PUI.PySide6.table import Table
 from PUI.PySide6.toolbar import ToolBar
-from PUI.PySide6.modal import Modal
 
 from .. import core as mcore
 from ..onedim import euler1d
@@ -148,10 +143,8 @@ class GUIConfig(object):
     users to set and retrieve parameters related to the simulation.
 
     Attributes:
-        :ivar: state (:class:`State`): The state object holding configuration
-            data.
-        :ivar: _tbl_content (:class:`State`): The content of the
-            configuration table.
+        :ivar: _tbl_content (list[list]): The content of the configuration
+            table.
         :ivar: _col_header (list): The header for the configuration
             table columns.
 
@@ -171,9 +164,16 @@ class GUIConfig(object):
     """
 
     def __init__(self, input_data, col_headers):
-        self.state = State(input_data)
-        self._tbl_content = self.state
+        self._tbl_content = input_data
         self._col_header = col_headers
+
+        expected_length = len(self._col_header)
+        for i, row in enumerate(self._tbl_content):
+            if len(row) != expected_length:
+                raise ValueError(
+                    f"Row {i} has length {len(row)}, "
+                    f"expected {expected_length}"
+                )
 
     def __getitem__(self, key):
         return _Accessor(self._tbl_content, 0, self._col_header)[key]
@@ -256,10 +256,7 @@ class SolverConfig(GUIConfig):
     users to set and retrieve parameters related to the simulation.
 
     Attributes:
-        - `state` (:class:`State`): The state object holding configuration
-          data in the form of [variable_name, value, description].
-        - `_tbl_content` (:class:`State`): The content of the
-          configuration table.
+        - `_tbl_content` (list[list]): The content of the configuration table.
         - `_col_header` (list): The header for the configuration
           table columns.
     """
@@ -276,11 +273,7 @@ class PlotConfig(GUIConfig):
     users to set and retrieve parameters related to the plotting arae.
 
     Attributes:
-        - `state` (:class:`State`): The state object holding configuration
-          data in the form of [variable, line_selection, y_axis_upper_limit,
-          y_axis_bottom_limit].
-        - `_tbl_content` (:class:`State`): The content of the
-          configuration table.
+        - `_tbl_content` (list[list]): The content of the configuration table.
         - `_col_header` (list): The header for the configuration
           table columns.
     """
@@ -365,16 +358,15 @@ class Euler1DApp(PilotFeature):
         self.setup_app()
         plotting_area = PlotArea(Window(), self)
 
-        config_window = ConfigWindow(Window(), self)
+        config_window = ConfigWindow(self)
         config_widget = QDockWidget("config")
-        config_widget.setWidget(config_window.ui.ui)
+        config_widget.setWidget(config_window)
 
         self._mgr.mainWindow.addDockWidget(Qt.LeftDockWidgetArea,
                                            config_widget)
         _subwin = self._mgr.addSubWindow(plotting_area.ui.ui)
         _subwin.showMaximized()
 
-        config_window.redraw()
         plotting_area.redraw()
         _subwin.show()
 
@@ -732,7 +724,7 @@ class Euler1DApp(PilotFeature):
             self.entropy.update(adata=self.st.entropy_field,
                                 ndata=self.st.svr.entropy[_s])
         else:
-            for name, is_selected, *_ in self.plot_config.state:
+            for name, is_selected, *_ in self.plot_config._tbl_content:
                 if is_selected:
                     eval(f'(self.{name}.update(adata=self.st.{name}_field,'
                          f' ndata=self.st.svr.{name}[self.st.svr.xindices]))')
@@ -772,11 +764,112 @@ class PlotArea(PuiInQt):
         QtInPui(self.app.plot_holder.plot)
 
 
-class ConfigWindow(PuiInQt):
+class ConfigTableModel(QAbstractTableModel):
+    """
+    ConfigTableModel class for displaying configuration data.
+
+    This class inherits from the QAbstractTableModel class and provides a model
+    for displaying configuration data using table. It is used in the QTable
+    class to display solver and plotting area configurations.
+
+    Attributes:
+        - `config` (:class:`GUIConfig`): Configuration object for the model.
+
+    Methods: (Overridden from QAbstractTableModel)
+        - :meth:`rowCount()`: Get the number of rows in the model.
+        - :meth:`columnCount()`: Get the number of columns in the model.
+        - :meth:`data(index, role)`: Get the data at a specific index in the
+          model.
+        - :meth:`setData(index, value, role)`: Set the data at a specific index
+          in the model.
+        - :meth:`flags(index)`: Get the flags for a specific index in the
+          model.
+        - :meth:`headerData(section, orientation, role)`: Get the header data
+          for a specific section in the model.
+    """
+
+    def __init__(self, config, parent=None):
+        super().__init__(parent)
+        self.config = config
+
+    def rowCount(self, parent):
+        return self.config.rowCount()
+
+    def columnCount(self, parent):
+        return self.config.columnCount()
+
+    def data(self, index, role):
+        if role in {Qt.DisplayRole, Qt.EditRole}:
+            return self.config.data(index.row(), index.column())
+        return None
+
+    def setData(self, index, value, role):
+        if role == Qt.EditRole:
+            self.config.setData(index.row(), index.column(), value)
+            return
+
+    def flags(self, index):
+        if self.config.editable(index.row(), index.column()):
+            return super().flags(index) | Qt.ItemIsEditable
+        return super().flags(index)
+
+    def headerData(self, section, orientation, role):
+        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+            return self.config.columnHeader(section)
+        return None
+
+
+class PlotConfigDialog(QDialog):
+    """
+    PlotConfigDialog class for managing plot configuration.
+
+    This class inherits from the QDialog class and provides a GUI for managing
+    plot configuration. It will pop up when clicking "Option" button. It
+    includes options for selecting the layout and setting data line config.
+    """
+    def __init__(self, app, parent=None):
+        super().__init__(parent)
+        self.app = app
+        self.init_UI()
+
+    def init_UI(self):
+        self.setWindowTitle("Plot Configuration")
+        layout = QVBoxLayout()
+
+        layout_selection_label = QLabel("Layout selection")
+        layout.addWidget(layout_selection_label)
+
+        hbox = QHBoxLayout()
+        grid_button = QPushButton("Grid")
+        grid_button.clicked.connect(self.app.grid_layout)
+        hbox.addWidget(grid_button)
+
+        single_button = QPushButton("Single")
+        single_button.clicked.connect(self.app.single_layout)
+        hbox.addWidget(single_button)
+
+        layout.addLayout(hbox)
+
+        data_line_config_label = QLabel("Data line configuration")
+        layout.addWidget(data_line_config_label)
+
+        table = QTableView()
+        table_model = ConfigTableModel(self.app.plot_config)
+        table.setModel(table_model)
+        layout.addWidget(table)
+
+        save_button = QPushButton("Save")
+        save_button.clicked.connect(self.app.update_layout)
+        layout.addWidget(save_button)
+
+        self.setLayout(layout)
+
+
+class ConfigWindow(QWidget):
     """
     ConfigWindow class for managing solver and plotting area configurations.
 
-    This class inherit from the PuiInQt class and provides a graphical user
+    This class inherit from the QWidget class and provides a graphical user
     interface for managing solver configurations. It includes options to set
     the solver type, view and edit configuration parameters, and control the
     solver's behavior.
@@ -787,23 +880,22 @@ class ConfigWindow(PuiInQt):
           for the solver.
         - `plot_config` (:class:`PlotConfig`): Configuration object
           for the plotting area.
-        - `state` (:class:`State`): The state object holding plot configuration
-          window opening state.
 
     Methods:
         - :meth:`setup()`: Setup method to configure the window.
-        - :meth:`content()`: Method to define the content of the window.
         - :meth:`on_open()`: Callback function when plot configure modal
           window is opened.
         - :meth:`on_close()`: Callback function when plot configure modal
           windows is closed.
+        - :meth:`init_UI()`: Define the GUI layout of the window.
     """
 
-    def __init__(self, parent, app):
+    def __init__(self, app, parent=None):
         super().__init__(parent)
         self.app = app
-        self.state = State()
-        self.state.plot_config_open = False
+        self.plot_config_open = False
+        self.setup()
+        self.init_UI()
 
     def setup(self):
         """
@@ -815,44 +907,78 @@ class ConfigWindow(PuiInQt):
         self.plot_config = self.app.plot_config
 
     def on_open(self):
-        self.state.plot_config_open = True
+        self.plot_config_open = True
+        if not self.plot_config_dialog:
+            self.plot_config_dialog = PlotConfigDialog(self.app, self)
+        self.plot_config_dialog.exec_()
 
     def on_close(self):
-        self.state.plot_config_open = False
+        self.plot_config_open = False
+        if self.plot_config_dialog:
+            self.plot_config_dialog.close()
 
-    def content(self):
+    def init_UI(self):
         """
-        Define the GUI layout of the window
+        Define the GUI layout of the window for this class
 
-        :return: nothing
+        :return: QWidget
         """
-        with VBox():
-            with VBox().layout(weight=4):
-                Label("Solver")
-                with ComboBox():
-                    ComboBoxItem("Euler1D-CESE")
-                Label("Configuration")
-                with Scroll():
-                    Table(self.solver_config)
-                Button("Set").click(self.app.set)
-                Button("Option").click(self.on_open)
-            with VBox().layout(weight=1):
-                Spacer()
-                Button("Start").click(self.app.start)
-                Button("Stop").click(self.app.stop)
-                Button("Step").click(self.app.step)
-            with (Modal(self.state("plot_config_open"),
-                        title="Plot configuration")
-                    .open(self.on_open)
-                    .close(self.on_close)):
-                with VBox():
-                    with HBox():
-                        Label("Layout selection")
-                        Button("Grid").click(lambda: self.app.grid_layout())
-                        Button("Single").click((lambda:
-                                                self.app.single_layout()))
-                    Label("Data line configuration")
-                    Table(self.plot_config)
-                    Button("Save").click(lambda: self.app.update_layout())
+        main_layout = QVBoxLayout(self)
+
+        # First VBox, handle operation about solver configuration, weight=4
+        vbox1 = QVBoxLayout()
+        vbox1.setStretch(0, 4)
+
+        solver_label = QLabel("Solver")
+        vbox1.addWidget(solver_label)
+
+        combo_box = QComboBox()
+        combo_box.addItem("Euler1D-CESE")
+        vbox1.addWidget(combo_box)
+
+        config_label = QLabel("Configuration")
+        vbox1.addWidget(config_label)
+
+        table = QTableView()
+        table_model = ConfigTableModel(self.solver_config)
+        table.setModel(table_model)
+        vbox1.addWidget(table)
+
+        set_button = QPushButton("Set")
+        set_button.clicked.connect(self.app.set)
+        vbox1.addWidget(set_button)
+
+        option_button = QPushButton("Option")
+        option_button.clicked.connect(self.on_open)
+        vbox1.addWidget(option_button)
+
+        main_layout.addLayout(vbox1)
+
+        # Second VBox, handle operation about calculation, weight=1
+        vbox2 = QVBoxLayout()
+        vbox2.setStretch(0, 1)
+
+        spacer = QSpacerItem(
+            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        vbox2.addItem(spacer)
+
+        start_button = QPushButton("Start")
+        start_button.clicked.connect(self.app.start)
+        vbox2.addWidget(start_button)
+
+        stop_button = QPushButton("Stop")
+        stop_button.clicked.connect(self.app.stop)
+        vbox2.addWidget(stop_button)
+
+        step_button = QPushButton("Step")
+        step_button.clicked.connect(lambda: self.app.step())
+        vbox2.addWidget(step_button)
+
+        main_layout.addLayout(vbox2)
+
+        # Modal window for plot configuration
+        self.plot_config_dialog = PlotConfigDialog(self.app, self)
+
+        self.setLayout(main_layout)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
