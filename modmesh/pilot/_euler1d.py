@@ -342,7 +342,7 @@ class Euler1DApp(PilotFeature):
         - :meth:`update_lines()`: Update all data lines after the solver
           finishes computation.
     """
-
+ 
     def populate_menu(self):
         self._add_menu_item(
             menu=self._mgr.oneMenu,
