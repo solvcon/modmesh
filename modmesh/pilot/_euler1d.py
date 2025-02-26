@@ -44,15 +44,8 @@ from PySide6.QtWidgets import (QDockWidget, QLabel, QVBoxLayout, QHBoxLayout,
 
 from PUI.state import State
 from PUI.PySide6.base import PuiInQt, QtInPui
-from PUI.PySide6.button import Button
-from PUI.PySide6.layout import VBox, Spacer, HBox
-from PUI.PySide6.scroll import Scroll
 from PUI.PySide6.window import Window
-from PUI.PySide6.combobox import ComboBox, ComboBoxItem
-from PUI.PySide6.label import Label
-from PUI.PySide6.table import Table
 from PUI.PySide6.toolbar import ToolBar
-from PUI.PySide6.modal import Modal
 
 from .. import core as mcore
 from ..onedim import euler1d
@@ -150,10 +143,8 @@ class GUIConfig(object):
     users to set and retrieve parameters related to the simulation.
 
     Attributes:
-        :ivar: state (:class:`State`): The state object holding configuration
-            data.
-        :ivar: _tbl_content (:class:`State`): The content of the
-            configuration table.
+        :ivar: _tbl_content (list[list]): The content of the configuration
+            table.
         :ivar: _col_header (list): The header for the configuration
             table columns.
 
@@ -262,10 +253,7 @@ class SolverConfig(GUIConfig):
     users to set and retrieve parameters related to the simulation.
 
     Attributes:
-        - `state` (:class:`State`): The state object holding configuration
-          data in the form of [variable_name, value, description].
-        - `_tbl_content` (:class:`State`): The content of the
-          configuration table.
+        - `_tbl_content` (list[list]): The content of the configuration table.
         - `_col_header` (list): The header for the configuration
           table columns.
     """
@@ -282,11 +270,7 @@ class PlotConfig(GUIConfig):
     users to set and retrieve parameters related to the plotting arae.
 
     Attributes:
-        - `state` (:class:`State`): The state object holding configuration
-          data in the form of [variable, line_selection, y_axis_upper_limit,
-          y_axis_bottom_limit].
-        - `_tbl_content` (:class:`State`): The content of the
-          configuration table.
+        - `_tbl_content` (list[list]): The content of the configuration table.
         - `_col_header` (list): The header for the configuration
           table columns.
     """
@@ -371,19 +355,15 @@ class Euler1DApp(PilotFeature):
         self.setup_app()
         plotting_area = PlotArea(Window(), self)
 
-        # config_window = ConfigWindow(Window(), self)
-        config_window = ConfigWindow_wo_PUI(self)
+        config_window = ConfigWindow(self)
         config_widget = QDockWidget("config")
-        # config_widget.setWidget(config_window.ui.ui)
         config_widget.setWidget(config_window)
-
 
         self._mgr.mainWindow.addDockWidget(Qt.LeftDockWidgetArea,
                                            config_widget)
         _subwin = self._mgr.addSubWindow(plotting_area.ui.ui)
         _subwin.showMaximized()
 
-        # config_window.redraw()
         plotting_area.redraw()
         _subwin.show()
 
@@ -783,16 +763,16 @@ class PlotArea(PuiInQt):
 
 class ConfigTableModel(QAbstractTableModel):
     """
-    ConfigTableModel class for managing configuration data.
+    ConfigTableModel class for displaying configuration data.
 
     This class inherits from the QAbstractTableModel class and provides a model
-    for managing configuration data. It is used in the ConfigTable class to
-    display solver and plotting area configurations.
+    for displaying configuration data using table. It is used in the QTable
+    class to display solver and plotting area configurations.
 
     Attributes:
         - `config` (:class:`GUIConfig`): Configuration object for the model.
 
-    Methods:
+    Methods: (Overridden from QAbstractTableModel)
         - :meth:`rowCount()`: Get the number of rows in the model.
         - :meth:`columnCount()`: Get the number of columns in the model.
         - :meth:`data(index, role)`: Get the data at a specific index in the
@@ -881,7 +861,7 @@ class PlotConfigDialog(QDialog):
         self.setLayout(layout)
 
 
-class ConfigWindow_wo_PUI(QWidget):
+class ConfigWindow(QWidget):
     """
     ConfigWindow class for managing solver and plotting area configurations.
 
@@ -899,7 +879,6 @@ class ConfigWindow_wo_PUI(QWidget):
 
     Methods:
         - :meth:`setup()`: Setup method to configure the window.
-        - :meth:`content()`: Method to define the content of the window.
         - :meth:`on_open()`: Callback function when plot configure modal
           window is opened.
         - :meth:`on_close()`: Callback function when plot configure modal
@@ -913,7 +892,6 @@ class ConfigWindow_wo_PUI(QWidget):
         self.plot_config_open = False
         self.setup()
         self.init_UI()
-
 
     def setup(self):
         """
@@ -988,7 +966,7 @@ class ConfigWindow_wo_PUI(QWidget):
         vbox2.addWidget(stop_button)
 
         step_button = QPushButton("Step")
-        step_button.clicked.connect(self.app.step)
+        step_button.clicked.connect(lambda: self.app.step())
         vbox2.addWidget(step_button)
 
         main_layout.addLayout(vbox2)
@@ -997,89 +975,5 @@ class ConfigWindow_wo_PUI(QWidget):
         self.plot_config_dialog = PlotConfigDialog(self.app, self)
 
         self.setLayout(main_layout)
-
-
-class ConfigWindow(PuiInQt):
-    """
-    ConfigWindow class for managing solver and plotting area configurations.
-
-    This class inherit from the PuiInQt class and provides a graphical user
-    interface for managing solver configurations. It includes options to set
-    the solver type, view and edit configuration parameters, and control the
-    solver's behavior.
-
-    Attributes:
-        - `app`: The app want to plot something in plotting area.
-        - `solver_config` (:class:`SolverConfig`): Configuration object
-          for the solver.
-        - `plot_config` (:class:`PlotConfig`): Configuration object
-          for the plotting area.
-        - `state` (:class:`State`): The state object holding plot configuration
-          window opening state.
-
-    Methods:
-        - :meth:`setup()`: Setup method to configure the window.
-        - :meth:`content()`: Method to define the content of the window.
-        - :meth:`on_open()`: Callback function when plot configure modal
-          window is opened.
-        - :meth:`on_close()`: Callback function when plot configure modal
-          windows is closed.
-    """
-
-    def __init__(self, parent, app):
-        super().__init__(parent)
-        self.app = app
-        self.state = State()
-        self.state.plot_config_open = False
-
-    def setup(self):
-        """
-        Assign the configure object from app
-
-        :return: nothing
-        """
-        self.solver_config = self.app.solver_config
-        self.plot_config = self.app.plot_config
-
-    def on_open(self):
-        self.state.plot_config_open = True
-
-    def on_close(self):
-        self.state.plot_config_open = False
-
-    def content(self):
-        """
-        Define the GUI layout of the window
-
-        :return: nothing
-        """
-        with VBox():
-            with VBox().layout(weight=4):
-                Label("Solver")
-                with ComboBox():
-                    ComboBoxItem("Euler1D-CESE")
-                Label("Configuration")
-                with Scroll():
-                    Table(self.solver_config)
-                Button("Set").click(self.app.set)
-                Button("Option").click(self.on_open)
-            with VBox().layout(weight=1):
-                Spacer()
-                Button("Start").click(self.app.start)
-                Button("Stop").click(self.app.stop)
-                Button("Step").click(self.app.step)
-            with (Modal(self.state("plot_config_open"),
-                        title="Plot configuration")
-                    .open(self.on_open)
-                    .close(self.on_close)):
-                with VBox():
-                    with HBox():
-                        Label("Layout selection")
-                        Button("Grid").click(lambda: self.app.grid_layout())
-                        Button("Single").click((lambda:
-                                                self.app.single_layout()))
-                    Label("Data line configuration")
-                    Table(self.plot_config)
-                    Button("Save").click(lambda: self.app.update_layout())
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
