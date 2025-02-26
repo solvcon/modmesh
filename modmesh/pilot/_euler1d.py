@@ -822,7 +822,6 @@ class ConfigTableModel(QAbstractTableModel):
     def setData(self, index, value, role):
         if role == Qt.EditRole:
             self.config.setData(index.row(), index.column(), value)
-            self.dataChanged.emit(index, index)
             return
     
     def flags(self, index):
