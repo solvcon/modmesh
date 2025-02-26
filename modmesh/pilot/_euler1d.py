@@ -37,10 +37,10 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 from matplotlib.pyplot import setp
 
-from PySide6.QtCore import QTimer, Slot, Qt
+from PySide6.QtCore import QTimer, Slot, Qt, QAbstractTableModel
 from PySide6.QtWidgets import (QDockWidget, QLabel, QVBoxLayout, QHBoxLayout, 
-    QComboBox, QScrollArea, QTableWidget, QPushButton, QSpacerItem,
-    QSizePolicy, QDialog, QWidget)
+    QComboBox, QPushButton, QSpacerItem, QSizePolicy, QDialog, QWidget,
+    QTableView)
 
 from PUI.state import State
 from PUI.PySide6.base import PuiInQt, QtInPui
@@ -173,9 +173,13 @@ class GUIConfig(object):
     """
 
     def __init__(self, input_data, col_headers):
-        self.state = State(input_data)
-        self._tbl_content = self.state
+        self._tbl_content = input_data
         self._col_header = col_headers
+
+        expected_length = len(self._col_header)
+        for i, row in enumerate(self._tbl_content):
+            if len(row) != expected_length:
+                raise ValueError(f"Row {i} has length {len(row)}, expected {expected_length}")
 
     def __getitem__(self, key):
         return _Accessor(self._tbl_content, 0, self._col_header)[key]
@@ -737,7 +741,7 @@ class Euler1DApp(PilotFeature):
             self.entropy.update(adata=self.st.entropy_field,
                                 ndata=self.st.svr.entropy[_s])
         else:
-            for name, is_selected, *_ in self.plot_config.state:
+            for name, is_selected, *_ in self.plot_config._tbl_content:
                 if is_selected:
                     eval(f'(self.{name}.update(adata=self.st.{name}_field,'
                          f' ndata=self.st.svr.{name}[self.st.svr.xindices]))')
@@ -777,6 +781,61 @@ class PlotArea(PuiInQt):
         QtInPui(self.app.plot_holder.plot)
 
 
+class ConfigTableModel(QAbstractTableModel):
+    """
+    ConfigTableModel class for managing configuration data.
+
+    This class inherits from the QAbstractTableModel class and provides a model
+    for managing configuration data. It is used in the ConfigTable class to
+    display solver and plotting area configurations.
+
+    Attributes:
+        - `config` (:class:`GUIConfig`): Configuration object for the model.
+
+    Methods:
+        - :meth:`rowCount()`: Get the number of rows in the model.
+        - :meth:`columnCount()`: Get the number of columns in the model.
+        - :meth:`data(index, role)`: Get the data at a specific index in the
+          model.
+        - :meth:`setData(index, value, role)`: Set the data at a specific index
+          in the model.
+        - :meth:`flags(index)`: Get the flags for a specific index in the model.
+        - :meth:`headerData(section, orientation, role)`: Get the header data
+          for a specific section in the model.
+    """
+
+    def __init__(self, config, parent=None):
+        super().__init__(parent)
+        self.config = config
+
+    def rowCount(self, parent):
+        return self.config.rowCount()
+
+    def columnCount(self, parent):
+        return self.config.columnCount()
+
+    def data(self, index, role):
+        if role in {Qt.DisplayRole, Qt.EditRole}:
+            return self.config.data(index.row(), index.column())
+        return None
+
+    def setData(self, index, value, role):
+        if role == Qt.EditRole:
+            self.config.setData(index.row(), index.column(), value)
+            self.dataChanged.emit(index, index)
+            return
+    
+    def flags(self, index):
+        if self.config.editable(index.row(), index.column()):
+            return super().flags(index) | Qt.ItemIsEditable
+        return super().flags(index)
+    
+    def headerData(self, section, orientation, role):
+        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+            return self.config.columnHeader(section)
+        return None
+
+
 class PlotConfigDialog(QDialog):
     """
     PlotConfigDialog class for managing plot configuration.
@@ -811,9 +870,10 @@ class PlotConfigDialog(QDialog):
         data_line_config_label = QLabel("Data line configuration")
         layout.addWidget(data_line_config_label)
 
-        # TODO: Modify the data structure in config object and draw the table
-        plot_config_table = QTableWidget()
-        layout.addWidget(plot_config_table)
+        table = QTableView()
+        table_model = ConfigTableModel(self.app.plot_config)
+        table.setModel(table_model)
+        layout.addWidget(table)
 
         save_button = QPushButton("Save")
         save_button.clicked.connect(self.app.update_layout)
@@ -898,11 +958,10 @@ class ConfigWindow_wo_PUI(QWidget):
         config_label = QLabel("Configuration")
         vbox1.addWidget(config_label)
 
-        # TODO: Modify the data structure in config object and draw the table
-        scroll_area = QScrollArea()
-        table = QTableWidget()
-        scroll_area.setWidget(table)
-        vbox1.addWidget(scroll_area)
+        table = QTableView()
+        table_model = ConfigTableModel(self.solver_config)
+        table.setModel(table_model)
+        vbox1.addWidget(table)
 
         set_button = QPushButton("Set")
         set_button.clicked.connect(self.app.set)
