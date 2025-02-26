@@ -38,9 +38,9 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
 from matplotlib.pyplot import setp
 
 from PySide6.QtCore import QTimer, Slot, Qt, QAbstractTableModel
-from PySide6.QtWidgets import (QDockWidget, QLabel, QVBoxLayout, QHBoxLayout, 
-    QComboBox, QPushButton, QSpacerItem, QSizePolicy, QDialog, QWidget,
-    QTableView)
+from PySide6.QtWidgets import (QDockWidget, QLabel, QVBoxLayout, QHBoxLayout,
+                               QComboBox, QPushButton, QSpacerItem,
+                               QSizePolicy, QDialog, QWidget, QTableView)
 
 from PUI.state import State
 from PUI.PySide6.base import PuiInQt, QtInPui
@@ -170,7 +170,10 @@ class GUIConfig(object):
         expected_length = len(self._col_header)
         for i, row in enumerate(self._tbl_content):
             if len(row) != expected_length:
-                raise ValueError(f"Row {i} has length {len(row)}, expected {expected_length}")
+                raise ValueError(
+                    f"Row {i} has length {len(row)}, "
+                    f"expected {expected_length}"
+                )
 
     def __getitem__(self, key):
         return _Accessor(self._tbl_content, 0, self._col_header)[key]
@@ -342,7 +345,7 @@ class Euler1DApp(PilotFeature):
         - :meth:`update_lines()`: Update all data lines after the solver
           finishes computation.
     """
- 
+
     def populate_menu(self):
         self._add_menu_item(
             menu=self._mgr.oneMenu,
@@ -779,7 +782,8 @@ class ConfigTableModel(QAbstractTableModel):
           model.
         - :meth:`setData(index, value, role)`: Set the data at a specific index
           in the model.
-        - :meth:`flags(index)`: Get the flags for a specific index in the model.
+        - :meth:`flags(index)`: Get the flags for a specific index in the
+          model.
         - :meth:`headerData(section, orientation, role)`: Get the header data
           for a specific section in the model.
     """
@@ -803,12 +807,12 @@ class ConfigTableModel(QAbstractTableModel):
         if role == Qt.EditRole:
             self.config.setData(index.row(), index.column(), value)
             return
-    
+
     def flags(self, index):
         if self.config.editable(index.row(), index.column()):
             return super().flags(index) | Qt.ItemIsEditable
         return super().flags(index)
-    
+
     def headerData(self, section, orientation, role):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return self.config.columnHeader(section)
@@ -954,7 +958,8 @@ class ConfigWindow(QWidget):
         vbox2 = QVBoxLayout()
         vbox2.setStretch(0, 1)
 
-        spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        spacer = QSpacerItem(
+            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         vbox2.addItem(spacer)
 
         start_button = QPushButton("Start")
