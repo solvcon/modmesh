@@ -118,12 +118,12 @@ WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const c
 
 template <typename T>
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapPointPad
-    : public WrapBase<WrapPointPad<T>, PointPad<T>>
+    : public WrapBase<WrapPointPad<T>, PointPad<T>, std::shared_ptr<PointPad<T>>>
 {
 
 public:
 
-    using base_type = WrapBase<WrapPointPad<T>, PointPad<T>>;
+    using base_type = WrapBase<WrapPointPad<T>, PointPad<T>, std::shared_ptr<PointPad<T>>>;
     using wrapped_type = typename base_type::wrapped_type;
 
     using value_type = typename base_type::wrapped_type::value_type;
@@ -145,17 +145,32 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
 
     // Constructors
     (*this)
-        .def(py::init<uint8_t>(), py::arg("ndim"))
-        .def_timed(py::init<uint8_t, size_t>(), py::arg("ndim"), py::arg("nelem"))
-        .def_timed(py::init<SimpleArray<T> &, SimpleArray<T> &, bool>(),
-                   py::arg("x"),
-                   py::arg("y"),
-                   py::arg("clone"))
-        .def_timed(py::init<SimpleArray<T> &, SimpleArray<T> &, SimpleArray<T> &, bool>(),
-                   py::arg("x"),
-                   py::arg("y"),
-                   py::arg("z"),
-                   py::arg("clone"))
+        .def(
+            py::init(
+                [](uint8_t ndim)
+                { return wrapped_type::construct(ndim); }),
+            py::arg("ndim"))
+        .def(
+            py::init(
+                [](uint8_t ndim, size_t nelem)
+                { return wrapped_type::construct(ndim, nelem); }),
+            py::arg("ndim"),
+            py::arg("nelem"))
+        .def(
+            py::init(
+                [](SimpleArray<T> & x, SimpleArray<T> & y, bool clone)
+                { return wrapped_type::construct(x, y, clone); }),
+            py::arg("x"),
+            py::arg("y"),
+            py::arg("clone"))
+        .def(
+            py::init(
+                [](SimpleArray<T> & x, SimpleArray<T> & y, SimpleArray<T> & z, bool clone)
+                { return wrapped_type::construct(x, y, z, clone); }),
+            py::arg("x"),
+            py::arg("y"),
+            py::arg("z"),
+            py::arg("clone"))
         //
         ;
 

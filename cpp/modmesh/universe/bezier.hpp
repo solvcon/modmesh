@@ -159,7 +159,14 @@ using Point3dFp64 = Point3d<double>;
 template <typename T>
 class PointPad
     : public NumberBase<int32_t, T>
+    , public std::enable_shared_from_this<PointPad<T>>
 {
+
+private:
+
+    struct ctor_passkey
+    {
+    };
 
 public:
 
@@ -167,9 +174,13 @@ public:
     using value_type = T;
     using point_type = Point3d<T>;
 
-    PointPad() = delete;
+    template <typename... Args>
+    static std::shared_ptr<PointPad<T>> construct(Args &&... args)
+    {
+        return std::make_shared<PointPad<T>>(std::forward<Args>(args)..., ctor_passkey());
+    }
 
-    PointPad(uint8_t ndim)
+    PointPad(uint8_t ndim, ctor_passkey const &)
         : m_ndim(ndim)
     {
         if (ndim > 3)
@@ -188,7 +199,7 @@ public:
         }
     }
 
-    PointPad(uint8_t ndim, size_t nelem)
+    PointPad(uint8_t ndim, size_t nelem, ctor_passkey const &)
         : m_ndim(ndim)
         , m_x(nelem)
         , m_y(nelem)
@@ -214,7 +225,7 @@ public:
         }
     }
 
-    PointPad(SimpleArray<T> & x, SimpleArray<T> & y, bool clone)
+    PointPad(SimpleArray<T> & x, SimpleArray<T> & y, bool clone, ctor_passkey const &)
         : m_ndim(2)
         , m_x(x, clone)
         , m_y(y, clone)
@@ -229,7 +240,7 @@ public:
         }
     }
 
-    PointPad(SimpleArray<T> & x, SimpleArray<T> & y, SimpleArray<T> & z, bool clone)
+    PointPad(SimpleArray<T> & x, SimpleArray<T> & y, SimpleArray<T> & z, bool clone, ctor_passkey const &)
         : m_ndim(3)
         , m_x(x, clone)
         , m_y(y, clone)
@@ -245,10 +256,11 @@ public:
         }
     }
 
-    PointPad(PointPad const &) = default;
-    PointPad(PointPad &&) = default;
-    PointPad & operator=(PointPad const &) = default;
-    PointPad & operator=(PointPad &&) = default;
+    PointPad() = delete;
+    PointPad(PointPad const &) = delete;
+    PointPad(PointPad &&) = delete;
+    PointPad & operator=(PointPad const &) = delete;
+    PointPad & operator=(PointPad &&) = delete;
 
     ~PointPad() = default;
 
