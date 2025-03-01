@@ -283,8 +283,8 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
 
     (*this)
         .def(py::init<point_type const &, point_type const &>(),
-             py::arg("v0"),
-             py::arg("v1"))
+             py::arg("p0"),
+             py::arg("p1"))
         .def(py::init<value_type, value_type, value_type, value_type, value_type, value_type>(),
              py::arg("x0"),
              py::arg("y0"),
@@ -327,8 +327,8 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
         { self.NAME() = v; })
     // clang-format off
     (*this)
-        DECL_WRAP(v0)
-        DECL_WRAP(v1)
+        DECL_WRAP(p0)
+        DECL_WRAP(p1)
         ;
 #undef DECL_WRAP
     // clang-format on

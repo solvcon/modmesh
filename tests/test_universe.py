@@ -247,33 +247,33 @@ class Point3dFp64TC(Point3dTB, unittest.TestCase):
 class Segment3dTB(ModMeshTB):
 
     def test_construct(self):
-        Vector = self.vkls
-        Edge = self.ekls
+        Point = self.vkls
+        Segment = self.gkls
 
-        e = Edge(x0=0, y0=0, z0=0, x1=1, y1=1, z1=1)
-        self.assertEqual(len(e), 2)
-        self.assertEqual(tuple(e.v0), (0.0, 0.0, 0.0))
-        self.assertEqual(tuple(e.v1), (1.0, 1.0, 1.0))
+        s = Segment(x0=0, y0=0, z0=0, x1=1, y1=1, z1=1)
+        self.assertEqual(len(s), 2)
+        self.assertEqual(tuple(s.p0), (0.0, 0.0, 0.0))
+        self.assertEqual(tuple(s.p1), (1.0, 1.0, 1.0))
 
-        e.v0 = Vector(x=3, y=7, z=0)
-        e.v1 = Vector(x=-1, y=-4, z=9)
-        self.assertEqual(e.x0, 3)
-        self.assertEqual(e.y0, 7)
-        self.assertEqual(e.z0, 0)
-        self.assertEqual(e.x1, -1)
-        self.assertEqual(e.y1, -4)
-        self.assertEqual(e.z1, 9)
+        s.p0 = Point(x=3, y=7, z=0)
+        s.p1 = Point(x=-1, y=-4, z=9)
+        self.assertEqual(s.x0, 3)
+        self.assertEqual(s.y0, 7)
+        self.assertEqual(s.z0, 0)
+        self.assertEqual(s.x1, -1)
+        self.assertEqual(s.y1, -4)
+        self.assertEqual(s.z1, 9)
 
-        e = Edge(Vector(x=3.1, y=7.4, z=0.6), Vector(x=-1.2, y=-4.1, z=9.2))
-        self.assert_allclose(tuple(e.v0), (3.1, 7.4, 0.6))
-        self.assert_allclose(tuple(e.v1), (-1.2, -4.1, 9.2))
+        s = Segment(Point(x=3.1, y=7.4, z=0.6), Point(x=-1.2, y=-4.1, z=9.2))
+        self.assert_allclose(tuple(s.p0), (3.1, 7.4, 0.6))
+        self.assert_allclose(tuple(s.p1), (-1.2, -4.1, 9.2))
 
 
 class Segment3dFp32TC(Segment3dTB, unittest.TestCase):
 
     def setUp(self):
         self.vkls = modmesh.Point3dFp32
-        self.ekls = modmesh.Segment3dFp32
+        self.gkls = modmesh.Segment3dFp32
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -285,7 +285,7 @@ class Segment3dFp64TC(Segment3dTB, unittest.TestCase):
 
     def setUp(self):
         self.vkls = modmesh.Point3dFp64
-        self.ekls = modmesh.Segment3dFp64
+        self.gkls = modmesh.Segment3dFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:

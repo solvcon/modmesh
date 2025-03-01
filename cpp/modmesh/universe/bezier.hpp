@@ -425,6 +425,25 @@ private:
 using PointPadFp32 = PointPad<float>;
 using PointPadFp64 = PointPad<double>;
 
+namespace detail
+{
+
+template <typename T>
+struct Segment3dNamed
+{
+    T x0, y0, z0, x1, y1, z1;
+}; /* end struct Segment3dNamed */
+
+template <typename T>
+union Segment3dData
+{
+    Point3d<T> p[2];
+    T v[6];
+    Segment3dNamed<T> f;
+}; /* end union Segment3dData */
+
+} /* end namespace detail */
+
 /**
  * Segment in three-dimensional space.
  *
@@ -441,12 +460,12 @@ public:
     using value_type = typename point_type::value_type;
 
     Segment3d(point_type const & v0, point_type const & v1)
-        : m_vec{v0, v1}
+        : m_data{v0, v1}
     {
     }
 
     Segment3d(value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
-        : m_vec{point_type{x0, y0, z0}, point_type{x1, y1, z1}}
+        : m_data{point_type{x0, y0, z0}, point_type{x1, y1, z1}}
     {
     }
 
@@ -457,50 +476,49 @@ public:
     Segment3d & operator=(Segment3d &&) = default;
     ~Segment3d() = default;
 
-    // TODO: rename v0, v1 to p0, p1
-    point_type const & v0() const { return m_vec[0]; }
-    point_type & v0() { return m_vec[0]; }
-    void set_v0(point_type const & v) { m_vec[0] = v; }
-    point_type const & v1() const { return m_vec[1]; }
-    point_type & v1() { return m_vec[1]; }
-    void set_v1(point_type const & v) { m_vec[1] = v; }
+    point_type const & p0() const { return m_data.p[0]; }
+    point_type & p0() { return m_data.p[0]; }
+    void set_p0(point_type const & v) { m_data.p[0] = v; }
+    point_type const & p1() const { return m_data.p[1]; }
+    point_type & p1() { return m_data.p[1]; }
+    void set_p1(point_type const & v) { m_data.p[1] = v; }
 
-    value_type x0() const { return m_vec[0].x(); }
-    value_type & x0() { return m_vec[0].x(); }
-    void set_x0(value_type v) { m_vec[0].set_x(v); }
+    value_type x0() const { return m_data.p[0].x(); }
+    value_type & x0() { return m_data.p[0].x(); }
+    void set_x0(value_type v) { m_data.p[0].set_x(v); }
 
-    value_type y0() const { return m_vec[0].y(); }
-    value_type & y0() { return m_vec[0].y(); }
-    void set_y0(value_type v) { m_vec[0].set_y(v); }
+    value_type y0() const { return m_data.p[0].y(); }
+    value_type & y0() { return m_data.p[0].y(); }
+    void set_y0(value_type v) { m_data.p[0].set_y(v); }
 
-    value_type z0() const { return m_vec[0].z(); }
-    value_type & z0() { return m_vec[0].z(); }
-    void set_z0(value_type v) { m_vec[0].set_z(v); }
+    value_type z0() const { return m_data.p[0].z(); }
+    value_type & z0() { return m_data.p[0].z(); }
+    void set_z0(value_type v) { m_data.p[0].set_z(v); }
 
-    value_type x1() const { return m_vec[1].x(); }
-    value_type & x1() { return m_vec[1].x(); }
-    void set_x1(value_type v) { m_vec[1].set_x(v); }
+    value_type x1() const { return m_data.p[1].x(); }
+    value_type & x1() { return m_data.p[1].x(); }
+    void set_x1(value_type v) { m_data.p[1].set_x(v); }
 
-    value_type y1() const { return m_vec[1].y(); }
-    value_type & y1() { return m_vec[1].y(); }
-    void set_y1(value_type v) { m_vec[1].set_y(v); }
+    value_type y1() const { return m_data.p[1].y(); }
+    value_type & y1() { return m_data.p[1].y(); }
+    void set_y1(value_type v) { m_data.p[1].set_y(v); }
 
-    value_type z1() const { return m_vec[1].z(); }
-    value_type & z1() { return m_vec[1].z(); }
-    void set_z1(value_type v) { m_vec[1].set_z(v); }
+    value_type z1() const { return m_data.p[1].z(); }
+    value_type & z1() { return m_data.p[1].z(); }
+    void set_z1(value_type v) { m_data.p[1].set_z(v); }
 
-    point_type const & operator[](size_t i) const { return m_vec[i]; }
-    point_type & operator[](size_t i) { return m_vec[i]; }
+    point_type const & operator[](size_t i) const { return m_data.p[i]; }
+    point_type & operator[](size_t i) { return m_data.p[i]; }
 
     point_type const & at(size_t i) const
     {
         check_size(i, 2);
-        return m_vec[i];
+        return m_data.p[i];
     }
     point_type & at(size_t i)
     {
         check_size(i, 2);
-        return m_vec[i];
+        return m_data.p[i];
     }
 
     size_t size() const { return 2; }
@@ -515,8 +533,7 @@ private:
         }
     }
 
-    // TODO: rename to m_p0, m_p1 and union
-    point_type m_vec[2];
+    detail::Segment3dData<T> m_data;
 
 }; /* end class Segment3d */
 

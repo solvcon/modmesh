@@ -159,14 +159,14 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
                 size_t ipt = 0;
                 for (size_t i = 0; i < world->nsegment(); ++i)
                 {
-                    Segment3dFp64 const & e = world->segment(i);
-                    sarr(ipt, 0) = e.v0()[0];
-                    sarr(ipt, 1) = e.v0()[1];
-                    sarr(ipt, 2) = e.v0()[2];
+                    Segment3dFp64 const & s = world->segment(i);
+                    sarr(ipt, 0) = s.p0()[0];
+                    sarr(ipt, 1) = s.p0()[1];
+                    sarr(ipt, 2) = s.p0()[2];
                     ++ipt;
-                    sarr(ipt, 0) = e.v1()[0];
-                    sarr(ipt, 1) = e.v1()[1];
-                    sarr(ipt, 2) = e.v1()[2];
+                    sarr(ipt, 0) = s.p1()[0];
+                    sarr(ipt, 1) = s.p1()[1];
+                    sarr(ipt, 2) = s.p1()[2];
                     ++ipt;
                 }
                 for (size_t i = 0; i < world->nbezier(); ++i)
