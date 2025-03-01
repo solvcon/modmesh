@@ -247,33 +247,33 @@ class Point3dFp64TC(Point3dTB, unittest.TestCase):
 class Segment3dTB(ModMeshTB):
 
     def test_construct(self):
-        Vector = self.vkls
-        Edge = self.ekls
+        Point = self.vkls
+        Segment = self.gkls
 
-        e = Edge(x0=0, y0=0, z0=0, x1=1, y1=1, z1=1)
-        self.assertEqual(len(e), 2)
-        self.assertEqual(tuple(e.v0), (0.0, 0.0, 0.0))
-        self.assertEqual(tuple(e.v1), (1.0, 1.0, 1.0))
+        s = Segment(x0=0, y0=0, z0=0, x1=1, y1=1, z1=1)
+        self.assertEqual(len(s), 2)
+        self.assertEqual(tuple(s.p0), (0.0, 0.0, 0.0))
+        self.assertEqual(tuple(s.p1), (1.0, 1.0, 1.0))
 
-        e.v0 = Vector(x=3, y=7, z=0)
-        e.v1 = Vector(x=-1, y=-4, z=9)
-        self.assertEqual(e.x0, 3)
-        self.assertEqual(e.y0, 7)
-        self.assertEqual(e.z0, 0)
-        self.assertEqual(e.x1, -1)
-        self.assertEqual(e.y1, -4)
-        self.assertEqual(e.z1, 9)
+        s.p0 = Point(x=3, y=7, z=0)
+        s.p1 = Point(x=-1, y=-4, z=9)
+        self.assertEqual(s.x0, 3)
+        self.assertEqual(s.y0, 7)
+        self.assertEqual(s.z0, 0)
+        self.assertEqual(s.x1, -1)
+        self.assertEqual(s.y1, -4)
+        self.assertEqual(s.z1, 9)
 
-        e = Edge(Vector(x=3.1, y=7.4, z=0.6), Vector(x=-1.2, y=-4.1, z=9.2))
-        self.assert_allclose(tuple(e.v0), (3.1, 7.4, 0.6))
-        self.assert_allclose(tuple(e.v1), (-1.2, -4.1, 9.2))
+        s = Segment(Point(x=3.1, y=7.4, z=0.6), Point(x=-1.2, y=-4.1, z=9.2))
+        self.assert_allclose(tuple(s.p0), (3.1, 7.4, 0.6))
+        self.assert_allclose(tuple(s.p1), (-1.2, -4.1, 9.2))
 
 
 class Segment3dFp32TC(Segment3dTB, unittest.TestCase):
 
     def setUp(self):
         self.vkls = modmesh.Point3dFp32
-        self.ekls = modmesh.Segment3dFp32
+        self.gkls = modmesh.Segment3dFp32
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -285,7 +285,7 @@ class Segment3dFp64TC(Segment3dTB, unittest.TestCase):
 
     def setUp(self):
         self.vkls = modmesh.Point3dFp64
-        self.ekls = modmesh.Segment3dFp64
+        self.gkls = modmesh.Segment3dFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -617,10 +617,309 @@ class PointPadFp64TC(PointPadTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
 
+class SegmentPadTB(ModMeshTB):
+
+    def test_ndim(self):
+        sp2d = self.skls(ndim=2)
+        self.assertEqual(sp2d.ndim, 2)
+        sp3d = self.skls(ndim=3)
+        self.assertEqual(sp3d.ndim, 3)
+
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 0 < 2"):
+            self.skls(ndim=0)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 0 < 2"):
+            self.skls(ndim=0, nelem=2)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 1 < 2"):
+            self.skls(ndim=1)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 1 < 2"):
+            self.skls(ndim=1, nelem=3)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 4 > 3"):
+            self.skls(ndim=4)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 4 > 3"):
+            self.skls(ndim=4, nelem=5)
+
+    def test_construct_2d(self):
+        x0arr = self.akls(array=np.array([1, 2, 3], dtype=self.dtype))
+        y0arr = self.akls(array=np.array([4, 5, 6], dtype=self.dtype))
+        x1arr = self.akls(array=np.array([-1, -2, -3], dtype=self.dtype))
+        y1arr = self.akls(array=np.array([-4, -5, -6], dtype=self.dtype))
+        sp = self.skls(x0=x0arr, y0=y0arr, x1=x1arr, y1=y1arr, clone=False)
+        self.assertEqual(sp.ndim, 2)
+        self.assert_allclose(sp.x0, [1, 2, 3])
+        self.assert_allclose(sp.y0, [4, 5, 6])
+        self.assert_allclose(sp.x1, [-1, -2, -3])
+        self.assert_allclose(sp.y1, [-4, -5, -6])
+        self.assertEqual(len(sp.z0), 0)
+        self.assertEqual(len(sp.z1), 0)
+
+        # Test zero-copy writing
+        sp.x0[1] = 200.2
+        sp.y0[0] = -700.3
+        sp.x1[1] = -200.2
+        sp.y1[0] = 700.3
+        self.assert_allclose(list(sp[0]), [[1, -700.3, 0], [-1, 700.3, 0]])
+        self.assert_allclose(list(sp[1]), [[200.2, 5, 0], [-200.2, -5, 0]])
+        self.assert_allclose(list(sp[2]), [[3, 6, 0], [-3, -6, 0]])
+
+        sp2 = self.skls(ndim=2, nelem=3)
+        for i in range(len(sp)):
+            sp2.set_at(i, sp.get_at(i).x0, sp.get_at(i).y0,
+                       sp.get_at(i).x1, sp.get_at(i).y1)
+        self.assert_allclose(sp2.x0, [1, 200.2, 3])
+        self.assert_allclose(sp2.y0, [-700.3, 5, 6])
+        self.assert_allclose(sp2.x1, [-1, -200.2, -3])
+        self.assert_allclose(sp2.y1, [700.3, -5, -6])
+        self.assertEqual(len(sp2.z0), 0)
+        self.assertEqual(len(sp2.z1), 0)
+
+        packed = sp2.pack_array().ndarray
+        self.assertEqual(packed.shape, (3, 4))
+        self.assert_allclose(list(packed[0]), (1, -700.3, -1, 700.3))
+        self.assert_allclose(list(packed[1]), (200.2, 5, -200.2, -5))
+        self.assert_allclose(list(packed[2]), (3, 6, -3, -6))
+
+    def test_construct_3d(self):
+        x0arr = self.akls(array=np.array([1, 2, 3], dtype=self.dtype))
+        y0arr = self.akls(array=np.array([4, 5, 6], dtype=self.dtype))
+        z0arr = self.akls(array=np.array([7, 8, 9], dtype=self.dtype))
+        x1arr = self.akls(array=np.array([-1, -2, -3], dtype=self.dtype))
+        y1arr = self.akls(array=np.array([-4, -5, -6], dtype=self.dtype))
+        z1arr = self.akls(array=np.array([-7, -8, -9], dtype=self.dtype))
+        sp = self.skls(x0=x0arr, y0=y0arr, z0=z0arr,
+                       x1=x1arr, y1=y1arr, z1=z1arr, clone=False)
+        self.assertEqual(sp.ndim, 3)
+        self.assert_allclose(sp.x0, [1, 2, 3])
+        self.assert_allclose(sp.y0, [4, 5, 6])
+        self.assert_allclose(sp.z0, [7, 8, 9])
+        self.assert_allclose(sp.x1, [-1, -2, -3])
+        self.assert_allclose(sp.y1, [-4, -5, -6])
+        self.assert_allclose(sp.z1, [-7, -8, -9])
+
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 3 is out of bounds with size 3"):
+            sp.x0_at(3)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 3 is out of bounds with size 3"):
+            sp.y1_at(3)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 3 is out of bounds with size 3"):
+            sp.z0_at(3)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 3 is out of bounds with size 3"):
+            sp.p0_at(3)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 3 is out of bounds with size 3"):
+            sp.get_at(3)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 3 is out of bounds with size 3"):
+            sp.set_at(3, self.gkls(0, 0, 0, 0, 0, 0))
+
+        # Test zero-copy writing
+        sp.x0[1] = 200.2
+        sp.y0[0] = -700.3
+        sp.z0[2] = 213.9
+        sp.x1[1] = -200.2
+        sp.y1[0] = 700.3
+        sp.z1[2] = -213.9
+        self.assert_allclose(list(sp[0]), [[1, -700.3, 7], [-1, 700.3, -7]])
+        self.assert_allclose(list(sp[1]), [[200.2, 5, 8], [-200.2, -5, -8]])
+        self.assert_allclose(list(sp[2]), [[3, 6, 213.9], [-3, -6, -213.9]])
+
+        sp2 = self.skls(ndim=3, nelem=3)
+        for i in range(len(sp)):
+            sp2.set_at(i, sp.get_at(i).x0, sp.get_at(i).y0, sp.get_at(i).z0,
+                       sp.get_at(i).x1, sp.get_at(i).y1, sp.get_at(i).z1)
+        self.assert_allclose(sp2.x0, [1, 200.2, 3])
+        self.assert_allclose(sp2.y0, [-700.3, 5, 6])
+        self.assert_allclose(sp2.z0, [7, 8, 213.9])
+        self.assert_allclose(sp2.x1, [-1, -200.2, -3])
+        self.assert_allclose(sp2.y1, [700.3, -5, -6])
+        self.assert_allclose(sp2.z1, [-7, -8, -213.9])
+
+        packed = sp2.pack_array().ndarray
+        self.assertEqual(packed.shape, (3, 6))
+        self.assert_allclose(list(packed[0]), (1, -700.3, 7, -1, 700.3, -7))
+        self.assert_allclose(list(packed[1]), (200.2, 5, 8, -200.2, -5, -8))
+        self.assert_allclose(list(packed[2]), (3, 6, 213.9, -3, -6, -213.9))
+
+    def test_append_2d(self):
+        sp = self.skls(ndim=2)
+        self.assertEqual(sp.ndim, 2)
+        self.assertEqual(len(sp), 0)
+        sp.append(1.1, 2.2, 7.1, 8.2)
+        self.assertEqual(len(sp), 1)
+        self.assert_allclose(sp.x0_at(0), 1.1)
+        self.assert_allclose(sp.y0_at(0), 2.2)
+        self.assert_allclose(sp.x1_at(0), 7.1)
+        self.assert_allclose(sp.y1_at(0), 8.2)
+        sp.append(1.1 * 3, 2.2 * 3, 7.1 * 3, 8.2 * 3)
+        self.assertEqual(len(sp), 2)
+        self.assert_allclose(sp.x0_at(1), 1.1 * 3)
+        self.assert_allclose(sp.y0_at(1), 2.2 * 3)
+        self.assert_allclose(sp.x1_at(1), 7.1 * 3)
+        self.assert_allclose(sp.y1_at(1), 8.2 * 3)
+        sp.append(1.1 * 3.1, 2.2 * 3.1, 7.1 * 3.1, 8.2 * 3.1)
+        self.assertEqual(len(sp), 3)
+        self.assert_allclose(sp.x0_at(2), 1.1 * 3.1)
+        self.assert_allclose(sp.y0_at(2), 2.2 * 3.1)
+        self.assert_allclose(sp.x1_at(2), 7.1 * 3.1)
+        self.assert_allclose(sp.y1_at(2), 8.2 * 3.1)
+
+        with self.assertRaisesRegex(
+                IndexError, "PointPad::append: ndim must be 3 but is 2"):
+            sp.append(3.2, 4.1, 5.7, 3.2, 4.1, 5.7)
+        self.assertEqual(len(sp), 3)
+
+        # Test batch interface
+        self.assert_allclose(sp.x0, [1.1, 1.1 * 3, 1.1 * 3.1])
+        self.assert_allclose(sp.y0, [2.2, 2.2 * 3, 2.2 * 3.1])
+        self.assert_allclose(sp.x1, [7.1, 7.1 * 3, 7.1 * 3.1])
+        self.assert_allclose(sp.y1, [8.2, 8.2 * 3, 8.2 * 3.1])
+        sp.x0[0] = -10.9
+        sp.x0.ndarray[2] = -13.2
+        sp.x1[0] = 10.9
+        sp.x1.ndarray[2] = 13.2
+        self.assert_allclose(sp.x0_at(0), -10.9)
+        self.assert_allclose(sp.x0_at(1), 1.1 * 3)
+        self.assert_allclose(sp.x0_at(2), -13.2)
+        self.assert_allclose(sp.x1_at(0), 10.9)
+        self.assert_allclose(sp.x1_at(1), 7.1 * 3)
+        self.assert_allclose(sp.x1_at(2), 13.2)
+        sp.y0[1] = -0.93
+        sp.y0.ndarray[2] = 29.1
+        sp.y1[1] = 0.93
+        sp.y1.ndarray[2] = -29.1
+        self.assert_allclose(sp.y0_at(0), 2.2)
+        self.assert_allclose(sp.y0_at(1), -0.93)
+        self.assert_allclose(sp.y0_at(2), 29.1)
+        self.assert_allclose(sp.y1_at(0), 8.2)
+        self.assert_allclose(sp.y1_at(1), 0.93)
+        self.assert_allclose(sp.y1_at(2), -29.1)
+        self.assertEqual(len(sp.z0), 0)
+        self.assertEqual(len(sp.z1), 0)
+
+    def test_append_3d(self):
+        sp = self.skls(ndim=3)
+        self.assertEqual(sp.ndim, 3)
+        self.assertEqual(len(sp), 0)
+        sp.append(1.1, 2.2, 3.3, 7.1, 8.2, 9.3)
+        self.assertEqual(len(sp), 1)
+        self.assert_allclose(sp.x0_at(0), 1.1)
+        self.assert_allclose(sp.y0_at(0), 2.2)
+        self.assert_allclose(sp.z0_at(0), 3.3)
+        self.assert_allclose(sp.x1_at(0), 7.1)
+        self.assert_allclose(sp.y1_at(0), 8.2)
+        self.assert_allclose(sp.z1_at(0), 9.3)
+        sp.append(1.1 * 5, 2.2 * 5, 3.3 * 5, 7.1 * 5, 8.2 * 5, 9.3 * 5)
+        self.assertEqual(len(sp), 2)
+        self.assert_allclose(sp.x0_at(1), 1.1 * 5)
+        self.assert_allclose(sp.y0_at(1), 2.2 * 5)
+        self.assert_allclose(sp.z0_at(1), 3.3 * 5)
+        self.assert_allclose(sp.x1_at(1), 7.1 * 5)
+        self.assert_allclose(sp.y1_at(1), 8.2 * 5)
+        self.assert_allclose(sp.z1_at(1), 9.3 * 5)
+        sp.append(1.1 * 5.1, 2.2 * 5.1, 3.3 * 5.1, 7.1 * 5.1, 8.2 * 5.1,
+                  9.3 * 5.1)
+        self.assertEqual(len(sp), 3)
+        self.assert_allclose(sp.x0_at(2), 1.1 * 5.1)
+        self.assert_allclose(sp.y0_at(2), 2.2 * 5.1)
+        self.assert_allclose(sp.z0_at(2), 3.3 * 5.1)
+        self.assert_allclose(sp.x1_at(2), 7.1 * 5.1)
+        self.assert_allclose(sp.y1_at(2), 8.2 * 5.1)
+        self.assert_allclose(sp.z1_at(2), 9.3 * 5.1)
+
+        with self.assertRaisesRegex(
+                IndexError, "PointPad::append: ndim must be 2 but is 3"):
+            sp.append(3.2, 4.1, 5.2, 6.2)
+        self.assertEqual(len(sp), 3)
+
+        # Test batch interface
+        self.assert_allclose(sp.x0, [1.1, 1.1 * 5, 1.1 * 5.1])
+        self.assert_allclose(sp.y0, [2.2, 2.2 * 5, 2.2 * 5.1])
+        self.assert_allclose(sp.z0, [3.3, 3.3 * 5, 3.3 * 5.1])
+        self.assert_allclose(sp.x1, [7.1, 7.1 * 5, 7.1 * 5.1])
+        self.assert_allclose(sp.y1, [8.2, 8.2 * 5, 8.2 * 5.1])
+        self.assert_allclose(sp.z1, [9.3, 9.3 * 5, 9.3 * 5.1])
+        sp.x0[0] = -10.9
+        sp.x0.ndarray[2] = -13.2
+        sp.x1[0] = 10.9
+        sp.x1.ndarray[2] = 13.2
+        self.assert_allclose(sp.x0_at(0), -10.9)
+        self.assert_allclose(sp.x0_at(1), 1.1 * 5)
+        self.assert_allclose(sp.x0_at(2), -13.2)
+        self.assert_allclose(sp.x1_at(0), 10.9)
+        self.assert_allclose(sp.x1_at(1), 7.1 * 5)
+        self.assert_allclose(sp.x1_at(2), 13.2)
+        sp.y0[1] = -0.93
+        sp.y0.ndarray[2] = 29.1
+        sp.y1[1] = 0.93
+        sp.y1.ndarray[2] = -29.1
+        self.assert_allclose(sp.y0_at(0), 2.2)
+        self.assert_allclose(sp.y0_at(1), -0.93)
+        self.assert_allclose(sp.y0_at(2), 29.1)
+        self.assert_allclose(sp.y1_at(0), 8.2)
+        self.assert_allclose(sp.y1_at(1), 0.93)
+        self.assert_allclose(sp.y1_at(2), -29.1)
+        sp.z0[0] = 2.31
+        sp.z0.ndarray[1] = 8.23
+        sp.z1[0] = -2.31
+        sp.z1.ndarray[1] = -8.23
+        self.assert_allclose(sp.z0_at(0), 2.31)
+        self.assert_allclose(sp.z0_at(1), 8.23)
+        self.assert_allclose(sp.z0_at(2), 3.3 * 5.1)
+        self.assert_allclose(sp.z1_at(0), -2.31)
+        self.assert_allclose(sp.z1_at(1), -8.23)
+        self.assert_allclose(sp.z1_at(2), 9.3 * 5.1)
+
+
+class SegmentPadFp32TC(SegmentPadTB, unittest.TestCase):
+
+    def setUp(self):
+        self.dtype = 'float32'
+        self.akls = modmesh.SimpleArrayFloat32
+        self.vkls = modmesh.Point3dFp32
+        self.pkls = modmesh.PointPadFp32
+        self.gkls = modmesh.Segment3dFp32
+        self.skls = modmesh.SegmentPadFp32
+
+    def assert_allclose(self, *args, **kw):
+        if 'rtol' not in kw:
+            kw['rtol'] = 1.e-7
+        return super().assert_allclose(*args, **kw)
+
+
+class SegmentPadFp64TC(SegmentPadTB, unittest.TestCase):
+
+    def setUp(self):
+        self.dtype = 'float64'
+        self.akls = modmesh.SimpleArrayFloat64
+        self.vkls = modmesh.Point3dFp64
+        self.pkls = modmesh.PointPadFp64
+        self.gkls = modmesh.Segment3dFp64
+        self.skls = modmesh.SegmentPadFp64
+
+    def assert_allclose(self, *args, **kw):
+        if 'rtol' not in kw:
+            kw['rtol'] = 1.e-15
+        return super().assert_allclose(*args, **kw)
+
+
 class WorldTB(ModMeshTB):
 
     def test_bezier(self):
-        Vector = self.vkls
+        Point = self.vkls
         World = self.wkls
 
         w = World()
@@ -633,8 +932,8 @@ class WorldTB(ModMeshTB):
 
         # Add Bezier curve
         b = w.add_bezier(
-            [Vector(0, 0, 0), Vector(1, 1, 0), Vector(3, 1, 0),
-             Vector(4, 0, 0)])
+            [Point(0, 0, 0), Point(1, 1, 0), Point(3, 1, 0),
+             Point(4, 0, 0)])
         self.assertEqual(w.nbezier, 1)
         with self.assertRaisesRegex(
                 IndexError, "World: \\(bezier\\) i 1 >= size 1"):
@@ -661,48 +960,99 @@ class WorldTB(ModMeshTB):
         # Confirm we worked on the internal instead of copy
         self.assertEqual(w.bezier(0).nlocus, 5)
 
-    def test_vertex(self):
-        Vector = self.vkls
+    def test_point(self):
+        Point = self.vkls
         World = self.wkls
 
         w = World()
 
         # Empty
-        self.assertEqual(w.nvertex, 0)
+        self.assertEqual(w.npoint, 0)
         with self.assertRaisesRegex(
-                IndexError, "World: \\(vertex\\) i 0 >= size 0"):
-            w.vertex(0)
+                IndexError, "World: \\(point\\) i 0 >= size 0"):
+            w.point(0)
 
-        # Add a vertex by object
-        v = w.add_vertex(Vector(0, 1, 2))
-        self.assertEqual(list(v), [0, 1, 2])
-        self.assertEqual(list(w.vertex(0)), [0, 1, 2])
-        self.assertEqual(v, w.vertex(0))
-        self.assertEqual(w.nvertex, 1)
+        # Add a point by object
+        p = w.add_point(Point(0, 1, 2))
+        self.assertEqual(list(p), [0, 1, 2])
+        self.assertEqual(list(w.point(0)), [0, 1, 2])
+        self.assertIsNot(p, w.point(0))
+        self.assertEqual(w.npoint, 1)
         with self.assertRaisesRegex(
-                IndexError, "World: \\(vertex\\) i 1 >= size 1"):
-            w.vertex(1)
+                IndexError, "World: \\(point\\) i 1 >= size 1"):
+            w.point(1)
 
-        # Add a vertex by coordinate
-        v = w.add_vertex(3.1415, 3.1416, 3.1417)
-        self.assert_allclose(list(v), [3.1415, 3.1416, 3.1417])
-        self.assert_allclose(list(w.vertex(1)), [3.1415, 3.1416, 3.1417])
-        self.assertEqual(v, w.vertex(1))
-        self.assertEqual(w.nvertex, 2)
+        # Add a point by coordinate
+        p = w.add_point(3.1415, 3.1416, 3.1417)
+        self.assert_allclose(list(p), [3.1415, 3.1416, 3.1417])
+        self.assert_allclose(list(w.point(1)), [3.1415, 3.1416, 3.1417])
+        self.assertIsNot(p, w.point(1))
+        self.assertEqual(w.npoint, 2)
         with self.assertRaisesRegex(
-                IndexError, "World: \\(vertex\\) i 2 >= size 2"):
-            w.vertex(2)
+                IndexError, "World: \\(point\\) i 2 >= size 2"):
+            w.point(2)
 
-        # Add many vertices
+        # Add many points
         for it in range(10):
-            w.add_vertex(3.1415 + it, 3.1416 + it, 3.1417 + it)
-            self.assertEqual(w.nvertex, 2 + it + 1)
+            w.add_point(3.1415 + it, 3.1416 + it, 3.1417 + it)
+            self.assertEqual(w.npoint, 2 + it + 1)
+
+        # Array/batch interface
+        pndarr = w.points.pack_array().ndarray
+        self.assertEqual(pndarr.shape, (12, 3))
+        self.assertEqual(w.npoint, 12)
+
+    def test_segment(self):
+        Segment = self.gkls
+        World = self.wkls
+
+        w = World()
+
+        # Empty
+        self.assertEqual(w.nsegment, 0)
+        with self.assertRaisesRegex(
+                IndexError, "World: \\(segment\\) i 0 >= size 0"):
+            w.segment(0)
+
+        # Add a segment by object
+        s = w.add_segment(Segment(0, 1, 2, 7.1, 8.2, 9.3))
+        self.assert_allclose(list(s), [[0, 1, 2], [7.1, 8.2, 9.3]])
+        self.assert_allclose(list(w.segment(0)), [[0, 1, 2], [7.1, 8.2, 9.3]])
+        self.assertIsNot(s, w.segment(0))
+        self.assertEqual(w.nsegment, 1)
+        with self.assertRaisesRegex(
+                IndexError, "World: \\(segment\\) i 1 >= size 1"):
+            w.segment(1)
+
+        # Add a segment by coordinate
+        s = w.add_segment(3.1415, 3.1416, 3.1417, 7.1, 8.2, 9.3)
+        self.assert_allclose(list(s),
+                             [[3.1415, 3.1416, 3.1417], [7.1, 8.2, 9.3]])
+        self.assert_allclose(list(w.segment(1)),
+                             [[3.1415, 3.1416, 3.1417], [7.1, 8.2, 9.3]])
+        self.assertIsNot(s, w.segment(1))
+        self.assertEqual(w.nsegment, 2)
+        with self.assertRaisesRegex(
+                IndexError, "World: \\(segment\\) i 2 >= size 2"):
+            w.segment(2)
+
+        # Add many segments
+        for it in range(11):
+            w.add_segment(3.1415 + it, 3.1416 + it, 3.1417 + it,
+                          7.1 + it, 8.2 + it, 9.3 + it)
+            self.assertEqual(w.nsegment, 2 + it + 1)
+
+        # Array/batch interface
+        sndarr = w.segments.pack_array().ndarray
+        self.assertEqual(sndarr.shape, (13, 6))
+        self.assertEqual(w.nsegment, 13)
 
 
 class WorldFp32TC(WorldTB, unittest.TestCase):
 
     def setUp(self):
         self.vkls = modmesh.Point3dFp32
+        self.gkls = modmesh.Segment3dFp32
         self.wkls = modmesh.WorldFp32
 
     def assert_allclose(self, *args, **kw):
@@ -718,6 +1068,7 @@ class WorldFp64TC(WorldTB, unittest.TestCase):
 
     def setUp(self):
         self.vkls = modmesh.Point3dFp64
+        self.gkls = modmesh.Segment3dFp64
         self.wkls = modmesh.WorldFp64
 
     def assert_allclose(self, *args, **kw):

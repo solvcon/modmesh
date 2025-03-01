@@ -42,7 +42,7 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
     , m_renderer(new Qt3DRender::QGeometryRenderer())
     , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
 {
-    size_t const npoint = world->nvertex();
+    size_t const npoint = world->npoint();
 
     if (npoint > 0)
     {
@@ -60,9 +60,9 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
                 QByteArray barray;
                 barray.resize(npoint * 3 * sizeof(float));
                 SimpleArray<float> sarr = makeSimpleArray<float>(barray, small_vector<size_t>{npoint, 3}, /*view*/ true);
-                for (size_t i = 0; i < world->nvertex(); ++i)
+                for (size_t i = 0; i < world->npoint(); ++i)
                 {
-                    Point3dFp64 const & v = world->vertex(i);
+                    Point3dFp64 const & v = world->point(i);
                     sarr(i, 0) = v[0];
                     sarr(i, 1) = v[1];
                     sarr(i, 2) = v[2];
@@ -88,7 +88,7 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
                 QByteArray barray;
                 barray.resize(npoint * sizeof(uint32_t));
                 SimpleArray<uint32_t> sarr = makeSimpleArray<uint32_t>(barray, small_vector<size_t>{npoint}, /*view*/ true);
-                for (size_t i = 0; i < world->nvertex(); ++i)
+                for (size_t i = 0; i < world->npoint(); ++i)
                 {
                     sarr(i) = i;
                 }
@@ -159,14 +159,14 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
                 size_t ipt = 0;
                 for (size_t i = 0; i < world->nsegment(); ++i)
                 {
-                    Segment3dFp64 const & e = world->segment(i);
-                    sarr(ipt, 0) = e.v0()[0];
-                    sarr(ipt, 1) = e.v0()[1];
-                    sarr(ipt, 2) = e.v0()[2];
+                    Segment3dFp64 const & s = world->segment(i);
+                    sarr(ipt, 0) = s.p0()[0];
+                    sarr(ipt, 1) = s.p0()[1];
+                    sarr(ipt, 2) = s.p0()[2];
                     ++ipt;
-                    sarr(ipt, 0) = e.v1()[0];
-                    sarr(ipt, 1) = e.v1()[1];
-                    sarr(ipt, 2) = e.v1()[2];
+                    sarr(ipt, 0) = s.p1()[0];
+                    sarr(ipt, 1) = s.p1()[1];
+                    sarr(ipt, 2) = s.p1()[2];
                     ++ipt;
                 }
                 for (size_t i = 0; i < world->nbezier(); ++i)
