@@ -42,7 +42,7 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
     , m_renderer(new Qt3DRender::QGeometryRenderer())
     , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
 {
-    size_t const npoint = world->nvertex();
+    size_t const npoint = world->npoint();
 
     if (npoint > 0)
     {
@@ -60,9 +60,9 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
                 QByteArray barray;
                 barray.resize(npoint * 3 * sizeof(float));
                 SimpleArray<float> sarr = makeSimpleArray<float>(barray, small_vector<size_t>{npoint, 3}, /*view*/ true);
-                for (size_t i = 0; i < world->nvertex(); ++i)
+                for (size_t i = 0; i < world->npoint(); ++i)
                 {
-                    Point3dFp64 const & v = world->vertex(i);
+                    Point3dFp64 const & v = world->point(i);
                     sarr(i, 0) = v[0];
                     sarr(i, 1) = v[1];
                     sarr(i, 2) = v[2];
@@ -88,7 +88,7 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
                 QByteArray barray;
                 barray.resize(npoint * sizeof(uint32_t));
                 SimpleArray<uint32_t> sarr = makeSimpleArray<uint32_t>(barray, small_vector<size_t>{npoint}, /*view*/ true);
-                for (size_t i = 0; i < world->nvertex(); ++i)
+                for (size_t i = 0; i < world->npoint(); ++i)
                 {
                     sarr(i) = i;
                 }

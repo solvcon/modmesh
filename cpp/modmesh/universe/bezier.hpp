@@ -598,14 +598,7 @@ public:
         : m_p0(point_pad_type::construct(x0, y0, clone))
         , m_p1(point_pad_type::construct(x1, y1, clone))
     {
-        if (m_p0->size() != m_p1->size())
-        {
-            throw std::invalid_argument(
-                Formatter()
-                << "SegmentPad::SegmentPad: "
-                << "m_p0->size() " << m_p0->size() << " m_p1->size() " << m_p1->size()
-                << " are not the same");
-        }
+        check_constructor_point_size(*m_p0, *m_p1);
     }
 
     SegmentPad(
@@ -620,14 +613,7 @@ public:
         : m_p0(point_pad_type::construct(x0, y0, z0, clone))
         , m_p1(point_pad_type::construct(x1, y1, z1, clone))
     {
-        if (m_p0->size() != m_p1->size())
-        {
-            throw std::invalid_argument(
-                Formatter()
-                << "SegmentPad::SegmentPad: "
-                << "m_p0->size() " << m_p0->size() << " m_p1->size() " << m_p1->size()
-                << " are not the same");
-        }
+        check_constructor_point_size(*m_p0, *m_p1);
     }
 
     SegmentPad() = delete;
@@ -852,6 +838,18 @@ public:
     }
 
 private:
+
+    void check_constructor_point_size(point_pad_type const & p0, point_pad_type const & p1)
+    {
+        if (m_p0->size() != m_p1->size())
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "SegmentPad::SegmentPad: "
+                << "p0.size() " << p0.size() << " p1.size() " << p1.size()
+                << " are not the same");
+        }
+    }
 
     std::shared_ptr<point_pad_type> m_p0;
     std::shared_ptr<point_pad_type> m_p1;

@@ -632,8 +632,7 @@ public:
     using wrapped_type = typename base_type::wrapped_type;
 
     using value_type = typename wrapped_type::value_type;
-    using vector_type = typename wrapped_type::vector_type;
-    using vertex_type = typename wrapped_type::vertex_type;
+    using point_type = typename wrapped_type::point_type;
     using segment_type = typename wrapped_type::segment_type;
     using bezier_type = typename wrapped_type::bezier_type;
 
@@ -662,29 +661,29 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
     // Bezier curves
     (*this)
         .def(
-            "add_vertex",
-            [](wrapped_type & self, vertex_type const & vertex)
+            "add_point",
+            [](wrapped_type & self, point_type const & point)
             {
-                self.add_vertex(vertex);
-                return self.vertex_at(self.nvertex() - 1);
+                self.add_point(point);
+                return self.point_at(self.npoint() - 1);
             },
-            py::arg("vertex"))
+            py::arg("point"))
         .def(
-            "add_vertex",
+            "add_point",
             [](wrapped_type & self, value_type x, value_type y, value_type z)
             {
-                self.add_vertex(x, y, z);
-                return self.vertex_at(self.nvertex() - 1);
+                self.add_point(x, y, z);
+                return self.point_at(self.npoint() - 1);
             },
             py::arg("x"),
             py::arg("y"),
             py::arg("z"))
-        .def_property_readonly("nvertex", &wrapped_type::nvertex)
+        .def_property_readonly("npoint", &wrapped_type::npoint)
         .def(
-            "vertex",
+            "point",
             [](wrapped_type & self, size_t i)
             {
-                return self.vertex_at(i);
+                return self.point_at(i);
             })
         .def(
             "add_segment",
@@ -709,14 +708,14 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
             py::arg("z1"))
         .def_property_readonly("nsegment", &wrapped_type::nsegment)
         .def(
-            "edge",
+            "segment",
             [](wrapped_type & self, size_t i)
             {
                 return self.segment_at(i);
             })
         .def(
             "add_bezier",
-            [](wrapped_type & self, std::vector<typename wrapped_type::vector_type> const & controls) -> auto &
+            [](wrapped_type & self, std::vector<typename wrapped_type::point_type> const & controls) -> auto &
             {
                 self.add_bezier(controls);
                 return self.bezier_at(self.nbezier() - 1);

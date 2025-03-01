@@ -54,12 +54,10 @@ private:
 
 public:
 
-    // TODO: rename vertex as point
     using real_type = T;
     using value_type = T;
     using size_type = typename NumberBase<int32_t, T>::size_type;
-    using vector_type = Point3d<T>;
-    using vertex_type = vector_type;
+    using point_type = Point3d<T>;
     using segment_type = Segment3d<T>;
     using bezier_type = Bezier3d<T>;
 
@@ -73,7 +71,7 @@ public:
     }
 
     explicit World(ctor_passkey const &)
-        : m_vertices(point_pad_type::construct(/* ndim */ 3))
+        : m_points(point_pad_type::construct(/* ndim */ 3))
         , m_segments(segment_pad_type::construct(/* ndim */ 3))
     {
     }
@@ -85,20 +83,26 @@ public:
     World & operator=(World &&) = delete;
     ~World() = default;
 
-    void add_vertex(vertex_type const & vertex);
-    void add_vertex(value_type x, value_type y, value_type z)
+    void add_point(point_type const & vertex)
     {
-        add_vertex(vertex_type(x, y, z));
+        m_points->append(vertex);
     }
-    size_t nvertex() const { return m_vertices->size(); }
-    vertex_type vertex(size_t i) const { return m_vertices->get(i); }
-    vertex_type vertex_at(size_t i) const
+    void add_point(value_type x, value_type y, value_type z)
     {
-        check_size(i, m_vertices->size(), "vertex");
-        return m_vertices->get(i);
+        add_point(point_type(x, y, z));
+    }
+    size_t npoint() const { return m_points->size(); }
+    point_type point(size_t i) const { return m_points->get(i); }
+    point_type point_at(size_t i) const
+    {
+        check_size(i, m_points->size(), "point");
+        return m_points->get(i);
     }
 
-    void add_segment(segment_type const & segment);
+    void add_segment(segment_type const & segment)
+    {
+        m_segments->append(segment);
+    }
     void add_segment(value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
     {
         add_segment(segment_type(x0, y0, z0, x1, y1, z1));
@@ -107,11 +111,14 @@ public:
     segment_type segment(size_t i) const { return m_segments->get(i); }
     segment_type segment_at(size_t i) const
     {
-        check_size(i, m_segments->size(), "edge");
+        check_size(i, m_segments->size(), "segment");
         return m_segments->get(i);
     }
 
-    void add_bezier(std::vector<vector_type> const & controls);
+    void add_bezier(std::vector<point_type> const & controls)
+    {
+        m_beziers.emplace_back(controls);
+    }
     size_t nbezier() const { return m_beziers.size(); }
     bezier_type const & bezier(size_t i) const { return m_beziers[i]; }
     bezier_type & bezier(size_t i) { return m_beziers[i]; }
@@ -136,34 +143,11 @@ private:
         }
     }
 
-#if 1
-    std::shared_ptr<point_pad_type> m_vertices;
+    std::shared_ptr<point_pad_type> m_points;
     std::shared_ptr<segment_pad_type> m_segments;
-#else
-    SimpleCollector<vertex_type> m_vertices;
-    std::deque<Segment3d<T>> m_segments;
-#endif
     std::deque<Bezier3d<T>> m_beziers;
 
 }; /* end class World */
-
-template <typename T>
-void World<T>::add_vertex(vertex_type const & vertex)
-{
-    m_vertices->append(vertex);
-}
-
-template <typename T>
-void World<T>::add_segment(segment_type const & segment)
-{
-    m_segments->append(segment);
-}
-
-template <typename T>
-void World<T>::add_bezier(std::vector<vector_type> const & controls)
-{
-    m_beziers.emplace_back(controls);
-}
 
 using WorldFp32 = World<float>;
 using WorldFp64 = World<double>;

@@ -919,7 +919,7 @@ class SegmentPadFp64TC(SegmentPadTB, unittest.TestCase):
 class WorldTB(ModMeshTB):
 
     def test_bezier(self):
-        Vector = self.vkls
+        Point = self.vkls
         World = self.wkls
 
         w = World()
@@ -932,8 +932,8 @@ class WorldTB(ModMeshTB):
 
         # Add Bezier curve
         b = w.add_bezier(
-            [Vector(0, 0, 0), Vector(1, 1, 0), Vector(3, 1, 0),
-             Vector(4, 0, 0)])
+            [Point(0, 0, 0), Point(1, 1, 0), Point(3, 1, 0),
+             Point(4, 0, 0)])
         self.assertEqual(w.nbezier, 1)
         with self.assertRaisesRegex(
                 IndexError, "World: \\(bezier\\) i 1 >= size 1"):
@@ -960,42 +960,42 @@ class WorldTB(ModMeshTB):
         # Confirm we worked on the internal instead of copy
         self.assertEqual(w.bezier(0).nlocus, 5)
 
-    def test_vertex(self):
-        Vector = self.vkls
+    def test_point(self):
+        Point = self.vkls
         World = self.wkls
 
         w = World()
 
         # Empty
-        self.assertEqual(w.nvertex, 0)
+        self.assertEqual(w.npoint, 0)
         with self.assertRaisesRegex(
-                IndexError, "World: \\(vertex\\) i 0 >= size 0"):
-            w.vertex(0)
+                IndexError, "World: \\(point\\) i 0 >= size 0"):
+            w.point(0)
 
-        # Add a vertex by object
-        v = w.add_vertex(Vector(0, 1, 2))
-        self.assertEqual(list(v), [0, 1, 2])
-        self.assertEqual(list(w.vertex(0)), [0, 1, 2])
-        self.assertIsNot(v, w.vertex(0))
-        self.assertEqual(w.nvertex, 1)
+        # Add a point by object
+        p = w.add_point(Point(0, 1, 2))
+        self.assertEqual(list(p), [0, 1, 2])
+        self.assertEqual(list(w.point(0)), [0, 1, 2])
+        self.assertIsNot(p, w.point(0))
+        self.assertEqual(w.npoint, 1)
         with self.assertRaisesRegex(
-                IndexError, "World: \\(vertex\\) i 1 >= size 1"):
-            w.vertex(1)
+                IndexError, "World: \\(point\\) i 1 >= size 1"):
+            w.point(1)
 
-        # Add a vertex by coordinate
-        v = w.add_vertex(3.1415, 3.1416, 3.1417)
-        self.assert_allclose(list(v), [3.1415, 3.1416, 3.1417])
-        self.assert_allclose(list(w.vertex(1)), [3.1415, 3.1416, 3.1417])
-        self.assertIsNot(v, w.vertex(1))
-        self.assertEqual(w.nvertex, 2)
+        # Add a point by coordinate
+        p = w.add_point(3.1415, 3.1416, 3.1417)
+        self.assert_allclose(list(p), [3.1415, 3.1416, 3.1417])
+        self.assert_allclose(list(w.point(1)), [3.1415, 3.1416, 3.1417])
+        self.assertIsNot(p, w.point(1))
+        self.assertEqual(w.npoint, 2)
         with self.assertRaisesRegex(
-                IndexError, "World: \\(vertex\\) i 2 >= size 2"):
-            w.vertex(2)
+                IndexError, "World: \\(point\\) i 2 >= size 2"):
+            w.point(2)
 
-        # Add many vertices
+        # Add many points
         for it in range(10):
-            w.add_vertex(3.1415 + it, 3.1416 + it, 3.1417 + it)
-            self.assertEqual(w.nvertex, 2 + it + 1)
+            w.add_point(3.1415 + it, 3.1416 + it, 3.1417 + it)
+            self.assertEqual(w.npoint, 2 + it + 1)
 
 
 class WorldFp32TC(WorldTB, unittest.TestCase):
