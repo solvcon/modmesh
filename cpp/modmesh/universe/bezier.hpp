@@ -457,6 +457,7 @@ public:
     Segment3d & operator=(Segment3d &&) = default;
     ~Segment3d() = default;
 
+    // TODO: rename v0, v1 to p0, p1
     point_type const & v0() const { return m_vec[0]; }
     point_type & v0() { return m_vec[0]; }
     void set_v0(point_type const & v) { m_vec[0] = v; }
@@ -514,12 +515,315 @@ private:
         }
     }
 
+    // TODO: rename to m_p0, m_p1 and union
     point_type m_vec[2];
 
 }; /* end class Segment3d */
 
 using Segment3dFp32 = Segment3d<float>;
 using Segment3dFp64 = Segment3d<double>;
+
+template <typename T>
+class SegmentPad
+    : public NumberBase<int32_t, T>
+    , public std::enable_shared_from_this<SegmentPad<T>>
+{
+
+private:
+
+    struct ctor_passkey
+    {
+    };
+
+public:
+
+    using real_type = T;
+    using value_type = T;
+    using point_type = Point3d<T>;
+    using segment_type = Segment3d<T>;
+    using point_pad_type = PointPad<T>;
+
+    template <typename... Args>
+    static std::shared_ptr<SegmentPad<T>> construct(Args &&... args)
+    {
+        return std::make_shared<SegmentPad<T>>(std::forward<Args>(args)..., ctor_passkey());
+    }
+
+    SegmentPad(uint8_t ndim, ctor_passkey const &)
+        : m_p0(point_pad_type::construct(ndim))
+        , m_p1(point_pad_type::construct(ndim))
+    {
+    }
+
+    SegmentPad(uint8_t ndim, size_t nelem, ctor_passkey const &)
+        : m_p0(point_pad_type::construct(ndim, nelem))
+        , m_p1(point_pad_type::construct(ndim, nelem))
+    {
+    }
+
+    SegmentPad(
+        SimpleArray<T> & x0,
+        SimpleArray<T> & y0,
+        SimpleArray<T> & x1,
+        SimpleArray<T> & y1,
+        bool clone,
+        ctor_passkey const &)
+        : m_p0(point_pad_type::construct(x0, y0, clone))
+        , m_p1(point_pad_type::construct(x1, y1, clone))
+    {
+        if (m_p0->size() != m_p1->size())
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "SegmentPad::SegmentPad: "
+                << "m_p0->size() " << m_p0->size() << " m_p1->size() " << m_p1->size()
+                << " are not the same");
+        }
+    }
+
+    SegmentPad(
+        SimpleArray<T> & x0,
+        SimpleArray<T> & y0,
+        SimpleArray<T> & z0,
+        SimpleArray<T> & x1,
+        SimpleArray<T> & y1,
+        SimpleArray<T> & z1,
+        bool clone,
+        ctor_passkey const &)
+        : m_p0(point_pad_type::construct(x0, y0, z0, clone))
+        , m_p1(point_pad_type::construct(x1, y1, z1, clone))
+    {
+        if (m_p0->size() != m_p1->size())
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "SegmentPad::SegmentPad: "
+                << "m_p0->size() " << m_p0->size() << " m_p1->size() " << m_p1->size()
+                << " are not the same");
+        }
+    }
+
+    SegmentPad() = delete;
+    SegmentPad(SegmentPad const &) = delete;
+    SegmentPad(SegmentPad &&) = delete;
+    SegmentPad & operator=(SegmentPad const &) = delete;
+    SegmentPad & operator=(SegmentPad &&) = delete;
+
+    ~SegmentPad() = default;
+
+    void append(T x0, T y0, T x1, T y1)
+    {
+        m_p0->append(x0, y0);
+        m_p1->append(x1, y1);
+    }
+
+    void append(T x0, T y0, T z0, T x1, T y1, T z1)
+    {
+        m_p0->append(x0, y0, z0);
+        m_p1->append(x1, y1, z1);
+    }
+
+    uint8_t ndim() const { return m_p0->ndim(); }
+
+    size_t size() const { return m_p0->size(); }
+
+    SimpleArray<T> pack_array() const
+    {
+        using shape_type = typename SimpleArray<T>::shape_type;
+        SimpleArray<T> ret(shape_type{m_p0->size(), static_cast<size_t>(ndim() * 2)});
+        if (ndim() == 3)
+        {
+            for (size_t i = 0; i < m_p0->size(); ++i)
+            {
+                ret(i, 0) = m_p0->x(i);
+                ret(i, 1) = m_p0->y(i);
+                ret(i, 2) = m_p0->z(i);
+                ret(i, 3) = m_p1->x(i);
+                ret(i, 4) = m_p1->y(i);
+                ret(i, 5) = m_p1->z(i);
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < m_p0->size(); ++i)
+            {
+                ret(i, 0) = m_p0->x(i);
+                ret(i, 1) = m_p0->y(i);
+                ret(i, 2) = m_p1->x(i);
+                ret(i, 3) = m_p1->y(i);
+            }
+        }
+        return ret;
+    }
+
+    void expand(size_t length)
+    {
+        m_p0->expand(length);
+        m_p1->expand(length);
+    }
+
+    real_type x0_at(size_t i) const { return m_p0->x_at(i); }
+    real_type y0_at(size_t i) const { return m_p0->y_at(i); }
+    real_type z0_at(size_t i) const { return m_p0->z_at(i); }
+    real_type x1_at(size_t i) const { return m_p1->x_at(i); }
+    real_type y1_at(size_t i) const { return m_p1->y_at(i); }
+    real_type z1_at(size_t i) const { return m_p1->z_at(i); }
+    real_type & x0_at(size_t i) { return m_p0->x_at(i); }
+    real_type & y0_at(size_t i) { return m_p0->y_at(i); }
+    real_type & z0_at(size_t i) { return m_p0->z_at(i); }
+    real_type & x1_at(size_t i) { return m_p1->x_at(i); }
+    real_type & y1_at(size_t i) { return m_p1->y_at(i); }
+    real_type & z1_at(size_t i) { return m_p1->z_at(i); }
+
+    real_type x0(size_t i) const { return m_p0->x(i); }
+    real_type y0(size_t i) const { return m_p0->y(i); }
+    real_type z0(size_t i) const { return m_p0->z(i); }
+    real_type x1(size_t i) const { return m_p1->x(i); }
+    real_type y1(size_t i) const { return m_p1->y(i); }
+    real_type z1(size_t i) const { return m_p1->z(i); }
+    real_type & x0(size_t i) { return m_p0->x(i); }
+    real_type & y0(size_t i) { return m_p0->y(i); }
+    real_type & z0(size_t i) { return m_p0->z(i); }
+    real_type & x1(size_t i) { return m_p1->x(i); }
+    real_type & y1(size_t i) { return m_p1->y(i); }
+    real_type & z1(size_t i) { return m_p1->z(i); }
+
+    point_type p0_at(size_t i) const { return m_p0->get_at(i); }
+    point_type p1_at(size_t i) const { return m_p1->get_at(i); }
+    void set_p0_at(size_t i, point_type const & p) { m_p0->set_at(i, p); }
+    void set_p1_at(size_t i, point_type const & p) { m_p1->set_at(i, p); }
+
+    point_type p0(size_t i) const { return m_p0->get(i); }
+    point_type p1(size_t i) const { return m_p1->get(i); }
+    void set_p0(size_t i, point_type const & p) { m_p0->set(i, p); }
+    void set_p1(size_t i, point_type const & p) { m_p1->set(i, p); }
+
+    SimpleArray<value_type> x0() { return m_p0->x(); }
+    SimpleArray<value_type> y0() { return m_p0->y(); }
+    SimpleArray<value_type> z0() { return m_p0->z(); }
+    SimpleArray<value_type> x1() { return m_p1->x(); }
+    SimpleArray<value_type> y1() { return m_p1->y(); }
+    SimpleArray<value_type> z1() { return m_p1->z(); }
+
+    std::shared_ptr<point_pad_type> p0() const { return m_p0; }
+    std::shared_ptr<point_pad_type> p1() const { return m_p1; }
+
+    segment_type get_at(size_t i) const
+    {
+        if (ndim() == 3)
+        {
+            return segment_type(x0_at(i), y0_at(i), z0_at(i), x1_at(i), y1_at(i), z1_at(i));
+        }
+        else
+        {
+            return segment_type(x0_at(i), y0_at(i), 0.0, x1_at(i), y1_at(i), 0.0);
+        }
+    }
+    void set_at(size_t i, segment_type const & s)
+    {
+        x0_at(i) = s.x0();
+        y0_at(i) = s.y0();
+        x1_at(i) = s.x1();
+        y1_at(i) = s.y1();
+        if (ndim() == 3)
+        {
+            z0_at(i) = s.z0();
+            z1_at(i) = s.z1();
+        }
+    }
+    void set_at(size_t i, point_type const & p0, point_type const & p1)
+    {
+        x0_at(i) = p0.x();
+        y0_at(i) = p0.y();
+        x1_at(i) = p1.x();
+        y1_at(i) = p1.y();
+        if (ndim() == 3)
+        {
+            z0_at(i) = p0.z();
+            z1_at(i) = p1.z();
+        }
+    }
+    void set_at(size_t i, value_type x0, value_type y0, value_type x1, value_type y1)
+    {
+        x0_at(i) = x0;
+        y0_at(i) = y0;
+        x1_at(i) = x1;
+        y1_at(i) = y1;
+    }
+    void set_at(size_t i, value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
+    {
+        x0_at(i) = x0;
+        y0_at(i) = y0;
+        x1_at(i) = x1;
+        y1_at(i) = y1;
+        if (ndim() == 3)
+        {
+            z0_at(i) = z0;
+            z1_at(i) = z1;
+        }
+    }
+
+    segment_type get(size_t i) const
+    {
+        if (ndim() == 3)
+        {
+            return segment_type(x0(i), y0(i), z0(i), x1(i), y1(i), z1(i));
+        }
+        else
+        {
+            return segment_type(x0(i), y0(i), 0.0, x1(i), y1(i), 0.0);
+        }
+    }
+    void set(size_t i, segment_type const & s)
+    {
+        x0(i) = s.x0();
+        y0(i) = s.y0();
+        x1(i) = s.x1();
+        y1(i) = s.y1();
+        if (ndim() == 3)
+        {
+            z0(i) = s.z0();
+            z1(i) = s.z1();
+        }
+    }
+    void set(size_t i, point_type const & p0, point_type const & p1)
+    {
+        x0(i) = p0.x();
+        y0(i) = p0.y();
+        x1(i) = p1.x();
+        y1(i) = p1.y();
+        if (ndim() == 3)
+        {
+            z0(i) = p0.z();
+            z1(i) = p1.z();
+        }
+    }
+    void set(size_t i, value_type x0, value_type y0, value_type x1, value_type y1)
+    {
+        x0(i) = x0;
+        y0(i) = y0;
+        x1(i) = x1;
+        y1(i) = y1;
+    }
+    void set(size_t i, value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
+    {
+        x0(i) = x0;
+        y0(i) = y0;
+        x1(i) = x1;
+        y1(i) = y1;
+        if (ndim() == 3)
+        {
+            z0(i) = z0;
+            z1(i) = z1;
+        }
+    }
+
+private:
+
+    std::shared_ptr<point_pad_type> m_p0;
+    std::shared_ptr<point_pad_type> m_p1;
+
+}; /* end class SegmentPad */
 
 /**
  * Bezier curve in three-dimensional space.

@@ -134,8 +134,7 @@ public:
 protected:
 
     WrapPointPad(pybind11::module & mod, char const * pyname, char const * pydoc);
-};
-/* end class WrapPointPad */
+}; /* end class WrapPointPad */
 
 template <typename T>
 WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const char * pydoc)
@@ -351,6 +350,183 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
        DECL_WRAP(y1)
        DECL_WRAP(z1)
        ;
+#undef DECL_WRAP
+    // clang-format on
+}
+
+template <typename T>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSegmentPad
+    : public WrapBase<WrapSegmentPad<T>, SegmentPad<T>, std::shared_ptr<SegmentPad<T>>>
+{
+
+public:
+
+    using base_type = WrapBase<WrapSegmentPad<T>, SegmentPad<T>, std::shared_ptr<SegmentPad<T>>>;
+    using wrapped_type = typename base_type::wrapped_type;
+
+    using value_type = typename base_type::wrapped_type::value_type;
+    using point_type = typename base_type::wrapped_type::point_type;
+    using segment_type = typename base_type::wrapped_type::segment_type;
+    using point_pad_type = typename base_type::wrapped_type::point_pad_type;
+
+    friend typename base_type::root_base_type;
+
+protected:
+
+    WrapSegmentPad(pybind11::module & mod, char const * pyname, char const * pydoc);
+}; /* end class WrapSegmentPad */
+
+template <typename T>
+WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, const char * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    // Constructors
+    (*this)
+        .def(
+            py::init(
+                [](uint8_t ndim)
+                { return wrapped_type::construct(ndim); }),
+            py::arg("ndim"))
+        .def(
+            py::init(
+                [](uint8_t ndim, size_t nelem)
+                { return wrapped_type::construct(ndim, nelem); }),
+            py::arg("ndim"),
+            py::arg("nelem"))
+        .def(
+            py::init(
+                [](
+                    SimpleArray<T> & x0,
+                    SimpleArray<T> & y0,
+                    SimpleArray<T> & x1,
+                    SimpleArray<T> & y1,
+                    bool clone)
+                { return wrapped_type::construct(x0, y0, x1, y1, clone); }),
+            py::arg("x0"),
+            py::arg("y0"),
+            py::arg("x1"),
+            py::arg("y1"),
+            py::arg("clone"))
+        .def(
+            py::init(
+                [](
+                    SimpleArray<T> & x0,
+                    SimpleArray<T> & y0,
+                    SimpleArray<T> & z0,
+                    SimpleArray<T> & x1,
+                    SimpleArray<T> & y1,
+                    SimpleArray<T> & z1,
+                    bool clone)
+                { return wrapped_type::construct(x0, y0, z0, x1, y1, z1, clone); }),
+            py::arg("x0"),
+            py::arg("y0"),
+            py::arg("z0"),
+            py::arg("x1"),
+            py::arg("y1"),
+            py::arg("z1"),
+            py::arg("clone"))
+        //
+        ;
+
+    (*this)
+        .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def(
+            "append",
+            [](wrapped_type & self, value_type x0, value_type y0, value_type x1, value_type y1)
+            {
+                self.append(x0, y0, x1, y1);
+            },
+            py::arg("x0"),
+            py::arg("y0"),
+            py::arg("x1"),
+            py::arg("y1"))
+        .def(
+            "append",
+            [](wrapped_type & self, value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
+            {
+                self.append(x0, y0, z0, x1, y1, z1);
+            },
+            py::arg("x0"),
+            py::arg("y0"),
+            py::arg("z0"),
+            py::arg("x1"),
+            py::arg("y1"),
+            py::arg("z1"))
+        .def_timed("pack_array", &wrapped_type::pack_array)
+        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
+        .def("__len__", &wrapped_type::size)
+        .def("__getitem__",
+             [](wrapped_type const & self, size_t it)
+             {
+                 return self.get_at(it);
+             })
+        .def("get_at",
+             [](wrapped_type const & self, size_t it)
+             {
+                 return self.get_at(it);
+             })
+        .def("set_at",
+             [](wrapped_type & self, size_t it, segment_type const & s)
+             {
+                 self.set_at(it, s);
+             })
+        .def("set_at",
+             [](wrapped_type & self, size_t it, point_type const & p0, point_type const & p1)
+             {
+                 self.set_at(it, p0, p1);
+             })
+        .def("set_at",
+             [](wrapped_type & self, size_t it, value_type x0, value_type y0, value_type x1, value_type y1)
+             {
+                 self.set_at(it, x0, y0, x1, y1);
+             })
+        .def("set_at",
+             [](wrapped_type & self, size_t it, value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
+             {
+                 self.set_at(it, x0, y0, z0, x1, y1, z1);
+             })
+        //
+        ;
+
+    // x, y, z, point element accessors.
+#define DECL_WRAP(NAME)                         \
+    .def(                                       \
+        #NAME,                                  \
+        [](wrapped_type const & self, size_t i) \
+        { return self.NAME(i); })
+    // clang-format off
+    (*this)
+        DECL_WRAP(x0_at)
+        DECL_WRAP(y0_at)
+        DECL_WRAP(z0_at)
+        DECL_WRAP(x1_at)
+        DECL_WRAP(y1_at)
+        DECL_WRAP(z1_at)
+        DECL_WRAP(p0_at)
+        DECL_WRAP(p1_at)
+        ;
+#undef DECL_WRAP
+    // clang-format on
+
+    // x, y, z, point array/batch accessors.
+#define DECL_WRAP(NAME)         \
+    .def_property_readonly(     \
+        #NAME,                  \
+        [](wrapped_type & self) \
+        { return self.NAME(); })
+    // clang-format off
+    (*this)
+        DECL_WRAP(x0)
+        DECL_WRAP(y0)
+        DECL_WRAP(z0)
+        DECL_WRAP(x1)
+        DECL_WRAP(y1)
+        DECL_WRAP(z1)
+        DECL_WRAP(p0)
+        DECL_WRAP(p1)
+        ;
 #undef DECL_WRAP
     // clang-format on
 }
@@ -573,6 +749,8 @@ void wrap_World(pybind11::module & mod)
     WrapPointPad<double>::commit(mod, "PointPadFp64", "PointPadFp64");
     WrapSegment3d<float>::commit(mod, "Segment3dFp32", "Segment3dFp32");
     WrapSegment3d<double>::commit(mod, "Segment3dFp64", "Segment3dFp64");
+    WrapSegmentPad<float>::commit(mod, "SegmentPadFp32", "SegmentPadFp32");
+    WrapSegmentPad<double>::commit(mod, "SegmentPadFp64", "SegmentPadFp64");
     WrapBezier3d<float>::commit(mod, "Bezier3dFp32", "Bezier3dFp32");
     WrapBezier3d<double>::commit(mod, "Bezier3dFp64", "Bezier3dFp64");
     WrapWorld<float>::commit(mod, "WorldFp32", "WorldFp32");
