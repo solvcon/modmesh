@@ -997,11 +997,62 @@ class WorldTB(ModMeshTB):
             w.add_point(3.1415 + it, 3.1416 + it, 3.1417 + it)
             self.assertEqual(w.npoint, 2 + it + 1)
 
+        # Array/batch interface
+        pndarr = w.points.pack_array().ndarray
+        self.assertEqual(pndarr.shape, (12, 3))
+        self.assertEqual(w.npoint, 12)
+
+    def test_segment(self):
+        Segment = self.gkls
+        World = self.wkls
+
+        w = World()
+
+        # Empty
+        self.assertEqual(w.nsegment, 0)
+        with self.assertRaisesRegex(
+                IndexError, "World: \\(segment\\) i 0 >= size 0"):
+            w.segment(0)
+
+        # Add a segment by object
+        s = w.add_segment(Segment(0, 1, 2, 7.1, 8.2, 9.3))
+        self.assert_allclose(list(s), [[0, 1, 2], [7.1, 8.2, 9.3]])
+        self.assert_allclose(list(w.segment(0)), [[0, 1, 2], [7.1, 8.2, 9.3]])
+        self.assertIsNot(s, w.segment(0))
+        self.assertEqual(w.nsegment, 1)
+        with self.assertRaisesRegex(
+                IndexError, "World: \\(segment\\) i 1 >= size 1"):
+            w.segment(1)
+
+        # Add a segment by coordinate
+        s = w.add_segment(3.1415, 3.1416, 3.1417, 7.1, 8.2, 9.3)
+        self.assert_allclose(list(s),
+                             [[3.1415, 3.1416, 3.1417], [7.1, 8.2, 9.3]])
+        self.assert_allclose(list(w.segment(1)),
+                             [[3.1415, 3.1416, 3.1417], [7.1, 8.2, 9.3]])
+        self.assertIsNot(s, w.segment(1))
+        self.assertEqual(w.nsegment, 2)
+        with self.assertRaisesRegex(
+                IndexError, "World: \\(segment\\) i 2 >= size 2"):
+            w.segment(2)
+
+        # Add many segments
+        for it in range(11):
+            w.add_segment(3.1415 + it, 3.1416 + it, 3.1417 + it,
+                          7.1 + it, 8.2 + it, 9.3 + it)
+            self.assertEqual(w.nsegment, 2 + it + 1)
+
+        # Array/batch interface
+        sndarr = w.segments.pack_array().ndarray
+        self.assertEqual(sndarr.shape, (13, 6))
+        self.assertEqual(w.nsegment, 13)
+
 
 class WorldFp32TC(WorldTB, unittest.TestCase):
 
     def setUp(self):
         self.vkls = modmesh.Point3dFp32
+        self.gkls = modmesh.Segment3dFp32
         self.wkls = modmesh.WorldFp32
 
     def assert_allclose(self, *args, **kw):
@@ -1017,6 +1068,7 @@ class WorldFp64TC(WorldTB, unittest.TestCase):
 
     def setUp(self):
         self.vkls = modmesh.Point3dFp64
+        self.gkls = modmesh.Segment3dFp64
         self.wkls = modmesh.WorldFp64
 
     def assert_allclose(self, *args, **kw):

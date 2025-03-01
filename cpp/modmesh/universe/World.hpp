@@ -98,6 +98,7 @@ public:
         check_size(i, m_points->size(), "point");
         return m_points->get(i);
     }
+    std::shared_ptr<point_pad_type> points() { return m_points; }
 
     void add_segment(segment_type const & segment)
     {
@@ -114,6 +115,7 @@ public:
         check_size(i, m_segments->size(), "segment");
         return m_segments->get(i);
     }
+    std::shared_ptr<segment_pad_type> segments() { return m_segments; }
 
     void add_bezier(std::vector<point_type> const & controls)
     {

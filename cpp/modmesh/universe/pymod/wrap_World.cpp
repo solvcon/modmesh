@@ -679,12 +679,8 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
             py::arg("y"),
             py::arg("z"))
         .def_property_readonly("npoint", &wrapped_type::npoint)
-        .def(
-            "point",
-            [](wrapped_type & self, size_t i)
-            {
-                return self.point_at(i);
-            })
+        .def("point", &wrapped_type::point_at)
+        .def_property_readonly("points", &wrapped_type::points)
         .def(
             "add_segment",
             [](wrapped_type & self, segment_type const & edge)
@@ -692,7 +688,7 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
                 self.add_segment(edge);
                 return self.segment_at(self.nsegment() - 1);
             },
-            py::arg("edge"))
+            py::arg("segment"))
         .def(
             "add_segment",
             [](wrapped_type & self, value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
@@ -707,12 +703,8 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
             py::arg("y1"),
             py::arg("z1"))
         .def_property_readonly("nsegment", &wrapped_type::nsegment)
-        .def(
-            "segment",
-            [](wrapped_type & self, size_t i)
-            {
-                return self.segment_at(i);
-            })
+        .def("segment", &wrapped_type::segment_at)
+        .def_property_readonly("segments", &wrapped_type::segments)
         .def(
             "add_bezier",
             [](wrapped_type & self, std::vector<typename wrapped_type::point_type> const & controls) -> auto &
