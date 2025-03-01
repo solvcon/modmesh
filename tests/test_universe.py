@@ -976,7 +976,7 @@ class WorldTB(ModMeshTB):
         v = w.add_vertex(Vector(0, 1, 2))
         self.assertEqual(list(v), [0, 1, 2])
         self.assertEqual(list(w.vertex(0)), [0, 1, 2])
-        self.assertEqual(v, w.vertex(0))
+        self.assertIsNot(v, w.vertex(0))
         self.assertEqual(w.nvertex, 1)
         with self.assertRaisesRegex(
                 IndexError, "World: \\(vertex\\) i 1 >= size 1"):
@@ -986,7 +986,7 @@ class WorldTB(ModMeshTB):
         v = w.add_vertex(3.1415, 3.1416, 3.1417)
         self.assert_allclose(list(v), [3.1415, 3.1416, 3.1417])
         self.assert_allclose(list(w.vertex(1)), [3.1415, 3.1416, 3.1417])
-        self.assertEqual(v, w.vertex(1))
+        self.assertIsNot(v, w.vertex(1))
         self.assertEqual(w.nvertex, 2)
         with self.assertRaisesRegex(
                 IndexError, "World: \\(vertex\\) i 2 >= size 2"):

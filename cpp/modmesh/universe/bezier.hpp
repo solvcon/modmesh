@@ -264,6 +264,16 @@ public:
 
     ~PointPad() = default;
 
+    void append(point_type const & point)
+    {
+        m_x.push_back(point.x());
+        m_y.push_back(point.y());
+        if (m_ndim == 3)
+        {
+            m_z.push_back(point.z());
+        }
+    }
+
     void append(T x, T y)
     {
         if (m_ndim != 2)
@@ -627,6 +637,12 @@ public:
     SegmentPad & operator=(SegmentPad &&) = delete;
 
     ~SegmentPad() = default;
+
+    void append(segment_type const & s)
+    {
+        m_p0->append(s.x0(), s.y0(), s.z0());
+        m_p1->append(s.x1(), s.y1(), s.z1());
+    }
 
     void append(T x0, T y0, T x1, T y1)
     {

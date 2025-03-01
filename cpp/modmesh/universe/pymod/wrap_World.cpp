@@ -663,44 +663,40 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
     (*this)
         .def(
             "add_vertex",
-            [](wrapped_type & self, vertex_type const & vertex) -> auto &
+            [](wrapped_type & self, vertex_type const & vertex)
             {
                 self.add_vertex(vertex);
                 return self.vertex_at(self.nvertex() - 1);
             },
-            py::arg("vertex"),
-            py::return_value_policy::reference_internal)
+            py::arg("vertex"))
         .def(
             "add_vertex",
-            [](wrapped_type & self, value_type x, value_type y, value_type z) -> auto &
+            [](wrapped_type & self, value_type x, value_type y, value_type z)
             {
                 self.add_vertex(x, y, z);
                 return self.vertex_at(self.nvertex() - 1);
             },
             py::arg("x"),
             py::arg("y"),
-            py::arg("z"),
-            py::return_value_policy::reference_internal)
+            py::arg("z"))
         .def_property_readonly("nvertex", &wrapped_type::nvertex)
         .def(
             "vertex",
-            [](wrapped_type & self, size_t i) -> auto &
+            [](wrapped_type & self, size_t i)
             {
                 return self.vertex_at(i);
-            },
-            py::return_value_policy::reference_internal)
+            })
         .def(
             "add_segment",
-            [](wrapped_type & self, segment_type const & edge) -> auto &
+            [](wrapped_type & self, segment_type const & edge)
             {
                 self.add_segment(edge);
                 return self.segment_at(self.nsegment() - 1);
             },
-            py::arg("edge"),
-            py::return_value_policy::reference_internal)
+            py::arg("edge"))
         .def(
             "add_segment",
-            [](wrapped_type & self, value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1) -> auto &
+            [](wrapped_type & self, value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
             {
                 self.add_segment(x0, y0, z0, x1, y1, z1);
                 return self.segment_at(self.nsegment() - 1);
@@ -710,16 +706,14 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
             py::arg("z0"),
             py::arg("x1"),
             py::arg("y1"),
-            py::arg("z1"),
-            py::return_value_policy::reference_internal)
+            py::arg("z1"))
         .def_property_readonly("nsegment", &wrapped_type::nsegment)
         .def(
             "edge",
-            [](wrapped_type & self, size_t i) -> auto &
+            [](wrapped_type & self, size_t i)
             {
                 return self.segment_at(i);
-            },
-            py::return_value_policy::reference_internal)
+            })
         .def(
             "add_bezier",
             [](wrapped_type & self, std::vector<typename wrapped_type::vector_type> const & controls) -> auto &
