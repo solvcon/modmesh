@@ -916,6 +916,140 @@ class SegmentPadFp64TC(SegmentPadTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
 
+class CurvePadTB(ModMeshTB):
+
+    def test_ndim(self):
+        cp2d = self.ckls(ndim=2)
+        self.assertEqual(cp2d.ndim, 2)
+        cp3d = self.ckls(ndim=3)
+        self.assertEqual(cp3d.ndim, 3)
+
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 0 < 2"):
+            self.ckls(ndim=0)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 0 < 2"):
+            self.ckls(ndim=0, nelem=2)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 1 < 2"):
+            self.ckls(ndim=1)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 1 < 2"):
+            self.ckls(ndim=1, nelem=3)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 4 > 3"):
+            self.ckls(ndim=4)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 4 > 3"):
+            self.ckls(ndim=4, nelem=5)
+
+    def test_append_2d(self):
+        cp = self.ckls(ndim=2)
+        self.assertEqual(cp.ndim, 2)
+        self.assertEqual(len(cp), 0)
+
+        p0 = self.vkls(0, 0, 0)
+        p1 = self.vkls(1, 1, 0)
+        p2 = self.vkls(3, 1, 0)
+        p3 = self.vkls(4, 0, 0)
+        cp.append(p0=p0, p1=p1, p2=p2, p3=p3)
+        self.assertEqual(len(cp), 1)
+
+        self.assertEqual(cp.x0_at(0), 0)
+        self.assertEqual(cp.y0_at(0), 0)
+        self.assertEqual(cp.x1_at(0), 1)
+        self.assertEqual(cp.y1_at(0), 1)
+        self.assertEqual(cp.x2_at(0), 3)
+        self.assertEqual(cp.y2_at(0), 1)
+        self.assertEqual(cp.x3_at(0), 4)
+        self.assertEqual(cp.y3_at(0), 0)
+
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 0 is out of bounds with size 0"):
+            cp.z0_at(0)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 0 is out of bounds with size 0"):
+            cp.z1_at(0)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 0 is out of bounds with size 0"):
+            cp.z2_at(0)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 0 is out of bounds with size 0"):
+            cp.z3_at(0)
+
+        b = cp[0]
+        self.assertEqual(len(b), 4)
+        self.assertEqual(list(b[0]), [0, 0, 0])
+        self.assertEqual(list(b[1]), [1, 1, 0])
+        self.assertEqual(list(b[2]), [3, 1, 0])
+        self.assertEqual(list(b[3]), [4, 0, 0])
+
+    def test_append_3d(self):
+        cp = self.ckls(ndim=3)
+        self.assertEqual(cp.ndim, 3)
+        self.assertEqual(len(cp), 0)
+
+        p0 = self.vkls(0, 0, 0)
+        p1 = self.vkls(1, 1, 0)
+        p2 = self.vkls(3, 1, 0)
+        p3 = self.vkls(4, 0, 0)
+        cp.append(p0=p0, p1=p1, p2=p2, p3=p3)
+        self.assertEqual(len(cp), 1)
+
+        self.assertEqual(cp.x0_at(0), 0)
+        self.assertEqual(cp.y0_at(0), 0)
+        self.assertEqual(cp.z0_at(0), 0)
+        self.assertEqual(cp.x1_at(0), 1)
+        self.assertEqual(cp.y1_at(0), 1)
+        self.assertEqual(cp.z1_at(0), 0)
+        self.assertEqual(cp.x2_at(0), 3)
+        self.assertEqual(cp.y2_at(0), 1)
+        self.assertEqual(cp.z2_at(0), 0)
+        self.assertEqual(cp.x3_at(0), 4)
+        self.assertEqual(cp.y3_at(0), 0)
+        self.assertEqual(cp.z3_at(0), 0)
+
+
+class CurvePadFp32TC(CurvePadTB, unittest.TestCase):
+
+    def setUp(self):
+        self.dtype = 'float32'
+        self.akls = modmesh.SimpleArrayFloat32
+        self.vkls = modmesh.Point3dFp32
+        self.pkls = modmesh.PointPadFp32
+        self.gkls = modmesh.Segment3dFp32
+        self.skls = modmesh.SegmentPadFp32
+        self.bkls = modmesh.Bezier3dFp32
+        self.ckls = modmesh.CurvePadFp32
+
+    def assert_allclose(self, *args, **kw):
+        if 'rtol' not in kw:
+            kw['rtol'] = 1.e-7
+        return super().assert_allclose(*args, **kw)
+
+
+class CurvePadFp64TC(CurvePadTB, unittest.TestCase):
+
+    def setUp(self):
+        self.dtype = 'float64'
+        self.akls = modmesh.SimpleArrayFloat64
+        self.vkls = modmesh.Point3dFp64
+        self.pkls = modmesh.PointPadFp64
+        self.gkls = modmesh.Segment3dFp64
+        self.skls = modmesh.SegmentPadFp64
+        self.bkls = modmesh.Bezier3dFp64
+        self.ckls = modmesh.CurvePadFp64
+
+    def assert_allclose(self, *args, **kw):
+        if 'rtol' not in kw:
+            kw['rtol'] = 1.e-15
+        return super().assert_allclose(*args, **kw)
+
+
 class WorldTB(ModMeshTB):
 
     def test_bezier(self):

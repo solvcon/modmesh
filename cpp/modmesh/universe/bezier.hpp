@@ -438,6 +438,7 @@ using PointPadFp64 = PointPad<double>;
 namespace detail
 {
 
+// TODO: change the layout to be x0, x1, y0, y1, z0, z1
 template <typename T>
 struct Segment3dNamed
 {
@@ -857,7 +858,7 @@ private:
 }; /* end class SegmentPad */
 
 /**
- * Bezier curve in three-dimensional space.
+ * Bezier curve up to degree 3 in three-dimensional space.
  *
  * @tparam T floating-point type
  */
@@ -870,9 +871,21 @@ public:
 
     using point_type = Point3d<T>;
 
+    Bezier3d(point_type const & p0,
+             point_type const & p1,
+             point_type const & p2,
+             point_type const & p3)
+        : m_controls{p0, p1, p2, p3}
+    {
+    }
+
     explicit Bezier3d(std::vector<point_type> const & controls)
         : m_controls(controls)
     {
+        if (controls.size() != 4)
+        {
+            throw std::invalid_argument("Bezier3d: Only allow third degree");
+        }
     }
 
     Bezier3d() = default;
@@ -926,7 +939,9 @@ private:
         }
     }
 
+    // TODO: limit to third-degree and order members as x0, x1, x2, x3, y0, y1, y2, y3, z0, z1, z2, z3
     std::vector<point_type> m_controls;
+    // TODO: move loci to outside
     std::vector<point_type> m_loci;
 
 }; /* end class Bezier3d */
@@ -957,6 +972,175 @@ void Bezier3d<T>::sample(size_t nlocus)
 
 using Bezier3dFp32 = Bezier3d<float>;
 using Bezier3dFp64 = Bezier3d<double>;
+
+/**
+ * Store curves that are compatible to SVG
+ * https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
+ * @tparam T
+ */
+template <typename T>
+class CurvePad
+    : public NumberBase<int32_t, T>
+    , public std::enable_shared_from_this<CurvePad<T>>
+{
+private:
+
+    struct ctor_passkey
+    {
+    };
+
+public:
+
+    using real_type = T;
+    using value_type = T;
+    using point_type = Point3d<T>;
+    using segment_type = Segment3d<T>;
+    using bezier_type = Bezier3d<T>;
+    using point_pad_type = PointPad<T>;
+
+    template <typename... Args>
+    static std::shared_ptr<CurvePad<T>> construct(Args &&... args)
+    {
+        return std::make_shared<CurvePad<T>>(std::forward<Args>(args)..., ctor_passkey());
+    }
+
+    CurvePad(uint8_t ndim, ctor_passkey const &)
+        : m_p0(point_pad_type::construct(ndim))
+        , m_p1(point_pad_type::construct(ndim))
+        , m_p2(point_pad_type::construct(ndim))
+        , m_p3(point_pad_type::construct(ndim))
+    {
+    }
+
+    CurvePad(uint8_t ndim, size_t nelem, ctor_passkey const &)
+        : m_p0(point_pad_type::construct(ndim, nelem))
+        , m_p1(point_pad_type::construct(ndim, nelem))
+        , m_p2(point_pad_type::construct(ndim, nelem))
+        , m_p3(point_pad_type::construct(ndim, nelem))
+    {
+    }
+
+    CurvePad() = delete;
+    CurvePad(CurvePad const &) = delete;
+    CurvePad(CurvePad &&) = delete;
+    CurvePad & operator=(CurvePad const &) = delete;
+    CurvePad & operator=(CurvePad &&) = delete;
+
+    ~CurvePad() = default;
+
+    void append(point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3)
+    {
+        m_p0->append(p0);
+        m_p1->append(p1);
+        m_p2->append(p2);
+        m_p3->append(p3);
+    }
+
+    uint8_t ndim() const { return m_p0->ndim(); }
+
+    size_t size() const { return m_p0->size(); }
+
+    SimpleArray<T> pack_array() const
+    {
+        using shape_type = typename SimpleArray<T>::shape_type;
+        SimpleArray<T> ret(shape_type{m_p0->size(), static_cast<size_t>(ndim() * 4)});
+        if (ndim() == 3)
+        {
+            for (size_t i = 0; i < m_p0->size(); ++i)
+            {
+                ret(i, 0) = m_p0->x(i);
+                ret(i, 1) = m_p0->y(i);
+                ret(i, 2) = m_p0->z(i);
+                ret(i, 3) = m_p1->x(i);
+                ret(i, 4) = m_p1->y(i);
+                ret(i, 5) = m_p1->z(i);
+                ret(i, 6) = m_p2->x(i);
+                ret(i, 7) = m_p2->y(i);
+                ret(i, 8) = m_p2->z(i);
+                ret(i, 9) = m_p3->x(i);
+                ret(i, 10) = m_p3->y(i);
+                ret(i, 11) = m_p3->z(i);
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < m_p0->size(); ++i)
+            {
+                ret(i, 0) = m_p0->x(i);
+                ret(i, 1) = m_p0->y(i);
+                ret(i, 2) = m_p1->x(i);
+                ret(i, 3) = m_p1->y(i);
+                ret(i, 4) = m_p2->x(i);
+                ret(i, 5) = m_p2->y(i);
+                ret(i, 6) = m_p3->x(i);
+                ret(i, 7) = m_p3->y(i);
+            }
+        }
+        return ret;
+    }
+
+    void expand(size_t length)
+    {
+        m_p0->expand(length);
+        m_p1->expand(length);
+        m_p2->expand(length);
+        m_p3->expand(length);
+    }
+
+#define DECL_VALUE_ACCESSOR(I, C)                                     \
+    real_type C##I##_at(size_t i) const { return m_p##I->C##_at(i); } \
+    real_type & C##I##_at(size_t i) { return m_p##I->C##_at(i); }     \
+    real_type C##I(size_t i) const { return m_p##I->C(i); }           \
+    real_type & C##I(size_t i) { return m_p##I->C(i); }
+    // clang-format off
+    DECL_VALUE_ACCESSOR(0, x)
+    DECL_VALUE_ACCESSOR(0, y)
+    DECL_VALUE_ACCESSOR(0, z)
+    DECL_VALUE_ACCESSOR(1, x)
+    DECL_VALUE_ACCESSOR(1, y)
+    DECL_VALUE_ACCESSOR(1, z)
+    DECL_VALUE_ACCESSOR(2, x)
+    DECL_VALUE_ACCESSOR(2, y)
+    DECL_VALUE_ACCESSOR(2, z)
+    DECL_VALUE_ACCESSOR(3, x)
+    DECL_VALUE_ACCESSOR(3, y)
+    DECL_VALUE_ACCESSOR(3, z)
+    // clang-format on
+#undef DECL_VALUE_ACCESSOR
+
+#define DECL_POINT_ACCESSOR(I)                                                          \
+    point_type p##I##_at(size_t i) const { return m_p##I->get_at(i); }                  \
+    void set_p##I##_at(size_t i, point_type const & p) { return m_p##I->set_at(i, p); } \
+    point_type p##I(size_t i) const { return m_p##I->get(i); }                          \
+    void set_p##I(size_t i, point_type const & p) { return m_p##I->set(i, p); }
+    // clang-format off
+    DECL_POINT_ACCESSOR(0)
+    DECL_POINT_ACCESSOR(1)
+    DECL_POINT_ACCESSOR(2)
+    DECL_POINT_ACCESSOR(3)
+    // clang-format on
+#undef DECL_POINT_ACCESSOR
+
+    bezier_type get_at(size_t i) const
+    {
+        return bezier_type(p0_at(i), p1_at(i), p2_at(i), p3_at(i));
+    }
+
+    bezier_type get(size_t i) const
+    {
+        return bezier_type(p0(i), p1(i), p2(i), p3(i));
+    }
+
+    // TODO: missing many accessors
+
+private:
+
+    std::shared_ptr<point_pad_type> m_p0;
+    std::shared_ptr<point_pad_type> m_p1;
+    std::shared_ptr<point_pad_type> m_p2;
+    std::shared_ptr<point_pad_type> m_p3;
+
+}; /* end class CurvePad */
 
 } /* end namespace modmesh */
 

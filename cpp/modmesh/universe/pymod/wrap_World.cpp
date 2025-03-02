@@ -622,6 +622,95 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
 }
 
 template <typename T>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapCurvePad
+    : public WrapBase<WrapCurvePad<T>, CurvePad<T>, std::shared_ptr<CurvePad<T>>>
+{
+
+public:
+
+    using base_type = WrapBase<WrapCurvePad<T>, CurvePad<T>, std::shared_ptr<CurvePad<T>>>;
+    using wrapped_type = typename base_type::wrapped_type;
+
+    using value_type = typename base_type::wrapped_type::value_type;
+    using point_type = typename base_type::wrapped_type::point_type;
+    using segment_type = typename base_type::wrapped_type::segment_type;
+    using bezier_type = typename base_type::wrapped_type::bezier_type;
+    using point_pad_type = typename base_type::wrapped_type::point_pad_type;
+
+    friend typename base_type::root_base_type;
+
+protected:
+
+    WrapCurvePad(pybind11::module & mod, char const * pyname, char const * pydoc);
+}; /* end class WrapCurvePad */
+
+template <typename T>
+WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const char * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    // Constructors
+    (*this)
+        .def(
+            py::init(
+                [](uint8_t ndim)
+                { return wrapped_type::construct(ndim); }),
+            py::arg("ndim"))
+        .def(
+            py::init(
+                [](uint8_t ndim, size_t nelem)
+                { return wrapped_type::construct(ndim, nelem); }),
+            py::arg("ndim"),
+            py::arg("nelem"))
+        //
+        ;
+
+    (*this)
+        .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def(
+            "append",
+            [](wrapped_type & self, point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3)
+            {
+                self.append(p0, p1, p2, p3);
+            },
+            py::arg("p0"),
+            py::arg("p1"),
+            py::arg("p2"),
+            py::arg("p3"))
+        .def("__len__", &wrapped_type::size)
+        .def("__getitem__", &wrapped_type::get_at)
+        .def("get_at", &wrapped_type::get_at)
+        //
+        ;
+
+    // x, y, z, point element accessors.
+#define DECL_WRAP(NAME) \
+    .def(#NAME, [](wrapped_type const & self, size_t i) { return self.NAME(i); })
+    // clang-format off
+    (*this)
+        DECL_WRAP(x0_at)
+        DECL_WRAP(y0_at)
+        DECL_WRAP(z0_at)
+        DECL_WRAP(x1_at)
+        DECL_WRAP(y1_at)
+        DECL_WRAP(z1_at)
+        DECL_WRAP(x2_at)
+        DECL_WRAP(y2_at)
+        DECL_WRAP(z2_at)
+        DECL_WRAP(x3_at)
+        DECL_WRAP(y3_at)
+        DECL_WRAP(z3_at)
+        DECL_WRAP(p0_at)
+        DECL_WRAP(p1_at)
+        DECL_WRAP(p2_at)
+        DECL_WRAP(p3_at)
+        ;
+    // clang-format on
+#undef DECL_WRAP
+}
+
+template <typename T>
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapWorld
     : public WrapBase<WrapWorld<T>, World<T>, std::shared_ptr<World<T>>>
 {
@@ -738,6 +827,8 @@ void wrap_World(pybind11::module & mod)
     WrapSegmentPad<double>::commit(mod, "SegmentPadFp64", "SegmentPadFp64");
     WrapBezier3d<float>::commit(mod, "Bezier3dFp32", "Bezier3dFp32");
     WrapBezier3d<double>::commit(mod, "Bezier3dFp64", "Bezier3dFp64");
+    WrapCurvePad<float>::commit(mod, "CurvePadFp32", "CurvePadFp32");
+    WrapCurvePad<double>::commit(mod, "CurvePadFp64", "CurvePadFp64");
     WrapWorld<float>::commit(mod, "WorldFp32", "WorldFp32");
     WrapWorld<double>::commit(mod, "WorldFp64", "WorldFp64");
 }
