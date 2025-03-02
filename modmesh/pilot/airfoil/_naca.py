@@ -256,10 +256,10 @@ class Naca4Sampler(object):
             p3 = np.array(points[it + 1])
             p1 = p0 + (1 / 3) * (p3 - p0)
             p2 = p0 + (2 / 3) * (p3 - p0)
-            b = world.add_bezier([Point(p0[0], p0[1], 0),
-                                  Point(p1[0], p1[1], 0),
-                                  Point(p2[0], p2[1], 0),
-                                  Point(p3[0], p3[1], 0)])
+            b = world.add_bezier(p0=Point(p0[0], p0[1], 0),
+                                 p1=Point(p1[0], p1[1], 0),
+                                 p2=Point(p2[0], p2[1], 0),
+                                 p3=Point(p3[0], p3[1], 0))
             b.sample(nsample[it])
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

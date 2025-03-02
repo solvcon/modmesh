@@ -117,9 +117,9 @@ public:
     }
     std::shared_ptr<segment_pad_type> segments() { return m_segments; }
 
-    void add_bezier(std::vector<point_type> const & controls)
+    void add_bezier(point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3)
     {
-        m_beziers.emplace_back(controls);
+        m_beziers.emplace_back(p0, p1, p2, p3);
     }
     size_t nbezier() const { return m_beziers.size(); }
     bezier_type const & bezier(size_t i) const { return m_beziers[i]; }

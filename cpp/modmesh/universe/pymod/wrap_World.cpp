@@ -558,45 +558,60 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
     namespace py = pybind11;
 
     (*this)
-        .def(py::init<std::vector<point_type> const &>(), py::arg("controls"))
-        .def(
-            "__len__",
-            [](wrapped_type const & self)
-            { return self.size(); })
+        .def(py::init<point_type const &, point_type const &, point_type const &, point_type const &>(),
+             py::arg("p0"),
+             py::arg("p1"),
+             py::arg("p2"),
+             py::arg("p3"))
+        .def("__len__",
+             [](wrapped_type const &)
+             { return 4; })
         .def(
             "__getitem__",
             [](wrapped_type const & self, size_t it)
-            { return self.at(it); })
-        .def(
-            "__setitem__",
-            [](wrapped_type & self, size_t it, point_type val)
-            { self.at(it) = val; })
-        //
-        ;
-
-    // Control points
-    (*this)
-        .def_property(
-            "control_points",
-            [](wrapped_type const & self)
             {
-                std::vector<point_type> ret(self.ncontrol());
-                for (size_t i = 0; i < self.ncontrol(); ++i)
+                point_type ret;
+                switch (it)
                 {
-                    ret[i] = self.control(i);
+                case 0:
+                    ret = self.p0();
+                    break;
+                case 1:
+                    ret = self.p1();
+                    break;
+                case 2:
+                    ret = self.p2();
+                    break;
+                case 3:
+                    ret = self.p3();
+                    break;
+                default:
+                    throw std::out_of_range("Bezier3d: (control) i 4 >= size 4");
+                    break;
                 }
                 return ret;
-            },
-            [](wrapped_type & self, std::vector<point_type> const & points)
+            })
+        .def(
+            "__setitem__",
+            [](wrapped_type & self, size_t it, point_type const & p)
             {
-                if (points.size() != self.ncontrol())
+                switch (it)
                 {
-                    throw std::out_of_range(
-                        Formatter() << "Bezier3d.control_points: len(points) " << points.size() << " != ncontrol " << self.ncontrol());
-                }
-                for (size_t i = 0; i < self.ncontrol(); ++i)
-                {
-                    self.control(i) = points[i];
+                case 0:
+                    self.p0() = p;
+                    break;
+                case 1:
+                    self.p1() = p;
+                    break;
+                case 2:
+                    self.p2() = p;
+                    break;
+                case 3:
+                    self.p3() = p;
+                    break;
+                default:
+                    throw py::stop_iteration();
+                    break;
                 }
             })
         //
@@ -796,12 +811,15 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
         .def_property_readonly("segments", &wrapped_type::segments)
         .def(
             "add_bezier",
-            [](wrapped_type & self, std::vector<typename wrapped_type::point_type> const & controls) -> auto &
+            [](wrapped_type & self, point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3) -> auto &
             {
-                self.add_bezier(controls);
+                self.add_bezier(p0, p1, p2, p3);
                 return self.bezier_at(self.nbezier() - 1);
             },
-            py::arg("controls"),
+            py::arg("p0"),
+            py::arg("p1"),
+            py::arg("p2"),
+            py::arg("p3"),
             py::return_value_policy::reference_internal)
         .def_property_readonly("nbezier", &wrapped_type::nbezier)
         .def(

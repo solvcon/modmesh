@@ -857,6 +857,24 @@ private:
 
 }; /* end class SegmentPad */
 
+namespace detail
+{
+
+template <typename T>
+struct Bezier3dNamed
+{
+    T x0, x1, x2, x3, y0, y1, y2, y3, z0, z1, z2, z3;
+}; /* end struct Bezier3dNamed */
+
+template <typename T>
+union Bezier3dData
+{
+    T v[12];
+    Bezier3dNamed<T> f;
+}; /* end union Segment3dData */
+
+} /* end namespace detail */
+
 /**
  * Bezier curve up to degree 3 in three-dimensional space.
  *
@@ -870,22 +888,14 @@ class Bezier3d
 public:
 
     using point_type = Point3d<T>;
+    using value_type = typename point_type::value_type;
 
     Bezier3d(point_type const & p0,
              point_type const & p1,
              point_type const & p2,
              point_type const & p3)
-        : m_controls{p0, p1, p2, p3}
+        : m_data{p0.x(), p1.x(), p2.x(), p3.x(), p0.y(), p1.y(), p2.y(), p3.y(), p0.z(), p1.z(), p2.z(), p3.z()}
     {
-    }
-
-    explicit Bezier3d(std::vector<point_type> const & controls)
-        : m_controls(controls)
-    {
-        if (controls.size() != 4)
-        {
-            throw std::invalid_argument("Bezier3d: Only allow third degree");
-        }
     }
 
     Bezier3d() = default;
@@ -895,27 +905,46 @@ public:
     Bezier3d & operator=(Bezier3d &&) = default;
     ~Bezier3d() = default;
 
-    size_t size() const { return ncontrol(); }
-    point_type const & operator[](size_t i) const { return control(i); }
-    point_type & operator[](size_t i) { return control(i); }
-    point_type const & at(size_t i) const { return control_at(i); }
-    point_type & at(size_t i) { return control_at(i); }
+#define DECL_VALUE_ACCESSOR(C, I)                    \
+    real_type C##I() const { return m_data.f.C##I; } \
+    real_type & C##I() { return m_data.f.C##I; }
+    // clang-format off
+    DECL_VALUE_ACCESSOR(x, 0)
+    DECL_VALUE_ACCESSOR(x, 1)
+    DECL_VALUE_ACCESSOR(x, 2)
+    DECL_VALUE_ACCESSOR(x, 3)
+    DECL_VALUE_ACCESSOR(y, 0)
+    DECL_VALUE_ACCESSOR(y, 1)
+    DECL_VALUE_ACCESSOR(y, 2)
+    DECL_VALUE_ACCESSOR(y, 3)
+    DECL_VALUE_ACCESSOR(z, 0)
+    DECL_VALUE_ACCESSOR(z, 1)
+    DECL_VALUE_ACCESSOR(z, 2)
+    DECL_VALUE_ACCESSOR(z, 3)
+    // clang-format on
+#undef DECL_VALUE_ACCESSOR
 
-    size_t ncontrol() const { return m_controls.size(); }
-    point_type const & control(size_t i) const { return m_controls[i]; }
-    point_type & control(size_t i) { return m_controls[i]; }
-    point_type const & control_at(size_t i) const
-    {
-        check_size(i, m_controls.size(), "control");
-        return m_controls[i];
+#define DECL_POINT_ACCESSOR(I)                                             \
+    point_type p##I() const { return point_type(x##I(), y##I(), z##I()); } \
+    void set_p##I(point_type const & p)                                    \
+    {                                                                      \
+        x##I() = p.x();                                                    \
+        y##I() = p.y();                                                    \
+        z##I() = p.z();                                                    \
     }
-    point_type & control_at(size_t i)
-    {
-        check_size(i, m_controls.size(), "control");
-        return m_controls[i];
-    }
+    // clang-format off
+    DECL_POINT_ACCESSOR(0)
+    DECL_POINT_ACCESSOR(1)
+    DECL_POINT_ACCESSOR(2)
+    DECL_POINT_ACCESSOR(3)
+    // clang-format on
+#undef DECL_POINT_ACCESSOR
 
-    size_t nlocus() const { return m_loci.size(); }
+    size_t
+    nlocus() const
+    {
+        return m_loci.size();
+    }
     point_type const & locus(size_t i) const
     {
         check_size(i, m_loci.size(), "locus");
@@ -939,12 +968,11 @@ private:
         }
     }
 
-    // TODO: limit to third-degree and order members as x0, x1, x2, x3, y0, y1, y2, y3, z0, z1, z2, z3
-    std::vector<point_type> m_controls;
+    detail::Bezier3dData<T> m_data;
     // TODO: move loci to outside
     std::vector<point_type> m_loci;
 
-}; /* end class Bezier3d */
+}; // namespace modmesh
 
 template <typename T>
 void Bezier3d<T>::sample(size_t nlocus)
@@ -956,11 +984,7 @@ void Bezier3d<T>::sample(size_t nlocus)
     m_loci.resize(nlocus);
     for (size_t idim = 0; idim < 3; ++idim)
     {
-        std::vector<T> cvalues(ncontrol());
-        for (size_t i = 0; i < ncontrol(); ++i)
-        {
-            cvalues[i] = control(i)[idim];
-        }
+        std::vector<T> cvalues{p0()[idim], p1()[idim], p2()[idim], p3()[idim]};
         for (size_t i = 0; i < nlocus; ++i)
         {
             T const t = ((T)i) / (nlocus - 1);

@@ -296,13 +296,12 @@ class Segment3dFp64TC(Segment3dTB, unittest.TestCase):
 class Bezier3dTB(ModMeshTB):
 
     def test_control_points(self):
-        Vector = self.vkls
+        Point = self.vkls
         Bezier = self.bkls
 
         # Create a cubic Bezier curve
-        bzr = Bezier(
-            [Vector(0, 0, 0), Vector(1, 1, 0), Vector(3, 1, 0),
-             Vector(4, 0, 0)])
+        bzr = Bezier(p0=Point(0, 0, 0), p1=Point(1, 1, 0), p2=Point(3, 1, 0),
+                     p3=Point(4, 0, 0))
         self.assertEqual(len(bzr), 4)
         self.assertEqual(list(bzr[0]), [0, 0, 0])
         self.assertEqual(list(bzr[1]), [1, 1, 0])
@@ -314,43 +313,13 @@ class Bezier3dTB(ModMeshTB):
                                     "Bezier3d: \\(control\\) i 4 >= size 4"):
             bzr[4]
 
-        # Control point API
-        self.assertEqual(len(bzr.control_points), 4)
-        self.assertEqual(list(bzr.control_points[0]), [0, 0, 0])
-        self.assertEqual(list(bzr.control_points[1]), [1, 1, 0])
-        self.assertEqual(list(bzr.control_points[2]), [3, 1, 0])
-        self.assertEqual(list(bzr.control_points[3]), [4, 0, 0])
-
-        bzr.control_points = [Vector(4, 0, 0), Vector(3, 1, 0),
-                              Vector(1, 1, 0), Vector(0, 0, 0)]
-        self.assertEqual(list(bzr.control_points[0]), [4, 0, 0])
-        self.assertEqual(list(bzr.control_points[1]), [3, 1, 0])
-        self.assertEqual(list(bzr.control_points[2]), [1, 1, 0])
-        self.assertEqual(list(bzr.control_points[3]), [0, 0, 0])
-
-        with self.assertRaisesRegex(
-                IndexError,
-                "Bezier3d.control_points: len\\(points\\) 3 != ncontrol 4"):
-            bzr.control_points = [Vector(3, 1, 0), Vector(1, 1, 0),
-                                  Vector(0, 0, 0)]
-        with self.assertRaisesRegex(
-                IndexError,
-                "Bezier3d.control_points: len\\(points\\) 5 != ncontrol 4"):
-            bzr.control_points = [Vector(4, 0, 0), Vector(3, 1, 0),
-                                  Vector(1, 1, 0), Vector(0, 0, 0),
-                                  Vector(0, 0, 0)]
-
-        # Locus point API
-        self.assertEqual(len(bzr.locus_points), 0)
-
-    def test_local_points(self):
-        Vector = self.vkls
+    def test_locus_points(self):
+        Point = self.vkls
         Bezier = self.bkls
 
-        b = Bezier(
-            [Vector(0, 0, 0), Vector(1, 1, 0), Vector(3, 1, 0),
-             Vector(4, 0, 0)])
-        self.assertEqual(len(b.control_points), 4)
+        b = Bezier(p0=Point(0, 0, 0), p1=Point(1, 1, 0), p2=Point(3, 1, 0),
+                   p3=Point(4, 0, 0))
+        self.assertEqual(len(b), 4)
         self.assertEqual(b.nlocus, 0)
         self.assertEqual(len(b.locus_points), 0)
 
@@ -1065,34 +1034,33 @@ class WorldTB(ModMeshTB):
             w.bezier(0)
 
         # Add Bezier curve
-        b = w.add_bezier(
-            [Point(0, 0, 0), Point(1, 1, 0), Point(3, 1, 0),
-             Point(4, 0, 0)])
+        b = w.add_bezier(p0=Point(0, 0, 0), p1=Point(1, 1, 0),
+                         p2=Point(3, 1, 0), p3=Point(4, 0, 0))
         self.assertEqual(w.nbezier, 1)
         with self.assertRaisesRegex(
                 IndexError, "World: \\(bezier\\) i 1 >= size 1"):
             w.bezier(1)
 
-        # Check control points
-        self.assertEqual(len(b), 4)
-        self.assertEqual(list(b[0]), [0, 0, 0])
-        self.assertEqual(list(b[1]), [1, 1, 0])
-        self.assertEqual(list(b[2]), [3, 1, 0])
-        self.assertEqual(list(b[3]), [4, 0, 0])
+            # Check control points
+            self.assertEqual(len(b), 4)
+            self.assertEqual(list(b[0]), [0, 0, 0])
+            self.assertEqual(list(b[1]), [1, 1, 0])
+            self.assertEqual(list(b[2]), [3, 1, 0])
+            self.assertEqual(list(b[3]), [4, 0, 0])
 
-        # Check locus points
-        self.assertEqual(b.nlocus, 0)
-        self.assertEqual(len(b.locus_points), 0)
-        b.sample(5)
-        self.assertEqual(b.nlocus, 5)
-        self.assertEqual(len(b.locus_points), 5)
-        self.assert_allclose([list(p) for p in b.locus_points],
-                             [[0.0, 0.0, 0.0], [0.90625, 0.5625, 0.0],
-                              [2.0, 0.75, 0.0], [3.09375, 0.5625, 0.0],
-                              [4.0, 0.0, 0.0]])
+            # Check locus points
+            self.assertEqual(b.nlocus, 0)
+            self.assertEqual(len(b.locus_points), 0)
+            b.sample(5)
+            self.assertEqual(b.nlocus, 5)
+            self.assertEqual(len(b.locus_points), 5)
+            self.assert_allclose([list(p) for p in b.locus_points],
+                                 [[0.0, 0.0, 0.0], [0.90625, 0.5625, 0.0],
+                                  [2.0, 0.75, 0.0], [3.09375, 0.5625, 0.0],
+                                  [4.0, 0.0, 0.0]])
 
-        # Confirm we worked on the internal instead of copy
-        self.assertEqual(w.bezier(0).nlocus, 5)
+            # Confirm we worked on the internal instead of copy
+            self.assertEqual(w.bezier(0).nlocus, 5)
 
     def test_point(self):
         Point = self.vkls
