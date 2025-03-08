@@ -91,6 +91,16 @@ public:
 
     void fill(T v) { m_coord[0] = m_coord[1] = m_coord[2] = v; }
 
+    bool operator==(Point3d const & rhs) const
+    {
+        return m_coord[0] == rhs.m_coord[0] && m_coord[1] == rhs.m_coord[1] && m_coord[2] == rhs.m_coord[2];
+    }
+
+    bool operator!=(Point3d const & rhs) const
+    {
+        return m_coord[0] != rhs.m_coord[0] || m_coord[1] != rhs.m_coord[1] || m_coord[2] != rhs.m_coord[2];
+    }
+
     Point3d & operator+=(Point3d const & o)
     {
         m_coord[0] += o.m_coord[0];
@@ -139,6 +149,9 @@ public:
         return *this;
     }
 
+    value_type calc_length2() const { return m_coord[0] * m_coord[0] + m_coord[1] * m_coord[1] + m_coord[2] * m_coord[2]; }
+    value_type calc_length() const { return std::sqrt(calc_length2()); }
+
 private:
 
     void check_size(size_t i, size_t s) const
@@ -152,6 +165,38 @@ private:
     T m_coord[3];
 
 }; /* end class Point3d */
+
+template <typename T>
+Point3d<T> operator+(Point3d<T> const & lhs, const Point3d<T> & rhs)
+{
+    Point3d<T> res = lhs;
+    res += rhs;
+    return res;
+}
+
+template <typename T>
+Point3d<T> operator-(Point3d<T> const & lhs, const Point3d<T> & rhs)
+{
+    Point3d<T> res = lhs;
+    res -= rhs;
+    return res;
+}
+
+template <typename T>
+Point3d<T> operator*(Point3d<T> const & lhs, typename Point3d<T>::value_type rhs)
+{
+    Point3d<T> res = lhs;
+    res *= rhs;
+    return res;
+}
+
+template <typename T>
+Point3d<T> operator/(Point3d<T> const & lhs, typename Point3d<T>::value_type rhs)
+{
+    Point3d<T> res = lhs;
+    res /= rhs;
+    return res;
+}
 
 using Point3dFp32 = Point3d<float>;
 using Point3dFp64 = Point3d<double>;
@@ -1157,6 +1202,8 @@ public:
 
     // TODO: missing many accessors
 
+    std::shared_ptr<SegmentPad<T>> sample(value_type length) const;
+
 private:
 
     std::shared_ptr<point_pad_type> m_p0;
@@ -1165,6 +1212,58 @@ private:
     std::shared_ptr<point_pad_type> m_p3;
 
 }; /* end class CurvePad */
+
+template <typename T>
+std::shared_ptr<SegmentPad<T>> CurvePad<T>::sample(value_type length) const
+{
+    std::vector<uint32_t> nlocus(size());
+    size_t totnlocus = 0;
+    size_t totnseg = 0;
+    for (size_t i = 0; i < size(); ++i)
+    {
+        const size_t n = static_cast<uint32_t>(std::floor((p3(i) - p0(i)).calc_length() / length));
+        nlocus[i] = n < 2 ? 2 : n;
+        totnlocus += nlocus[i];
+        totnseg += nlocus[i] - 1;
+    }
+
+    std::shared_ptr<SegmentPad<T>> spad = SegmentPad<T>::construct(/*ndim*/ 3, /*nelem*/ totnseg);
+    size_t iseg = 0;
+    for (size_t i = 0; i < size(); ++i)
+    {
+        point_type const & tp0 = p0(i);
+        point_type const & tp1 = p1(i);
+        point_type const & tp2 = p2(i);
+        point_type const & tp3 = p3(i);
+        std::vector<point_type> loci(nlocus[i]);
+        if (nlocus[0] == 2)
+        {
+            spad->set(iseg, tp0, tp3);
+            ++iseg;
+        }
+        else
+        {
+            point_type lastp = tp0;
+            for (size_t j = 1; j < nlocus[i] - 1; ++j)
+            {
+                value_type t = j;
+                t /= nlocus[i] - 1;
+                point_type thisp;
+                for (size_t idim = 0; idim < 3; ++idim)
+                {
+                    std::vector<T> cvalues{tp0[idim], tp1[idim], tp2[idim], tp3[idim]};
+                    thisp[idim] = detail::interpolate_bernstein_impl(t, cvalues, cvalues.size() - 1);
+                }
+                spad->set(iseg, lastp, thisp);
+                ++iseg;
+                lastp = thisp;
+            }
+            spad->set(iseg, lastp, tp3);
+            ++iseg;
+        }
+    }
+    return spad;
+}
 
 } /* end namespace modmesh */
 

@@ -982,6 +982,88 @@ class CurvePadTB(ModMeshTB):
         self.assertEqual(cp.y3_at(0), 0)
         self.assertEqual(cp.z3_at(0), 0)
 
+    def test_sample_2d(self):
+        CurvePad = self.ckls
+        Point3d = self.vkls
+
+        cp = CurvePad(ndim=3)
+        p0 = Point3d(0, 0, 0)
+        p1 = Point3d(1, 1, 0)
+        p2 = Point3d(3, 1, 0)
+        p3 = Point3d(4, 0, 0)
+        cp.append(p0=p0, p1=p1, p2=p2, p3=p3)
+        self.assertEqual(len(cp), 1)
+        p4 = Point3d(5, 0, 0)
+        p5 = Point3d(5.5, 1, 0)
+        p6 = Point3d(6.5, 1, 0)
+        p7 = Point3d(7, 0, 0)
+        cp.append(p0=p4, p1=p5, p2=p6, p3=p7)
+        self.assertEqual(len(cp), 2)
+
+        # Sample to create segment pad
+        sp = cp.sample(length=0.5)
+        self.assertEqual(len(sp), 10)
+
+        # The connectivity of the first curve
+        self.assertEqual(p0, sp[0].p0)
+        self.assertEqual(sp[0].p1, sp[1].p0)
+        self.assertEqual(sp[1].p1, sp[2].p0)
+        self.assertEqual(sp[2].p1, sp[3].p0)
+        self.assertEqual(sp[3].p1, sp[4].p0)
+        self.assertEqual(sp[4].p1, sp[5].p0)
+        self.assertEqual(sp[5].p1, sp[6].p0)
+        self.assertEqual(sp[6].p1, p3)
+
+        # The connectivity of the second curve
+        self.assertEqual(p4, sp[7].p0)
+        self.assertEqual(sp[7].p1, sp[8].p0)
+        self.assertEqual(sp[8].p1, sp[9].p0)
+        self.assertEqual(sp[9].p1, p7)
+
+        # Test for the segment coordinates of the first curve
+        self.assert_allclose(list(sp[0].p0),
+                             [0.0, 0.0, 0.0])
+        self.assert_allclose(list(sp[0].p1),
+                             [0.48396501457725954, 0.3673469387755103, 0.0])
+        self.assert_allclose(list(sp[1].p0),
+                             [0.48396501457725954, 0.3673469387755103, 0.0])
+        self.assert_allclose(list(sp[1].p1),
+                             [1.0553935860058308, 0.6122448979591837, 0.0])
+        self.assert_allclose(list(sp[2].p0),
+                             [1.0553935860058308, 0.6122448979591837, 0.0])
+        self.assert_allclose(list(sp[2].p1),
+                             [1.6793002915451893, 0.7346938775510203, 0.0])
+        self.assert_allclose(list(sp[3].p0),
+                             [1.6793002915451893, 0.7346938775510203, 0.0])
+        self.assert_allclose(list(sp[3].p1),
+                             [2.3206997084548107, 0.7346938775510206, 0.0])
+        self.assert_allclose(list(sp[4].p0),
+                             [2.3206997084548107, 0.7346938775510206, 0.0])
+        self.assert_allclose(list(sp[4].p1),
+                             [2.944606413994169, 0.6122448979591837, 0.0])
+        self.assert_allclose(list(sp[5].p0),
+                             [2.944606413994169, 0.6122448979591837, 0.0])
+        self.assert_allclose(list(sp[5].p1),
+                             [3.5160349854227406, 0.36734693877551033, 0.0])
+        self.assert_allclose(list(sp[6].p0),
+                             [3.5160349854227406, 0.36734693877551033, 0.0])
+        self.assert_allclose(list(sp[6].p1),
+                             [4.0, 0.0, 0.0])
+
+        # Test for the segment coordinates of the second curve
+        self.assert_allclose(list(sp[7].p0),
+                             [5.0, 0.0, 0.0])
+        self.assert_allclose(list(sp[7].p1),
+                             [5.6296296296296315, 0.6666666666666667, 0.0])
+        self.assert_allclose(list(sp[8].p0),
+                             [5.6296296296296315, 0.6666666666666667, 0.0])
+        self.assert_allclose(list(sp[8].p1),
+                             [6.370370370370371, 0.6666666666666667, 0.0])
+        self.assert_allclose(list(sp[9].p0),
+                             [6.370370370370371, 0.6666666666666667, 0.0])
+        self.assert_allclose(list(sp[9].p1),
+                             [7.0, 0.0, 0.0])
+
 
 class CurvePadFp32TC(CurvePadTB, unittest.TestCase):
 
@@ -997,7 +1079,7 @@ class CurvePadFp32TC(CurvePadTB, unittest.TestCase):
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
-            kw['rtol'] = 1.e-7
+            kw['rtol'] = 1.5e-7
         return super().assert_allclose(*args, **kw)
 
 

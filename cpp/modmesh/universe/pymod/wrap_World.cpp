@@ -89,6 +89,8 @@ WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const c
 
     // Wrap for operators.
     (*this)
+        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
+        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
         .def(py::self += py::self)
         .def(py::self += value_type())
         .def(py::self -= py::self)
@@ -696,6 +698,11 @@ WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const
         .def("__len__", &wrapped_type::size)
         .def("__getitem__", &wrapped_type::get_at)
         .def("get_at", &wrapped_type::get_at)
+        //
+        ;
+
+    (*this)
+        .def("sample", &wrapped_type::sample, py::arg("length"))
         //
         ;
 
