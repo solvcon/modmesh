@@ -130,11 +130,14 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
     , m_renderer(new Qt3DRender::QGeometryRenderer())
     , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
 {
-    size_t npoint = world->nsegment() * 2;
-    for (size_t i = 0; i < world->nbezier(); ++i)
-    {
-        npoint += world->bezier(i).nlocus();
-    }
+    // Create segment pad
+    std::shared_ptr<SegmentPadFp64> segments = world->segments()->clone();
+    // Create sampled segments in a pad from the curves
+    std::shared_ptr<SegmentPadFp64> csegs = world->curves()->sample(/*length*/ 0.1);
+    // Extend the overall segment pad with the sampled segments
+    segments->extend_with(*csegs);
+    // Number of points is twice of that of segments
+    size_t npoint = segments->size() * 2;
 
     /*
      * Fence the geometry building code to prevent the exception from Qt:
@@ -157,9 +160,9 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
                 barray.resize(npoint * 3 * sizeof(float));
                 SimpleArray<float> sarr = makeSimpleArray<float>(barray, small_vector<size_t>{npoint, 3}, /*view*/ true);
                 size_t ipt = 0;
-                for (size_t i = 0; i < world->nsegment(); ++i)
+                for (size_t i = 0; i < segments->size(); ++i)
                 {
-                    Segment3dFp64 const & s = world->segment(i);
+                    Segment3dFp64 const & s = segments->get(i);
                     sarr(ipt, 0) = s.p0()[0];
                     sarr(ipt, 1) = s.p0()[1];
                     sarr(ipt, 2) = s.p0()[2];
@@ -168,18 +171,6 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
                     sarr(ipt, 1) = s.p1()[1];
                     sarr(ipt, 2) = s.p1()[2];
                     ++ipt;
-                }
-                for (size_t i = 0; i < world->nbezier(); ++i)
-                {
-                    Bezier3dFp64 const & b = world->bezier(i);
-                    for (size_t j = 0; j < b.nlocus(); ++j)
-                    {
-                        Point3dFp64 const & v = b.locus(j);
-                        sarr(ipt, 0) = v[0];
-                        sarr(ipt, 1) = v[1];
-                        sarr(ipt, 2) = v[2];
-                        ++ipt;
-                    }
                 }
                 buf->setData(barray);
             }
@@ -197,14 +188,7 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
             indices->setVertexBaseType(Qt3DCore::QAttribute::UnsignedInt);
             indices->setAttributeType(Qt3DCore::QAttribute::IndexAttribute);
 
-            size_t nedge = world->nsegment();
-            {
-                for (size_t i = 0; i < world->nbezier(); ++i)
-                {
-                    Bezier3dFp64 const & b = world->bezier(i);
-                    nedge += b.nlocus() - 1;
-                }
-            }
+            size_t nedge = segments->size();
 
             auto * buf = new Qt3DCore::QBuffer(m_geometry);
             {
@@ -213,22 +197,11 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
                 SimpleArray<uint32_t> sarr = makeSimpleArray<uint32_t>(barray, small_vector<size_t>{nedge, 2}, /*view*/ true);
                 size_t ied = 0;
                 size_t ipt = 0;
-                for (size_t i = 0; i < world->nsegment(); ++i)
+                for (size_t i = 0; i < segments->size(); ++i)
                 {
                     sarr(ied, 0) = ipt++;
                     sarr(ied, 1) = ipt++;
                     ++ied;
-                }
-                for (size_t i = 0; i < world->nbezier(); ++i)
-                {
-                    Bezier3dFp64 const & b = world->bezier(i);
-                    for (size_t j = 0; j < b.nlocus() - 1; ++j)
-                    {
-                        sarr(ied, 0) = ipt++;
-                        sarr(ied, 1) = ipt;
-                        ++ied;
-                    }
-                    ++ipt;
                 }
                 buf->setData(barray);
             }

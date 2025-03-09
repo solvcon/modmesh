@@ -89,6 +89,8 @@ WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const c
 
     // Wrap for operators.
     (*this)
+        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
+        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
         .def(py::self += py::self)
         .def(py::self += value_type())
         .def(py::self -= py::self)
@@ -352,6 +354,13 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
        ;
 #undef DECL_WRAP
     // clang-format on
+
+    // Wrap for operators.
+    (*this)
+        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
+        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
+        //
+        ;
 }
 
 template <typename T>
@@ -454,6 +463,13 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
             py::arg("x1"),
             py::arg("y1"),
             py::arg("z1"))
+        .def(
+            "extend_with",
+            [](wrapped_type & self, wrapped_type const & other)
+            {
+                self.extend_with(other);
+            },
+            py::arg("segments"))
         .def_timed("pack_array", &wrapped_type::pack_array)
         .def_timed("expand", &wrapped_type::expand, py::arg("length"))
         .def("__len__", &wrapped_type::size)
@@ -558,45 +574,60 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
     namespace py = pybind11;
 
     (*this)
-        .def(py::init<std::vector<point_type> const &>(), py::arg("controls"))
-        .def(
-            "__len__",
-            [](wrapped_type const & self)
-            { return self.size(); })
+        .def(py::init<point_type const &, point_type const &, point_type const &, point_type const &>(),
+             py::arg("p0"),
+             py::arg("p1"),
+             py::arg("p2"),
+             py::arg("p3"))
+        .def("__len__",
+             [](wrapped_type const &)
+             { return 4; })
         .def(
             "__getitem__",
             [](wrapped_type const & self, size_t it)
-            { return self.at(it); })
-        .def(
-            "__setitem__",
-            [](wrapped_type & self, size_t it, point_type val)
-            { self.at(it) = val; })
-        //
-        ;
-
-    // Control points
-    (*this)
-        .def_property(
-            "control_points",
-            [](wrapped_type const & self)
             {
-                std::vector<point_type> ret(self.ncontrol());
-                for (size_t i = 0; i < self.ncontrol(); ++i)
+                point_type ret;
+                switch (it)
                 {
-                    ret[i] = self.control(i);
+                case 0:
+                    ret = self.p0();
+                    break;
+                case 1:
+                    ret = self.p1();
+                    break;
+                case 2:
+                    ret = self.p2();
+                    break;
+                case 3:
+                    ret = self.p3();
+                    break;
+                default:
+                    throw std::out_of_range("Bezier3d: (control) i 4 >= size 4");
+                    break;
                 }
                 return ret;
-            },
-            [](wrapped_type & self, std::vector<point_type> const & points)
+            })
+        .def(
+            "__setitem__",
+            [](wrapped_type & self, size_t it, point_type const & p)
             {
-                if (points.size() != self.ncontrol())
+                switch (it)
                 {
-                    throw std::out_of_range(
-                        Formatter() << "Bezier3d.control_points: len(points) " << points.size() << " != ncontrol " << self.ncontrol());
-                }
-                for (size_t i = 0; i < self.ncontrol(); ++i)
-                {
-                    self.control(i) = points[i];
+                case 0:
+                    self.p0() = p;
+                    break;
+                case 1:
+                    self.p1() = p;
+                    break;
+                case 2:
+                    self.p2() = p;
+                    break;
+                case 3:
+                    self.p3() = p;
+                    break;
+                default:
+                    throw py::stop_iteration();
+                    break;
                 }
             })
         //
@@ -619,6 +650,109 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
             })
         //
         ;
+}
+
+template <typename T>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapCurvePad
+    : public WrapBase<WrapCurvePad<T>, CurvePad<T>, std::shared_ptr<CurvePad<T>>>
+{
+
+public:
+
+    using base_type = WrapBase<WrapCurvePad<T>, CurvePad<T>, std::shared_ptr<CurvePad<T>>>;
+    using wrapped_type = typename base_type::wrapped_type;
+
+    using value_type = typename base_type::wrapped_type::value_type;
+    using point_type = typename base_type::wrapped_type::point_type;
+    using segment_type = typename base_type::wrapped_type::segment_type;
+    using bezier_type = typename base_type::wrapped_type::bezier_type;
+    using point_pad_type = typename base_type::wrapped_type::point_pad_type;
+
+    friend typename base_type::root_base_type;
+
+protected:
+
+    WrapCurvePad(pybind11::module & mod, char const * pyname, char const * pydoc);
+}; /* end class WrapCurvePad */
+
+template <typename T>
+WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const char * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    // Constructors
+    (*this)
+        .def(
+            py::init(
+                [](uint8_t ndim)
+                { return wrapped_type::construct(ndim); }),
+            py::arg("ndim"))
+        .def(
+            py::init(
+                [](uint8_t ndim, size_t nelem)
+                { return wrapped_type::construct(ndim, nelem); }),
+            py::arg("ndim"),
+            py::arg("nelem"))
+        //
+        ;
+
+    (*this)
+        .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def(
+            "append",
+            [](wrapped_type & self, bezier_type const & c)
+            {
+                self.append(c);
+            },
+            py::arg("c"))
+        .def(
+            "append",
+            [](wrapped_type & self, point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3)
+            {
+                self.append(p0, p1, p2, p3);
+            },
+            py::arg("p0"),
+            py::arg("p1"),
+            py::arg("p2"),
+            py::arg("p3"))
+        .def("__len__", &wrapped_type::size)
+        .def("__getitem__", &wrapped_type::get_at)
+        .def("__setitem__", &wrapped_type::set_at)
+        .def("get_at", &wrapped_type::get_at)
+        .def("set_at", &wrapped_type::set_at)
+        //
+        ;
+
+    (*this)
+        .def("sample", &wrapped_type::sample, py::arg("length"))
+        //
+        ;
+
+    // x, y, z, point element accessors.
+#define DECL_WRAP(NAME) \
+    .def(#NAME, [](wrapped_type const & self, size_t i) { return self.NAME(i); })
+    // clang-format off
+    (*this)
+        DECL_WRAP(x0_at)
+        DECL_WRAP(y0_at)
+        DECL_WRAP(z0_at)
+        DECL_WRAP(x1_at)
+        DECL_WRAP(y1_at)
+        DECL_WRAP(z1_at)
+        DECL_WRAP(x2_at)
+        DECL_WRAP(y2_at)
+        DECL_WRAP(z2_at)
+        DECL_WRAP(x3_at)
+        DECL_WRAP(y3_at)
+        DECL_WRAP(z3_at)
+        DECL_WRAP(p0_at)
+        DECL_WRAP(p1_at)
+        DECL_WRAP(p2_at)
+        DECL_WRAP(p3_at)
+        ;
+    // clang-format on
+#undef DECL_WRAP
 }
 
 template <typename T>
@@ -707,21 +841,23 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
         .def_property_readonly("segments", &wrapped_type::segments)
         .def(
             "add_bezier",
-            [](wrapped_type & self, std::vector<typename wrapped_type::point_type> const & controls) -> auto &
+            [](wrapped_type & self, point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3)
             {
-                self.add_bezier(controls);
+                self.add_bezier(p0, p1, p2, p3);
                 return self.bezier_at(self.nbezier() - 1);
             },
-            py::arg("controls"),
-            py::return_value_policy::reference_internal)
+            py::arg("p0"),
+            py::arg("p1"),
+            py::arg("p2"),
+            py::arg("p3"))
         .def_property_readonly("nbezier", &wrapped_type::nbezier)
         .def(
             "bezier",
-            [](wrapped_type & self, size_t i) -> auto &
+            [](wrapped_type & self, size_t i)
             {
                 return self.bezier_at(i);
-            },
-            py::return_value_policy::reference_internal)
+            })
+        .def_property_readonly("curves", &wrapped_type::curves)
         //
         ;
 }
@@ -738,6 +874,8 @@ void wrap_World(pybind11::module & mod)
     WrapSegmentPad<double>::commit(mod, "SegmentPadFp64", "SegmentPadFp64");
     WrapBezier3d<float>::commit(mod, "Bezier3dFp32", "Bezier3dFp32");
     WrapBezier3d<double>::commit(mod, "Bezier3dFp64", "Bezier3dFp64");
+    WrapCurvePad<float>::commit(mod, "CurvePadFp32", "CurvePadFp32");
+    WrapCurvePad<double>::commit(mod, "CurvePadFp64", "CurvePadFp64");
     WrapWorld<float>::commit(mod, "WorldFp32", "WorldFp32");
     WrapWorld<double>::commit(mod, "WorldFp64", "WorldFp64");
 }

@@ -63,6 +63,7 @@ public:
 
     using point_pad_type = PointPad<T>;
     using segment_pad_type = SegmentPad<T>;
+    using curve_pad_type = CurvePad<T>;
 
     template <typename... Args>
     static std::shared_ptr<World<T>> construct(Args &&... args)
@@ -73,6 +74,7 @@ public:
     explicit World(ctor_passkey const &)
         : m_points(point_pad_type::construct(/* ndim */ 3))
         , m_segments(segment_pad_type::construct(/* ndim */ 3))
+        , m_curves(curve_pad_type::construct(/* ndim */ 3))
     {
     }
 
@@ -98,7 +100,7 @@ public:
         check_size(i, m_points->size(), "point");
         return m_points->get(i);
     }
-    std::shared_ptr<point_pad_type> points() { return m_points; }
+    std::shared_ptr<point_pad_type> const & points() { return m_points; }
 
     void add_segment(segment_type const & segment)
     {
@@ -115,25 +117,20 @@ public:
         check_size(i, m_segments->size(), "segment");
         return m_segments->get(i);
     }
-    std::shared_ptr<segment_pad_type> segments() { return m_segments; }
+    std::shared_ptr<segment_pad_type> const & segments() { return m_segments; }
 
-    void add_bezier(std::vector<point_type> const & controls)
+    void add_bezier(point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3)
     {
-        m_beziers.emplace_back(controls);
+        m_curves->append(p0, p1, p2, p3);
     }
-    size_t nbezier() const { return m_beziers.size(); }
-    bezier_type const & bezier(size_t i) const { return m_beziers[i]; }
-    bezier_type & bezier(size_t i) { return m_beziers[i]; }
-    bezier_type const & bezier_at(size_t i) const
+    size_t nbezier() const { return m_curves->size(); }
+    bezier_type bezier(size_t i) const { return m_curves->get(i); }
+    bezier_type bezier_at(size_t i) const
     {
-        check_size(i, m_beziers.size(), "bezier");
-        return m_beziers[i];
+        check_size(i, m_curves->size(), "bezier");
+        return m_curves->get_at(i);
     }
-    bezier_type & bezier_at(size_t i)
-    {
-        check_size(i, m_beziers.size(), "bezier");
-        return m_beziers[i];
-    }
+    std::shared_ptr<curve_pad_type> const & curves() { return m_curves; }
 
 private:
 
@@ -147,7 +144,7 @@ private:
 
     std::shared_ptr<point_pad_type> m_points;
     std::shared_ptr<segment_pad_type> m_segments;
-    std::deque<Bezier3d<T>> m_beziers;
+    std::shared_ptr<curve_pad_type> m_curves;
 
 }; /* end class World */
 

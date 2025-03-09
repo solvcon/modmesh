@@ -296,13 +296,12 @@ class Segment3dFp64TC(Segment3dTB, unittest.TestCase):
 class Bezier3dTB(ModMeshTB):
 
     def test_control_points(self):
-        Vector = self.vkls
+        Point = self.vkls
         Bezier = self.bkls
 
         # Create a cubic Bezier curve
-        bzr = Bezier(
-            [Vector(0, 0, 0), Vector(1, 1, 0), Vector(3, 1, 0),
-             Vector(4, 0, 0)])
+        bzr = Bezier(p0=Point(0, 0, 0), p1=Point(1, 1, 0), p2=Point(3, 1, 0),
+                     p3=Point(4, 0, 0))
         self.assertEqual(len(bzr), 4)
         self.assertEqual(list(bzr[0]), [0, 0, 0])
         self.assertEqual(list(bzr[1]), [1, 1, 0])
@@ -314,43 +313,13 @@ class Bezier3dTB(ModMeshTB):
                                     "Bezier3d: \\(control\\) i 4 >= size 4"):
             bzr[4]
 
-        # Control point API
-        self.assertEqual(len(bzr.control_points), 4)
-        self.assertEqual(list(bzr.control_points[0]), [0, 0, 0])
-        self.assertEqual(list(bzr.control_points[1]), [1, 1, 0])
-        self.assertEqual(list(bzr.control_points[2]), [3, 1, 0])
-        self.assertEqual(list(bzr.control_points[3]), [4, 0, 0])
-
-        bzr.control_points = [Vector(4, 0, 0), Vector(3, 1, 0),
-                              Vector(1, 1, 0), Vector(0, 0, 0)]
-        self.assertEqual(list(bzr.control_points[0]), [4, 0, 0])
-        self.assertEqual(list(bzr.control_points[1]), [3, 1, 0])
-        self.assertEqual(list(bzr.control_points[2]), [1, 1, 0])
-        self.assertEqual(list(bzr.control_points[3]), [0, 0, 0])
-
-        with self.assertRaisesRegex(
-                IndexError,
-                "Bezier3d.control_points: len\\(points\\) 3 != ncontrol 4"):
-            bzr.control_points = [Vector(3, 1, 0), Vector(1, 1, 0),
-                                  Vector(0, 0, 0)]
-        with self.assertRaisesRegex(
-                IndexError,
-                "Bezier3d.control_points: len\\(points\\) 5 != ncontrol 4"):
-            bzr.control_points = [Vector(4, 0, 0), Vector(3, 1, 0),
-                                  Vector(1, 1, 0), Vector(0, 0, 0),
-                                  Vector(0, 0, 0)]
-
-        # Locus point API
-        self.assertEqual(len(bzr.locus_points), 0)
-
-    def test_local_points(self):
-        Vector = self.vkls
+    def test_locus_points(self):
+        Point = self.vkls
         Bezier = self.bkls
 
-        b = Bezier(
-            [Vector(0, 0, 0), Vector(1, 1, 0), Vector(3, 1, 0),
-             Vector(4, 0, 0)])
-        self.assertEqual(len(b.control_points), 4)
+        b = Bezier(p0=Point(0, 0, 0), p1=Point(1, 1, 0), p2=Point(3, 1, 0),
+                   p3=Point(4, 0, 0))
+        self.assertEqual(len(b), 4)
         self.assertEqual(b.nlocus, 0)
         self.assertEqual(len(b.locus_points), 0)
 
@@ -810,6 +779,11 @@ class SegmentPadTB(ModMeshTB):
         self.assertEqual(len(sp.z0), 0)
         self.assertEqual(len(sp.z1), 0)
 
+        nseg = len(sp)
+        sp.extend_with(sp)
+        for i in range(nseg):
+            self.assertEqual(sp[i], sp[nseg + i])
+
     def test_append_3d(self):
         sp = self.skls(ndim=3)
         self.assertEqual(sp.ndim, 3)
@@ -883,6 +857,11 @@ class SegmentPadTB(ModMeshTB):
         self.assert_allclose(sp.z1_at(1), -8.23)
         self.assert_allclose(sp.z1_at(2), 9.3 * 5.1)
 
+        nseg = len(sp)
+        sp.extend_with(sp)
+        for i in range(nseg):
+            self.assertEqual(sp[i], sp[nseg + i])
+
 
 class SegmentPadFp32TC(SegmentPadTB, unittest.TestCase):
 
@@ -916,6 +895,246 @@ class SegmentPadFp64TC(SegmentPadTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
 
+class CurvePadTB(ModMeshTB):
+
+    def test_ndim(self):
+        cp2d = self.ckls(ndim=2)
+        self.assertEqual(cp2d.ndim, 2)
+        cp3d = self.ckls(ndim=3)
+        self.assertEqual(cp3d.ndim, 3)
+
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 0 < 2"):
+            self.ckls(ndim=0)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 0 < 2"):
+            self.ckls(ndim=0, nelem=2)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 1 < 2"):
+            self.ckls(ndim=1)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 1 < 2"):
+            self.ckls(ndim=1, nelem=3)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 4 > 3"):
+            self.ckls(ndim=4)
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: ndim = 4 > 3"):
+            self.ckls(ndim=4, nelem=5)
+
+    def test_append_2d(self):
+        cp = self.ckls(ndim=2)
+        self.assertEqual(cp.ndim, 2)
+        self.assertEqual(len(cp), 0)
+
+        p0 = self.vkls(0, 0, 0)
+        p1 = self.vkls(1, 1, 0)
+        p2 = self.vkls(3, 1, 0)
+        p3 = self.vkls(4, 0, 0)
+        cp.append(p0=p0, p1=p1, p2=p2, p3=p3)
+        self.assertEqual(len(cp), 1)
+
+        self.assertEqual(cp.x0_at(0), 0)
+        self.assertEqual(cp.y0_at(0), 0)
+        self.assertEqual(cp.x1_at(0), 1)
+        self.assertEqual(cp.y1_at(0), 1)
+        self.assertEqual(cp.x2_at(0), 3)
+        self.assertEqual(cp.y2_at(0), 1)
+        self.assertEqual(cp.x3_at(0), 4)
+        self.assertEqual(cp.y3_at(0), 0)
+
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 0 is out of bounds with size 0"):
+            cp.z0_at(0)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 0 is out of bounds with size 0"):
+            cp.z1_at(0)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 0 is out of bounds with size 0"):
+            cp.z2_at(0)
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 0 is out of bounds with size 0"):
+            cp.z3_at(0)
+
+        b = cp[0]
+        self.assertEqual(len(b), 4)
+        self.assertEqual(list(b[0]), [0, 0, 0])
+        self.assertEqual(list(b[1]), [1, 1, 0])
+        self.assertEqual(list(b[2]), [3, 1, 0])
+        self.assertEqual(list(b[3]), [4, 0, 0])
+
+        p0 = self.vkls(7, 8, 0)
+        p1 = self.vkls(1, 1, 0)
+        p2 = self.vkls(3, 1, 0)
+        p3 = self.vkls(4, 0, 0)
+        b = self.bkls(p0, p1, p2, p3)
+        cp[0] = b
+        self.assertEqual(list(cp[0][0]), [7, 8, 0])
+        self.assertEqual(list(cp[0][1]), [1, 1, 0])
+        self.assertEqual(list(cp[0][2]), [3, 1, 0])
+        self.assertEqual(list(cp[0][3]), [4, 0, 0])
+
+    def test_append_3d(self):
+        cp = self.ckls(ndim=3)
+        self.assertEqual(cp.ndim, 3)
+        self.assertEqual(len(cp), 0)
+
+        p0 = self.vkls(0, 0, 0)
+        p1 = self.vkls(1, 1, 0)
+        p2 = self.vkls(3, 1, 0)
+        p3 = self.vkls(4, 0, 0)
+        cp.append(p0=p0, p1=p1, p2=p2, p3=p3)
+        self.assertEqual(len(cp), 1)
+
+        self.assertEqual(cp.x0_at(0), 0)
+        self.assertEqual(cp.y0_at(0), 0)
+        self.assertEqual(cp.z0_at(0), 0)
+        self.assertEqual(cp.x1_at(0), 1)
+        self.assertEqual(cp.y1_at(0), 1)
+        self.assertEqual(cp.z1_at(0), 0)
+        self.assertEqual(cp.x2_at(0), 3)
+        self.assertEqual(cp.y2_at(0), 1)
+        self.assertEqual(cp.z2_at(0), 0)
+        self.assertEqual(cp.x3_at(0), 4)
+        self.assertEqual(cp.y3_at(0), 0)
+        self.assertEqual(cp.z3_at(0), 0)
+
+        p0 = self.vkls(7, 8, -3)
+        p1 = self.vkls(1, 1, 0)
+        p2 = self.vkls(3, 1, 0)
+        p3 = self.vkls(4, 0, 0)
+        b = self.bkls(p0, p1, p2, p3)
+        cp[0] = b
+        self.assertEqual(list(cp[0][0]), [7, 8, -3])
+        self.assertEqual(list(cp[0][1]), [1, 1, 0])
+        self.assertEqual(list(cp[0][2]), [3, 1, 0])
+        self.assertEqual(list(cp[0][3]), [4, 0, 0])
+
+    def test_sample_2d(self):
+        CurvePad = self.ckls
+        Point3d = self.vkls
+        Bezier3d = self.bkls
+
+        cp = CurvePad(ndim=3)
+        p0 = Point3d(0, 0, 0)
+        p1 = Point3d(1, 1, 0)
+        p2 = Point3d(3, 1, 0)
+        p3 = Point3d(4, 0, 0)
+        cp.append(p0=p0, p1=p1, p2=p2, p3=p3)
+        self.assertEqual(len(cp), 1)
+        p4 = Point3d(5, 0, 0)
+        p5 = Point3d(5.5, 1, 0)
+        p6 = Point3d(6.5, 1, 0)
+        p7 = Point3d(7, 0, 0)
+        c = Bezier3d(p0=p4, p1=p5, p2=p6, p3=p7)
+        cp.append(c)
+        self.assertEqual(len(cp), 2)
+
+        # Sample to create segment pad
+        sp = cp.sample(length=0.5)
+        self.assertEqual(len(sp), 10)
+
+        # The connectivity of the first curve
+        self.assertEqual(p0, sp[0].p0)
+        self.assertEqual(sp[0].p1, sp[1].p0)
+        self.assertEqual(sp[1].p1, sp[2].p0)
+        self.assertEqual(sp[2].p1, sp[3].p0)
+        self.assertEqual(sp[3].p1, sp[4].p0)
+        self.assertEqual(sp[4].p1, sp[5].p0)
+        self.assertEqual(sp[5].p1, sp[6].p0)
+        self.assertEqual(sp[6].p1, p3)
+
+        # The connectivity of the second curve
+        self.assertEqual(p4, sp[7].p0)
+        self.assertEqual(sp[7].p1, sp[8].p0)
+        self.assertEqual(sp[8].p1, sp[9].p0)
+        self.assertEqual(sp[9].p1, p7)
+
+        # Test for the segment coordinates of the first curve
+        self.assert_allclose(list(sp[0].p0),
+                             [0.0, 0.0, 0.0])
+        self.assert_allclose(list(sp[0].p1),
+                             [0.48396501457725954, 0.3673469387755103, 0.0])
+        self.assert_allclose(list(sp[1].p0),
+                             [0.48396501457725954, 0.3673469387755103, 0.0])
+        self.assert_allclose(list(sp[1].p1),
+                             [1.0553935860058308, 0.6122448979591837, 0.0])
+        self.assert_allclose(list(sp[2].p0),
+                             [1.0553935860058308, 0.6122448979591837, 0.0])
+        self.assert_allclose(list(sp[2].p1),
+                             [1.6793002915451893, 0.7346938775510203, 0.0])
+        self.assert_allclose(list(sp[3].p0),
+                             [1.6793002915451893, 0.7346938775510203, 0.0])
+        self.assert_allclose(list(sp[3].p1),
+                             [2.3206997084548107, 0.7346938775510206, 0.0])
+        self.assert_allclose(list(sp[4].p0),
+                             [2.3206997084548107, 0.7346938775510206, 0.0])
+        self.assert_allclose(list(sp[4].p1),
+                             [2.944606413994169, 0.6122448979591837, 0.0])
+        self.assert_allclose(list(sp[5].p0),
+                             [2.944606413994169, 0.6122448979591837, 0.0])
+        self.assert_allclose(list(sp[5].p1),
+                             [3.5160349854227406, 0.36734693877551033, 0.0])
+        self.assert_allclose(list(sp[6].p0),
+                             [3.5160349854227406, 0.36734693877551033, 0.0])
+        self.assert_allclose(list(sp[6].p1),
+                             [4.0, 0.0, 0.0])
+
+        # Test for the segment coordinates of the second curve
+        self.assert_allclose(list(sp[7].p0),
+                             [5.0, 0.0, 0.0])
+        self.assert_allclose(list(sp[7].p1),
+                             [5.6296296296296315, 0.6666666666666667, 0.0])
+        self.assert_allclose(list(sp[8].p0),
+                             [5.6296296296296315, 0.6666666666666667, 0.0])
+        self.assert_allclose(list(sp[8].p1),
+                             [6.370370370370371, 0.6666666666666667, 0.0])
+        self.assert_allclose(list(sp[9].p0),
+                             [6.370370370370371, 0.6666666666666667, 0.0])
+        self.assert_allclose(list(sp[9].p1),
+                             [7.0, 0.0, 0.0])
+
+
+class CurvePadFp32TC(CurvePadTB, unittest.TestCase):
+
+    def setUp(self):
+        self.dtype = 'float32'
+        self.akls = modmesh.SimpleArrayFloat32
+        self.vkls = modmesh.Point3dFp32
+        self.pkls = modmesh.PointPadFp32
+        self.gkls = modmesh.Segment3dFp32
+        self.skls = modmesh.SegmentPadFp32
+        self.bkls = modmesh.Bezier3dFp32
+        self.ckls = modmesh.CurvePadFp32
+
+    def assert_allclose(self, *args, **kw):
+        if 'rtol' not in kw:
+            kw['rtol'] = 1.5e-7
+        return super().assert_allclose(*args, **kw)
+
+
+class CurvePadFp64TC(CurvePadTB, unittest.TestCase):
+
+    def setUp(self):
+        self.dtype = 'float64'
+        self.akls = modmesh.SimpleArrayFloat64
+        self.vkls = modmesh.Point3dFp64
+        self.pkls = modmesh.PointPadFp64
+        self.gkls = modmesh.Segment3dFp64
+        self.skls = modmesh.SegmentPadFp64
+        self.bkls = modmesh.Bezier3dFp64
+        self.ckls = modmesh.CurvePadFp64
+
+    def assert_allclose(self, *args, **kw):
+        if 'rtol' not in kw:
+            kw['rtol'] = 1.e-15
+        return super().assert_allclose(*args, **kw)
+
+
 class WorldTB(ModMeshTB):
 
     def test_bezier(self):
@@ -931,9 +1150,8 @@ class WorldTB(ModMeshTB):
             w.bezier(0)
 
         # Add Bezier curve
-        b = w.add_bezier(
-            [Point(0, 0, 0), Point(1, 1, 0), Point(3, 1, 0),
-             Point(4, 0, 0)])
+        b = w.add_bezier(p0=Point(0, 0, 0), p1=Point(1, 1, 0),
+                         p2=Point(3, 1, 0), p3=Point(4, 0, 0))
         self.assertEqual(w.nbezier, 1)
         with self.assertRaisesRegex(
                 IndexError, "World: \\(bezier\\) i 1 >= size 1"):
@@ -956,9 +1174,6 @@ class WorldTB(ModMeshTB):
                              [[0.0, 0.0, 0.0], [0.90625, 0.5625, 0.0],
                               [2.0, 0.75, 0.0], [3.09375, 0.5625, 0.0],
                               [4.0, 0.0, 0.0]])
-
-        # Confirm we worked on the internal instead of copy
-        self.assertEqual(w.bezier(0).nlocus, 5)
 
     def test_point(self):
         Point = self.vkls

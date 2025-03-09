@@ -57,6 +57,13 @@ public:
     {
     }
 
+    // Always (forcefully) clone the input array when it is a const reference
+    SimpleCollector(SimpleArray<T> const & arr)
+        : m_expander(BufferExpander::construct(arr.buffer().clone(), /*clone*/ false))
+    {
+    }
+
+    // Allow sharing the buffer when the input array is an lvalue reference
     SimpleCollector(SimpleArray<T> & arr, bool clone)
         : m_expander(BufferExpander::construct(arr.buffer().shared_from_this(), clone))
     {
