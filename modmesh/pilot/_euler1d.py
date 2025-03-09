@@ -361,7 +361,7 @@ class Euler1DApp(PilotFeature):
 
         # A new sub-window (`QMdiSubWindow`) for the plot area
         _subwin = self._mgr.addSubWindow(QWidget())
-        _subwin.setWidget(PlotArea_wo_Pui(self))
+        _subwin.setWidget(PlotArea(self))
         _subwin.showMaximized()
         _subwin.show()
 
@@ -724,7 +724,7 @@ class Euler1DApp(PilotFeature):
                          f' ndata=self.st.svr.{name}[self.st.svr.xindices]))')
 
 
-class PlotArea_wo_Pui(QWidget):
+class PlotArea(QWidget):
     """
     Class for displaying the plot area in the application.
 
@@ -735,14 +735,14 @@ class PlotArea_wo_Pui(QWidget):
         - `app`: The app want to plot something in plotting area.
 
     Methods:
-        - :meth:`init_UI()`: Define the GUI layout of the window.
+        - :meth:`init_ui()`: Define the GUI layout of the window.
     """
     def __init__(self, app, parent=None):
         super().__init__(parent)
         self.app = app
-        self.init_UI()
+        self.init_ui()
 
-    def init_UI(self):
+    def init_ui(self):
         layout = QVBoxLayout(self)
         layout.addWidget(NavigationToolbar2QT(self.app.plot, None))
         layout.addWidget(self.app.plot)
@@ -816,9 +816,9 @@ class PlotConfigDialog(QDialog):
     def __init__(self, app, parent=None):
         super().__init__(parent)
         self.app = app
-        self.init_UI()
+        self.init_ui()
 
-    def init_UI(self):
+    def init_ui(self):
         self.setWindowTitle("Plot Configuration")
         layout = QVBoxLayout()
 
@@ -873,7 +873,7 @@ class ConfigWindow(QWidget):
           window is opened.
         - :meth:`on_close()`: Callback function when plot configure modal
           windows is closed.
-        - :meth:`init_UI()`: Define the GUI layout of the window.
+        - :meth:`init_ui()`: Define the GUI layout of the window.
     """
 
     def __init__(self, app, parent=None):
@@ -881,7 +881,7 @@ class ConfigWindow(QWidget):
         self.app = app
         self.plot_config_open = False
         self.setup()
-        self.init_UI()
+        self.init_ui()
 
     def setup(self):
         """
@@ -903,7 +903,7 @@ class ConfigWindow(QWidget):
         if self.plot_config_dialog:
             self.plot_config_dialog.close()
 
-    def init_UI(self):
+    def init_ui(self):
         """
         Define the GUI layout of the window for this class
 
