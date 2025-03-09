@@ -42,11 +42,6 @@ from PySide6.QtWidgets import (QDockWidget, QLabel, QVBoxLayout, QHBoxLayout,
                                QComboBox, QPushButton, QSpacerItem,
                                QSizePolicy, QDialog, QWidget, QTableView)
 
-from PUI.state import State
-from PUI.PySide6.base import PuiInQt, QtInPui
-from PUI.PySide6.window import Window
-from PUI.PySide6.toolbar import ToolBar
-
 from .. import core as mcore
 from ..onedim import euler1d
 from ._gui_common import PilotFeature
@@ -356,18 +351,18 @@ class Euler1DApp(PilotFeature):
 
     def run(self):
         self.setup_app()
-        plotting_area = PlotArea(Window(), self)
 
+        # A new dock widget for showing config
         config_window = ConfigWindow(self)
         config_widget = QDockWidget("config")
         config_widget.setWidget(config_window)
-
         self._mgr.mainWindow.addDockWidget(Qt.LeftDockWidgetArea,
                                            config_widget)
-        _subwin = self._mgr.addSubWindow(plotting_area.ui.ui)
-        _subwin.showMaximized()
 
-        plotting_area.redraw()
+        # A new sub-window (`QMdiSubWindow`) for the plot area
+        _subwin = self._mgr.addSubWindow(QWidget())
+        _subwin.setWidget(PlotArea_wo_Pui(self))
+        _subwin.showMaximized()
         _subwin.show()
 
     def setup_app(self):
@@ -436,10 +431,9 @@ class Euler1DApp(PilotFeature):
                                       self.entropy.y_bottom_lim])
         self.plot_config = PlotConfig(self.plot_config_data)
         self.use_grid_layout = False
-        self.plot_holder = State()
         self.set_solver_config()
         self.setup_timer()
-        self.plot_holder.plot = self.build_single_figure()
+        self.plot = self.build_single_figure()
 
     def init_solver(self, gamma=1.4, pressure_left=1.0, density_left=1.0,
                     pressure_right=0.1, density_right=0.125, xmin=-10,
@@ -656,9 +650,9 @@ class Euler1DApp(PilotFeature):
                 "y_axis_bottom_limit"]
 
         if self.use_grid_layout:
-            self.plot_holder.plot = self.build_grid_figure()
+            self.plot = self.build_grid_figure()
         else:
-            self.plot_holder.plot = self.build_single_figure()
+            self.plot = self.build_single_figure()
 
     def single_layout(self):
         """
@@ -667,7 +661,7 @@ class Euler1DApp(PilotFeature):
         :return: None
         """
         self.use_grid_layout = False
-        self.plot_holder.plot = self.build_single_figure()
+        self.plot = self.build_single_figure()
 
     def grid_layout(self):
         """
@@ -676,7 +670,7 @@ class Euler1DApp(PilotFeature):
         :return: None
         """
         self.use_grid_layout = True
-        self.plot_holder.plot = self.build_grid_figure()
+        self.plot = self.build_grid_figure()
 
     @Slot()
     def timer_timeout(self):
@@ -730,38 +724,30 @@ class Euler1DApp(PilotFeature):
                          f' ndata=self.st.svr.{name}[self.st.svr.xindices]))')
 
 
-class PlotArea(PuiInQt):
+class PlotArea_wo_Pui(QWidget):
     """
     Class for displaying the plot area in the application.
 
-    This class inherits from `PuiInQt` and is responsible for managing the
+    This class inherits from `QWidget` and is responsible for managing the
     display of the plot area in the application.
 
     Attributes:
         - `app`: The app want to plot something in plotting area.
 
     Methods:
-        - :meth:`setup()`: Placeholder method for setting up the plot area.
-        - :meth:`content()`: Method for defining the content of the plot area,
-          including a toolbar and the actual plot.
+        - :meth:`init_UI()`: Define the GUI layout of the window.
     """
-
-    def __init__(self, parent, app):
+    def __init__(self, app, parent=None):
         super().__init__(parent)
         self.app = app
+        self.init_UI()
 
-    def setup(self):
-        pass
+    def init_UI(self):
+        layout = QVBoxLayout(self)
+        layout.addWidget(NavigationToolbar2QT(self.app.plot, None))
+        layout.addWidget(self.app.plot)
 
-    def content(self):
-        """
-        Define the GUI layout of plotting area
-
-        :return: nothing
-        """
-        with ToolBar():
-            QtInPui(NavigationToolbar2QT(self.app.plot_holder.plot, None))
-        QtInPui(self.app.plot_holder.plot)
+        self.setLayout(layout)
 
 
 class ConfigTableModel(QAbstractTableModel):
