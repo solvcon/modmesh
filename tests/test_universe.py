@@ -957,6 +957,17 @@ class CurvePadTB(ModMeshTB):
         self.assertEqual(list(b[2]), [3, 1, 0])
         self.assertEqual(list(b[3]), [4, 0, 0])
 
+        p0 = self.vkls(7, 8, 0)
+        p1 = self.vkls(1, 1, 0)
+        p2 = self.vkls(3, 1, 0)
+        p3 = self.vkls(4, 0, 0)
+        b = self.bkls(p0, p1, p2, p3)
+        cp[0] = b
+        self.assertEqual(list(cp[0][0]), [7, 8, 0])
+        self.assertEqual(list(cp[0][1]), [1, 1, 0])
+        self.assertEqual(list(cp[0][2]), [3, 1, 0])
+        self.assertEqual(list(cp[0][3]), [4, 0, 0])
+
     def test_append_3d(self):
         cp = self.ckls(ndim=3)
         self.assertEqual(cp.ndim, 3)
@@ -982,9 +993,21 @@ class CurvePadTB(ModMeshTB):
         self.assertEqual(cp.y3_at(0), 0)
         self.assertEqual(cp.z3_at(0), 0)
 
+        p0 = self.vkls(7, 8, -3)
+        p1 = self.vkls(1, 1, 0)
+        p2 = self.vkls(3, 1, 0)
+        p3 = self.vkls(4, 0, 0)
+        b = self.bkls(p0, p1, p2, p3)
+        cp[0] = b
+        self.assertEqual(list(cp[0][0]), [7, 8, -3])
+        self.assertEqual(list(cp[0][1]), [1, 1, 0])
+        self.assertEqual(list(cp[0][2]), [3, 1, 0])
+        self.assertEqual(list(cp[0][3]), [4, 0, 0])
+
     def test_sample_2d(self):
         CurvePad = self.ckls
         Point3d = self.vkls
+        Bezier3d = self.bkls
 
         cp = CurvePad(ndim=3)
         p0 = Point3d(0, 0, 0)
@@ -997,7 +1020,8 @@ class CurvePadTB(ModMeshTB):
         p5 = Point3d(5.5, 1, 0)
         p6 = Point3d(6.5, 1, 0)
         p7 = Point3d(7, 0, 0)
-        cp.append(p0=p4, p1=p5, p2=p6, p3=p7)
+        c = Bezier3d(p0=p4, p1=p5, p2=p6, p3=p7)
+        cp.append(c)
         self.assertEqual(len(cp), 2)
 
         # Sample to create segment pad

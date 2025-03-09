@@ -270,6 +270,39 @@ public:
         }
     }
 
+    // Always clone the input arrays
+    PointPad(SimpleArray<T> const & x, SimpleArray<T> const & y, ctor_passkey const &)
+        : m_ndim(2)
+        , m_x(x)
+        , m_y(y)
+    {
+        if (x.size() != y.size())
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "PointPad::PointPad: "
+                << "x.size() " << x.size() << " y.size() " << y.size()
+                << " are not the same");
+        }
+    }
+
+    // Always clone the input arrays
+    PointPad(SimpleArray<T> const & x, SimpleArray<T> const & y, SimpleArray<T> const & z, ctor_passkey const &)
+        : m_ndim(3)
+        , m_x(x)
+        , m_y(y)
+        , m_z(z)
+    {
+        if (x.size() != y.size() || x.size() != z.size() || y.size() != z.size())
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "PointPad::PointPad: "
+                << "x.size() " << x.size() << " y.size() " << y.size() << " z.size() " << z.size()
+                << " are not the same");
+        }
+    }
+
     PointPad(SimpleArray<T> & x, SimpleArray<T> & y, bool clone, ctor_passkey const &)
         : m_ndim(2)
         , m_x(x, clone)
@@ -635,6 +668,32 @@ public:
     }
 
     SegmentPad(
+        SimpleArray<T> const & x0,
+        SimpleArray<T> const & y0,
+        SimpleArray<T> const & x1,
+        SimpleArray<T> const & y1,
+        ctor_passkey const &)
+        : m_p0(point_pad_type::construct(x0, y0))
+        , m_p1(point_pad_type::construct(x1, y1))
+    {
+        check_constructor_point_size(*m_p0, *m_p1);
+    }
+
+    SegmentPad(
+        SimpleArray<T> const & x0,
+        SimpleArray<T> const & y0,
+        SimpleArray<T> const & z0,
+        SimpleArray<T> const & x1,
+        SimpleArray<T> const & y1,
+        SimpleArray<T> const & z1,
+        ctor_passkey const &)
+        : m_p0(point_pad_type::construct(x0, y0, z0))
+        , m_p1(point_pad_type::construct(x1, y1, z1))
+    {
+        check_constructor_point_size(*m_p0, *m_p1);
+    }
+
+    SegmentPad(
         SimpleArray<T> & x0,
         SimpleArray<T> & y0,
         SimpleArray<T> & x1,
@@ -660,6 +719,18 @@ public:
         , m_p1(point_pad_type::construct(x1, y1, z1, clone))
     {
         check_constructor_point_size(*m_p0, *m_p1);
+    }
+
+    std::shared_ptr<SegmentPad<T>> clone()
+    {
+        if (ndim() == 2)
+        {
+            return SegmentPad<T>::construct(x0(), y0(), x1(), y1());
+        }
+        else
+        {
+            return SegmentPad<T>::construct(x0(), y0(), z0(), x1(), y1(), z1());
+        }
     }
 
     SegmentPad() = delete;
@@ -902,6 +973,9 @@ private:
 
 }; /* end class SegmentPad */
 
+using SegmentPadFp32 = SegmentPad<float>;
+using SegmentPadFp64 = SegmentPad<double>;
+
 namespace detail
 {
 
@@ -1097,6 +1171,14 @@ public:
 
     ~CurvePad() = default;
 
+    void append(bezier_type const & c)
+    {
+        m_p0->append(c.p0());
+        m_p1->append(c.p1());
+        m_p2->append(c.p2());
+        m_p3->append(c.p3());
+    }
+
     void append(point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3)
     {
         m_p0->append(p0);
@@ -1194,10 +1276,24 @@ public:
     {
         return bezier_type(p0_at(i), p1_at(i), p2_at(i), p3_at(i));
     }
+    void set_at(size_t i, bezier_type const & c)
+    {
+        m_p0->set_at(i, c.p0());
+        m_p1->set_at(i, c.p1());
+        m_p2->set_at(i, c.p2());
+        m_p3->set_at(i, c.p3());
+    }
 
     bezier_type get(size_t i) const
     {
         return bezier_type(p0(i), p1(i), p2(i), p3(i));
+    }
+    void set(size_t i, bezier_type const & c)
+    {
+        m_p0->set(i, c.p0());
+        m_p1->set(i, c.p1());
+        m_p2->set(i, c.p2());
+        m_p3->set(i, c.p3());
     }
 
     // TODO: missing many accessors
@@ -1213,6 +1309,9 @@ private:
 
 }; /* end class CurvePad */
 
+using CurvePadFp32 = CurvePad<float>;
+using CurvePadFp64 = CurvePad<double>;
+
 template <typename T>
 std::shared_ptr<SegmentPad<T>> CurvePad<T>::sample(value_type length) const
 {
@@ -1221,8 +1320,15 @@ std::shared_ptr<SegmentPad<T>> CurvePad<T>::sample(value_type length) const
     size_t totnseg = 0;
     for (size_t i = 0; i < size(); ++i)
     {
-        const size_t n = static_cast<uint32_t>(std::floor((p3(i) - p0(i)).calc_length() / length));
-        nlocus[i] = n < 2 ? 2 : n;
+        // The verbose code helps step in debuggers,
+        // but I did not check the assembly for performance
+        point_type const & tp3 = p3(i);
+        point_type const & tp0 = p0(i);
+        point_type const vec = tp3 - tp0;
+        value_type val = vec.calc_length();
+        val = std::floor(val) / length;
+        // Determine number of locus and accumulate
+        nlocus[i] = val < 2 ? 2 : std::floor(val);
         totnlocus += nlocus[i];
         totnseg += nlocus[i] - 1;
     }
@@ -1235,8 +1341,7 @@ std::shared_ptr<SegmentPad<T>> CurvePad<T>::sample(value_type length) const
         point_type const & tp1 = p1(i);
         point_type const & tp2 = p2(i);
         point_type const & tp3 = p3(i);
-        std::vector<point_type> loci(nlocus[i]);
-        if (nlocus[0] == 2)
+        if (nlocus[i] == 2)
         {
             spad->set(iseg, tp0, tp3);
             ++iseg;

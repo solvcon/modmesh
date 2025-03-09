@@ -687,6 +687,13 @@ WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const
         .def_property_readonly("ndim", &wrapped_type::ndim)
         .def(
             "append",
+            [](wrapped_type & self, bezier_type const & c)
+            {
+                self.append(c);
+            },
+            py::arg("c"))
+        .def(
+            "append",
             [](wrapped_type & self, point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3)
             {
                 self.append(p0, p1, p2, p3);
@@ -697,7 +704,9 @@ WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const
             py::arg("p3"))
         .def("__len__", &wrapped_type::size)
         .def("__getitem__", &wrapped_type::get_at)
+        .def("__setitem__", &wrapped_type::set_at)
         .def("get_at", &wrapped_type::get_at)
+        .def("set_at", &wrapped_type::set_at)
         //
         ;
 
