@@ -779,6 +779,11 @@ class SegmentPadTB(ModMeshTB):
         self.assertEqual(len(sp.z0), 0)
         self.assertEqual(len(sp.z1), 0)
 
+        nseg = len(sp)
+        sp.extend_with(sp)
+        for i in range(nseg):
+            self.assertEqual(sp[i], sp[nseg + i])
+
     def test_append_3d(self):
         sp = self.skls(ndim=3)
         self.assertEqual(sp.ndim, 3)
@@ -851,6 +856,11 @@ class SegmentPadTB(ModMeshTB):
         self.assert_allclose(sp.z1_at(0), -2.31)
         self.assert_allclose(sp.z1_at(1), -8.23)
         self.assert_allclose(sp.z1_at(2), 9.3 * 5.1)
+
+        nseg = len(sp)
+        sp.extend_with(sp)
+        for i in range(nseg):
+            self.assertEqual(sp[i], sp[nseg + i])
 
 
 class SegmentPadFp32TC(SegmentPadTB, unittest.TestCase):
@@ -1147,26 +1157,23 @@ class WorldTB(ModMeshTB):
                 IndexError, "World: \\(bezier\\) i 1 >= size 1"):
             w.bezier(1)
 
-            # Check control points
-            self.assertEqual(len(b), 4)
-            self.assertEqual(list(b[0]), [0, 0, 0])
-            self.assertEqual(list(b[1]), [1, 1, 0])
-            self.assertEqual(list(b[2]), [3, 1, 0])
-            self.assertEqual(list(b[3]), [4, 0, 0])
+        # Check control points
+        self.assertEqual(len(b), 4)
+        self.assertEqual(list(b[0]), [0, 0, 0])
+        self.assertEqual(list(b[1]), [1, 1, 0])
+        self.assertEqual(list(b[2]), [3, 1, 0])
+        self.assertEqual(list(b[3]), [4, 0, 0])
 
-            # Check locus points
-            self.assertEqual(b.nlocus, 0)
-            self.assertEqual(len(b.locus_points), 0)
-            b.sample(5)
-            self.assertEqual(b.nlocus, 5)
-            self.assertEqual(len(b.locus_points), 5)
-            self.assert_allclose([list(p) for p in b.locus_points],
-                                 [[0.0, 0.0, 0.0], [0.90625, 0.5625, 0.0],
-                                  [2.0, 0.75, 0.0], [3.09375, 0.5625, 0.0],
-                                  [4.0, 0.0, 0.0]])
-
-            # Confirm we worked on the internal instead of copy
-            self.assertEqual(w.bezier(0).nlocus, 5)
+        # Check locus points
+        self.assertEqual(b.nlocus, 0)
+        self.assertEqual(len(b.locus_points), 0)
+        b.sample(5)
+        self.assertEqual(b.nlocus, 5)
+        self.assertEqual(len(b.locus_points), 5)
+        self.assert_allclose([list(p) for p in b.locus_points],
+                             [[0.0, 0.0, 0.0], [0.90625, 0.5625, 0.0],
+                              [2.0, 0.75, 0.0], [3.09375, 0.5625, 0.0],
+                              [4.0, 0.0, 0.0]])
 
     def test_point(self):
         Point = self.vkls

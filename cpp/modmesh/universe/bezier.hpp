@@ -599,6 +599,16 @@ public:
     point_type const & operator[](size_t i) const { return m_data.p[i]; }
     point_type & operator[](size_t i) { return m_data.p[i]; }
 
+    bool operator==(Segment3d const & other) const
+    {
+        return m_data.p[0] == other[0] && m_data.p[1] == other[1];
+    }
+
+    bool operator!=(Segment3d const & other) const
+    {
+        return m_data.p[0] != other[0] || m_data.p[1] != other[1];
+    }
+
     point_type const & at(size_t i) const
     {
         check_size(i, 2);
@@ -743,8 +753,16 @@ public:
 
     void append(segment_type const & s)
     {
-        m_p0->append(s.x0(), s.y0(), s.z0());
-        m_p1->append(s.x1(), s.y1(), s.z1());
+        if (ndim() == 2)
+        {
+            m_p0->append(s.x0(), s.y0());
+            m_p1->append(s.x1(), s.y1());
+        }
+        else
+        {
+            m_p0->append(s.x0(), s.y0(), s.z0());
+            m_p1->append(s.x1(), s.y1(), s.z1());
+        }
     }
 
     void append(T x0, T y0, T x1, T y1)
@@ -757,6 +775,15 @@ public:
     {
         m_p0->append(x0, y0, z0);
         m_p1->append(x1, y1, z1);
+    }
+
+    void extend_with(SegmentPad<T> const & other)
+    {
+        size_t const nseg = other.size(); // Fix the number since other may be *this
+        for (size_t i = 0; i < nseg; ++i)
+        {
+            append(other.get(i));
+        }
     }
 
     uint8_t ndim() const { return m_p0->ndim(); }

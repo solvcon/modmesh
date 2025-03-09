@@ -132,19 +132,10 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
 {
     // Create segment pad
     std::shared_ptr<SegmentPadFp64> segments = world->segments()->clone();
-    // Create curve pad
-    std::shared_ptr<CurvePadFp64> curves = CurvePadFp64::construct(/*ndim*/ 3, /*nelem*/ world->nbezier());
-    for (size_t i = 0; i < curves->size(); ++i)
-    {
-        curves->set(i, world->bezier(i));
-    }
     // Create sampled segments in a pad from the curves
-    std::shared_ptr<SegmentPadFp64> csegs = curves->sample(/*length*/ 0.1);
-    // Append the sampled segments to the overall segment pad
-    for (size_t i = 0; i < csegs->size(); ++i)
-    {
-        segments->append(csegs->get(i));
-    }
+    std::shared_ptr<SegmentPadFp64> csegs = world->curves()->sample(/*length*/ 0.1);
+    // Extend the overall segment pad with the sampled segments
+    segments->extend_with(*csegs);
     // Number of points is twice of that of segments
     size_t npoint = segments->size() * 2;
 

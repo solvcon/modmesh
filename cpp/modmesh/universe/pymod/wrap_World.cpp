@@ -354,6 +354,13 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
        ;
 #undef DECL_WRAP
     // clang-format on
+
+    // Wrap for operators.
+    (*this)
+        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
+        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
+        //
+        ;
 }
 
 template <typename T>
@@ -456,6 +463,13 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
             py::arg("x1"),
             py::arg("y1"),
             py::arg("z1"))
+        .def(
+            "extend_with",
+            [](wrapped_type & self, wrapped_type const & other)
+            {
+                self.extend_with(other);
+            },
+            py::arg("segments"))
         .def_timed("pack_array", &wrapped_type::pack_array)
         .def_timed("expand", &wrapped_type::expand, py::arg("length"))
         .def("__len__", &wrapped_type::size)
@@ -827,7 +841,7 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
         .def_property_readonly("segments", &wrapped_type::segments)
         .def(
             "add_bezier",
-            [](wrapped_type & self, point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3) -> auto &
+            [](wrapped_type & self, point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3)
             {
                 self.add_bezier(p0, p1, p2, p3);
                 return self.bezier_at(self.nbezier() - 1);
@@ -835,16 +849,15 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
             py::arg("p0"),
             py::arg("p1"),
             py::arg("p2"),
-            py::arg("p3"),
-            py::return_value_policy::reference_internal)
+            py::arg("p3"))
         .def_property_readonly("nbezier", &wrapped_type::nbezier)
         .def(
             "bezier",
-            [](wrapped_type & self, size_t i) -> auto &
+            [](wrapped_type & self, size_t i)
             {
                 return self.bezier_at(i);
-            },
-            py::return_value_policy::reference_internal)
+            })
+        .def_property_readonly("curves", &wrapped_type::curves)
         //
         ;
 }
