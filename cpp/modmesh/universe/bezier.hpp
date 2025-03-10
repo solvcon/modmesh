@@ -34,7 +34,6 @@
 
 namespace modmesh
 {
-
 /**
  * Point in three-dimensional space.
  *
@@ -48,6 +47,11 @@ class Point3d
 public:
 
     using value_type = T;
+
+    Point3d(T x, T y)
+        : Point3d(x, y, /*z*/ 0.0)
+    {
+    }
 
     Point3d(T x, T y, T z)
         : m_coord{x, y, z}
@@ -553,6 +557,11 @@ public:
     {
     }
 
+    Segment3d(value_type x0, value_type y0, value_type x1, value_type y1)
+        : Segment3d(x0, y0, /*z0*/ 0.0, x1, y1, /*z1*/ 0.0)
+    {
+    }
+
     Segment3d(value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
         : m_data{point_type{x0, y0, z0}, point_type{x1, y1, z1}}
     {
@@ -762,6 +771,20 @@ public:
         {
             m_p0->append(s.x0(), s.y0(), s.z0());
             m_p1->append(s.x1(), s.y1(), s.z1());
+        }
+    }
+
+    void append(point_type const & p0, point_type const & p1)
+    {
+        if (ndim() == 2)
+        {
+            m_p0->append(p0.x(), p0.y());
+            m_p1->append(p1.x(), p1.y());
+        }
+        else
+        {
+            m_p0->append(p0.x(), p0.y(), p0.z());
+            m_p1->append(p1.x(), p1.y(), p1.z());
         }
     }
 
@@ -1052,8 +1075,8 @@ public:
     ~Bezier3d() = default;
 
 #define DECL_VALUE_ACCESSOR(C, I)                    \
-    real_type C##I() const { return m_data.f.C##I; } \
-    real_type & C##I() { return m_data.f.C##I; }
+real_type C##I() const { return m_data.f.C##I; } \
+real_type & C##I() { return m_data.f.C##I; }
     // clang-format off
     DECL_VALUE_ACCESSOR(x, 0)
     DECL_VALUE_ACCESSOR(x, 1)
@@ -1071,13 +1094,13 @@ public:
 #undef DECL_VALUE_ACCESSOR
 
 #define DECL_POINT_ACCESSOR(I)                                             \
-    point_type p##I() const { return point_type(x##I(), y##I(), z##I()); } \
-    void set_p##I(point_type const & p)                                    \
-    {                                                                      \
-        x##I() = p.x();                                                    \
-        y##I() = p.y();                                                    \
-        z##I() = p.z();                                                    \
-    }
+point_type p##I() const { return point_type(x##I(), y##I(), z##I()); } \
+void set_p##I(point_type const & p)                                    \
+{                                                                      \
+x##I() = p.x();                                                    \
+y##I() = p.y();                                                    \
+z##I() = p.z();                                                    \
+}
     // clang-format off
     DECL_POINT_ACCESSOR(0)
     DECL_POINT_ACCESSOR(1)
@@ -1266,10 +1289,10 @@ public:
     }
 
 #define DECL_VALUE_ACCESSOR(I, C)                                     \
-    real_type C##I##_at(size_t i) const { return m_p##I->C##_at(i); } \
-    real_type & C##I##_at(size_t i) { return m_p##I->C##_at(i); }     \
-    real_type C##I(size_t i) const { return m_p##I->C(i); }           \
-    real_type & C##I(size_t i) { return m_p##I->C(i); }
+real_type C##I##_at(size_t i) const { return m_p##I->C##_at(i); } \
+real_type & C##I##_at(size_t i) { return m_p##I->C##_at(i); }     \
+real_type C##I(size_t i) const { return m_p##I->C(i); }           \
+real_type & C##I(size_t i) { return m_p##I->C(i); }
     // clang-format off
     DECL_VALUE_ACCESSOR(0, x)
     DECL_VALUE_ACCESSOR(0, y)
@@ -1287,10 +1310,10 @@ public:
 #undef DECL_VALUE_ACCESSOR
 
 #define DECL_POINT_ACCESSOR(I)                                                          \
-    point_type p##I##_at(size_t i) const { return m_p##I->get_at(i); }                  \
-    void set_p##I##_at(size_t i, point_type const & p) { return m_p##I->set_at(i, p); } \
-    point_type p##I(size_t i) const { return m_p##I->get(i); }                          \
-    void set_p##I(size_t i, point_type const & p) { return m_p##I->set(i, p); }
+point_type p##I##_at(size_t i) const { return m_p##I->get_at(i); }                  \
+void set_p##I##_at(size_t i, point_type const & p) { return m_p##I->set_at(i, p); } \
+point_type p##I(size_t i) const { return m_p##I->get(i); }                          \
+void set_p##I(size_t i, point_type const & p) { return m_p##I->set(i, p); }
     // clang-format off
     DECL_POINT_ACCESSOR(0)
     DECL_POINT_ACCESSOR(1)
@@ -1340,38 +1363,84 @@ using CurvePadFp32 = CurvePad<float>;
 using CurvePadFp64 = CurvePad<double>;
 
 template <typename T>
+class CubicBezierSampler
+{
+public:
+    using point_type = Point3d<T>;
+    using bezier_type = Bezier3d<T>;
+    using curve_pad_type = CurvePad<T>;
+    using segment_pad_type = SegmentPad<T>;
+
+    using value_type = typename bezier_type::value_type;
+
+    CubicBezierSampler(size_t ndim)
+        : m_segments(segment_pad_type::construct(ndim))
+    {
+    }
+
+    CubicBezierSampler() = delete;
+    CubicBezierSampler(CubicBezierSampler const &) = delete;
+    CubicBezierSampler(CubicBezierSampler &&) = default;
+    CubicBezierSampler & operator=(CubicBezierSampler const &) = delete;
+    CubicBezierSampler & operator=(CubicBezierSampler &&) = default;
+    ~CubicBezierSampler() = default;
+
+    std::shared_ptr<segment_pad_type> const & operator()(curve_pad_type const & curves, T length);
+
+    void reset() { m_segments.swap(segment_pad_type::construct(/*ndim*/ m_segments.ndim())); }
+
+private:
+
+    static size_t calc_nspacing(Bezier3d<T> const & c, T length);
+
+    std::shared_ptr<segment_pad_type> m_segments;
+}; /* end class CubicBezierSampler */
+
+template <typename T>
 std::shared_ptr<SegmentPad<T>> CurvePad<T>::sample(value_type length) const
 {
-    std::vector<uint32_t> nlocus(size());
+    return CubicBezierSampler<T>(/*ndim*/ 3)(*this, length);
+}
+
+template <typename T>
+size_t CubicBezierSampler<T>::calc_nspacing(Bezier3d<T> const & c, T length)
+{
+    // The verbose code helps step in debuggers,
+    // but I did not check the assembly for performance
+    point_type const & tp3 = c.p3();
+    point_type const & tp0 = c.p0();
+    point_type const vec = tp3 - tp0;
+    value_type val = vec.calc_length();
+    val = std::floor(val) / length;
+    val = std::floor(val);
+    return static_cast<size_t>(val);
+}
+
+// Sample for all curves in a curve pad sequentially
+template <typename T>
+std::shared_ptr<SegmentPad<T>> const & CubicBezierSampler<T>::operator()(CurvePad<T> const & curves, T length)
+{
+    std::vector<uint32_t> nlocus(curves.size());
     size_t totnlocus = 0;
     size_t totnseg = 0;
-    for (size_t i = 0; i < size(); ++i)
+    for (size_t i = 0; i < curves.size(); ++i)
     {
-        // The verbose code helps step in debuggers,
-        // but I did not check the assembly for performance
-        point_type const & tp3 = p3(i);
-        point_type const & tp0 = p0(i);
-        point_type const vec = tp3 - tp0;
-        value_type val = vec.calc_length();
-        val = std::floor(val) / length;
+        size_t nspacing = calc_nspacing(curves.get(i), length);
         // Determine number of locus and accumulate
-        nlocus[i] = val < 2 ? 2 : std::floor(val);
+        nlocus[i] = nspacing < 2 ? 2 : nspacing;
         totnlocus += nlocus[i];
         totnseg += nlocus[i] - 1;
     }
 
-    std::shared_ptr<SegmentPad<T>> spad = SegmentPad<T>::construct(/*ndim*/ 3, /*nelem*/ totnseg);
-    size_t iseg = 0;
-    for (size_t i = 0; i < size(); ++i)
+    for (size_t i = 0; i < curves.size(); ++i)
     {
-        point_type const & tp0 = p0(i);
-        point_type const & tp1 = p1(i);
-        point_type const & tp2 = p2(i);
-        point_type const & tp3 = p3(i);
+        point_type const & tp0 = curves.p0(i);
+        point_type const & tp1 = curves.p1(i);
+        point_type const & tp2 = curves.p2(i);
+        point_type const & tp3 = curves.p3(i);
         if (nlocus[i] == 2)
         {
-            spad->set(iseg, tp0, tp3);
-            ++iseg;
+            m_segments->append(tp0, tp3);
         }
         else
         {
@@ -1386,15 +1455,13 @@ std::shared_ptr<SegmentPad<T>> CurvePad<T>::sample(value_type length) const
                     std::vector<T> cvalues{tp0[idim], tp1[idim], tp2[idim], tp3[idim]};
                     thisp[idim] = detail::interpolate_bernstein_impl(t, cvalues, cvalues.size() - 1);
                 }
-                spad->set(iseg, lastp, thisp);
-                ++iseg;
+                m_segments->append(lastp, thisp);
                 lastp = thisp;
             }
-            spad->set(iseg, lastp, tp3);
-            ++iseg;
+            m_segments->append(lastp, tp3);
         }
     }
-    return spad;
+    return m_segments;
 }
 
 } /* end namespace modmesh */

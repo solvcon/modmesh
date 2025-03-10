@@ -724,16 +724,19 @@ class SegmentPadTB(ModMeshTB):
         self.assert_allclose(list(packed[2]), (3, 6, 213.9, -3, -6, -213.9))
 
     def test_append_2d(self):
+        Point3d = self.vkls
+        Segment3d = self.gkls
+
         sp = self.skls(ndim=2)
         self.assertEqual(sp.ndim, 2)
         self.assertEqual(len(sp), 0)
-        sp.append(1.1, 2.2, 7.1, 8.2)
+        sp.append(Segment3d(1.1, 2.2, 7.1, 8.2))
         self.assertEqual(len(sp), 1)
         self.assert_allclose(sp.x0_at(0), 1.1)
         self.assert_allclose(sp.y0_at(0), 2.2)
         self.assert_allclose(sp.x1_at(0), 7.1)
         self.assert_allclose(sp.y1_at(0), 8.2)
-        sp.append(1.1 * 3, 2.2 * 3, 7.1 * 3, 8.2 * 3)
+        sp.append(Point3d(1.1 * 3, 2.2 * 3), Point3d(7.1 * 3, 8.2 * 3))
         self.assertEqual(len(sp), 2)
         self.assert_allclose(sp.x0_at(1), 1.1 * 3)
         self.assert_allclose(sp.y0_at(1), 2.2 * 3)
@@ -785,10 +788,13 @@ class SegmentPadTB(ModMeshTB):
             self.assertEqual(sp[i], sp[nseg + i])
 
     def test_append_3d(self):
+        Point3d = self.vkls
+        Segment3d = self.gkls
+
         sp = self.skls(ndim=3)
         self.assertEqual(sp.ndim, 3)
         self.assertEqual(len(sp), 0)
-        sp.append(1.1, 2.2, 3.3, 7.1, 8.2, 9.3)
+        sp.append(s=Segment3d(1.1, 2.2, 3.3, 7.1, 8.2, 9.3))
         self.assertEqual(len(sp), 1)
         self.assert_allclose(sp.x0_at(0), 1.1)
         self.assert_allclose(sp.y0_at(0), 2.2)
@@ -796,7 +802,8 @@ class SegmentPadTB(ModMeshTB):
         self.assert_allclose(sp.x1_at(0), 7.1)
         self.assert_allclose(sp.y1_at(0), 8.2)
         self.assert_allclose(sp.z1_at(0), 9.3)
-        sp.append(1.1 * 5, 2.2 * 5, 3.3 * 5, 7.1 * 5, 8.2 * 5, 9.3 * 5)
+        sp.append(p0=Point3d(1.1 * 5, 2.2 * 5, 3.3 * 5),
+                  p1=Point3d(7.1 * 5, 8.2 * 5, 9.3 * 5))
         self.assertEqual(len(sp), 2)
         self.assert_allclose(sp.x0_at(1), 1.1 * 5)
         self.assert_allclose(sp.y0_at(1), 2.2 * 5)
@@ -804,8 +811,8 @@ class SegmentPadTB(ModMeshTB):
         self.assert_allclose(sp.x1_at(1), 7.1 * 5)
         self.assert_allclose(sp.y1_at(1), 8.2 * 5)
         self.assert_allclose(sp.z1_at(1), 9.3 * 5)
-        sp.append(1.1 * 5.1, 2.2 * 5.1, 3.3 * 5.1, 7.1 * 5.1, 8.2 * 5.1,
-                  9.3 * 5.1)
+        sp.append(x0=1.1 * 5.1, y0=2.2 * 5.1, z0=3.3 * 5.1,
+                  x1=7.1 * 5.1, y1=8.2 * 5.1, z1=9.3 * 5.1)
         self.assertEqual(len(sp), 3)
         self.assert_allclose(sp.x0_at(2), 1.1 * 5.1)
         self.assert_allclose(sp.y0_at(2), 2.2 * 5.1)

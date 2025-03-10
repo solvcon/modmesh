@@ -62,6 +62,7 @@ WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const c
     namespace py = pybind11;
 
     (*this)
+        .def(py::init<value_type, value_type>(), py::arg("x"), py::arg("y"))
         .def(py::init<value_type, value_type, value_type>(), py::arg("x"), py::arg("y"), py::arg("z"))
         .def(
             "__str__",
@@ -287,6 +288,11 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
         .def(py::init<point_type const &, point_type const &>(),
              py::arg("p0"),
              py::arg("p1"))
+        .def(py::init<value_type, value_type, value_type, value_type>(),
+             py::arg("x0"),
+             py::arg("y0"),
+             py::arg("x1"),
+             py::arg("y1"))
         .def(py::init<value_type, value_type, value_type, value_type, value_type, value_type>(),
              py::arg("x0"),
              py::arg("y0"),
@@ -441,6 +447,21 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
 
     (*this)
         .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def(
+            "append",
+            [](wrapped_type & self, segment_type const & s)
+            {
+                self.append(s);
+            },
+            py::arg("s"))
+        .def(
+            "append",
+            [](wrapped_type & self, point_type const & p0, point_type const & p1)
+            {
+                self.append(p0, p1);
+            },
+            py::arg("p0"),
+            py::arg("p1"))
         .def(
             "append",
             [](wrapped_type & self, value_type x0, value_type y0, value_type x1, value_type y1)
