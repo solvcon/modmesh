@@ -320,27 +320,40 @@ class Bezier3dTB(ModMeshTB):
         b = Bezier(p0=Point(0, 0, 0), p1=Point(1, 1, 0), p2=Point(3, 1, 0),
                    p3=Point(4, 0, 0))
         self.assertEqual(len(b), 4)
-        self.assertEqual(b.nlocus, 0)
-        self.assertEqual(len(b.locus_points), 0)
 
-        b.sample(5)
-        self.assertEqual(b.nlocus, 5)
-        self.assertEqual(len(b.locus_points), 5)
-        self.assert_allclose([list(p) for p in b.locus_points],
-                             [[0.0, 0.0, 0.0], [0.90625, 0.5625, 0.0],
-                              [2.0, 0.75, 0.0], [3.09375, 0.5625, 0.0],
-                              [4.0, 0.0, 0.0]])
+        segs = b.sample(nlocus=5)
+        self.assertEqual(len(segs), 4)
+        self.assert_allclose(
+            list(segs[0]), [[0.0, 0.0, 0.0], [0.90625, 0.5625, 0.0]])
+        self.assert_allclose(
+            list(segs[1]), [[0.90625, 0.5625, 0.0], [2.0, 0.75, 0.0]])
+        self.assert_allclose(
+            list(segs[2]), [[2.0, 0.75, 0.0], [3.09375, 0.5625, 0.0]])
+        self.assert_allclose(
+            list(segs[3]), [[3.09375, 0.5625, 0.0], [4.0, 0.0, 0.0]])
 
-        b.sample(9)
-        self.assertEqual(b.nlocus, 9)
-        self.assertEqual(len(b.locus_points), 9)
-        self.assert_allclose([list(p) for p in b.locus_points],
-                             [[0.0, 0.0, 0.0], [0.41796875, 0.328125, 0.0],
-                              [0.90625, 0.5625, 0.0],
-                              [1.44140625, 0.703125, 0.0], [2.0, 0.75, 0.0],
-                              [2.55859375, 0.703125, 0.0],
-                              [3.09375, 0.5625, 0.0],
-                              [3.58203125, 0.328125, 0.0], [4.0, 0.0, 0.0]])
+        segs = b.sample(nlocus=9)
+        self.assertEqual(len(segs), 8)
+        self.assert_allclose(
+            list(segs[0]), [[0.0, 0.0, 0.0], [0.41796875, 0.328125, 0.0]])
+        self.assert_allclose(
+            list(segs[1]),
+            [[0.41796875, 0.328125, 0.0], [0.90625, 0.5625, 0.0]])
+        self.assert_allclose(
+            list(segs[2]),
+            [[0.90625, 0.5625, 0.0], [1.44140625, 0.703125, 0.0]])
+        self.assert_allclose(
+            list(segs[3]), [[1.44140625, 0.703125, 0.0], [2.0, 0.75, 0.0]])
+        self.assert_allclose(
+            list(segs[4]), [[2.0, 0.75, 0.0], [2.55859375, 0.703125, 0.0]])
+        self.assert_allclose(
+            list(segs[5]),
+            [[2.55859375, 0.703125, 0.0], [3.09375, 0.5625, 0.0]])
+        self.assert_allclose(
+            list(segs[6]),
+            [[3.09375, 0.5625, 0.0], [3.58203125, 0.328125, 0.0]])
+        self.assert_allclose(
+            list(segs[7]), [[3.58203125, 0.328125, 0.0], [4.0, 0.0, 0.0]])
 
 
 class Bezier3dFp32TC(Bezier3dTB, unittest.TestCase):
@@ -1172,15 +1185,16 @@ class WorldTB(ModMeshTB):
         self.assertEqual(list(b[3]), [4, 0, 0])
 
         # Check locus points
-        self.assertEqual(b.nlocus, 0)
-        self.assertEqual(len(b.locus_points), 0)
-        b.sample(5)
-        self.assertEqual(b.nlocus, 5)
-        self.assertEqual(len(b.locus_points), 5)
-        self.assert_allclose([list(p) for p in b.locus_points],
-                             [[0.0, 0.0, 0.0], [0.90625, 0.5625, 0.0],
-                              [2.0, 0.75, 0.0], [3.09375, 0.5625, 0.0],
-                              [4.0, 0.0, 0.0]])
+        segs = b.sample(nlocus=5)
+        self.assertEqual(len(segs), 4)
+        self.assert_allclose(
+            list(segs[0]), [[0.0, 0.0, 0.0], [0.90625, 0.5625, 0.0]])
+        self.assert_allclose(
+            list(segs[1]), [[0.90625, 0.5625, 0.0], [2.0, 0.75, 0.0]])
+        self.assert_allclose(
+            list(segs[2]), [[2.0, 0.75, 0.0], [3.09375, 0.5625, 0.0]])
+        self.assert_allclose(
+            list(segs[3]), [[3.09375, 0.5625, 0.0], [4.0, 0.0, 0.0]])
 
     def test_point(self):
         Point = self.vkls

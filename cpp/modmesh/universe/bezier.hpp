@@ -34,6 +34,7 @@
 
 namespace modmesh
 {
+
 /**
  * Point in three-dimensional space.
  *
@@ -1109,24 +1110,7 @@ public:
     // clang-format on
 #undef DECL_POINT_ACCESSOR
 
-    // TODO: remove sampling from Bezier3d
-    size_t
-    nlocus() const
-    {
-        return m_loci.size();
-    }
-    point_type const & locus(size_t i) const
-    {
-        check_size(i, m_loci.size(), "locus");
-        return m_loci[i];
-    }
-    point_type & locus(size_t i)
-    {
-        check_size(i, m_loci.size(), "locus");
-        return m_loci[i];
-    }
-
-    void sample(size_t nlocus);
+    std::shared_ptr<SegmentPad<T>> sample(size_t nlocus) const;
 
 private:
 
@@ -1139,30 +1123,8 @@ private:
     }
 
     detail::Bezier3dData<T> m_data;
-    // TODO: move loci to outside
-    std::vector<point_type> m_loci;
 
 }; // namespace modmesh
-
-template <typename T>
-void Bezier3d<T>::sample(size_t nlocus)
-{
-    if (nlocus < 2)
-    {
-        throw std::invalid_argument(Formatter() << "Bezier3d::sample: nlocus " << nlocus << " < 2");
-    }
-    m_loci.resize(nlocus);
-    for (size_t idim = 0; idim < 3; ++idim)
-    {
-        std::vector<T> cvalues{p0()[idim], p1()[idim], p2()[idim], p3()[idim]};
-        for (size_t i = 0; i < nlocus; ++i)
-        {
-            T const t = ((T)i) / (nlocus - 1);
-            T const v = detail::interpolate_bernstein_impl(t, cvalues, cvalues.size() - 1);
-            m_loci[i][idim] = v;
-        }
-    }
-}
 
 using Bezier3dFp32 = Bezier3d<float>;
 using Bezier3dFp64 = Bezier3d<double>;
@@ -1386,7 +1348,8 @@ public:
     CubicBezierSampler & operator=(CubicBezierSampler &&) = default;
     ~CubicBezierSampler() = default;
 
-    std::shared_ptr<segment_pad_type> const & operator()(curve_pad_type const & curves, T length);
+    std::shared_ptr<segment_pad_type> operator()(bezier_type const & curve, size_t nlocus, bool inplace);
+    std::shared_ptr<segment_pad_type> operator()(curve_pad_type const & curves, T length);
 
     void reset() { m_segments.swap(segment_pad_type::construct(/*ndim*/ m_segments.ndim())); }
 
@@ -1442,7 +1405,7 @@ size_t CubicBezierSampler<T>::sample_to(bezier_type const & c, segment_pad_type 
 
 // Sample for all curves in a curve pad sequentially
 template <typename T>
-std::shared_ptr<SegmentPad<T>> const & CubicBezierSampler<T>::operator()(CurvePad<T> const & curves, T length)
+std::shared_ptr<SegmentPad<T>> CubicBezierSampler<T>::operator()(curve_pad_type const & curves, T length)
 {
     for (size_t i = 0; i < curves.size(); ++i)
     {
@@ -1450,7 +1413,7 @@ std::shared_ptr<SegmentPad<T>> const & CubicBezierSampler<T>::operator()(CurvePa
         bezier_type const & c = curves.get(i);
         size_t const nlocus = calc_nlocus(c, length);
         // No sample and append the base line segment (p0-p3)
-        if (nlocus == 2)
+        if (nlocus <= 2)
         {
             m_segments->append(c.p0(), c.p3());
         }
@@ -1467,6 +1430,30 @@ template <typename T>
 std::shared_ptr<SegmentPad<T>> CurvePad<T>::sample(value_type length) const
 {
     return CubicBezierSampler<T>(/*ndim*/ 3)(*this, length);
+}
+
+// Sample for all curves in a curve pad sequentially
+template <typename T>
+std::shared_ptr<SegmentPad<T>> CubicBezierSampler<T>::operator()(bezier_type const & curve, size_t nlocus, bool inplace)
+{
+    std::shared_ptr<segment_pad_type> segments = inplace ? m_segments : segment_pad_type::construct(m_segments->ndim());
+    // No sample and append the base line segment (p0-p3)
+    if (nlocus <= 2)
+    {
+        segments->append(curve.p0(), curve.p3());
+    }
+    // Sample
+    else
+    {
+        sample_to(curve, *segments, nlocus);
+    }
+    return segments;
+}
+
+template <typename T>
+std::shared_ptr<SegmentPad<T>> Bezier3d<T>::sample(size_t nlocus) const
+{
+    return CubicBezierSampler<T>(/*ndim*/ 3)(*this, nlocus, /*inplace*/ false);
 }
 
 } /* end namespace modmesh */

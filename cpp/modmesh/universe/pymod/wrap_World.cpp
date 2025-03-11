@@ -654,21 +654,9 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
         //
         ;
 
-    // Locus points
+    // Sampling
     (*this)
         .def("sample", &wrapped_type::sample, py::arg("nlocus"))
-        .def_property_readonly("nlocus", &wrapped_type::nlocus)
-        .def_property_readonly(
-            "locus_points",
-            [](wrapped_type const & self)
-            {
-                std::vector<typename wrapped_type::point_type> ret(self.nlocus());
-                for (size_t i = 0; i < self.nlocus(); ++i)
-                {
-                    ret[i] = self.locus(i);
-                }
-                return ret;
-            })
         //
         ;
 }
