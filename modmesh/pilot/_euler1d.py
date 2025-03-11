@@ -360,10 +360,10 @@ class Euler1DApp(PilotFeature):
                                            config_widget)
 
         # A new sub-window (`QMdiSubWindow`) for the plot area
-        _subwin = self._mgr.addSubWindow(QWidget())
-        _subwin.setWidget(PlotArea(self))
-        _subwin.showMaximized()
-        _subwin.show()
+        self._subwin = self._mgr.addSubWindow(QWidget())
+        self._subwin.setWidget(PlotArea(self))
+        self._subwin.showMaximized()
+        self._subwin.show()
 
     def setup_app(self):
         self.solver_config_data = [
@@ -622,6 +622,9 @@ class Euler1DApp(PilotFeature):
         self.set_solver_config()
         self.setup_timer()
         self.update_layout()
+
+        # Update PlotArea while click set button
+        self._subwin.setWidget(PlotArea(self))
 
     def stop(self):
         """
