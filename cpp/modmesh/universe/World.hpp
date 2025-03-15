@@ -106,9 +106,9 @@ public:
     {
         m_segments->append(segment);
     }
-    void add_segment(value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
+    void add_segment(point_type const & p0, point_type const & p1)
     {
-        add_segment(segment_type(x0, y0, z0, x1, y1, z1));
+        add_segment(segment_type(p0, p1));
     }
     size_t nsegment() const { return m_segments->size(); }
     segment_type segment(size_t i) const { return m_segments->get(i); }

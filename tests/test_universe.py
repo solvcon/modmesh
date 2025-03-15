@@ -250,7 +250,7 @@ class Segment3dTB(ModMeshTB):
         Point = self.vkls
         Segment = self.gkls
 
-        s = Segment(x0=0, y0=0, z0=0, x1=1, y1=1, z1=1)
+        s = Segment(p0=Point(x=0, y=0, z=0), p1=Point(x=1, y=1, z=1))
         self.assertEqual(len(s), 2)
         self.assertEqual(tuple(s.p0), (0.0, 0.0, 0.0))
         self.assertEqual(tuple(s.p1), (1.0, 1.0, 1.0))
@@ -667,6 +667,8 @@ class SegmentPadTB(ModMeshTB):
         self.assert_allclose(list(packed[2]), (3, 6, -3, -6))
 
     def test_construct_3d(self):
+        Point = self.vkls
+
         x0arr = self.akls(array=np.array([1, 2, 3], dtype=self.dtype))
         y0arr = self.akls(array=np.array([4, 5, 6], dtype=self.dtype))
         z0arr = self.akls(array=np.array([7, 8, 9], dtype=self.dtype))
@@ -706,7 +708,7 @@ class SegmentPadTB(ModMeshTB):
         with self.assertRaisesRegex(
                 IndexError,
                 "SimpleCollector: index 3 is out of bounds with size 3"):
-            sp.set_at(3, self.gkls(0, 0, 0, 0, 0, 0))
+            sp.set_at(3, self.gkls(Point(0, 0, 0), Point(0, 0, 0)))
 
         # Test zero-copy writing
         sp.x0[1] = 200.2
@@ -737,19 +739,19 @@ class SegmentPadTB(ModMeshTB):
         self.assert_allclose(list(packed[2]), (3, 6, 213.9, -3, -6, -213.9))
 
     def test_append_2d(self):
-        Point3d = self.vkls
-        Segment3d = self.gkls
+        Point = self.vkls
+        Segment = self.gkls
 
         sp = self.skls(ndim=2)
         self.assertEqual(sp.ndim, 2)
         self.assertEqual(len(sp), 0)
-        sp.append(Segment3d(1.1, 2.2, 7.1, 8.2))
+        sp.append(Segment(Point(1.1, 2.2, 0.0), Point(7.1, 8.2, 0.0)))
         self.assertEqual(len(sp), 1)
         self.assert_allclose(sp.x0_at(0), 1.1)
         self.assert_allclose(sp.y0_at(0), 2.2)
         self.assert_allclose(sp.x1_at(0), 7.1)
         self.assert_allclose(sp.y1_at(0), 8.2)
-        sp.append(Point3d(1.1 * 3, 2.2 * 3), Point3d(7.1 * 3, 8.2 * 3))
+        sp.append(Point(1.1 * 3, 2.2 * 3), Point(7.1 * 3, 8.2 * 3))
         self.assertEqual(len(sp), 2)
         self.assert_allclose(sp.x0_at(1), 1.1 * 3)
         self.assert_allclose(sp.y0_at(1), 2.2 * 3)
@@ -801,13 +803,13 @@ class SegmentPadTB(ModMeshTB):
             self.assertEqual(sp[i], sp[nseg + i])
 
     def test_append_3d(self):
-        Point3d = self.vkls
-        Segment3d = self.gkls
+        Point = self.vkls
+        Segment = self.gkls
 
         sp = self.skls(ndim=3)
         self.assertEqual(sp.ndim, 3)
         self.assertEqual(len(sp), 0)
-        sp.append(s=Segment3d(1.1, 2.2, 3.3, 7.1, 8.2, 9.3))
+        sp.append(s=Segment(Point(1.1, 2.2, 3.3), Point(7.1, 8.2, 9.3)))
         self.assertEqual(len(sp), 1)
         self.assert_allclose(sp.x0_at(0), 1.1)
         self.assert_allclose(sp.y0_at(0), 2.2)
@@ -815,8 +817,8 @@ class SegmentPadTB(ModMeshTB):
         self.assert_allclose(sp.x1_at(0), 7.1)
         self.assert_allclose(sp.y1_at(0), 8.2)
         self.assert_allclose(sp.z1_at(0), 9.3)
-        sp.append(p0=Point3d(1.1 * 5, 2.2 * 5, 3.3 * 5),
-                  p1=Point3d(7.1 * 5, 8.2 * 5, 9.3 * 5))
+        sp.append(p0=Point(1.1 * 5, 2.2 * 5, 3.3 * 5),
+                  p1=Point(7.1 * 5, 8.2 * 5, 9.3 * 5))
         self.assertEqual(len(sp), 2)
         self.assert_allclose(sp.x0_at(1), 1.1 * 5)
         self.assert_allclose(sp.y0_at(1), 2.2 * 5)
@@ -1239,6 +1241,7 @@ class WorldTB(ModMeshTB):
         self.assertEqual(w.npoint, 12)
 
     def test_segment(self):
+        Point = self.vkls
         Segment = self.gkls
         World = self.wkls
 
@@ -1251,7 +1254,7 @@ class WorldTB(ModMeshTB):
             w.segment(0)
 
         # Add a segment by object
-        s = w.add_segment(Segment(0, 1, 2, 7.1, 8.2, 9.3))
+        s = w.add_segment(Segment(Point(0, 1, 2), Point(7.1, 8.2, 9.3)))
         self.assert_allclose(list(s), [[0, 1, 2], [7.1, 8.2, 9.3]])
         self.assert_allclose(list(w.segment(0)), [[0, 1, 2], [7.1, 8.2, 9.3]])
         self.assertIsNot(s, w.segment(0))
@@ -1261,7 +1264,7 @@ class WorldTB(ModMeshTB):
             w.segment(1)
 
         # Add a segment by coordinate
-        s = w.add_segment(3.1415, 3.1416, 3.1417, 7.1, 8.2, 9.3)
+        s = w.add_segment(Point(3.1415, 3.1416, 3.1417), Point(7.1, 8.2, 9.3))
         self.assert_allclose(list(s),
                              [[3.1415, 3.1416, 3.1417], [7.1, 8.2, 9.3]])
         self.assert_allclose(list(w.segment(1)),
@@ -1274,8 +1277,8 @@ class WorldTB(ModMeshTB):
 
         # Add many segments
         for it in range(11):
-            w.add_segment(3.1415 + it, 3.1416 + it, 3.1417 + it,
-                          7.1 + it, 8.2 + it, 9.3 + it)
+            w.add_segment(Point(3.1415 + it, 3.1416 + it, 3.1417 + it),
+                          Point(7.1 + it, 8.2 + it, 9.3 + it))
             self.assertEqual(w.nsegment, 2 + it + 1)
 
         # Array/batch interface

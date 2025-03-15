@@ -228,12 +228,13 @@ class Naca4Sampler(object):
 
         :return: None
         """
+        Point = core.Point3dFp64
         points = self.points
         world = self.world
         for it in range(len(points) - 1):
             p0 = points.get_at(it)
             p1 = points.get_at(it + 1)
-            world.add_edge(p0.x, p0.y, 0, p1.x, p1.y, 0)
+            world.add_segment(Point(p0.x, p0.y, 0), Point(p1.x, p1.y, 0))
 
     def draw_cbc(self, spacing=0.01):
         """

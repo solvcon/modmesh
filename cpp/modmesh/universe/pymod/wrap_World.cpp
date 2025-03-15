@@ -288,18 +288,6 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
         .def(py::init<point_type const &, point_type const &>(),
              py::arg("p0"),
              py::arg("p1"))
-        .def(py::init<value_type, value_type, value_type, value_type>(),
-             py::arg("x0"),
-             py::arg("y0"),
-             py::arg("x1"),
-             py::arg("y1"))
-        .def(py::init<value_type, value_type, value_type, value_type, value_type, value_type>(),
-             py::arg("x0"),
-             py::arg("y0"),
-             py::arg("z0"),
-             py::arg("x1"),
-             py::arg("y1"),
-             py::arg("z1"))
         .def(
             "__str__",
             [](wrapped_type const & self)
@@ -332,7 +320,7 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
         [](wrapped_type const & self)                 \
         { return self.NAME(); },                      \
         [](wrapped_type & self, point_type const & v) \
-        { self.NAME() = v; })
+        { self.set_##NAME(v); })
     // clang-format off
     (*this)
         DECL_WRAP(p0)
@@ -348,7 +336,7 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
         [](wrapped_type const & self)                                \
         { return self.NAME(); },                                     \
         [](wrapped_type & self, typename wrapped_type::value_type v) \
-        { self.NAME() = v; })
+        { self.set_##NAME(v); })
     // clang-format off
    (*this)
        DECL_WRAP(x0)
@@ -834,17 +822,13 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
             py::arg("segment"))
         .def(
             "add_segment",
-            [](wrapped_type & self, value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
+            [](wrapped_type & self, point_type const & p0, point_type const & p1)
             {
-                self.add_segment(x0, y0, z0, x1, y1, z1);
+                self.add_segment(p0, p1);
                 return self.segment_at(self.nsegment() - 1);
             },
-            py::arg("x0"),
-            py::arg("y0"),
-            py::arg("z0"),
-            py::arg("x1"),
-            py::arg("y1"),
-            py::arg("z1"))
+            py::arg("p0"),
+            py::arg("p1"))
         .def_property_readonly("nsegment", &wrapped_type::nsegment)
         .def("segment", &wrapped_type::segment_at)
         .def_property_readonly("segments", &wrapped_type::segments)
