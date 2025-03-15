@@ -47,6 +47,8 @@ class Point3d
 
 public:
 
+    static_assert(std::is_arithmetic_v<T>, "T in Point3d<T> must be arithmetic type");
+
     using value_type = T;
 
     Point3d(T x, T y)
@@ -521,17 +523,15 @@ using PointPadFp64 = PointPad<double>;
 namespace detail
 {
 
-// TODO: change the layout to be x0, x1, y0, y1, z0, z1
 template <typename T>
 struct Segment3dNamed
 {
-    T x0, y0, z0, x1, y1, z1;
+    T x0, x1, y0, y1, z0, z1;
 }; /* end struct Segment3dNamed */
 
 template <typename T>
 union Segment3dData
 {
-    Point3d<T> p[2];
     T v[6];
     Segment3dNamed<T> f;
 }; /* end union Segment3dData */
@@ -550,21 +550,13 @@ class Segment3d
 
 public:
 
+    static_assert(std::is_arithmetic_v<T>, "T in Segment3d<T> must be arithmetic type");
+
     using point_type = Point3d<T>;
     using value_type = typename point_type::value_type;
 
-    Segment3d(point_type const & v0, point_type const & v1)
-        : m_data{v0, v1}
-    {
-    }
-
-    Segment3d(value_type x0, value_type y0, value_type x1, value_type y1)
-        : Segment3d(x0, y0, /*z0*/ 0.0, x1, y1, /*z1*/ 0.0)
-    {
-    }
-
-    Segment3d(value_type x0, value_type y0, value_type z0, value_type x1, value_type y1, value_type z1)
-        : m_data{point_type{x0, y0, z0}, point_type{x1, y1, z1}}
+    Segment3d(point_type const & p0, point_type const & p1)
+        : m_data{p0.x(), p1.x(), p0.y(), p1.y(), p0.z(), p1.z()}
     {
     }
 
@@ -575,59 +567,71 @@ public:
     Segment3d & operator=(Segment3d &&) = default;
     ~Segment3d() = default;
 
-    point_type const & p0() const { return m_data.p[0]; }
-    point_type & p0() { return m_data.p[0]; }
-    void set_p0(point_type const & v) { m_data.p[0] = v; }
-    point_type const & p1() const { return m_data.p[1]; }
-    point_type & p1() { return m_data.p[1]; }
-    void set_p1(point_type const & v) { m_data.p[1] = v; }
+    point_type p0() const { return point_type(m_data.f.x0, m_data.f.y0, m_data.f.z0); }
+    void set_p0(point_type const & p)
+    {
+        m_data.f.x0 = p.x();
+        m_data.f.y0 = p.y();
+        m_data.f.z0 = p.z();
+    }
+    point_type p1() const { return point_type(m_data.f.x1, m_data.f.y1, m_data.f.z1); }
+    void set_p1(point_type const & p)
+    {
+        m_data.f.x1 = p.x();
+        m_data.f.y1 = p.y();
+        m_data.f.z1 = p.z();
+    }
 
-    value_type x0() const { return m_data.p[0].x(); }
-    value_type & x0() { return m_data.p[0].x(); }
-    void set_x0(value_type v) { m_data.p[0].set_x(v); }
+    value_type x0() const { return m_data.f.x0; }
+    value_type & x0() { return m_data.f.x0; }
+    void set_x0(value_type v) { m_data.f.x0 = v; }
 
-    value_type y0() const { return m_data.p[0].y(); }
-    value_type & y0() { return m_data.p[0].y(); }
-    void set_y0(value_type v) { m_data.p[0].set_y(v); }
+    value_type y0() const { return m_data.f.y0; }
+    value_type & y0() { return m_data.f.y0; }
+    void set_y0(value_type v) { m_data.f.y0 = v; }
 
-    value_type z0() const { return m_data.p[0].z(); }
-    value_type & z0() { return m_data.p[0].z(); }
-    void set_z0(value_type v) { m_data.p[0].set_z(v); }
+    value_type z0() const { return m_data.f.z0; }
+    value_type & z0() { return m_data.f.z0; }
+    void set_z0(value_type v) { m_data.f.z0 = v; }
 
-    value_type x1() const { return m_data.p[1].x(); }
-    value_type & x1() { return m_data.p[1].x(); }
-    void set_x1(value_type v) { m_data.p[1].set_x(v); }
+    value_type x1() const { return m_data.f.x1; }
+    value_type & x1() { return m_data.f.x1; }
+    void set_x1(value_type v) { m_data.f.x1 = v; }
 
-    value_type y1() const { return m_data.p[1].y(); }
-    value_type & y1() { return m_data.p[1].y(); }
-    void set_y1(value_type v) { m_data.p[1].set_y(v); }
+    value_type y1() const { return m_data.f.y1; }
+    value_type & y1() { return m_data.f.y1; }
+    void set_y1(value_type v) { m_data.f.y1 = v; }
 
-    value_type z1() const { return m_data.p[1].z(); }
-    value_type & z1() { return m_data.p[1].z(); }
-    void set_z1(value_type v) { m_data.p[1].set_z(v); }
+    value_type z1() const { return m_data.f.z1; }
+    value_type & z1() { return m_data.f.z1; }
+    void set_z1(value_type v) { m_data.f.z1 = v; }
 
-    point_type const & operator[](size_t i) const { return m_data.p[i]; }
-    point_type & operator[](size_t i) { return m_data.p[i]; }
+    point_type operator[](size_t i) const { return point_type(m_data.v[i], m_data.v[i + 2], m_data.v[i + 4]); }
 
     bool operator==(Segment3d const & other) const
     {
-        return m_data.p[0] == other[0] && m_data.p[1] == other[1];
+        return m_data.v[0] == other.m_data.v[0] &&
+               m_data.v[1] == other.m_data.v[1] &&
+               m_data.v[2] == other.m_data.v[2] &&
+               m_data.v[3] == other.m_data.v[3] &&
+               m_data.v[4] == other.m_data.v[4] &&
+               m_data.v[5] == other.m_data.v[5];
     }
 
     bool operator!=(Segment3d const & other) const
     {
-        return m_data.p[0] != other[0] || m_data.p[1] != other[1];
+        return m_data.v[0] != other.m_data.v[0] ||
+               m_data.v[1] != other.m_data.v[1] ||
+               m_data.v[2] != other.m_data.v[2] ||
+               m_data.v[3] != other.m_data.v[3] ||
+               m_data.v[4] != other.m_data.v[4] ||
+               m_data.v[5] != other.m_data.v[5];
     }
 
-    point_type const & at(size_t i) const
+    point_type at(size_t i) const
     {
         check_size(i, 2);
-        return m_data.p[i];
-    }
-    point_type & at(size_t i)
-    {
-        check_size(i, 2);
-        return m_data.p[i];
+        return (*this)[i];
     }
 
     size_t size() const { return 2; }
@@ -899,11 +903,11 @@ public:
     {
         if (ndim() == 3)
         {
-            return segment_type(x0_at(i), y0_at(i), z0_at(i), x1_at(i), y1_at(i), z1_at(i));
+            return segment_type(point_type(x0_at(i), y0_at(i), z0_at(i)), point_type(x1_at(i), y1_at(i), z1_at(i)));
         }
         else
         {
-            return segment_type(x0_at(i), y0_at(i), 0.0, x1_at(i), y1_at(i), 0.0);
+            return segment_type(point_type(x0_at(i), y0_at(i), 0.0), point_type(x1_at(i), y1_at(i), 0.0));
         }
     }
     void set_at(size_t i, segment_type const & s)
@@ -954,11 +958,11 @@ public:
     {
         if (ndim() == 3)
         {
-            return segment_type(x0(i), y0(i), z0(i), x1(i), y1(i), z1(i));
+            return segment_type(point_type(x0(i), y0(i), z0(i)), point_type(x1(i), y1(i), z1(i)));
         }
         else
         {
-            return segment_type(x0(i), y0(i), 0.0, x1(i), y1(i), 0.0);
+            return segment_type(point_type(x0(i), y0(i), 0.0), point_type(x1(i), y1(i), 0.0));
         }
     }
     void set(size_t i, segment_type const & s)
@@ -1056,6 +1060,8 @@ class Bezier3d
 {
 
 public:
+
+    static_assert(std::is_floating_point_v<T>, "T in Bezier3d<T> must be floating-point type");
 
     using point_type = Point3d<T>;
     using value_type = typename point_type::value_type;
