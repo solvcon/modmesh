@@ -29,9 +29,6 @@ void dft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
             T1<T2> twiddle_factor{std::cos(tmp), std::sin(tmp)};
             out[i] += in[j] * twiddle_factor;
         }
-
-        // Normalize dft output
-        out[i] = out[i] / std::sqrt(static_cast<T2>(N));
     }
 }
 
@@ -68,12 +65,6 @@ void fft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
                 out[i + k + half_size] = even - odd;
             }
         }
-    }
-
-    // Normalize fft output
-    for (size_t i = 0; i < N; ++i)
-    {
-        out[i] = out[i] / std::sqrt(static_cast<T2>(N));
     }
 }
 

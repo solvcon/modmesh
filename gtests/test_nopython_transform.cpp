@@ -38,7 +38,7 @@ protected:
         for (unsigned int i = 0; i < VN; ++i)
         {
             psd_sig += signal[i].norm();
-            psd_out += out[i].norm();
+            psd_out += out[i].norm() / VN;
         }
 
         // TODO: When FFT / DFT uses float, the accumulation error is around 1e-3,
@@ -71,7 +71,7 @@ protected:
     void verify_delta_function()
     {
         // Transformation of delta is constant in all bins with magnitude = 1/N because of normalization
-        T expected_mag = static_cast<T>(1.0) / static_cast<T>(VN);
+        T expected_mag = static_cast<T>(1.0);
 
         for (unsigned int i = 0; i < VN; ++i)
         {

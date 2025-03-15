@@ -133,6 +133,7 @@ struct ComplexImpl
     T real() const { return real_v; }
     T imag() const { return imag_v; }
     T norm() const { return real_v * real_v + imag_v * imag_v; }
+    ComplexImpl<T> conj() const { return {real_v, -imag_v}; }
 }; /* end struct ComplexImpl */
 
 } /* end namespace detail */
