@@ -70,7 +70,6 @@ protected:
 
     void verify_delta_function()
     {
-        // Transformation of delta is constant in all bins with magnitude = 1/N because of normalization
         T expected_mag = static_cast<T>(1.0);
 
         for (unsigned int i = 0; i < VN; ++i)
