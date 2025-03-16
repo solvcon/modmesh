@@ -68,6 +68,25 @@ void fft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
     }
 }
 
+template <template <typename> class T1, typename T2>
+void ifft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
+{
+    auto N = in.size();
+    SimpleArray<T1<T2>> in_conj(N);
+
+    for (size_t i = 0; i < N; ++i)
+    {
+        in_conj[i] = in[i].conj();
+    }
+
+    fft<T1, T2>(in_conj, out);
+
+    for (size_t i = 0; i < N; ++i)
+    {
+        out[i] = out[i].conj() / static_cast<T2>(N);
+    }
+}
+
 } /* end namespace transform */
 
 } /* end namespace modmesh */
