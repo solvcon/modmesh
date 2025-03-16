@@ -35,7 +35,7 @@ void dft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
 template <template <typename> class T1, typename T2>
 void fft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
 {
-    auto N = in.size();
+    size_t N = in.size();
     const unsigned int bits = static_cast<unsigned int>(std::log2(N));
 
     // bit reversed reordering
@@ -71,7 +71,7 @@ void fft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
 template <template <typename> class T1, typename T2>
 void ifft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
 {
-    auto N = in.size();
+    size_t N = in.size();
     SimpleArray<T1<T2>> in_conj(N);
 
     for (size_t i = 0; i < N; ++i)
