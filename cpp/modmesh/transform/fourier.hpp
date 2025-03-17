@@ -29,16 +29,13 @@ void dft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
             T1<T2> twiddle_factor{std::cos(tmp), std::sin(tmp)};
             out[i] += in[j] * twiddle_factor;
         }
-
-        // Normalize dft output
-        out[i] = out[i] / std::sqrt(static_cast<T2>(N));
     }
 }
 
 template <template <typename> class T1, typename T2>
 void fft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
 {
-    auto N = in.size();
+    size_t N = in.size();
     const unsigned int bits = static_cast<unsigned int>(std::log2(N));
 
     // bit reversed reordering
@@ -69,11 +66,24 @@ void fft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
             }
         }
     }
+}
 
-    // Normalize fft output
+template <template <typename> class T1, typename T2>
+void ifft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
+{
+    size_t N = in.size();
+    SimpleArray<T1<T2>> in_conj(N);
+
     for (size_t i = 0; i < N; ++i)
     {
-        out[i] = out[i] / std::sqrt(static_cast<T2>(N));
+        in_conj[i] = in[i].conj();
+    }
+
+    fft<T1, T2>(in_conj, out);
+
+    for (size_t i = 0; i < N; ++i)
+    {
+        out[i] = out[i].conj() / static_cast<T2>(N);
     }
 }
 

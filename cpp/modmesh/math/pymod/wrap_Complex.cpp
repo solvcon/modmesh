@@ -87,6 +87,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapComplex
             .def_readonly("real", &wrapped_type::real_v)
             .def_readonly("imag", &wrapped_type::imag_v)
             .def("norm", &wrapped_type::norm)
+            .def("conj", &wrapped_type::conj)
             .def("dtype",
                  []()
                  { return complex_dtype; });

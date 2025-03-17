@@ -298,3 +298,17 @@ class ComplexTC(unittest.TestCase, mm.testing.TestBase):
 
         self.assertEqual(sarr.ndarray.dtype, ndarr.dtype)
         self.assertEqual(10 * 8 * 2, sarr.nbytes)
+
+    def test_complex_conj_float32(self):
+        cplx = mm.complex64(self.real1_32, self.imag1_32)
+        cplx_conj = mm.complex64(self.real1_32, -self.imag1_32)
+
+        self.assertEqual(cplx.conj().real, cplx_conj.real)
+        self.assertEqual(cplx.conj().imag, cplx_conj.imag)
+
+    def test_complex_conj_float64(self):
+        cplx = mm.complex128(self.real1_64, self.imag1_64)
+        cplx_conj = mm.complex128(self.real1_64, -self.imag1_64)
+
+        self.assertEqual(cplx.conj().real, cplx_conj.real)
+        self.assertEqual(cplx.conj().imag, cplx_conj.imag)
