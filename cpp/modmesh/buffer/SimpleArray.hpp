@@ -837,26 +837,42 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
                                              << " but the array is " << athis->ndim() << " dimension");
     }
 
-    A ret(indices.shape());
-
-    auto sidx = indices.first_sidx();
-    do {
-        I idx = indices.at(sidx);
-        if (idx < 0 || idx > athis->shape()[0])
+    size_t max_idx = athis->shape()[0];
+    I const * src = indices.begin();
+    I const * const end = indices.end();
+    while (src < end)
+    {
+        if (*src < 0 || *src > max_idx)
         {
+            size_t offset = src - indices.begin();
+            shape_type const & stride = indices.stride();
             Formatter err_msg;
-            err_msg << "SimpleArray::take_along_axis(): indices[" << sidx[0];
-            for (size_t dim = 1; dim < sidx.size(); ++dim)
+            err_msg << "SimpleArray::take_along_axis(): indices[" << offset / stride[0];
+            offset %= stride[0];
+            for (size_t dim = 1; dim < stride.size(); ++dim)
             {
-                err_msg << ", " << sidx[dim];
+                err_msg << ", " << offset / stride[dim];
+                offset %= stride[dim];
             }
-            err_msg << "] is " << idx << ", which is out of range of the array size "
-                    << athis->shape()[0];
+            err_msg << "] is " << *src << ", which is out of range of the array size "
+                    << max_idx;
 
             throw std::out_of_range(err_msg);
         }
-        ret.at(sidx) = (*athis)[static_cast<size_t>(idx)];
-    } while (indices.next_sidx(sidx));
+        src++;
+    }
+
+    src = indices.begin();
+    A ret(indices.shape());
+    T * data = athis->begin();
+    T * dst = ret.begin();
+    while (src < end)
+    {
+        T * valp = data + static_cast<size_t>(*src);
+        *dst = *valp;
+        ++dst;
+        ++src;
+    }
     return ret;
 }
 
