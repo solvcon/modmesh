@@ -10,10 +10,7 @@ from matplotlib.figure import Figure
 from matplotlib.pyplot import setp
 
 from PySide6.QtCore import QTimer, Slot, Qt
-from PySide6.QtWidgets import QDockWidget
-
-from PUI.state import State
-from PUI.PySide6.window import Window
+from PySide6.QtWidgets import QDockWidget, QWidget
 
 from .. import core as mcore
 from ._gui_common import PilotFeature
@@ -82,19 +79,19 @@ class Burgers1DApp(PilotFeature):
 
     def run(self):
         self.setup_app()
-        plotting_area = PlotArea(Window(), self)
 
+        # A new dock widget for showing config
         config_window = ConfigWindow(self)
         config_widget = QDockWidget("config")
         config_widget.setWidget(config_window)
-
         self._mgr.mainWindow.addDockWidget(Qt.LeftDockWidgetArea,
                                            config_widget)
-        _subwin = self._mgr.addSubWindow(plotting_area.ui.ui)
-        _subwin.showMaximized()
 
-        plotting_area.redraw()
-        _subwin.show()
+        # A new sub-window (`QMdiSubWindow`) for the plot area
+        self._subwin = self._mgr.addSubWindow(QWidget())
+        self._subwin.setWidget(PlotArea(self))
+        self._subwin.showMaximized()
+        self._subwin.show()
 
     def setup_app(self):
         solver_config_data = [
@@ -119,10 +116,9 @@ class Burgers1DApp(PilotFeature):
                                  self.velocity.y_bottom_lim])
         self.plot_config = PlotConfig(plot_config_data)
         self.use_grid_layout = False
-        self.plot_holder = State()
         self.set_solver_config()
         self.setup_timer()
-        self.plot_holder.plot = self.build_single_figure()
+        self.plot = self.build_single_figure()
 
     def init_solver(self, x1, x2, x3, velocity12, velocity23):
         self.st = BurgersEquation()
@@ -216,6 +212,9 @@ class Burgers1DApp(PilotFeature):
         self.setup_timer()
         self.update_layout()
 
+        # Update PlotArea while click set button
+        self._subwin.setWidget(PlotArea(self))
+
     def stop(self):
         self.timer.stop()
 
@@ -225,17 +224,17 @@ class Burgers1DApp(PilotFeature):
         line.y_bottom_lim = self.plot_config[line.name]["y_axis_bottom_limit"]
 
         if self.use_grid_layout:
-            self.plot_holder.plot = self.build_grid_figure()
+            self.plot = self.build_grid_figure()
         else:
-            self.plot_holder.plot = self.build_single_figure()
+            self.plot = self.build_single_figure()
 
     def single_layout(self):
         self.use_grid_layout = False
-        self.plot_holder.plot = self.build_single_figure()
+        self.plot = self.build_single_figure()
 
     def grid_layout(self):
         self.use_grid_layout = True
-        self.plot_holder.plot = self.build_grid_figure()
+        self.plot = self.build_grid_figure()
 
     @Slot()
     def timer_timeout(self):
