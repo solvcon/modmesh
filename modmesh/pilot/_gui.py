@@ -42,6 +42,7 @@ if _pcore.enable:
     from PySide6.QtGui import QAction
     from . import _mesh
     from . import _euler1d
+    from . import _burgers1d
 
 __all__ = [  # noqa: F822
     'controller',
@@ -86,6 +87,7 @@ class _Controller(metaclass=_Singleton):
         self.recdom = _mesh.RectangularDomain(mgr=self._rmgr)
         self.naca4airfoil = airfoil.Naca4Airfoil(mgr=self._rmgr)
         self.eulerone = _euler1d.Euler1DApp(mgr=self._rmgr)
+        self.burgers = _burgers1d.Burgers1DApp(mgr=self._rmgr)
         self.populate_menu()
         self._rmgr.show()
         return self._rmgr.exec()
@@ -110,6 +112,7 @@ class _Controller(metaclass=_Singleton):
         self.naca4airfoil.populate_menu()
         self.recdom.populate_menu()
         self.eulerone.populate_menu()
+        self.burgers.populate_menu()
 
         if sys.platform != 'darwin':
             _addAction(
