@@ -7,7 +7,6 @@ set(MODMESH_PILOT_PYMODHEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/R3DWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RWorld.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RManager.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/RParameter.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAxisMark.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RCameraController.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RPythonConsoleDockWidget.hpp
@@ -22,7 +21,6 @@ set(MODMESH_PILOT_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/R3DWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RWorld.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/RParameter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAxisMark.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RCameraController.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RPythonConsoleDockWidget.cpp
