@@ -201,15 +201,83 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def(
                 "argsort",
                 [](wrapped_type & self)
-                { return pybind11::cast(self.argsort()); })
-            .def("take_along_axis",
-                 [](wrapped_type & self, py::object const & indices)
-                 { return pybind11::cast(self.take_along_axis(indices.cast<SimpleArrayUint64>())); })
+                { return py::cast(self.argsort()); })
+            .def("take_along_axis", &take_along_axis)
+            .def("take_along_axis_simd", &take_along_axis_simd)
             //
             ;
 
         return *this;
     }
+
+    static pybind11::object take_along_axis(wrapped_type & self, pybind11::object const & indices)
+    {
+        const char * py_typename = pybind11::detail::obj_class_name(indices.ptr());
+        const char * type = strstr(py_typename, "_modmesh.SimpleArray");
+        if (type == NULL)
+        {
+            printf("no type\n");
+        }
+        else
+        {
+            type += strlen("_modmesh.SimpleArray");
+        }
+
+#define cast_SimpleArray_type_match(obj, typ)                                          \
+        if (strcmp(type, #typ) == 0)                                                   \
+        {                                                                              \
+            return pybind11::cast(self.take_along_axis(obj.cast<SimpleArray##typ>())); \
+        }
+
+        cast_SimpleArray_type_match(indices, Int8);
+        cast_SimpleArray_type_match(indices, Int16);
+        cast_SimpleArray_type_match(indices, Int32);
+        cast_SimpleArray_type_match(indices, Int64);
+        cast_SimpleArray_type_match(indices, Uint8);
+        cast_SimpleArray_type_match(indices, Uint16);
+        cast_SimpleArray_type_match(indices, Uint32);
+        cast_SimpleArray_type_match(indices, Uint64);
+#undef cast_SimpleArray_type_match
+
+        return pybind11::cast(std::move(self));
+    }
+
+    static pybind11::object take_along_axis_simd(wrapped_type & self, pybind11::object const & indices)
+    {
+#if defined(__aarch64__)
+        const char * py_typename = pybind11::detail::obj_class_name(indices.ptr());
+        const char * type = strstr(py_typename, "_modmesh.SimpleArray");
+        if (type == NULL)
+        {
+            printf("no type\n");
+        }
+        else
+        {
+            type += strlen("_modmesh.SimpleArray");
+        }
+
+#define cast_SimpleArray_type_match(obj, typ)                                               \
+        if (strcmp(type, #typ) == 0)                                                        \
+        {                                                                                   \
+            return pybind11::cast(self.take_along_axis_simd(obj.cast<SimpleArray##typ>())); \
+        }
+
+        cast_SimpleArray_type_match(indices, Int8);
+        cast_SimpleArray_type_match(indices, Int16);
+        cast_SimpleArray_type_match(indices, Int32);
+        cast_SimpleArray_type_match(indices, Int64);
+        cast_SimpleArray_type_match(indices, Uint8);
+        cast_SimpleArray_type_match(indices, Uint16);
+        cast_SimpleArray_type_match(indices, Uint32);
+        cast_SimpleArray_type_match(indices, Uint64);
+#undef cast_SimpleArray_type_match
+
+        return pybind11::cast(std::move(self));
+#else
+        take_along_axis(self, indices);
+#endif /* defined(__aarch64__) */
+    }
+
 }; /* end class WrapSimpleArray */
 
 template <typename T>
