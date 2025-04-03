@@ -235,6 +235,10 @@ jobs:
       run: |
         python3 -c "import modmesh; assert modmesh.HAS_PILOT == True"
         make pytest VERBOSE=1
+        
+    - name: make pyprof
+      run: |
+        make pyprof
 
     - name: make pilot
       run: |
@@ -390,6 +394,10 @@ jobs:
             JOB_MAKE_ARGS="${JOB_MAKE_ARGS} BUILD_METAL=ON" ; \
           fi
           make pytest ${JOB_MAKE_ARGS}
+        
+      - name: make pyprof
+        run: |
+          make pyprof
 
       - name: make buildext BUILD_QT=ON USE_PYTEST_HELPER_BINDING=OFF
         run: |
