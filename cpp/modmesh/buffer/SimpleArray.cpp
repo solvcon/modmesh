@@ -36,6 +36,77 @@ namespace modmesh
 
 namespace detail
 {
+
+#if defined(__aarch64__)
+#define vec_typ(typ, N) typ##x##N##_t
+#define t_typ(typ) typ##_t
+
+#define IMPL_CHECK_IDX_RNG_SIMD(typ, N_vec, typ_symbol)                                                       \
+    template <>                                                                                               \
+    t_typ(typ) const * check_index_range<t_typ(typ)>(SimpleArray<t_typ(typ)> const & indices, size_t max_idx) \
+    {                                                                                                         \
+        check_type_range(t_typ(typ), max_idx);                                                                \
+                                                                                                              \
+        vec_typ(typ, N_vec) max_vec = vdupq_n_##typ_symbol(static_cast<t_typ(typ)>(max_idx));                 \
+        vec_typ(typ, N_vec) data_vec = {};                                                                    \
+        vec_typ(typ, N_vec) cmp_vec = {};                                                                     \
+                                                                                                              \
+        t_typ(typ) const * src = indices.begin();                                                             \
+        t_typ(typ) const * const end = indices.end();                                                         \
+                                                                                                              \
+        for (; src <= end - N_vec; src += N_vec)                                                              \
+        {                                                                                                     \
+            data_vec = vld1q_##typ_symbol(src);                                                               \
+            cmp_vec = vcgeq_##typ_symbol(data_vec, max_vec);                                                  \
+            if (vgetq_lane_##typ_symbol(cmp_vec, 0) ||                                                        \
+                vgetq_lane_##typ_symbol(cmp_vec, 1))                                                          \
+            {                                                                                                 \
+                goto OUT_OF_RANGE;                                                                            \
+            }                                                                                                 \
+        }                                                                                                     \
+                                                                                                              \
+        while (src < end)                                                                                     \
+        {                                                                                                     \
+            t_typ(typ) idx = *src;                                                                            \
+            if (idx < 0 || static_cast<size_t>(idx) > max_idx)                                                \
+            {                                                                                                 \
+                return src;                                                                                   \
+            }                                                                                                 \
+            ++src;                                                                                            \
+        }                                                                                                     \
+        return nullptr;                                                                                       \
+                                                                                                              \
+    OUT_OF_RANGE:                                                                                             \
+        constexpr size_t N = 16;                                                                              \
+        t_typ(typ) cmp_val[N] = {};                                                                           \
+        t_typ(typ) * cmp = cmp_val;                                                                           \
+        vst1q_##typ_symbol(cmp_val, cmp_vec);                                                                 \
+                                                                                                              \
+        for (size_t i = 0; i < N; ++i, ++cmp)                                                                 \
+        {                                                                                                     \
+            if (*cmp)                                                                                         \
+            {                                                                                                 \
+                return src + i;                                                                               \
+            }                                                                                                 \
+        }                                                                                                     \
+        return src;                                                                                           \
+    }
+
+IMPL_CHECK_IDX_RNG_SIMD(uint8, 16, u8)
+IMPL_CHECK_IDX_RNG_SIMD(uint16, 8, u16)
+IMPL_CHECK_IDX_RNG_SIMD(uint32, 4, u32)
+IMPL_CHECK_IDX_RNG_SIMD(uint64, 2, u64)
+IMPL_CHECK_IDX_RNG_SIMD(int8, 16, s8)
+IMPL_CHECK_IDX_RNG_SIMD(int16, 8, s16)
+IMPL_CHECK_IDX_RNG_SIMD(int32, 4, s32)
+IMPL_CHECK_IDX_RNG_SIMD(int64, 2, s64)
+
+#undef IMPL_CHECK_IDX_RNG_SIMD
+#undef t_typ
+#undef vec_typ
+
+#endif /* defined(__aarch64__) */
+
 struct DataTypeHasher
 {
     // The std::hash<std::string> is not deterministic, so we implement our own.
