@@ -62,36 +62,48 @@ class QuantityLine(object):
         - `axis` (matplotlib.pyplot.axis): Axis for the plot.
         - `name` (str): Name of the quantity.
         - `unit` (str): Unit of measurement.
+        - `color` (str): Color of line or symbol.
         - `y_upper_lim` (float): y axis upper limit.
         - `y_bottom_lim` (float): y axis bottom limit.
 
     Methods:
-        - :meth:`update(xdata, adata, ndata)`: Update the line data and
-          redraw the plot.
+        - :meth:`update_ana(x, y)`: Update the line data and redraw the plot.
+        - :meth:`update_num(x, y)`: Update the line data and redraw the plot.
+
     """
     ana: matplotlib.lines.Line2D = None
     num: matplotlib.lines.Line2D = None
     axis: matplotlib.pyplot.axis = None
-    y_upper_lim: float = 0.0
-    y_bottom_lim: float = 0.0
     name: str = ""
     unit: str = ""
+    color: str = ""
+    y_upper_lim: float = 0.0
+    y_bottom_lim: float = 0.0
 
-    def update(self, adata, ndata):
+    def update_ana(self, x=None, y=None):
         """
-        Update the line data and redraw the plot.
+        Update analytical data and redraw the plot.
 
-        :param adata: Analytical data.
-        :type adata: ndarray
-
-        :param ndata: Numerical data.
-        :type ndata: ndarray
-
+        :param x, y (type: ndarray): Analytical data.
         :return: None
         """
-        self.ana.set_ydata(adata)
-        self.num.set_ydata(ndata)
+        if x is not None:
+            self.ana.set_xdata(x)
+        if y is not None:
+            self.ana.set_ydata(y)
         self.ana.figure.canvas.draw()
+
+    def update_num(self, x=None, y=None):
+        """
+        Update numerical data and redraw the plot.
+
+        :param x, y (type: ndarray): data.
+        :return: None
+        """
+        if x is not None:
+            self.num.set_xdata(x)
+        if y is not None:
+            self.num.set_ydata(y)
         self.num.figure.canvas.draw()
 
 
@@ -274,10 +286,7 @@ class PlotConfig(GUIConfig):
     """
 
     def __init__(self, input_data):
-        super().__init__(input_data, ["variable",
-                                      "line_selection",
-                                      "y_axis_upper_limit",
-                                      "y_axis_bottom_limit"])
+        super().__init__(input_data, ["variable", "line_selection"])
 
     def editable(self, row, col):
         """
@@ -294,62 +303,76 @@ class PlotConfig(GUIConfig):
         return False
 
 
-class Euler1DApp(PilotFeature):
+class _1DApp(PilotFeature):
     """
-    Main application class for the Euler 1D solver.
+    Main application for 1D solver.
 
-    This class provides the main application logic for the Euler 1D solver.
+    This class provides the main application logic for the 1D solver.
     It includes methods for initializing the solver, configuring parameters,
     setting up timers, and building visualization figures.
 
     Attributes:
-        - `solver_config` (:class:`SolverConfig`): Configuration object
-          for the solver.
-        - `solver_config_data` (list): Solver configuration data
-        - `plot_config` (:class:`PlotConfig`): Configuration object
-          for the plotting area.
-        - `plot_config_data` (list): Plotting area configuration data
-        - `data_lines` (dict): Dictionary containing QuantityLine objects and
-          their display status.
-        - Other QuantityLine (:class:`QuantityLine`) objects such as `density`,
-          `velocity`, etc. to save physical variables.
-        - `use_grid_layout` (bool): Flag indicating whether to use a
-          grid layout.
-        - `plot_holder` (:class:`State`): State object for holding plots.
+        - `solver_config` (:class:`SolverConfig`): Configuration object for
+          the solver.
+        - `plot_data` (list[str, bool]): Data list for the plotting area.
+        - `plot_config` (:class:`PlotConfig`): Configuration object for the
+          plotting area.
+        - `plot` (:class:`State`): State object for the holding plots.
+        - `plot_ana` (bool): Flag indicating whether to plot analytical data.
+        - `plot_num` (bool): Flag indicating whether to plot numerical data.
+        - `use_grid_layout` (bool): Flag indicating whether to use a grid
+          layout.
 
     Methods:
-        - :meth:`init_solver(gamma, pressure_left, density_left, ...)`:
-          Initialize the shock tube solver and set up the initial conditions.
-        - :meth:`set_solver_config()`: Initialize solver configuration
-          based on user input.
+        - :meth:`populate_menu()`: Set menu item for GUI.
+        - :meth:`run()`: Create the GUI environment.
+        - :meth:`setup_app()`: Create the window for solver.
+        - :meth:`init_solver_config()`: Initialize solver configuration data.
+        - :meth:`set_plot_data()`: Set the property of st and set list of data.
+        - :meth:`set_solver_config()`: Initialize solver configure by user's
+          input, also reset the computational results.
+        - :meth:`init_solver()`: Initialize the shock tube solver and set up
+          the initial conditions.
         - :meth:`setup_timer()`: Set up the Qt timer for data visualization.
-        - :meth:`build_grid_figure()`: Build a grid figure for visualization.
         - :meth:`build_single_figure()`: Build a single-figure layout for
           visualization.
-        - :meth:`march_alpha2(steps)`: Call the C++ solver to march the
-          time step.
+        - :meth:`build_grid_figure()`: Build a grid figure for visualization.
+        - :meth:`init_plot_data(data, y_limit)`: Initialize analytical and
+          numerical data in figure.
         - :meth:`step(steps)`: Callback function for the step button.
+        - :meth:`update_step(steps)`: Update data at current step.
         - :meth:`start()`: Start the solver.
         - :meth:`set()`: Set the solver configurations and update the timer.
+        - :meth:`update_layout()`: Refresh plotting area layout.
         - :meth:`stop()`: Stop the solver.
         - :meth:`single_layout()`: Switch plot holder to a single plot layout.
         - :meth:`grid_layout()`: Switch plot holder to a grid plot layout.
-        - :meth:`timer_timeout()`: Qt timer timeout callback.
+        - :meth:`timer_timeout()`: Callback function for Qt timer.
         - :meth:`log(msg)`: Print log messages to the console window and
           standard output.
-        - :meth:`update_lines()`: Update all data lines after the solver
-          finishes computation.
+        - :meth:`update_plot()`: Updating plot after the solver finishes its
+          computation each time.
     """
+    st = None
+    solver_config: SolverConfig = None
+    plot_data: list[str, bool] = None
+    plot_config: PlotConfig = None
+    plot: FigureCanvas = None
+    plot_ana: bool = False
+    plot_num: bool = False
+    use_grid_layout: bool = False
 
     def populate_menu(self):
-        self._add_menu_item(
-            menu=self._mgr.oneMenu,
-            text="Euler solver",
-            tip="One-dimensional shock-tube problem with Euler solver",
-            func=self.run,
-        )
+        """
+        Set menu item for GUI.
+        """
+        raise NotImplementedError(f"{self.__class__.__name__} not implemented"
+                                  f"{sys._getframe().f_code.co_name}")
 
     def run(self):
+        """
+        Create the GUI environment.
+        """
         self.setup_app()
 
         # A new dock widget for showing config
@@ -366,258 +389,154 @@ class Euler1DApp(PilotFeature):
         self._subwin.show()
 
     def setup_app(self):
-        self.solver_config_data = [
-            ["gamma", 1.4, "The ratio of the specific heats."],
-            ["p_left", 1.0, "The pressure of left hand side."],
-            ["rho_left", 1.0, "The density of left hand side."],
-            ["p_right", 0.1, "The pressure of right hand side."],
-            ["rho_right", 0.125, "The density of right hand side."],
-            ["xmin", -10, "The most left point of x axis."],
-            ["xmax", 10, "The most right point of x axis."],
-            ["ncoord", 201, "Number of grid point."],
-            ["time_increment", 0.05, "The density of right hand side."],
-            ["timer_interval", 10, "Qt timer interval"],
-            ["max_steps", 50, "Maximum step"],
-            ["profiling", False, "Turn on / off solver profiling"],
-        ]
-        self.solver_config = SolverConfig(self.solver_config_data)
-        self.plot_config_data = []
-        self.density = QuantityLine(name="density",
-                                    unit=r"$\mathrm{kg}/\mathrm{m}^3$",
-                                    y_upper_lim=1.2,
-                                    y_bottom_lim=-0.1)
-        self.plot_config_data.append([self.density.name,
-                                      True,
-                                      self.density.y_upper_lim,
-                                      self.density.y_bottom_lim])
-        self.velocity = QuantityLine(name="velocity",
-                                     unit=r"$\mathrm{m}/\mathrm{s}$",
-                                     y_upper_lim=1.2,
-                                     y_bottom_lim=-0.1)
-        self.plot_config_data.append([self.velocity.name,
-                                      True,
-                                      self.velocity.y_upper_lim,
-                                      self.velocity.y_bottom_lim])
-        self.pressure = QuantityLine(name="pressure", unit=r"$\mathrm{Pa}$",
-                                     y_upper_lim=1.2,
-                                     y_bottom_lim=-0.1)
-        self.plot_config_data.append([self.pressure.name,
-                                      True,
-                                      self.pressure.y_upper_lim,
-                                      self.pressure.y_bottom_lim])
-        self.temperature = QuantityLine(name="temperature",
-                                        unit=r"$\mathrm{K}$",
-                                        y_upper_lim=0.15,
-                                        y_bottom_lim=0.0)
-        self.plot_config_data.append([self.temperature.name,
-                                      False,
-                                      self.temperature.y_upper_lim,
-                                      self.temperature.y_bottom_lim])
-        self.internal_energy = QuantityLine(name="internal_energy",
-                                            unit=r"$\mathrm{J}/\mathrm{kg}$",
-                                            y_upper_lim=3.0,
-                                            y_bottom_lim=1.5)
-        self.plot_config_data.append([self.internal_energy.name,
-                                      False,
-                                      self.internal_energy.y_upper_lim,
-                                      self.internal_energy.y_bottom_lim])
-        self.entropy = QuantityLine(name="entropy",
-                                    unit=r"$\mathrm{J}/\mathrm{K}$",
-                                    y_upper_lim=2.2,
-                                    y_bottom_lim=0.9)
-        self.plot_config_data.append([self.entropy.name,
-                                      False,
-                                      self.entropy.y_upper_lim,
-                                      self.entropy.y_bottom_lim])
-        self.plot_config = PlotConfig(self.plot_config_data)
-        self.use_grid_layout = False
+        """
+        Create the window for solver.
+        """
+        self.init_solver_config()
+        self.set_plot_data()
+        self.plot_config = PlotConfig(self.plot_data)
         self.set_solver_config()
         self.setup_timer()
         self.plot = self.build_single_figure()
 
-    def init_solver(self, gamma=1.4, pressure_left=1.0, density_left=1.0,
-                    pressure_right=0.1, density_right=0.125, xmin=-10,
-                    xmax=10, ncoord=201, time_increment=0.05):
+    def init_solver_config(self):
         """
-        This function is used to initialize shock tube solver and setup
-        the initial conition.
+        Initialize solver configuration data.
+        """
+        raise NotImplementedError(f"{self.__class__.__name__} not implemented"
+                                  f"{sys._getframe().f_code.co_name}")
 
-        :return: None
+    def set_plot_data(self):
         """
-        self.st = euler1d.ShockTube()
-        self.st.build_constant(gamma, pressure_left, density_left,
-                               pressure_right, density_right)
-        self.st.build_numerical(xmin, xmax, ncoord, time_increment)
-        self.st.build_field(t=0)
+        Set the property of st and set list of data.
+        """
+        raise NotImplementedError(f"{self.__class__.__name__} not implemented"
+                                  f"{sys._getframe().f_code.co_name}")
 
     def set_solver_config(self):
         """
-        Initializing solver configure by user's input, also reset
-        the computational results.
-
-        :return None
+        Initialize solver configure by user's input, also reset the
+        computational results.
         """
-        self.init_solver(gamma=self.solver_config["gamma"]["value"],
-                         pressure_left=self.solver_config["p_left"]["value"],
-                         density_left=self.solver_config["rho_left"]["value"],
-                         pressure_right=self.solver_config["p_right"]["value"],
-                         density_right=self.solver_config["rho_right"]
-                         ["value"],
-                         xmin=self.solver_config["xmin"]["value"],
-                         xmax=self.solver_config["xmax"]["value"],
-                         ncoord=self.solver_config["ncoord"]["value"],
-                         time_increment=(self.solver_config["time_increment"][
-                             "value"]))
+        self.init_solver()
         self.current_step = 0
-        self.interval = self.solver_config["timer_interval"]["value"]
+        self.time_interval = self.solver_config["time_interval"]["value"]
         self.max_steps = self.solver_config["max_steps"]["value"]
         self.profiling = self.solver_config["profiling"]["value"]
 
+    def init_solver(self):
+        """
+        Initialize solver and set up the initial conition.
+        """
+        raise NotImplementedError(f"{self.__class__.__name__} not implemented"
+                                  f"{sys._getframe().f_code.co_name}")
+
     def setup_timer(self):
         """
-        Steup the Qt timer for data visualization, timer also driver
-        solver marching time step.
-
-        :return: None
+        Set up the Qt timer for data visualization.
         """
         self.timer = QTimer()
         self.timer.timeout.connect(self.timer_timeout)
 
-    def build_grid_figure(self):
-        """
-        Create a matplotlib figure that includes all data lines, each
-        represeting a physical variable. The layout of figure is that
-        a grid plot.
-
-        :return: FigureCanvas
-        """
-        x = self.st.svr.coord[self.st.svr.xindices]
-        fig = Figure()
-        canvas = FigureCanvas(fig)
-        ax = canvas.figure.subplots(3, 2)
-        fig.tight_layout()
-        y_upper_lim_max = 0.0
-        y_bottom_lim_min = sys.float_info.max
-
-        for i, (data, color) in enumerate((
-                (self.density, 'r'),
-                (self.velocity, 'g'),
-                (self.pressure, 'b'),
-                (self.temperature, 'c'),
-                (self.internal_energy, 'k'),
-                (self.entropy, 'm')
-        )):
-            axis = ax[i // 2][i % 2]
-            data.axis = axis
-            data.ana, = axis.plot(x, np.zeros_like(x),
-                                  f'{color}-',
-                                  label=f'{data.name}_ana')
-            data.num, = axis.plot(x, np.zeros_like(x),
-                                  f'{color}x',
-                                  label=f'{data.name}_num')
-            axis.set_ylabel(f'{data.name}')
-
-            axis.set_xlabel("distance")
-            axis.legend()
-            axis.grid()
-            y_upper_lim_max = max(y_upper_lim_max, data.y_upper_lim)
-            y_bottom_lim_min = min(y_bottom_lim_min, data.y_bottom_lim)
-
-        setp(ax, ylim=[y_bottom_lim_min, y_upper_lim_max])
-        self.update_lines()
-        return canvas
-
     def build_single_figure(self):
         """
-        Create a matplotlib figure that includes up to 3 data lines, each
-        represeting a physical variable. The layout of figure is that
-        a single plot contains all data lines.
+        Build a single-figure layout for visualization.
 
         :return: FigureCanvas
         """
-        x = self.st.svr.coord[self.st.svr.xindices]
         fig = Figure()
         canvas = FigureCanvas(fig)
         ax = canvas.figure.subplots()
         fig.tight_layout()
-        y_upper_lim_max = 0.0
-        y_bottom_lim_min = sys.float_info.max
 
-        for data, color in (
-                (self.density, 'r'),
-                (self.velocity, 'g'),
-                (self.pressure, 'b'),
-                (self.temperature, 'c'),
-                (self.internal_energy, 'k'),
-                (self.entropy, 'm')
-        ):
-            # Plot multiple data line with same X axis, it need to plot a
-            # data line on main axis first
-            if self.plot_config[data.name]["line_selection"]:
+        y_limit = [sys.float_info.max, 0.0]
+        for [name, *_] in self.plot_data:
+            if self.plot_config[name]["line_selection"]:
+                data = getattr(self, name)
                 data.axis = ax
-                data.ana, = ax.plot(x, np.zeros_like(x),
-                                    f'{color}-',
-                                    label=f'{data.name}_ana')
-                data.num, = ax.plot(x, np.zeros_like(x),
-                                    f'{color}x',
-                                    label=f'{data.name}_num')
-                y_upper_lim_max = max(y_upper_lim_max, data.y_upper_lim)
-                y_bottom_lim_min = min(y_bottom_lim_min, data.y_bottom_lim)
+                y_limit = self.init_plot_data(data, y_limit)
 
-        ax.set_xlabel("distance")
-        ax.grid()
-        ax.legend()
-
-        setp(ax, ylim=[y_bottom_lim_min, y_upper_lim_max])
-        self.update_lines()
-
+        setp(ax, ylim=y_limit)
+        self.update_plot()
         return canvas
 
-    def march_alpha2(self, steps=1):
+    def build_grid_figure(self):
         """
-        This function is used to call c++ solver to march the time step, also
-        calling python side analytical solution to march the time step.
+        Build a grid figure for visualization.
 
-        :return: None
+        :return: FigureCanvas
+        """
+        fig = Figure()
+        canvas = FigureCanvas(fig)
+        ax = canvas.figure.subplots(3, 2)
+        fig.tight_layout()
+
+        y_limit = [sys.float_info.max, 0.0]
+        for i, [name, *_] in enumerate(self.plot_data):
+            if self.plot_config[name]["line_selection"]:
+                data = getattr(self, name)
+                data.axis = ax[i // 2][i % 2]
+                y_limit = self.init_plot_data(data, y_limit)
+
+        setp(ax, ylim=y_limit)
+        self.update_plot()
+        return canvas
+
+    def init_plot_data(self, data, y_limit):
+        """
+        Initialize analytical and numerical data in figure.
+
+        :param data (type: QuantityLine): property of solver
+        :param y_limit (type: list[int, int]): the bottom and top limit of y
+        :return: the bottom and top limit of y axis (type: list[int, int])
+        """
+        if self.plot_ana:
+            x = self.st.coord_field
+            data.ana, = data.axis.plot(x, np.zeros_like(x),
+                                       f"{data.color}-",
+                                       label=f'{data.name}_ana')
+        if self.plot_num:
+            x = self.st.svr.coord[self.st.svr.xindices]
+            data.num, = data.axis.plot(x, np.zeros_like(x),
+                                       f"{data.color}x",
+                                       label=f'{data.name}_num')
+        data.axis.set_xlabel("distance")
+        data.axis.legend()
+        data.axis.grid()
+
+        y_limit[0] = min(y_limit[0], data.y_bottom_lim)
+        y_limit[1] = max(y_limit[1], data.y_upper_lim)
+        return y_limit
+
+    def step(self, steps=1):
+        """
+        Callback function for the step button.
         """
         if self.max_steps and self.current_step > self.max_steps:
             self.stop()
             return
 
-        self.st.svr.march_alpha2(steps=steps)
-        self.current_step += steps
-        time_current = self.current_step * self.st.svr.time_increment
-        self.st.build_field(t=time_current)
-        cfl = self.st.svr.cfl
-        self.log(f"CFL: min {cfl.min()} max {cfl.max()}")
-        self.update_lines()
+        self.update_step(steps)
+        self.update_plot()
         if self.profiling:
             self.log(mcore.time_registry.report())
 
-    def step(self, steps=1):
+    def update_step(self, steps=1):
         """
-        Callback function of step button.
-
-        :return: None
+        Update data at current step.
         """
-        self.march_alpha2(steps=steps)
+        raise NotImplementedError(f"{self.__class__.__name__} not implemented"
+                                  f"{sys._getframe().f_code.co_name}")
 
     def start(self):
         """
-        This callback function don't care button's checked state,
-        therefore the checked state is not used in this function.
-
-        :param checked: button is checked or not
-        :return: None
+        Start the solver.
         """
-        self.timer.start(self.interval)
+        self.timer.start(self.time_interval)
 
     def set(self):
         """
-        Callback function of set button that set the solver
-        configures and setup the timer.
-
-        :return: None
+        Set the solver configurations and update the timer.
         """
         self.set_solver_config()
         self.setup_timer()
@@ -626,51 +545,31 @@ class Euler1DApp(PilotFeature):
         # Update PlotArea while click set button
         self._subwin.setWidget(PlotArea(self))
 
-    def stop(self):
-        """
-        The stop button callback for stopping Qt timer.
-        :return: None
-        """
-        self.timer.stop()
-
     def update_layout(self):
         """
-        To refresh plotting area layout.
-
-        :return: None
+        Refresh plotting area layout.
         """
-        for line in (
-                self.density,
-                self.velocity,
-                self.pressure,
-                self.temperature,
-                self.internal_energy,
-                self.entropy
-        ):
-            line.y_upper_lim = self.plot_config[line.name][
-                "y_axis_upper_limit"]
-            line.y_bottom_lim = self.plot_config[line.name][
-                "y_axis_bottom_limit"]
-
         if self.use_grid_layout:
             self.plot = self.build_grid_figure()
         else:
             self.plot = self.build_single_figure()
 
+    def stop(self):
+        """
+        Stop the solver.
+        """
+        self.timer.stop()
+
     def single_layout(self):
         """
-        Button action callback that switch plot holder to single plot layout.
-
-        :return: None
+        Switch plot holder to a single plot layout.
         """
         self.use_grid_layout = False
         self.plot = self.build_single_figure()
 
     def grid_layout(self):
         """
-        Button action callback that switch plot holder to grid plot layout.
-
-        :return: None
+        Switch plot holder to a grid plot layout.
         """
         self.use_grid_layout = True
         self.plot = self.build_grid_figure()
@@ -678,17 +577,13 @@ class Euler1DApp(PilotFeature):
     @Slot()
     def timer_timeout(self):
         """
-        Qt timer timeout callback.
-
-        :return: None
+        Callback function for Qt timer timeout.
         """
         self.step()
 
     def log(self, msg):
         """
-        Print log in both console window and standard output.
-
-        :return: None
+        Print log messages to the console window and standard output.
         """
         # stdout can be None under some conditions
         # ref: https://github.com/solvcon/modmesh/issues/334
@@ -698,33 +593,163 @@ class Euler1DApp(PilotFeature):
         self._pycon.writeToHistory(msg)
         self._pycon.writeToHistory('\n')
 
-    def update_lines(self):
+    def update_plot(self):
         """
-        Updating all data lines after the solver finishes
-        its computation each time.
-
-        :return: None
+        Updating plot after the solver finishes its computation each time.
         """
         if self.use_grid_layout:
-            _s = self.st.svr.xindices
-            self.density.update(adata=self.st.density_field,
-                                ndata=self.st.svr.density[_s])
-            self.pressure.update(adata=self.st.pressure_field,
-                                 ndata=self.st.svr.pressure[_s])
-            self.velocity.update(adata=self.st.velocity_field,
-                                 ndata=self.st.svr.velocity[_s])
-            self.temperature.update(adata=self.st.temperature_field,
-                                    ndata=self.st.svr.temperature[_s])
-            self.internal_energy.update(adata=(self.st.internal_energy_field),
-                                        ndata=(self.st.svr.
-                                        internal_energy[_s]))
-            self.entropy.update(adata=self.st.entropy_field,
-                                ndata=self.st.svr.entropy[_s])
+            for [name, *_] in self.plot_data:
+                data = getattr(self, name)
+                self.update_plot_data(data)
         else:
-            for name, is_selected, *_ in self.plot_config._tbl_content:
-                if is_selected:
-                    eval(f'(self.{name}.update(adata=self.st.{name}_field,'
-                         f' ndata=self.st.svr.{name}[self.st.svr.xindices]))')
+            for [name, *_] in self.plot_data:
+                if self.plot_config[name]["line_selection"]:
+                    data = getattr(self, name)
+                    self.update_plot_data(data)
+
+    def update_plot_data(self, data):
+        """
+        Update analytical and numerical data.
+
+        :param data (type: QuantityLine): property of solver
+        """
+        if self.plot_ana:
+            ana_x = self.st.coord_field
+            ana_y = getattr(self.st, data.name + "_field")
+            data.update_ana(x=ana_x, y=ana_y)
+        if self.plot_num:
+            num_y = getattr(self.st.svr, data.name)[self.st.svr.xindices]
+            data.update_num(y=num_y)
+
+
+class Euler1DApp(_1DApp):
+    """
+    Main application for Euler 1D solver.
+    """
+
+    def populate_menu(self):
+        """
+        Set menu item for GUI.
+        """
+        self._add_menu_item(
+            menu=self._mgr.oneMenu,
+            text="Euler solver",
+            tip="One-dimensional shock-tube problem with Euler solver",
+            func=self.run,
+        )
+
+    def init_solver_config(self):
+        """
+        Set shock tube solver configuration by user' input, and then reset the
+        initial condition.
+        """
+        solver_config_data = [
+            ["gamma", 1.4, "The ratio of the specific heats."],
+            ["p_left", 1.0, "The pressure of left hand side."],
+            ["rho_left", 1.0, "The density of left hand side."],
+            ["p_right", 0.1, "The pressure of right hand side."],
+            ["rho_right", 0.125, "The density of right hand side."],
+            ["xmin", -10, "The most left point of x axis."],
+            ["xmax", 10, "The most right point of x axis."],
+            ["ncoord", 201, "Number of grid point."],
+            ["time_increment", 0.05, "The density of right hand side."],
+            ["time_interval", 10, "Qt timer interval"],
+            ["max_steps", 50, "Maximum step"],
+            ["profiling", False, "Turn on / off solver profiling"],
+        ]
+        self.solver_config = SolverConfig(solver_config_data)
+
+    def set_plot_data(self):
+        """
+        Set the analytical and numerical data for plot.
+            - density
+            - pressure
+            - velocity
+            - temperature
+            - internal_energy
+            - entropy
+        """
+        self.plot_ana = True
+        self.plot_num = True
+        self.plot_data = []
+
+        density = QuantityLine(name="density",
+                               unit=r"$\mathrm{kg}/\mathrm{m}^3$",
+                               color='r',
+                               y_upper_lim=1.2,
+                               y_bottom_lim=-0.1)
+        setattr(self, density.name, density)
+        self.plot_data.append([self.density.name, True])
+
+        pressure = QuantityLine(name="pressure",
+                                unit=r"$\mathrm{Pa}$",
+                                color='g',
+                                y_upper_lim=1.2,
+                                y_bottom_lim=-0.1)
+        setattr(self, pressure.name, pressure)
+        self.plot_data.append([self.pressure.name, True])
+
+        velocity = QuantityLine(name="velocity",
+                                unit=r"$\mathrm{m}/\mathrm{s}$",
+                                color='b',
+                                y_upper_lim=1.2,
+                                y_bottom_lim=-0.1)
+        setattr(self, velocity.name, velocity)
+        self.plot_data.append([self.velocity.name, True])
+
+        temperature = QuantityLine(name="temperature",
+                                   unit=r"$\mathrm{K}$",
+                                   color='c',
+                                   y_upper_lim=0.15,
+                                   y_bottom_lim=0.0)
+        setattr(self, temperature.name, temperature)
+        self.plot_data.append([self.temperature.name, False])
+
+        internal_energy = QuantityLine(name="internal_energy",
+                                       unit=r"$\mathrm{J}/\mathrm{kg}$",
+                                       color='k',
+                                       y_upper_lim=3.0,
+                                       y_bottom_lim=1.5)
+        setattr(self, internal_energy.name, internal_energy)
+        self.plot_data.append([self.internal_energy.name, False])
+
+        entropy = QuantityLine(name="entropy",
+                               unit=r"$\mathrm{J}/\mathrm{K}$",
+                               color='m',
+                               y_upper_lim=2.2,
+                               y_bottom_lim=0.9)
+        setattr(self, entropy.name, entropy)
+        self.plot_data.append([self.entropy.name, False])
+
+    def init_solver(self):
+        """
+        Initialize the shock tube solver and set up the initial condition.
+        """
+        self.st = euler1d.ShockTube()
+        _s = self.solver_config
+        self.st.build_constant(gamma=_s["gamma"]["value"],
+                               pressure1=_s["p_left"]["value"],
+                               density1=_s["rho_left"]["value"],
+                               pressure5=_s["p_right"]["value"],
+                               density5=_s["rho_right"]["value"])
+        self.st.build_numerical(xmin=_s["xmin"]["value"],
+                                xmax=_s["xmax"]["value"],
+                                ncoord=_s["ncoord"]["value"],
+                                time_increment=_s["time_increment"]["value"])
+        self.st.build_field(t=0)
+
+    def update_step(self, steps):
+        """
+        Update data at current step.
+            - numerical data solved in c++
+            - analytical data solved in python
+        """
+        self.st.svr.march_alpha2(steps=steps)
+        self.current_step += steps
+        time_current = self.current_step * self.st.svr.time_increment
+        self.st.build_field(t=time_current)
+        cfl = self.st.svr.cfl
+        self.log(f"CFL: min {cfl.min()} max {cfl.max()}")
 
 
 class PlotArea(QWidget):

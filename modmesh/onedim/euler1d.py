@@ -110,7 +110,7 @@ class ShockTube:
         self.speedofsound3 = None
 
         # Field data of the analytical solution.
-        self.coord = None
+        self.coord_field = None
         self.density_field = None
         self.velocity_field = None
         self.pressure_field = None
@@ -318,26 +318,31 @@ class ShockTube:
         :return: None
         """
         if coord is None:
-            # set the x-coordinate for numerical solver.
+            # Set the x-coordinate for numerical solver.
             coord = self.svr.coord[self.svr.xindices]
-        self.coord = coord.copy()  # Make a copy; no write back to argument.
+        # Make a copy; no write back to argument.
+        self.coord_field = coord.copy()
 
         # Determine the zone location and the Boolean selection arrays.
         loc12, loc23, loc34, loc45 = self.calc_locations(t=t)
-        slct1 = self.coord < loc12
-        slct2 = np.logical_and(self.coord >= loc12, self.coord < loc23)
-        slct3 = np.logical_and(self.coord >= loc23, self.coord < loc34)
-        slct4 = np.logical_and(self.coord >= loc34, self.coord < loc45)
-        slct5 = self.coord >= loc45
+        slct1 = self.coord_field < loc12
+        slct2 = np.logical_and(self.coord_field >= loc12,
+                               self.coord_field < loc23)
+        slct3 = np.logical_and(self.coord_field >= loc23,
+                               self.coord_field < loc34)
+        slct4 = np.logical_and(self.coord_field >= loc34,
+                               self.coord_field < loc45)
+        slct5 = self.coord_field >= loc45
 
         # Create the field buffers.
-        self.density_field = np.zeros(self.coord.shape, dtype='float64')
-        self.velocity_field = np.zeros(self.coord.shape, dtype='float64')
-        self.pressure_field = np.zeros(self.coord.shape, dtype='float64')
-        self.temperature_field = np.zeros(self.coord.shape, dtype='float64')
-        self.internal_energy_field = np.zeros(self.coord.shape,
+        self.density_field = np.zeros(self.coord_field.shape, dtype='float64')
+        self.velocity_field = np.zeros(self.coord_field.shape, dtype='float64')
+        self.pressure_field = np.zeros(self.coord_field.shape, dtype='float64')
+        self.temperature_field = np.zeros(self.coord_field.shape,
+                                          dtype='float64')
+        self.internal_energy_field = np.zeros(self.coord_field.shape,
                                               dtype='float64')
-        self.entropy_field = np.zeros(self.coord.shape, dtype='float64')
+        self.entropy_field = np.zeros(self.coord_field.shape, dtype='float64')
 
         # Set value in the zones whose value is constant.
         def _set_zone(slct, zone_density, zone_velocity, zone_pressure,
