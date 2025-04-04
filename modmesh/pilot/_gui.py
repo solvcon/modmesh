@@ -73,6 +73,7 @@ class _Controller(metaclass=_Singleton):
         self.recdom = None
         self.naca4airfoil = None
         self.eulerone = None
+        self.burgers = None
 
     def __getattr__(self, name):
         return None if self._rmgr is None else getattr(self._rmgr, name)
