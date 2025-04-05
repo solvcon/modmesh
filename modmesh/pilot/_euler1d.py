@@ -331,8 +331,8 @@ class _1DApp(PilotFeature):
         - :meth:`set_plot_data()`: Set the property of st and set list of data.
         - :meth:`set_solver_config()`: Initialize solver configure by user's
           input, also reset the computational results.
-        - :meth:`init_solver()`: Initialize the shock tube solver and set up
-          the initial conditions.
+        - :meth:`init_solver()`: Initialize solver and set up the initial
+          conditions.
         - :meth:`setup_timer()`: Set up the Qt timer for data visualization.
         - :meth:`build_single_figure()`: Build a single-figure layout for
           visualization.
