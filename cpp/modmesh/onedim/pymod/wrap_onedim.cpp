@@ -128,9 +128,9 @@ protected:
 
         (*this)
             .def_timed("update_cfl", &wrapped_type::update_cfl, py::arg("odd_plane"))
-            .def_timed("march_half_so0", &wrapped_type::march_half_so0, py::arg("odd_plane"))
             .def_timed("treat_boundary_so0", &wrapped_type::treat_boundary_so0)
             .def_timed("treat_boundary_so1", &wrapped_type::treat_boundary_so1)
+            .def_timed("march_half_so0", &wrapped_type::march_half_so0, py::arg("odd_plane"))
             .def_timed("setup_march", &wrapped_type::setup_march);
 
         (*this)
