@@ -22,7 +22,7 @@ public:
     static constexpr bool isPow2 = TestParam::isPow2;
 
 protected:
-    const size_t VN = isPow2 ? 1024 : 1000;
+    static constexpr size_t VN = isPow2 ? 1024 : 1000;
 
     modmesh::SimpleArray<modmesh::Complex<T>> signal{
         modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{0.0, 0.0}};
@@ -69,7 +69,7 @@ public:
     static constexpr bool isPow2 = TestParam::isPow2;
 
 protected:
-    const size_t VN = isPow2 ? 1024 : 1000;
+    static constexpr size_t VN = isPow2 ? 1024 : 1000;
 
     std::mt19937 rng{std::random_device{}()};
 
@@ -103,7 +103,7 @@ public:
     static constexpr bool isPow2 = TestParam::isPow2;
 
 protected:
-    const size_t VN = isPow2 ? 1024 : 1000;
+    static constexpr size_t VN = isPow2 ? 1024 : 1000;
 
     std::mt19937 rng{std::random_device{}()};
 
