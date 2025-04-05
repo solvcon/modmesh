@@ -11,7 +11,7 @@ template <typename T, bool IsPow2>
 struct FFTTestParams
 {
     using Type = T;
-    static constexpr bool isPow2 = IsPow2;
+    static constexpr bool is_pow_2 = IsPow2;
 };
 
 template <typename TestParam>
@@ -19,10 +19,10 @@ class ParsevalTest : public ::testing::Test
 {
 public:
     using T = typename TestParam::Type;
-    static constexpr bool isPow2 = TestParam::isPow2;
+    static constexpr bool is_pow_2 = TestParam::is_pow_2;
 
 protected:
-    static constexpr size_t VN = isPow2 ? 1024 : 1000;
+    static constexpr size_t VN = is_pow_2 ? 1024 : 1000;
 
     modmesh::SimpleArray<modmesh::Complex<T>> signal{
         modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{0.0, 0.0}};
@@ -66,10 +66,10 @@ class DeltaFunctionTest : public ::testing::Test
 {
 public:
     using T = typename TestParam::Type;
-    static constexpr bool isPow2 = TestParam::isPow2;
+    static constexpr bool is_pow_2 = TestParam::is_pow_2;
 
 protected:
-    static constexpr size_t VN = isPow2 ? 1024 : 1000;
+    static constexpr size_t VN = is_pow_2 ? 1024 : 1000;
 
     std::mt19937 rng{std::random_device{}()};
 
@@ -100,10 +100,10 @@ class InverseTest : public ::testing::Test
 {
 public:
     using T = typename TestParam::Type;
-    static constexpr bool isPow2 = TestParam::isPow2;
+    static constexpr bool is_pow_2 = TestParam::is_pow_2;
 
 protected:
-    static constexpr size_t VN = isPow2 ? 1024 : 1000;
+    static constexpr size_t VN = is_pow_2 ? 1024 : 1000;
 
     std::mt19937 rng{std::random_device{}()};
 
