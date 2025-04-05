@@ -335,14 +335,14 @@ class ShockTube:
         slct5 = self.coord_field >= loc45
 
         # Create the field buffers.
-        self.density_field = np.zeros(self.coord_field.shape, dtype='float64')
-        self.velocity_field = np.zeros(self.coord_field.shape, dtype='float64')
-        self.pressure_field = np.zeros(self.coord_field.shape, dtype='float64')
-        self.temperature_field = np.zeros(self.coord_field.shape,
-                                          dtype='float64')
-        self.internal_energy_field = np.zeros(self.coord_field.shape,
-                                              dtype='float64')
-        self.entropy_field = np.zeros(self.coord_field.shape, dtype='float64')
+        self.density_field = np.zeros_like(self.coord_field, dtype='float64')
+        self.velocity_field = np.zeros_like(self.coord_field, dtype='float64')
+        self.pressure_field = np.zeros_like(self.coord_field, dtype='float64')
+        self.temperature_field = np.zeros_like(self.coord_field,
+                                               dtype='float64')
+        self.internal_energy_field = np.zeros_like(self.coord_field,
+                                                   dtype='float64')
+        self.entropy_field = np.zeros_like(self.coord_field, dtype='float64')
 
         # Set value in the zones whose value is constant.
         def _set_zone(slct, zone_density, zone_velocity, zone_pressure,
