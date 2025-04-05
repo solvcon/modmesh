@@ -7,11 +7,22 @@
 #error "Python.h should not be included."
 #endif
 
-template <typename T>
+template <typename T, bool IsPow2>
+struct FFTTestParams
+{
+    using Type = T;
+    static constexpr bool is_pow_2 = IsPow2;
+};
+
+template <typename TestParam>
 class ParsevalTest : public ::testing::Test
 {
+public:
+    using T = typename TestParam::Type;
+    static constexpr bool is_pow_2 = TestParam::is_pow_2;
+
 protected:
-    const size_t VN = 1024;
+    static constexpr size_t VN = is_pow_2 ? 1024 : 1000;
 
     modmesh::SimpleArray<modmesh::Complex<T>> signal{
         modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{0.0, 0.0}};
@@ -50,11 +61,15 @@ protected:
     }
 };
 
-template <typename T>
+template <typename TestParam>
 class DeltaFunctionTest : public ::testing::Test
 {
+public:
+    using T = typename TestParam::Type;
+    static constexpr bool is_pow_2 = TestParam::is_pow_2;
+
 protected:
-    const size_t VN = 1024;
+    static constexpr size_t VN = is_pow_2 ? 1024 : 1000;
 
     std::mt19937 rng{std::random_device{}()};
 
@@ -80,11 +95,15 @@ protected:
     }
 };
 
-template <typename T>
+template <typename TestParam>
 class InverseTest : public ::testing::Test
 {
+public:
+    using T = typename TestParam::Type;
+    static constexpr bool is_pow_2 = TestParam::is_pow_2;
+
 protected:
-    const size_t VN = 1024;
+    static constexpr size_t VN = is_pow_2 ? 1024 : 1000;
 
     std::mt19937 rng{std::random_device{}()};
 
@@ -116,51 +135,57 @@ protected:
     }
 };
 
-typedef ::testing::Types<float, double> TestTypes;
+typedef ::testing::Types<
+    FFTTestParams<float, true>,
+    FFTTestParams<float, false>,
+    FFTTestParams<double, true>,
+    FFTTestParams<double, false>>
+    TestTypes;
+
 TYPED_TEST_SUITE(ParsevalTest, TestTypes);
 TYPED_TEST_SUITE(DeltaFunctionTest, TestTypes);
 TYPED_TEST_SUITE(InverseTest, TestTypes);
 
 TYPED_TEST(ParsevalTest, fft)
 {
-    modmesh::transform::fft<modmesh::Complex, TypeParam>(this->signal, this->out);
+    modmesh::transform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
 
     this->verify_parseval();
 }
 
 TYPED_TEST(ParsevalTest, dft)
 {
-    modmesh::transform::dft<modmesh::Complex, TypeParam>(this->signal, this->out);
+    modmesh::transform::dft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
 
     this->verify_parseval();
 }
 
 TYPED_TEST(DeltaFunctionTest, fft)
 {
-    modmesh::transform::fft<modmesh::Complex, TypeParam>(this->signal, this->out);
+    modmesh::transform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
 
     this->verify_delta_function();
 }
 
 TYPED_TEST(DeltaFunctionTest, dft)
 {
-    modmesh::transform::dft<modmesh::Complex, TypeParam>(this->signal, this->out);
+    modmesh::transform::dft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
 
     this->verify_delta_function();
 }
 
 TYPED_TEST(InverseTest, fft)
 {
-    modmesh::transform::fft<modmesh::Complex, TypeParam>(this->signal, this->freq_domain);
-    modmesh::transform::ifft<modmesh::Complex, TypeParam>(this->freq_domain, this->time_domain);
+    modmesh::transform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->freq_domain);
+    modmesh::transform::ifft<modmesh::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain);
 
     this->verify_inverse_fft_function();
 }
 
 TYPED_TEST(InverseTest, dft)
 {
-    modmesh::transform::dft<modmesh::Complex, TypeParam>(this->signal, this->freq_domain);
-    modmesh::transform::ifft<modmesh::Complex, TypeParam>(this->freq_domain, this->time_domain);
+    modmesh::transform::dft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->freq_domain);
+    modmesh::transform::ifft<modmesh::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain);
 
     this->verify_inverse_fft_function();
 }
