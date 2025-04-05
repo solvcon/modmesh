@@ -22,6 +22,16 @@ size_t bit_reverse(size_t n, const size_t bits)
     return reversed;
 }
 
+size_t next_power_of_two(size_t n)
+{
+    size_t power = 1;
+    while (power < n)
+    {
+        power = power << 1;
+    }
+    return power;
+}
+
 } /* end namespace detail */
 
 } /* end namespace transform */
