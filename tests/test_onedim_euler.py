@@ -85,7 +85,7 @@ class ShockTubeTC(unittest.TestCase):
 
     def _check_field_value_at_t0(self):
         np.testing.assert_equal(0, self.st.velocity_field)
-        slct_left = self.st.coord < 0
+        slct_left = self.st.coord_field < 0
         slct_right = np.logical_not(slct_left)
         np.testing.assert_equal(self.st.pressure1,
                                 self.st.pressure_field[slct_left])
@@ -99,7 +99,7 @@ class ShockTubeTC(unittest.TestCase):
     def test_field_without_numerical(self):
         self.st.build_field(t=0.0, coord=np.linspace(-1, 1, num=11))
         self.assertIs(self.st.svr, None)
-        self.assertEqual(len(self.st.coord), 11)
+        self.assertEqual(len(self.st.coord_field), 11)
         self._check_field_value_at_t0()
 
     def test_field_with_numerical(self):
@@ -107,7 +107,7 @@ class ShockTubeTC(unittest.TestCase):
                                 time_increment=0.05, keep_edge=True)
         self.st.build_field(t=0.0)
         self.assertIsInstance(self.st.svr, euler1d.Euler1DSolver)
-        self.assertEqual(len(self.st.coord), 11)
+        self.assertEqual(len(self.st.coord_field), 11)
         self._check_field_value_at_t0()
 
     def test_pressure45(self):
