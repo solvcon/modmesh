@@ -440,13 +440,14 @@ class RectangularDomain(PilotFeature):
         self.edges = edges
 
     def _create_world(self) -> core.WorldFp64:
+        Point = core.Point3dFp64
         w = core.WorldFp64()
         for pt in self.points:
             w.add_point(pt[0], pt[1], 0.0)
         for ed in self.edges:
             p0 = self.points[ed[0]]
             p1 = self.points[ed[1]]
-            w.add_segment(p0[0], p0[1], 0, p1[0], p1[1], 0)
+            w.add_segment(Point(p0[0], p0[1], 0), Point(p1[0], p1[1], 0))
         return w
 
     def run(self):
