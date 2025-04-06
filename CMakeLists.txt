@@ -41,6 +41,13 @@ message(STATUS "USE_PYTEST_HELPER_BINDING: ${USE_PYTEST_HELPER_BINDING}")
 if(BUILD_QT)
     option(QT3D_USE_RHI "Qt use RHI" OFF)
     message(STATUS "QT3D_USE_RHI: ${QT3D_USE_RHI}")
+endif()
+
+# PUI-related code has been migrated to PySide6, so it doesn't need to be installed by default.
+# Yet, you can still install it by setting the INSTALL_PUI option to ON.
+option(INSTALL_PUI "install PUI" OFF)
+message(STATUS "INSTALL_PUI : ${INSTALL_PUI}")
+if(INSTALL_PUI)
     execute_process(
         COMMAND python3 PUI_install.py
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/thirdparty 
