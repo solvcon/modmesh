@@ -118,6 +118,21 @@ pytest: buildext
 	env $(RUNENV) \
 		$(PYTEST) $(PYTEST_OPTS) tests/
 
+PROFFILES = $(shell find profiles -type f -name 'profile_*.py' | sort)
+PROFRESDIR = profiles/results
+
+.PHONY: pyprof
+pyprof: buildext $(PROFFILES)
+	@mkdir -p profiles/results
+	@for fn in $(PROFFILES); \
+	do \
+		outfn=$${fn%%.py}; \
+		outfn=profiles/results/$${outfn##profiles/}.output; \
+		echo "$(WHICH_PYTHON) $${fn} > $${outfn}"; \
+		env $(RUNENV) \
+			$(WHICH_PYTHON) $${fn} > $${outfn} || exit 1; \
+	done
+
 .PHONY: pilot
 pilot: cmake
 	cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)

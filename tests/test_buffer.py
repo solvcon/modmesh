@@ -876,12 +876,21 @@ class SimpleArrayBasicTC(unittest.TestCase):
         for i in range(len(idx)):
             self.assertEqual(ret_arr[i], data[idx[i]])
 
+        ret_arr = data_arr.take_along_axis_simd(idx_arr)
+        for i in range(len(idx)):
+            self.assertEqual(ret_arr[i], data[idx[i]])
+
         # test 2-D indices
         idx = [[0, 2, 4, 6], [1, 3, 5, 7]]
         narr = np.array(idx, dtype='uint64')
         idx_arr = modmesh.SimpleArrayUint64(array=narr)
 
         ret_arr = data_arr.take_along_axis(idx_arr)
+        for i in range(len(idx)):
+            for j in range(len(idx[i])):
+                self.assertEqual(ret_arr[i, j], data[idx_arr[i, j]])
+
+        ret_arr = data_arr.take_along_axis_simd(idx_arr)
         for i in range(len(idx)):
             for j in range(len(idx[i])):
                 self.assertEqual(ret_arr[i, j], data[idx_arr[i, j]])
@@ -897,6 +906,13 @@ class SimpleArrayBasicTC(unittest.TestCase):
             "which is out of range of the array size 10"
         ):
             ret_arr = data_arr.take_along_axis(idx_arr)
+
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::take_along_axis\(\): indices\[2, 1\] is 20, " +
+            "which is out of range of the array size 10"
+        ):
+            ret_arr = data_arr.take_along_axis_simd(idx_arr)
 
 
 class SimpleArrayCalculatorsTC(unittest.TestCase):
