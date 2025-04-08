@@ -34,8 +34,8 @@ def profile_take_along_axis_sa(sarr, indices):
 
 
 @profile_function
-def profile_take_along_axis_simd(sarr, indices):
-    return sarr.take_along_axis_simd(indices)
+def profile_take_along_axis_neon(sarr, indices):
+    return sarr.take_along_axis_neon(indices)
 
 
 def profile_take_along_axis(pow, it=10):
@@ -54,7 +54,7 @@ def profile_take_along_axis(pow, it=10):
 
         profile_take_along_axis_np(test_data, indices)
         profile_take_along_axis_sa(test_sa, idx_sa)
-        profile_take_along_axis_simd(test_sa, idx_sa)
+        profile_take_along_axis_neon(test_sa, idx_sa)
 
     res = modmesh.call_profiler.result()["children"]
 

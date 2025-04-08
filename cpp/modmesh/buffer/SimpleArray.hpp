@@ -230,7 +230,7 @@ public:
     A take_along_axis(SimpleArray<I> const & indices);
 #if defined(__aarch64__)
     template <typename I>
-    A take_along_axis_simd(SimpleArray<I> const & indices);
+    A take_along_axis_neon(SimpleArray<I> const & indices);
 #endif /* defined(__aarch64__) */
 
 }; /* end class SimpleArrayMixinSort */
@@ -1001,20 +1001,20 @@ T const * detail::check_index_range(SimpleArray<T> const & indices, size_t max_i
     return nullptr;
 }
 
-#define DECL_CHECK_IDX_RNG_SIMD(typ) \
-    template <>                      \
+#define DECL_MM_DECL_CHECK_IDX_RNG_NEON(typ) \
+    template <>                              \
     typ const * detail::check_index_range<typ>(SimpleArray<typ> const & indices, size_t max_idx)
 
-DECL_CHECK_IDX_RNG_SIMD(uint8_t);
-DECL_CHECK_IDX_RNG_SIMD(uint16_t);
-DECL_CHECK_IDX_RNG_SIMD(uint32_t);
-DECL_CHECK_IDX_RNG_SIMD(uint64_t);
-DECL_CHECK_IDX_RNG_SIMD(int8_t);
-DECL_CHECK_IDX_RNG_SIMD(int16_t);
-DECL_CHECK_IDX_RNG_SIMD(int32_t);
-DECL_CHECK_IDX_RNG_SIMD(int64_t);
+DECL_MM_DECL_CHECK_IDX_RNG_NEON(uint8_t);
+DECL_MM_DECL_CHECK_IDX_RNG_NEON(uint16_t);
+DECL_MM_DECL_CHECK_IDX_RNG_NEON(uint32_t);
+DECL_MM_DECL_CHECK_IDX_RNG_NEON(uint64_t);
+DECL_MM_DECL_CHECK_IDX_RNG_NEON(int8_t);
+DECL_MM_DECL_CHECK_IDX_RNG_NEON(int16_t);
+DECL_MM_DECL_CHECK_IDX_RNG_NEON(int32_t);
+DECL_MM_DECL_CHECK_IDX_RNG_NEON(int64_t);
 
-#undef DECL_CHECK_IDX_RNG_SIMD
+#undef DECL_MM_DECL_CHECK_IDX_RNG_NEON
 
 template <typename T, typename I>
 void detail::buffer_cpy(T * dest, T const * data, I const * begin, I const * const end)
@@ -1032,7 +1032,7 @@ void detail::buffer_cpy(T * dest, T const * data, I const * begin, I const * con
 
 template <typename A, typename T>
 template <typename I>
-A detail::SimpleArrayMixinSort<A, T>::take_along_axis_simd(SimpleArray<I> const & indices)
+A detail::SimpleArrayMixinSort<A, T>::take_along_axis_neon(SimpleArray<I> const & indices)
 {
     static_assert(std::is_integral_v<I>, "I must be integral type");
     auto athis = static_cast<A *>(this);

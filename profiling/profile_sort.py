@@ -54,8 +54,8 @@ def profile_take_along_axis_sa(sarr, indices):
 
 
 @profile_function
-def profile_take_along_axis_simd(sarr, indices):
-    return sarr.take_along_axis_simd(indices)
+def profile_take_along_axis_neon(sarr, indices):
+    return sarr.take_along_axis_neon(indices)
 
 
 def print_res(res):
@@ -142,7 +142,7 @@ def main():
         idx_sa = make_container(indices)
         profile_take_along_axis_np(test_data, indices)
         profile_take_along_axis_sa(test_sa, idx_sa)
-        profile_take_along_axis_simd(test_sa, idx_sa)
+        profile_take_along_axis_neon(test_sa, idx_sa)
     print_res(modmesh.call_profiler.result()["children"])
 
     print("## `take_along_axis` Descending Data\n")
@@ -154,7 +154,7 @@ def main():
         idx_sa = make_container(indices)
         profile_take_along_axis_np(test_data, indices)
         profile_take_along_axis_sa(test_sa, idx_sa)
-        profile_take_along_axis_simd(test_sa, idx_sa)
+        profile_take_along_axis_neon(test_sa, idx_sa)
     print_res(modmesh.call_profiler.result()["children"])
 
     print("## `take_along_axis` Random Data\n")
@@ -168,7 +168,7 @@ def main():
         idx_sa = make_container(indices)
         profile_take_along_axis_np(test_data, indices)
         profile_take_along_axis_sa(test_sa, idx_sa)
-        profile_take_along_axis_simd(test_sa, idx_sa)
+        profile_take_along_axis_neon(test_sa, idx_sa)
     print_res(modmesh.call_profiler.result()["children"])
 
 

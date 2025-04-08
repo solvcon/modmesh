@@ -924,7 +924,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         for i in range(len(idx)):
             self.assertEqual(ret_arr[i], data[idx[i]])
 
-        ret_arr = data_arr.take_along_axis_simd(idx_arr)
+        ret_arr = data_arr.take_along_axis_neon(idx_arr)
         for i in range(len(idx)):
             self.assertEqual(ret_arr[i], data[idx[i]])
 
@@ -938,7 +938,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
             for j in range(len(idx[i])):
                 self.assertEqual(ret_arr[i, j], data[idx_arr[i, j]])
 
-        ret_arr = data_arr.take_along_axis_simd(idx_arr)
+        ret_arr = data_arr.take_along_axis_neon(idx_arr)
         for i in range(len(idx)):
             for j in range(len(idx[i])):
                 self.assertEqual(ret_arr[i, j], data[idx_arr[i, j]])
@@ -960,7 +960,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
             r"SimpleArray::take_along_axis\(\): indices\[2, 1\] is 20, " +
             "which is out of range of the array size 10"
         ):
-            ret_arr = data_arr.take_along_axis_simd(idx_arr)
+            ret_arr = data_arr.take_along_axis_neon(idx_arr)
 
 
 class SimpleArrayCalculatorsTC(unittest.TestCase):

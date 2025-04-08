@@ -41,7 +41,7 @@ namespace detail
 #define vec_typ(typ, N) typ##x##N##_t
 #define t_typ(typ) typ##_t
 
-#define IMPL_CHECK_IDX_RNG_SIMD(typ, N_vec, typ_symbol)                                                       \
+#define DECL_MM_IMPL_CHECK_IDX_RNG_NEON(typ, N_vec, typ_symbol)                                               \
     template <>                                                                                               \
     t_typ(typ) const * check_index_range<t_typ(typ)>(SimpleArray<t_typ(typ)> const & indices, size_t max_idx) \
     {                                                                                                         \
@@ -92,16 +92,16 @@ namespace detail
         return src;                                                                                           \
     }
 
-IMPL_CHECK_IDX_RNG_SIMD(uint8, 16, u8)
-IMPL_CHECK_IDX_RNG_SIMD(uint16, 8, u16)
-IMPL_CHECK_IDX_RNG_SIMD(uint32, 4, u32)
-IMPL_CHECK_IDX_RNG_SIMD(uint64, 2, u64)
-IMPL_CHECK_IDX_RNG_SIMD(int8, 16, s8)
-IMPL_CHECK_IDX_RNG_SIMD(int16, 8, s16)
-IMPL_CHECK_IDX_RNG_SIMD(int32, 4, s32)
-IMPL_CHECK_IDX_RNG_SIMD(int64, 2, s64)
+DECL_MM_IMPL_CHECK_IDX_RNG_NEON(uint8, 16, u8)
+DECL_MM_IMPL_CHECK_IDX_RNG_NEON(uint16, 8, u16)
+DECL_MM_IMPL_CHECK_IDX_RNG_NEON(uint32, 4, u32)
+DECL_MM_IMPL_CHECK_IDX_RNG_NEON(uint64, 2, u64)
+DECL_MM_IMPL_CHECK_IDX_RNG_NEON(int8, 16, s8)
+DECL_MM_IMPL_CHECK_IDX_RNG_NEON(int16, 8, s16)
+DECL_MM_IMPL_CHECK_IDX_RNG_NEON(int32, 4, s32)
+DECL_MM_IMPL_CHECK_IDX_RNG_NEON(int64, 2, s64)
 
-#undef IMPL_CHECK_IDX_RNG_SIMD
+#undef DECL_MM_IMPL_CHECK_IDX_RNG_NEON
 #undef t_typ
 #undef vec_typ
 
