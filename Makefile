@@ -118,16 +118,16 @@ pytest: buildext
 	env $(RUNENV) \
 		$(PYTEST) $(PYTEST_OPTS) tests/
 
-PROFFILES = $(shell find profiles -type f -name 'profile_*.py' | sort)
-PROFRESDIR = profiles/results
+PROFFILES = $(shell find profiling -type f -name 'profile_*.py' | sort)
+PROFRESDIR = profiling/results
 
 .PHONY: pyprof
 pyprof: buildext $(PROFFILES)
-	@mkdir -p profiles/results
+	@mkdir -p profiling/results
 	@for fn in $(PROFFILES); \
 	do \
 		outfn=$${fn%%.py}; \
-		outfn=profiles/results/$${outfn##profiles/}.output; \
+		outfn=profiling/results/$${outfn##profiling/}.output; \
 		echo "$(WHICH_PYTHON) $${fn} > $${outfn}"; \
 		env $(RUNENV) \
 			$(WHICH_PYTHON) $${fn} > $${outfn} || exit 1; \

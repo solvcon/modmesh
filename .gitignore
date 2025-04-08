@@ -20,4 +20,4 @@ setup.mk
 *.obj
 *.pdb
 *.env
-profiles/results/
+profiling/results/
