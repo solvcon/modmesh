@@ -48,10 +48,14 @@ endif()
 option(INSTALL_PUI "install PUI" OFF)
 message(STATUS "INSTALL_PUI : ${INSTALL_PUI}")
 if(INSTALL_PUI)
-    execute_process(
-        COMMAND python3 PUI_install.py
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/thirdparty 
-    )
+    if(NOT BUILD_QT)
+        message(WARNING "INSTALL_PUI is enabled, but BUILD_QT is not enabled. PUI depends on Qt, so this configuration may not work as expected.")
+    else()
+        execute_process(
+            COMMAND python3 PUI_install.py
+            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/thirdparty 
+        )
+    endif()
 endif()
 
 find_program(
