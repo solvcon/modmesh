@@ -34,9 +34,6 @@ import numpy as np
 import re
 import xml.etree.ElementTree as ET
 from math import sin, cos, atan2, sqrt, radians, pi
-import matplotlib.pyplot as plt
-from matplotlib.collections import LineCollection
-
 from PySide6 import QtCore, QtWidgets
 
 from .. import core
@@ -49,11 +46,15 @@ __all__ = [  # noqa: F822
 
 class EPath(object):
     def __init__(self, dAttr, fillAttr):
+        """
+        :param closedPaths: list of closed paths in a <path>.
+            Each closed paths in <path> is represented by a tuple (SegmentPad, CurvePad).
+        """
         self.dAttr = dAttr
         self.fillAttr = fillAttr
-        self.closedPaths = None
-        self.pathcmds = self.dAttr_parser()
-        self.points = self.cal_vertices()
+        self.cmds = self.dAttr_parser()
+        self.closedPaths = self.cal_vertices()
+        # self.points = self.cal_vertices()
 
     def cal_cubic_bezier(self, p0, p1, p2, p3, num=20):
         """
@@ -147,22 +148,38 @@ class EPath(object):
         path commands for `d` attribute:
             https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d
         """
-        commands = self.pathcmds
-        vertices = np.empty((0, 2))  # create an empty 2D array
-        current_pos = np.array([0.0, 0.0])
+        Point = core.Point3dFp64  # Point object
+        Segment = core.Segment3dFp64  # Segment object
+        sp2d = core.SegmentPadFp64(ndim=2)
+        cp2d = core.CurvePadFp64(ndim=2)
+
+        commands = self.cmds
+        start_pos = [0, 0]  # absolute position to (0, 0)
+        current_pos = start_pos
         last_control = None
         last_cmd = None
-        closedPaths = []
+        # closedPaths = []
+        # vertices = np.empty((0, 2))  # create an empty 2D array
 
-        for cmd, coords in commands:
+        for idx, (cmd, coords) in enumerate(commands):
+            print(f"{idx}: '{cmd}', len of coords: {len(coords)}, coords: {coords}")
+            print(f"start_pos: ({start_pos[0]}, {start_pos[1]})")
+            print(f"[before] current_pos: ({current_pos[0]}, {current_pos[1]})")
             i = 0
             if cmd in ('M', 'm'):
                 # move to (x, y):
                 #   M x y
                 #   m dx dy (relative position to current position)
                 x, y = coords[i], coords[i+1]
-                current_pos = np.array([x, y]) if cmd == 'M' else current_pos + np.array([x, y])
-                vertices = np.vstack([vertices, current_pos])
+
+                if cmd == 'M':
+                    start_pos[0] = x
+                    start_pos[1] = y
+                else:  # cmd is 'm', relative position
+                    start_pos[0] = (current_pos[0] + x)
+                    start_pos[1] = (current_pos[1] + y)
+
+                current_pos = start_pos
                 i += 2
                 last_control = None
             elif cmd in ('L', 'l'):
@@ -170,143 +187,243 @@ class EPath(object):
                 #   L x y
                 #   l dx dy (relative position to current position)
                 x, y = coords[i], coords[i+1]
-                end = np.array([x, y]) if cmd == 'L' else current_pos + np.array([x, y])
-                vertices = np.vstack([vertices, end])
-                current_pos = end
+
+                if cmd == 'L':  # absolute position
+                    x_end = x
+                    y_end = y
+                else:  # cmd is 'l', relative position
+                    x_end = current_pos[0] + x
+                    y_end = current_pos[1] + y
+
+                p_from = current_pos
+                p_to = Point(x_end, y_end, 0)
+                current_pos = p_to
+
+                p_from -= start_pos
+                p_to -= start_pos
+
+                # add a Segment to SegmentPad
+                sp2d.append(Segment(p_from, p_to))
+
+                # vertices = np.vstack([vertices, end])
                 i += 2
                 last_control = None
             elif cmd == 'C':
                 # draw cubic bezier curve:
                 #   C ctl_x1, ctl_y1, ctl_x2, ctl_y2, endpos_x, endpos_y
-                x1, y1, x2, y2, x, y = coords[i:i+6]
-                p1 = np.array([x1, y2])
-                p2 = np.array([x2, y2])
-                p3 = np.array([x, y])
+                x_1, y_1, x_2, y_2, x_end, y_end = coords[i:i+6]
 
-                points = self.cal_cubic_bezier(current_pos, p1, p2, p3)
-                vertices = np.vstack([vertices, points])
-                current_pos = p3
-                last_control = p2
+                x_cur, y_cur = current_pos[0], current_pos[1]
+
+                # translate position to -(startX, startY)
+                x_p0, y_p0 = x_cur - start_pos[0], y_cur - start_pos[1]
+                x_p1, y_p1 = x_1 - start_pos[0], y_1 - start_pos[1]
+                x_p2, y_p2 = x_2 - start_pos[0], y_2 - start_pos[1]
+                x_p3, y_p3 = x_end - start_pos[0], y_end - start_pos[1]
+
+                p0 = Point(x_p0, y_p0, 0)
+                p1 = Point(x_p1, y_p1, 0)
+                p2 = Point(x_p2, y_p2, 0)
+                p3 = Point(x_p3, y_p3, 0)
+
+                print(f"p0=({p0[0]}, {p0[1]})")
+                print(f"p1=({p1[0]}, {p1[1]})")
+                print(f"p2=({p2[0]}, {p2[1]})")
+                print(f"p3=({p3[0]}, {p3[1]})")
+
+                # add a Curve to CurvePad with 4 control points
+                cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
+                print(f"cmd: {cmd}, add a curve, total curves: {len(cp2d)}")
+
+                current_pos = [x_end, y_end]
+                last_control = [x_2, y_2]
+
                 i += 6
             elif cmd == 'c':
                 # draw cubic bezier curve with relative position:
                 #   c ctl_dx1, ctl_dy1, ctl_dx2, ctl_dy2, endpos_dx, endpos_dy
                 while i + 5 < len(coords):
                     dx1, dy1, dx2, dy2, dx, dy = coords[i:i+6]
-                    p1 = current_pos + np.array([dx1, dx2])
-                    p2 = current_pos + np.array([dx2, dy2])
-                    p3 = current_pos + np.array([dx, dy])
-                    
-                    points = self.cal_cubic_bezier(current_pos, p1, p2, p3)
-                    vertices = np.vstack([vertices, points])
-                    current_pos = p3
-                    last_control = p2
+                    x_cur, y_cur = current_pos[0], current_pos[1]
+
+                    # translate positions to -(startX, startY)
+                    x_p0, y_p0 = x_cur - start_pos[0], y_cur - start_pos[1]
+                    x_p1, y_p1 = (x_cur + dx1) - start_pos[0], (y_cur + dy1) - start_pos[1]
+                    x_p2, y_p2 = (x_cur + dx2) - start_pos[0], (y_cur + dy2) - start_pos[1]
+                    x_p3, y_p3 = (x_cur + dx) - start_pos[0], (y_cur + dy) - start_pos[1]
+
+                    p0 = Point(x_p0, y_p0, 0)
+                    p1 = Point(x_p1, y_p1, 0)
+                    p2 = Point(x_p2, y_p2, 0)
+                    p3 = Point(x_p3, y_p3, 0)
+
+                    print(f"p0=({p0[0]}, {p0[1]})")
+                    print(f"p1=({p1[0]}, {p1[1]})")
+                    print(f"p2=({p2[0]}, {p2[1]})")
+                    print(f"p3=({p3[0]}, {p3[1]})")
+
+                    # add a Curve to CurvePad with 4 control points
+                    cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
+                    print(f"cmd: {cmd}, add a curve, total curves: {len(cp2d)}")
+
+                    current_pos = [(x_cur + dx), (y_cur + dy)]
+                    last_control = [(x_cur + dx2), (y_cur + dy2)]
                     i += 6
             elif cmd == 'S':
                 # draw a smooth curve (a shortcut version for cubic bezier)
-                x2, y2, x, y = coords[i:i+4]
+                x_2, y_2, x_end, y_end = coords[i:i+4]
+                x_cur, y_cur = current_pos[0], current_pos[1]
+                x_lastc, y_lastc = last_control[0], last_control[1]
 
+                # add a Curve to CurvePad with 4 control points
                 if last_cmd in ('C', 'c', 'S', 's') and last_control is not None:
-                    p1 = current_pos * 2 - last_control
+                    x_p1, y_p1 = (x_cur * 2 - x_lastc) - start_pos[0], (y_cur * 2 - y_lastc) - start_pos[1]
                 else:
-                    p1 = current_pos
+                    x_p1, y_p1 = x_cur - start_pos[0], y_cur - start_pos[1]
 
-                p2 = np.array([x2, y2])
-                p3 = np.array([x, y])
+                # translate positions to -(startX, startY)
+                x_p0, y_p0 = x_cur - start_pos[0], y_cur - start_pos[1]
+                x_p2, y_p2 = x_2 - start_pos[0], y_2 - start_pos[1]
+                x_p3, y_p3 = x_end - start_pos[0], y_end - start_pos[1]
 
-                points = self.cal_cubic_bezier(current_pos, p1, p2, p3)
-                vertices = np.vstack([vertices, points])
-                current_pos = p3
-                last_control = p2
+                p0 = Point(x_p0, y_p0, 0)
+                p1 = Point(x_p1, y_p1, 0)
+                p2 = Point(x_p2, y_p2, 0)
+                p3 = Point(x_p3, y_p3, 0)
+
+                print(f"p0=({p0[0]}, {p0[1]})")
+                print(f"p1=({p1[0]}, {p1[1]})")
+                print(f"p2=({p2[0]}, {p2[1]})")
+                print(f"p3=({p3[0]}, {p3[1]})")
+
+                cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
+                print(f"cmd: {cmd}, add a curve, total curves: {len(cp2d)}")
+
+                current_pos = [x_end, y_end]
+                last_control = [x_2, y_2]
                 i += 4
             elif cmd == 's':
                 # draw a smooth curve with relative positions
+                # add a Curve to CurvePad with 4 control points
                 while i + 3 < len(coords):
                     dx2, dy2, dx, dy = coords[i:i+4]
+                    x_cur, y_cur = current_pos[0], current_pos[1]
+                    x_lastc, y_lastc = last_control[0], last_control[1]
+
                     if last_cmd in ('C', 'c', 'S', 's') and last_control is not None:
-                        p1 = current_pos * 2 - last_control
+                        x_p1, y_p1 = (x_cur * 2 - x_lastc) - start_pos[0], (y_cur * 2 - y_lastc) - start_pos[1]
                     else:
-                        p1 = current_pos
+                        x_p1, y_p1 = x_cur - start_pos[0], y_cur - start_pos[1]
 
-                    p2 = current_pos + np.array([dx2, dy2])
-                    p3 = current_pos + np.array([dx, dy])
+                    # translate positions to -(startX, startY)
+                    x_p0, y_p0 = x_cur - start_pos[0], y_cur - start_pos[1]
+                    x_p2, y_p2 = (x_cur + dx2) - start_pos[0], (y_cur + dy2) - start_pos[1]
+                    x_p3, y_p3 = (x_cur + dx) - start_pos[0], (y_cur + dy) - start_pos[1]
 
-                    points = self.cal_cubic_bezier(current_pos, p1, p2, p3)
-                    vertices = np.vstack([vertices, points])
-                    current_pos = p3
-                    last_control = p2
+                    p0 = Point(x_p0, y_p0, 0)
+                    p1 = Point(x_p1, y_p1, 0)
+                    p2 = Point(x_p2, y_p2, 0)
+                    p3 = Point(x_p3, y_p3, 0)
+
+                    print(f"p0=({p0[0]}, {p0[1]})")
+                    print(f"p1=({p1[0]}, {p1[1]})")
+                    print(f"p2=({p2[0]}, {p2[1]})")
+                    print(f"p3=({p3[0]}, {p3[1]})")
+
+                    cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
+                    print(f"cmd: {cmd}, add a curve, total curves: {len(cp2d)}")
+
+                    current_pos = [(x_cur + dx), (y_cur + dy)]
+                    last_control = [(x_cur + dx2), (y_cur + dy2)]
+
                     i += 4
             elif cmd == 'A':
-                # draw a arc curve
+                # draw a elliptical arc curve
                 start_pt = current_pos
-                rx, ry, rotation, Flarge_arc, Fsweep, x1, y1 = coords[i:i+7]
-                end_pt = np.array([x1, y1])
+                rx, ry, rotation, Flarge_arc, Fsweep, x, y = coords[i:i+7]
 
-                arc_pts = self.cal_arc2pnts(start_pt, end_pt, rx, ry, rotation,
-                                            Flarge_arc, Fsweep)
+                if cmd == 'M':  # absolute position
+                    x_end = x
+                    y_end = y
+                else:  # cmd is 'a', relative position
+                    x_end = current_pos[0] + x
+                    y_end = current_pos[1] + y
 
-                vertices = np.vstack([vertices, arc_pts])
+                end_pt = Point(x_end, y_end, 0)
+
+                # [TODO] approximate a elliptical arc curve by one cbc
+                p0, p1, p2, p3 = self.cal_arc2pnts(start_pt,
+                                                   end_pt,
+                                                   rx, ry,
+                                                   rotation,
+                                                   Flarge_arc, Fsweep)
+
+                # [TODO] add a Curve to CurvePad with 4 control points
+                cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+                # arc_pts = self.cal_arc2pnts(start_pt, end_pt, rx, ry, rotation,
+                #                            Flarge_arc, Fsweep)
+                # vertices = np.vstack([vertices, arc_pts])
                 current_pos = end_pt
                 i += 7
-            elif cmd == 'a':
-                # draw a arc curve with relative position
-                start_pt = current_pos
-                rx, ry, rotation, Flarge_arc, Fsweep, dx, dy = coords[i:i+7]
-                end_pt = current_pos + np.array([dx, dy])
-
-                arc_pts = self.cal_arc2pnts(start_pt, end_pt, rx, ry, rotation,
-                                            Flarge_arc, Fsweep)
-
-                vertices = np.vstack([vertices, arc_pts])
-                current_pos = end_pt
-                i += 7
-            elif cmd == 'H':
+            elif cmd in ('H', 'h'):
                 # draws a horizontal line
-                x = coords[i]
-                new_x, old_y = x, current_pos[1]
-                end = np.array([new_x, old_y])
-                vertices = np.vstack([vertices, end])
+                # for 'H', coord[0] is absolute position
+                # for 'h', coord[0] is relative position from current position
+
+                new_x = coords[i] if cmd == 'H' else current_pos[0] + coords[i]  # dx
+                old_y = current_pos[1]
+                end = Point(new_x, old_y, 0)
+
+                # add a Segment to SegmentPad
+                sp2d.append(Segment(current_pos, end))
+
+                # vertices = np.vstack([vertices, end])
                 current_pos = end
                 i += 1
                 last_control = None
-            elif cmd == 'h':
-                # draws a horizontal line with delta_x
-                dx = coords[i]
-                new_x, old_y = current_pos[0] + dx, current_pos[1]
-                end = np.array([new_x, old_y])
-                vertices = np.vstack([vertices, end])
+            elif cmd in ('V', 'v'):
+                # draws a vertical line from current position
+                # for 'V', coord[0] is absolute position
+                # for 'v', coord[0] is relative position from current position
+
+                old_x = current_pos[0]
+                new_y = coords[i] if cmd == 'V' else current_pos[1] + coords[i]  # dy
+                end = Point(old_x, new_y, 0)
+               
+                # add a Segment to SegmentPad
+                sp2d.append(Segment(current_pos, end))
+
+                # vertices = np.vstack([vertices, end])
                 current_pos = end
                 i += 1
                 last_control = None
-            elif cmd == 'V':
-                # draws a vertical line
-                y = coords[i]
-                old_x, new_y = current_pos[0], current_pos[1] + dy
-                end = np.array([old_x, new_y])
-                vertices = np.vstack([vertices, end])
-                current_pos = end
-                i += 1
-                last_control = None
-            elif cmd == 'v':
-                # draws a horizontal line with delta_x
-                dy = coords[i]
-                old_x, new_y = current_pos[0], current_pos[1] + dy
-                end = np.array([old_x, new_y])
-                vertices = np.vstack([vertices, end])
-                current_pos = end
-                i += 1
-                last_control = None
-            elif cmd in ['Z', 'z']:
-                # form a closed path, push the vertices back to the start
-                vertices = np.vstack([vertices, vertices[0]])
-                closedPaths.append(vertices)
-                vertices = np.empty((0, 2))
+            elif cmd in ('Z', 'z'):
+                # form a closed path,
+                #   draw a straight line from the current position to the first point in the path.
+
+                x_p0, y_p0 = current_pos[0] - start_pos[0], current_pos[1] - start_pos[1]
+                x_p1, y_p1 = start_pos[0] - start_pos[0], start_pos[1] - start_pos[1]
+
+                p_from = Point(x_p0, y_p0, 0)
+                p_to = Point(x_p1, y_p1, 0)
+
+                print(f"p_from=({p_from[0]}, {p_from[1]})")
+                print(f"p_to=({p_to[0]}, {p_to[1]})")
+
+                # add a Segment to SegmentPad
+                sp2d.append(Segment(p_from, p_to))
+                print(f"cmd: {cmd}, add a segment, total segments: {len(sp2d)}")
                 i += 1
             else:
+                # [TODO] invalid path command, need to rasie an Error
                 i = len(coords)
             last_cmd = cmd
-        self.closedPaths = closedPaths
-        return vertices
+            print(f"[after] start_pos: ({start_pos[0]}, {start_pos[1]})")
+            print(f"[after] current_pos: ({current_pos[0]}, {current_pos[1]})")
+            print('\n')
+        # self.closedPaths = (sp2d, cp2d)
+        return (sp2d, cp2d)
 
     def dAttr_parser(self):
         d_attr = self.dAttr
@@ -333,40 +450,39 @@ class EPath(object):
     def getClosedPaths(self):
         return self.closedPaths
 
+    def getCmds(self):
+        return self.cmds
+
 
 class _pathParser(object):
     def __init__(self, filepath=None):
         self.filepath = filepath
-        self.paths = None  # list of Path
+        self.Epaths = None  # list of Epath
 
     def parse(self):
         tree = ET.parse(self.filepath)
         root = tree.getroot()
 
         namespace = {'svg': 'http://www.w3.org/2000/svg'}
+        pathElements = root.findall('.//svg:path', namespace)
 
+        # print(len(total_paths))
         paths = []
-        for elmnt in root.findall('.//svg:path', namespace):
+        d_attr = pathElements[0].attrib.get('d', '')
+        fill_attr = pathElements[0].attrib.get('fill', '')
+        paths.append(EPath(dAttr=d_attr, fillAttr=fill_attr))
+
+        # Test for <path>[0] which is without 'A'/'a' command
+        """ for elmnt in pathElements:
             d_attr = elmnt.attrib.get('d', '')
             fill_attr = elmnt.attrib.get('fill', '')
+            pdb.set_trace()
             paths.append(EPath(dAttr=d_attr, fillAttr=fill_attr))
-        self.paths = paths
+        """
+        self.Epaths = paths
 
     def getEPaths(self):
-        return self.paths
-
-
-def _plot_paths(paths):
-    # [TODO] use Qt to plot paths
-    fig, ax = plt.subplots()
-    lc = LineCollection(paths, linewidths=1.5, linestyle='solid')
-    ax.add_collection(lc)
-
-    ax.set_aspect('equal')
-    ax.autoscale()
-    ax.invert_yaxis()
-    plt.grid(True)
-    plt.show()
+        return self.Epaths
 
 
 class SVGFileDialog(PilotFeature):
@@ -417,18 +533,57 @@ class SVGFileDialog(PilotFeature):
     def _load_svg_file(self, filename):
         svgParser = _pathParser(filename)
         svgParser.parse()
-        paths = svgParser.getEPaths()
 
-        cpaths = []
-        all_pts = []
-        for p in paths:
-            closedPaths = p.getClosedPaths()
-            for cp in closedPaths:
-                all_pts.append(cp)
-                cpaths.append(cp.tolist())
+        # get closed paths representing by SegmentPad and CurvePad
+        # svgParser.getEPaths() will return all EPath (representing <path>). 
+        # Each EPath has  a set of closed paths
+        # Each closed paths in <path> is represented by a tuple (SegmentPad, CurvePad)
+        Epaths = svgParser.getEPaths()
 
-        all_pts = np.vstack(all_pts)
-        # [TODO] Prepare the CurvePad and SegementPad for ploting
-        _plot_paths(cpaths)
+        for p in Epaths:
+            cmds = p.getCmds()  # list of tuple
+            closedp = p.getClosedPaths()  # tuple
+            sp2d = closedp[0]
+            cp2d = closedp[1]
+            print(f"total commands: {len(cmds)}")
+            print(f"number of segments: {len(sp2d)}")
+            print(f"number of curves: {len(cp2d)}")
+
+        # print(f"sp2d[0] type: {type(sp2d[0])}")  # <class '_modmesh.Segment3dFp64'>
+        # print(f"cp2d[0] type: {type(cp2d[0])}")  # <class '_modmesh.Bezier3dFp64'>
+
+        # sample curves to create segment pad
+        # sp_cp2d = cp2d.sample(length=0.5)
+        # print(f"number of segments from curves: {len(sp_cp2d)}")
+
+        world = core.WorldFp64()
+
+        for i in range(len(sp2d)):
+            # print(f"point {i} in ({sp2d[i][0]}, {sp2d[i][1]})")
+            world.add_segment(sp2d[i])
+
+        for i in range(len(cp2d)):
+            b = world.add_bezier(p0=cp2d[i][0],
+                                 p1=cp2d[i][1],
+                                 p2=cp2d[i][2],
+                                 p3=cp2d[i][3])
+            b.sample(nlocus=5)
+
+        wcp = world.curves  # get world CurvePad
+        print(f"world segments: {world.nsegment}")
+        print(f"world curves: {len(wcp)}")
+        print(f"wcp[0] type: {type(wcp[0])}")
+
+        for c in range(len(wcp)):
+            print(f"#{c} bezier")
+            print(f"p0=({wcp.x0_at(c)}, {wcp.y0_at(c)})")
+            print(f"p1=({wcp.x1_at(c)}, {wcp.y1_at(c)})")
+            print(f"p2=({wcp.x2_at(c)}, {wcp.y2_at(c)})")
+            print(f"p3=({wcp.x3_at(c)}, {wcp.y3_at(c)})")
+            print("\n")
+
+        wid = self._mgr.add3DWidget()
+        wid.updateWorld(world)
+        wid.showMark()
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
