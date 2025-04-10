@@ -34,14 +34,6 @@ try:
     from modmesh import pilot
 except ImportError:
     pilot = None
-try:
-    import PUI.PySide6
-except ImportError:
-    # Bypass PUI import error if modmesh is built without Qt PUI may not be
-    # installed in this case.
-    # If modmesh is built with Qt, the PilotTC will check if PUI is working
-    # or not.
-    pass
 
 GITHUB_ACTIONS = os.getenv('GITHUB_ACTIONS', False)
 
@@ -51,10 +43,6 @@ class PilotTC(unittest.TestCase):
 
     def test_import(self):
         self.assertTrue(hasattr(modmesh.pilot, "mgr"))
-        self.assertTrue(hasattr(PUI.PySide6, "PUINode"))
-        self.assertTrue(hasattr(PUI.PySide6, "PUIView"))
-        self.assertEqual(PUI.PySide6.PUI_BACKEND, "PySide6",
-                         "PUI backebd mismatch")
 
     @unittest.skip("headless testing is not ready")
     def test_pycon(self):

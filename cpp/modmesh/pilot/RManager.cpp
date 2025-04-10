@@ -31,7 +31,6 @@
 #include <vector>
 
 #include <modmesh/pilot/RAction.hpp>
-#include <modmesh/pilot/RParameter.hpp>
 #include <Qt>
 #include <QMenuBar>
 #include <QMenu>

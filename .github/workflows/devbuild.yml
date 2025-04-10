@@ -617,7 +617,7 @@ jobs:
           Copy-Item -Path ".\build\cpp\binary\pilot\Release\pilot.exe" -Destination $destination
           windeployqt --release "$destination\pilot.exe"
           Copy-Item -Path ".\modmesh" -Destination $destination -Recurse
-          # PUI is necessary
+          # Also include potential thirdparty
           Copy-Item -Path ".\thirdparty" -Destination $destination -Recurse
 
       - name: archive portable artifacts
