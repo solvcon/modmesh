@@ -48,25 +48,11 @@ class EPath(object):
     def __init__(self, dAttr, fillAttr):
         """
         :param closedPaths: list of closed paths in a <path>.
-            Each closed paths in <path> is represented by a tuple (SegmentPad, CurvePad).
         """
         self.dAttr = dAttr
         self.fillAttr = fillAttr
         self.cmds = self.dAttr_parser()
         self.closedPaths = self.cal_vertices()
-        # self.points = self.cal_vertices()
-
-    def cal_cubic_bezier(self, p0, p1, p2, p3, num=20):
-        """
-        comput a cubic bezier curve
-        """
-        t = np.linspace(0, 1, num)
-        return (
-            (1 - t)[:, None]**3 * p0 +
-            3 * (1 - t)[:, None]**2 * t[:, None] * p1 +
-            3 * (1 - t)[:, None] * t[:, None]**2 * p2 +
-            t[:, None]**3 * p3
-        )
 
     def cal_arc2pnts(self, start_pt, end_pt, rx, ry, phi_deg, large_arc, sweep,
                      steps=40):
@@ -138,8 +124,8 @@ class EPath(object):
 
         # using parametric equations for the ellipse and the arc angles
         t = np.linspace(0, delta_theta, num=steps)
-        x_arc = cx + rx * np.cos(theta1 + t) * cos(phi) - ry * np.sin(theta1 + t) * sin(phi)
-        y_arc = cy + rx * np.cos(theta1 + t) * sin(phi) + ry * np.sin(theta1 + t) * cos(phi)
+        x_arc = cx + (rx * np.cos(theta1 + t) * cos(phi)) - (ry * np.sin(theta1 + t) * sin(phi))
+        y_arc = cy + (rx * np.cos(theta1 + t) * sin(phi)) + (ry * np.sin(theta1 + t) * cos(phi))
 
         return np.column_stack((x_arc, y_arc))
 
@@ -148,23 +134,18 @@ class EPath(object):
         path commands for `d` attribute:
             https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d
         """
-        Point = core.Point3dFp64  # Point object
-        Segment = core.Segment3dFp64  # Segment object
+        Point = core.Point3dFp64
+        Segment = core.Segment3dFp64
         sp2d = core.SegmentPadFp64(ndim=2)
         cp2d = core.CurvePadFp64(ndim=2)
 
         commands = self.cmds
-        start_pos = [0, 0]  # absolute position to (0, 0)
+        start_pos = Point(0, 0, 0)
         current_pos = start_pos
         last_control = None
         last_cmd = None
-        # closedPaths = []
-        # vertices = np.empty((0, 2))  # create an empty 2D array
 
         for idx, (cmd, coords) in enumerate(commands):
-            print(f"{idx}: '{cmd}', len of coords: {len(coords)}, coords: {coords}")
-            print(f"start_pos: ({start_pos[0]}, {start_pos[1]})")
-            print(f"[before] current_pos: ({current_pos[0]}, {current_pos[1]})")
             i = 0
             if cmd in ('M', 'm'):
                 # move to (x, y):
@@ -195,17 +176,11 @@ class EPath(object):
                     x_end = current_pos[0] + x
                     y_end = current_pos[1] + y
 
-                p_from = current_pos
-                p_to = Point(x_end, y_end, 0)
-                current_pos = p_to
-
-                p_from -= start_pos
-                p_to -= start_pos
+                end = Point(x_end, y_end, 0)
+                current_pos = end
 
                 # add a Segment to SegmentPad
-                sp2d.append(Segment(p_from, p_to))
-
-                # vertices = np.vstack([vertices, end])
+                sp2d.append(Segment(current_pos, end))
                 i += 2
                 last_control = None
             elif cmd == 'C':
@@ -213,31 +188,16 @@ class EPath(object):
                 #   C ctl_x1, ctl_y1, ctl_x2, ctl_y2, endpos_x, endpos_y
                 x_1, y_1, x_2, y_2, x_end, y_end = coords[i:i+6]
 
-                x_cur, y_cur = current_pos[0], current_pos[1]
-
-                # translate position to -(startX, startY)
-                x_p0, y_p0 = x_cur - start_pos[0], y_cur - start_pos[1]
-                x_p1, y_p1 = x_1 - start_pos[0], y_1 - start_pos[1]
-                x_p2, y_p2 = x_2 - start_pos[0], y_2 - start_pos[1]
-                x_p3, y_p3 = x_end - start_pos[0], y_end - start_pos[1]
-
-                p0 = Point(x_p0, y_p0, 0)
-                p1 = Point(x_p1, y_p1, 0)
-                p2 = Point(x_p2, y_p2, 0)
-                p3 = Point(x_p3, y_p3, 0)
-
-                print(f"p0=({p0[0]}, {p0[1]})")
-                print(f"p1=({p1[0]}, {p1[1]})")
-                print(f"p2=({p2[0]}, {p2[1]})")
-                print(f"p3=({p3[0]}, {p3[1]})")
+                p0 = current_pos
+                p1 = Point(x_1, y_1, 0)
+                p2 = Point(x_2, y_2, 0)
+                p3 = Point(x_end, y_end, 0)
 
                 # add a Curve to CurvePad with 4 control points
                 cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
-                print(f"cmd: {cmd}, add a curve, total curves: {len(cp2d)}")
 
-                current_pos = [x_end, y_end]
-                last_control = [x_2, y_2]
-
+                current_pos = p3
+                last_control = p2
                 i += 6
             elif cmd == 'c':
                 # draw cubic bezier curve with relative position:
@@ -246,61 +206,35 @@ class EPath(object):
                     dx1, dy1, dx2, dy2, dx, dy = coords[i:i+6]
                     x_cur, y_cur = current_pos[0], current_pos[1]
 
-                    # translate positions to -(startX, startY)
-                    x_p0, y_p0 = x_cur - start_pos[0], y_cur - start_pos[1]
-                    x_p1, y_p1 = (x_cur + dx1) - start_pos[0], (y_cur + dy1) - start_pos[1]
-                    x_p2, y_p2 = (x_cur + dx2) - start_pos[0], (y_cur + dy2) - start_pos[1]
-                    x_p3, y_p3 = (x_cur + dx) - start_pos[0], (y_cur + dy) - start_pos[1]
-
-                    p0 = Point(x_p0, y_p0, 0)
-                    p1 = Point(x_p1, y_p1, 0)
-                    p2 = Point(x_p2, y_p2, 0)
-                    p3 = Point(x_p3, y_p3, 0)
-
-                    print(f"p0=({p0[0]}, {p0[1]})")
-                    print(f"p1=({p1[0]}, {p1[1]})")
-                    print(f"p2=({p2[0]}, {p2[1]})")
-                    print(f"p3=({p3[0]}, {p3[1]})")
-
-                    # add a Curve to CurvePad with 4 control points
+                    p0 = current_pos
+                    p1 = Point((x_cur + dx1), (y_cur + dy1), 0)
+                    p2 = Point((x_cur + dx2), (y_cur + dy2), 0)
+                    p3 = Point((x_cur + dx), (y_cur + dy), 0)
                     cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
-                    print(f"cmd: {cmd}, add a curve, total curves: {len(cp2d)}")
 
-                    current_pos = [(x_cur + dx), (y_cur + dy)]
-                    last_control = [(x_cur + dx2), (y_cur + dy2)]
+                    current_pos = p3
+                    last_control = p2
                     i += 6
             elif cmd == 'S':
                 # draw a smooth curve (a shortcut version for cubic bezier)
                 x_2, y_2, x_end, y_end = coords[i:i+4]
                 x_cur, y_cur = current_pos[0], current_pos[1]
-                x_lastc, y_lastc = last_control[0], last_control[1]
 
                 # add a Curve to CurvePad with 4 control points
                 if last_cmd in ('C', 'c', 'S', 's') and last_control is not None:
-                    x_p1, y_p1 = (x_cur * 2 - x_lastc) - start_pos[0], (y_cur * 2 - y_lastc) - start_pos[1]
+                    x_lastc, y_lastc = last_control[0], last_control[1]
+                    x_1, y_1 = (x_cur * 2 - x_lastc), (y_cur * 2 - y_lastc)
                 else:
-                    x_p1, y_p1 = x_cur - start_pos[0], y_cur - start_pos[1]
+                    x_1, y_1 = x_cur, y_cur
 
-                # translate positions to -(startX, startY)
-                x_p0, y_p0 = x_cur - start_pos[0], y_cur - start_pos[1]
-                x_p2, y_p2 = x_2 - start_pos[0], y_2 - start_pos[1]
-                x_p3, y_p3 = x_end - start_pos[0], y_end - start_pos[1]
-
-                p0 = Point(x_p0, y_p0, 0)
-                p1 = Point(x_p1, y_p1, 0)
-                p2 = Point(x_p2, y_p2, 0)
-                p3 = Point(x_p3, y_p3, 0)
-
-                print(f"p0=({p0[0]}, {p0[1]})")
-                print(f"p1=({p1[0]}, {p1[1]})")
-                print(f"p2=({p2[0]}, {p2[1]})")
-                print(f"p3=({p3[0]}, {p3[1]})")
-
+                p0 = current_pos
+                p1 = Point(x_1, y_1, 0)
+                p2 = Point(x_2, y_2, 0)
+                p3 = Point(x_end, y_end, 0)
                 cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
-                print(f"cmd: {cmd}, add a curve, total curves: {len(cp2d)}")
 
-                current_pos = [x_end, y_end]
-                last_control = [x_2, y_2]
+                current_pos = p3
+                last_control = p2
                 i += 4
             elif cmd == 's':
                 # draw a smooth curve with relative positions
@@ -308,41 +242,29 @@ class EPath(object):
                 while i + 3 < len(coords):
                     dx2, dy2, dx, dy = coords[i:i+4]
                     x_cur, y_cur = current_pos[0], current_pos[1]
-                    x_lastc, y_lastc = last_control[0], last_control[1]
 
                     if last_cmd in ('C', 'c', 'S', 's') and last_control is not None:
-                        x_p1, y_p1 = (x_cur * 2 - x_lastc) - start_pos[0], (y_cur * 2 - y_lastc) - start_pos[1]
+                        x_lastc, y_lastc = last_control[0], last_control[1]
+                        x_p1 = x_cur * 2 - x_lastc
+                        y_p1 = y_cur * 2 - y_lastc
                     else:
-                        x_p1, y_p1 = x_cur - start_pos[0], y_cur - start_pos[1]
+                        x_p1, y_p1 = x_cur, y_cur
 
-                    # translate positions to -(startX, startY)
-                    x_p0, y_p0 = x_cur - start_pos[0], y_cur - start_pos[1]
-                    x_p2, y_p2 = (x_cur + dx2) - start_pos[0], (y_cur + dy2) - start_pos[1]
-                    x_p3, y_p3 = (x_cur + dx) - start_pos[0], (y_cur + dy) - start_pos[1]
-
-                    p0 = Point(x_p0, y_p0, 0)
+                    p0 = current_pos
                     p1 = Point(x_p1, y_p1, 0)
-                    p2 = Point(x_p2, y_p2, 0)
-                    p3 = Point(x_p3, y_p3, 0)
-
-                    print(f"p0=({p0[0]}, {p0[1]})")
-                    print(f"p1=({p1[0]}, {p1[1]})")
-                    print(f"p2=({p2[0]}, {p2[1]})")
-                    print(f"p3=({p3[0]}, {p3[1]})")
-
+                    p2 = Point(x_cur + dx2, y_cur + dy2, 0)
+                    p3 = Point(x_cur + dx, y_cur + dy, 0)
                     cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
-                    print(f"cmd: {cmd}, add a curve, total curves: {len(cp2d)}")
 
-                    current_pos = [(x_cur + dx), (y_cur + dy)]
-                    last_control = [(x_cur + dx2), (y_cur + dy2)]
-
+                    current_pos = p3
+                    last_control = p2
                     i += 4
-            elif cmd == 'A':
+            elif cmd in ('A', 'a'):
                 # draw a elliptical arc curve
                 start_pt = current_pos
                 rx, ry, rotation, Flarge_arc, Fsweep, x, y = coords[i:i+7]
 
-                if cmd == 'M':  # absolute position
+                if cmd == 'A':  # absolute position
                     x_end = x
                     y_end = y
                 else:  # cmd is 'a', relative position
@@ -351,19 +273,13 @@ class EPath(object):
 
                 end_pt = Point(x_end, y_end, 0)
 
-                # [TODO] approximate a elliptical arc curve by one cbc
-                p0, p1, p2, p3 = self.cal_arc2pnts(start_pt,
-                                                   end_pt,
-                                                   rx, ry,
-                                                   rotation,
-                                                   Flarge_arc, Fsweep)
+                arc_pts = self.cal_arc2pnts(start_pt, end_pt, rx, ry, rotation,
+                                            Flarge_arc, Fsweep)
+                for i in range(arc_pts.shape[0]-1):
+                    p_from = Point(arc_pts[i][0], arc_pts[i][1], 0)
+                    p_to = Point(arc_pts[i+1][0], arc_pts[i+1][1], 0)
+                    sp2d.append(Segment(p_from, p_to))
 
-                # [TODO] add a Curve to CurvePad with 4 control points
-                cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
-
-                # arc_pts = self.cal_arc2pnts(start_pt, end_pt, rx, ry, rotation,
-                #                            Flarge_arc, Fsweep)
-                # vertices = np.vstack([vertices, arc_pts])
                 current_pos = end_pt
                 i += 7
             elif cmd in ('H', 'h'):
@@ -371,14 +287,13 @@ class EPath(object):
                 # for 'H', coord[0] is absolute position
                 # for 'h', coord[0] is relative position from current position
 
-                new_x = coords[i] if cmd == 'H' else current_pos[0] + coords[i]  # dx
+                new_x = coords[i] if cmd == 'H' else current_pos[0] + coords[i]
                 old_y = current_pos[1]
                 end = Point(new_x, old_y, 0)
 
                 # add a Segment to SegmentPad
                 sp2d.append(Segment(current_pos, end))
 
-                # vertices = np.vstack([vertices, end])
                 current_pos = end
                 i += 1
                 last_control = None
@@ -388,41 +303,25 @@ class EPath(object):
                 # for 'v', coord[0] is relative position from current position
 
                 old_x = current_pos[0]
-                new_y = coords[i] if cmd == 'V' else current_pos[1] + coords[i]  # dy
+                new_y = coords[i] if cmd == 'V' else current_pos[1] + coords[i]
                 end = Point(old_x, new_y, 0)
-               
+
                 # add a Segment to SegmentPad
                 sp2d.append(Segment(current_pos, end))
 
-                # vertices = np.vstack([vertices, end])
                 current_pos = end
                 i += 1
                 last_control = None
             elif cmd in ('Z', 'z'):
                 # form a closed path,
-                #   draw a straight line from the current position to the first point in the path.
-
-                x_p0, y_p0 = current_pos[0] - start_pos[0], current_pos[1] - start_pos[1]
-                x_p1, y_p1 = start_pos[0] - start_pos[0], start_pos[1] - start_pos[1]
-
-                p_from = Point(x_p0, y_p0, 0)
-                p_to = Point(x_p1, y_p1, 0)
-
-                print(f"p_from=({p_from[0]}, {p_from[1]})")
-                print(f"p_to=({p_to[0]}, {p_to[1]})")
-
-                # add a Segment to SegmentPad
-                sp2d.append(Segment(p_from, p_to))
-                print(f"cmd: {cmd}, add a segment, total segments: {len(sp2d)}")
+                #   draw a straight line from the current position to
+                #   the first point in the path.
+                sp2d.append(Segment(current_pos, start_pos))
+                current_pos = start_pos
                 i += 1
             else:
-                # [TODO] invalid path command, need to rasie an Error
                 i = len(coords)
             last_cmd = cmd
-            print(f"[after] start_pos: ({start_pos[0]}, {start_pos[1]})")
-            print(f"[after] current_pos: ({current_pos[0]}, {current_pos[1]})")
-            print('\n')
-        # self.closedPaths = (sp2d, cp2d)
         return (sp2d, cp2d)
 
     def dAttr_parser(self):
@@ -466,19 +365,11 @@ class _pathParser(object):
         namespace = {'svg': 'http://www.w3.org/2000/svg'}
         pathElements = root.findall('.//svg:path', namespace)
 
-        # print(len(total_paths))
         paths = []
-        d_attr = pathElements[0].attrib.get('d', '')
-        fill_attr = pathElements[0].attrib.get('fill', '')
-        paths.append(EPath(dAttr=d_attr, fillAttr=fill_attr))
-
-        # Test for <path>[0] which is without 'A'/'a' command
-        """ for elmnt in pathElements:
+        for elmnt in pathElements:
             d_attr = elmnt.attrib.get('d', '')
             fill_attr = elmnt.attrib.get('fill', '')
-            pdb.set_trace()
             paths.append(EPath(dAttr=d_attr, fillAttr=fill_attr))
-        """
         self.Epaths = paths
 
     def getEPaths(self):
@@ -533,54 +424,28 @@ class SVGFileDialog(PilotFeature):
     def _load_svg_file(self, filename):
         svgParser = _pathParser(filename)
         svgParser.parse()
-
-        # get closed paths representing by SegmentPad and CurvePad
-        # svgParser.getEPaths() will return all EPath (representing <path>). 
-        # Each EPath has  a set of closed paths
-        # Each closed paths in <path> is represented by a tuple (SegmentPad, CurvePad)
         Epaths = svgParser.getEPaths()
 
+        sp2d = []
+        cp2d = []
         for p in Epaths:
-            cmds = p.getCmds()  # list of tuple
             closedp = p.getClosedPaths()  # tuple
-            sp2d = closedp[0]
-            cp2d = closedp[1]
-            print(f"total commands: {len(cmds)}")
-            print(f"number of segments: {len(sp2d)}")
-            print(f"number of curves: {len(cp2d)}")
-
-        # print(f"sp2d[0] type: {type(sp2d[0])}")  # <class '_modmesh.Segment3dFp64'>
-        # print(f"cp2d[0] type: {type(cp2d[0])}")  # <class '_modmesh.Bezier3dFp64'>
-
-        # sample curves to create segment pad
-        # sp_cp2d = cp2d.sample(length=0.5)
-        # print(f"number of segments from curves: {len(sp_cp2d)}")
+            sp2d.append(closedp[0])
+            cp2d.append(closedp[1])
 
         world = core.WorldFp64()
 
         for i in range(len(sp2d)):
-            # print(f"point {i} in ({sp2d[i][0]}, {sp2d[i][1]})")
-            world.add_segment(sp2d[i])
+            for s in sp2d[i]:
+                world.add_segment(s)
 
         for i in range(len(cp2d)):
-            b = world.add_bezier(p0=cp2d[i][0],
-                                 p1=cp2d[i][1],
-                                 p2=cp2d[i][2],
-                                 p3=cp2d[i][3])
-            b.sample(nlocus=5)
-
-        wcp = world.curves  # get world CurvePad
-        print(f"world segments: {world.nsegment}")
-        print(f"world curves: {len(wcp)}")
-        print(f"wcp[0] type: {type(wcp[0])}")
-
-        for c in range(len(wcp)):
-            print(f"#{c} bezier")
-            print(f"p0=({wcp.x0_at(c)}, {wcp.y0_at(c)})")
-            print(f"p1=({wcp.x1_at(c)}, {wcp.y1_at(c)})")
-            print(f"p2=({wcp.x2_at(c)}, {wcp.y2_at(c)})")
-            print(f"p3=({wcp.x3_at(c)}, {wcp.y3_at(c)})")
-            print("\n")
+            for c in cp2d[i]:
+                b = world.add_bezier(p0=c[0],
+                                     p1=c[1],
+                                     p2=c[2],
+                                     p3=c[3])
+                b.sample(nlocus=5)
 
         wid = self._mgr.add3DWidget()
         wid.updateWorld(world)
