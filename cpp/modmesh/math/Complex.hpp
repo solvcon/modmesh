@@ -35,52 +35,57 @@ namespace modmesh
 
 namespace detail
 {
-template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+
+template <typename T>
 struct ComplexImpl
 {
+    static_assert(std::is_floating_point_v<T>);
+
     T real_v;
     T imag_v;
 
-    ComplexImpl<T> operator+(const ComplexImpl<T> & other) const
+    ComplexImpl & operator+=(const ComplexImpl & other)
     {
-        ComplexImpl<T> ret(*this);
-        return ret += other;
+        real_v += other.real_v;
+        imag_v += other.imag_v;
+        return *this;
     }
 
-    ComplexImpl<T> operator-(const ComplexImpl<T> & other) const
+    ComplexImpl & operator+=(T other)
     {
-        ComplexImpl<T> ret(*this);
-        return ret -= other;
+        real_v += other;
+        return *this;
     }
 
-    ComplexImpl<T> operator*(const ComplexImpl<T> & other) const
+    ComplexImpl & operator-=(const ComplexImpl & other)
     {
-        ComplexImpl<T> ret(*this);
-        ret *= other;
-        return ret;
+        real_v -= other.real_v;
+        imag_v -= other.imag_v;
+        return *this;
     }
 
-    ComplexImpl<T> operator/(const ComplexImpl<T> & other) const
+    ComplexImpl & operator-=(T other)
     {
-        ComplexImpl<T> ret(*this);
-        return ret /= other;
+        real_v -= other;
+        return *this;
     }
 
-    ComplexImpl<T> operator/(const T & other) const
-    {
-        ComplexImpl<T> ret(*this);
-        return ret /= other;
-    }
-
-    ComplexImpl<T> & operator*=(const ComplexImpl<T> & rhs)
+    ComplexImpl & operator*=(const ComplexImpl<T> & rhs)
     {
         T real_v_copy = real_v;
-        real_v = real_v * rhs.real_v - imag_v * rhs.imag_v;
+        real_v = real_v_copy * rhs.real_v - imag_v * rhs.imag_v;
         imag_v = real_v_copy * rhs.imag_v + imag_v * rhs.real_v;
         return *this;
     }
 
-    ComplexImpl<T> & operator/=(const ComplexImpl<T> & rhs)
+    ComplexImpl & operator*=(const T & rhs)
+    {
+        real_v *= rhs;
+        imag_v *= rhs;
+        return *this;
+    }
+
+    ComplexImpl & operator/=(const ComplexImpl<T> & rhs)
     {
         T denominator = rhs.norm();
         T real_v_copy = real_v;
@@ -95,7 +100,7 @@ struct ComplexImpl
         return *this;
     }
 
-    ComplexImpl<T> & operator/=(const T & rhs)
+    ComplexImpl & operator/=(const T & rhs)
     {
         if (rhs == 0.0)
         {
@@ -106,53 +111,113 @@ struct ComplexImpl
         return *this;
     }
 
-    ComplexImpl & operator+=(const ComplexImpl & other)
-    {
-        real_v += other.real_v;
-        imag_v += other.imag_v;
-        return *this;
-    }
-
-    ComplexImpl & operator-=(const ComplexImpl & other)
-    {
-        real_v -= other.real_v;
-        imag_v -= other.imag_v;
-        return *this;
-    }
-
-    bool operator<(const ComplexImpl<T> & rhs) const
-    {
-        return this->norm() < rhs.norm();
-    }
-
-    bool operator>(const ComplexImpl<T> & rhs) const
-    {
-        return this->norm() > rhs.norm();
-    }
-
     T real() const { return real_v; }
     T imag() const { return imag_v; }
     T norm() const { return real_v * real_v + imag_v * imag_v; }
     ComplexImpl<T> conj() const { return {real_v, -imag_v}; }
 }; /* end struct ComplexImpl */
 
-} /* end namespace detail */
-
-template <typename T>
-using Complex = detail::ComplexImpl<T>;
-
 // These comparison operator would be used in SimpleArray::min(), SimpleArray::max().
 template <typename T>
-bool operator<(const Complex<T> & lhs, const Complex<T> & rhs)
+bool operator<(const ComplexImpl<T> & lhs, const ComplexImpl<T> & rhs)
 {
     return lhs.norm() < rhs.norm();
 }
 
 template <typename T>
-bool operator>(const Complex<T> & lhs, const Complex<T> & rhs)
+bool operator>(const ComplexImpl<T> & lhs, const ComplexImpl<T> & rhs)
 {
     return lhs.norm() > rhs.norm();
 }
+
+template <typename T>
+bool operator==(const ComplexImpl<T> & lhs, const ComplexImpl<T> & rhs)
+{
+    return lhs.real_v == rhs.real_v && lhs.imag_v == rhs.imag_v;
+}
+
+template <typename T>
+bool operator!=(const ComplexImpl<T> & lhs, const ComplexImpl<T> & rhs)
+{
+    return lhs.real_v != rhs.real_v || lhs.imag_v != rhs.imag_v;
+}
+
+template <typename T>
+ComplexImpl<T> operator+(ComplexImpl<T> lhs, const ComplexImpl<T> & rhs)
+{
+    return lhs += rhs;
+}
+
+template <typename T>
+ComplexImpl<T> operator+(ComplexImpl<T> lhs, T rhs)
+{
+    return lhs += rhs;
+}
+
+template <typename T>
+ComplexImpl<T> operator+(T lhs, const ComplexImpl<T> & rhs)
+{
+    return ComplexImpl<T>{lhs, 0.0} += rhs;
+}
+
+template <typename T>
+ComplexImpl<T> operator-(ComplexImpl<T> lhs, const ComplexImpl<T> & rhs)
+{
+    return lhs -= rhs;
+}
+
+template <typename T>
+ComplexImpl<T> operator-(ComplexImpl<T> lhs, T rhs)
+{
+    return lhs -= rhs;
+}
+
+template <typename T>
+ComplexImpl<T> operator-(T lhs, const ComplexImpl<T> & rhs)
+{
+    return ComplexImpl<T>{lhs, 0.0} -= rhs;
+}
+
+template <typename T>
+ComplexImpl<T> operator*(ComplexImpl<T> lhs, const ComplexImpl<T> & rhs)
+{
+    return lhs *= rhs;
+}
+
+template <typename T>
+ComplexImpl<T> operator*(ComplexImpl<T> lhs, T rhs)
+{
+    return lhs *= rhs;
+}
+
+template <typename T>
+ComplexImpl<T> operator*(T lhs, const ComplexImpl<T> & rhs)
+{
+    return ComplexImpl<T>{lhs, 0.0} *= rhs;
+}
+
+template <typename T>
+ComplexImpl<T> operator/(ComplexImpl<T> lhs, const ComplexImpl<T> & rhs)
+{
+    return lhs /= rhs;
+}
+
+template <typename T>
+ComplexImpl<T> operator/(ComplexImpl<T> lhs, const T & rhs)
+{
+    return lhs /= rhs;
+}
+
+template <typename T>
+ComplexImpl<T> operator/(T lhs, const ComplexImpl<T> & rhs)
+{
+    return ComplexImpl<T>{lhs, 0.0} /= rhs;
+}
+
+} /* end namespace detail */
+
+template <typename T>
+using Complex = detail::ComplexImpl<T>;
 
 // clang-format off
 template <typename T>

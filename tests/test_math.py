@@ -75,6 +75,19 @@ class ComplexTC(unittest.TestCase, mm.testing.TestBase):
         self.assert_allclose64(cplx.imag, self.imag1_64)
 
     def test_operator_add_float32(self):
+        cplx = mm.complex64(self.real1_32, self.imag1_32)
+        realv = np.float32(2.0)
+
+        result = cplx + realv
+
+        self.assert_allclose32(result.real, self.real1_32 + realv)
+        self.assert_allclose32(result.imag, self.imag1_32)
+
+        result = realv + cplx
+
+        self.assert_allclose32(result.real, realv + cplx.real)
+        self.assert_allclose32(result.imag, cplx.imag)
+
         cplx1 = mm.complex64(self.real1_32, self.imag1_32)
         cplx2 = mm.complex64(self.real2_32, self.imag2_32)
 
@@ -87,6 +100,19 @@ class ComplexTC(unittest.TestCase, mm.testing.TestBase):
         self.assert_allclose32(result.imag, expected_imag)
 
     def test_operator_add_float64(self):
+        cplx = mm.complex128(self.real1_64, self.imag1_64)
+        realv = np.float64(2.0)
+
+        result = cplx + realv
+
+        self.assert_allclose64(result.real, self.real1_64 + realv)
+        self.assert_allclose64(result.imag, self.imag1_64)
+
+        result = realv + cplx
+
+        self.assert_allclose64(result.real, realv + cplx.real)
+        self.assert_allclose64(result.imag, cplx.imag)
+
         cplx1 = mm.complex128(self.real1_64, self.imag1_64)
         cplx2 = mm.complex128(self.real2_64, self.imag2_64)
 
@@ -99,6 +125,19 @@ class ComplexTC(unittest.TestCase, mm.testing.TestBase):
         self.assert_allclose64(result.imag, expected_imag)
 
     def test_operator_sub_float32(self):
+        cplx = mm.complex64(self.real1_32, self.imag1_32)
+        realv = np.float32(2.0)
+
+        result = cplx - realv
+
+        self.assert_allclose32(result.real, self.real1_32 - realv)
+        self.assert_allclose32(result.imag, self.imag1_32)
+
+        result = realv - cplx
+
+        self.assert_allclose32(result.real, realv - cplx.real)
+        self.assert_allclose32(result.imag, -cplx.imag)
+
         cplx1 = mm.complex64(self.real1_32, self.imag1_32)
         cplx2 = mm.complex64(self.real2_32, self.imag2_32)
 
@@ -111,6 +150,19 @@ class ComplexTC(unittest.TestCase, mm.testing.TestBase):
         self.assert_allclose32(result.imag, expected_imag)
 
     def test_operator_sub_float64(self):
+        cplx = mm.complex128(self.real1_64, self.imag1_64)
+        realv = np.float64(2.0)
+
+        result = cplx - realv
+
+        self.assert_allclose64(result.real, self.real1_64 - realv)
+        self.assert_allclose64(result.imag, self.imag1_64)
+
+        result = realv - cplx
+
+        self.assert_allclose64(result.real, realv - cplx.real)
+        self.assert_allclose64(result.imag, -cplx.imag)
+
         cplx1 = mm.complex128(self.real1_64, self.imag1_64)
         cplx2 = mm.complex128(self.real2_64, self.imag2_64)
 
@@ -123,6 +175,20 @@ class ComplexTC(unittest.TestCase, mm.testing.TestBase):
         self.assert_allclose64(result.imag, expected_imag)
 
     def test_operator_mul_float32(self):
+        cplx = mm.complex64(self.real1_32, self.imag1_32)
+        realv = np.float32(2.0)
+
+        result = cplx * realv
+
+        self.assert_allclose32(result.real, self.real1_32 * realv)
+        self.assert_allclose32(result.imag, self.imag1_32 * realv)
+
+        result = realv * cplx
+        golden = mm.complex64(realv, 0.0) * cplx
+
+        self.assert_allclose32(result.real, golden.real)
+        self.assert_allclose32(result.imag, golden.imag)
+
         cplx1 = mm.complex64(self.real1_32, self.imag1_32)
         cplx2 = mm.complex64(self.real2_32, self.imag2_32)
 
@@ -137,6 +203,20 @@ class ComplexTC(unittest.TestCase, mm.testing.TestBase):
         self.assert_allclose32(result.imag, expected_imag)
 
     def test_operator_mul_float64(self):
+        cplx = mm.complex128(self.real1_64, self.imag1_64)
+        realv = np.float64(2.0)
+
+        result = cplx * realv
+
+        self.assert_allclose64(result.real, self.real1_64 * realv)
+        self.assert_allclose64(result.imag, self.imag1_64 * realv)
+
+        result = realv * cplx
+        golden = mm.complex128(realv, 0.0) * cplx
+
+        self.assert_allclose64(result.real, golden.real)
+        self.assert_allclose64(result.imag, golden.imag)
+
         cplx1 = mm.complex128(self.real1_64, self.imag1_64)
         cplx2 = mm.complex128(self.real2_64, self.imag2_64)
 
@@ -150,32 +230,15 @@ class ComplexTC(unittest.TestCase, mm.testing.TestBase):
         self.assert_allclose64(result.real, expected_real)
         self.assert_allclose64(result.imag, expected_imag)
 
-    def test_operator_div_float32_scalar(self):
-        cplx = mm.complex64(self.real1_32, self.imag1_32)
-        # Avoid division by zero by explicitly assigning the divisor
-        divisor = np.float32(2.0)
-
-        result = cplx / divisor
-
-        expected_real = self.real1_32 / divisor
-        expected_imag = self.imag1_32 / divisor
-
-        self.assert_allclose32(result.real, expected_real)
-        self.assert_allclose32(result.imag, expected_imag)
-
-    def test_operator_div_float64_scalar(self):
-        cplx = mm.complex128(self.real1_64, self.imag1_64)
-        divisor = np.float64(2.0)
-
-        result = cplx / divisor
-
-        expected_real = self.real1_64 / divisor
-        expected_imag = self.imag1_64 / divisor
-
-        self.assert_allclose64(result.real, expected_real)
-        self.assert_allclose64(result.imag, expected_imag)
-
     def test_operator_div_float32(self):
+        cplx = mm.complex64(self.real1_32, self.imag1_32)
+        realv = np.float32(2.0)
+
+        result = cplx / realv
+
+        self.assert_allclose32(result.real, self.real1_32 / realv)
+        self.assert_allclose32(result.imag, self.imag1_32 / realv)
+
         cplx1 = mm.complex64(self.real1_32, self.imag1_32)
         cplx2 = mm.complex64(self.real2_32, self.imag2_32)
 
@@ -192,6 +255,14 @@ class ComplexTC(unittest.TestCase, mm.testing.TestBase):
         self.assert_allclose32(result.imag, expected_imag)
 
     def test_operator_div_float64(self):
+        cplx = mm.complex128(self.real1_64, self.imag1_64)
+        realv = np.float64(2.0)
+
+        result = cplx / realv
+
+        self.assert_allclose64(result.real, self.real1_64 / realv)
+        self.assert_allclose64(result.imag, self.imag1_64 / realv)
+
         cplx1 = mm.complex128(self.real1_64, self.imag1_64)
         cplx2 = mm.complex128(self.real2_64, self.imag2_64)
 
