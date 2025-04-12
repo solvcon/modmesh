@@ -85,8 +85,11 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
         }
     }
 
-    auto * vertices = new RVertices(world, m_scene);
-    auto * lines = new RLines(world, m_scene);
+    new RVertices(world, m_scene);
+    new RLines(world, m_scene);
+
+    auto vertices = std::make_shared<RVertices>(world, m_scene);
+    auto lines = std::make_shared<RLines>(world, m_scene);
 
     float box_minX = std::min(vertices->bounding_min().x(), lines->bounding_min().x());
     float box_minY = std::min(vertices->bounding_min().y(), lines->bounding_min().y());
