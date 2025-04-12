@@ -103,9 +103,9 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
     float fov = 45.0f;
     float dist = radius / std::tan(qDegreesToRadians(fov) / 2.0f);
 
-    cameraController()->setPosition(center + QVector3D(0, 0, dist)); 
-    cameraController()->setViewCenter(center); 
-    cameraController()->setFarPlane(dist + radius * 2); 
+    cameraController()->setPosition(center + QVector3D(0, 0, dist));
+    cameraController()->setViewCenter(center);
+    cameraController()->setFarPlane(dist + radius * 2);
 }
 
 void R3DWidget::closeAndDestroy()

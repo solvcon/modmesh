@@ -124,8 +124,12 @@ class EPath(object):
 
         # using parametric equations for the ellipse and the arc angles
         t = np.linspace(0, delta_theta, num=steps)
-        x_arc = cx + (rx * np.cos(theta1 + t) * cos(phi)) - (ry * np.sin(theta1 + t) * sin(phi))
-        y_arc = cy + (rx * np.cos(theta1 + t) * sin(phi)) + (ry * np.sin(theta1 + t) * cos(phi))
+        x_arc = (cx +
+                 rx * np.cos(theta1 + t) * cos(phi) -
+                 ry * np.sin(theta1 + t) * sin(phi))
+        y_arc = (cy +
+                 rx * np.cos(theta1 + t) * sin(phi) +
+                 ry * np.sin(theta1 + t) * cos(phi))
 
         return np.column_stack((x_arc, y_arc))
 
@@ -221,7 +225,8 @@ class EPath(object):
                 x_cur, y_cur = current_pos[0], current_pos[1]
 
                 # add a Curve to CurvePad with 4 control points
-                if last_cmd in ('C', 'c', 'S', 's') and last_control is not None:
+                if (last_cmd in ('C', 'c', 'S', 's')
+                        and last_control is not None):
                     x_lastc, y_lastc = last_control[0], last_control[1]
                     x_1, y_1 = (x_cur * 2 - x_lastc), (y_cur * 2 - y_lastc)
                 else:
@@ -243,7 +248,8 @@ class EPath(object):
                     dx2, dy2, dx, dy = coords[i:i+4]
                     x_cur, y_cur = current_pos[0], current_pos[1]
 
-                    if last_cmd in ('C', 'c', 'S', 's') and last_control is not None:
+                    if (last_cmd in ('C', 'c', 'S', 's')
+                            and last_control is not None):
                         x_lastc, y_lastc = last_control[0], last_control[1]
                         x_p1 = x_cur * 2 - x_lastc
                         y_p1 = y_cur * 2 - y_lastc
@@ -378,7 +384,7 @@ class _PathParser(object):
 
 class SVGFileDialog(PilotFeature):
     """
-    An example svg file can be downloaded from: https://www.svgrepo.com/svg/530293/tree-2
+    Download an example svg from: https://www.svgrepo.com/svg/530293/tree-2
     """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)

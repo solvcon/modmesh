@@ -55,13 +55,8 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
             vertices->setVertexBaseType(Qt3DCore::QAttribute::Float);
             vertices->setVertexSize(3);
 
-            QVector3D min_pt(std::numeric_limits<float>::max(),
-            std::numeric_limits<float>::max(),
-            std::numeric_limits<float>::max());
-            
-            QVector3D max_pt(std::numeric_limits<float>::lowest(),
-            std::numeric_limits<float>::lowest(),
-            std::numeric_limits<float>::lowest());
+            QVector3D min_pt(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+            QVector3D max_pt(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
 
             auto * buf = new Qt3DCore::QBuffer(m_geometry);
             {
@@ -170,14 +165,9 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
             vertices->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
             vertices->setVertexBaseType(Qt3DCore::QAttribute::Float);
             vertices->setVertexSize(3);
-            
-            QVector3D min_pt(std::numeric_limits<float>::max(),
-            std::numeric_limits<float>::max(),
-            std::numeric_limits<float>::max());
-            
-            QVector3D max_pt(std::numeric_limits<float>::lowest(),
-            std::numeric_limits<float>::lowest(),
-            std::numeric_limits<float>::lowest());
+
+            QVector3D min_pt(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+            QVector3D max_pt(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
 
             auto * buf = new Qt3DCore::QBuffer(m_geometry);
             {
