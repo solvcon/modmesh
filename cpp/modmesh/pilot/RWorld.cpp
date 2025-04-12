@@ -41,6 +41,8 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
     , m_geometry(new Qt3DCore::QGeometry())
     , m_renderer(new Qt3DRender::QGeometryRenderer())
     , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
+    , m_bounding_min(QVector3D(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max()))
+    , m_bounding_max(QVector3D(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()))
 {
     size_t const npoint = world->npoint();
 
@@ -141,6 +143,8 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
     , m_geometry(new Qt3DCore::QGeometry())
     , m_renderer(new Qt3DRender::QGeometryRenderer())
     , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
+    , m_bounding_min(QVector3D(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max()))
+    , m_bounding_max(QVector3D(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()))
 {
     // Create segment pad
     std::shared_ptr<SegmentPadFp64> segments = world->segments()->clone();
