@@ -424,8 +424,8 @@ class SVGFileDialog(PilotFeature):
                 break
         return found
 
-    def _load_svg_file(self, file_name):
-        svgParser = _PathParser(file_name)
+    def _load_svg_file(self, filename):
+        svgParser = _PathParser(filename)
         svgParser.parse()
         Epaths = svgParser.get_EPaths()
 

@@ -85,7 +85,6 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
         }
     }
 
-    // prepare the vertice buffer in RVertices and RLines
     auto * vertices = new RVertices(world, m_scene);
     auto * lines = new RLines(world, m_scene);
 
@@ -96,7 +95,6 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
     float box_maxY = std::max(vertices->bounding_max().y(), lines->bounding_max().y());
     float box_maxZ = std::max(vertices->bounding_max().z(), lines->bounding_max().z());
 
-    // 1. need a helper function to compute the object's bounding box
     QVector3D bounding_min(box_minX, box_minY, box_minZ);
     QVector3D bounding_max(box_maxX, box_maxY, box_maxZ);
     QVector3D center = (bounding_min + bounding_max) * 0.5f;
@@ -105,12 +103,9 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
     float fov = 45.0f;
     float dist = radius / std::tan(qDegreesToRadians(fov) / 2.0f);
 
-    // adjust camera's position
-    Qt3DRender::QCamera * cam = camera();
-    cam->setPosition(center + QVector3D(0, 0, dist)); 
-    cam->setViewCenter(center); 
-    cam->setFarPlane(dist + radius * 2); 
-    cameraController()->setCamera(cam);
+    cameraController()->setPosition(center + QVector3D(0, 0, dist)); 
+    cameraController()->setViewCenter(center); 
+    cameraController()->setFarPlane(dist + radius * 2); 
 }
 
 void R3DWidget::closeAndDestroy()
