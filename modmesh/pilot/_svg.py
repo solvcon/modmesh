@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Yung-Yu Chen <yyc@solvcon.net>
+# Copyright (c) 2025, Jenny Yen <jenny35006@gmail.com>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -45,17 +45,17 @@ __all__ = [  # noqa: F822
 
 
 class EPath(object):
-    def __init__(self, dAttr, fillAttr):
+    def __init__(self, d_attr, fill_attr):
         """
         :param closedPaths: list of closed paths in a <path>.
         """
-        self.dAttr = dAttr
-        self.fillAttr = fillAttr
-        self.cmds = self.dAttr_parser()
-        self.closedPaths = self.cal_vertices()
+        self.d_attr = d_attr
+        self.fill_attr = fill_attr
+        self.cmds = self.parse_dattr()
+        self.closedPaths = self.calc_vertices()
 
-    def cal_arc2pnts(self, start_pt, end_pt, rx, ry, phi_deg, large_arc, sweep,
-                     steps=40):
+    def calc_arc2pnts(self, start_pt, end_pt, rx, ry, phi_deg, large_arc,
+                      sweep, steps=40):
         """
         Populate points for an arc curve.
 
@@ -129,7 +129,7 @@ class EPath(object):
 
         return np.column_stack((x_arc, y_arc))
 
-    def cal_vertices(self):
+    def calc_vertices(self):
         """
         path commands for `d` attribute:
             https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d
@@ -273,8 +273,8 @@ class EPath(object):
 
                 end_pt = Point(x_end, y_end, 0)
 
-                arc_pts = self.cal_arc2pnts(start_pt, end_pt, rx, ry, rotation,
-                                            Flarge_arc, Fsweep)
+                arc_pts = self.calc_arc2pnts(start_pt, end_pt, rx, ry,
+                                             rotation, Flarge_arc, Fsweep)
                 for i in range(arc_pts.shape[0]-1):
                     p_from = Point(arc_pts[i][0], arc_pts[i][1], 0)
                     p_to = Point(arc_pts[i+1][0], arc_pts[i+1][1], 0)
@@ -324,8 +324,8 @@ class EPath(object):
             last_cmd = cmd
         return (sp2d, cp2d)
 
-    def dAttr_parser(self):
-        d_attr = self.dAttr
+    def parse_dattr(self):
+        d_attr = self.d_attr
         tokens = re.findall(r'([MLCSHAZmlcshvaz])|(-?\d*\.?\d+)', d_attr)
 
         commands = []
@@ -346,20 +346,20 @@ class EPath(object):
 
         return commands
 
-    def getClosedPaths(self):
+    def get_closed_paths(self):
         return self.closedPaths
 
-    def getCmds(self):
+    def get_cmds(self):
         return self.cmds
 
 
-class _pathParser(object):
-    def __init__(self, filepath=None):
-        self.filepath = filepath
+class _PathParser(object):
+    def __init__(self, file_path=None):
+        self.file_path = file_path
         self.Epaths = None  # list of Epath
 
     def parse(self):
-        tree = ET.parse(self.filepath)
+        tree = ET.parse(self.file_path)
         root = tree.getroot()
 
         namespace = {'svg': 'http://www.w3.org/2000/svg'}
@@ -369,14 +369,17 @@ class _pathParser(object):
         for elmnt in pathElements:
             d_attr = elmnt.attrib.get('d', '')
             fill_attr = elmnt.attrib.get('fill', '')
-            paths.append(EPath(dAttr=d_attr, fillAttr=fill_attr))
+            paths.append(EPath(d_attr=d_attr, fill_attr=fill_attr))
         self.Epaths = paths
 
-    def getEPaths(self):
+    def get_EPaths(self):
         return self.Epaths
 
 
 class SVGFileDialog(PilotFeature):
+    """
+    An example svg file can be downloaded from: https://www.svgrepo.com/svg/530293/tree-2
+    """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self._diag = QtWidgets.QFileDialog()
@@ -421,15 +424,15 @@ class SVGFileDialog(PilotFeature):
                 break
         return found
 
-    def _load_svg_file(self, filename):
-        svgParser = _pathParser(filename)
+    def _load_svg_file(self, file_name):
+        svgParser = _PathParser(file_name)
         svgParser.parse()
-        Epaths = svgParser.getEPaths()
+        Epaths = svgParser.get_EPaths()
 
         sp2d = []
         cp2d = []
         for p in Epaths:
-            closedp = p.getClosedPaths()  # tuple
+            closedp = p.get_closed_paths()  # tuple
             sp2d.append(closedp[0])
             cp2d.append(closedp[1])
 
