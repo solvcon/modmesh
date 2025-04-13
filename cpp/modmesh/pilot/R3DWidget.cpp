@@ -85,28 +85,41 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
         }
     }
 
-    // create a standalone node first
+    // Create standalone Qt objects first
     auto vertices = std::make_unique<RVertices>(world, nullptr);
     auto lines = std::make_unique<RLines>(world, nullptr);
 
-    float box_minX = std::min(vertices->bounding_min().x(), lines->bounding_min().x());
-    float box_minY = std::min(vertices->bounding_min().y(), lines->bounding_min().y());
-    float box_minZ = std::min(vertices->bounding_min().z(), lines->bounding_min().z());
-    float box_maxX = std::max(vertices->bounding_max().x(), lines->bounding_max().x());
-    float box_maxY = std::max(vertices->bounding_max().y(), lines->bounding_max().y());
-    float box_maxZ = std::max(vertices->bounding_max().z(), lines->bounding_max().z());
+    // Calculate the bounding box by finding the minimum and maximum coordinates among all vertices
+    float box_min_x = std::min(vertices->bounding_min().x(), lines->bounding_min().x());
+    float box_min_y = std::min(vertices->bounding_min().y(), lines->bounding_min().y());
+    float box_min_z = std::min(vertices->bounding_min().z(), lines->bounding_min().z());
+    float box_max_x = std::max(vertices->bounding_max().x(), lines->bounding_max().x());
+    float box_max_y = std::max(vertices->bounding_max().y(), lines->bounding_max().y());
+    float box_max_z = std::max(vertices->bounding_max().z(), lines->bounding_max().z());
+    QVector3D bounding_min(box_min_x, box_min_y, box_min_z);
+    QVector3D bounding_max(box_max_x, box_max_y, box_max_z);
+    QVector3D box_center = (bounding_min + bounding_max) * 0.5f; // center point of the bounding box
 
-    QVector3D bounding_min(box_minX, box_minY, box_minZ);
-    QVector3D bounding_max(box_maxX, box_maxY, box_maxZ);
-    QVector3D center = (bounding_min + bounding_max) * 0.5f;
-    float radius = (bounding_max - bounding_min).length() * 0.5f;
-
+    /*
+    * Calculate the camera distance to fully view the bounding box based on 
+    * the vertical field of view (FOV) and the vertical extent of the box.
+    *
+    * Using the relation: tan(fov / 2) = (half of vertical size) / (distance to center),
+    * we can rearrange and solve for the distance:
+    *
+    *     (distance to center) = (half of vertical size) / tan(fov / 2)
+    *
+    * This gives the minimum distance from the box center along the view direction within 
+    * the specified FOV. After that, set the far plane properly to ensurce enclose whole 
+    * bounding box.
+    */
     float fov = 45.0f;
-    float dist = radius / std::tan(qDegreesToRadians(fov) / 2.0f);
+    float half_height = (bounding_max - bounding_min).length() * 0.5f;
+    float dist = half_height / std::tan(qDegreesToRadians(fov) / 2.0f);
 
-    cameraController()->setPosition(center + QVector3D(0, 0, dist));
-    cameraController()->setViewCenter(center);
-    cameraController()->setFarPlane(dist + radius * 2);
+    cameraController()->setPosition(box_center + QVector3D(0, 0, dist));
+    cameraController()->setViewCenter(box_center);
+    cameraController()->setFarPlane(dist + half_height * 2);
 
     // Attach into the scene, being part of existing Qt object tree
     vertices->setParent(m_scene);
