@@ -101,18 +101,18 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
     QVector3D box_center = (bounding_min + bounding_max) * 0.5f; // center point of the bounding box
 
     /*
-    * Calculate the camera distance to fully view the bounding box based on 
-    * the vertical field of view (FOV) and the vertical extent of the box.
-    *
-    * Using the relation: tan(fov / 2) = (half of vertical size) / (distance to center),
-    * we can rearrange and solve for the distance:
-    *
-    *     (distance to center) = (half of vertical size) / tan(fov / 2)
-    *
-    * This gives the minimum distance from the box center along the view direction within 
-    * the specified FOV. After that, set the far plane properly to ensurce enclose whole 
-    * bounding box.
-    */
+     * Calculate the camera distance to fully view the bounding box based on
+     * the vertical field of view (FOV) and the vertical extent of the box.
+     *
+     * Using the relation: tan(fov / 2) = (half of vertical size) / (distance to center),
+     * we can rearrange and solve for the distance:
+     *
+     *     (distance to center) = (half of vertical size) / tan(fov / 2)
+     *
+     * This gives the minimum distance from the box center along the view direction within
+     * the specified FOV. After that, set the far plane properly to ensurce enclose whole
+     * bounding box.
+     */
     float fov = 45.0f;
     float half_height = (bounding_max - bounding_min).length() * 0.5f;
     float dist = half_height / std::tan(qDegreesToRadians(fov) / 2.0f);
