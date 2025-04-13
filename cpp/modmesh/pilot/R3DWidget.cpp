@@ -85,11 +85,9 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
         }
     }
 
-    new RVertices(world, m_scene);
-    new RLines(world, m_scene);
-
-    auto vertices = std::make_shared<RVertices>(world, m_scene);
-    auto lines = std::make_shared<RLines>(world, m_scene);
+    // create a standalone node first
+    auto vertices = std::make_unique<RVertices>(world, nullptr);
+    auto lines = std::make_unique<RLines>(world, nullptr);
 
     float box_minX = std::min(vertices->bounding_min().x(), lines->bounding_min().x());
     float box_minY = std::min(vertices->bounding_min().y(), lines->bounding_min().y());
@@ -109,6 +107,14 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
     cameraController()->setPosition(center + QVector3D(0, 0, dist));
     cameraController()->setViewCenter(center);
     cameraController()->setFarPlane(dist + radius * 2);
+
+    // Attach into the scene, being part of existing Qt object tree
+    vertices->setParent(m_scene);
+    lines->setParent(m_scene);
+
+    // Release ownership from unique_ptr. Qt will delete them.
+    vertices.release();
+    lines.release();
 }
 
 void R3DWidget::closeAndDestroy()
