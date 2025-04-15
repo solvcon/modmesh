@@ -41,8 +41,6 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
     , m_geometry(new Qt3DCore::QGeometry())
     , m_renderer(new Qt3DRender::QGeometryRenderer())
     , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
-    , m_bounding_min(QVector3D(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max()))
-    , m_bounding_max(QVector3D(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()))
 {
     size_t const npoint = world->npoint();
 
@@ -86,8 +84,12 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
             vertices->setCount(npoint);
 
             m_geometry->addAttribute(vertices);
-            setBounding_min(min_pt);
-            setBounding_max(max_pt);
+
+            RScene * parent = qobject_cast<RScene *>(this->parent());
+            if (parent)
+            {
+                parent->setBoundingBox(min_pt, max_pt);
+            }
         }
 
         {
@@ -143,8 +145,6 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
     , m_geometry(new Qt3DCore::QGeometry())
     , m_renderer(new Qt3DRender::QGeometryRenderer())
     , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
-    , m_bounding_min(QVector3D(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max()))
-    , m_bounding_max(QVector3D(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest()))
 {
     // Create segment pad
     std::shared_ptr<SegmentPadFp64> segments = world->segments()->clone();
@@ -212,8 +212,11 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
 
             m_geometry->addAttribute(vertices);
 
-            setBounding_min(min_pt);
-            setBounding_max(max_pt);
+            RScene * parent = qobject_cast<RScene *>(this->parent());
+            if (parent)
+            {
+                parent->setBoundingBox(min_pt, max_pt);
+            }
         }
 
         {

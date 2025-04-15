@@ -31,6 +31,7 @@
 #include <modmesh/pilot/common_detail.hpp> // Must be the first include.
 
 #include <modmesh/universe/universe.hpp>
+#include <modmesh/pilot/R3DWidget.hpp>
 
 #include <Qt>
 #include <QWidget>
@@ -59,19 +60,11 @@ public:
 
     RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * parent = nullptr);
 
-    void setBounding_min(QVector3D min) { m_bounding_min = min; }
-    QVector3D bounding_min() const { return m_bounding_min; }
-
-    void setBounding_max(QVector3D max) { m_bounding_max = max; }
-    QVector3D bounding_max() const { return m_bounding_max; }
-
 private:
 
     Qt3DCore::QGeometry * m_geometry = nullptr;
     Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
     Qt3DRender::QMaterial * m_material = nullptr;
-    QVector3D m_bounding_min;
-    QVector3D m_bounding_max;
 
 }; /* end class RVertices */
 
@@ -86,19 +79,11 @@ public:
 
     void update();
 
-    void setBounding_min(QVector3D min) { m_bounding_min = min; }
-    QVector3D bounding_min() const { return m_bounding_min; }
-
-    void setBounding_max(QVector3D max) { m_bounding_max = max; }
-    QVector3D bounding_max() const { return m_bounding_max; }
-
 private:
 
     Qt3DCore::QGeometry * m_geometry = nullptr;
     Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
     Qt3DRender::QMaterial * m_material = nullptr;
-    QVector3D m_bounding_min;
-    QVector3D m_bounding_max;
 
 }; /* end class RLines */
 

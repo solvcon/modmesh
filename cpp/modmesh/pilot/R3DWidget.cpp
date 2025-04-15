@@ -85,20 +85,12 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
         }
     }
 
-    // Create standalone Qt objects first
-    auto vertices = std::make_unique<RVertices>(world, nullptr);
-    auto lines = std::make_unique<RLines>(world, nullptr);
+    new RLines(world, m_scene);
+    new RVertices(world, m_scene);
 
-    // Calculate the bounding box by finding the minimum and maximum coordinates among all vertices
-    float box_min_x = std::min(vertices->bounding_min().x(), lines->bounding_min().x());
-    float box_min_y = std::min(vertices->bounding_min().y(), lines->bounding_min().y());
-    float box_min_z = std::min(vertices->bounding_min().z(), lines->bounding_min().z());
-    float box_max_x = std::max(vertices->bounding_max().x(), lines->bounding_max().x());
-    float box_max_y = std::max(vertices->bounding_max().y(), lines->bounding_max().y());
-    float box_max_z = std::max(vertices->bounding_max().z(), lines->bounding_max().z());
-    QVector3D bounding_min(box_min_x, box_min_y, box_min_z);
-    QVector3D bounding_max(box_max_x, box_max_y, box_max_z);
-    QVector3D box_center = (bounding_min + bounding_max) * 0.5f; // center point of the bounding box
+    QVector3D box_min_pt = m_scene->minPoint(); // get the bottom-left corner of bounding box
+    QVector3D box_max_pt = m_scene->maxPoint(); // get the top-right corner of bounding box
+    QVector3D box_center = (box_min_pt + box_max_pt) * 0.5f; // center point of the bounding box
 
     /*
      * Calculate the camera distance to fully view the bounding box based on
@@ -114,20 +106,12 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
      * bounding box.
      */
     float fov = 45.0f;
-    float half_height = (bounding_max - bounding_min).length() * 0.5f;
+    float half_height = (box_max_pt - box_min_pt).length() * 0.5f;
     float dist = half_height / std::tan(qDegreesToRadians(fov) / 2.0f);
 
     cameraController()->setPosition(box_center + QVector3D(0, 0, dist));
     cameraController()->setViewCenter(box_center);
     cameraController()->setFarPlane(dist + half_height * 2);
-
-    // Attach into the scene, being part of existing Qt object tree
-    vertices->setParent(m_scene);
-    lines->setParent(m_scene);
-
-    // Release ownership from unique_ptr. Qt will delete them.
-    vertices.release();
-    lines.release();
 }
 
 void R3DWidget::closeAndDestroy()
