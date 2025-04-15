@@ -43,6 +43,7 @@ if _pcore.enable:
     from . import _mesh
     from . import _euler1d
     from . import _burgers1d
+    from . import _svg
 
 __all__ = [  # noqa: F822
     'controller',
@@ -69,6 +70,7 @@ class _Controller(metaclass=_Singleton):
         # Windows may "exited with code -1073740791."
         self._rmgr = None
         self.gmsh_dialog = None
+        self.svg_dialog = None
         self.sample_mesh = None
         self.recdom = None
         self.naca4airfoil = None
@@ -84,6 +86,7 @@ class _Controller(metaclass=_Singleton):
         self._rmgr.windowTitle = name
         self._rmgr.resize(w=size[0], h=size[1])
         self.gmsh_dialog = _mesh.GmshFileDialog(mgr=self._rmgr)
+        self.svg_dialog = _svg.SVGFileDialog(mgr=self._rmgr)
         self.sample_mesh = _mesh.SampleMesh(mgr=self._rmgr)
         self.recdom = _mesh.RectangularDomain(mgr=self._rmgr)
         self.naca4airfoil = airfoil.Naca4Airfoil(mgr=self._rmgr)
@@ -109,6 +112,7 @@ class _Controller(metaclass=_Singleton):
             menu.addAction(act)
 
         self.gmsh_dialog.populate_menu()
+        self.svg_dialog.populate_menu()
         self.sample_mesh.populate_menu()
         self.naca4airfoil.populate_menu()
         self.recdom.populate_menu()

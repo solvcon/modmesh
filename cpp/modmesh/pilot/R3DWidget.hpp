@@ -49,12 +49,16 @@ namespace modmesh
 class RScene
     : public Qt3DCore::QEntity
 {
+    Q_OBJECT
+
 public:
 
     explicit RScene(QNode * parent = nullptr)
         : QEntity(parent)
     {
         m_controller = new ROrbitCameraController(this);
+        m_min_pt = QVector3D(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+        m_max_pt = QVector3D(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
     }
 
     RCameraController * controller() const { return m_controller; }
@@ -69,9 +73,26 @@ public:
 
     void setFirstPersonCameraController() { setCameraController(new RFirstPersonCameraController(this)); }
 
+    void updateBoundingBox(QVector3D const & buttom_left, QVector3D const & top_right)
+    {
+        float bbox_min_x = std::min(buttom_left.x(), m_min_pt.x());
+        float bbox_min_y = std::min(buttom_left.y(), m_min_pt.y());
+        float bbox_min_z = std::min(buttom_left.z(), m_min_pt.z());
+        float bbox_max_x = std::max(top_right.x(), m_max_pt.x());
+        float bbox_max_y = std::max(top_right.y(), m_max_pt.y());
+        float bbox_max_z = std::max(top_right.z(), m_max_pt.z());
+
+        m_min_pt = QVector3D(bbox_min_x, bbox_min_y, bbox_min_z);
+        m_max_pt = QVector3D(bbox_max_x, bbox_max_y, bbox_max_z);
+    }
+    QVector3D minPoint() const { return m_min_pt; }
+    QVector3D maxPoint() const { return m_max_pt; }
+
 private:
 
     RCameraController * m_controller;
+    QVector3D m_min_pt;
+    QVector3D m_max_pt;
 
 }; /* end class RScene */
 

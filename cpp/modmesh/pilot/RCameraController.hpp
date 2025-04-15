@@ -165,6 +165,9 @@ public:
     QVector3D upVector() const { return camera()->upVector(); }
     void setUpVector(const QVector3D & value) const { camera()->setUpVector(value); }
 
+    float farPlane() const { return camera()->farPlane(); }
+    void setFarPlane(float value) const { camera()->setFarPlane(value); }
+
     void reset();
 
     QVector3D defaultPosition() const { return m_default_position; }

@@ -86,6 +86,31 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
     }
     new RVertices(world, m_scene);
     new RLines(world, m_scene);
+
+    QVector3D box_min_pt = m_scene->minPoint(); // get the bottom-left corner of bounding box
+    QVector3D box_max_pt = m_scene->maxPoint(); // get the top-right corner of bounding box
+    QVector3D box_center = (box_min_pt + box_max_pt) * 0.5f; // center point of the bounding box
+
+    /*
+     * Calculate the camera distance to fully view the bounding box based on
+     * the vertical field of view (FOV) and the vertical extent of the box.
+     *
+     * Using the relation: tan(fov / 2) = (half of vertical size) / (distance to center),
+     * we can rearrange and solve for the distance:
+     *
+     *     (distance to center) = (half of vertical size) / tan(fov / 2)
+     *
+     * This gives the minimum distance from the box center along the view direction within
+     * the specified FOV. After that, set the far plane properly to ensurce enclose whole
+     * bounding box.
+     */
+    float fov = 45.0f;
+    float half_height = (box_max_pt - box_min_pt).length() * 0.5f;
+    float dist = half_height / std::tan(qDegreesToRadians(fov) / 2.0f);
+
+    cameraController()->setPosition(box_center + QVector3D(0, 0, dist));
+    cameraController()->setViewCenter(box_center);
+    cameraController()->setFarPlane(dist + half_height * 2);
 }
 
 void R3DWidget::closeAndDestroy()

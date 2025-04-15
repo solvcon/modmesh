@@ -55,6 +55,9 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
             vertices->setVertexBaseType(Qt3DCore::QAttribute::Float);
             vertices->setVertexSize(3);
 
+            QVector3D min_pt(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+            QVector3D max_pt(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
+
             auto * buf = new Qt3DCore::QBuffer(m_geometry);
             {
                 QByteArray barray;
@@ -66,6 +69,13 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
                     sarr(i, 0) = v[0];
                     sarr(i, 1) = v[1];
                     sarr(i, 2) = v[2];
+
+                    min_pt.setX(std::min(min_pt.x(), sarr(i, 0)));
+                    min_pt.setY(std::min(min_pt.y(), sarr(i, 1)));
+                    min_pt.setZ(std::min(min_pt.z(), sarr(i, 2)));
+                    max_pt.setX(std::max(max_pt.x(), sarr(i, 0)));
+                    max_pt.setY(std::max(max_pt.y(), sarr(i, 1)));
+                    max_pt.setZ(std::max(max_pt.z(), sarr(i, 2)));
                 }
                 buf->setData(barray);
             }
@@ -74,6 +84,12 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
             vertices->setCount(npoint);
 
             m_geometry->addAttribute(vertices);
+
+            RScene * parent = qobject_cast<RScene *>(this->parent());
+            if (parent)
+            {
+                parent->updateBoundingBox(min_pt, max_pt);
+            }
         }
 
         {
@@ -154,6 +170,9 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
             vertices->setVertexBaseType(Qt3DCore::QAttribute::Float);
             vertices->setVertexSize(3);
 
+            QVector3D min_pt(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+            QVector3D max_pt(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
+
             auto * buf = new Qt3DCore::QBuffer(m_geometry);
             {
                 QByteArray barray;
@@ -166,10 +185,23 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
                     sarr(ipt, 0) = s.p0()[0];
                     sarr(ipt, 1) = s.p0()[1];
                     sarr(ipt, 2) = s.p0()[2];
+                    min_pt.setX(std::min(min_pt.x(), sarr(ipt, 0)));
+                    min_pt.setY(std::min(min_pt.y(), sarr(ipt, 1)));
+                    min_pt.setZ(std::min(min_pt.z(), sarr(ipt, 2)));
+                    max_pt.setX(std::max(max_pt.x(), sarr(ipt, 0)));
+                    max_pt.setY(std::max(max_pt.y(), sarr(ipt, 1)));
+                    max_pt.setZ(std::max(max_pt.z(), sarr(ipt, 2)));
                     ++ipt;
+
                     sarr(ipt, 0) = s.p1()[0];
                     sarr(ipt, 1) = s.p1()[1];
                     sarr(ipt, 2) = s.p1()[2];
+                    min_pt.setX(std::min(min_pt.x(), sarr(ipt, 0)));
+                    min_pt.setY(std::min(min_pt.y(), sarr(ipt, 1)));
+                    min_pt.setZ(std::min(min_pt.z(), sarr(ipt, 2)));
+                    max_pt.setX(std::max(max_pt.x(), sarr(ipt, 0)));
+                    max_pt.setY(std::max(max_pt.y(), sarr(ipt, 1)));
+                    max_pt.setZ(std::max(max_pt.z(), sarr(ipt, 2)));
                     ++ipt;
                 }
                 buf->setData(barray);
@@ -179,6 +211,12 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
             vertices->setCount(npoint);
 
             m_geometry->addAttribute(vertices);
+
+            RScene * parent = qobject_cast<RScene *>(this->parent());
+            if (parent)
+            {
+                parent->updateBoundingBox(min_pt, max_pt);
+            }
         }
 
         {

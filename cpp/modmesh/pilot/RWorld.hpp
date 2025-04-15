@@ -31,6 +31,7 @@
 #include <modmesh/pilot/common_detail.hpp> // Must be the first include.
 
 #include <modmesh/universe/universe.hpp>
+#include <modmesh/pilot/R3DWidget.hpp>
 
 #include <Qt>
 #include <QWidget>
