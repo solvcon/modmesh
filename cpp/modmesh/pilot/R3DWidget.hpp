@@ -73,7 +73,7 @@ public:
 
     void setFirstPersonCameraController() { setCameraController(new RFirstPersonCameraController(this)); }
 
-    void setBoundingBox(QVector3D buttom_left, QVector3D top_right)
+    void updateBoundingBox(QVector3D const & buttom_left, QVector3D const & top_right)
     {
         float bbox_min_x = std::min(buttom_left.x(), m_min_pt.x());
         float bbox_min_y = std::min(buttom_left.y(), m_min_pt.y());

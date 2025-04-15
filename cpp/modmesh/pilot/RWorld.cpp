@@ -88,7 +88,7 @@ RVertices::RVertices(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode *
             RScene * parent = qobject_cast<RScene *>(this->parent());
             if (parent)
             {
-                parent->setBoundingBox(min_pt, max_pt);
+                parent->updateBoundingBox(min_pt, max_pt);
             }
         }
 
@@ -215,7 +215,7 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
             RScene * parent = qobject_cast<RScene *>(this->parent());
             if (parent)
             {
-                parent->setBoundingBox(min_pt, max_pt);
+                parent->updateBoundingBox(min_pt, max_pt);
             }
         }
 
