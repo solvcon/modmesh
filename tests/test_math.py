@@ -130,6 +130,16 @@ class ComplexTB(mm.testing.TestBase):
         self.assert_allclose(result.real, self.real1 / realv)
         self.assert_allclose(result.imag, self.imag1 / realv)
 
+        result = realv / cplx
+
+        denominator = (self.real1 * self.real1 + self.imag1 *
+                       self.imag1)
+        expected_real = (self.real1 * realv) / denominator
+        expected_imag = (-self.imag1 * realv) / denominator
+
+        self.assert_allclose(result.real, expected_real)
+        self.assert_allclose(result.imag, expected_imag)
+
         cplx1 = self.mm_complex(self.real1, self.imag1)
         cplx2 = self.mm_complex(self.real2, self.imag2)
 
@@ -163,6 +173,9 @@ class ComplexTB(mm.testing.TestBase):
         expected_val = self.real1 ** 2 + self.imag1 ** 2
 
         self.assert_allclose(result, expected_val)
+
+    def test_dtype_verification(self):
+        self.assertEqual(self.dtype, self.expected_dtype)
 
     def test_complex_array(self):
         cplx = self.mm_complex(self.real1, self.imag1)
@@ -223,11 +236,8 @@ class ComplexFp32TC(ComplexTB, unittest.TestCase):
         self.imag2 = np.float32(3.4)
         self.realv = np.float32(2.0)
         self.dtype = mm.complex64.dtype()
+        self.expected_dtype = np.dtype('complex64')
         self.esize = 4 * 2
-
-    def test_dtype_verification(self):
-        expected_dtype = np.dtype('complex64')
-        self.assertEqual(self.dtype, expected_dtype)
 
 
 class ComplexFp64TC(ComplexTB, unittest.TestCase):
@@ -260,8 +270,5 @@ class ComplexFp64TC(ComplexTB, unittest.TestCase):
         self.imag2 = np.float64(7.0)
         self.realv = np.float64(2.0)
         self.dtype = mm.complex128.dtype()
+        self.expected_dtype = np.dtype('complex128')
         self.esize = 8 * 2
-
-    def test_dtype_verification(self):
-        expected_dtype = np.dtype('complex128')
-        self.assertEqual(self.dtype, expected_dtype)
