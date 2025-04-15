@@ -84,9 +84,8 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
             child->deleteLater();
         }
     }
-
-    new RLines(world, m_scene);
     new RVertices(world, m_scene);
+    new RLines(world, m_scene);
 
     QVector3D box_min_pt = m_scene->minPoint(); // get the bottom-left corner of bounding box
     QVector3D box_max_pt = m_scene->maxPoint(); // get the top-right corner of bounding box

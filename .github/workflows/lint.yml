@@ -102,6 +102,7 @@ jobs:
         modules: 'qt3d'
         setup-python: 'false'
         cache: true
+        archives: 'https://ftp.nluug.nl/pub/qtproject/online/'
 
     - name: dependency by pip
       run: |
