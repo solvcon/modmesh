@@ -31,355 +31,244 @@ import numpy as np
 import modmesh as mm
 
 
-class ComplexTC(unittest.TestCase, mm.testing.TestBase):
+class ComplexTB(mm.testing.TestBase):
 
-    def assert_allclose32(self, *args, **kw):
+    def test_construct_default(self):
+        cplx = self.mm_complex()
+        self.assert_allclose(cplx.real, 0.0)
+        self.assert_allclose(cplx.imag, 0.0)
+
+    def test_construct_random(self):
+        cplx = self.mm_complex(self.real1, self.imag1)
+        self.assert_allclose(cplx.real, self.real1)
+        self.assert_allclose(cplx.imag, self.imag1)
+
+    def test_operator_add(self):
+        cplx = self.mm_complex(self.real1, self.imag1)
+        realv = self.np_float(2.0)
+
+        result = cplx + realv
+
+        self.assert_allclose(result.real, self.real1 + realv)
+        self.assert_allclose(result.imag, self.imag1)
+
+        result = realv + cplx
+
+        self.assert_allclose(result.real, realv + cplx.real)
+        self.assert_allclose(result.imag, cplx.imag)
+
+        cplx1 = self.mm_complex(self.real1, self.imag1)
+        cplx2 = self.mm_complex(self.real2, self.imag2)
+
+        result = cplx1 + cplx2
+
+        expected_real = self.real1 + self.real2
+        expected_imag = self.imag1 + self.imag2
+
+        self.assert_allclose(result.real, expected_real)
+        self.assert_allclose(result.imag, expected_imag)
+
+    def test_operator_sub(self):
+        cplx = self.mm_complex(self.real1, self.imag1)
+        realv = self.np_float(2.0)
+
+        result = cplx - realv
+
+        self.assert_allclose(result.real, self.real1 - realv)
+        self.assert_allclose(result.imag, self.imag1)
+
+        result = realv - cplx
+
+        self.assert_allclose(result.real, realv - cplx.real)
+        self.assert_allclose(result.imag, -cplx.imag)
+
+        cplx1 = self.mm_complex(self.real1, self.imag1)
+        cplx2 = self.mm_complex(self.real2, self.imag2)
+
+        result = cplx1 - cplx2
+
+        expected_real = self.real1 - self.real2
+        expected_imag = self.imag1 - self.imag2
+
+        self.assert_allclose(result.real, expected_real)
+        self.assert_allclose(result.imag, expected_imag)
+
+    def test_operator_mul(self):
+        cplx = self.mm_complex(self.real1, self.imag1)
+        realv = self.np_float(2.0)
+
+        result = cplx * realv
+
+        self.assert_allclose(result.real, self.real1 * realv)
+        self.assert_allclose(result.imag, self.imag1 * realv)
+
+        result = realv * cplx
+        golden = self.mm_complex(realv, 0.0) * cplx
+
+        self.assert_allclose(result.real, golden.real)
+        self.assert_allclose(result.imag, golden.imag)
+
+        cplx1 = self.mm_complex(self.real1, self.imag1)
+        cplx2 = self.mm_complex(self.real2, self.imag2)
+
+        result = cplx1 * cplx2
+
+        expected_real = (self.real1 * self.real2
+                         - self.imag1 * self.imag2)
+        expected_imag = (self.real1 * self.imag2
+                         + self.imag1 * self.real2)
+
+        self.assert_allclose(result.real, expected_real)
+        self.assert_allclose(result.imag, expected_imag)
+
+    def test_operator_div(self):
+        cplx = self.mm_complex(self.real1, self.imag1)
+        realv = self.np_float(2.0)
+
+        result = cplx / realv
+
+        self.assert_allclose(result.real, self.real1 / realv)
+        self.assert_allclose(result.imag, self.imag1 / realv)
+
+        result = realv / cplx
+
+        denominator = (self.real1 * self.real1 + self.imag1 *
+                       self.imag1)
+        expected_real = (self.real1 * realv) / denominator
+        expected_imag = (-self.imag1 * realv) / denominator
+
+        self.assert_allclose(result.real, expected_real)
+        self.assert_allclose(result.imag, expected_imag)
+
+        cplx1 = self.mm_complex(self.real1, self.imag1)
+        cplx2 = self.mm_complex(self.real2, self.imag2)
+
+        result = cplx1 / cplx2
+
+        denominator = (self.real2 * self.real2 + self.imag2 *
+                       self.imag2)
+        expected_real = (self.real1 * self.real2 + self.imag1 *
+                         self.imag2) / denominator
+        expected_imag = (self.imag1 * self.real2 - self.real1 *
+                         self.imag2) / denominator
+
+        self.assert_allclose(result.real, expected_real)
+        self.assert_allclose(result.imag, expected_imag)
+
+    def test_operator_comparison(self):
+        cplx1 = self.mm_complex(self.real1, self.imag1)
+        cplx2 = self.mm_complex(self.real2, self.imag2)
+
+        norm1 = cplx1.norm()
+        norm2 = cplx2.norm()
+
+        self.assertEqual(cplx1 < cplx2, norm1 < norm2)
+        self.assertEqual(cplx1 > cplx2, norm1 > norm2)
+
+    def test_norm(self):
+        cplx = self.mm_complex(self.real1, self.imag1)
+
+        result = cplx.norm()
+
+        expected_val = self.real1 ** 2 + self.imag1 ** 2
+
+        self.assert_allclose(result, expected_val)
+
+    def test_dtype_verification(self):
+        self.assertEqual(self.dtype, self.expected_dtype)
+
+    def test_complex_array(self):
+        cplx = self.mm_complex(self.real1, self.imag1)
+        sarr = self.mm_simplearraycomplex(10)
+        sarr.fill(cplx)
+        ndarr = np.array(sarr, copy=False, dtype=self.dtype)
+
+        for i in range(10):
+            self.assertEqual(ndarr[i].real, self.real1)
+            self.assertEqual(ndarr[i].imag, self.imag1)
+
+        self.assertEqual(ndarr.dtype, self.dtype)
+
+        sarr = self.mm_simplearraycomplex(array=ndarr)
+
+        for i in range(10):
+            self.assertEqual(sarr[i].real, self.real1)
+            self.assertEqual(sarr[i].imag, self.imag1)
+
+        self.assertEqual(sarr.ndarray.dtype, ndarr.dtype)
+        self.assertEqual(10 * self.esize, sarr.nbytes)
+
+    def test_complex_conj(self):
+        cplx = self.mm_complex(self.real1, self.imag1)
+        cplx_conj = self.mm_complex(self.real1, -self.imag1)
+
+        self.assertEqual(cplx.conj().real, cplx_conj.real)
+        self.assertEqual(cplx.conj().imag, cplx_conj.imag)
+
+
+class ComplexFp32TC(ComplexTB, unittest.TestCase):
+
+    def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
             kw['rtol'] = 1.e-7
         return super().assert_allclose(*args, **kw)
 
-    def assert_allclose64(self, *args, **kw):
+    def mm_complex(self, real=None, imag=None):
+        if real is not None and imag is not None:
+            return mm.complex64(real, imag)
+        else:
+            return mm.complex64()
+
+    def mm_simplearraycomplex(self, size=None, array=None):
+        if size is not None:
+            return mm.SimpleArrayComplex64(size)
+        if array is not None:
+            return mm.SimpleArrayComplex64(array=array)
+        return mm.SimpleArrayComplex64(0)
+
+    def np_float(self, val):
+        return np.float32(val)
+
+    def setUp(self):
+        self.real1 = np.float32(0.7)
+        self.imag1 = np.float32(1.6)
+        self.real2 = np.float32(2.5)
+        self.imag2 = np.float32(3.4)
+        self.realv = np.float32(2.0)
+        self.dtype = mm.complex64.dtype()
+        self.expected_dtype = np.dtype('complex64')
+        self.esize = 4 * 2
+
+
+class ComplexFp64TC(ComplexTB, unittest.TestCase):
+
+    def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
             kw['rtol'] = 1.e-15
         return super().assert_allclose(*args, **kw)
 
+    def mm_complex(self, real=None, imag=None):
+        if real is not None and imag is not None:
+            return mm.complex128(real, imag)
+        else:
+            return mm.complex128()
+
+    def mm_simplearraycomplex(self, size=None, array=None):
+        if size is not None:
+            return mm.SimpleArrayComplex128(size)
+        if array is not None:
+            return mm.SimpleArrayComplex128(array=array)
+        return mm.SimpleArrayComplex128(0)
+
+    def np_float(self, val):
+        return np.float64(val)
+
     def setUp(self):
-        self.real1_32 = np.float32(0.7)
-        self.imag1_32 = np.float32(1.6)
-        self.real2_32 = np.float32(2.5)
-        self.imag2_32 = np.float32(3.4)
-
-        self.real1_64 = np.float64(4.3)
-        self.imag1_64 = np.float64(5.2)
-        self.real2_64 = np.float64(6.1)
-        self.imag2_64 = np.float64(7.0)
-
-    def test_construct_float32_default(self):
-        cplx = mm.complex64()
-        self.assert_allclose32(cplx.real, 0.0)
-        self.assert_allclose32(cplx.imag, 0.0)
-
-    def test_construct_float64_default(self):
-        cplx = mm.complex128()
-        self.assert_allclose64(cplx.real, 0.0)
-        self.assert_allclose64(cplx.imag, 0.0)
-
-    def test_construct_float32_random(self):
-        cplx = mm.complex64(self.real1_32, self.imag1_32)
-        self.assert_allclose32(cplx.real, self.real1_32)
-        self.assert_allclose32(cplx.imag, self.imag1_32)
-
-    def test_construct_float64_random(self):
-        cplx = mm.complex128(self.real1_64, self.imag1_64)
-        self.assert_allclose64(cplx.real, self.real1_64)
-        self.assert_allclose64(cplx.imag, self.imag1_64)
-
-    def test_operator_add_float32(self):
-        cplx = mm.complex64(self.real1_32, self.imag1_32)
-        realv = np.float32(2.0)
-
-        result = cplx + realv
-
-        self.assert_allclose32(result.real, self.real1_32 + realv)
-        self.assert_allclose32(result.imag, self.imag1_32)
-
-        result = realv + cplx
-
-        self.assert_allclose32(result.real, realv + cplx.real)
-        self.assert_allclose32(result.imag, cplx.imag)
-
-        cplx1 = mm.complex64(self.real1_32, self.imag1_32)
-        cplx2 = mm.complex64(self.real2_32, self.imag2_32)
-
-        result = cplx1 + cplx2
-
-        expected_real = self.real1_32 + self.real2_32
-        expected_imag = self.imag1_32 + self.imag2_32
-
-        self.assert_allclose32(result.real, expected_real)
-        self.assert_allclose32(result.imag, expected_imag)
-
-    def test_operator_add_float64(self):
-        cplx = mm.complex128(self.real1_64, self.imag1_64)
-        realv = np.float64(2.0)
-
-        result = cplx + realv
-
-        self.assert_allclose64(result.real, self.real1_64 + realv)
-        self.assert_allclose64(result.imag, self.imag1_64)
-
-        result = realv + cplx
-
-        self.assert_allclose64(result.real, realv + cplx.real)
-        self.assert_allclose64(result.imag, cplx.imag)
-
-        cplx1 = mm.complex128(self.real1_64, self.imag1_64)
-        cplx2 = mm.complex128(self.real2_64, self.imag2_64)
-
-        result = cplx1 + cplx2
-
-        expected_real = self.real1_64 + self.real2_64
-        expected_imag = self.imag1_64 + self.imag2_64
-
-        self.assert_allclose64(result.real, expected_real)
-        self.assert_allclose64(result.imag, expected_imag)
-
-    def test_operator_sub_float32(self):
-        cplx = mm.complex64(self.real1_32, self.imag1_32)
-        realv = np.float32(2.0)
-
-        result = cplx - realv
-
-        self.assert_allclose32(result.real, self.real1_32 - realv)
-        self.assert_allclose32(result.imag, self.imag1_32)
-
-        result = realv - cplx
-
-        self.assert_allclose32(result.real, realv - cplx.real)
-        self.assert_allclose32(result.imag, -cplx.imag)
-
-        cplx1 = mm.complex64(self.real1_32, self.imag1_32)
-        cplx2 = mm.complex64(self.real2_32, self.imag2_32)
-
-        result = cplx1 - cplx2
-
-        expected_real = self.real1_32 - self.real2_32
-        expected_imag = self.imag1_32 - self.imag2_32
-
-        self.assert_allclose32(result.real, expected_real)
-        self.assert_allclose32(result.imag, expected_imag)
-
-    def test_operator_sub_float64(self):
-        cplx = mm.complex128(self.real1_64, self.imag1_64)
-        realv = np.float64(2.0)
-
-        result = cplx - realv
-
-        self.assert_allclose64(result.real, self.real1_64 - realv)
-        self.assert_allclose64(result.imag, self.imag1_64)
-
-        result = realv - cplx
-
-        self.assert_allclose64(result.real, realv - cplx.real)
-        self.assert_allclose64(result.imag, -cplx.imag)
-
-        cplx1 = mm.complex128(self.real1_64, self.imag1_64)
-        cplx2 = mm.complex128(self.real2_64, self.imag2_64)
-
-        result = cplx1 - cplx2
-
-        expected_real = self.real1_64 - self.real2_64
-        expected_imag = self.imag1_64 - self.imag2_64
-
-        self.assert_allclose64(result.real, expected_real)
-        self.assert_allclose64(result.imag, expected_imag)
-
-    def test_operator_mul_float32(self):
-        cplx = mm.complex64(self.real1_32, self.imag1_32)
-        realv = np.float32(2.0)
-
-        result = cplx * realv
-
-        self.assert_allclose32(result.real, self.real1_32 * realv)
-        self.assert_allclose32(result.imag, self.imag1_32 * realv)
-
-        result = realv * cplx
-        golden = mm.complex64(realv, 0.0) * cplx
-
-        self.assert_allclose32(result.real, golden.real)
-        self.assert_allclose32(result.imag, golden.imag)
-
-        cplx1 = mm.complex64(self.real1_32, self.imag1_32)
-        cplx2 = mm.complex64(self.real2_32, self.imag2_32)
-
-        result = cplx1 * cplx2
-
-        expected_real = (self.real1_32 * self.real2_32
-                         - self.imag1_32 * self.imag2_32)
-        expected_imag = (self.real1_32 * self.imag2_32
-                         + self.imag1_32 * self.real2_32)
-
-        self.assert_allclose32(result.real, expected_real)
-        self.assert_allclose32(result.imag, expected_imag)
-
-    def test_operator_mul_float64(self):
-        cplx = mm.complex128(self.real1_64, self.imag1_64)
-        realv = np.float64(2.0)
-
-        result = cplx * realv
-
-        self.assert_allclose64(result.real, self.real1_64 * realv)
-        self.assert_allclose64(result.imag, self.imag1_64 * realv)
-
-        result = realv * cplx
-        golden = mm.complex128(realv, 0.0) * cplx
-
-        self.assert_allclose64(result.real, golden.real)
-        self.assert_allclose64(result.imag, golden.imag)
-
-        cplx1 = mm.complex128(self.real1_64, self.imag1_64)
-        cplx2 = mm.complex128(self.real2_64, self.imag2_64)
-
-        result = cplx1 * cplx2
-
-        expected_real = (self.real1_64 * self.real2_64
-                         - self.imag1_64 * self.imag2_64)
-        expected_imag = (self.real1_64 * self.imag2_64
-                         + self.imag1_64 * self.real2_64)
-
-        self.assert_allclose64(result.real, expected_real)
-        self.assert_allclose64(result.imag, expected_imag)
-
-    def test_operator_div_float32(self):
-        cplx = mm.complex64(self.real1_32, self.imag1_32)
-        realv = np.float32(2.0)
-
-        result = cplx / realv
-
-        self.assert_allclose32(result.real, self.real1_32 / realv)
-        self.assert_allclose32(result.imag, self.imag1_32 / realv)
-
-        cplx1 = mm.complex64(self.real1_32, self.imag1_32)
-        cplx2 = mm.complex64(self.real2_32, self.imag2_32)
-
-        result = cplx1 / cplx2
-
-        denominator = (self.real2_32 * self.real2_32 + self.imag2_32 *
-                       self.imag2_32)
-        expected_real = (self.real1_32 * self.real2_32 +
-                         self.imag1_32 * self.imag2_32) / denominator
-        expected_imag = (self.imag1_32 * self.real2_32 -
-                         self.real1_32 * self.imag2_32) / denominator
-
-        self.assert_allclose32(result.real, expected_real)
-        self.assert_allclose32(result.imag, expected_imag)
-
-    def test_operator_div_float64(self):
-        cplx = mm.complex128(self.real1_64, self.imag1_64)
-        realv = np.float64(2.0)
-
-        result = cplx / realv
-
-        self.assert_allclose64(result.real, self.real1_64 / realv)
-        self.assert_allclose64(result.imag, self.imag1_64 / realv)
-
-        cplx1 = mm.complex128(self.real1_64, self.imag1_64)
-        cplx2 = mm.complex128(self.real2_64, self.imag2_64)
-
-        result = cplx1 / cplx2
-
-        denominator = (self.real2_64 * self.real2_64 + self.imag2_64 *
-                       self.imag2_64)
-        expected_real = (self.real1_64 * self.real2_64 + self.imag1_64 *
-                         self.imag2_64) / denominator
-        expected_imag = (self.imag1_64 * self.real2_64 - self.real1_64 *
-                         self.imag2_64) / denominator
-
-        self.assert_allclose64(result.real, expected_real)
-        self.assert_allclose64(result.imag, expected_imag)
-
-    def test_operator_comparison_float32(self):
-        cplx1 = mm.complex64(self.real1_32, self.imag1_32)
-        cplx2 = mm.complex64(self.real2_32, self.imag2_32)
-
-        norm1 = cplx1.norm()
-        norm2 = cplx2.norm()
-
-        self.assertEqual(cplx1 < cplx2, norm1 < norm2)
-        self.assertEqual(cplx1 > cplx2, norm1 > norm2)
-
-    def test_operator_comparison_float64(self):
-        cplx1 = mm.complex128(self.real1_64, self.imag1_64)
-        cplx2 = mm.complex128(self.real2_64, self.imag2_64)
-
-        norm1 = cplx1.norm()
-        norm2 = cplx2.norm()
-
-        self.assertEqual(cplx1 < cplx2, norm1 < norm2)
-        self.assertEqual(cplx1 > cplx2, norm1 > norm2)
-
-    def test_norm_float32(self):
-        cplx = mm.complex64(self.real1_32, self.imag1_32)
-
-        result = cplx.norm()
-
-        expected_val = self.real1_32 ** 2 + self.imag1_32 ** 2
-
-        self.assert_allclose32(result, expected_val)
-
-    def test_norm_float64(self):
-        cplx = mm.complex128(self.real1_64, self.imag1_64)
-
-        result = cplx.norm()
-
-        expected_val = self.real1_64 ** 2 + self.imag1_64 ** 2
-
-        self.assert_allclose64(result, expected_val)
-
-    def test_dtype_verification_float32(self):
-        dtype = mm.complex64.dtype()
-        expected_dtype = np.dtype('complex64')
-
-        self.assertEqual(dtype, expected_dtype)
-
-    def test_dtype_verification_float64(self):
-        dtype = mm.complex128.dtype()
-        expected_dtype = np.dtype('complex128')
-
-        self.assertEqual(dtype, expected_dtype)
-
-    def test_complex_array_float32(self):
-        cplx = mm.complex64(self.real1_32, self.imag1_32)
-        sarr = mm.SimpleArrayComplex64(10)
-        sarr.fill(cplx)
-        ndarr = np.array(sarr, copy=False, dtype=mm.complex64.dtype())
-
-        for i in range(10):
-            self.assertEqual(ndarr[i].real, self.real1_32)
-            self.assertEqual(ndarr[i].imag, self.imag1_32)
-
-        self.assertEqual(ndarr.dtype, mm.complex64.dtype())
-
-        sarr = mm.SimpleArrayComplex64(array=ndarr)
-
-        for i in range(10):
-            self.assertEqual(sarr[i].real, self.real1_32)
-            self.assertEqual(sarr[i].imag, self.imag1_32)
-
-        self.assertEqual(sarr.ndarray.dtype, ndarr.dtype)
-        self.assertEqual(10 * 4 * 2, sarr.nbytes)
-
-    def test_complex_array_float64(self):
-        cplx = mm.complex128(self.real1_64, self.imag1_64)
-        sarr = mm.SimpleArrayComplex128(10)
-        sarr.fill(cplx)
-        ndarr = np.array(sarr, copy=False, dtype=mm.complex128.dtype())
-
-        for i in range(10):
-            self.assertEqual(ndarr[i].real, self.real1_64)
-            self.assertEqual(ndarr[i].imag, self.imag1_64)
-
-        self.assertEqual(ndarr.dtype, mm.complex128.dtype())
-
-        sarr = mm.SimpleArrayComplex128(array=ndarr)
-
-        for i in range(10):
-            self.assertEqual(sarr[i].real, self.real1_64)
-            self.assertEqual(sarr[i].imag, self.imag1_64)
-
-        self.assertEqual(sarr.ndarray.dtype, ndarr.dtype)
-        self.assertEqual(10 * 8 * 2, sarr.nbytes)
-
-    def test_complex_conj_float32(self):
-        cplx = mm.complex64(self.real1_32, self.imag1_32)
-        cplx_conj = mm.complex64(self.real1_32, -self.imag1_32)
-
-        self.assertEqual(cplx.conj().real, cplx_conj.real)
-        self.assertEqual(cplx.conj().imag, cplx_conj.imag)
-
-    def test_complex_conj_float64(self):
-        cplx = mm.complex128(self.real1_64, self.imag1_64)
-        cplx_conj = mm.complex128(self.real1_64, -self.imag1_64)
-
-        self.assertEqual(cplx.conj().real, cplx_conj.real)
-        self.assertEqual(cplx.conj().imag, cplx_conj.imag)
+        self.real1 = np.float64(4.3)
+        self.imag1 = np.float64(5.2)
+        self.real2 = np.float64(6.1)
+        self.imag2 = np.float64(7.0)
+        self.realv = np.float64(2.0)
+        self.dtype = mm.complex128.dtype()
+        self.expected_dtype = np.dtype('complex128')
+        self.esize = 8 * 2
