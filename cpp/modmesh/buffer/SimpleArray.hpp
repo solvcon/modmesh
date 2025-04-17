@@ -654,6 +654,37 @@ public:
         }
     }
 
+    void transpose()
+    {
+        std::reverse(m_shape.begin(), m_shape.end());
+        std::reverse(m_stride.begin(), m_stride.end());
+    }
+
+    void transpose(shape_type const & axis)
+    {
+        if (axis.size() != m_shape.size())
+        {
+            throw std::runtime_error("SimpleArray: axis size mismatch");
+        }
+        shape_type new_shape(m_shape.size(), -1);
+        shape_type new_stride(m_stride.size());
+        for (size_t it = 0; it < m_shape.size(); ++it)
+        {
+            if (axis[it] >= m_shape.size() || axis[it] < 0)
+            {
+                throw std::runtime_error("SimpleArray: axis out of range");
+            }
+            if (new_shape[it] != -1)
+            {
+                throw std::runtime_error("SimpleArray: axis already set");
+            }
+            new_shape[it] = m_shape[axis[it]];
+            new_stride[it] = m_stride[axis[it]];
+        }
+        m_shape = new_shape;
+        m_stride = new_stride;
+    }
+
     template <typename... Args>
     value_type const & operator()(Args... args) const { return *vptr(args...); }
     template <typename... Args>
