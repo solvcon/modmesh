@@ -415,9 +415,9 @@ protected:
 
         (*this)
             .def("update_cfl", &wrapped_type::update_cfl, py::arg("odd_plane"))
-            .def("march_half_so0", &wrapped_type::march_half_so0, py::arg("odd_plane"))
             .def("treat_boundary_so0", &wrapped_type::treat_boundary_so0)
             .def("treat_boundary_so1", &wrapped_type::treat_boundary_so1)
+            .def("march_half_so0", &wrapped_type::march_half_so0, py::arg("odd_plane"))
             .def("setup_march", &wrapped_type::setup_march);
 
 // clang-format off

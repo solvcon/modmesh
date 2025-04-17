@@ -1004,11 +1004,11 @@ template <typename ST, typename CE, typename SE>
 template <size_t ALPHA>
 inline void SolverBase<ST, CE, SE>::march_half1_alpha()
 {
-    march_half_so0(false);
     treat_boundary_so0();
+    treat_boundary_so1();
+    march_half_so0(false);
     update_cfl(true);
     march_half_so1_alpha<ALPHA>(false);
-    treat_boundary_so1();
 }
 
 template <typename ST, typename CE, typename SE>
