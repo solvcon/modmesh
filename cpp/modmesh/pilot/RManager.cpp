@@ -95,6 +95,17 @@ R3DWidget * RManager::add3DWidget()
     return viewer;
 }
 
+void RManager::toggleConsole()
+{
+    if (m_pycon)
+    {
+        if (m_pycon->isVisible())
+            m_pycon->hide();
+        else
+            m_pycon->show();
+    }
+}
+
 void RManager::setUpConsole()
 {
     m_pycon = new RPythonConsoleDockWidget(QString("Console"), m_mainWindow);

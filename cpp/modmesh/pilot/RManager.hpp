@@ -76,6 +76,8 @@ public:
 
     void quit() { m_core->quit(); }
 
+    void toggleConsole();
+
 private:
 
     RManager();
