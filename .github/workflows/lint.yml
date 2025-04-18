@@ -65,6 +65,16 @@ jobs:
     - name: event name
       run: |
         echo "github.event_name: ${{ github.event_name }}"
+    
+    # Cache the downloaded/extracted Qt bits
+    - name: Cache Qt download
+      uses: actions/cache@v3
+      with:
+        path: ${{ github.workspace }}/Qt
+        key: ${{ runner.os }}-qt-6.8.1-linux_gcc_64
+        # fallback to any previous Qt cache on this OS
+        restore-keys: |
+          ${{ runner.os }}-qt-6.8.1-
 
     - name: dependency by apt
       run: |
@@ -101,7 +111,7 @@ jobs:
         arch: 'linux_gcc_64'
         modules: 'qt3d'
         setup-python: 'false'
-        cache: true
+        cache: false
 
     - name: dependency by pip
       run: |
