@@ -147,6 +147,37 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 "reshape",
                 [](wrapped_type const & self, py::object const & shape)
                 { return self.reshape(make_shape(shape)); })
+            .def(
+                "transpose",
+                [](wrapped_type & self, py::object const & axis, bool const & inplace) -> py::object
+                {
+                    if (inplace)
+                    {
+                        if (axis.is_none())
+                        {
+                            self.transpose();
+                        }
+                        else
+                        {
+                            self.transpose(make_shape(axis));
+                        }
+                        return py::none();
+                    }
+
+                    wrapped_type self_copy(self);
+                    if (axis.is_none())
+                    {
+                        self_copy.transpose();
+                    }
+                    else
+                    {
+                        self_copy.transpose(make_shape(axis));
+                    }
+                    return py::cast(std::move(self_copy));
+                },
+                py::arg("axis") = py::none(),
+                py::arg("inplace") = true)
+
             .def_property_readonly("has_ghost", &wrapped_type::has_ghost)
             .def_property("nghost", &wrapped_type::nghost, &wrapped_type::set_nghost)
             .def_property_readonly("nbody", &wrapped_type::nbody)

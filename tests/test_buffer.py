@@ -222,6 +222,42 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual(sarr_ref[3], 3.0)
         self.assertEqual(sarr_clone[3], 2.0)  # should be the original value
 
+    def test_SimpleArray_transpose(self):
+        def check_identical(sarr, ndarr):
+            self.assertEqual(sarr.shape, ndarr.shape)
+            shape = sarr.shape
+            for idx1 in range(shape[0]):
+                for idx2 in range(shape[1]):
+                    for idx3 in range(shape[2]):
+                        for idx4 in range(shape[3]):
+                            ndnum = ndarr[idx1, idx2, idx3, idx4]
+                            sarrnum = sarr[idx1, idx2, idx3, idx4]
+                            self.assertEqual(ndnum, sarrnum)
+
+        ndarr = np.arange(2 * 3 * 4 * 5, dtype='float64')
+        ndarr = ndarr.reshape((2, 3, 4, 5))
+        ndarrT = ndarr.transpose()
+
+        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        noarr = sarr.transpose()
+        check_identical(sarr, ndarrT)
+        self.assertEqual(noarr, None)
+
+        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr = sarr.transpose(inplace=False)
+        check_identical(sarr, ndarrT)
+
+        ndarrT = ndarr.transpose(0, 3, 2, 1)
+
+        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        noarr = sarr.transpose((0, 3, 2, 1))
+        check_identical(sarr, ndarrT)
+        self.assertEqual(noarr, None)
+
+        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr = sarr.transpose((0, 3, 2, 1), inplace=False)
+        check_identical(sarr, ndarrT)
+
     def test_SimpleArray_ghost_1d(self):
 
         sarr = modmesh.SimpleArrayFloat64(4 * 3 * 2)
