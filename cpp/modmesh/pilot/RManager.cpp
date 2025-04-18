@@ -100,9 +100,13 @@ void RManager::toggleConsole()
     if (m_pycon)
     {
         if (m_pycon->isVisible())
+        {
             m_pycon->hide();
+        }
         else
+        {
             m_pycon->show();
+        }
     }
 }
 
