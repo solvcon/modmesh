@@ -135,13 +135,6 @@ class _Controller(metaclass=_Singleton):
         )
 
         _addAction(
-            menu=wm.addonMenu,
-            text="(To be deprecated) load bad_euler1d",
-            tip="Load bad_euler1d",
-            func="modmesh.app.bad_euler1d.load_app",
-        )
-
-        _addAction(
             menu=wm.windowMenu,
             text="(empty)",
             tip="(empty)",

@@ -21,7 +21,6 @@ _toload = [
     'Solver',
     'InviscidBurgersSolver',
     'LinearScalarSolver',
-    'BadEuler1DSolver',
 ]
 
 
