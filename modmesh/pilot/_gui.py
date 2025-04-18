@@ -99,9 +99,12 @@ class _Controller(metaclass=_Singleton):
     def populate_menu(self):
         wm = self._rmgr
 
-        def _addAction(menu, text, tip, func):
+        def _addAction(menu, text, tip, func, checkable=False, checked=False):
             act = QAction(text, wm.mainWindow)
             act.setStatusTip(tip)
+            act.setCheckable(checkable)
+            if checkable:
+                act.setChecked(checked)
             if callable(func):
                 act.triggered.connect(lambda *a: func())
             elif func:
@@ -143,9 +146,11 @@ class _Controller(metaclass=_Singleton):
 
         _addAction(
             menu=wm.windowMenu,
-            text="(empty)",
-            tip="(empty)",
-            func=None,
+            text="Console",
+            tip="Open / Close Console",
+            func=wm.toggleConsole,
+            checkable=True,
+            checked=True,
         )
 
 
