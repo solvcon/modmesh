@@ -30,6 +30,8 @@
 
 #include <modmesh/buffer/pymod/array_common.hpp>
 
+#include <cctype>
+
 namespace modmesh
 {
 
@@ -246,41 +248,32 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         }
 
         type += strlen("_modmesh.SimpleArray");
+        char ltype[16];
+        strncpy(ltype, type, 16);
 
-        if (strcmp(type, "Int8") == 0)
-        {
-            return pybind11::cast(self.take_along_axis(indices.cast<SimpleArrayInt8>()));
-        }
-        if (strcmp(type, "Int16") == 0)
-        {
-            return pybind11::cast(self.take_along_axis(indices.cast<SimpleArrayInt16>()));
-        }
-        if (strcmp(type, "Int32") == 0)
-        {
-            return pybind11::cast(self.take_along_axis(indices.cast<SimpleArrayInt32>()));
-        }
-        if (strcmp(type, "Int64") == 0)
-        {
-            return pybind11::cast(self.take_along_axis(indices.cast<SimpleArrayInt64>()));
-        }
-        if (strcmp(type, "Uint8") == 0)
-        {
-            return pybind11::cast(self.take_along_axis(indices.cast<SimpleArrayUint8>()));
-        }
-        if (strcmp(type, "Uint16") == 0)
-        {
-            return pybind11::cast(self.take_along_axis(indices.cast<SimpleArrayUint16>()));
-        }
-        if (strcmp(type, "Uint32") == 0)
-        {
-            return pybind11::cast(self.take_along_axis(indices.cast<SimpleArrayUint32>()));
-        }
-        if (strcmp(type, "Uint64") == 0)
-        {
-            return pybind11::cast(self.take_along_axis(indices.cast<SimpleArrayUint64>()));
-        }
+        ltype[0] = tolower(ltype[0]);
+        DataType dt(ltype);
 
+#define DECL_MM_TAKE_ALONG_AXIS_TYPED(_type)    \
+        case DataType::_type:                   \
+            return pybind11::cast(self.take_along_axis(indices.cast<SimpleArray ## _type>()));
+
+        switch (dt)
+        {
+        DECL_MM_TAKE_ALONG_AXIS_TYPED(Int8)
+        DECL_MM_TAKE_ALONG_AXIS_TYPED(Int16)
+        DECL_MM_TAKE_ALONG_AXIS_TYPED(Int32)
+        DECL_MM_TAKE_ALONG_AXIS_TYPED(Int64)
+        DECL_MM_TAKE_ALONG_AXIS_TYPED(Uint8)
+        DECL_MM_TAKE_ALONG_AXIS_TYPED(Uint16)
+        DECL_MM_TAKE_ALONG_AXIS_TYPED(Uint32)
+        DECL_MM_TAKE_ALONG_AXIS_TYPED(Uint64)
+        default:
+            break;
+        }
         return pybind11::cast(std::move(self));
+
+#undef DECL_MM_TAKE_ALONG_AXIS_TYPED 
     }
 
     static pybind11::object take_along_axis_neon(wrapped_type & self, pybind11::object const & indices)
