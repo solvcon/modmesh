@@ -254,26 +254,26 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         ltype[0] = tolower(ltype[0]);
         DataType dt(ltype);
 
-#define DECL_MM_TAKE_ALONG_AXIS_TYPED(_type)    \
-        case DataType::_type:                   \
-            return pybind11::cast(self.take_along_axis(indices.cast<SimpleArray ## _type>()));
+#define DECL_MM_TAKE_ALONG_AXIS_TYPED(_type) \
+    case DataType::_type:                    \
+        return pybind11::cast(self.take_along_axis(indices.cast<SimpleArray##_type>()));
 
         switch (dt)
         {
-        DECL_MM_TAKE_ALONG_AXIS_TYPED(Int8)
-        DECL_MM_TAKE_ALONG_AXIS_TYPED(Int16)
-        DECL_MM_TAKE_ALONG_AXIS_TYPED(Int32)
-        DECL_MM_TAKE_ALONG_AXIS_TYPED(Int64)
-        DECL_MM_TAKE_ALONG_AXIS_TYPED(Uint8)
-        DECL_MM_TAKE_ALONG_AXIS_TYPED(Uint16)
-        DECL_MM_TAKE_ALONG_AXIS_TYPED(Uint32)
-        DECL_MM_TAKE_ALONG_AXIS_TYPED(Uint64)
+            DECL_MM_TAKE_ALONG_AXIS_TYPED(Int8)
+            DECL_MM_TAKE_ALONG_AXIS_TYPED(Int16)
+            DECL_MM_TAKE_ALONG_AXIS_TYPED(Int32)
+            DECL_MM_TAKE_ALONG_AXIS_TYPED(Int64)
+            DECL_MM_TAKE_ALONG_AXIS_TYPED(Uint8)
+            DECL_MM_TAKE_ALONG_AXIS_TYPED(Uint16)
+            DECL_MM_TAKE_ALONG_AXIS_TYPED(Uint32)
+            DECL_MM_TAKE_ALONG_AXIS_TYPED(Uint64)
         default:
             break;
         }
         return pybind11::cast(std::move(self));
 
-#undef DECL_MM_TAKE_ALONG_AXIS_TYPED 
+#undef DECL_MM_TAKE_ALONG_AXIS_TYPED
     }
 
     static pybind11::object take_along_axis_neon(wrapped_type & self, pybind11::object const & indices)

@@ -38,58 +38,58 @@ namespace detail
 {
 
 #if defined(__aarch64__)
-#define vec_typ(typ, N) typ##x##N##_t
-#define t_typ(typ) typ##_t
+#define vec_typ(__type, __N) __type##x##__N##_t
+#define type_t(__type) __type##_t
 
-#define DECL_MM_IMPL_CHECK_IDX_RNG_NEON(typ, N_vec, typ_symbol)                                               \
-    template <>                                                                                               \
-    t_typ(typ) const * check_index_range<t_typ(typ)>(SimpleArray<t_typ(typ)> const & indices, size_t max_idx) \
-    {                                                                                                         \
-        check_type_range(t_typ(typ), max_idx);                                                                \
-                                                                                                              \
-        vec_typ(typ, N_vec) max_vec = vdupq_n_##typ_symbol(static_cast<t_typ(typ)>(max_idx));                 \
-        vec_typ(typ, N_vec) data_vec = {};                                                                    \
-        vec_typ(typ, N_vec) cmp_vec = {};                                                                     \
-                                                                                                              \
-        t_typ(typ) const * src = indices.begin();                                                             \
-        t_typ(typ) const * const end = indices.end();                                                         \
-                                                                                                              \
-        for (; src <= end - N_vec; src += N_vec)                                                              \
-        {                                                                                                     \
-            data_vec = vld1q_##typ_symbol(src);                                                               \
-            cmp_vec = vcgeq_##typ_symbol(data_vec, max_vec);                                                  \
-            if (vgetq_lane_##typ_symbol(cmp_vec, 0) ||                                                        \
-                vgetq_lane_##typ_symbol(cmp_vec, 1))                                                          \
-            {                                                                                                 \
-                goto OUT_OF_RANGE;                                                                            \
-            }                                                                                                 \
-        }                                                                                                     \
-                                                                                                              \
-        while (src < end)                                                                                     \
-        {                                                                                                     \
-            t_typ(typ) idx = *src;                                                                            \
-            if (idx < 0 || static_cast<size_t>(idx) > max_idx)                                                \
-            {                                                                                                 \
-                return src;                                                                                   \
-            }                                                                                                 \
-            ++src;                                                                                            \
-        }                                                                                                     \
-        return nullptr;                                                                                       \
-                                                                                                              \
-    OUT_OF_RANGE:                                                                                             \
-        constexpr size_t N = 16;                                                                              \
-        t_typ(typ) cmp_val[N] = {};                                                                           \
-        t_typ(typ) * cmp = cmp_val;                                                                           \
-        vst1q_##typ_symbol(cmp_val, cmp_vec);                                                                 \
-                                                                                                              \
-        for (size_t i = 0; i < N; ++i, ++cmp)                                                                 \
-        {                                                                                                     \
-            if (*cmp)                                                                                         \
-            {                                                                                                 \
-                return src + i;                                                                               \
-            }                                                                                                 \
-        }                                                                                                     \
-        return src;                                                                                           \
+#define DECL_MM_IMPL_CHECK_IDX_RNG_NEON(__type, N_vec, typ_symbol)                                                        \
+    template <>                                                                                                           \
+    type_t(__type) const * check_index_range<type_t(__type)>(SimpleArray<type_t(__type)> const & indices, size_t max_idx) \
+    {                                                                                                                     \
+        check_type_range(type_t(__type), max_idx);                                                                        \
+                                                                                                                          \
+        vec_typ(__type, N_vec) max_vec = vdupq_n_##typ_symbol(static_cast<type_t(__type)>(max_idx));                      \
+        vec_typ(__type, N_vec) data_vec = {};                                                                             \
+        vec_typ(__type, N_vec) cmp_vec = {};                                                                              \
+                                                                                                                          \
+        type_t(__type) const * src = indices.begin();                                                                     \
+        type_t(__type) const * const end = indices.end();                                                                 \
+                                                                                                                          \
+        for (; src <= end - N_vec; src += N_vec)                                                                          \
+        {                                                                                                                 \
+            data_vec = vld1q_##typ_symbol(src);                                                                           \
+            cmp_vec = vcgeq_##typ_symbol(data_vec, max_vec);                                                              \
+            if (vgetq_lane_##typ_symbol(cmp_vec, 0) ||                                                                    \
+                vgetq_lane_##typ_symbol(cmp_vec, 1))                                                                      \
+            {                                                                                                             \
+                goto OUT_OF_RANGE;                                                                                        \
+            }                                                                                                             \
+        }                                                                                                                 \
+                                                                                                                          \
+        while (src < end)                                                                                                 \
+        {                                                                                                                 \
+            type_t(__type) idx = *src;                                                                                    \
+            if (idx < 0 || static_cast<size_t>(idx) > max_idx)                                                            \
+            {                                                                                                             \
+                return src;                                                                                               \
+            }                                                                                                             \
+            ++src;                                                                                                        \
+        }                                                                                                                 \
+        return nullptr;                                                                                                   \
+                                                                                                                          \
+    OUT_OF_RANGE:                                                                                                         \
+        constexpr size_t N = 16;                                                                                          \
+        type_t(__type) cmp_val[N] = {};                                                                                   \
+        type_t(__type) * cmp = cmp_val;                                                                                   \
+        vst1q_##typ_symbol(cmp_val, cmp_vec);                                                                             \
+                                                                                                                          \
+        for (size_t i = 0; i < N; ++i, ++cmp)                                                                             \
+        {                                                                                                                 \
+            if (*cmp)                                                                                                     \
+            {                                                                                                             \
+                return src + i;                                                                                           \
+            }                                                                                                             \
+        }                                                                                                                 \
+        return src;                                                                                                       \
     }
 
 DECL_MM_IMPL_CHECK_IDX_RNG_NEON(uint8, 16, u8)
@@ -102,7 +102,7 @@ DECL_MM_IMPL_CHECK_IDX_RNG_NEON(int32, 4, s32)
 DECL_MM_IMPL_CHECK_IDX_RNG_NEON(int64, 2, s64)
 
 #undef DECL_MM_IMPL_CHECK_IDX_RNG_NEON
-#undef t_typ
+#undef type_t
 #undef vec_typ
 
 #endif /* defined(__aarch64__) */
