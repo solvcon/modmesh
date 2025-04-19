@@ -654,13 +654,14 @@ public:
         }
     }
 
-    void transpose()
+    SimpleArray transpose()
     {
         std::reverse(m_shape.begin(), m_shape.end());
         std::reverse(m_stride.begin(), m_stride.end());
+        return *this;
     }
 
-    void transpose(shape_type const & axis)
+    SimpleArray transpose(shape_type const & axis)
     {
         if (axis.size() != m_shape.size())
         {
@@ -683,6 +684,7 @@ public:
         }
         m_shape = new_shape;
         m_stride = new_stride;
+        return *this;
     }
 
     template <typename... Args>

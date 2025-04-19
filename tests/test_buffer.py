@@ -239,24 +239,31 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ndarrT = ndarr.transpose()
 
         sarr = modmesh.SimpleArrayFloat64(array=ndarr)
-        noarr = sarr.transpose()
+        sarr2 = sarr.transpose()
         check_identical(sarr, ndarrT)
-        self.assertEqual(noarr, None)
+        check_identical(sarr2, ndarrT)
 
         sarr = modmesh.SimpleArrayFloat64(array=ndarr)
-        sarr = sarr.transpose(inplace=False)
-        check_identical(sarr, ndarrT)
+        sarr2 = sarr.transpose(inplace=False)
+        check_identical(sarr, ndarr)
+        check_identical(sarr2, ndarrT)
+
+        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr2 = sarr.T
+        check_identical(sarr, ndarr)
+        check_identical(sarr2, ndarrT)
 
         ndarrT = ndarr.transpose(0, 3, 2, 1)
 
         sarr = modmesh.SimpleArrayFloat64(array=ndarr)
-        noarr = sarr.transpose((0, 3, 2, 1))
+        sarr2 = sarr.transpose(0, 3, 2, 1)
         check_identical(sarr, ndarrT)
-        self.assertEqual(noarr, None)
+        check_identical(sarr2, ndarrT)
 
         sarr = modmesh.SimpleArrayFloat64(array=ndarr)
-        sarr = sarr.transpose((0, 3, 2, 1), inplace=False)
-        check_identical(sarr, ndarrT)
+        sarr2 = sarr.transpose(0, 3, 2, 1, inplace=False)
+        check_identical(sarr, ndarr)
+        check_identical(sarr2, ndarrT)
 
     def test_SimpleArray_ghost_1d(self):
 
