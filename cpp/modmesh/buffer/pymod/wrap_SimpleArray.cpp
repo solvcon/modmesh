@@ -156,7 +156,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 },
                 py::kw_only(),
                 py::arg("inplace") = true)
-
+            .def_property_readonly(
+                "T",
+                [](wrapped_type & self)
+                { return wrapped_type(self).transpose(); })
             .def_property_readonly("has_ghost", &wrapped_type::has_ghost)
             .def_property("nghost", &wrapped_type::nghost, &wrapped_type::set_nghost)
             .def_property_readonly("nbody", &wrapped_type::nbody)

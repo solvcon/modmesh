@@ -248,6 +248,11 @@ class SimpleArrayBasicTC(unittest.TestCase):
         check_identical(sarr, ndarr)
         check_identical(sarr2, ndarrT)
 
+        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr2 = sarr.T
+        check_identical(sarr, ndarr)
+        check_identical(sarr2, ndarrT)
+
         ndarrT = ndarr.transpose(0, 3, 2, 1)
 
         sarr = modmesh.SimpleArrayFloat64(array=ndarr)
