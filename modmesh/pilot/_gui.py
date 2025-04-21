@@ -131,10 +131,17 @@ class _Controller(metaclass=_Singleton):
             )
 
         _addAction(
-            menu=wm.addonMenu,
+            menu=wm.oneMenu,
             text="(To be deprecated) load linear_wave",
             tip="Load linear_wave",
-            func="modmesh.app.linear_wave.load_app",
+            func="modmesh.onedim.linear_wave.load_app",
+        )
+
+        _addAction(
+            menu=wm.addonMenu,
+            text="(empty)",
+            tip="(empty)",
+            func=None,
         )
 
         _addAction(
