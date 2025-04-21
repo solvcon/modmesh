@@ -37,7 +37,8 @@ from .. import spacetime as libst
 
 
 def load_app():
-    cmd = "win, svr = mm.onedim.linear_wave.run_linear(animate=True, interval=10)"
+    cmd = "win, svr = mm.onedim.linear_wave.run_linear(animate=True, " \
+          "interval=10)"
     pilot.mgr.pycon.command = cmd
 
 
