@@ -148,191 +148,272 @@ class EPath(object):
         current_pos = start_pos
         last_control = None
         last_cmd = None
-
         for idx, (cmd, coords) in enumerate(commands):
             i = 0
             if cmd in ('M', 'm'):
-                # move to (x, y):
-                #   M x y
-                #   m dx dy (relative position to current position)
-                x, y = coords[i], coords[i+1]
+                # Move position:
+                #   command: [M|m] (relative position in lowercase command)
+                #   parameter: (dx, dy)+
+                dx, dy = coords[i:i+2]
+                x_cur, y_cur = current_pos[0], current_pos[1]
 
                 if cmd == 'M':
-                    start_pos[0] = x
-                    start_pos[1] = y
-                else:  # cmd is 'm', relative position
-                    start_pos[0] = (current_pos[0] + x)
-                    start_pos[1] = (current_pos[1] + y)
+                    start_pos[0] = dx
+                    start_pos[1] = dy
+                else:
+                    start_pos[0] = (x_cur + dx)
+                    start_pos[1] = (y_cur + dy)
 
                 current_pos = start_pos
                 i += 2
-                last_control = None
-            elif cmd in ('L', 'l'):
-                # line to (x, y):
-                #   L x y
-                #   l dx dy (relative position to current position)
-                x, y = coords[i], coords[i+1]
 
-                if cmd == 'L':  # absolute position
-                    x_end = x
-                    y_end = y
-                else:  # cmd is 'l', relative position
-                    x_end = current_pos[0] + x
-                    y_end = current_pos[1] + y
-
-                end = Point(x_end, y_end, 0)
-                current_pos = end
-
-                # add a Segment to SegmentPad
-                sp2d.append(Segment(current_pos, end))
-                i += 2
-                last_control = None
-            elif cmd == 'C':
-                # draw cubic bezier curve:
-                #   C ctl_x1, ctl_y1, ctl_x2, ctl_y2, endpos_x, endpos_y
-                x_1, y_1, x_2, y_2, x_end, y_end = coords[i:i+6]
-
-                p0 = current_pos
-                p1 = Point(x_1, y_1, 0)
-                p2 = Point(x_2, y_2, 0)
-                p3 = Point(x_end, y_end, 0)
-
-                # add a Curve to CurvePad with 4 control points
-                cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
-
-                current_pos = p3
-                last_control = p2
-                i += 6
-            elif cmd == 'c':
-                # draw cubic bezier curve with relative position:
-                #   c ctl_dx1, ctl_dy1, ctl_dx2, ctl_dy2, endpos_dx, endpos_dy
-                while i + 5 < len(coords):
-                    dx1, dy1, dx2, dy2, dx, dy = coords[i:i+6]
+                # implicit line-to command
+                while i + 1 < len(coords):
+                    dx, dy = coords[i:i+2]
                     x_cur, y_cur = current_pos[0], current_pos[1]
 
+                    x_end = dx
+                    y_end = dy
+                    if cmd == 'm':
+                        x_end = (x_cur + dx)
+                        y_end = (y_cur + dy)
+
+                    end = Point(x_end, y_end, 0)
+                    sp2d.append(Segment(current_pos, end))
+
+                    current_pos = end
+                    i += 2
+
+                last_control = None
+            elif cmd in ('L', 'l'):
+                # Draw lines from current position
+                #   command: [L|l] (relative position in lowercase command)
+                #   parameter: (dx1, dy1)+
+                while i + 1 < len(coords):
+                    dx, dy = coords[i:i+2]
+                    x_cur, y_cur = current_pos[0], current_pos[1]
+
+                    x_end = dx
+                    y_end = dy
+                    if cmd == 'l':
+                        x_end = x_cur + dx
+                        y_end = y_cur + dy
+
+                    end = Point(x_end, y_end, 0)
+                    sp2d.append(Segment(current_pos, end))
+
+                    current_pos = end
+                    last_control = None
+                    i += 2
+            elif cmd in ('H', 'h'):
+                # Draws horizontal lines
+                #   command: [H|h] (relative position in lowercase command)
+                #   parameter: (dx)+
+                while i < len(coords):
+                    dx = coords[i]
+
+                    new_x = dx
+                    old_y = current_pos[1]
+                    if cmd == 'h':
+                        new_x = current_pos[0] + dx
+
+                    end = Point(new_x, old_y, 0)
+                    sp2d.append(Segment(current_pos, end))
+
+                    current_pos = end
+                    last_control = None
+                    i += 1
+            elif cmd in ('V', 'v'):
+                # Draws a vertical line from current position
+                #   command: [V|v] (relative position in lowercase command)
+                #   parameter: (dy)+
+                while i < len(coords):
+                    dy = coords[i]
+                    old_x = current_pos[0]
+
+                    new_y = dy
+                    if cmd == 'v':
+                        new_y = current_pos[1] + dy
+
+                    end = Point(old_x, new_y, 0)
+                    sp2d.append(Segment(current_pos, end))
+
+                    current_pos = end
+                    last_control = None
+                    i += 1
+            elif cmd in ('C', 'c'):
+                # Draw cubic bezier curves
+                #   command: [C|c] (relative position in lowercase command)
+                #   parameter: (dx1, dy1, dx2, dy2, dx3, dy3)+
+                while i + 5 < len(coords):
+                    dx1, dy1, dx2, dy2, dx3, dy3 = coords[i:i+6]
+                    x_cur, y_cur = current_pos[0], current_pos[1]
+
+                    if cmd == 'C':
+                        x1 = dx1
+                        y1 = dy1
+                        x2 = dx2
+                        y2 = dy2
+                        x3 = dx3
+                        y3 = dy3
+                    else:
+                        x1 = x_cur + dx1
+                        y1 = y_cur + dy1
+                        x2 = x_cur + dx2
+                        y2 = y_cur + dy2
+                        x3 = x_cur + dx3
+                        y3 = y_cur + dy3
+
                     p0 = current_pos
-                    p1 = Point((x_cur + dx1), (y_cur + dy1), 0)
-                    p2 = Point((x_cur + dx2), (y_cur + dy2), 0)
-                    p3 = Point((x_cur + dx), (y_cur + dy), 0)
+                    p1 = Point(x1, y1, 0)
+                    p2 = Point(x2, y2, 0)
+                    p3 = Point(x3, y3, 0)
                     cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
 
                     current_pos = p3
                     last_control = p2
                     i += 6
-            elif cmd == 'S':
-                # draw a smooth curve (a shortcut version for cubic bezier)
-                x_2, y_2, x_end, y_end = coords[i:i+4]
-                x_cur, y_cur = current_pos[0], current_pos[1]
-
-                # add a Curve to CurvePad with 4 control points
-                if (last_cmd in ('C', 'c', 'S', 's')
-                        and last_control is not None):
-                    x_lastc, y_lastc = last_control[0], last_control[1]
-                    x_1, y_1 = (x_cur * 2 - x_lastc), (y_cur * 2 - y_lastc)
-                else:
-                    x_1, y_1 = x_cur, y_cur
-
-                p0 = current_pos
-                p1 = Point(x_1, y_1, 0)
-                p2 = Point(x_2, y_2, 0)
-                p3 = Point(x_end, y_end, 0)
-                cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
-
-                current_pos = p3
-                last_control = p2
-                i += 4
-            elif cmd == 's':
-                # draw a smooth curve with relative positions
-                # add a Curve to CurvePad with 4 control points
+            elif cmd in ('S', 's'):
+                # draw a smooth curves
+                # command: [S|s] (relative position in lowercase command)
+                # parameter: (dx2, dy2, dx3, dy3)+
                 while i + 3 < len(coords):
-                    dx2, dy2, dx, dy = coords[i:i+4]
+                    dx2, dy2, dx3, dy3 = coords[i:i+4]
                     x_cur, y_cur = current_pos[0], current_pos[1]
+
+                    if cmd == 'S':
+                        x2 = dx2
+                        y2 = dy2
+                        x3 = dx3
+                        y3 = dy3
+                    else:
+                        x2 = x_cur + dx2
+                        y2 = y_cur + dy2
+                        x3 = x_cur + dx3
+                        y3 = y_cur + dy3
 
                     if (last_cmd in ('C', 'c', 'S', 's')
                             and last_control is not None):
                         x_lastc, y_lastc = last_control[0], last_control[1]
-                        x_p1 = x_cur * 2 - x_lastc
-                        y_p1 = y_cur * 2 - y_lastc
+                        x1 = x_cur * 2 - x_lastc
+                        y1 = y_cur * 2 - y_lastc
                     else:
-                        x_p1, y_p1 = x_cur, y_cur
+                        x1, y1 = x_cur, y_cur
 
                     p0 = current_pos
-                    p1 = Point(x_p1, y_p1, 0)
-                    p2 = Point(x_cur + dx2, y_cur + dy2, 0)
-                    p3 = Point(x_cur + dx, y_cur + dy, 0)
+                    p1 = Point(x1, y1, 0)
+                    p2 = Point(x2, y2, 0)
+                    p3 = Point(x3, y3, 0)
                     cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
 
                     current_pos = p3
                     last_control = p2
                     i += 4
+            elif cmd in ('Q', 'q'):
+                # Draw quadratic bezier curves
+                #   command: [Q|q] (relative position in lowercase command)
+                #   parameter: (dx1, dy1, dx2, dy2)+
+                while i + 3 < len(coords):
+                    dx1, dy1, dx2, dy2 = coords[i:i+4]
+                    x_cur, y_cur = current_pos[0], current_pos[1]
+
+                    if cmd == 'Q':
+                        x1 = dx1
+                        y1 = dy1
+                        x2 = dx2
+                        y2 = dy2
+                    else:
+                        x1 = x_cur + dx1
+                        y1 = y_cur + dy1
+                        x2 = x_cur + dx2
+                        y2 = y_cur + dy2
+
+                    p0 = current_pos
+                    p1 = Point(x1, y1, 0)
+                    p2 = Point(x2, y2, 0)
+                    p3 = Point(x2, y2, 0)
+                    cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+                    current_pos = p3
+                    last_control = p1
+                    i += 4
+            elif cmd in ('T', 't'):
+                # Draw a smooth quadratic Bézier curve from the current point
+                # to the end point specified by `dx2 dy2`.
+                #   command: [T|t] (relative position in lowercase command)
+                #   parameter: (dx2, dy2)+
+                while i + 1 < len(coords):
+                    dx2, dy2 = coords[i:i+2]
+                    x_cur, y_cur = current_pos[0], current_pos[1]
+
+                    if cmd == 'T':
+                        x2 = dx2
+                        y2 = dy2
+                    else:
+                        x2 = x_cur + dx2
+                        y2 = y_cur + dy2
+
+                    if (last_cmd in ('Q', 'q', 'T', 't')
+                            and last_control is not None):
+                        x_lastc, y_lastc = last_control[0], last_control[1]
+                        x1 = x_cur * 2 - x_lastc
+                        y1 = y_cur * 2 - y_lastc
+                    else:
+                        x1, y1 = x_cur, y_cur
+
+                    p0 = current_pos
+                    p1 = Point(x1, y1, 0)
+                    p2 = Point(x2, y2, 0)
+                    p3 = Point(x2, y2, 0)
+                    cp2d.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+                    current_pos = p3
+                    last_control = p1
+                    i += 2
             elif cmd in ('A', 'a'):
-                # draw a elliptical arc curve
-                start_pt = current_pos
-                rx, ry, rotation, Flarge_arc, Fsweep, x, y = coords[i:i+7]
+                # Draw a elliptical arc curves
+                #   command: [A|a] (relative position in lowercase command)
+                #   parameter: (rx, ry, angle,
+                #               large-arc-flag, sweep-flag, dx, dy)+
+                while i + 6 < len(coords):
+                    start_pt = current_pos
+                    (rx, ry, rotation,
+                     Flarge_arc, Fsweep, dx, dy) = coords[i:i+7]
+                    x_cur, y_cur = current_pos[0], current_pos[1]
 
-                if cmd == 'A':  # absolute position
-                    x_end = x
-                    y_end = y
-                else:  # cmd is 'a', relative position
-                    x_end = current_pos[0] + x
-                    y_end = current_pos[1] + y
+                    x_end = dx
+                    y_end = dy
+                    if cmd == 'a':
+                        x_end = x_cur + dx
+                        y_end = y_cur + dy
 
-                end_pt = Point(x_end, y_end, 0)
+                    end = Point(x_end, y_end, 0)
+                    arc_pts = self.calc_arc2pnts(start_pt, end, rx, ry,
+                                                 rotation, Flarge_arc, Fsweep)
 
-                arc_pts = self.calc_arc2pnts(start_pt, end_pt, rx, ry,
-                                             rotation, Flarge_arc, Fsweep)
-                for i in range(arc_pts.shape[0]-1):
-                    p_from = Point(arc_pts[i][0], arc_pts[i][1], 0)
-                    p_to = Point(arc_pts[i+1][0], arc_pts[i+1][1], 0)
-                    sp2d.append(Segment(p_from, p_to))
+                    for p in range(arc_pts.shape[0]-1):
+                        p_from = Point(arc_pts[p][0], arc_pts[p][1], 0)
+                        p_to = Point(arc_pts[p+1][0], arc_pts[p+1][1], 0)
+                        sp2d.append(Segment(p_from, p_to))
 
-                current_pos = end_pt
-                i += 7
-            elif cmd in ('H', 'h'):
-                # draws a horizontal line
-                # for 'H', coord[0] is absolute position
-                # for 'h', coord[0] is relative position from current position
-
-                new_x = coords[i] if cmd == 'H' else current_pos[0] + coords[i]
-                old_y = current_pos[1]
-                end = Point(new_x, old_y, 0)
-
-                # add a Segment to SegmentPad
-                sp2d.append(Segment(current_pos, end))
-
-                current_pos = end
-                i += 1
-                last_control = None
-            elif cmd in ('V', 'v'):
-                # draws a vertical line from current position
-                # for 'V', coord[0] is absolute position
-                # for 'v', coord[0] is relative position from current position
-
-                old_x = current_pos[0]
-                new_y = coords[i] if cmd == 'V' else current_pos[1] + coords[i]
-                end = Point(old_x, new_y, 0)
-
-                # add a Segment to SegmentPad
-                sp2d.append(Segment(current_pos, end))
-
-                current_pos = end
-                i += 1
-                last_control = None
+                    current_pos = end
+                    i += 7
             elif cmd in ('Z', 'z'):
-                # form a closed path,
+                # closed path:
                 #   draw a straight line from the current position to
                 #   the first point in the path.
                 sp2d.append(Segment(current_pos, start_pos))
                 current_pos = start_pos
                 i += 1
             else:
+                # [TODO] raise a value error
                 i = len(coords)
             last_cmd = cmd
         return (sp2d, cp2d)
 
     def parse_dattr(self):
         d_attr = self.d_attr
-        tokens = re.findall(r'([MLCSHAZmlcshvaz])|(-?\d*\.?\d+)', d_attr)
+        tokens = re.findall(r'([MLCSHVAZQTmlcshvazqt])|(-?\d*\.?\d+)', d_attr)
 
         commands = []
         current_command = None
@@ -349,7 +430,6 @@ class EPath(object):
 
         if current_command:
             commands.append((current_command, current_coords))
-
         return commands
 
     def get_closed_paths(self):
@@ -376,6 +456,9 @@ class _PathParser(object):
             d_attr = elmnt.attrib.get('d', '')
             fill_attr = elmnt.attrib.get('fill', '')
             paths.append(EPath(d_attr=d_attr, fill_attr=fill_attr))
+        """ d_attr = pathElements[0].attrib.get('d', '')
+        fill_attr = pathElements[0].attrib.get('fill', '')
+        paths.append(EPath(d_attr=d_attr, fill_attr=fill_attr)) """
         self.Epaths = paths
 
     def get_EPaths(self):
@@ -434,26 +517,37 @@ class SVGFileDialog(PilotFeature):
         svgParser = _PathParser(filename)
         svgParser.parse()
         Epaths = svgParser.get_EPaths()
-
         sp2d = []
         cp2d = []
         for p in Epaths:
-            closedp = p.get_closed_paths()  # tuple
+            closedp = p.get_closed_paths()
             sp2d.append(closedp[0])
             cp2d.append(closedp[1])
 
         world = core.WorldFp64()
+        Point = core.Point3dFp64
 
         for i in range(len(sp2d)):
-            for s in sp2d[i]:
-                world.add_segment(s)
+            for j in range(len(sp2d[i])):
+                # the points are reflected to x-axis: (x, y) -> (x, -y)
+                world.add_segment(Point(sp2d[i].x0_at(j), -sp2d[i].y0_at(j)),
+                                  Point(sp2d[i].x1_at(j), -sp2d[i].y1_at(j)))
 
         for i in range(len(cp2d)):
-            for c in cp2d[i]:
-                b = world.add_bezier(p0=c[0],
-                                     p1=c[1],
-                                     p2=c[2],
-                                     p3=c[3])
+            for j in range(len(cp2d[i])):
+                # the points are reflected to x-axis: (x, y) -> (x, -y)
+                b = world.add_bezier(p0=Point(cp2d[i].x0_at(j),
+                                              -cp2d[i].y0_at(j),
+                                              0),
+                                     p1=Point(cp2d[i].x1_at(j),
+                                              -cp2d[i].y1_at(j),
+                                              0),
+                                     p2=Point(cp2d[i].x2_at(j),
+                                              -cp2d[i].y2_at(j),
+                                              0),
+                                     p3=Point(cp2d[i].x3_at(j),
+                                              -cp2d[i].y3_at(j),
+                                              0))
                 b.sample(nlocus=5)
 
         wid = self._mgr.add3DWidget()
