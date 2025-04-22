@@ -67,7 +67,6 @@ def main():
         packages=[
             'modmesh',
             'modmesh.onedim',
-            'modmesh.app',
             'modmesh.pilot',
             'modmesh.pilot.airfoil',
         ],
