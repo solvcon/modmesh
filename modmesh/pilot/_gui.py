@@ -138,13 +138,6 @@ class _Controller(metaclass=_Singleton):
         )
 
         _addAction(
-            menu=wm.addonMenu,
-            text="(empty)",
-            tip="(empty)",
-            func=None,
-        )
-
-        _addAction(
             menu=wm.windowMenu,
             text="Console",
             tip="Open / Close Console",

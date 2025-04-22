@@ -353,7 +353,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
             .def_property_readonly("viewMenu", &wrapped_type::viewMenu)
             .def_property_readonly("oneMenu", &wrapped_type::oneMenu)
             .def_property_readonly("meshMenu", &wrapped_type::meshMenu)
-            .def_property_readonly("addonMenu", &wrapped_type::addonMenu)
             .def_property_readonly("windowMenu", &wrapped_type::windowMenu)
             .def(
                 "quit",
