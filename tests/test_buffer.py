@@ -223,7 +223,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual(sarr_clone[3], 2.0)  # should be the original value
 
     def test_SimpleArray_transpose(self):
-        def check_identical(sarr, ndarr):
+        def check_equal(sarr, ndarr):
             self.assertEqual(sarr.shape, ndarr.shape)
             shape = sarr.shape
             for idx1 in range(shape[0]):
@@ -239,24 +239,36 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ndarrT = ndarr.transpose()
 
         sarr = modmesh.SimpleArrayFloat64(array=ndarr)
-        noarr = sarr.transpose()
-        check_identical(sarr, ndarrT)
-        self.assertEqual(noarr, None)
+        sarr2 = sarr.transpose()
+        check_equal(sarr, ndarrT)
+        check_equal(sarr2, ndarrT)
+        self.assertEqual(memoryview(sarr), memoryview(sarr2))
 
         sarr = modmesh.SimpleArrayFloat64(array=ndarr)
-        sarr = sarr.transpose(inplace=False)
-        check_identical(sarr, ndarrT)
+        sarr2 = sarr.transpose(inplace=False)
+        check_equal(sarr, ndarr)
+        check_equal(sarr2, ndarrT)
+        self.assertNotEqual(memoryview(sarr), memoryview(sarr2))
+
+        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr2 = sarr.T
+        check_equal(sarr, ndarr)
+        check_equal(sarr2, ndarrT)
+        self.assertNotEqual(memoryview(sarr), memoryview(sarr2))
 
         ndarrT = ndarr.transpose(0, 3, 2, 1)
 
         sarr = modmesh.SimpleArrayFloat64(array=ndarr)
-        noarr = sarr.transpose((0, 3, 2, 1))
-        check_identical(sarr, ndarrT)
-        self.assertEqual(noarr, None)
+        sarr2 = sarr.transpose((0, 3, 2, 1))
+        check_equal(sarr, ndarrT)
+        check_equal(sarr2, ndarrT)
+        self.assertEqual(memoryview(sarr), memoryview(sarr2))
 
         sarr = modmesh.SimpleArrayFloat64(array=ndarr)
-        sarr = sarr.transpose((0, 3, 2, 1), inplace=False)
-        check_identical(sarr, ndarrT)
+        sarr2 = sarr.transpose((0, 3, 2, 1), inplace=False)
+        check_equal(sarr, ndarr)
+        check_equal(sarr2, ndarrT)
+        self.assertNotEqual(memoryview(sarr), memoryview(sarr2))
 
     def test_SimpleArray_ghost_1d(self):
 
