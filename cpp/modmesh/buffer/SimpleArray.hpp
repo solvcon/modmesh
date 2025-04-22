@@ -30,6 +30,7 @@
 
 #include <modmesh/buffer/ConcreteBuffer.hpp>
 #include <modmesh/math/math.hpp>
+#include <modmesh/simd/neon.hpp>
 
 #include <limits>
 #include <stdexcept>
@@ -972,14 +973,14 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
 }
 
 #if defined(__aarch64__)
-#define check_type_range(typ, max_val)                              \
-    do {                                                            \
-        constexpr typ __type_max = std::numeric_limits<typ>::max(); \
-        constexpr typ __type_min = std::numeric_limits<typ>::min(); \
-        if (max_val >= __type_max && __type_min == 0)               \
-        {                                                           \
-            return nullptr;                                         \
-        }                                                           \
+#define check_type_range(_type, max_val)                                \
+    do {                                                                \
+        constexpr _type __type_max = std::numeric_limits<_type>::max(); \
+        constexpr _type __type_min = std::numeric_limits<_type>::min(); \
+        if (max_val >= __type_max && __type_min == 0)                   \
+        {                                                               \
+            return nullptr;                                             \
+        }                                                               \
     } while (0)
 
 template <typename T>
@@ -1001,9 +1002,9 @@ T const * detail::check_index_range(SimpleArray<T> const & indices, size_t max_i
     return nullptr;
 }
 
-#define DECL_MM_DECL_CHECK_IDX_RNG_NEON(typ) \
-    template <>                              \
-    typ const * detail::check_index_range<typ>(SimpleArray<typ> const & indices, size_t max_idx)
+#define DECL_MM_DECL_CHECK_IDX_RNG_NEON(_type) \
+    template <>                                \
+    _type const * detail::check_index_range<_type>(SimpleArray<_type> const & indices, size_t max_idx)
 
 DECL_MM_DECL_CHECK_IDX_RNG_NEON(uint8_t);
 DECL_MM_DECL_CHECK_IDX_RNG_NEON(uint16_t);
