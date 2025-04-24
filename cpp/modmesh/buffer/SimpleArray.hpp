@@ -226,7 +226,7 @@ public:
     template <typename I>
     A take_along_axis(SimpleArray<I> const & indices);
     template <typename I>
-    A take_along_axis_neon(SimpleArray<I> const & indices);
+    A take_along_axis_simd(SimpleArray<I> const & indices);
 
 }; /* end class SimpleArrayMixinSort */
 
@@ -996,7 +996,7 @@ void detail::buffer_cpy(T * dest, T const * data, I const * begin, I const * con
 
 template <typename A, typename T>
 template <typename I>
-A detail::SimpleArrayMixinSort<A, T>::take_along_axis_neon(SimpleArray<I> const & indices)
+A detail::SimpleArrayMixinSort<A, T>::take_along_axis_simd(SimpleArray<I> const & indices)
 {
     static_assert(std::is_integral_v<I>, "I must be integral type");
     auto athis = static_cast<A *>(this);
@@ -1015,7 +1015,7 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis_neon(SimpleArray<I> const 
         shape_type const & stride = indices.stride();
         const size_t ndim = stride.size();
         Formatter err_msg;
-        err_msg << "SimpleArray::take_along_axis(): indices[" << offset / stride[0];
+        err_msg << "SimpleArray::take_along_axis_simd(): indices[" << offset / stride[0];
         offset %= stride[0];
         for (size_t dim = 1; dim < ndim; ++dim)
         {

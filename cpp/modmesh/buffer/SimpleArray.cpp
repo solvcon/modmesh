@@ -36,7 +36,6 @@ namespace modmesh
 
 namespace detail
 {
-
 struct DataTypeHasher
 {
     // The std::hash<std::string> is not deterministic, so we implement our own.

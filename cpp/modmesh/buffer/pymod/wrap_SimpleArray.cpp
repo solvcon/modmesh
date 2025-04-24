@@ -30,8 +30,6 @@
 
 #include <modmesh/buffer/pymod/array_common.hpp>
 
-#include <cctype>
-
 namespace modmesh
 {
 
@@ -231,7 +229,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 [](wrapped_type & self)
                 { return py::cast(self.argsort()); })
             .def("take_along_axis", &take_along_axis)
-            .def("take_along_axis_neon", &take_along_axis_neon)
+            .def("take_along_axis_simd", &take_along_axis_simd)
             //
             ;
 
@@ -273,7 +271,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
 #undef DECL_MM_TAKE_ALONG_AXIS_TYPED
     }
 
-    static pybind11::object take_along_axis_neon(wrapped_type & self, pybind11::object const & indices)
+    static pybind11::object take_along_axis_simd(wrapped_type & self, pybind11::object const & indices)
     {
         std::string py_typename(pybind11::detail::obj_class_name(indices.ptr()));
         const std::size_t found = py_typename.find("_modmesh.SimpleArray");
