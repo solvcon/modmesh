@@ -50,6 +50,9 @@ $(SETUPROOT)/BufferExpander.o: $(SETUPROOT)/modmesh/buffer/BufferExpander.cpp Ma
 $(SETUPROOT)/SimpleArray.o: $(SETUPROOT)/modmesh/buffer/SimpleArray.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
+$(SETUPROOT)/neon_wrap.o: $(SETUPROOT)/modmesh/simd/neon/neon_wrap.cpp Makefile
+	c++ $(CFLAGS) -c $< -o $@
+
 $(SETUPROOT)/modbuf.o: modbuf.cpp
 	c++ $(CFLAGS) -c $< -o $@
 
@@ -60,6 +63,7 @@ OBJS = \
 	$(SETUPROOT)/wrap_SimpleArray.o \
 	$(SETUPROOT)/wrap_SimpleArrayPlex.o \
 	$(SETUPROOT)/buffer_pymod.o \
+	$(SETUPROOT)/neon_wrap.o \
 	$(SETUPROOT)/modbuf.o
 
 $(MODPATH): Makefile $(OBJS)
@@ -79,5 +83,6 @@ copy:
 	rm -rf $(SETUPROOT)/modmesh/toggle/pymod
 	cp -a $(MMROOT)/cpp/modmesh/math $(SETUPROOT)/modmesh/math
 	rm -rf $(SETUPROOT)/modmesh/math/pymod
+	cp -a $(MMROOT)/cpp/modmesh/simd $(SETUPROOT)/modmesh/simd
 	cp $(MMROOT)/cpp/modmesh/base.hpp $(SETUPROOT)/modmesh/
 	find $(SETUPROOT) -name CMakeLists.txt -delete

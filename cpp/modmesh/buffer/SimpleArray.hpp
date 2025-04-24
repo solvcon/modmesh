@@ -30,17 +30,13 @@
 
 #include <modmesh/buffer/ConcreteBuffer.hpp>
 #include <modmesh/math/math.hpp>
-#include <modmesh/simd/neon.hpp>
+#include <modmesh/simd/simd.hpp>
 
 #include <limits>
 #include <stdexcept>
 #include <functional>
 #include <numeric>
 #include <algorithm>
-
-#if defined(__aarch64__)
-#include <arm_neon.h>
-#endif /* defined(__aarch64__) */
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -229,10 +225,8 @@ public:
     SimpleArray<uint64_t> argsort(void);
     template <typename I>
     A take_along_axis(SimpleArray<I> const & indices);
-#if defined(__aarch64__)
     template <typename I>
     A take_along_axis_neon(SimpleArray<I> const & indices);
-#endif /* defined(__aarch64__) */
 
 }; /* end class SimpleArrayMixinSort */
 
@@ -249,15 +243,11 @@ void SimpleArrayMixinSort<A, T>::sort(void)
     std::sort(athis->begin(), athis->end());
 }
 
-#if defined(__aarch64__)
-
 template <typename T, typename I>
 void buffer_cpy(T * dest, T const * data, I const * begin, I const * const end);
 
 template <typename T>
 T const * check_index_range(SimpleArray<T> const & indices, size_t max_idx);
-
-#endif /* defined(__aarch64__) */
 
 template <typename A, typename T>
 class SimpleArrayMixinSearch
@@ -972,15 +962,14 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
     return ret;
 }
 
-#if defined(__aarch64__)
-#define check_type_range(_type, max_val)                                \
-    do {                                                                \
-        constexpr _type __type_max = std::numeric_limits<_type>::max(); \
-        constexpr _type __type_min = std::numeric_limits<_type>::min(); \
-        if (max_val >= __type_max && __type_min == 0)                   \
-        {                                                               \
-            return nullptr;                                             \
-        }                                                               \
+#define check_type_range(DataType, MaxVal)                                     \
+    do {                                                                       \
+        constexpr DataType DataTypeMax = std::numeric_limits<DataType>::max(); \
+        constexpr DataType DataTypeMin = std::numeric_limits<DataType>::min(); \
+        if (MaxVal >= DataTypeMax && DataTypeMin == 0)                         \
+        {                                                                      \
+            return nullptr;                                                    \
+        }                                                                      \
     } while (0)
 
 template <typename T>
@@ -988,34 +977,8 @@ T const * detail::check_index_range(SimpleArray<T> const & indices, size_t max_i
 {
     check_type_range(T, max_idx);
 
-    T const * src = indices.begin();
-    T const * const end = indices.end();
-    while (src < end)
-    {
-        T const idx = *src;
-        if (idx < 0 || idx > max_idx)
-        {
-            return src;
-        }
-        ++src;
-    }
-    return nullptr;
+    return simd::check_between<T>(indices.begin(), indices.end(), 0, max_idx);
 }
-
-#define DECL_MM_DECL_CHECK_IDX_RNG_NEON(_type) \
-    template <>                                \
-    _type const * detail::check_index_range<_type>(SimpleArray<_type> const & indices, size_t max_idx)
-
-DECL_MM_DECL_CHECK_IDX_RNG_NEON(uint8_t);
-DECL_MM_DECL_CHECK_IDX_RNG_NEON(uint16_t);
-DECL_MM_DECL_CHECK_IDX_RNG_NEON(uint32_t);
-DECL_MM_DECL_CHECK_IDX_RNG_NEON(uint64_t);
-DECL_MM_DECL_CHECK_IDX_RNG_NEON(int8_t);
-DECL_MM_DECL_CHECK_IDX_RNG_NEON(int16_t);
-DECL_MM_DECL_CHECK_IDX_RNG_NEON(int32_t);
-DECL_MM_DECL_CHECK_IDX_RNG_NEON(int64_t);
-
-#undef DECL_MM_DECL_CHECK_IDX_RNG_NEON
 
 template <typename T, typename I>
 void detail::buffer_cpy(T * dest, T const * data, I const * begin, I const * const end)
@@ -1044,6 +1007,7 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis_neon(SimpleArray<I> const 
     }
 
     size_t max_idx = athis->shape()[0];
+
     I const * oor_ptr = check_index_range(indices, max_idx);
     if (oor_ptr != nullptr)
     {
@@ -1072,7 +1036,6 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis_neon(SimpleArray<I> const 
     detail::buffer_cpy(dest, data, src, end);
     return ret;
 }
-#endif /* defined(__aarch64__) */
 
 template <typename S>
 using is_simple_array = std::is_same<
