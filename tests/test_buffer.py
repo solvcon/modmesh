@@ -983,6 +983,29 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         self.assertEqual(sarr.sum(), True)
 
 
+class SimpleArraySearchTC(unittest.TestCase):
+
+    def test_argminmax(self):
+        # test 1-D data
+        data = [1, 3, 5, 7, 9]
+        narr = np.array(data, dtype='uint64')
+        sarr = modmesh.SimpleArrayUint64(array=narr)
+
+        self.assertEqual(sarr.argmin(), 0)
+        self.assertEqual(sarr.argmax(), 4)
+        self.assertEqual(narr.argmin(), sarr.argmin())
+        self.assertEqual(narr.argmax(), sarr.argmax())
+
+        # test N-D data
+        data = [[1, 3, 5, 7, 9], [2, 4, 6, 8, 10], [1, 10, 1, 10, 1]]
+        narr = np.array(data, dtype='float64')
+        sarr = modmesh.SimpleArrayFloat64(array=narr)
+        self.assertEqual(sarr.argmin(), 0)
+        self.assertEqual(sarr.argmax(), 9)
+        self.assertEqual(narr.argmin(), sarr.argmin())
+        self.assertEqual(narr.argmax(), sarr.argmax())
+
+
 class SimpleArrayPlexTC(unittest.TestCase):
 
     def test_SimpleArrayPlex_constructor(self):

@@ -180,6 +180,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .wrap_modifiers()
             .wrap_calculators()
             .wrap_sort()
+            .wrap_search()
             // ATTENTION: always keep the same interface between WrapSimpleArrayPlex and WrapSimpleArray
             ;
     }
@@ -230,6 +231,19 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def("take_along_axis",
                  [](wrapped_type & self, py::object const & indices)
                  { return pybind11::cast(self.take_along_axis(indices.cast<SimpleArrayUint64>())); })
+            //
+            ;
+
+        return *this;
+    }
+
+    wrapper_type & wrap_search()
+    {
+        namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
+
+        (*this)
+            .def("argmin", &wrapped_type::argmin)
+            .def("argmax", &wrapped_type::argmax)
             //
             ;
 
