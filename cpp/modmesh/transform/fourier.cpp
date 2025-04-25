@@ -3,9 +3,6 @@
 namespace modmesh
 {
 
-namespace transform
-{
-
 namespace detail
 {
 
@@ -33,7 +30,5 @@ size_t next_power_of_two(size_t n)
 }
 
 } /* end namespace detail */
-
-} /* end namespace transform */
 
 } // namespace modmesh
