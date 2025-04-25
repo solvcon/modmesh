@@ -30,7 +30,7 @@
 
 #include <modmesh/simd/simd_generic.hpp>
 #include <modmesh/simd/neon/neon_type.hpp>
-#include <modmesh/simd/neon/neon_wrap.hpp>
+#include <modmesh/simd/neon/neon_alias.hpp>
 
 #if defined(__aarch64__)
 #include <arm_neon.h>

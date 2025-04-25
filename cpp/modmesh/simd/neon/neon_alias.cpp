@@ -28,7 +28,7 @@
 
 #if defined(__aarch64__)
 
-#include <modmesh/simd/neon/neon_wrap.hpp>
+#include <modmesh/simd/neon/neon_alias.hpp>
 
 namespace modmesh
 {

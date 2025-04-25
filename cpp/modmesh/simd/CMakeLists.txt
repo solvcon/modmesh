@@ -34,13 +34,13 @@ set(MODMESH_SIMD_SOURCES
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_SIMD_NEONHEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/neon/neon_wrap.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/neon/neon_alias.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/neon/neon_type.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/neon/neon.hpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_SIMD_NEONSOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/neon/neon_wrap.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/neon/neon_alias.cpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_SIMD_FILES
