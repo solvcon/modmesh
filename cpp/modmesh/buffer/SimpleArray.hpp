@@ -244,7 +244,7 @@ void SimpleArrayMixinSort<A, T>::sort(void)
 }
 
 template <typename T, typename I>
-void buffer_cpy(T * dest, T const * data, I const * begin, I const * const end);
+void indexed_copy(T * dest, T const * data, I const * begin, I const * const end);
 
 template <typename T>
 T const * check_index_range(SimpleArray<T> const & indices, size_t max_idx);
@@ -981,11 +981,11 @@ T const * detail::check_index_range(SimpleArray<T> const & indices, size_t max_i
 }
 
 template <typename T, typename I>
-void detail::buffer_cpy(T * dest, T const * data, I const * begin, I const * const end)
+void detail::indexed_copy(T * dest, T const * data, I const * index0, I const * const index1)
 {
     T * dst = dest;
-    I const * src = begin;
-    while (src < end)
+    I const * src = index0;
+    while (src < index1)
     {
         T const * valp = data + static_cast<size_t>(*src);
         *dst = *valp;
@@ -1033,7 +1033,7 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis_simd(SimpleArray<I> const 
     A ret(indices.shape());
     T * data = athis->begin();
     T * dest = ret.begin();
-    detail::buffer_cpy(dest, data, src, end);
+    detail::indexed_copy(dest, data, src, end);
     return ret;
 }
 

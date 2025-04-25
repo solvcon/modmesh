@@ -249,9 +249,9 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         py_typename[0] = tolower(py_typename[0]);
         const DataType dt(py_typename);
 
-#define DECL_MM_TAKE_ALONG_AXIS_TYPED(DataType__) \
-    case DataType::DataType__:                    \
-        return pybind11::cast(self.take_along_axis(indices.cast<SimpleArray##DataType__>()));
+#define DECL_MM_TAKE_ALONG_AXIS_TYPED(IntDataType) \
+    case DataType::IntDataType:                    \
+        return pybind11::cast(self.take_along_axis(indices.cast<SimpleArray##IntDataType>()));
 
         switch (dt)
         {
@@ -284,9 +284,9 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         py_typename[0] = tolower(py_typename[0]);
         const DataType dt(py_typename);
 
-#define DECL_MM_TAKE_ALONG_AXIS_SIMD_TYPED(DataType__) \
-    case DataType::DataType__:                         \
-        return pybind11::cast(self.take_along_axis_simd(indices.cast<SimpleArray##DataType__>()));
+#define DECL_MM_TAKE_ALONG_AXIS_SIMD_TYPED(IntDataType) \
+    case DataType::IntDataType:                         \
+        return pybind11::cast(self.take_along_axis_simd(indices.cast<SimpleArray##IntDataType>()));
 
         switch (dt)
         {
