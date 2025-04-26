@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (c) 2025, Kuan-Hsien Lee <khlee870529@gmail.com>
  *
@@ -29,9 +27,18 @@
  */
 
 #include <modmesh/simd/simd_support.hpp>
-#include <modmesh/simd/simd_generic.hpp>
 
-#include <modmesh/simd/neon/neon.hpp>
+#if defined(__linux__) || defined(__ANDROID__)
+#include <sys/auxv.h>
+#if defined(__aarch64__) || defined(__arm__)
+#include <asm/hwcap.h>
+#endif
+#elif defined(_WIN32)
+#include <windows.h>
+#include <intrin.h>
+#elif defined(__APPLE__)
+#include <sys/sysctl.h>
+#endif
 
 namespace modmesh
 {
@@ -39,21 +46,49 @@ namespace modmesh
 namespace simd
 {
 
-// Check if each element from start to end (excluded end) is within the range [min_val, max_val)
-template <typename T>
-const T * check_between(T const * start, T const * end, T const & min_val, T const & max_val)
+namespace detail
 {
-    using namespace detail;
-    switch (detect_simd())
-    {
-    case SIMD_NEON:
-        return neon::check_between<T>(start, end, min_val, max_val);
-        break;
 
-    default:
-        return generic::check_between<T>(start, end, min_val, max_val);
+SimdFeature detect_simd()
+{
+    static SimdFeature CurrentFeature = SIMD_UNKNOWN;
+
+    if (CurrentFeature != SIMD_UNKNOWN)
+    {
+        return CurrentFeature;
     }
+
+#if defined(__aarch64__) || defined(__arm__)
+// ARM architecture
+#if defined(__linux__) || defined(__ANDROID__)
+    unsigned long hwcaps = getauxval(AT_HWCAP);
+#ifdef HWCAP_NEON
+    if (hwcaps & HWCAP_NEON)
+    {
+        CurrentFeature = SIMD_NEON;
+    }
+#endif /* HWCAP_NEON */
+#elif defined(__APPLE__)
+    int neon_supported = 0;
+    size_t size = sizeof(neon_supported);
+    if (sysctlbyname("hw.optional.neon", &neon_supported, &size, NULL, 0) == 0 && neon_supported)
+    {
+        CurrentFeature = SIMD_NEON;
+    }
+#elif defined(_WIN32)
+    if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
+    {
+        CurrentFeature = SIMD_NEON;
+    }
+#endif
+#endif /* defined(__aarch64__) || defined(__arm__) */
+
+    CurrentFeature = SIMD_NONE;
+
+    return CurrentFeature;
 }
+
+} /* namespace detail */
 
 } /* namespace simd */
 

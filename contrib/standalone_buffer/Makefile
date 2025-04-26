@@ -52,6 +52,9 @@ $(SETUPROOT)/SimpleArray.o: $(SETUPROOT)/modmesh/buffer/SimpleArray.cpp Makefile
 
 $(SETUPROOT)/neon_alias.o: $(SETUPROOT)/modmesh/simd/neon/neon_alias.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
+	
+$(SETUPROOT)/simd_support.o: $(SETUPROOT)/modmesh/simd/simd_support.cpp Makefile
+	c++ $(CFLAGS) -c $< -o $@
 
 $(SETUPROOT)/modbuf.o: modbuf.cpp
 	c++ $(CFLAGS) -c $< -o $@
@@ -64,6 +67,7 @@ OBJS = \
 	$(SETUPROOT)/wrap_SimpleArrayPlex.o \
 	$(SETUPROOT)/buffer_pymod.o \
 	$(SETUPROOT)/neon_alias.o \
+	$(SETUPROOT)/simd_support.o \
 	$(SETUPROOT)/modbuf.o
 
 $(MODPATH): Makefile $(OBJS)

@@ -28,32 +28,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/simd/simd_support.hpp>
-#include <modmesh/simd/simd_generic.hpp>
-
-#include <modmesh/simd/neon/neon.hpp>
-
 namespace modmesh
 {
 
 namespace simd
 {
 
-// Check if each element from start to end (excluded end) is within the range [min_val, max_val)
-template <typename T>
-const T * check_between(T const * start, T const * end, T const & min_val, T const & max_val)
+namespace detail
 {
-    using namespace detail;
-    switch (detect_simd())
-    {
-    case SIMD_NEON:
-        return neon::check_between<T>(start, end, min_val, max_val);
-        break;
 
-    default:
-        return generic::check_between<T>(start, end, min_val, max_val);
-    }
-}
+enum SimdFeature
+{
+    SIMD_NONE = 0,
+    SIMD_NEON,
+    SIMD_SSE,
+    SIMD_SSE2,
+    SIMD_SSE3,
+    SIMD_SSSE3,
+    SIMD_SSE41,
+    SIMD_SSE42,
+    SIMD_AVX,
+    SIMD_AVX2,
+    SIMD_AVX512,
+    SIMD_UNKNOWN
+};
+
+SimdFeature detect_simd(void);
+
+} /* namespace detail */
 
 } /* namespace simd */
 
