@@ -45,14 +45,14 @@ namespace simd
 namespace neon
 {
 
-template <typename T, typename std::enable_if_t<!type::has_vectype<T>, int> = 0>
+template <typename T, typename std::enable_if_t<!type::has_vectype<T>> * = nullptr>
 const T * check_between(T const * start, T const * end, T const & min_val, T const & max_val)
 {
     return generic::check_between<T>(start, end, min_val, max_val);
 }
 
 #if defined(__aarch64__)
-template <typename T, typename std::enable_if_t<type::has_vectype<T>, int> = 0>
+template <typename T, typename std::enable_if_t<type::has_vectype<T>> * = nullptr>
 const T * check_between(T const * start, T const * end, T const & min_val, T const & max_val)
 {
     using vec_t = type::vector_t<T>;

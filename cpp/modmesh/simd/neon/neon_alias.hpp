@@ -63,17 +63,25 @@ type::vector_t<base_type> vcltq(type::vector_t<base_type> vec_a, type::vector_t<
 
 #define utype_t(N) uint##N##_t
 #define stype_t(N) int##N##_t
-#define DECL_MM_IMPL_VGETQ(N)                                                                                          \
-    template <typename base_type, size_t n, typename std::enable_if_t<std::is_same_v<utype_t(N), base_type>, int> = 0> \
-    base_type vgetq(type::vector_t<base_type> vec)                                                                     \
-    {                                                                                                                  \
-        return vgetq_lane_u##N(vec, n);                                                                                \
-    }                                                                                                                  \
-    template <typename base_type, size_t n, typename std::enable_if_t<std::is_same_v<stype_t(N), base_type>, int> = 0> \
-    base_type vgetq(type::vector_t<base_type> vec)                                                                     \
-    {                                                                                                                  \
-        return vgetq_lane_s##N(vec, n);                                                                                \
+// clang-format off
+#define DECL_MM_IMPL_VGETQ(N)                                                           \
+    template <typename base_type, size_t n,                                             \
+        typename std::enable_if_t<                                                      \
+            n < type::vector_lane<utype_t(N)> && std::is_same_v<utype_t(N), base_type>  \
+        > * = nullptr>                                                                  \
+    base_type vgetq(type::vector_t<base_type> vec)                                      \
+    {                                                                                   \
+        return vgetq_lane_u##N(vec, n);                                                 \
+    }                                                                                   \
+    template <typename base_type, size_t n,                                             \
+        typename std::enable_if_t<                                                      \
+            n < type::vector_lane<stype_t(N)> && std::is_same_v<stype_t(N), base_type>  \
+        > * = nullptr>                                                                  \
+    base_type vgetq(type::vector_t<base_type> vec)                                      \
+    {                                                                                   \
+        return vgetq_lane_s##N(vec, n);                                                 \
     }
+// clang-format on
 
 DECL_MM_IMPL_VGETQ(8)
 DECL_MM_IMPL_VGETQ(16)
