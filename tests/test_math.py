@@ -159,11 +159,12 @@ class ComplexTB(mm.testing.TestBase):
         cplx1 = self.mm_complex(self.real1, self.imag1)
         cplx2 = self.mm_complex(self.real2, self.imag2)
 
-        norm1 = cplx1.norm()
-        norm2 = cplx2.norm()
+        def compare():
+            if self.real1 == self.real2:
+                return self.imag1 <= self.imag2
+            return self.real1 <= self.real2
 
-        self.assertEqual(cplx1 < cplx2, norm1 < norm2)
-        self.assertEqual(cplx1 > cplx2, norm1 > norm2)
+        self.assertEqual(cplx1 < cplx2, compare())
 
     def test_norm(self):
         cplx = self.mm_complex(self.real1, self.imag1)

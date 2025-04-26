@@ -123,6 +123,18 @@ public:
 
 }; /* end class SimpleArrayMixinModifiers */
 
+template <typename U>
+struct select_real_t
+{
+    using type = U;
+};
+
+template <typename U>
+struct select_real_t<Complex<U>>
+{
+    using type = U;
+};
+
 template <typename A, typename T>
 class SimpleArrayMixinCalculators
 {
@@ -134,6 +146,8 @@ private:
 public:
 
     using value_type = typename internal_types::value_type;
+    using buffer_type = typename internal_types::buffer_type;
+    using real_type = typename detail::select_real_t<value_type>::type;
 
     value_type min() const
     {
@@ -191,6 +205,85 @@ public:
             }
         }
         return initial;
+    }
+
+    value_type median() const
+    {
+        auto athis = static_cast<A const *>(this);
+        A acopy(*athis);
+        size_t n = acopy.size();
+        std::nth_element(acopy.begin(),
+                         acopy.begin() + n / 2,
+                         acopy.end());
+        if (n % 2 != 0)
+        {
+            return acopy[n / 2];
+        }
+        std::nth_element(acopy.begin(),
+                         acopy.begin() + n / 2 - 1,
+                         acopy.end());
+        return static_cast<value_type>(acopy[n / 2] + acopy[n / 2 - 1]) / static_cast<value_type>(2.0);
+    }
+
+    value_type average() const
+    {
+        auto athis = static_cast<A const *>(this);
+        value_type sum = 0;
+        for (size_t i = 0; i < athis->size(); ++i)
+        {
+            sum += athis->data(i);
+        }
+        return sum / static_cast<value_type>(athis->size());
+    }
+
+    value_type mean() const
+    {
+        auto athis = static_cast<A const *>(this);
+        value_type sum = 0;
+        for (size_t i = 0; i < athis->size(); ++i)
+        {
+            sum += athis->data(i);
+        }
+        return sum / static_cast<value_type>(athis->size());
+    }
+
+    real_type var(size_t ddof) const
+    {
+        auto athis = static_cast<A const *>(this);
+        size_t n = athis->size();
+        if (n <= ddof)
+        {
+            throw std::runtime_error("SimpleArray::var(): ddof must be less than the number of elements");
+        }
+
+        value_type mu = athis->mean();
+        real_type acc = 0;
+        for (size_t i = 0; i < n; ++i)
+        {
+            if constexpr (is_complex_v<value_type>)
+            {
+                acc += athis->data(i).norm();
+            }
+            else
+            {
+                acc += athis->data(i) * athis->data(i);
+            }
+        }
+        if constexpr (is_complex_v<value_type>)
+        {
+            acc -= n * mu.norm();
+        }
+        else
+        {
+            acc -= n * mu * mu;
+        }
+        return acc / static_cast<real_type>(n - ddof);
+    }
+
+    real_type std(size_t ddof) const
+    {
+        auto athis = static_cast<A const *>(this);
+        return std::sqrt(athis->var(ddof));
     }
 
     A abs() const
