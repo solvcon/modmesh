@@ -43,7 +43,7 @@ if _pcore.enable:
     from . import _mesh
     from . import _euler1d
     from . import _burgers1d
-    from . import _svg
+    from . import _svg_gui
 
 __all__ = [  # noqa: F822
     'controller',
@@ -86,7 +86,7 @@ class _Controller(metaclass=_Singleton):
         self._rmgr.windowTitle = name
         self._rmgr.resize(w=size[0], h=size[1])
         self.gmsh_dialog = _mesh.GmshFileDialog(mgr=self._rmgr)
-        self.svg_dialog = _svg.SVGFileDialog(mgr=self._rmgr)
+        self.svg_dialog = _svg_gui.SVGFileDialog(mgr=self._rmgr)
         self.sample_mesh = _mesh.SampleMesh(mgr=self._rmgr)
         self.recdom = _mesh.RectangularDomain(mgr=self._rmgr)
         self.naca4airfoil = airfoil.Naca4Airfoil(mgr=self._rmgr)

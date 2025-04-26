@@ -26,21 +26,19 @@
 
 
 """
-Show a SVG (scalleable vector graphic)
+Input, output, and process SVG (scalleable vector graphic).
 """
 
-import os
-import numpy as np
 import re
 import xml.etree.ElementTree as ET
 from math import sin, cos, atan2, sqrt, radians, pi
-from PySide6 import QtCore, QtWidgets
+
+import numpy as np
 
 from .. import core
-from ._gui_common import PilotFeature
 
 __all__ = [  # noqa: F822
-    'SVGFileDialog',
+    'PathParser',
 ]
 
 
@@ -439,10 +437,10 @@ class EPath(object):
         return self.cmds
 
 
-class _PathParser(object):
+class PathParser(object):
     def __init__(self, file_path=None):
         self.file_path = file_path
-        self.Epaths = None  # list of Epath
+        self.epaths = None  # list of epath
 
     def parse(self):
         tree = ET.parse(self.file_path)
@@ -459,99 +457,9 @@ class _PathParser(object):
         """ d_attr = pathElements[0].attrib.get('d', '')
         fill_attr = pathElements[0].attrib.get('fill', '')
         paths.append(EPath(d_attr=d_attr, fill_attr=fill_attr)) """
-        self.Epaths = paths
+        self.epaths = paths
 
-    def get_EPaths(self):
-        return self.Epaths
-
-
-class SVGFileDialog(PilotFeature):
-    """
-    Download an example svg from: https://www.svgrepo.com/svg/530293/tree-2
-    """
-    def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
-        self._diag = QtWidgets.QFileDialog()
-        self._diag.setFileMode(QtWidgets.QFileDialog.ExistingFile)
-        self._diag.setDirectory(self._get_initial_path())
-        self._diag.setWindowTitle('Open SVG file')
-
-    def run(self):
-        self._diag.open(self, QtCore.SLOT('on_finished()'))
-
-    def populate_menu(self):
-        self._add_menu_item(
-            menu=self._mgr.fileMenu,
-            text="Open SVG file",
-            tip="Open SVG file",
-            func=self.run,
-        )
-
-    @QtCore.Slot()
-    def on_finished(self):
-        filenames = []
-        for path in self._diag.selectedFiles():
-            filenames.append(path)
-        self._load_svg_file(filename=filenames[0])
-
-    @staticmethod
-    def _get_initial_path():
-        found = ''
-        for dp in ('.', core.__file__):
-            dp = os.path.dirname(os.path.abspath(dp))
-            dp2 = os.path.dirname(dp)
-
-            while dp != dp2:
-                tp = os.path.join(dp, "tests", "data")
-                fp = os.path.join(tp, "tree.svg")
-                if os.path.exists(fp):
-                    found = fp
-                    break
-                dp = dp2
-                dp2 = os.path.dirname(dp)
-            if found:
-                break
-        return found
-
-    def _load_svg_file(self, filename):
-        svgParser = _PathParser(filename)
-        svgParser.parse()
-        Epaths = svgParser.get_EPaths()
-        sp2d = []
-        cp2d = []
-        for p in Epaths:
-            closedp = p.get_closed_paths()
-            sp2d.append(closedp[0])
-            cp2d.append(closedp[1])
-
-        world = core.WorldFp64()
-        Point = core.Point3dFp64
-
-        for i in range(len(sp2d)):
-            for j in range(len(sp2d[i])):
-                # the points are reflected to x-axis: (x, y) -> (x, -y)
-                world.add_segment(Point(sp2d[i].x0_at(j), -sp2d[i].y0_at(j)),
-                                  Point(sp2d[i].x1_at(j), -sp2d[i].y1_at(j)))
-
-        for i in range(len(cp2d)):
-            for j in range(len(cp2d[i])):
-                # the points are reflected to x-axis: (x, y) -> (x, -y)
-                b = world.add_bezier(p0=Point(cp2d[i].x0_at(j),
-                                              -cp2d[i].y0_at(j),
-                                              0),
-                                     p1=Point(cp2d[i].x1_at(j),
-                                              -cp2d[i].y1_at(j),
-                                              0),
-                                     p2=Point(cp2d[i].x2_at(j),
-                                              -cp2d[i].y2_at(j),
-                                              0),
-                                     p3=Point(cp2d[i].x3_at(j),
-                                              -cp2d[i].y3_at(j),
-                                              0))
-                b.sample(nlocus=5)
-
-        wid = self._mgr.add3DWidget()
-        wid.updateWorld(world)
-        wid.showMark()
+    def get_epaths(self):
+        return self.epaths
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

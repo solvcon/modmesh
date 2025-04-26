@@ -27,7 +27,7 @@
 import unittest
 
 from modmesh.testing import TestBase as ModMeshTB
-from modmesh.pilot._svg import EPath
+from modmesh.plot.svg import EPath
 
 
 class SvgParserTC(ModMeshTB, unittest.TestCase):

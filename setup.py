@@ -69,6 +69,7 @@ def main():
             'modmesh.onedim',
             'modmesh.pilot',
             'modmesh.pilot.airfoil',
+            'modmesh.plot',
         ],
         ext_modules=[CMakeExtension("_modmesh")],
         cmdclass={'build_ext': cmake_build_ext},
