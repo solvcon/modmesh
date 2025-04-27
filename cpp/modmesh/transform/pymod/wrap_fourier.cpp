@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2025, Chun-Hsu Lai <as2266317@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -27,25 +25,49 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <modmesh/modmesh.hpp>
 
-/**
- * \file This is a template library for the meshes for numerical calculations
- * of partial differential equations.
- */
+#include <modmesh/transform/pymod/transform_pymod.hpp>
 
-#include <modmesh/base.hpp>
-#include <modmesh/math/math.hpp>
-#include <modmesh/buffer/buffer.hpp>
-#include <modmesh/grid.hpp>
-#include <modmesh/mesh/mesh.hpp>
-#include <modmesh/toggle/toggle.hpp>
-#include <modmesh/transform/transform.hpp>
+#include <pybind11/numpy.h>
+#include <pybind11/operators.h>
 
-// TODO Add MSVC case once sanitizer can be default turned on for CI testing
-#if defined(USE_SANITIZER) && (defined(__clang__) || defined(__GNUC__))
-#define ASAN_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
-#else
-#define ASAN_NO_SANITIZE_ADDRESS
-#endif
+namespace modmesh
+{
+
+namespace python
+{
+
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapTransform
+    : public WrapBase<WrapTransform, modmesh::Transform, std::shared_ptr<modmesh::Transform>>
+{
+    using base_type = WrapBase<WrapTransform, modmesh::Transform, std::shared_ptr<modmesh::Transform>>;
+    using wrapped_type = typename base_type::wrapped_type;
+
+    friend base_type;
+
+    WrapTransform(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : WrapBase<WrapTransform, modmesh::Transform, std::shared_ptr<modmesh::Transform>>(mod, pyname, pydoc)
+    {
+        namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
+
+        (*this)
+            .def(
+                py::init(
+                    []()
+                    { return std::make_shared<wrapped_type>(); }))
+            .def_static("fft", &wrapped_type::fft<modmesh::Complex, double>, py::arg("input"), py::arg("output"));
+    }
+
+}; /* end class WrapTransform */
+
+void wrap_Transform(pybind11::module & mod)
+{
+    WrapTransform::commit(mod, "transform", "Transform library");
+}
+
+} /* end namespace python */
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

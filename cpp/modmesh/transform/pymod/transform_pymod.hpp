@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2025, Chun-Hsu Lai <as2266317@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,24 +28,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * \file This is a template library for the meshes for numerical calculations
- * of partial differential equations.
- */
+#include <pybind11/pybind11.h> // Must be the first include.
+#include <pybind11/stl.h>
 
-#include <modmesh/base.hpp>
-#include <modmesh/math/math.hpp>
-#include <modmesh/buffer/buffer.hpp>
-#include <modmesh/grid.hpp>
-#include <modmesh/mesh/mesh.hpp>
-#include <modmesh/toggle/toggle.hpp>
-#include <modmesh/transform/transform.hpp>
+#include <modmesh/modmesh.hpp>
+#include <modmesh/python/common.hpp>
 
-// TODO Add MSVC case once sanitizer can be default turned on for CI testing
-#if defined(USE_SANITIZER) && (defined(__clang__) || defined(__GNUC__))
-#define ASAN_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
-#else
-#define ASAN_NO_SANITIZE_ADDRESS
-#endif
+namespace modmesh
+{
+
+namespace python
+{
+
+void initialize_transform(pybind11::module & mod);
+void wrap_Transform(pybind11::module & mod);
+
+} /* end namespace python */
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
