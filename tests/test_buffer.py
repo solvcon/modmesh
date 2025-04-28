@@ -894,7 +894,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
             args = sarr.argsort()
             for i in range(1, len(args)):
-                self.assertLessEqual(sarr[args[i]], sarr[args[i]])
+                self.assertLessEqual(sarr[args[i - 1]], sarr[args[i]])
 
             sorted_arr = sarr.take_along_axis(args)
             for i in range(1, len(sorted_arr)):
