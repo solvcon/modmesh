@@ -30,6 +30,7 @@
 
 #include <modmesh/buffer/ConcreteBuffer.hpp>
 #include <modmesh/math/math.hpp>
+#include <modmesh/simd/simd.hpp>
 
 #include <limits>
 #include <stdexcept>
@@ -224,6 +225,8 @@ public:
     SimpleArray<uint64_t> argsort(void);
     template <typename I>
     A take_along_axis(SimpleArray<I> const & indices);
+    template <typename I>
+    A take_along_axis_simd(SimpleArray<I> const & indices);
 
 }; /* end class SimpleArrayMixinSort */
 
@@ -239,6 +242,12 @@ void SimpleArrayMixinSort<A, T>::sort(void)
 
     std::sort(athis->begin(), athis->end());
 }
+
+template <typename T, typename I>
+void indexed_copy(T * dest, T const * data, I const * begin, I const * const end);
+
+template <typename T>
+T const * check_index_range(SimpleArray<T> const & indices, size_t max_idx);
 
 template <typename A, typename T>
 class SimpleArrayMixinSearch
@@ -950,6 +959,76 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
         ++dst;
         ++src;
     }
+    return ret;
+}
+
+template <typename T>
+T const * detail::check_index_range(SimpleArray<T> const & indices, size_t max_idx)
+{
+    constexpr T DataTypeMax = std::numeric_limits<T>::max();
+    constexpr T DataTypeMin = std::numeric_limits<T>::min();
+    if (max_idx >= DataTypeMax && DataTypeMin == 0)
+    {
+        return nullptr;
+    }
+
+    return simd::check_between<T>(indices.begin(), indices.end(), 0, max_idx);
+}
+
+template <typename T, typename I>
+void detail::indexed_copy(T * dest, T const * data, I const * index0, I const * const index1)
+{
+    T * dst = dest;
+    I const * src = index0;
+    while (src < index1)
+    {
+        T const * valp = data + static_cast<size_t>(*src);
+        *dst = *valp;
+        ++dst;
+        ++src;
+    }
+}
+
+template <typename A, typename T>
+template <typename I>
+A detail::SimpleArrayMixinSort<A, T>::take_along_axis_simd(SimpleArray<I> const & indices)
+{
+    static_assert(std::is_integral_v<I>, "I must be integral type");
+    auto athis = static_cast<A *>(this);
+    if (athis->ndim() != 1)
+    {
+        throw std::runtime_error(Formatter() << "SimpleArray::take_along_axis(): currently only support 1D array"
+                                             << " but the array is " << athis->ndim() << " dimension");
+    }
+
+    size_t max_idx = athis->shape()[0];
+
+    I const * oor_ptr = check_index_range(indices, max_idx);
+    if (oor_ptr != nullptr)
+    {
+        size_t offset = oor_ptr - indices.begin();
+        shape_type const & stride = indices.stride();
+        const size_t ndim = stride.size();
+        Formatter err_msg;
+        err_msg << "SimpleArray::take_along_axis_simd(): indices[" << offset / stride[0];
+        offset %= stride[0];
+        for (size_t dim = 1; dim < ndim; ++dim)
+        {
+            err_msg << ", " << offset / stride[dim];
+            offset %= stride[dim];
+        }
+        err_msg << "] is " << *oor_ptr << ", which is out of range of the array size "
+                << max_idx;
+
+        throw std::out_of_range(err_msg);
+    }
+
+    I const * src = indices.begin();
+    I const * const end = indices.end();
+    A ret(indices.shape());
+    T * data = athis->begin();
+    T * dest = ret.begin();
+    detail::indexed_copy(dest, data, src, end);
     return ret;
 }
 
