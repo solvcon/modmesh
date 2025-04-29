@@ -924,12 +924,21 @@ class SimpleArrayBasicTC(unittest.TestCase):
         for i in range(len(idx)):
             self.assertEqual(ret_arr[i], data[idx[i]])
 
+        ret_arr = data_arr.take_along_axis_simd(idx_arr)
+        for i in range(len(idx)):
+            self.assertEqual(ret_arr[i], data[idx[i]])
+
         # test 2-D indices
         idx = [[0, 2, 4, 6], [1, 3, 5, 7]]
         narr = np.array(idx, dtype='uint64')
         idx_arr = modmesh.SimpleArrayUint64(array=narr)
 
         ret_arr = data_arr.take_along_axis(idx_arr)
+        for i in range(len(idx)):
+            for j in range(len(idx[i])):
+                self.assertEqual(ret_arr[i, j], data[idx_arr[i, j]])
+
+        ret_arr = data_arr.take_along_axis_simd(idx_arr)
         for i in range(len(idx)):
             for j in range(len(idx[i])):
                 self.assertEqual(ret_arr[i, j], data[idx_arr[i, j]])
@@ -945,6 +954,13 @@ class SimpleArrayBasicTC(unittest.TestCase):
             "which is out of range of the array size 10"
         ):
             ret_arr = data_arr.take_along_axis(idx_arr)
+
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::take_along_axis_simd\(\): indices\[2, 1\] is 20, " +
+            "which is out of range of the array size 10"
+        ):
+            ret_arr = data_arr.take_along_axis_simd(idx_arr)
 
 
 class SimpleArrayCalculatorsTC(unittest.TestCase):
@@ -981,6 +997,29 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         self.assertEqual(sarr.sum(), True)
         sarr = sarr.abs()
         self.assertEqual(sarr.sum(), True)
+
+
+class SimpleArraySearchTC(unittest.TestCase):
+
+    def test_argminmax(self):
+        # test 1-D data
+        data = [1, 3, 5, 7, 9]
+        narr = np.array(data, dtype='uint64')
+        sarr = modmesh.SimpleArrayUint64(array=narr)
+
+        self.assertEqual(sarr.argmin(), 0)
+        self.assertEqual(sarr.argmax(), 4)
+        self.assertEqual(narr.argmin(), sarr.argmin())
+        self.assertEqual(narr.argmax(), sarr.argmax())
+
+        # test N-D data
+        data = [[1, 3, 5, 7, 9], [2, 4, 6, 8, 10], [1, 10, 1, 10, 1]]
+        narr = np.array(data, dtype='float64')
+        sarr = modmesh.SimpleArrayFloat64(array=narr)
+        self.assertEqual(sarr.argmin(), 0)
+        self.assertEqual(sarr.argmax(), 9)
+        self.assertEqual(narr.argmin(), sarr.argmin())
+        self.assertEqual(narr.argmax(), sarr.argmax())
 
 
 class SimpleArrayPlexTC(unittest.TestCase):
