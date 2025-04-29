@@ -962,20 +962,15 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
     return ret;
 }
 
-#define check_type_range(DataType, MaxVal)                                     \
-    do {                                                                       \
-        constexpr DataType DataTypeMax = std::numeric_limits<DataType>::max(); \
-        constexpr DataType DataTypeMin = std::numeric_limits<DataType>::min(); \
-        if (MaxVal >= DataTypeMax && DataTypeMin == 0)                         \
-        {                                                                      \
-            return nullptr;                                                    \
-        }                                                                      \
-    } while (0)
-
 template <typename T>
 T const * detail::check_index_range(SimpleArray<T> const & indices, size_t max_idx)
 {
-    check_type_range(T, max_idx);
+    constexpr T DataTypeMax = std::numeric_limits<T>::max();
+    constexpr T DataTypeMin = std::numeric_limits<T>::min();
+    if (max_idx >= DataTypeMax && DataTypeMin == 0)
+    {
+        return nullptr;
+    }
 
     return simd::check_between<T>(indices.begin(), indices.end(), 0, max_idx);
 }
