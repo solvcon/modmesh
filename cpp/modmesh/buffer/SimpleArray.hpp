@@ -240,6 +240,51 @@ void SimpleArrayMixinSort<A, T>::sort(void)
     std::sort(athis->begin(), athis->end());
 }
 
+template <typename A, typename T>
+class SimpleArrayMixinSearch
+{
+
+private:
+
+    using internal_types = detail::SimpleArrayInternalTypes<T>;
+
+public:
+
+    using value_type = typename internal_types::value_type;
+
+    size_t argmin() const
+    {
+        size_t min_index = 0;
+        value_type min_value = std::numeric_limits<value_type>::max();
+        auto athis = static_cast<A const *>(this);
+        for (size_t i = 0; i < athis->size(); ++i)
+        {
+            if (athis->data(i) < min_value)
+            {
+                min_value = athis->data(i);
+                min_index = i;
+            }
+        }
+        return min_index;
+    }
+
+    size_t argmax() const
+    {
+        size_t max_index = 0;
+        value_type max_value = std::numeric_limits<value_type>::lowest();
+        auto athis = static_cast<A const *>(this);
+        for (size_t i = 0; i < athis->size(); ++i)
+        {
+            if (athis->data(i) > max_value)
+            {
+                max_value = athis->data(i);
+                max_index = i;
+            }
+        }
+        return max_index;
+    }
+}; /* end class SimpleArrayMixinSearch */
+
 } /* end namespace detail */
 
 /**
@@ -252,6 +297,7 @@ class SimpleArray
     : public detail::SimpleArrayMixinModifiers<SimpleArray<T>, T>
     , public detail::SimpleArrayMixinCalculators<SimpleArray<T>, T>
     , public detail::SimpleArrayMixinSort<SimpleArray<T>, T>
+    , public detail::SimpleArrayMixinSearch<SimpleArray<T>, T>
 {
 
 private:
