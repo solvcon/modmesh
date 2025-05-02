@@ -41,7 +41,7 @@ namespace python
 {
 
 void initialize_transform(pybind11::module & mod);
-void wrap_Transform(pybind11::module & mod);
+void wrap_FourierTransform(pybind11::module & mod);
 
 } /* end namespace python */
 

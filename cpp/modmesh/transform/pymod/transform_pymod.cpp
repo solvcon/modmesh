@@ -47,7 +47,7 @@ void initialize_transform(pybind11::module & mod)
 {
     auto initialize_impl = [](pybind11::module & mod)
     {
-        wrap_Transform(mod);
+        wrap_FourierTransform(mod);
     };
 
     OneTimeInitializer<transform_pymod_tag>::me()(mod, initialize_impl);

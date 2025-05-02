@@ -58,7 +58,7 @@ class TransformTB(mm.testing.TestBase):
         np_input = np.array(mm_input, copy=False)
 
         mm_output = self.mm_simplearraycomplex(input_size)
-        mm.transform.dft(mm_input, mm_output)
+        mm.FourierTransform.dft(mm_input, mm_output)
 
         np_output = np.fft.fft(np_input)
 
@@ -76,7 +76,7 @@ class TransformTB(mm.testing.TestBase):
         np_input = np.array(mm_input, copy=False)
 
         mm_output = self.mm_simplearraycomplex(input_size)
-        mm.transform.fft(mm_input, mm_output)
+        mm.FourierTransform.fft(mm_input, mm_output)
 
         np_output = np.fft.fft(np_input)
 
@@ -94,7 +94,7 @@ class TransformTB(mm.testing.TestBase):
         np_input = np.array(mm_input, copy=False)
 
         mm_output = self.mm_simplearraycomplex(input_size)
-        mm.transform.ifft(mm_input, mm_output)
+        mm.FourierTransform.ifft(mm_input, mm_output)
 
         np_output = np.fft.ifft(np_input)
 

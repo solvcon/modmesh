@@ -148,44 +148,44 @@ TYPED_TEST_SUITE(InverseTest, TestTypes);
 
 TYPED_TEST(ParsevalTest, fft)
 {
-    modmesh::Transform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
+    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
 
     this->verify_parseval();
 }
 
 TYPED_TEST(ParsevalTest, dft)
 {
-    modmesh::Transform::dft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
+    modmesh::FourierTransform::dft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
 
     this->verify_parseval();
 }
 
 TYPED_TEST(DeltaFunctionTest, fft)
 {
-    modmesh::Transform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
+    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
 
     this->verify_delta_function();
 }
 
 TYPED_TEST(DeltaFunctionTest, dft)
 {
-    modmesh::Transform::dft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
+    modmesh::FourierTransform::dft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
 
     this->verify_delta_function();
 }
 
 TYPED_TEST(InverseTest, fft)
 {
-    modmesh::Transform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->freq_domain);
-    modmesh::Transform::ifft<modmesh::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain);
+    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->freq_domain);
+    modmesh::FourierTransform::ifft<modmesh::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain);
 
     this->verify_inverse_fft_function();
 }
 
 TYPED_TEST(InverseTest, dft)
 {
-    modmesh::Transform::dft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->freq_domain);
-    modmesh::Transform::ifft<modmesh::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain);
+    modmesh::FourierTransform::dft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->freq_domain);
+    modmesh::FourierTransform::ifft<modmesh::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain);
 
     this->verify_inverse_fft_function();
 }

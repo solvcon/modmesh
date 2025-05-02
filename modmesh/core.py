@@ -53,7 +53,7 @@ __all__ = [  # noqa: F822
     'Plot3d',
     'complex64',
     'complex128',
-    'transform',
+    'FourierTransform',
     'SimpleArray',
     'SimpleArrayBool',
     'SimpleArrayInt8',

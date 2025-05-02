@@ -52,15 +52,15 @@ void fft_radix_2(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
 
 } /* end namespace detail */
 
-class Transform
+class FourierTransform
 {
 public:
-    Transform() = default;
-    ~Transform() = default;
-    Transform(const Transform & other) = delete;
-    Transform(Transform && other) = delete;
-    Transform & operator=(const Transform & other) = delete;
-    Transform & operator=(Transform && other) = delete;
+    FourierTransform() = default;
+    ~FourierTransform() = default;
+    FourierTransform(const FourierTransform & other) = delete;
+    FourierTransform(FourierTransform && other) = delete;
+    FourierTransform & operator=(const FourierTransform & other) = delete;
+    FourierTransform & operator=(FourierTransform && other) = delete;
 
     template <template <typename> class T1, typename T2>
     static void fft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
@@ -152,7 +152,7 @@ void fft_bluestein(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
         A[i] *= B[i];
     }
 
-    Transform::ifft<T1, T2>(A, a);
+    FourierTransform::ifft<T1, T2>(A, a);
 
     for (size_t i = 0; i < N; ++i)
     {

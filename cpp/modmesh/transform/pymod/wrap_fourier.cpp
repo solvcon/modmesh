@@ -39,16 +39,16 @@ namespace modmesh
 namespace python
 {
 
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapTransform
-    : public WrapBase<WrapTransform, modmesh::Transform, std::shared_ptr<modmesh::Transform>>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapFourierTransform
+    : public WrapBase<WrapFourierTransform, modmesh::FourierTransform, std::shared_ptr<modmesh::FourierTransform>>
 {
-    using base_type = WrapBase<WrapTransform, modmesh::Transform, std::shared_ptr<modmesh::Transform>>;
+    using base_type = WrapBase<WrapFourierTransform, modmesh::FourierTransform, std::shared_ptr<modmesh::FourierTransform>>;
     using wrapped_type = typename base_type::wrapped_type;
 
     friend base_type;
 
-    WrapTransform(pybind11::module & mod, char const * pyname, char const * pydoc)
-        : WrapBase<WrapTransform, modmesh::Transform, std::shared_ptr<modmesh::Transform>>(mod, pyname, pydoc)
+    WrapFourierTransform(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : WrapBase<WrapFourierTransform, modmesh::FourierTransform, std::shared_ptr<modmesh::FourierTransform>>(mod, pyname, pydoc)
     {
         namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
 
@@ -61,11 +61,11 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapTransform
             .def_static("dft", &wrapped_type::dft<modmesh::Complex, float>, py::arg("input"), py::arg("output"));
     }
 
-}; /* end class WrapTransform */
+}; /* end class WrapFourierTransform */
 
-void wrap_Transform(pybind11::module & mod)
+void wrap_FourierTransform(pybind11::module & mod)
 {
-    WrapTransform::commit(mod, "transform", "Transform library");
+    WrapFourierTransform::commit(mod, "FourierTransform", "Fourier transform library");
 }
 
 } /* end namespace python */
