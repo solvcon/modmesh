@@ -147,3 +147,5 @@ class TransformFp64TC(TransformTB, unittest.TestCase):
 
     def setUp(self):
         np.random.seed()
+
+# vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
