@@ -60,7 +60,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapComplex
             .def(
                 py::init(
                     []()
-                    { return std::make_shared<wrapped_type>(); }))
+                    { return std::make_shared<wrapped_type>(wrapped_type{0.0, 0.0}); }))
             .def(
                 py::init(
                     [](const value_type & real, const value_type & imag)
