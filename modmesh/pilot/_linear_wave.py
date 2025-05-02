@@ -32,8 +32,6 @@ from ..onedim.linear_scalar import LinearScalarSolver
 
 
 class LinearWave:
-    """
-    """
 
     def __init__(self):
         self.svr = None
@@ -54,8 +52,6 @@ class LinearWave:
 
 
 class LinearWave1DApp(_1DApp):
-    """
-    """
 
     def populate_menu(self):
         """
@@ -69,8 +65,6 @@ class LinearWave1DApp(_1DApp):
         )
 
     def init_solver_config(self):
-        """
-        """
         solver_config_data = [
             ["xmin", 0, "The most left point of x axis."],
             ["xmax", 4 * 2 * np.pi, "The most right point of x axis."],
@@ -97,8 +91,6 @@ class LinearWave1DApp(_1DApp):
         self.plot_data.append([self.wave.name, True])
 
     def init_solver(self):
-        """
-        """
         self.st = LinearWave()
         _s = self.solver_config
         self.st.build_numerical(xmin=_s["xmin"]["value"],
