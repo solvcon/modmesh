@@ -36,28 +36,22 @@ class TransformTB(mm.testing.TestBase):
     def setUp(self):
         pass
 
-    def mm_complex(self, real=0.0, imag=0.0):
-        pass
-
     def real_rng(self):
         pass
 
     def imag_rng(self):
         pass
 
-    def mm_simplearraycomplex(self, size):
-        pass
-
     def test_numpy_dft_comparison(self):
         input_size = 100
 
-        mm_input = self.mm_simplearraycomplex(input_size)
+        mm_input = self.SimpleArray(input_size)
         for i in range(input_size):
-            mm_input[i] = self.mm_complex(self.real_rng(), self.imag_rng())
+            mm_input[i] = self.complex(self.real_rng(), self.imag_rng())
 
         np_input = np.array(mm_input, copy=False)
 
-        mm_output = self.mm_simplearraycomplex(input_size)
+        mm_output = self.SimpleArray(input_size, self.complex())
         mm.FourierTransform.dft(mm_input, mm_output)
 
         np_output = np.fft.fft(np_input)
@@ -69,13 +63,13 @@ class TransformTB(mm.testing.TestBase):
     def test_numpy_fft_comparison(self):
         input_size = 100
 
-        mm_input = self.mm_simplearraycomplex(input_size)
+        mm_input = self.SimpleArray(input_size)
         for i in range(input_size):
-            mm_input[i] = self.mm_complex(self.real_rng(), self.imag_rng())
+            mm_input[i] = self.complex(self.real_rng(), self.imag_rng())
 
         np_input = np.array(mm_input, copy=False)
 
-        mm_output = self.mm_simplearraycomplex(input_size)
+        mm_output = self.SimpleArray(input_size, self.complex())
         mm.FourierTransform.fft(mm_input, mm_output)
 
         np_output = np.fft.fft(np_input)
@@ -87,13 +81,13 @@ class TransformTB(mm.testing.TestBase):
     def test_numpy_ifft_comparison(self):
         input_size = 100
 
-        mm_input = self.mm_simplearraycomplex(input_size)
+        mm_input = self.SimpleArray(input_size)
         for i in range(input_size):
-            mm_input[i] = self.mm_complex(self.real_rng(), self.imag_rng())
+            mm_input[i] = self.complex(self.real_rng(), self.imag_rng())
 
         np_input = np.array(mm_input, copy=False)
 
-        mm_output = self.mm_simplearraycomplex(input_size)
+        mm_output = self.SimpleArray(input_size, self.complex())
         mm.FourierTransform.ifft(mm_input, mm_output)
 
         np_output = np.fft.ifft(np_input)
@@ -110,12 +104,6 @@ class TransformFp32TC(TransformTB, unittest.TestCase):
             kw['atol'] = 1.e-2
         return super().assert_allclose(*args, **kw)
 
-    def mm_complex(self, real=0.0, imag=0.0):
-        return mm.complex64(real, imag)
-
-    def mm_simplearraycomplex(self, size):
-        return mm.SimpleArrayComplex64(size, mm.complex64())
-
     def real_rng(self):
         return np.float32(np.random.uniform(-1.0, 1.0))
 
@@ -124,6 +112,8 @@ class TransformFp32TC(TransformTB, unittest.TestCase):
 
     def setUp(self):
         np.random.seed()
+        self.complex = mm.complex64
+        self.SimpleArray = mm.SimpleArrayComplex64
 
 
 class TransformFp64TC(TransformTB, unittest.TestCase):
@@ -133,12 +123,6 @@ class TransformFp64TC(TransformTB, unittest.TestCase):
             kw['atol'] = 1.e-10
         return super().assert_allclose(*args, **kw)
 
-    def mm_complex(self, real=0.0, imag=0.0):
-        return mm.complex128(real, imag)
-
-    def mm_simplearraycomplex(self, size):
-        return mm.SimpleArrayComplex128(size, mm.complex128())
-
     def real_rng(self):
         return np.random.uniform(-1.0, 1.0)
 
@@ -147,5 +131,7 @@ class TransformFp64TC(TransformTB, unittest.TestCase):
 
     def setUp(self):
         np.random.seed()
+        self.complex = mm.complex128
+        self.SimpleArray = mm.SimpleArrayComplex128
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
