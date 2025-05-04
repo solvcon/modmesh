@@ -31,7 +31,7 @@ import numpy as np
 import modmesh as mm
 
 
-class TransformTB(mm.testing.TestBase):
+class FourierTransformTB(mm.testing.TestBase):
 
     def setUp(self):
         pass
@@ -97,7 +97,7 @@ class TransformTB(mm.testing.TestBase):
             self.assert_allclose(mm_output[i].imag, np_output[i].imag)
 
 
-class TransformFp32TC(TransformTB, unittest.TestCase):
+class TransformFp32TC(FourierTransformTB, unittest.TestCase):
 
     def assert_allclose(self, *args, **kw):
         if 'atol' not in kw:
@@ -116,7 +116,7 @@ class TransformFp32TC(TransformTB, unittest.TestCase):
         self.SimpleArray = mm.SimpleArrayComplex64
 
 
-class TransformFp64TC(TransformTB, unittest.TestCase):
+class TransformFp64TC(FourierTransformTB, unittest.TestCase):
 
     def assert_allclose(self, *args, **kw):
         if 'atol' not in kw:
