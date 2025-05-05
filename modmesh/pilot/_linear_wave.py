@@ -27,7 +27,7 @@
 
 import numpy as np
 
-from ._euler1d import QuantityLine, SolverConfig, _1DApp
+from ._base_app import QuantityLine, SolverConfig, OneDimBaseApp
 from ..onedim.linear_scalar import LinearScalarSolver
 
 
@@ -51,7 +51,7 @@ class LinearWave:
         self.wave_field = self.svr.get_so0(0).ndarray
 
 
-class LinearWave1DApp(_1DApp):
+class LinearWave1DApp(OneDimBaseApp):
 
     def populate_menu(self):
         """

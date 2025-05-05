@@ -27,7 +27,7 @@
 
 import numpy as np
 
-from ._euler1d import QuantityLine, SolverConfig, _1DApp
+from ._base_app import QuantityLine, SolverConfig, OneDimBaseApp
 
 
 class BurgersEquation:
@@ -89,7 +89,7 @@ class BurgersEquation:
         return np.hstack((self.coord[0], internal, self.coord[-1]))
 
 
-class Burgers1DApp(_1DApp):
+class Burgers1DApp(OneDimBaseApp):
     """
     Main application for Burgers' equation 1D solver.
     """
