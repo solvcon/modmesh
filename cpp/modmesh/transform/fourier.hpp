@@ -6,35 +6,13 @@
 namespace modmesh
 {
 
-namespace transform
-{
-
 namespace detail
 {
 
 size_t bit_reverse(size_t n, const size_t bits);
 size_t next_power_of_two(size_t n);
-
-} /* end namespace detail */
-
 template <template <typename> class T1, typename T2>
-void fft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out);
-
-// TODO: The template of template is too complicate, we should find a way to make it easier.
-template <template <typename> typename T1, typename T2>
-void dft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
-{
-    size_t N = in.size();
-    for (size_t i = 0; i < N; ++i)
-    {
-        for (size_t j = 0; j < N; ++j)
-        {
-            T2 tmp = -2.0 * pi<T2> * i * j / static_cast<T2>(N);
-            T1<T2> twiddle_factor{std::cos(tmp), std::sin(tmp)};
-            out[i] += in[j] * twiddle_factor;
-        }
-    }
-}
+void fft_bluestein(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out);
 
 template <template <typename> class T1, typename T2>
 void fft_radix_2(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
@@ -72,24 +50,71 @@ void fft_radix_2(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
     }
 }
 
-template <template <typename> class T1, typename T2>
-void ifft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
+} /* end namespace detail */
+
+class FourierTransform
 {
-    size_t N = in.size();
-    SimpleArray<T1<T2>> in_conj{modmesh::small_vector<size_t>{N}, T1<T2>{0.0, 0.0}};
+public:
+    FourierTransform() = default;
+    ~FourierTransform() = default;
+    FourierTransform(const FourierTransform & other) = delete;
+    FourierTransform(FourierTransform && other) = delete;
+    FourierTransform & operator=(const FourierTransform & other) = delete;
+    FourierTransform & operator=(FourierTransform && other) = delete;
 
-    for (size_t i = 0; i < N; ++i)
+    template <template <typename> class T1, typename T2>
+    static void fft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
     {
-        in_conj[i] = in[i].conj();
+        const size_t N = in.size();
+
+        if ((N & (N - 1)) == 0)
+        {
+            detail::fft_radix_2<T1, T2>(in, out);
+        }
+        else
+        {
+            detail::fft_bluestein<T1, T2>(in, out);
+        }
     }
 
-    fft<T1, T2>(in_conj, out);
-
-    for (size_t i = 0; i < N; ++i)
+    template <template <typename> class T1, typename T2>
+    static void ifft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
     {
-        out[i] = out[i].conj() / static_cast<T2>(N);
+        size_t N = in.size();
+        SimpleArray<T1<T2>> in_conj{modmesh::small_vector<size_t>{N}, T1<T2>{0.0, 0.0}};
+
+        for (size_t i = 0; i < N; ++i)
+        {
+            in_conj[i] = in[i].conj();
+        }
+
+        fft<T1, T2>(in_conj, out);
+
+        for (size_t i = 0; i < N; ++i)
+        {
+            out[i] = out[i].conj() / static_cast<T2>(N);
+        }
     }
-}
+
+    // TODO: The template of template is too complicate, we should find a way to make it easier.
+    template <template <typename> typename T1, typename T2>
+    static void dft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
+    {
+        size_t N = in.size();
+        for (size_t i = 0; i < N; ++i)
+        {
+            for (size_t j = 0; j < N; ++j)
+            {
+                T2 tmp = -2.0 * pi<T2> * i * j / static_cast<T2>(N);
+                T1<T2> twiddle_factor{std::cos(tmp), std::sin(tmp)};
+                out[i] += in[j] * twiddle_factor;
+            }
+        }
+    }
+};
+
+namespace detail
+{
 
 template <template <typename> class T1, typename T2>
 void fft_bluestein(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
@@ -127,7 +152,7 @@ void fft_bluestein(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
         A[i] *= B[i];
     }
 
-    ifft<T1, T2>(A, a);
+    FourierTransform::ifft<T1, T2>(A, a);
 
     for (size_t i = 0; i < N; ++i)
     {
@@ -137,22 +162,7 @@ void fft_bluestein(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
     }
 }
 
-template <template <typename> class T1, typename T2>
-void fft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
-{
-    const size_t N = in.size();
-
-    if ((N & (N - 1)) == 0)
-    {
-        fft_radix_2<T1, T2>(in, out);
-    }
-    else
-    {
-        fft_bluestein<T1, T2>(in, out);
-    }
-}
-
-} /* end namespace transform */
+} /* end of namespace detail */
 
 } /* end namespace modmesh */
 

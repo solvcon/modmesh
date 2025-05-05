@@ -126,7 +126,6 @@ if (BUILD_QT)
     target_link_libraries(
         modmesh_primary PUBLIC
         ${PYSIDE6_LIBFILE}
-        ${SHIBOKEN6_LIBFILE}
     )
 else () # BUILD_QT
     add_library(

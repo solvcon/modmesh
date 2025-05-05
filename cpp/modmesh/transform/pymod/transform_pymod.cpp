@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2025, Chun-Hsu Lai <as2266317@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,24 +26,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/**
- * \file This is a template library for the meshes for numerical calculations
- * of partial differential equations.
- */
+#include <modmesh/transform/pymod/transform_pymod.hpp>
 
-#include <modmesh/base.hpp>
-#include <modmesh/math/math.hpp>
-#include <modmesh/buffer/buffer.hpp>
-#include <modmesh/grid.hpp>
-#include <modmesh/mesh/mesh.hpp>
-#include <modmesh/toggle/toggle.hpp>
-#include <modmesh/transform/transform.hpp>
+namespace modmesh
+{
 
-// TODO Add MSVC case once sanitizer can be default turned on for CI testing
-#if defined(USE_SANITIZER) && (defined(__clang__) || defined(__GNUC__))
-#define ASAN_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
-#else
-#define ASAN_NO_SANITIZE_ADDRESS
-#endif
+namespace python
+{
 
-// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
+struct transform_pymod_tag;
+
+template <>
+OneTimeInitializer<transform_pymod_tag> & OneTimeInitializer<transform_pymod_tag>::me()
+{
+    static OneTimeInitializer<transform_pymod_tag> instance;
+    return instance;
+}
+
+void initialize_transform(pybind11::module & mod)
+{
+    auto initialize_impl = [](pybind11::module & mod)
+    {
+        wrap_FourierTransform(mod);
+    };
+
+    OneTimeInitializer<transform_pymod_tag>::me()(mod, initialize_impl);
+}
+
+} /* end namespace python */
+
+} /* end namespace modmesh */
+
+// vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
