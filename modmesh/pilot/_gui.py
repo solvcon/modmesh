@@ -134,13 +134,6 @@ class _Controller(metaclass=_Singleton):
             )
 
         _addAction(
-            menu=wm.oneMenu,
-            text="(To be deprecated) load linear_wave",
-            tip="Load linear_wave",
-            func="modmesh.onedim.linear_wave.load_app",
-        )
-
-        _addAction(
             menu=wm.windowMenu,
             text="Console",
             tip="Open / Close Console",
