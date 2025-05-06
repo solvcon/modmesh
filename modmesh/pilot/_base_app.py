@@ -1,4 +1,4 @@
-# Copyright (c) 2025, Ting-Yu Chuang <tychuang.cs10@nycu.edu.tw>
+# Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
