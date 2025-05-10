@@ -110,6 +110,20 @@ struct vector<int64_t>
     static constexpr size_t N_lane = 2;
 };
 
+template <>
+struct vector<float>
+{
+    using type = float32x4_t;
+    static constexpr size_t N_lane = 4;
+};
+
+template <>
+struct vector<double>
+{
+    using type = float64x2_t;
+    static constexpr size_t N_lane = 2;
+};
+
 } /* namespace detail */
 
 template <typename T>
