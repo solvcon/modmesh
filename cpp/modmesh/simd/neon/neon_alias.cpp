@@ -61,6 +61,18 @@ DECL_MM_IMPL_VDUPQ(64)
 
 #undef DECL_MM_IMPL_VDUPQ
 
+template <>
+type::vector_t<float> vdupq<float>(float val)
+{
+    return vdupq_n_f32(val);
+}
+
+template <>
+type::vector_t<double> vdupq<double>(double val)
+{
+    return vdupq_n_f64(val);
+}
+
 #define DECL_MM_IMPL_VLD1Q(N)                                            \
     template <>                                                          \
     type::vector_t<utype_t(N)> vld1q<utype_t(N)>(utype_t(N) * ptr)       \
@@ -90,6 +102,30 @@ DECL_MM_IMPL_VLD1Q(64)
 
 #undef DECL_MM_IMPL_VLD1Q
 
+template <>
+type::vector_t<float> vld1q<float>(float * ptr)
+{
+    return vld1q_f32(ptr);
+}
+
+template <>
+type::vector_t<float> vld1q<float>(float const * ptr)
+{
+    return vld1q_f32(ptr);
+}
+
+template <>
+type::vector_t<double> vld1q<double>(double * ptr)
+{
+    return vld1q_f64(ptr);
+}
+
+template <>
+type::vector_t<double> vld1q<double>(double const * ptr)
+{
+    return vld1q_f64(ptr);
+}
+
 #define DECL_MM_IMPL_VST1Q(N)                                                \
     template <>                                                              \
     void vst1q<utype_t(N)>(utype_t(N) * ptr, type::vector_t<utype_t(N)> vec) \
@@ -108,6 +144,18 @@ DECL_MM_IMPL_VST1Q(32)
 DECL_MM_IMPL_VST1Q(64)
 
 #undef DECL_MM_IMPL_VST1Q
+
+template <>
+void vst1q<float>(float * ptr, type::vector_t<float> vec)
+{
+    return vst1q_f32(ptr, vec);
+}
+
+template <>
+void vst1q<double>(double * ptr, type::vector_t<double> vec)
+{
+    return vst1q_f64(ptr, vec);
+}
 
 #define DECL_MM_IMPL_VCGEQ(N)                                                                                        \
     template <>                                                                                                      \
@@ -128,6 +176,18 @@ DECL_MM_IMPL_VCGEQ(64)
 
 #undef DECL_MM_IMPL_VCGEQ
 
+template <>
+type::vector_t<float> vcgeq<float>(type::vector_t<float> vec_a, type::vector_t<float> vec_b)
+{
+    return vcgeq_f32(vec_a, vec_b);
+}
+
+template <>
+type::vector_t<double> vcgeq<double>(type::vector_t<double> vec_a, type::vector_t<double> vec_b)
+{
+    return vcgeq_f64(vec_a, vec_b);
+}
+
 #define DECL_MM_IMPL_VCLTQ(N)                                                                                        \
     template <>                                                                                                      \
     type::vector_t<utype_t(N)> vcltq<utype_t(N)>(type::vector_t<utype_t(N)> vec_a, type::vector_t<utype_t(N)> vec_b) \
@@ -146,6 +206,19 @@ DECL_MM_IMPL_VCLTQ(32)
 DECL_MM_IMPL_VCLTQ(64)
 
 #undef DECL_MM_IMPL_VCLTQ
+
+template <>
+type::vector_t<float> vcltq<float>(type::vector_t<float> vec_a, type::vector_t<float> vec_b)
+{
+    return vcltq_f32(vec_a, vec_b);
+}
+
+template <>
+type::vector_t<double> vcltq<double>(type::vector_t<double> vec_a, type::vector_t<double> vec_b)
+{
+    return vcltq_f64(vec_a, vec_b);
+}
+
 #undef stype_t
 #undef utype_t
 
