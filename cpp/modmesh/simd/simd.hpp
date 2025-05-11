@@ -55,6 +55,66 @@ const T * check_between(T const * start, T const * end, T const & min_val, T con
     }
 }
 
+template <typename T>
+void add(T * dest, T const * dest_end, T const * src1, T const * src2)
+{
+    using namespace detail;
+    switch (detect_simd())
+    {
+    case SIMD_NEON:
+        return neon::add<T>(dest, dest_end, src1, src2);
+        break;
+
+    default:
+        return generic::add<T>(dest, dest_end, src1, src2);
+    }
+}
+
+template <typename T>
+void sub(T * dest, T const * dest_end, T const * src1, T const * src2)
+{
+    using namespace detail;
+    switch (detect_simd())
+    {
+    case SIMD_NEON:
+        return neon::sub<T>(dest, dest_end, src1, src2);
+        break;
+
+    default:
+        return generic::sub<T>(dest, dest_end, src1, src2);
+    }
+}
+
+template <typename T>
+void mul(T * dest, T const * dest_end, T const * src1, T const * src2)
+{
+    using namespace detail;
+    switch (detect_simd())
+    {
+    case SIMD_NEON:
+        return neon::mul<T>(dest, dest_end, src1, src2);
+        break;
+
+    default:
+        return generic::mul<T>(dest, dest_end, src1, src2);
+    }
+}
+
+template <typename T>
+void div(T * dest, T const * dest_end, T const * src1, T const * src2)
+{
+    using namespace detail;
+    switch (detect_simd())
+    {
+    case SIMD_NEON:
+        return neon::div<T>(dest, dest_end, src1, src2);
+        break;
+
+    default:
+        return generic::div<T>(dest, dest_end, src1, src2);
+    }
+}
+
 } /* namespace simd */
 
 } /* namespace modmesh */

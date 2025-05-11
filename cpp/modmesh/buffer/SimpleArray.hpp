@@ -207,6 +207,178 @@ public:
         }
         return ret;
     }
+
+    A add(A const & other) const
+    {
+        return A(*static_cast<A const *>(this)).iadd(other);
+    }
+
+    A sub(A const & other) const
+    {
+        return A(*static_cast<A const *>(this)).isub(other);
+    }
+
+    A mul(A const & other) const
+    {
+        return A(*static_cast<A const *>(this)).imul(other);
+    }
+
+    A div(A const & other) const
+    {
+        return A(*static_cast<A const *>(this)).idiv(other);
+    }
+
+    A & iadd(A const & other)
+    {
+        auto athis = static_cast<A *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            for (size_t i = 0; i < athis->size(); ++i)
+            {
+                athis->data(i) += other.data(i);
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < athis->size(); ++i)
+            {
+                athis->data(i) = athis->data(i) || other.data(i);
+            }
+        }
+
+        return *athis;
+    }
+
+    A & isub(A const & other)
+    {
+        auto athis = static_cast<A *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            for (size_t i = 0; i < athis->size(); ++i)
+            {
+                athis->data(i) -= other.data(i);
+            }
+        }
+        else
+        {
+            throw std::runtime_error(Formatter() << "SimpleArray<bool>::isub(): boolean value doesn't support this operation");
+        }
+        return *athis;
+    }
+
+    A & imul(A const & other)
+    {
+        auto athis = static_cast<A *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            for (size_t i = 0; i < athis->size(); ++i)
+            {
+                athis->data(i) *= other.data(i);
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < athis->size(); ++i)
+            {
+                athis->data(i) = athis->data(i) && other.data(i);
+            }
+        }
+        return *athis;
+    }
+
+    A & idiv(A const & other)
+    {
+        auto athis = static_cast<A *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            for (size_t i = 0; i < athis->size(); ++i)
+            {
+                athis->data(i) /= other.data(i);
+            }
+        }
+        else
+        {
+            throw std::runtime_error(Formatter() << "SimpleArray<bool>::idiv(): boolean value doesn't support this operation");
+        }
+        return *athis;
+    }
+
+    A add_simd(A const & other) const
+    {
+        return A(*static_cast<A const *>(this)).iadd_simd(other);
+    }
+
+    A sub_simd(A const & other) const
+    {
+        return A(*static_cast<A const *>(this)).isub_simd(other);
+    }
+
+    A mul_simd(A const & other) const
+    {
+        return A(*static_cast<A const *>(this)).imul_simd(other);
+    }
+
+    A div_simd(A const & other) const
+    {
+        return A(*static_cast<A const *>(this)).idiv_simd(other);
+    }
+
+    A & iadd_simd(A const & other)
+    {
+        auto athis = static_cast<A *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            simd::add<T>(athis->begin(), athis->end(), athis->begin(), other.begin());
+            return *athis;
+        }
+        else
+        {
+            return athis->iadd(other);
+        }
+    }
+
+    A & isub_simd(A const & other)
+    {
+        auto athis = static_cast<A *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            simd::sub<T>(athis->begin(), athis->end(), athis->begin(), other.begin());
+            return *athis;
+        }
+        else
+        {
+            return athis->isub(other);
+        }
+    }
+
+    A & imul_simd(A const & other)
+    {
+        auto athis = static_cast<A *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            simd::mul<T>(athis->begin(), athis->end(), athis->begin(), other.begin());
+            return *athis;
+        }
+        else
+        {
+            return athis->imul(other);
+        }
+    }
+
+    A & idiv_simd(A const & other)
+    {
+        auto athis = static_cast<A *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            simd::div<T>(athis->begin(), athis->end(), athis->begin(), other.begin());
+            return *athis;
+        }
+        else
+        {
+            return athis->idiv(other);
+        }
+    }
+
 }; /* end class SimpleArrayMixinCalculators */
 
 template <typename A, typename T>

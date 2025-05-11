@@ -105,12 +105,154 @@ OUT_OF_RANGE:
     }
     return ptr;
 }
+
+template <typename T>
+void add(T * dest, T const * dest_end, T const * src1, T const * src2)
+{
+    if constexpr (!(type::has_vectype<T>))
+    {
+        return generic::add<T>(dest, dest_end, src1, src2);
+    }
+    else
+    {
+        using vec_t = type::vector_t<T>;
+        constexpr size_t N_lane = type::vector_lane<T>;
+        vec_t src1_vec;
+        vec_t src2_vec;
+        vec_t res_vec;
+        T * ptr = dest;
+        for (; ptr <= dest_end - N_lane; ptr += N_lane, src1 += N_lane, src2 += N_lane)
+        {
+            src1_vec = vld1q<T>(src1);
+            src2_vec = vld1q<T>(src2);
+            res_vec = vaddq<T>(src1_vec, src2_vec);
+            vst1q<T>(ptr, res_vec);
+        }
+        if (ptr != dest_end)
+        {
+            generic::add<T>(ptr, dest_end, src1, src2);
+        }
+    }
+}
+
+template <typename T>
+void sub(T * dest, T const * dest_end, T const * src1, T const * src2)
+{
+    if constexpr (!(type::has_vectype<T>))
+    {
+        return generic::sub<T>(dest, dest_end, src1, src2);
+    }
+    else
+    {
+        using vec_t = type::vector_t<T>;
+        constexpr size_t N_lane = type::vector_lane<T>;
+        vec_t src1_vec;
+        vec_t src2_vec;
+        vec_t res_vec;
+        T * ptr = dest;
+        for (; ptr <= dest_end - N_lane; ptr += N_lane, src1 += N_lane, src2 += N_lane)
+        {
+            src1_vec = vld1q<T>(src1);
+            src2_vec = vld1q<T>(src2);
+            res_vec = vsubq<T>(src1_vec, src2_vec);
+            vst1q<T>(ptr, res_vec);
+        }
+        if (ptr != dest_end)
+        {
+            generic::sub<T>(ptr, dest_end, src1, src2);
+        }
+    }
+}
+
+template <typename T>
+void mul(T * dest, T const * dest_end, T const * src1, T const * src2)
+{
+    if constexpr (!((type::vector_lane<T> > 2)))
+    {
+        return generic::mul<T>(dest, dest_end, src1, src2);
+    }
+    else
+    {
+        using vec_t = type::vector_t<T>;
+        constexpr size_t N_lane = type::vector_lane<T>;
+        vec_t src1_vec;
+        vec_t src2_vec;
+        vec_t res_vec;
+        T * ptr = dest;
+        for (; ptr <= dest_end - N_lane; ptr += N_lane, src1 += N_lane, src2 += N_lane)
+        {
+            src1_vec = vld1q<T>(src1);
+            src2_vec = vld1q<T>(src2);
+            res_vec = vmulq<T>(src1_vec, src2_vec);
+            vst1q<T>(ptr, res_vec);
+        }
+        if (ptr != dest_end)
+        {
+            generic::mul<T>(ptr, dest_end, src1, src2);
+        }
+    }
+}
+
+template <typename T>
+void div(T * dest, T const * dest_end, T const * src1, T const * src2)
+{
+    if constexpr (!(std::is_floating_point_v<T>))
+    {
+        return generic::div<T>(dest, dest_end, src1, src2);
+    }
+    else
+    {
+        using vec_t = type::vector_t<T>;
+        constexpr size_t N_lane = type::vector_lane<T>;
+        vec_t src1_vec;
+        vec_t src2_vec;
+        vec_t res_vec;
+        T * ptr = dest;
+        for (; ptr <= dest_end - N_lane; ptr += N_lane, src1 += N_lane, src2 += N_lane)
+        {
+            src1_vec = vld1q<T>(src1);
+            src2_vec = vld1q<T>(src2);
+            res_vec = vdivq<T>(src1_vec, src2_vec);
+            vst1q<T>(ptr, res_vec);
+        }
+        if (ptr != dest_end)
+        {
+            generic::div<T>(ptr, dest_end, src1, src2);
+        }
+    }
+}
+
 #else
 template <typename T>
 const T * check_between(T const * start, T const * end, T const & min_val, T const & max_val)
 {
     return generic::check_between<T>(start, end, min_val, max_val);
 }
+
+template <typename T>
+void add(T * dest, T const * dest_end, T const * src1, T const * src2)
+{
+    generic::add<T>(dest, dest_end, src1, src2);
+}
+
+template <typename T>
+void sub(T * dest, T const * dest_end, T const * src1, T const * src2)
+{
+    generic::sub<T>(dest, dest_end, src1, src2);
+}
+
+template <typename T>
+void mul(T * dest, T const * dest_end, T const * src1, T const * src2)
+{
+    generic::mul<T>(dest, dest_end, src1, src2);
+}
+
+template <typename T>
+void div(T * dest, T const * dest_end, T const * src1, T const * src2)
+{
+    generic::div<T>(dest, dest_end, src1, src2);
+}
+
 #endif /* defined(__aarch64__) */
 
 } /* namespace neon */
