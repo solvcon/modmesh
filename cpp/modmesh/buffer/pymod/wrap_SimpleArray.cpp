@@ -224,6 +224,18 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                  { self.imul(other); })
             .def("idiv", [](wrapped_type & self, wrapped_type const & other)
                  { self.idiv(other); })
+            .def("add_simd", &wrapped_type::add_simd)
+            .def("sub_simd", &wrapped_type::sub_simd)
+            .def("mul_simd", &wrapped_type::mul_simd)
+            .def("div_simd", &wrapped_type::div_simd)
+            .def("iadd_simd", [](wrapped_type & self, wrapped_type const & other)
+                 { self.iadd_simd(other); })
+            .def("isub_simd", [](wrapped_type & self, wrapped_type const & other)
+                 { self.isub_simd(other); })
+            .def("imul_simd", [](wrapped_type & self, wrapped_type const & other)
+                 { self.imul_simd(other); })
+            .def("idiv_simd", [](wrapped_type & self, wrapped_type const & other)
+                 { self.idiv_simd(other); })
             //
             ;
 
