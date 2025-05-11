@@ -44,16 +44,16 @@ class BurgersEquation:
         self.coord_field = None
         self.velocity_field = None
 
-    def build_constant(self, x1, x2, x3, velocity12, velocity23):
+    def build_constant(self, x, velocity):
         """
         Set solver initial condition.
 
-        :param xn: the n-th point of x axis.
-        :param velocitymn: the velocity between point m and n.
+        :param x: the points of x axis.
+        :param velocity: the velocities.
         """
         # Set the given value.
-        self.coord = np.array([x1, x2, x3], dtype='float64')
-        self.velocity = np.array([velocity12, velocity23], dtype='float64')
+        self.coord = np.array(x, dtype='float64')
+        self.velocity = np.array(velocity, dtype='float64')
 
     def build_field(self, t):
         """
@@ -93,6 +93,9 @@ class Burgers1DApp(OneDimBaseApp):
     """
     Main application for Burgers' equation 1D solver.
     """
+    num_region: int = 3
+    region_x: list = [-10.0, 0.0, 2.0, 5.0]
+    region_velocity: list = [-0.5, 1.0, 0.5]
 
     def populate_menu(self):
         """
@@ -105,17 +108,43 @@ class Burgers1DApp(OneDimBaseApp):
             func=self.run,
         )
 
+    def get_region_solver_config(self):
+        """
+        Get the solver configuration data (x & velocity) for region.
+
+        :return: solver configuration data
+        """
+        region = []
+        for i, x in enumerate(self.region_x):
+            x_var = f"x{i}"
+            x_des = f"The point {i} of x axis"
+            region.append([x_var, x, x_des])
+        for i, vel in enumerate(self.region_velocity):
+            vel_var = f"velocity{i}{i+1}"
+            vel_des = f"The velocity between point {i} and {i+1}"
+            region.append([vel_var, vel, vel_des])
+        return region
+
+    def reset_region_properties(self):
+        """
+        Reset the region properties (x & velocity).
+        """
+        self.region_x = []
+        for i in range(self.num_region + 1):
+            x_var = f"x{i}"
+            self.region_x.append(self.solver_config[x_var]["value"])
+        self.region_velocity = []
+        for i in range(self.num_region):
+            vel_var = f"velocity{i}{i+1}"
+            self.region_velocity.append(self.solver_config[vel_var]["value"])
+
     def init_solver_config(self):
         """
         Set Burgers' equation solver configuration by user' input, and then
         reset the initial condition.
         """
-        solver_config_data = [
-            ["x1", -10.0, "The 1st point of x axis"],
-            ["x2", 0.0, "The 2nd point of x axis"],
-            ["x3", 5.0, "The 3rd point of x axis"],
-            ["velocity12", -0.5, "The velocity between point 1 and 2"],
-            ["velocity23", 1.0, "The velocity between point 2 and 3"],
+        self.adjust_region = True
+        solver_config_data = self.get_region_solver_config() + [
             ["time_interval", 0.01, "The amount of time in a time step"],
             ["max_steps", 200, "Maximum time step"],
             ["profiling", False, "Turn on / off solver profiling"],
@@ -143,12 +172,8 @@ class Burgers1DApp(OneDimBaseApp):
         Initialize Burgers' equation solver and set up the initial condition.
         """
         self.st = BurgersEquation()
-        _s = self.solver_config
-        self.st.build_constant(x1=_s["x1"]["value"],
-                               x2=_s["x2"]["value"],
-                               x3=_s["x3"]["value"],
-                               velocity12=_s["velocity12"]["value"],
-                               velocity23=_s["velocity23"]["value"])
+        self.reset_region_properties()
+        self.st.build_constant(self.region_x, self.region_velocity)
         self.st.build_field(t=0)
 
     def update_step(self, steps):
@@ -159,6 +184,34 @@ class Burgers1DApp(OneDimBaseApp):
         self.current_step += steps
         time_current = self.current_step * self.time_interval
         self.st.build_field(t=time_current)
+
+    def get_region_add(self):
+        """
+        Add solver configuration item to the GUI.
+
+        :return: solver configuration data to be added
+        """
+        self.num_region += 1
+        pos_x = self.num_region
+        data_x = [f"x{pos_x}",
+                  self.region_x[-1],
+                  f"The point {pos_x} of x axis"]
+        pos_vel = self.num_region * 2 - 1
+        data_vel = [f"velocity{pos_x-1}{pos_x}",
+                    self.region_velocity[-1],
+                    f"The velocity between point {pos_x-1} and {pos_x}"]
+        return [(pos_x, data_x), (pos_vel, data_vel)]
+
+    def get_region_delete(self):
+        """
+        Delete solver configuration item to the GUI.
+
+        :return: solver configuration data to be deleted
+        """
+        pos_x = self.num_region
+        pos_vel = self.num_region * 2
+        self.num_region -= 1
+        return [pos_x, pos_vel]
 
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
