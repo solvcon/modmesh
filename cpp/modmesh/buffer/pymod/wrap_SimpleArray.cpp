@@ -212,6 +212,18 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def("max", &wrapped_type::max)
             .def("sum", &wrapped_type::sum)
             .def("abs", &wrapped_type::abs)
+            .def("add", &wrapped_type::add)
+            .def("sub", &wrapped_type::sub)
+            .def("mul", &wrapped_type::mul)
+            .def("div", &wrapped_type::div)
+            .def("iadd", [](wrapped_type & self, wrapped_type const & other)
+                 { self.iadd(other); })
+            .def("isub", [](wrapped_type & self, wrapped_type const & other)
+                 { self.isub(other); })
+            .def("imul", [](wrapped_type & self, wrapped_type const & other)
+                 { self.imul(other); })
+            .def("idiv", [](wrapped_type & self, wrapped_type const & other)
+                 { self.idiv(other); })
             //
             ;
 
