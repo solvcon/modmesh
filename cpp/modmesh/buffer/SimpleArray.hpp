@@ -124,6 +124,18 @@ public:
 
 }; /* end class SimpleArrayMixinModifiers */
 
+template <typename U>
+struct select_real_t
+{
+    using type = U;
+};
+
+template <typename U>
+struct select_real_t<Complex<U>>
+{
+    using type = U;
+};
+
 template <typename A, typename T>
 class SimpleArrayMixinCalculators
 {
@@ -135,6 +147,106 @@ private:
 public:
 
     using value_type = typename internal_types::value_type;
+    using real_type = typename detail::select_real_t<value_type>::type;
+
+    value_type median() const
+    {
+        auto athis = static_cast<A const *>(this);
+        size_t n = 1;
+        for (size_t i = 0; i < athis->ndim(); ++i)
+        {
+            n *= athis->shape(i);
+        }
+        small_vector<T> acopy(n);
+        auto sidx = athis->first_sidx();
+        size_t i = 0;
+        do
+        {
+            acopy[i] = athis->at(sidx);
+            ++i;
+        } while (athis->next_sidx(sidx));
+        if (n % 2 != 0)
+        {
+            return acopy.select_kth(n / 2);
+        }
+        auto v1 = acopy.select_kth(n / 2 - 1);
+        auto v2 = acopy.select_kth(n / 2);
+        return static_cast<value_type>(v1 + v2) / static_cast<value_type>(2.0);
+    }
+
+    value_type average() const
+    {
+        auto athis = static_cast<A const *>(this);
+        value_type sum = 0;
+        auto sidx = athis->first_sidx();
+        int64_t total = 0;
+        do
+        {
+            sum += athis->at(sidx);
+            ++total;
+        } while (athis->next_sidx(sidx));
+        return sum / static_cast<value_type>(total);
+    }
+
+    value_type mean() const
+    {
+        auto athis = static_cast<A const *>(this);
+        auto sidx = athis->first_sidx();
+        value_type sum = 0;
+        int64_t total = 0;
+        do
+        {
+            sum += athis->at(sidx);
+            ++total;
+        } while (athis->next_sidx(sidx));
+        return sum / static_cast<value_type>(total);
+    }
+
+    real_type var(size_t ddof) const
+    {
+        auto athis = static_cast<A const *>(this);
+        size_t n = 1;
+        for (size_t i = 0; i < athis->ndim(); ++i)
+        {
+            n *= athis->shape(i);
+        }
+        if (n <= ddof)
+        {
+            throw std::runtime_error("SimpleArray::var(): ddof must be less than the number of elements");
+        }
+
+        auto sidx = athis->first_sidx();
+        value_type mu = athis->mean();
+        real_type acc = 0;
+        if constexpr (is_complex_v<value_type>)
+        {
+            do
+            {
+                acc += athis->at(sidx).norm();
+            } while (athis->next_sidx(sidx));
+        }
+        else
+        {
+            do {
+                acc += athis->at(sidx) * athis->at(sidx);
+            } while (athis->next_sidx(sidx));
+        }
+        if constexpr (is_complex_v<value_type>)
+        {
+            acc -= n * mu.norm();
+        }
+        else
+        {
+            acc -= n * mu * mu;
+        }
+        return acc / static_cast<real_type>(n - ddof);
+    }
+
+    real_type std(size_t ddof) const
+    {
+        auto athis = static_cast<A const *>(this);
+        return std::sqrt(athis->var(ddof));
+    }
 
     value_type min() const
     {
@@ -809,13 +921,12 @@ public:
         while (dim >= 0)
         {
             sidx[dim] += 1;
-            if (sidx[dim] == shape()[dim])
+            if (sidx[dim] < shape()[dim])
             {
-                sidx[dim] = 0;
-                dim -= 1;
-                continue;
+                return true;
             }
-            return true;
+            sidx[dim] = 0;
+            dim -= 1;
         }
         return false;
     }

@@ -270,6 +270,72 @@ public:
         m_head[m_size++] = value;
     }
 
+    T select_kth(size_t k)
+    {
+        iterator it = quick_select(begin(), end(), k);
+        return *it;
+    }
+
+    iterator choose_pivot(iterator left, iterator right)
+    {
+        iterator first = left;
+        iterator mid = left + (right - left) / 2;
+        iterator last = right - 1;
+        if (*mid < *first)
+        {
+            std::iter_swap(mid, first);
+        }
+        if (*last < *first)
+        {
+            std::iter_swap(last, first);
+        }
+        if (*last < *mid)
+        {
+            std::iter_swap(last, mid);
+        }
+        return mid;
+    }
+
+    iterator quick_select(iterator first, iterator last, size_t k)
+    {
+        size_t len = last - first;
+        if (k >= len)
+        {
+            throw std::out_of_range("quick_select: k out of range");
+        }
+        iterator left = first;
+        iterator right = last;
+        while (true)
+        {
+            iterator pivot_it = choose_pivot(left, right);
+            std::iter_swap(pivot_it, right - 1);
+            iterator store = left;
+            for (iterator it = left; it < right - 1; ++it)
+            {
+                if (*it < *(right - 1))
+                {
+                    std::iter_swap(it, store);
+                    ++store;
+                }
+            }
+            std::iter_swap(store, right - 1);
+            size_t pivot_rank = store - left;
+            if (pivot_rank == k)
+            {
+                return store;
+            }
+            else if (pivot_rank < k)
+            {
+                k -= pivot_rank + 1;
+                left = store + 1;
+            }
+            else
+            {
+                right = store;
+            }
+        }
+    }
+
 private:
 
     void validate_range(size_t it) const

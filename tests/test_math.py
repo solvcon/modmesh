@@ -159,11 +159,21 @@ class ComplexTB(mm.testing.TestBase):
         cplx1 = self.mm_complex(self.real1, self.imag1)
         cplx2 = self.mm_complex(self.real2, self.imag2)
 
-        norm1 = cplx1.norm()
-        norm2 = cplx2.norm()
+        # https://numpy.org/devdocs/reference/generated/numpy.sort.html
+        # In numpy documentation,
+        # the sort order for complex numbers is lexicographic.
+        # Use the lexicographic order to match the numpy implementation.
+        # You can also see the following discussion for more details:
+        # 1.
+        # https://github.com/numpy/numpy/issues/12943
+        # 2.
+        # https://stackoverflow.com/questions/52481376
 
-        self.assertEqual(cplx1 < cplx2, norm1 < norm2)
-        self.assertEqual(cplx1 > cplx2, norm1 > norm2)
+        def compare():
+            if self.real1 == self.real2:
+                return self.imag1 <= self.imag2
+            return self.real1 <= self.real2
+        self.assertEqual(cplx1 < cplx2, compare())
 
     def test_norm(self):
         cplx = self.mm_complex(self.real1, self.imag1)

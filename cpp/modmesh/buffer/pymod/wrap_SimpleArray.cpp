@@ -208,6 +208,11 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
 
         (*this)
+            .def("median", &wrapped_type::median)
+            .def("average", &wrapped_type::average)
+            .def("mean", &wrapped_type::mean)
+            .def("var", &wrapped_type::var, py::arg("ddof") = 0)
+            .def("std", &wrapped_type::std, py::arg("ddof") = 0)
             .def("min", &wrapped_type::min)
             .def("max", &wrapped_type::max)
             .def("sum", &wrapped_type::sum)

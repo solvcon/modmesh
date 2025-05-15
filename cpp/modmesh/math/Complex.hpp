@@ -44,6 +44,20 @@ struct ComplexImpl
     T real_v;
     T imag_v;
 
+    ComplexImpl() = default;
+
+    ComplexImpl(T r, T i)
+        : real_v(r)
+        , imag_v(i)
+    {
+    }
+
+    ComplexImpl(T t)
+        : real_v(t)
+        , imag_v(0.0)
+    {
+    }
+
     ComplexImpl & operator+=(const ComplexImpl & other)
     {
         real_v += other.real_v;
@@ -121,13 +135,31 @@ struct ComplexImpl
 template <typename T>
 bool operator<(const ComplexImpl<T> & lhs, const ComplexImpl<T> & rhs)
 {
-    return lhs.norm() < rhs.norm();
+    /*
+     * https://numpy.org/devdocs/reference/generated/numpy.sort.html
+     * In numpy documentation, the sort order for complex numbers is lexicographic.
+     * Use the lexicographic order to match the numpy implementation.
+     * You can also see the following discussion for more details:
+     * 1.
+     * https://github.com/numpy/numpy/issues/12943
+     * 2.
+     * https://stackoverflow.com/questions/52481376/numpy-minimum-for-complex-numbers
+     */
+    if (lhs.real_v == rhs.real_v)
+    {
+        return lhs.imag_v <= rhs.imag_v;
+    }
+    return lhs.real_v <= rhs.real_v;
 }
 
 template <typename T>
 bool operator>(const ComplexImpl<T> & lhs, const ComplexImpl<T> & rhs)
 {
-    return lhs.norm() > rhs.norm();
+    if (lhs.real_v == rhs.real_v)
+    {
+        return lhs.imag_v > rhs.imag_v;
+    }
+    return lhs.real_v > rhs.real_v;
 }
 
 template <typename T>
