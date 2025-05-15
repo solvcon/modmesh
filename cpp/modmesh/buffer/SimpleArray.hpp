@@ -152,11 +152,7 @@ public:
     value_type median() const
     {
         auto athis = static_cast<A const *>(this);
-        size_t n = 1;
-        for (size_t i = 0; i < athis->ndim(); ++i)
-        {
-            n *= athis->shape(i);
-        }
+        const size_t n = athis->size();
         small_vector<T> acopy(n);
         auto sidx = athis->first_sidx();
         size_t i = 0;
@@ -205,11 +201,7 @@ public:
     real_type var(size_t ddof) const
     {
         auto athis = static_cast<A const *>(this);
-        size_t n = 1;
-        for (size_t i = 0; i < athis->ndim(); ++i)
-        {
-            n *= athis->shape(i);
-        }
+        const size_t n = athis->size();
         if (n <= ddof)
         {
             throw std::runtime_error("SimpleArray::var(): ddof must be less than the number of elements");
@@ -723,17 +715,6 @@ public:
     {
         if (buffer)
         {
-            const size_t nbytes = ITEMSIZE *
-                                  std::accumulate(shape.begin(),
-                                                  shape.end(),
-                                                  static_cast<size_t>(1),
-                                                  std::multiplies<size_t>());
-            if (nbytes != buffer->nbytes())
-            {
-                throw std::runtime_error(Formatter() << "SimpleArray: shape byte count " << nbytes
-                                                     << " differs from buffer " << buffer->nbytes());
-            }
-
             m_shape = shape;
             m_stride = stride;
         }
@@ -834,8 +815,22 @@ public:
 
     explicit operator bool() const noexcept { return bool(m_buffer) && bool(*m_buffer); }
 
-    size_t nbytes() const noexcept { return m_buffer ? m_buffer->nbytes() : 0; }
-    size_t size() const noexcept { return nbytes() / ITEMSIZE; }
+    size_t nbytes() const noexcept { return size() * ITEMSIZE; }
+    /**
+     * In the following numpy documentaions,
+     * `size()` are calculated based on the number of the elements.
+     * https://numpy.org/doc/2.2/reference/generated/numpy.ndarray.size.html
+     * SimpleArray matchs the behavior of numpy.ndarray.
+     */
+    size_t size() const noexcept
+    {
+        size_t size = 1;
+        for (size_t it = 0; it < m_shape.size(); ++it)
+        {
+            size *= m_shape[it];
+        }
+        return size;
+    }
 
     using iterator = T *;
     using const_iterator = T const *;
@@ -1090,11 +1085,11 @@ private:
         {
             throw std::out_of_range(Formatter() << "SimpleArray: index " << it << " < -nghost: " << -static_cast<ssize_t>(m_nghost));
         }
-        if (it >= static_cast<ssize_t>(size() - m_nghost))
+        if (it >= static_cast<ssize_t>((buffer().nbytes() / ITEMSIZE) - m_nghost))
         {
             throw std::out_of_range(
-                Formatter() << "SimpleArray: index " << it << " >= " << size() - m_nghost
-                            << " (size: " << size() << " - nghost: " << m_nghost << ")");
+                Formatter() << "SimpleArray: index " << it << " >= " << (buffer().nbytes() / ITEMSIZE) - m_nghost
+                            << " (buffer size: " << (buffer().nbytes() / ITEMSIZE) << " - nghost: " << m_nghost << ")");
         }
     }
 

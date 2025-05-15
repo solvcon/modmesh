@@ -320,7 +320,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 IndexError,
-                r"SimpleArray: index 14 >= 14 \(size: 24 - nghost: 10\)"
+                r"SimpleArray: index 14 >= 14 \(buffer size: 24 - nghost: 10\)"
         ):
             sarr[14]
 
@@ -332,7 +332,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 IndexError,
-                r"SimpleArray: index 14 >= 14 \(size: 24 - nghost: 10\)"
+                r"SimpleArray: index 14 >= 14 \(buffer size: 24 - nghost: 10\)"
         ):
             sarr[14] = 1
 
@@ -489,6 +489,8 @@ class SimpleArrayBasicTC(unittest.TestCase):
         np_sarr = np.empty(shape, dtype='float64')
         py_sarr = modmesh.SimpleArrayFloat64(array=np_sarr)
         self.assertTupleEqual(shape, py_sarr.shape)
+        self.assertEqual(np_sarr.nbytes, py_sarr.nbytes)
+        self.assertEqual(np_sarr.size, py_sarr.size)
 
         shape = (5, 5, 5, 5)
         np_sarr = np.empty(shape, dtype='float64')
@@ -500,6 +502,8 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         py_sarr = modmesh.SimpleArrayFloat64(array=np_sarr)
         self.assertTupleEqual(shape, py_sarr.shape)
+        self.assertEqual(np_sarr.nbytes, py_sarr.nbytes)
+        self.assertEqual(np_sarr.size, py_sarr.size)
 
     def test_SimpleArray_from_ndarray_content(self):
 
@@ -524,6 +528,8 @@ class SimpleArrayBasicTC(unittest.TestCase):
             for j in range(4):
                 for k in range(6):
                     self.assertEqual(parr[i, j, k], sarr[i, j, k])
+        self.assertEqual(parr.nbytes, sarr.nbytes)
+        self.assertEqual(parr.size, sarr.size)
 
     def test_SimpleArray_from_ndarray_transpose(self):
         ndarr = np.arange(350, dtype='float64').reshape((5, 7, 10))
@@ -1039,6 +1045,13 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         self.assertEqual(npmed.real, smed.real)
         self.assertEqual(npmed.imag, smed.imag)
 
+        nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        nparr = nparr[::2, ::2, ::2]
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npavg = np.median(nparr)
+        savg = sarr.median()
+        self.assertEqual(npavg, savg)
+
     def test_average(self):
         nparr = np.arange(24, dtype='float64')
         np.random.shuffle(nparr)
@@ -1061,6 +1074,13 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         savg = sarr.average()
         self.assertEqual(npavg, savg)
 
+        nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        nparr = nparr[::2, ::2, ::2]
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npavg = np.average(nparr)
+        savg = sarr.average()
+        self.assertEqual(npavg, savg)
+
     def test_mean(self):
         nparr = np.arange(24, dtype='float64')
         np.random.shuffle(nparr)
@@ -1078,6 +1098,13 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
 
         nparr = np.arange(81, dtype='float64').reshape((3, 3, 3, 3))
         np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npmean = np.mean(nparr)
+        smean = sarr.mean()
+        self.assertEqual(npmean, smean)
+
+        nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        nparr = nparr[::2, ::2, ::2]
         sarr = modmesh.SimpleArrayFloat64(array=nparr)
         npmean = np.mean(nparr)
         smean = sarr.mean()
@@ -1108,6 +1135,13 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         svar = sarr.var()
         self.assertEqual(npvar, svar)
 
+        nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        nparr = nparr[::2, ::2, ::2]
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npvar = np.var(nparr)
+        svar = sarr.var()
+        self.assertEqual(npvar, svar)
+
     def test_std(self):
         nparr = np.arange(24, dtype='float64')
         np.random.shuffle(nparr)
@@ -1131,6 +1165,13 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         sarr = modmesh.SimpleArrayComplex128(array=nparr)
         npstd = np.std(nparr)
         sstd = sarr.std()
+        self.assertEqual(npstd, sstd)
+
+        nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        nparr = nparr[::2, ::2, ::2]
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npstd = np.var(nparr)
+        sstd = sarr.var()
         self.assertEqual(npstd, sstd)
 
     def type_convertor(self, dtype):

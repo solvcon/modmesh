@@ -78,6 +78,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                         modmesh::detail::shape_type shape;
                         modmesh::detail::shape_type stride;
                         constexpr size_t itemsize = wrapped_type::itemsize();
+                        constexpr size_t span = 0;
                         for (ssize_t i = 0; i < arr_in.ndim(); ++i)
                         {
                             shape.push_back(arr_in.shape(i));
@@ -87,10 +88,49 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                         const bool is_c_contiguous = (arr_in.flags() & py::array::c_style) == py::array::c_style;
                         const bool is_f_contiguous = (arr_in.flags() & py::array::f_style) == py::array::f_style;
 
-                        std::shared_ptr<ConcreteBuffer> const buffer = ConcreteBuffer::construct(
-                            arr_in.nbytes(),
-                            arr_in.mutable_data(),
-                            std::make_unique<ConcreteBufferNdarrayRemover>(arr_in));
+                        py::array owner = arr_in;
+                        /*
+                         * In the following document, it introduces the base object in ndarray.
+                         * https://numpy.org/doc/2.2/reference/generated/numpy.ndarray.base.html
+                         * The `array.base` is base object if memory is from some other object.
+                         * If object owns its memory, base is None.
+                         */
+                        while (true)
+                        {
+                            const py::object b = owner.attr("base");
+                            if (b.is_none() || !py::isinstance<py::array>(b))
+                            {
+                                break;
+                            }
+                            auto next = b.cast<py::array>();
+                            /*
+                             * Prevent the infinite loop.
+                             * For example, the following code will create a loop:
+                             * nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+                             * nparr = nparr[::2, ::2, ::2]
+                             */
+                            if (next.ptr() == owner.ptr())
+                            {
+                                break;
+                            }
+                            owner = next;
+                        }
+
+                        char * base_ptr = static_cast<char *>(owner.mutable_data());
+                        char * view_ptr = static_cast<char *>(arr_in.mutable_data());
+                        const ptrdiff_t offset_bytes = view_ptr - base_ptr;
+                        if (offset_bytes < 0)
+                        {
+                            throw std::runtime_error("Unexpected negative offset!");
+                        }
+                        const size_t true_owner_nbytes = owner.nbytes();
+                        const size_t view_nbytes = true_owner_nbytes - static_cast<size_t>(offset_bytes);
+                        auto remover = std::make_unique<ConcreteBufferNdarrayRemover>(owner);
+                        const std::shared_ptr<ConcreteBuffer> buffer =
+                            ConcreteBuffer::construct(
+                                view_nbytes,
+                                view_ptr,
+                                std::move(remover));
                         return wrapped_type(shape, stride, buffer, is_c_contiguous, is_f_contiguous);
                     }),
                 py::arg("array"))
