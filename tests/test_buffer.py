@@ -998,6 +998,141 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         sarr = sarr.abs()
         self.assertEqual(sarr.sum(), True)
 
+    def test_median(self):
+        nparr = np.arange(24, dtype='float64')
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npmed = np.median(nparr)
+        smed = sarr.median()
+        self.assertEqual(npmed, smed)
+
+        nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npmed = np.median(nparr)
+        smed = sarr.median()
+        self.assertEqual(npmed, smed)
+
+        nparr = np.arange(81, dtype='float64').reshape((3, 3, 3, 3))
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npmed = np.median(nparr)
+        smed = sarr.median()
+        self.assertEqual(npmed, smed)
+
+        nparr = np.arange(24, dtype='complex128').reshape((2, 3, 4))
+        npimg = nparr.copy()
+        np.random.shuffle(nparr)
+        np.random.shuffle(npimg)
+        nparr = nparr + 1j * npimg
+        sarr = modmesh.SimpleArrayComplex128(array=nparr)
+        npmed = np.median(nparr)
+        smed = sarr.median()
+        self.assertEqual(npmed.real, smed.real)
+        self.assertEqual(npmed.imag, smed.imag)
+
+        # Reference: https://github.com/numpy/numpy/issues/12943
+        nparr = np.array([1+10j, 2+1j, 3+0j, 0+3j], dtype='complex128')
+        sarr = modmesh.SimpleArrayComplex128(array=nparr)
+        npmed = np.median(nparr)
+        smed = sarr.median()
+        self.assertEqual(npmed.real, smed.real)
+        self.assertEqual(npmed.imag, smed.imag)
+
+    def test_average(self):
+        nparr = np.arange(24, dtype='float64')
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npavg = np.average(nparr)
+        savg = sarr.average()
+        self.assertEqual(npavg, savg)
+
+        nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npavg = np.average(nparr)
+        savg = sarr.average()
+        self.assertEqual(npavg, savg)
+
+        nparr = np.arange(81, dtype='float64').reshape((3, 3, 3, 3))
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npavg = np.average(nparr)
+        savg = sarr.average()
+        self.assertEqual(npavg, savg)
+
+    def test_mean(self):
+        nparr = np.arange(24, dtype='float64')
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npavg = np.mean(nparr)
+        savg = sarr.mean()
+        self.assertEqual(npavg, savg)
+
+        nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npmean = np.mean(nparr)
+        smean = sarr.mean()
+        self.assertEqual(npmean, smean)
+
+        nparr = np.arange(81, dtype='float64').reshape((3, 3, 3, 3))
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npmean = np.mean(nparr)
+        smean = sarr.mean()
+        self.assertEqual(npmean, smean)
+
+    def test_var(self):
+        nparr = np.arange(24, dtype='float64')
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npavg = np.var(nparr)
+        savg = sarr.var()
+        self.assertEqual(npavg, savg)
+
+        nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npvar = np.var(nparr)
+        svar = sarr.var()
+        self.assertEqual(npvar, svar)
+
+        nparr = np.arange(24, dtype='complex128').reshape((2, 3, 4))
+        npimg = nparr.copy()
+        np.random.shuffle(nparr)
+        np.random.shuffle(npimg)
+        nparr = npimg + 1j * npimg
+        sarr = modmesh.SimpleArrayComplex128(array=nparr)
+        npvar = np.var(nparr)
+        svar = sarr.var()
+        self.assertEqual(npvar, svar)
+
+    def test_std(self):
+        nparr = np.arange(24, dtype='float64')
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npavg = np.std(nparr)
+        savg = sarr.std()
+        self.assertEqual(npavg, savg)
+
+        nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npstd = np.std(nparr)
+        sstd = sarr.std()
+        self.assertEqual(npstd, sstd)
+
+        nparr = np.arange(24, dtype='complex128').reshape((2, 3, 4))
+        npimg = nparr.copy()
+        np.random.shuffle(nparr)
+        np.random.shuffle(npimg)
+        nparr = npimg + 1j * npimg
+        sarr = modmesh.SimpleArrayComplex128(array=nparr)
+        npstd = np.std(nparr)
+        sstd = sarr.std()
+        self.assertEqual(npstd, sstd)
+
     def type_convertor(self, dtype):
         return {
             'int8': modmesh.SimpleArrayInt8,

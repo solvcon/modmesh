@@ -44,6 +44,20 @@ struct ComplexImpl
     T real_v;
     T imag_v;
 
+    ComplexImpl() = default;
+
+    ComplexImpl(T r, T i)
+        : real_v(r)
+        , imag_v(i)
+    {
+    }
+
+    ComplexImpl(T t)
+        : real_v(t)
+        , imag_v(0.0)
+    {
+    }
+
     ComplexImpl & operator+=(const ComplexImpl & other)
     {
         real_v += other.real_v;
@@ -117,17 +131,34 @@ struct ComplexImpl
     ComplexImpl<T> conj() const { return {real_v, -imag_v}; }
 }; /* end struct ComplexImpl */
 
-// These comparison operator would be used in SimpleArray::min(), SimpleArray::max().
+/**
+ * These comparison operators use lexicographic ordering and would be used in
+ * SimpleArray::min() and SimpleArray::max(). The use of lexicographic ordering
+ * is to match the numpy behaviors documented in
+ * https://numpy.org/devdocs/reference/generated/numpy.sort.html . The
+ * following discussions include more details:
+ * more details:
+ * 1. https://github.com/numpy/numpy/issues/12943
+ * 2. https://stackoverflow.com/questions/52481376
+ */
 template <typename T>
 bool operator<(const ComplexImpl<T> & lhs, const ComplexImpl<T> & rhs)
 {
-    return lhs.norm() < rhs.norm();
+    if (lhs.real_v == rhs.real_v)
+    {
+        return lhs.imag_v <= rhs.imag_v;
+    }
+    return lhs.real_v <= rhs.real_v;
 }
 
 template <typename T>
 bool operator>(const ComplexImpl<T> & lhs, const ComplexImpl<T> & rhs)
 {
-    return lhs.norm() > rhs.norm();
+    if (lhs.real_v == rhs.real_v)
+    {
+        return lhs.imag_v > rhs.imag_v;
+    }
+    return lhs.real_v > rhs.real_v;
 }
 
 template <typename T>
