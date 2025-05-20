@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 
+#include <random>
 #ifdef Py_PYTHON_H
 #error "Python.h should not be included."
 #endif
@@ -132,4 +133,38 @@ TEST(BufferExpander, iterator)
     }
 }
 
+TEST(small_vector, select_kth)
+{
+    const size_t n = 1024;
+    std::vector<int> scrambled(n);
+    // gcd(31, 1024) = 1,
+    // so we can get all numbers from 0 to 1023.
+    for (size_t i = 0; i < n; ++i)
+    {
+        scrambled[i] = static_cast<int>((i * 31) % n);
+    }
+
+    for (size_t k = 0; k < n; ++k)
+    {
+        modmesh::small_vector<int> sv(scrambled);
+        int result = sv.select_kth(k);
+        EXPECT_EQ(result, static_cast<int>(k));
+    }
+}
+
+TEST(small_vector, select_kth_random)
+{
+    size_t n = 1024;
+    std::vector<int> vec(n);
+    std::iota(vec.begin(), vec.end(), 0);
+
+    modmesh::small_vector<int> sv(vec);
+    for (size_t i = 0; i < n; ++i)
+    {
+        auto rng = std::default_random_engine{};
+        std::shuffle(sv.begin(), sv.end(), rng);
+        int it = sv.select_kth(i);
+        EXPECT_EQ(it, i);
+    }
+}
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
