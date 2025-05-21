@@ -210,6 +210,7 @@ class GUIConfig(object):
         :return None
         """
         self._tbl_content[row][col] = value
+        return True
 
     def columnHeader(self, col):
         """
@@ -322,6 +323,7 @@ class OneDimBaseApp(PilotFeature):
         - `plot_num` (bool): Flag indicating whether to plot numerical data.
         - `use_grid_layout` (bool): Flag indicating whether to use a grid
           layout.
+        - `adjust_region` (bool): Flag indicating whether to adjust the region.
 
     Methods:
         - :meth:`populate_menu()`: Set menu item for GUI.
@@ -361,6 +363,7 @@ class OneDimBaseApp(PilotFeature):
     plot_ana: bool = False
     plot_num: bool = False
     use_grid_layout: bool = False
+    adjust_region: bool = False
 
     def populate_menu(self):
         """
@@ -690,6 +693,8 @@ class ConfigWindow(QWidget):
           window is opened.
         - :meth:`on_close()`: Callback function when plot configure modal
           windows is closed.
+        - :meth:`add_region()`: Add data for a new region.
+        - :meth:`delete_region()`: Delete data for a region.
         - :meth:`init_ui()`: Define the GUI layout of the window.
     """
 
@@ -720,6 +725,28 @@ class ConfigWindow(QWidget):
         if self.plot_config_dialog:
             self.plot_config_dialog.close()
 
+    def add_region(self):
+        """
+        Add data for a new region to the solver configuration table.
+        """
+        table_model = ConfigTableModel(self.solver_config)
+        list_add = sorted(self.app.get_region_add(),
+                          key=lambda x: x[0],
+                          reverse=True)
+        for pos, data in list_add:
+            table_model.insertRow(data, pos)
+        self.table.setModel(table_model)
+
+    def delete_region(self):
+        """
+        Delete data for a region from the solver configuration table.
+        """
+        table_model = ConfigTableModel(self.solver_config)
+        list_del = sorted(self.app.get_region_delete(), reverse=True)
+        for pos in list_del:
+            table_model.deleteRow(pos)
+        self.table.setModel(table_model)
+
     def init_ui(self):
         """
         Define the GUI layout of the window for this class
@@ -742,10 +769,19 @@ class ConfigWindow(QWidget):
         config_label = QLabel("Configuration")
         vbox1.addWidget(config_label)
 
-        table = QTableView()
+        self.table = QTableView()
         table_model = ConfigTableModel(self.solver_config)
-        table.setModel(table_model)
-        vbox1.addWidget(table)
+        self.table.setModel(table_model)
+        vbox1.addWidget(self.table)
+
+        if self.app.adjust_region:
+            add_button = QPushButton("Add Region")
+            add_button.clicked.connect(self.add_region)
+            vbox1.addWidget(add_button)
+
+            delete_button = QPushButton("Delete Region")
+            delete_button.clicked.connect(self.delete_region)
+            vbox1.addWidget(delete_button)
 
         set_button = QPushButton("Set")
         set_button.clicked.connect(self.app.set)
@@ -833,6 +869,8 @@ class ConfigTableModel(QAbstractTableModel):
           model.
         - :meth:`headerData(section, orientation, role)`: Get the header data
           for a specific section in the model.
+        - :meth:`insertRow(data, position)`: Insert a new row of data.
+        - :meth:`deleteRow(position)`: Delete a row of data.
     """
 
     def __init__(self, config, parent=None):
@@ -853,7 +891,7 @@ class ConfigTableModel(QAbstractTableModel):
     def setData(self, index, value, role):
         if role == Qt.EditRole:
             self.config.setData(index.row(), index.column(), value)
-            return
+            return True
 
     def flags(self, index):
         if self.config.editable(index.row(), index.column()):
@@ -863,6 +901,35 @@ class ConfigTableModel(QAbstractTableModel):
     def headerData(self, section, orientation, role):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return self.config.columnHeader(section)
+        return None
+
+    def insertRow(self, data, position=None):
+        """
+        Insert data at specific row.
+
+        :param data: data to be inserted
+        :param position: row index of config._tbl_content
+        """
+        if len(data) != self.config.columnCount():
+            raise ValueError(
+                f"Row {position} has length {len(data)}, "
+                f"expected {self.config.columnCount()}"
+            )
+        position = self.rowCount(None) if position is None else position
+        if position < 0 or position > self.rowCount(None):
+            raise IndexError(f"Row {position} out of range")
+        self.config._tbl_content.insert(position, data)
+        return None
+
+    def deleteRow(self, position):
+        """
+        Delete data at specific row.
+
+        :param position: row index of config._tbl_content
+        """
+        if position < 0 or position >= self.rowCount(None):
+            raise IndexError(f"Row {position} out of range")
+        self.config._tbl_content.pop(position)
         return None
 
 
