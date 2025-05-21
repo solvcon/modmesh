@@ -48,8 +48,8 @@ class BurgersEquation:
         """
         Set solver initial condition.
 
-        :param x: the points of x axis.
-        :param velocity: the velocities.
+        :param x (type: list): the points of x axis.
+        :param velocity (type: list): the velocities.
         """
         # Set the given value.
         self.coord = np.array(x, dtype='float64')
