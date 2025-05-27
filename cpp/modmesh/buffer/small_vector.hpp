@@ -270,6 +270,35 @@ public:
         m_head[m_size++] = value;
     }
 
+    size_t count(T const & value) const
+    {
+        size_t count = 0;
+        for (const_iterator it = begin(); it != end(); ++it)
+        {
+            if (*it == value)
+            {
+                ++count;
+            }
+        }
+        return count;
+    }
+
+    bool next_cartesian_product(small_vector const & bound)
+    {
+        int64_t dim = size() - 1;
+        while (dim >= 0)
+        {
+            (*this)[dim] += 1;
+            if ((*this)[dim] < bound[dim])
+            {
+                return true;
+            }
+            (*this)[dim] = 0;
+            dim -= 1;
+        }
+        return false;
+    }
+
     T select_kth(size_t k)
     {
         iterator it = quick_select(begin(), end(), k);

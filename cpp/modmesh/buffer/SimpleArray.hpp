@@ -149,6 +149,106 @@ public:
     using value_type = typename internal_types::value_type;
     using real_type = typename detail::select_real_t<value_type>::type;
 
+    template <typename RedFn, typename... RedArgs>
+    auto reduce(const shape_type & axis, RedFn red_fn, RedArgs &&... red_args) const
+    {
+        using element_type = std::invoke_result_t<
+            RedFn,
+            const A *,
+            small_vector<value_type> &,
+            RedArgs...>;
+
+        using ret_type = typename A::template rebind<element_type>;
+
+        auto athis = static_cast<const A *>(this);
+        const size_t ndim = athis->ndim();
+
+        small_vector<bool> reduce_mask(ndim, false);
+        for (size_t ax : axis)
+        {
+            if (ax >= ndim || ax < 0)
+            {
+                throw std::out_of_range("reduce: axis out of range");
+            }
+            reduce_mask[ax] = true;
+        }
+
+        size_t red_count = reduce_mask.count(true);
+        if (red_count == 0 || red_count == ndim)
+        {
+            throw std::runtime_error("reduce: no axis to reduce or all axes are reduced");
+        }
+
+        small_vector<size_t> out_shape(ndim - red_count);
+        for (size_t i = 0, l = 0; i < ndim; ++i)
+        {
+            if (!reduce_mask[i])
+            {
+                out_shape[l++] = athis->shape(i);
+            }
+        }
+        ret_type result(out_shape);
+
+        small_vector<size_t> red_axes(red_count), red_shape(red_count);
+        for (size_t i = 0, l = 0; i < ndim; ++i)
+        {
+            if (reduce_mask[i])
+            {
+                red_axes[l] = i;
+                red_shape[l++] = athis->shape(i);
+            }
+        }
+
+        small_vector<size_t> full_idx(ndim, 0);
+        auto out_idx = result.first_sidx();
+
+        do
+        {
+            for (size_t i = 0, l = 0; i < ndim; ++i)
+            {
+                if (!reduce_mask[i])
+                {
+                    full_idx[i] = out_idx[l++];
+                }
+            }
+
+            small_vector<value_type> slice;
+            small_vector<size_t> red_idx(red_axes.size(), 0);
+
+            do
+            {
+                for (size_t k = 0; k < red_axes.size(); ++k)
+                {
+                    full_idx[red_axes[k]] = red_idx[k];
+                }
+                slice.push_back(athis->at(full_idx));
+
+            } while (red_idx.next_cartesian_product(red_shape));
+
+            element_type mv = std::invoke(red_fn, this, slice, std::forward<RedArgs>(red_args)...);
+            result.at(out_idx) = mv;
+        } while (result.next_sidx(out_idx));
+
+        return result;
+    }
+
+    value_type median_op(small_vector<value_type> & sv) const
+    {
+        const size_t n = sv.size();
+        if (n % 2 != 0)
+        {
+            return sv.select_kth(n / 2);
+        }
+        auto v1 = sv.select_kth(n / 2 - 1);
+        auto v2 = sv.select_kth(n / 2);
+        return static_cast<value_type>(v1 + v2) / static_cast<value_type>(2.0);
+    }
+
+    A median(const small_vector<size_t> & axis) const
+    {
+        return reduce(axis, &SimpleArrayMixinCalculators::median_op);
+    }
+
     value_type median() const
     {
         auto athis = static_cast<A const *>(this);
@@ -161,27 +261,84 @@ public:
             acopy[i] = athis->at(sidx);
             ++i;
         } while (athis->next_sidx(sidx));
-        if (n % 2 != 0)
-        {
-            return acopy.select_kth(n / 2);
-        }
-        auto v1 = acopy.select_kth(n / 2 - 1);
-        auto v2 = acopy.select_kth(n / 2);
-        return static_cast<value_type>(v1 + v2) / static_cast<value_type>(2.0);
+        return median_op(acopy);
     }
 
-    value_type average() const
+    value_type average_op(small_vector<value_type> & sv, small_vector<value_type> & weight) const
     {
-        auto athis = static_cast<A const *>(this);
+        const size_t n = sv.size();
+        if (n != weight.size())
+        {
+            throw std::runtime_error("SimpleArray::average_op(): weight size does not match array size");
+        }
         value_type sum = 0;
-        auto sidx = athis->first_sidx();
-        int64_t total = 0;
+        value_type total_weight = 0;
+        for (size_t i = 0; i < n; ++i)
+        {
+            sum += sv[i] * weight[i];
+            total_weight += weight[i];
+        }
+        if (total_weight == static_cast<value_type>(0))
+        {
+            throw std::runtime_error("SimpleArray::average_op(): total weight is zero");
+        }
+        return sum / total_weight;
+    }
+
+    A average(const small_vector<size_t> & axis, A const & weight) const
+    {
+        small_vector<value_type> weight_sv(weight.size());
+        auto sidx = weight.first_sidx();
+        size_t i = 0;
         do
         {
-            sum += athis->at(sidx);
-            ++total;
+            weight_sv[i] = weight.at(sidx);
+            ++i;
+        } while (weight.next_sidx(sidx));
+        return reduce(axis, &SimpleArrayMixinCalculators::average_op, weight_sv);
+    }
+
+    value_type average(A const & weight) const
+    {
+        auto athis = static_cast<A const *>(this);
+        const shape_type & weight_shape = weight.shape();
+        const shape_type & athis_shape = athis->shape();
+        for (size_t i = 0; i < athis_shape.size(); ++i)
+        {
+            if (weight_shape[i] != athis_shape[i])
+            {
+                throw std::runtime_error("SimpleArray::average(): weight shape does not match array shape");
+            }
+        }
+        value_type sum = 0;
+        value_type total_weight = 0;
+        auto sidx = athis->first_sidx();
+        do
+        {
+            sum += athis->at(sidx) * weight.at(sidx);
+            total_weight += weight.at(sidx);
         } while (athis->next_sidx(sidx));
-        return sum / static_cast<value_type>(total);
+        if (total_weight == static_cast<value_type>(0))
+        {
+            throw std::runtime_error("SimpleArray::average(): total weight is zero");
+        }
+        return sum / total_weight;
+    }
+
+    value_type mean_op(small_vector<value_type> & sv) const
+    {
+        const size_t n = sv.size();
+        value_type sum = 0;
+        for (const auto & v : sv)
+        {
+            sum += v;
+        }
+        return sum / static_cast<value_type>(n);
+    }
+
+    A mean(const small_vector<size_t> & axis) const
+    {
+        return reduce(axis, &SimpleArrayMixinCalculators::mean_op);
     }
 
     value_type mean() const
@@ -196,6 +353,37 @@ public:
             ++total;
         } while (athis->next_sidx(sidx));
         return sum / static_cast<value_type>(total);
+    }
+
+    real_type var_op(small_vector<value_type> & sv, size_t ddof) const
+    {
+        const size_t n = sv.size();
+        if (n <= ddof)
+        {
+            throw std::runtime_error("SimpleArray::var_op(): ddof must be less than the number of elements");
+        }
+        value_type mu = mean_op(sv);
+        real_type acc = 0;
+        if constexpr (is_complex_v<value_type>)
+        {
+            for (const auto & v : sv)
+            {
+                acc += (v - mu).norm();
+            }
+        }
+        else
+        {
+            for (const auto & v : sv)
+            {
+                acc += (v - mu) * (v - mu);
+            }
+        }
+        return acc / static_cast<real_type>(n - ddof);
+    }
+
+    auto var(const small_vector<size_t> & axis, size_t ddof) const
+    {
+        return reduce(axis, &SimpleArrayMixinCalculators::var_op, ddof);
     }
 
     real_type var(size_t ddof) const
@@ -232,6 +420,16 @@ public:
             acc -= n * mu * mu;
         }
         return acc / static_cast<real_type>(n - ddof);
+    }
+
+    real_type std_op(small_vector<value_type> & sv, size_t ddof) const
+    {
+        return std::sqrt(var_op(sv, ddof));
+    }
+
+    auto std(const small_vector<size_t> & axis, size_t ddof) const
+    {
+        return reduce(axis, &SimpleArrayMixinCalculators::std_op, ddof);
     }
 
     real_type std(size_t ddof) const
@@ -590,7 +788,8 @@ private:
     using internal_types = detail::SimpleArrayInternalTypes<T>;
 
 public:
-
+    template <typename U>
+    using rebind = SimpleArray<U>;
     using value_type = typename internal_types::value_type;
     using shape_type = typename internal_types::shape_type;
     using sshape_type = typename internal_types::sshape_type;
@@ -912,18 +1111,7 @@ public:
 
     bool next_sidx(shape_type & sidx) const noexcept
     {
-        ssize_t dim = shape().size() - 1;
-        while (dim >= 0)
-        {
-            sidx[dim] += 1;
-            if (sidx[dim] < shape()[dim])
-            {
-                return true;
-            }
-            sidx[dim] = 0;
-            dim -= 1;
-        }
-        return false;
+        return sidx.next_cartesian_product(shape());
     }
 
     size_t ndim() const noexcept { return m_shape.size(); }

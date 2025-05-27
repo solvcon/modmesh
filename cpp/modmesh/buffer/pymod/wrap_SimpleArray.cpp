@@ -248,11 +248,64 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
 
         (*this)
-            .def("median", &wrapped_type::median)
-            .def("average", &wrapped_type::average)
-            .def("mean", &wrapped_type::mean)
-            .def("var", &wrapped_type::var, py::arg("ddof") = 0)
-            .def("std", &wrapped_type::std, py::arg("ddof") = 0)
+            .def(
+                "median",
+                [](wrapped_type const & self)
+                {
+                    return self.median();
+                })
+            .def(
+                "median",
+                [](wrapped_type const & self, py::object const & axis)
+                { return self.median(make_shape(axis)); },
+                py::arg("axis"))
+            .def(
+                "average",
+                [](wrapped_type const & self, py::object const & weight)
+                {
+                    if (weight.is_none())
+                    {
+                        return self.mean();
+                    }
+                    auto w = weight.cast<wrapped_type>();
+                    return self.average(w);
+                },
+                py::arg("weight") = py::none())
+            .def(
+                "average",
+                &WrapSimpleArray<T>::average_with_axis,
+                py::arg("axis"),
+                py::arg("weight") = py::none())
+            .def("mean",
+                 [](wrapped_type const & self)
+                 { return self.mean(); })
+            .def(
+                "mean",
+                [](wrapped_type const & self, py::object const & axis)
+                { return self.mean(make_shape(axis)); },
+                py::arg("axis"))
+            .def(
+                "var",
+                [](wrapped_type const & self, size_t ddof)
+                { return self.var(ddof); },
+                py::arg("ddof") = 0)
+            .def(
+                "var",
+                [](wrapped_type const & self, py::object const & axis, size_t ddof)
+                { return self.var(make_shape(axis), ddof); },
+                py::arg("axis"),
+                py::arg("ddof") = 0)
+            .def(
+                "std",
+                [](wrapped_type const & self, size_t ddof)
+                { return self.std(ddof); },
+                py::arg("ddof") = 0)
+            .def(
+                "std",
+                [](wrapped_type const & self, py::object const & axis, size_t ddof)
+                { return self.std(make_shape(axis), ddof); },
+                py::arg("axis"),
+                py::arg("ddof") = 0)
             .def("min", &wrapped_type::min)
             .def("max", &wrapped_type::max)
             .def("sum", &wrapped_type::sum)
@@ -287,6 +340,21 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
 
         return *this;
     }
+
+    // NOLINTBEGIN(bugprone-easily-swappable-parameters)
+    static wrapped_type average_with_axis(wrapped_type const & self,
+                                          pybind11::object const & axis,
+                                          pybind11::object const & weight)
+    {
+        auto ashape = make_shape(axis);
+        if (weight.is_none())
+        {
+            return self.mean(ashape);
+        }
+        auto w = weight.cast<wrapped_type>();
+        return self.average(ashape, w);
+    }
+    // NOLINTEND(bugprone-easily-swappable-parameters)
 
     wrapper_type & wrap_sort()
     {
