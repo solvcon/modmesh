@@ -27,7 +27,8 @@
 
 from ..onedim import euler1d
 
-from ._base_app import QuantityLine, SolverConfig, OneDimBaseApp
+from ._base_app import (QuantityLine, SolverConfig, OneDimBaseApp,
+                        PlotArea, QWidget)
 
 
 class Euler1DApp(OneDimBaseApp):
@@ -45,6 +46,24 @@ class Euler1DApp(OneDimBaseApp):
             tip="One-dimensional shock-tube problem with Euler solver",
             func=self.run,
         )
+
+    def run(self):
+        """
+        Create the GUI environment.
+        """
+        super().run()
+        # Create sub-window
+        self._subwin = self._mgr.addSubWindow(QWidget())
+        self._subwin.setWidget(PlotArea(self.plot))
+        self._subwin.showMaximized()
+        self._subwin.show()
+
+    def set(self):
+        """
+        Set the solver configurations and update the timer.
+        """
+        super().set()
+        self._subwin.setWidget(PlotArea(self.plot))
 
     def init_solver_config(self):
         """

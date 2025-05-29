@@ -27,7 +27,12 @@
 
 import numpy as np
 
-from ._base_app import QuantityLine, SolverConfig, OneDimBaseApp
+from matplotlib.backends.backend_qtagg import FigureCanvas
+from matplotlib.figure import Figure
+from matplotlib.pyplot import setp
+
+from ._base_app import (QuantityLine, SolverConfig, OneDimBaseApp,
+                        PlotArea, QWidget)
 
 
 class BurgersEquation:
@@ -94,8 +99,8 @@ class Burgers1DApp(OneDimBaseApp):
     Main application for Burgers' equation 1D solver.
     """
     num_region: int = 3
-    region_x: list = [-10.0, 0.0, 2.0, 5.0]
-    region_velocity: list = [-0.5, 1.0, 0.5]
+    region_x: list = [-3, -1, 1, 3]
+    region_velocity: list = [-1, 1, -1]
 
     def populate_menu(self):
         """
@@ -107,6 +112,46 @@ class Burgers1DApp(OneDimBaseApp):
             tip="One-dimensional Burgers equation problem",
             func=self.run,
         )
+
+    def run(self):
+        """
+        Create the GUI environment.
+        """
+        super().run()
+        # Create first sub-window
+        self._subwin1 = self._mgr.addSubWindow(QWidget())
+        self._subwin1.setWidget(PlotArea(self.plot))
+        self._subwin1.move(0, 0)
+        self._subwin1.resize(600, 600)
+        self._subwin1.show()
+        # Create second sub-window
+        self._subwin2 = self._mgr.addSubWindow(QWidget())
+        self._subwin2.setWidget(PlotArea(self.plot_wave_diagram))
+        self._subwin2.move(600, 0)
+        self._subwin2.resize(600, 600)
+        self._subwin2.show()
+
+    def set(self):
+        """
+        Set the solver configurations and update the timer.
+        """
+        super().set()
+        self._subwin1.setWidget(PlotArea(self.plot))
+        self._subwin2.setWidget(PlotArea(self.plot_wave_diagram))
+
+    def setup_app(self):
+        """
+        Create the window for solver.
+        """
+        super().setup_app()
+        self.plot_wave_diagram = self.build_wave_diagram()
+
+    def update_layout(self):
+        """
+        Refresh plotting area layout.
+        """
+        super().update_layout()
+        self.plot_wave_diagram = self.build_wave_diagram()
 
     def get_region_solver_config(self):
         """
@@ -213,5 +258,40 @@ class Burgers1DApp(OneDimBaseApp):
         self.num_region -= 1
         return [pos_x, pos_vel]
 
+    def build_wave_diagram(self):
+        """
+        Build the wave diagram (t vs x) for Burgers' equation.
+
+        :return: FigureCanvas
+        """
+        fig = Figure()
+        canvas = FigureCanvas(fig)
+        ax = canvas.figure.subplots()
+
+        # set t information
+        t_max = (self.solver_config["max_steps"]["value"]
+                 * self.solver_config["time_interval"]["value"])
+        t = np.linspace(0, t_max, 100)
+
+        # set x information - wavefront
+        x_num = 5
+        for i in range(len(self.region_x)-1):
+            x_length = self.region_x[i+1] - self.region_x[i]
+            dx = x_length / (x_num - 1)
+            for j in range(x_num):
+                x0 = self.region_x[i] + j * dx
+                xt = x0 + self.region_velocity[i] * t_max
+                x = np.linspace(x0, xt, 100)
+                ax.plot(x, t, 'b-')
+
+        ax.set_xlabel('Position (x)')
+        ax.set_ylabel('Time (t)')
+        ax.grid(True)
+        ax.legend()
+
+        fig.tight_layout()
+        setp(ax, xlim=[self.region_x[0], self.region_x[-1]])
+        setp(ax, ylim=[0, t_max])
+        return canvas
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

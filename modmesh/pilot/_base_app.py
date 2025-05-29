@@ -385,12 +385,6 @@ class OneDimBaseApp(PilotFeature):
         self._mgr.mainWindow.addDockWidget(Qt.LeftDockWidgetArea,
                                            config_widget)
 
-        # A new sub-window (`QMdiSubWindow`) for the plot area
-        self._subwin = self._mgr.addSubWindow(QWidget())
-        self._subwin.setWidget(PlotArea(self))
-        self._subwin.showMaximized()
-        self._subwin.show()
-
     def setup_app(self):
         """
         Create the window for solver.
@@ -544,9 +538,6 @@ class OneDimBaseApp(PilotFeature):
         self.set_solver_config()
         self.setup_timer()
         self.update_layout()
-
-        # Update PlotArea while click set button
-        self._subwin.setWidget(PlotArea(self))
 
     def update_layout(self):
         """
@@ -834,15 +825,15 @@ class PlotArea(QWidget):
     Methods:
         - :meth:`init_ui()`: Define the GUI layout of the window.
     """
-    def __init__(self, app, parent=None):
+    def __init__(self, plot, parent=None):
         super().__init__(parent)
-        self.app = app
+        self.app_plot = plot
         self.init_ui()
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        layout.addWidget(NavigationToolbar2QT(self.app.plot, None))
-        layout.addWidget(self.app.plot)
+        layout.addWidget(NavigationToolbar2QT(self.app_plot, None))
+        layout.addWidget(self.app_plot)
 
         self.setLayout(layout)
 
