@@ -125,6 +125,7 @@ static void verify_python_value_datatype(pybind11::object const & value, DataTyp
         {
             throw pybind11::type_error("Data type mismatch, expected Complex64");
         }
+        break;
     }
     case DataType::Complex128:
     {
@@ -132,6 +133,7 @@ static void verify_python_value_datatype(pybind11::object const & value, DataTyp
         {
             throw pybind11::type_error("Data type mismatch, expected Complex128");
         }
+        break;
     }
 
     default:
