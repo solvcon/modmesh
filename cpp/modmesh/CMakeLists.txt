@@ -30,6 +30,17 @@ if (BUILD_QT)
     find_package(Qt6 REQUIRED COMPONENTS 3DExtras)
 endif () # BUILD_QT
 
+if (BUILD_CUDA)
+    find_package(CUDA REQUIRED)
+    find_package(CUDAToolkit REQUIRED)
+    enable_language(CUDA)
+    if (TARGET CUDA::cufft)
+        message(STATUS "CUDA cuFFT available")
+    else ()
+        message(FATAL_ERROR "CUDA cuFFT not found")
+    endif ()
+endif () # BUILD_CUDA
+
 add_subdirectory(buffer)
 add_subdirectory(mesh)
 add_subdirectory(toggle)
@@ -134,6 +145,12 @@ else () # BUILD_QT
         ${MODMESH_TERMINAL_FILES}
     )
 endif () # BUILD_QT
+
+if (BUILD_CUDA)
+    set_target_properties(modmesh_primary PROPERTIES LINKER_LANGUAGE CUDA)
+    target_compile_definitions(modmesh_primary PRIVATE BUILD_CUDA)
+    target_link_libraries(modmesh_primary PRIVATE CUDA::cudart CUDA::cufft)
+endif () # BUILD_CUDA
 
 set_target_properties(modmesh_primary PROPERTIES POSITION_INDEPENDENT_CODE ON)
 

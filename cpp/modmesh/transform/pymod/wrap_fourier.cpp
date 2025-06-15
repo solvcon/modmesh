@@ -53,10 +53,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapFourierTransform
         namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
 
         (*this)
-            .def_static("fft", &wrapped_type::fft<modmesh::Complex, double>, py::arg("input"), py::arg("output"))
-            .def_static("fft", &wrapped_type::fft<modmesh::Complex, float>, py::arg("input"), py::arg("output"))
-            .def_static("ifft", &wrapped_type::ifft<modmesh::Complex, double>, py::arg("input"), py::arg("output"))
-            .def_static("ifft", &wrapped_type::ifft<modmesh::Complex, float>, py::arg("input"), py::arg("output"))
+            .def_static("fft", &wrapped_type::fft<modmesh::Complex, double>, py::arg("input"), py::arg("output"), py::arg("backend"))
+            .def_static("fft", &wrapped_type::fft<modmesh::Complex, float>, py::arg("input"), py::arg("output"), py::arg("backend"))
+            .def_static("ifft", &wrapped_type::ifft<modmesh::Complex, double>, py::arg("input"), py::arg("output"), py::arg("backend"))
+            .def_static("ifft", &wrapped_type::ifft<modmesh::Complex, float>, py::arg("input"), py::arg("output"), py::arg("backend"))
             .def_static("dft", &wrapped_type::dft<modmesh::Complex, double>, py::arg("input"), py::arg("output"))
             .def_static("dft", &wrapped_type::dft<modmesh::Complex, float>, py::arg("input"), py::arg("output"));
     }
