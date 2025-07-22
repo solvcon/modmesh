@@ -274,9 +274,9 @@ public:
     }
 
     WrapBase() = delete;
-    WrapBase(WrapBase const &) = default;
+    WrapBase(WrapBase const &) = delete;
     WrapBase(WrapBase &&) = delete;
-    WrapBase & operator=(WrapBase const &) = default;
+    WrapBase & operator=(WrapBase const &) = delete;
     WrapBase & operator=(WrapBase &&) = delete;
     ~WrapBase() = default;
 
