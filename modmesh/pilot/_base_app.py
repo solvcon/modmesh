@@ -84,7 +84,10 @@ class QuantityLine(object):
         """
         Update analytical data and redraw the plot.
 
-        :param x, y (type: ndarray): Analytical data.
+        :param x: Analytical data.
+        :type x: ndarray
+        :param y: Analytical data.
+        :type y: ndarray
         :return: None
         """
         if x is not None:
@@ -97,7 +100,10 @@ class QuantityLine(object):
         """
         Update numerical data and redraw the plot.
 
-        :param x, y (type: ndarray): data.
+        :param x: Numerical data.
+        :type x: ndarray
+        :param y: Numerical data.
+        :type y: ndarray
         :return: None
         """
         if x is not None:
@@ -207,7 +213,7 @@ class GUIConfig(object):
         :param col: Column index.
         :type col: int
         :prarm value: Any
-        :return None
+        :return: None
         """
         self._tbl_content[row][col] = value
         return True
@@ -219,6 +225,7 @@ class GUIConfig(object):
         :param col: Column index.
         :type col: int
         :return: The header for the specific column.
+        :rtype: list[str]
         """
         return self._col_header[col]
 
@@ -235,9 +242,6 @@ class GUIConfig(object):
         if col == 1:
             return True
         return False
-
-    # Delete row header
-    rowHeader = None
 
     def rowCount(self):
         """
@@ -293,8 +297,10 @@ class PlotConfig(GUIConfig):
         """
         Check if the cell is editable.
 
-        :param row (type: int): Row index.
-        :param col (type: int): Column index.
+        :param row: Row index.
+        :type row: int
+        :param col: Column index.
+        :type col: int
         :return: True if the cell is editable, false otherwise.
         """
         if col >= 1:
@@ -432,7 +438,7 @@ class OneDimBaseApp(PilotFeature):
         Initialize figure configuration data.
         """
         self.config_option = []
-        for [name, *_] in self.plot_data:
+        for name, *_ in self.plot_data:
             data = getattr(self, name)
             option = [["y_min", data.y_bottom_lim],
                       ["y_max", data.y_upper_lim],
@@ -493,7 +499,7 @@ class OneDimBaseApp(PilotFeature):
 
         y_bottom_lim = sys.float_info.max
         y_upper_lim = 0.0
-        for [name, *_] in self.plot_data:
+        for name, *_ in self.plot_data:
             if self.plot_config[name]["line_selection"]:
                 data = getattr(self, name)
                 data.axis = ax
@@ -533,7 +539,9 @@ class OneDimBaseApp(PilotFeature):
         """
         Initialize analytical and numerical data in figure.
 
-        :param data (type: QuantityLine): property of solver
+        :param data: property of solver.
+        :type data: QuantityLine
+        :return: None
         """
         if self.plot_ana:
             x = self.st.coord_field
@@ -552,7 +560,9 @@ class OneDimBaseApp(PilotFeature):
         """
         Initialize figure configuration data.
 
-        :param data (type: QuantityLine): property of solver
+        :param data: property of solver.
+        :type data: QuantityLine
+        :return: None
         """
         config_option = self.data_config[data.name]["configuration"]
         data.y_bottom_lim = config_option["y_min"]["option"]
@@ -650,11 +660,11 @@ class OneDimBaseApp(PilotFeature):
         Updating plot after the solver finishes its computation each time.
         """
         if self.use_grid_layout:
-            for [name, *_] in self.plot_data:
+            for name, *_ in self.plot_data:
                 data = getattr(self, name)
                 self.update_plot_data(data)
         else:
-            for [name, *_] in self.plot_data:
+            for name, *_ in self.plot_data:
                 if self.plot_config[name]["line_selection"]:
                     data = getattr(self, name)
                     self.update_plot_data(data)
@@ -663,7 +673,9 @@ class OneDimBaseApp(PilotFeature):
         """
         Update analytical and numerical data.
 
-        :param data (type: QuantityLine): property of solver
+        :param data: property of solver.
+        :type data: QuantityLine
+        :return: None
         """
         if self.plot_config[data.name]["line_selection"]:
             if self.plot_ana:
@@ -739,7 +751,7 @@ class FigureConfigDialog(QDialog):
         self.setWindowTitle("Figure Options")
         layout = QVBoxLayout()
 
-        for [name, *_] in self.app.config_option:
+        for name, *_ in self.app.config_option:
             layout_data_label = QLabel(name)
             layout.addWidget(layout_data_label)
             table = QTableView()
@@ -795,7 +807,7 @@ class ConfigWindow(QWidget):
         """
         Assign the configure object from app
 
-        :return: nothing
+        :return: None
         """
         self.solver_config = self.app.solver_config
         self.plot_config = self.app.plot_config
@@ -1022,6 +1034,7 @@ class ConfigTableModel(QAbstractTableModel):
 
         :param data: data to be inserted
         :param position: row index of config._tbl_content
+        :return: None
         """
         if len(data) != self.config.columnCount():
             raise ValueError(
@@ -1039,6 +1052,8 @@ class ConfigTableModel(QAbstractTableModel):
         Delete data at specific row.
 
         :param position: row index of config._tbl_content
+        :type position: int
+        :return: None
         """
         if position < 0 or position >= self.rowCount(None):
             raise IndexError(f"Row {position} out of range")
