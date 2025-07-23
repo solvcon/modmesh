@@ -103,6 +103,7 @@ public:
         size_t N = in.size();
         for (size_t i = 0; i < N; ++i)
         {
+            out[i] = 0;
             for (size_t j = 0; j < N; ++j)
             {
                 T2 tmp = -2.0 * pi<T2> * i * j / static_cast<T2>(N);
