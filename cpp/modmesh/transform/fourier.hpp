@@ -3,6 +3,10 @@
 #include <modmesh/math/math.hpp>
 #include <modmesh/buffer/buffer.hpp>
 
+#if defined(BUILD_CUDA)
+#include <modmesh/transform/fourier.cuh>
+#endif
+
 namespace modmesh
 {
 
@@ -63,22 +67,37 @@ public:
     FourierTransform & operator=(FourierTransform && other) = delete;
 
     template <template <typename> class T1, typename T2>
-    static void fft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
+    static void fft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out, std::string const && backend)
     {
         const size_t N = in.size();
 
-        if ((N & (N - 1)) == 0)
+        if (backend == "cpu")
         {
-            detail::fft_radix_2<T1, T2>(in, out);
+            if ((N & (N - 1)) == 0)
+            {
+                detail::fft_radix_2<T1, T2>(in, out);
+            }
+            else
+            {
+                detail::fft_bluestein<T1, T2>(in, out);
+            }
+        }
+        else if (backend == "cuda")
+        {
+#if defined(BUILD_CUDA)
+            modmesh::fft_cuda<T1, T2>(in, out);
+#else
+            throw std::runtime_error("CUDA is not available.");
+#endif
         }
         else
         {
-            detail::fft_bluestein<T1, T2>(in, out);
+            throw std::runtime_error("unsupported backend.");
         }
     }
 
     template <template <typename> class T1, typename T2>
-    static void ifft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
+    static void ifft(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out, std::string const && backend)
     {
         size_t N = in.size();
         SimpleArray<T1<T2>> in_conj{modmesh::small_vector<size_t>{N}, T1<T2>{0.0, 0.0}};
@@ -88,7 +107,7 @@ public:
             in_conj[i] = in[i].conj();
         }
 
-        fft<T1, T2>(in_conj, out);
+        fft<T1, T2>(in_conj, out, std::move(backend));
 
         for (size_t i = 0; i < N; ++i)
         {
@@ -152,7 +171,7 @@ void fft_bluestein(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
         A[i] *= B[i];
     }
 
-    FourierTransform::ifft<T1, T2>(A, a);
+    FourierTransform::ifft<T1, T2>(A, a, "cpu");
 
     for (size_t i = 0; i < N; ++i)
     {
