@@ -60,6 +60,25 @@ class FourierTransformTB(mm.testing.TestBase):
             self.assert_allclose(mm_output[i].real, np_output[i].real)
             self.assert_allclose(mm_output[i].imag, np_output[i].imag)
 
+    def test_numpy_duplicate_dft_comparison(self):
+        input_size = 100
+
+        mm_input = self.SimpleArray(input_size)
+        for i in range(input_size):
+            mm_input[i] = self.complex(self.real_rng(), self.imag_rng())
+
+        np_input = np.array(mm_input, copy=False)
+
+        mm_output = self.SimpleArray(input_size, self.complex())
+        mm.FourierTransform.dft(mm_input, mm_output)
+        mm.FourierTransform.dft(mm_input, mm_output)
+
+        np_output = np.fft.fft(np_input)
+
+        for i in range(input_size):
+            self.assert_allclose(mm_output[i].real, np_output[i].real)
+            self.assert_allclose(mm_output[i].imag, np_output[i].imag)
+
     def test_numpy_fft_comparison(self):
         input_size = 100
 
