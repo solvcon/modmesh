@@ -28,7 +28,7 @@ import functools
 import modmesh
 import numpy as np
 
-from profiling.util.profiler_table import ProfilingResultPrinter
+from modmesh.profiling import ProfilingResultPrinter
 
 
 def profile_function(func):
