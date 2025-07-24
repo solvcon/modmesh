@@ -92,19 +92,19 @@ class TestProfilingTableBuilder:
 
     @pytest.fixture
     def expect_header(self) -> str:
-        return f"| {"func".ljust(30, " ")} | {"runtime".ljust(30, " ")} |\n"
+        return f'| {"func".ljust(30, " ")} | {"runtime".ljust(30, " ")} |\n'
 
     @pytest.fixture
     def expect_horizontal_lines(self) -> str:
-        return f"| {"".ljust(30, "-")} | {"".ljust(30, "-")} |\n"
+        return f'| {"".ljust(30, "-")} | {"".ljust(30, "-")} |\n'
 
     @pytest.fixture
     def expect_row_data(self) -> str:
         return "".join(
             [
-                f"| {"foo".ljust(30, " ")} | {"10".ljust(30, " ")} |\n",
-                f"| {"bar".ljust(30, " ")} | {"20".ljust(30, " ")} |\n",
-                f"| {"foobar".ljust(30, " ")} | {"200".ljust(30, " ")} |\n",
+                f'| {"foo".ljust(30, " ")} | {"10".ljust(30, " ")} |\n',
+                f'| {"bar".ljust(30, " ")} | {"20".ljust(30, " ")} |\n',
+                f'| {"foobar".ljust(30, " ")} | {"200".ljust(30, " ")} |\n',
             ]
         )
 
