@@ -39,7 +39,7 @@ from matplotlib.pyplot import setp
 
 from PySide6.QtCore import QTimer, Slot, Qt, QAbstractTableModel
 from PySide6.QtWidgets import (QDockWidget, QLabel, QVBoxLayout, QHBoxLayout,
-                               QComboBox, QPushButton, QSpacerItem,
+                               QComboBox, QPushButton, QSpacerItem, QMenu,
                                QSizePolicy, QDialog, QWidget, QTableView)
 
 from .. import core as mcore
@@ -84,7 +84,10 @@ class QuantityLine(object):
         """
         Update analytical data and redraw the plot.
 
-        :param x, y (type: ndarray): Analytical data.
+        :param x: Analytical data.
+        :type x: ndarray
+        :param y: Analytical data.
+        :type y: ndarray
         :return: None
         """
         if x is not None:
@@ -97,7 +100,10 @@ class QuantityLine(object):
         """
         Update numerical data and redraw the plot.
 
-        :param x, y (type: ndarray): data.
+        :param x: Numerical data.
+        :type x: ndarray
+        :param y: Numerical data.
+        :type y: ndarray
         :return: None
         """
         if x is not None:
@@ -207,7 +213,7 @@ class GUIConfig(object):
         :param col: Column index.
         :type col: int
         :prarm value: Any
-        :return None
+        :return: None
         """
         self._tbl_content[row][col] = value
         return True
@@ -219,6 +225,7 @@ class GUIConfig(object):
         :param col: Column index.
         :type col: int
         :return: The header for the specific column.
+        :rtype: list[str]
         """
         return self._col_header[col]
 
@@ -235,9 +242,6 @@ class GUIConfig(object):
         if col == 1:
             return True
         return False
-
-    # Delete row header
-    rowHeader = None
 
     def rowCount(self):
         """
@@ -304,6 +308,29 @@ class PlotConfig(GUIConfig):
         return False
 
 
+class ConfigOption(GUIConfig):
+    """
+    Configuration class for the figure.
+
+    This class provides a set of options for the figure, allowing users to set
+    and retrieve parameters related to the figure's.
+    """
+
+    def __init__(self, input_data):
+        super().__init__(input_data, ["variable", "option"])
+
+
+class DataConfig(GUIConfig):
+    """
+    Configuration class for the figure.
+
+    This class provides a data configuration structure for the solver.
+    """
+
+    def __init__(self, input_data):
+        super().__init__(input_data, ["variable", "configuration"])
+
+
 class OneDimBaseApp(PilotFeature):
     """
     Main application for 1D solver.
@@ -357,8 +384,10 @@ class OneDimBaseApp(PilotFeature):
     """
     st = None
     solver_config: SolverConfig = None
-    plot_data: list[str, bool] = None
+    plot_data: list[list[str, bool]] = None
     plot_config: PlotConfig = None
+    config_option: list[list[str, ConfigOption]] = None
+    data_config: DataConfig = None
     plot: FigureCanvas = None
     plot_ana: bool = False
     plot_num: bool = False
@@ -398,9 +427,24 @@ class OneDimBaseApp(PilotFeature):
         self.init_solver_config()
         self.set_plot_data()
         self.plot_config = PlotConfig(self.plot_data)
+        self.set_config_option()
+        self.data_config = DataConfig(self.config_option)
         self.set_solver_config()
         self.setup_timer()
         self.plot = self.build_single_figure()
+
+    def set_config_option(self):
+        """
+        Initialize figure configuration data.
+        """
+        self.config_option = []
+        for name, *_ in self.plot_data:
+            data = getattr(self, name)
+            option = [["y_min", data.y_bottom_lim],
+                      ["y_max", data.y_upper_lim],
+                      ["color", data.color],
+                      ["unit", data.unit]]
+            self.config_option.append([name, ConfigOption(option)])
 
     def init_solver_config(self):
         """
@@ -450,16 +494,21 @@ class OneDimBaseApp(PilotFeature):
         fig = Figure()
         canvas = FigureCanvas(fig)
         ax = canvas.figure.subplots()
+        ax.grid()
         fig.tight_layout()
 
-        y_limit = [sys.float_info.max, 0.0]
-        for [name, *_] in self.plot_data:
+        y_bottom_lim = sys.float_info.max
+        y_upper_lim = 0.0
+        for name, *_ in self.plot_data:
             if self.plot_config[name]["line_selection"]:
                 data = getattr(self, name)
                 data.axis = ax
-                y_limit = self.init_plot_data(data, y_limit)
+                self.init_figure_items(data)
+                self.init_plot_data(data)
+                y_bottom_lim = min(y_bottom_lim, data.y_bottom_lim)
+                y_upper_lim = max(y_upper_lim, data.y_upper_lim)
 
-        setp(ax, ylim=y_limit)
+        setp(ax, ylim=[y_bottom_lim, y_upper_lim])
         self.update_plot()
         return canvas
 
@@ -474,24 +523,25 @@ class OneDimBaseApp(PilotFeature):
         ax = canvas.figure.subplots(3, 2)
         fig.tight_layout()
 
-        y_limit = [sys.float_info.max, 0.0]
         for i, [name, *_] in enumerate(self.plot_data):
             if self.plot_config[name]["line_selection"]:
                 data = getattr(self, name)
                 data.axis = ax[i // 2][i % 2]
-                y_limit = self.init_plot_data(data, y_limit)
+                data.axis.grid()
+                self.init_figure_items(data)
+                self.init_plot_data(data)
+                setp(data.axis, ylim=[data.y_bottom_lim, data.y_upper_lim])
 
-        setp(ax, ylim=y_limit)
         self.update_plot()
         return canvas
 
-    def init_plot_data(self, data, y_limit):
+    def init_plot_data(self, data):
         """
         Initialize analytical and numerical data in figure.
 
-        :param data (type: QuantityLine): property of solver
-        :param y_limit (type: list[int, int]): the bottom and top limit of y
-        :return: the bottom and top limit of y axis (type: list[int, int])
+        :param data: property of solver.
+        :type data: QuantityLine
+        :return: None
         """
         if self.plot_ana:
             x = self.st.coord_field
@@ -505,11 +555,20 @@ class OneDimBaseApp(PilotFeature):
                                        label=f'{data.name}_num')
         data.axis.set_xlabel("distance")
         data.axis.legend()
-        data.axis.grid()
 
-        y_limit[0] = min(y_limit[0], data.y_bottom_lim)
-        y_limit[1] = max(y_limit[1], data.y_upper_lim)
-        return y_limit
+    def init_figure_items(self, data):
+        """
+        Initialize figure configuration data.
+
+        :param data: property of solver.
+        :type data: QuantityLine
+        :return: None
+        """
+        config_option = self.data_config[data.name]["configuration"]
+        data.y_bottom_lim = config_option["y_min"]["option"]
+        data.y_upper_lim = config_option["y_max"]["option"]
+        data.color = config_option["color"]["option"]
+        data.unit = config_option["unit"]["option"]
 
     def step(self, steps=1):
         """
@@ -601,11 +660,11 @@ class OneDimBaseApp(PilotFeature):
         Updating plot after the solver finishes its computation each time.
         """
         if self.use_grid_layout:
-            for [name, *_] in self.plot_data:
+            for name, *_ in self.plot_data:
                 data = getattr(self, name)
                 self.update_plot_data(data)
         else:
-            for [name, *_] in self.plot_data:
+            for name, *_ in self.plot_data:
                 if self.plot_config[name]["line_selection"]:
                     data = getattr(self, name)
                     self.update_plot_data(data)
@@ -614,15 +673,18 @@ class OneDimBaseApp(PilotFeature):
         """
         Update analytical and numerical data.
 
-        :param data (type: QuantityLine): property of solver
+        :param data: property of solver.
+        :type data: QuantityLine
+        :return: None
         """
-        if self.plot_ana:
-            ana_x = self.st.coord_field
-            ana_y = getattr(self.st, data.name + "_field")
-            data.update_ana(x=ana_x, y=ana_y)
-        if self.plot_num:
-            num_y = getattr(self.st.svr, data.name)[self.st.svr.xindices]
-            data.update_num(y=num_y)
+        if self.plot_config[data.name]["line_selection"]:
+            if self.plot_ana:
+                ana_x = self.st.coord_field
+                ana_y = getattr(self.st, data.name + "_field")
+                data.update_ana(x=ana_x, y=ana_y)
+            if self.plot_num:
+                num_y = getattr(self.st.svr, data.name)[self.st.svr.xindices]
+                data.update_num(y=num_y)
 
 
 class PlotConfigDialog(QDialog):
@@ -639,7 +701,7 @@ class PlotConfigDialog(QDialog):
         self.init_ui()
 
     def init_ui(self):
-        self.setWindowTitle("Plot Configuration")
+        self.setWindowTitle("Plot Options")
         layout = QVBoxLayout()
 
         layout_selection_label = QLabel("Layout selection")
@@ -660,9 +722,44 @@ class PlotConfigDialog(QDialog):
         layout.addWidget(data_line_config_label)
 
         table = QTableView()
+        table.horizontalHeader().setStretchLastSection(True)
         table_model = ConfigTableModel(self.app.plot_config)
         table.setModel(table_model)
         layout.addWidget(table)
+
+        save_button = QPushButton("Save")
+        save_button.clicked.connect(self.app.update_layout)
+        layout.addWidget(save_button)
+
+        self.setLayout(layout)
+
+
+class FigureConfigDialog(QDialog):
+    """
+    PlotConfigDialog class for managing plot configuration.
+
+    This class inherits from the QDialog class and provides a GUI for managing
+    plot configuration. It will pop up when clicking "Option" button. It
+    includes options for selecting the layout and setting data line config.
+    """
+    def __init__(self, app, parent=None):
+        super().__init__(parent)
+        self.app = app
+        self.init_ui()
+
+    def init_ui(self):
+        self.setWindowTitle("Figure Options")
+        layout = QVBoxLayout()
+
+        for name, *_ in self.app.config_option:
+            layout_data_label = QLabel(name)
+            layout.addWidget(layout_data_label)
+            table = QTableView()
+            table.horizontalHeader().setStretchLastSection(True)
+            table_model = ConfigTableModel(
+                self.app.data_config[name]["configuration"])
+            table.setModel(table_model)
+            layout.addWidget(table)
 
         save_button = QPushButton("Save")
         save_button.clicked.connect(self.app.update_layout)
@@ -689,10 +786,10 @@ class ConfigWindow(QWidget):
 
     Methods:
         - :meth:`setup()`: Setup method to configure the window.
-        - :meth:`on_open()`: Callback function when plot configure modal
-          window is opened.
-        - :meth:`on_close()`: Callback function when plot configure modal
-          windows is closed.
+        - :meth:`on_open_plot_option()`: Callback function when plot configure
+          modal window is opened.
+        - :meth:`on_close_plot_option()`: Callback function when plot configure
+          modal windows is closed.
         - :meth:`add_region()`: Add data for a new region.
         - :meth:`delete_region()`: Delete data for a region.
         - :meth:`init_ui()`: Define the GUI layout of the window.
@@ -702,6 +799,7 @@ class ConfigWindow(QWidget):
         super().__init__(parent)
         self.app = app
         self.plot_config_open = False
+        self.figure_config_open = False
         self.setup()
         self.init_ui()
 
@@ -709,21 +807,33 @@ class ConfigWindow(QWidget):
         """
         Assign the configure object from app
 
-        :return: nothing
+        :return: None
         """
         self.solver_config = self.app.solver_config
         self.plot_config = self.app.plot_config
+        self.data_config = self.app.data_config
 
-    def on_open(self):
+    def on_open_plot_option(self):
         self.plot_config_open = True
         if not self.plot_config_dialog:
             self.plot_config_dialog = PlotConfigDialog(self.app, self)
         self.plot_config_dialog.exec_()
 
-    def on_close(self):
+    def on_close_plot_option(self):
         self.plot_config_open = False
         if self.plot_config_dialog:
             self.plot_config_dialog.close()
+
+    def on_open_figure_option(self):
+        self.figure_config_open = True
+        if not self.figure_config_dialog:
+            self.figure_config_dialog = FigureConfigDialog(self.app, self)
+        self.figure_config_dialog.exec_()
+
+    def on_close_figure_option(self):
+        self.figure_config_open = False
+        if self.figure_config_dialog:
+            self.figure_config_dialog.close()
 
     def add_region(self):
         """
@@ -770,26 +880,27 @@ class ConfigWindow(QWidget):
         vbox1.addWidget(config_label)
 
         self.table = QTableView()
+        self.table.horizontalHeader().setStretchLastSection(True)
         table_model = ConfigTableModel(self.solver_config)
         self.table.setModel(table_model)
         vbox1.addWidget(self.table)
 
         if self.app.adjust_region:
-            add_button = QPushButton("Add Region")
-            add_button.clicked.connect(self.add_region)
-            vbox1.addWidget(add_button)
+            self.table.setContextMenuPolicy(Qt.CustomContextMenu)
+            self.table.customContextMenuRequested.connect(
+                self.adjust_region_menu)
 
-            delete_button = QPushButton("Delete Region")
-            delete_button.clicked.connect(self.delete_region)
-            vbox1.addWidget(delete_button)
+        option_button = QPushButton("Figure Options")
+        option_button.clicked.connect(self.on_open_figure_option)
+        vbox1.addWidget(option_button)
+
+        option_button = QPushButton("Plot Options")
+        option_button.clicked.connect(self.on_open_plot_option)
+        vbox1.addWidget(option_button)
 
         set_button = QPushButton("Set")
         set_button.clicked.connect(self.app.set)
         vbox1.addWidget(set_button)
-
-        option_button = QPushButton("Option")
-        option_button.clicked.connect(self.on_open)
-        vbox1.addWidget(option_button)
 
         main_layout.addLayout(vbox1)
 
@@ -800,6 +911,9 @@ class ConfigWindow(QWidget):
         spacer = QSpacerItem(
             20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         vbox2.addItem(spacer)
+
+        time_label = QLabel("Time Control")
+        vbox2.addWidget(time_label)
 
         start_button = QPushButton("Start")
         start_button.clicked.connect(self.app.start)
@@ -816,9 +930,20 @@ class ConfigWindow(QWidget):
         main_layout.addLayout(vbox2)
 
         # Modal window for plot configuration
+        self.figure_config_dialog = FigureConfigDialog(self.app, self)
         self.plot_config_dialog = PlotConfigDialog(self.app, self)
 
         self.setLayout(main_layout)
+
+    def adjust_region_menu(self, pos):
+        menu = QMenu(self)
+        add_action = menu.addAction("Add Region")
+        delete_action = menu.addAction("Delete Region")
+        action = menu.exec_(self.table.viewport().mapToGlobal(pos))
+        if action == add_action:
+            self.add_region()
+        elif action == delete_action:
+            self.delete_region()
 
 
 class PlotArea(QWidget):
@@ -909,6 +1034,7 @@ class ConfigTableModel(QAbstractTableModel):
 
         :param data: data to be inserted
         :param position: row index of config._tbl_content
+        :return: None
         """
         if len(data) != self.config.columnCount():
             raise ValueError(
@@ -926,6 +1052,8 @@ class ConfigTableModel(QAbstractTableModel):
         Delete data at specific row.
 
         :param position: row index of config._tbl_content
+        :type position: int
+        :return: None
         """
         if position < 0 or position >= self.rowCount(None):
             raise IndexError(f"Row {position} out of range")
