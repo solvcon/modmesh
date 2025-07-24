@@ -25,7 +25,7 @@ class TestProfilingResultPrinter:
         result: dict[str, Any] = modmesh.call_profiler.result()["children"]
         return result
 
-    def test_printer_getitem_with_valid_function_key_should_return_correct_data(
+    def test_printer_getitem_with_valid_key_should_return_correct_data(
         self, profiling_result_fixture: dict[str, Any]
     ) -> None:
         printer: ProfilingResultPrinter = ProfilingResultPrinter(
@@ -34,7 +34,7 @@ class TestProfilingResultPrinter:
 
         assert printer["numpy_arange_100"].name == "numpy_arange_100"
 
-    def test_printer_getitem_with_absent_function_key_should_raise_value_error(
+    def test_printer_getitem_with_absent_key_should_raise_value_error(
         self, profiling_result_fixture: dict[str, Any]
     ) -> None:
         printer: ProfilingResultPrinter = ProfilingResultPrinter(
@@ -44,7 +44,7 @@ class TestProfilingResultPrinter:
         try:
             printer["numpy_arange_1000"]
             assert False
-        except:
+        except ValueError:
             assert True
 
     def test_printer_add_column_should_have_correct_column(
@@ -72,7 +72,6 @@ class TestProfilingResultPrinter:
             profiling_result_fixture
         )
 
-        tot: float = printer["numpy_arange_100"].total_time
         printer.add_column("tot_scale_10", lambda r: r.total_time * 10)
 
         col = list(
@@ -93,19 +92,19 @@ class TestProfilingTableBuilder:
 
     @pytest.fixture
     def expect_header(self) -> str:
-        return "| func                           | runtime                        |\n"
+        return f"| {"func".ljust(30, " ")} | {"runtime".ljust(30, " ")} |\n"
 
     @pytest.fixture
     def expect_horizontal_lines(self) -> str:
-        return "| ------------------------------ | ------------------------------ |\n"
+        return f"| {"".ljust(30, "-")} | {"".ljust(30, "-")} |\n"
 
     @pytest.fixture
     def expect_row_data(self) -> str:
         return "".join(
             [
-                "| foo                            | 10                             |\n",
-                "| bar                            | 20                             |\n",
-                "| foobar                         | 200                            |\n",
+                f"| {"foo".ljust(30, " ")} | {"10".ljust(30, " ")} |\n",
+                f"| {"bar".ljust(30, " ")} | {"20".ljust(30, " ")} |\n",
+                f"| {"foobar".ljust(30, " ")} | {"200".ljust(30, " ")} |\n",
             ]
         )
 
