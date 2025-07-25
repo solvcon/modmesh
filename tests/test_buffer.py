@@ -1124,6 +1124,41 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         savg = sarr.average()
         self.assertEqual(npavg, savg)
 
+        nparr = np.array([1, 2, 3, 4, 5], dtype='float64')
+        weights = np.array([0.1, 0.2, 0.3, 0.2, 0.2], dtype='float64')
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        npavg = np.average(nparr, weights=weights)
+        savg = sarr.average(weight=sweights)
+        self.assertEqual(npavg, savg)
+
+        nparr = np.arange(6, dtype='float64').reshape((2, 3))
+        weights = np.array([0.5, 0.3, 0.2], dtype='float64')
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        npavg = np.average(nparr, weights=weights, axis=1)
+        savg = sarr.average(axis=1, weight=sweights)
+        savg = savg.ndarray
+        self.assertTrue(np.allclose(npavg, savg))
+
+        nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        weights = np.array([0.25, 0.25, 0.25, 0.25], dtype='float64')
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        npavg = np.average(nparr, weights=weights, axis=2)
+        savg = sarr.average(axis=2, weight=sweights)
+        savg = savg.ndarray
+        self.assertTrue(np.allclose(npavg, savg))
+
+        nparr = np.arange(12, dtype='float64').reshape((3, 4))
+        weights = np.array([0.5, 0.3, 0.2], dtype='float64')
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        npavg = np.average(nparr, weights=weights, axis=0)
+        savg = sarr.average(axis=0, weight=sweights)
+        savg = savg.ndarray
+        self.assertTrue(np.allclose(npavg, savg))
+
     def test_average_with_axis(self):
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
         sarr = modmesh.SimpleArrayFloat64(array=nparr)
@@ -1166,6 +1201,55 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         smed = sarr.average(axis=[0, 2])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
+
+        nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
+        weights = np.array([0.1, 0.2, 0.3, 0.2, 0.2], dtype='float64')
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        npmed = np.average(nparr, weights=weights, axis=1)
+        smed = sarr.average(axis=1, weight=sweights)
+        smed = smed.ndarray
+        self.assertTrue(np.allclose(npmed, smed))
+
+        nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
+        weights = np.array([
+            [0.2, 0.25, 0.25, 0.25, 0.25, 0.25],
+            [0.25, 0.2, 0.25, 0.25, 0.25, 0.25],
+            [0.25, 0.25, 0.2, 0.25, 0.25, 0.25],
+            [0.25, 0.25, 0.25, 0.2, 0.25, 0.25]
+        ], dtype='float64')
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        npmed = np.average(nparr, weights=weights, axis=(0, 2))
+        smed = sarr.average(axis=[0, 2], weight=sweights)
+        smed = smed.ndarray
+        self.assertTrue(np.allclose(npmed, smed))
+
+        nparr = np.arange(60, dtype='float64').reshape((3, 4, 5))
+        weights_axis0 = np.array([0.4, 0.3, 0.3], dtype='float64')
+        weights_axis2 = np.array([0.2, 0.2, 0.2, 0.2, 0.2], dtype='float64')
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sweights_axis0 = modmesh.SimpleArrayFloat64(array=weights_axis0)
+        sweights_axis2 = modmesh.SimpleArrayFloat64(array=weights_axis2)
+
+        npmed = np.average(nparr, weights=weights_axis0, axis=0)
+        smed = sarr.average(axis=0, weight=sweights_axis0)
+        smed = smed.ndarray
+        self.assertTrue(np.allclose(npmed, smed))
+
+        npmed = np.average(nparr, weights=weights_axis2, axis=2)
+        smed = sarr.average(axis=2, weight=sweights_axis2)
+        smed = smed.ndarray
+        self.assertTrue(np.allclose(npmed, smed))
+
+        nparr = np.array([[1, 2], [3, 4]], dtype='float64')
+        weights = np.array([0.6, 0.4], dtype='float64')
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        npmed = np.average(nparr, weights=weights, axis=1)
+        smed = sarr.average(axis=1, weight=sweights)
+        smed = smed.ndarray
+        self.assertTrue(np.allclose(npmed, smed))
 
     def test_mean(self):
         nparr = np.arange(24, dtype='float64')
