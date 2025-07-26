@@ -70,6 +70,7 @@ def main():
             'modmesh.pilot',
             'modmesh.pilot.airfoil',
             'modmesh.plot',
+            'modmesh.profiling',
         ],
         ext_modules=[CMakeExtension("_modmesh")],
         cmdclass={'build_ext': cmake_build_ext},
