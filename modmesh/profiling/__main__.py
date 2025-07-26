@@ -1,4 +1,4 @@
-# Copyright (c) 2025, Han-Xuan Huang <c1ydehhx@gmail.com>
+# Copyright (c) 2025, Kuan-Hsien Lee <khlee870529@gmail.com>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -24,37 +24,245 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import sys
-import json
+import functools
+import modmesh
+import numpy as np
 
-if __name__ == "__main__":
-    from ._result import (
-        ProfilingResultPrinter,
+from modmesh.profiling import ProfilingResultPrinter
+
+
+def profile_function(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        _ = modmesh.CallProfilerProbe(func.__name__)
+        result = func(*args, **kwargs)
+        return result
+
+    return wrapper
+
+
+def make_container(data):
+    if np.isdtype(data.dtype, np.uint8):
+        return modmesh.SimpleArrayUint8(array=data)
+    elif np.isdtype(data.dtype, np.uint16):
+        return modmesh.SimpleArrayUint16(array=data)
+    elif np.isdtype(data.dtype, np.uint32):
+        return modmesh.SimpleArrayUint32(array=data)
+    elif np.isdtype(data.dtype, np.uint64):
+        return modmesh.SimpleArrayUint64(array=data)
+
+
+@profile_function
+def profile_sort_np(narr):
+    narr.sort()
+
+
+@profile_function
+def profile_sort_sa(sarr):
+    sarr.sort()
+
+
+@profile_function
+def profile_argsort_np(narr):
+    return narr.argsort()
+
+
+@profile_function
+def profile_argsort_sa(sarr):
+    return sarr.argsort()
+
+
+@profile_function
+def profile_take_along_axis_np(narr, indices):
+    return np.take_along_axis(narr, indices, -1)
+
+
+@profile_function
+def profile_take_along_axis_sa(sarr, indices):
+    return sarr.take_along_axis(indices)
+
+
+@profile_function
+def profile_take_along_axis_simd(sarr, indices):
+    return sarr.take_along_axis_simd(indices)
+
+
+def main():
+
+    N = 100000
+    it = 10
+
+    print("## `sort` Ascending Data\n")
+    modmesh.call_profiler.reset()
+    for _ in range(it):
+        test_data = np.arange(0, N, dtype='uint32')
+        profile_sort_np(test_data)
+        profile_sort_sa(make_container(test_data))
+
+    printer = ProfilingResultPrinter(
+        modmesh.call_profiler.result()["children"]
     )
+    printer.add_column("per call (ms)", lambda r: r.total_time)
 
-    if len(sys.argv) < 2:
-        print(
-            "Usage: python -m modmesh.profiling <profiling_result_file.json>"
-        )
-        sys.exit(1)
+    tot = printer["profile_sort_np"].total_time
+    printer.add_column("cmp to np", lambda r: r.total_time / tot)
 
-    filepath = sys.argv[1]
+    printer.print_result(column_width=30)
 
-    try:
-        with open(filepath, "r") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        print(f"File not found: {filepath}")
-        sys.exit(1)
-    except json.JSONDecodeError:
-        print(f"Invalid JSON file: {filepath}")
-        sys.exit(1)
+    print("## `sort` Descending Data\n")
+    modmesh.call_profiler.reset()
+    for _ in range(it):
+        test_data = np.arange(N, 0, -1, dtype='uint32')
+        profile_sort_np(test_data)
+        profile_sort_sa(make_container(test_data))
 
-    printer = ProfilingResultPrinter(data)
+    printer = ProfilingResultPrinter(
+        modmesh.call_profiler.result()["children"]
+    )
+    printer.add_column("per call (ms)", lambda r: r.total_time)
 
-    printer.add_column("total_time", lambda r: r.total_time)
-    printer.add_column("count", lambda r: r.count)
+    tot = printer["profile_sort_np"].total_time
+    printer.add_column("cmp to np", lambda r: r.total_time / tot)
 
-    printer.print_result()
+    printer.print_result(column_width=30)
+
+    print("## `sort` Random Data\n")
+    modmesh.call_profiler.reset()
+    for _ in range(it):
+        test_data = np.arange(0, N, dtype='uint32')
+        np.random.shuffle(test_data)
+        profile_sort_np(test_data)
+        profile_sort_sa(make_container(test_data))
+
+    printer = ProfilingResultPrinter(
+        modmesh.call_profiler.result()["children"]
+    )
+    printer.add_column("per call (ms)", lambda r: r.total_time)
+
+    tot = printer["profile_sort_np"].total_time
+    printer.add_column("cmp to np", lambda r: r.total_time / tot)
+
+    printer.print_result(column_width=30)
+
+    print("## `argsort` Ascending Data\n")
+    modmesh.call_profiler.reset()
+    for _ in range(it):
+        test_data = np.arange(0, N, dtype='uint32')
+        profile_argsort_np(test_data)
+        profile_argsort_sa(make_container(test_data))
+
+    printer = ProfilingResultPrinter(
+        modmesh.call_profiler.result()["children"]
+    )
+    printer.add_column("per call (ms)", lambda r: r.total_time)
+
+    tot = printer["profile_argsort_np"].total_time
+    printer.add_column("cmp to np", lambda r: r.total_time / tot)
+
+    printer.print_result(column_width=30)
+
+    print("## `argsort` Descending Data\n")
+    modmesh.call_profiler.reset()
+    for _ in range(it):
+        test_data = np.arange(N, 0, -1, dtype='uint32')
+        profile_argsort_np(test_data)
+        profile_argsort_sa(make_container(test_data))
+
+    printer = ProfilingResultPrinter(
+        modmesh.call_profiler.result()["children"]
+    )
+    printer.add_column("per call (ms)", lambda r: r.total_time)
+
+    tot = printer["profile_argsort_np"].total_time
+    printer.add_column("cmp to np", lambda r: r.total_time / tot)
+
+    printer.print_result(column_width=30)
+
+    print("## `argsort` Random Data\n")
+    modmesh.call_profiler.reset()
+    for _ in range(it):
+        test_data = np.arange(0, N, dtype='uint32')
+        np.random.shuffle(test_data)
+        profile_argsort_np(test_data)
+        profile_argsort_sa(make_container(test_data))
+
+    printer = ProfilingResultPrinter(
+        modmesh.call_profiler.result()["children"]
+    )
+    printer.add_column("per call (ms)", lambda r: r.total_time)
+
+    tot = printer["profile_argsort_np"].total_time
+    printer.add_column("cmp to np", lambda r: r.total_time / tot)
+
+    printer.print_result(column_width=30)
+
+    print("## `take_along_axis` Ascending Data\n")
+    modmesh.call_profiler.reset()
+    for _ in range(it):
+        test_data = np.arange(0, N, dtype='uint32')
+        indices = np.arange(0, N-1, dtype='uint32')
+        test_sa = make_container(test_data)
+        idx_sa = make_container(indices)
+        profile_take_along_axis_np(test_data, indices)
+        profile_take_along_axis_sa(test_sa, idx_sa)
+        profile_take_along_axis_simd(test_sa, idx_sa)
+
+    printer = ProfilingResultPrinter(
+        modmesh.call_profiler.result()["children"]
+    )
+    printer.add_column("per call (ms)", lambda r: r.total_time)
+
+    tot = printer["profile_take_along_axis_np"].total_time
+    printer.add_column("cmp to np", lambda r: r.total_time / tot)
+
+    printer.print_result(column_width=30)
+
+    print("## `take_along_axis` Descending Data\n")
+    modmesh.call_profiler.reset()
+    for _ in range(it):
+        test_data = np.arange(N, 0, -1, dtype='uint32')
+        indices = np.arange(N-1, 0, -1, dtype='uint32')
+        test_sa = make_container(test_data)
+        idx_sa = make_container(indices)
+        profile_take_along_axis_np(test_data, indices)
+        profile_take_along_axis_sa(test_sa, idx_sa)
+        profile_take_along_axis_simd(test_sa, idx_sa)
+
+    printer = ProfilingResultPrinter(
+        modmesh.call_profiler.result()["children"]
+    )
+    printer.add_column("per call (ms)", lambda r: r.total_time)
+
+    tot = printer["profile_take_along_axis_np"].total_time
+    printer.add_column("cmp to np", lambda r: r.total_time / tot)
+
+    printer.print_result(column_width=30)
+
+    print("## `take_along_axis` Random Data\n")
+    modmesh.call_profiler.reset()
+    for _ in range(it):
+        test_data = np.arange(0, N, dtype='uint32')
+        indices = np.arange(0, N-1, dtype='uint32')
+        np.random.shuffle(test_data)
+        np.random.shuffle(indices)
+        test_sa = make_container(test_data)
+        idx_sa = make_container(indices)
+        profile_take_along_axis_np(test_data, indices)
+        profile_take_along_axis_sa(test_sa, idx_sa)
+        profile_take_along_axis_simd(test_sa, idx_sa)
+
+    printer = ProfilingResultPrinter(
+        modmesh.call_profiler.result()["children"]
+    )
+    printer.add_column("per call (ms)", lambda r: r.total_time)
+
+    tot = printer["profile_take_along_axis_np"].total_time
+    printer.add_column("cmp to np", lambda r: r.total_time / tot)
+
+    printer.print_result(column_width=30)
+
+
+if __name__ == '__main__':
+    main()
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
