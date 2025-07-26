@@ -28,7 +28,7 @@ import sys
 import json
 
 if __name__ == "__main__":
-    from modmesh.profiling._profiling_result_printer import (
+    from ._result import (
         ProfilingResultPrinter,
     )
 

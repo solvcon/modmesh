@@ -32,6 +32,8 @@ import numpy
 import modmesh
 from modmesh.profiling import (
     ProfilingResultPrinter,
+    ProfilingColumnData,
+    ProfilingTableBuilder
 )
 
 
@@ -108,5 +110,85 @@ class TestProfilingResultPrinter:
     def test_null_column(self) -> None:
         ProfilingResultPrinter()
 
+
+class TestProfilingTableBuilder:
+    @pytest.fixture
+    def fake_column_datas(self) -> list[ProfilingColumnData]:
+        return [
+            ProfilingColumnData("func", ["foo", "bar", "foobar"]),
+            ProfilingColumnData("runtime", [10, 20, 200]),
+        ]
+
+    @pytest.fixture
+    def expect_header(self) -> str:
+        return f'| {"func".ljust(30, " ")} | {"runtime".ljust(30, " ")} |\n'
+
+    @pytest.fixture
+    def expect_horizontal_lines(self) -> str:
+        return f'| {"".ljust(30, "-")} | {"".ljust(30, "-")} |\n'
+
+    @pytest.fixture
+    def expect_row_data(self) -> str:
+        return "".join(
+            [
+                f'| {"foo".ljust(30, " ")} | {"10".ljust(30, " ")} |\n',
+                f'| {"bar".ljust(30, " ")} | {"20".ljust(30, " ")} |\n',
+                f'| {"foobar".ljust(30, " ")} | {"200".ljust(30, " ")} |\n',
+            ]
+        )
+
+    def test_generate_header_should_have_correct_header(
+        self, fake_column_datas: list[ProfilingColumnData], expect_header: str
+    ) -> None:
+        builder: ProfilingTableBuilder = ProfilingTableBuilder(
+            fake_column_datas
+        )
+
+        header: str = builder.generate_header()
+
+        assert expect_header == header
+
+    def test_generate_horizontal_lines_should_have_correct_horizontal_line(
+        self,
+        fake_column_datas: list[ProfilingColumnData],
+        expect_horizontal_lines: str,
+    ) -> None:
+        builder: ProfilingTableBuilder = ProfilingTableBuilder(
+            fake_column_datas
+        )
+
+        horizontal_line: str = builder.generate_horizontal_lines()
+
+        assert expect_horizontal_lines == horizontal_line
+
+    def test_generate_row_data_should_have_correct_row_data(
+        self,
+        fake_column_datas: list[ProfilingColumnData],
+        expect_row_data: str,
+    ) -> None:
+        builder: ProfilingTableBuilder = ProfilingTableBuilder(
+            fake_column_datas
+        )
+
+        result_rows: str = builder.generate_result_row_by_row()
+
+        assert result_rows == expect_row_data
+
+    def test_generate_table_str_should_have_correct_table(
+        self,
+        fake_column_datas: list[ProfilingColumnData],
+        expect_header: str,
+        expect_horizontal_lines: str,
+        expect_row_data: str,
+    ) -> None:
+        builder: ProfilingTableBuilder = ProfilingTableBuilder(
+            fake_column_datas
+        )
+
+        table_str: str = builder.generate_table_str()
+
+        assert table_str == (
+            expect_header + expect_horizontal_lines + expect_row_data
+        )
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

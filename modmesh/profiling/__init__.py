@@ -24,8 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from ._profiling_result_printer import (  # noqa: F401
+from ._result import (  # noqa: F401
     ProfilingResultPrinter,
+    ProfilingTableBuilder,
+    ProfilingColumnData
 )
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
