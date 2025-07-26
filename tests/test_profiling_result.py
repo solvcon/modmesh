@@ -28,59 +28,44 @@ from typing import Any
 
 import pytest
 import numpy
+import unittest
 
 import modmesh
 from modmesh.profiling import (
     ProfilingResultPrinter,
     ProfilingColumnData,
-    ProfilingTableBuilder
+    ProfilingTableBuilder,
 )
 
 
-class TestProfilingResultPrinter:
+class TestProfilingResultPrinter(unittest.TestCase):
     def run_profile_function(self):
         _ = modmesh.CallProfilerProbe("numpy_arange_100")
         numpy.arange(0, 100, dtype="uint32")
 
-    @pytest.fixture
-    def profiling_result_fixture(self) -> dict[str, Any]:
+    def setUp(self):
         modmesh.call_profiler.reset()
-
         self.run_profile_function()
-
         result: dict[str, Any] = modmesh.call_profiler.result()["children"]
-        return result
 
-    def test_getitem_valid_key(
-        self, profiling_result_fixture: dict[str, Any]
-    ) -> None:
-        printer: ProfilingResultPrinter = ProfilingResultPrinter(
-            profiling_result_fixture
-        )
+        self.profiling_result_fixture = result
 
-        assert printer["numpy_arange_100"].name == "numpy_arange_100"
+    def test_getitem_valid_key(self) -> None:
+        printer = ProfilingResultPrinter(self.profiling_result_fixture)
 
-    def test_getitem_absent_key(
-        self, profiling_result_fixture: dict[str, Any]
-    ) -> None:
-        printer: ProfilingResultPrinter = ProfilingResultPrinter(
-            profiling_result_fixture
-        )
+        expected_name = "numpy_arange_100"
+        self.assertEqual(printer["numpy_arange_100"].name, expected_name)
 
-        try:
+    def test_getitem_absent_key(self) -> None:
+        printer = ProfilingResultPrinter(self.profiling_result_fixture)
+
+        with self.assertRaisesRegex(ValueError, ".* is absent."):
             printer["numpy_arange_1000"]
-            assert False
-        except ValueError:
-            assert True
 
-    def test_add_column(
-        self, profiling_result_fixture: dict[str, Any]
-    ) -> None:
-        printer: ProfilingResultPrinter = ProfilingResultPrinter(
-            profiling_result_fixture
-        )
-
+    def test_add_column(self) -> None:
+        printer = ProfilingResultPrinter(self.profiling_result_fixture)
         tot: float = printer["numpy_arange_100"].total_time
+
         printer.add_column("tot_scale_10", lambda r: r.total_time * 10)
 
         col = list(
@@ -89,14 +74,10 @@ class TestProfilingResultPrinter:
                 printer.column_datas,
             )
         )[0]
-        assert col.column_data[0] == tot * 10
+        self.assertEqual(col.column_data[0], tot * 10)
 
-    def test_default_column(
-        self, profiling_result_fixture: dict[str, Any]
-    ) -> None:
-        printer: ProfilingResultPrinter = ProfilingResultPrinter(
-            profiling_result_fixture
-        )
+    def test_default_column(self) -> None:
+        printer = ProfilingResultPrinter(self.profiling_result_fixture)
 
         printer.add_column("tot_scale_10", lambda r: r.total_time * 10)
 
@@ -105,31 +86,25 @@ class TestProfilingResultPrinter:
                 lambda cols: cols.column_name == "func", printer.column_datas
             )
         )[0]
-        assert col.column_data[0] == "numpy_arange_100"
+        self.assertEqual(col.column_data[0], "numpy_arange_100")
 
     def test_null_column(self) -> None:
         ProfilingResultPrinter()
 
 
-class TestProfilingTableBuilder:
-    @pytest.fixture
-    def fake_column_datas(self) -> list[ProfilingColumnData]:
-        return [
+class TestProfilingTableBuilder(unittest.TestCase):
+    def setUp(self):
+        self.fake_column_datas = [
             ProfilingColumnData("func", ["foo", "bar", "foobar"]),
             ProfilingColumnData("runtime", [10, 20, 200]),
         ]
-
-    @pytest.fixture
-    def expect_header(self) -> str:
-        return f'| {"func".ljust(30, " ")} | {"runtime".ljust(30, " ")} |\n'
-
-    @pytest.fixture
-    def expect_horizontal_lines(self) -> str:
-        return f'| {"".ljust(30, "-")} | {"".ljust(30, "-")} |\n'
-
-    @pytest.fixture
-    def expect_row_data(self) -> str:
-        return "".join(
+        self.expect_header = (
+            f'| {"func".ljust(30, " ")} | {"runtime".ljust(30, " ")} |\n'
+        )
+        self.expect_horizontal_lines = (
+            f'| {"".ljust(30, "-")} | {"".ljust(30, "-")} |\n'
+        )
+        self.expect_row_data = "".join(
             [
                 f'| {"foo".ljust(30, " ")} | {"10".ljust(30, " ")} |\n',
                 f'| {"bar".ljust(30, " ")} | {"20".ljust(30, " ")} |\n',
@@ -137,58 +112,48 @@ class TestProfilingTableBuilder:
             ]
         )
 
-    def test_generate_header_should_have_correct_header(
-        self, fake_column_datas: list[ProfilingColumnData], expect_header: str
-    ) -> None:
+    def test_generate_header(self) -> None:
         builder: ProfilingTableBuilder = ProfilingTableBuilder(
-            fake_column_datas
+            self.fake_column_datas
         )
 
         header: str = builder.generate_header()
 
-        assert expect_header == header
+        self.assertEqual(self.expect_header, header)
 
-    def test_generate_horizontal_lines_should_have_correct_horizontal_line(
+    def test_generate_hr_lines(
         self,
-        fake_column_datas: list[ProfilingColumnData],
-        expect_horizontal_lines: str,
     ) -> None:
         builder: ProfilingTableBuilder = ProfilingTableBuilder(
-            fake_column_datas
+            self.fake_column_datas
         )
 
         horizontal_line: str = builder.generate_horizontal_lines()
 
-        assert expect_horizontal_lines == horizontal_line
+        self.assertEqual(self.expect_horizontal_lines, horizontal_line)
 
-    def test_generate_row_data_should_have_correct_row_data(
-        self,
-        fake_column_datas: list[ProfilingColumnData],
-        expect_row_data: str,
-    ) -> None:
+    def test_generate_row_data(self) -> None:
         builder: ProfilingTableBuilder = ProfilingTableBuilder(
-            fake_column_datas
+            self.fake_column_datas
         )
 
         result_rows: str = builder.generate_result_row_by_row()
 
-        assert result_rows == expect_row_data
+        self.assertEqual(result_rows, self.expect_row_data)
 
-    def test_generate_table_str_should_have_correct_table(
-        self,
-        fake_column_datas: list[ProfilingColumnData],
-        expect_header: str,
-        expect_horizontal_lines: str,
-        expect_row_data: str,
-    ) -> None:
+    def test_generate_table_str(self) -> None:
         builder: ProfilingTableBuilder = ProfilingTableBuilder(
-            fake_column_datas
+            self.fake_column_datas
         )
 
         table_str: str = builder.generate_table_str()
 
-        assert table_str == (
-            expect_header + expect_horizontal_lines + expect_row_data
+        expect_result = (
+            self.expect_header
+            + self.expect_horizontal_lines
+            + self.expect_row_data
         )
+        self.assertEqual(table_str, expect_result)
+
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
