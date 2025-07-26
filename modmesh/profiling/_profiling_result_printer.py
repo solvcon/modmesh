@@ -109,7 +109,7 @@ class ProfilingTableBuilder:
 
 
 class ProfilingResultPrinter:
-    def __init__(self, profiling_results: dict[str, Any] | None):
+    def __init__(self, profiling_results: list[dict[str, Any]] = []):
 
         if profiling_results is None:
             raise ValueError("Profiling results cannot be None.")

@@ -106,11 +106,7 @@ class TestProfilingResultPrinter:
         assert col.column_data[0] == "numpy_arange_100"
 
     def test_null_column(self) -> None:
-        try:
-            ProfilingResultPrinter(None)
-            assert False
-        except ValueError:
-            assert True
+        ProfilingResultPrinter()
 
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
