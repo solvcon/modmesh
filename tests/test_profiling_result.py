@@ -26,13 +26,14 @@
 
 from typing import Any
 
-import pytest
 import numpy
 import unittest
 
 import modmesh
 from modmesh.profiling import (
     ProfilingResultPrinter,
+)
+from modmesh.profiling._result import (
     ProfilingColumnData,
     ProfilingTableBuilder,
 )

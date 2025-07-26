@@ -25,9 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from ._result import (  # noqa: F401
-    ProfilingResultPrinter,
-    ProfilingTableBuilder,
-    ProfilingColumnData
+    ProfilingResultPrinter
 )
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
