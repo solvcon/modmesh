@@ -33,6 +33,9 @@
 
 #include <modmesh/simd/neon/neon.hpp>
 
+#include <modmesh/buffer/small_vector.hpp>
+#include <modmesh/buffer/SimpleArray.hpp>
+
 namespace modmesh
 {
 
@@ -112,6 +115,21 @@ void div(T * dest, T const * dest_end, T const * src1, T const * src2)
 
     default:
         return generic::div<T>(dest, dest_end, src1, src2);
+    }
+}
+
+template <typename T>
+T median(T * dest, T * dest_end)
+{
+    using namespace detail;
+    switch (detect_simd())
+    {
+    case SIMD_NEON:
+        return neon::median<T>(dest, dest_end);
+        break;
+
+    default:
+        return generic::median<T>(dest, dest_end);
     }
 }
 

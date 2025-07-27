@@ -55,6 +55,11 @@ def profile_median_sa(src):
 
 
 @profile_function
+def profile_median_simd_sa(src):
+    return src.parallel_median()
+
+
+@profile_function
 def profile_mean_sa(src):
     return src.mean()
 
@@ -70,8 +75,11 @@ def profile_std_sa(src):
 
 
 @profile_function
-def profile_average_sa(src):
-    return src.average()
+def profile_average_sa(src, weights=None):
+    if weights is not None:
+        return src.average(weight=weights)
+    else:
+        return src.average()
 
 
 @profile_function
@@ -95,14 +103,20 @@ def profile_std_np(src):
 
 
 @profile_function
-def profile_average_np(src):
-    return np.average(src)
+def profile_average_np(src, weights=None):
+    if weights is not None:
+        return np.average(src, weights=weights)
+    else:
+        return np.average(src)
 
 
 def profile_stat_op(op, prof_func_np, prof_func_sa, dtype, sizes, it=10,
-                    axis=None):
+                    axis=None, with_weights=False, prof_func_simd=None,
+                    non_contiguous=False):
     axis_str = f" (axis={axis})" if axis is not None else ""
-    print(f"\n# {op} (dtype={dtype}){axis_str}")
+    weight_str = " (with weights)" if with_weights else ""
+    non_cont_str = " (non-contiguous)" if non_contiguous else ""
+    print(f"\n# {op} (dtype={dtype}){axis_str}{weight_str}{non_cont_str}")
     for N in sizes:
         if axis is not None:
             shape = (N//100, 100) if axis == 1 else (100, N//100)
@@ -112,21 +126,68 @@ def profile_stat_op(op, prof_func_np, prof_func_sa, dtype, sizes, it=10,
                 src = np.random.rand(*shape).astype(dtype, copy=False)
             else:
                 src = np.random.randint(-1000, 1000, shape, dtype=dtype)
+            # Create non-contiguous array using slicing
+            if non_contiguous:
+                if axis == 1:
+                    src = src[:, ::2]  # Take every other column
+                else:
+                    src = src[::2, :]  # Take every other row
             src_sa = make_container(src, dtype)
         else:
             if np.issubdtype(dtype, np.floating):
                 src = np.random.rand(N).astype(dtype, copy=False)
             else:
                 src = np.random.randint(-1000, 1000, N, dtype=dtype)
+            # Create non-contiguous array using slicing
+            if non_contiguous:
+                src = src[::2]  # Take every other element
             src_sa = make_container(src, dtype)
+        # Create weights if needed
+        weights = None
+        weights_sa = None
+        if with_weights:
+            if axis is not None:
+                # For axis operations, weights should match the reduced shape
+                if axis == 1:
+                    weight_shape = (shape[0],)  # Keep first dimension
+                else:
+                    weight_shape = (shape[1],)  # Keep second dimension
+                if np.issubdtype(dtype, np.floating):
+                    weights = np.random.rand(*weight_shape).astype(
+                        dtype, copy=False)
+                else:
+                    weights = np.random.randint(
+                        1, 1000, weight_shape, dtype=dtype)
+                weights_sa = make_container(weights, dtype)
+            else:
+                # Use actual size of src array (which may be non-contiguous)
+                actual_size = src.size
+                if np.issubdtype(dtype, np.floating):
+                    weights = np.random.rand(actual_size).astype(
+                        dtype, copy=False)
+                else:
+                    weights = np.random.randint(
+                        1, 1000, actual_size, dtype=dtype)
+                weights_sa = make_container(weights, dtype)
         modmesh.call_profiler.reset()
         for _ in range(it):
             if axis is not None:
-                prof_func_np(src, axis=axis)
-                prof_func_sa(src_sa, axis=axis)
+                if with_weights:
+                    prof_func_np(src, axis=axis, weights=weights)
+                    prof_func_sa(src_sa, axis=axis, weights=weights_sa)
+                else:
+                    prof_func_np(src, axis=axis)
+                    prof_func_sa(src_sa, axis=axis)
             else:
-                prof_func_np(src)
-                prof_func_sa(src_sa)
+                if with_weights:
+                    prof_func_np(src, weights=weights)
+                    prof_func_sa(src_sa, weights=weights_sa)
+                else:
+                    prof_func_np(src)
+                    prof_func_sa(src_sa)
+                    # Add SIMD version if provided and no axis/weights
+                    if prof_func_simd is not None:
+                        prof_func_simd(src_sa)
         res = modmesh.call_profiler.result()["children"]
         out = {}
         for r in res:
@@ -169,8 +230,11 @@ def profile_std_sa_axis(src, axis=None):
 
 
 @profile_function
-def profile_average_sa_axis(src, axis=None):
-    return src.average(axis=axis)
+def profile_average_sa_axis(src, axis=None, weights=None):
+    if weights is not None:
+        return src.average(axis=axis, weight=weights)
+    else:
+        return src.average(axis=axis)
 
 
 @profile_function
@@ -194,22 +258,46 @@ def profile_std_np_axis(src, axis=None):
 
 
 @profile_function
-def profile_average_np_axis(src, axis=None):
-    return np.average(src, axis=axis)
+def profile_average_np_axis(src, axis=None, weights=None):
+    if weights is not None:
+        return np.average(src, axis=axis, weights=weights)
+    else:
+        return np.average(src, axis=axis)
 
 
 def main():
     sizes = [10**3, 10**4, 10**5, 10**6, 10**7]
     for dtype in [np.float64, np.int32]:
+        # Test contiguous arrays
         profile_stat_op("median", profile_median_np, profile_median_sa,
-                        dtype, sizes)
+                        dtype, sizes, prof_func_simd=profile_median_simd_sa)
         profile_stat_op("mean", profile_mean_np, profile_mean_sa, dtype,
                         sizes)
         profile_stat_op("var", profile_var_np, profile_var_sa, dtype, sizes)
         profile_stat_op("std", profile_std_np, profile_std_sa, dtype, sizes)
         profile_stat_op("average", profile_average_np, profile_average_sa,
                         dtype, sizes)
+        # Test average with weights (no axis)
+        profile_stat_op("average", profile_average_np, profile_average_sa,
+                        dtype, sizes, with_weights=True)
+        # Test non-contiguous arrays (no axis)
+        profile_stat_op("median", profile_median_np, profile_median_sa,
+                        dtype, sizes, prof_func_simd=profile_median_simd_sa,
+                        non_contiguous=True)
+        profile_stat_op("mean", profile_mean_np, profile_mean_sa, dtype,
+                        sizes, non_contiguous=True)
+        profile_stat_op("var", profile_var_np, profile_var_sa, dtype, sizes,
+                        non_contiguous=True)
+        profile_stat_op("std", profile_std_np, profile_std_sa, dtype, sizes,
+                        non_contiguous=True)
+        profile_stat_op("average", profile_average_np, profile_average_sa,
+                        dtype, sizes, non_contiguous=True)
+        # Test average with weights (no axis, non-contiguous)
+        profile_stat_op("average", profile_average_np, profile_average_sa,
+                        dtype, sizes, with_weights=True, non_contiguous=True)
+
         for axis in [0, 1]:
+            # Test contiguous arrays with axis
             profile_stat_op("median", profile_median_np_axis,
                             profile_median_sa_axis, dtype, sizes, axis=axis)
             profile_stat_op("mean", profile_mean_np_axis,
@@ -220,6 +308,21 @@ def main():
                             dtype, sizes, axis=axis)
             profile_stat_op("average", profile_average_np_axis,
                             profile_average_sa_axis, dtype, sizes, axis=axis)
+
+            # Test non-contiguous arrays with axis
+            profile_stat_op("median", profile_median_np_axis,
+                            profile_median_sa_axis, dtype, sizes, axis=axis,
+                            non_contiguous=True)
+            profile_stat_op("mean", profile_mean_np_axis,
+                            profile_mean_sa_axis, dtype, sizes, axis=axis,
+                            non_contiguous=True)
+            profile_stat_op("var", profile_var_np_axis, profile_var_sa_axis,
+                            dtype, sizes, axis=axis, non_contiguous=True)
+            profile_stat_op("std", profile_std_np_axis, profile_std_sa_axis,
+                            dtype, sizes, axis=axis, non_contiguous=True)
+            profile_stat_op("average", profile_average_np_axis,
+                            profile_average_sa_axis, dtype, sizes, axis=axis,
+                            non_contiguous=True)
 
 
 if __name__ == "__main__":

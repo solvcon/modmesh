@@ -1095,6 +1095,54 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
+    def test_parallel_median(self):
+        nparr = np.arange(24, dtype='float64')
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npmed = np.median(nparr)
+        smed = sarr.parallel_median()
+        self.assertEqual(npmed, smed)
+
+        nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npmed = np.median(nparr)
+        smed = sarr.parallel_median()
+        self.assertEqual(npmed, smed)
+
+        nparr = np.arange(81, dtype='float64').reshape((3, 3, 3, 3))
+        np.random.shuffle(nparr)
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npmed = np.median(nparr)
+        smed = sarr.parallel_median()
+        self.assertEqual(npmed, smed)
+
+        nparr = np.arange(24, dtype='complex128').reshape((2, 3, 4))
+        npimg = nparr.copy()
+        np.random.shuffle(nparr)
+        np.random.shuffle(npimg)
+        nparr = nparr + 1j * npimg
+        sarr = modmesh.SimpleArrayComplex128(array=nparr)
+        npmed = np.median(nparr)
+        smed = sarr.parallel_median()
+        self.assertEqual(npmed.real, smed.real)
+        self.assertEqual(npmed.imag, smed.imag)
+
+        # Reference: https://github.com/numpy/numpy/issues/12943
+        nparr = np.array([1+10j, 2+1j, 3+0j, 0+3j], dtype='complex128')
+        sarr = modmesh.SimpleArrayComplex128(array=nparr)
+        npmed = np.median(nparr)
+        smed = sarr.parallel_median()
+        self.assertEqual(npmed.real, smed.real)
+        self.assertEqual(npmed.imag, smed.imag)
+
+        nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
+        nparr = nparr[::2, ::2, ::2]
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        npavg = np.median(nparr)
+        savg = sarr.parallel_median()
+        self.assertEqual(npavg, savg)
+
     def test_average(self):
         nparr = np.arange(24, dtype='float64')
         np.random.shuffle(nparr)

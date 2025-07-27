@@ -260,6 +260,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 { return self.median(make_shape(axis)); },
                 py::arg("axis"))
             .def(
+                "parallel_median",
+                [](wrapped_type const & self)
+                { return self.parallel_median(); })
+            .def(
                 "average",
                 [](wrapped_type const & self, py::object const & weight)
                 {

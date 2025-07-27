@@ -261,7 +261,22 @@ public:
             acopy[i] = athis->at(sidx);
             ++i;
         } while (athis->next_sidx(sidx));
-        return median_op(acopy);
+        return simd::generic::median(acopy.begin(), acopy.end());
+    }
+
+    value_type parallel_median() const
+    {
+        auto athis = static_cast<A const *>(this);
+        const size_t n = athis->size();
+        small_vector<T> acopy(n);
+        auto sidx = athis->first_sidx();
+        size_t i = 0;
+        do
+        {
+            acopy[i] = athis->at(sidx);
+            ++i;
+        } while (athis->next_sidx(sidx));
+        return simd::median(acopy.begin(), acopy.end());
     }
 
     value_type average_op(small_vector<value_type> & sv, small_vector<value_type> & weight) const
