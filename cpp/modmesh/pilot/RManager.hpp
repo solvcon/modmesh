@@ -72,6 +72,7 @@ public:
     QMenu * oneMenu() { return m_oneMenu; }
     QMenu * meshMenu() { return m_meshMenu; }
     QMenu * windowMenu() { return m_windowMenu; }
+    QMenu * profilingMenu() { return m_profiling; }
 
     void quit() { m_core->quit(); }
 
@@ -101,6 +102,7 @@ private:
     QMenu * m_oneMenu = nullptr;
     QMenu * m_meshMenu = nullptr;
     QMenu * m_windowMenu = nullptr;
+    QMenu * m_profiling = nullptr;
 
     RPythonConsoleDockWidget * m_pycon = nullptr;
     QMdiArea * m_mdiArea = nullptr;
