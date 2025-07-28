@@ -122,9 +122,7 @@ class TestProfilingTableBuilder(unittest.TestCase):
 
         self.assertEqual(self.expect_header, header)
 
-    def test_generate_hr_lines(
-        self,
-    ) -> None:
+    def test_generate_hr_lines(self) -> None:
         builder: ProfilingTableBuilder = ProfilingTableBuilder(
             self.fake_column_data
         )
