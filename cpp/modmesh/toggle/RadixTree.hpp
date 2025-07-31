@@ -362,11 +362,11 @@ private:
 // ref: https://gcc.gnu.org/onlinedocs/gcc/Function-Names.html
 #define __CROSS_PRETTY_FUNCTION__ __PRETTY_FUNCTION__
 #endif
-#define USE_CALLPROFILER_PROFILE_THIS_FUNCTION() modmesh::CallProfilerProbe __profilerProbe##__COUNTER__(modmesh::CallProfiler::instance(), __CROSS_PRETTY_FUNCTION__)
-#define USE_CALLPROFILER_PROFILE_THIS_SCOPE(scopeName) modmesh::CallProfilerProbe __profilerProbe##__COUNTER__(modmesh::CallProfiler::instance(), scopeName)
+#define MODMESH_PROFILE_FUNCTION() modmesh::CallProfilerProbe __profilerProbe##__COUNTER__(modmesh::CallProfiler::instance(), __CROSS_PRETTY_FUNCTION__)
+#define MODMESH_PROFILE_SCOPE(scopeName) modmesh::CallProfilerProbe __profilerProbe##__COUNTER__(modmesh::CallProfiler::instance(), scopeName)
 #else
-#define USE_CALLPROFILER_PROFILE_THIS_FUNCTION() // do nothing
-#define USE_CALLPROFILER_PROFILE_THIS_SCOPE(scopeName) // do nothing
+#define MODMESH_PROFILE_FUNCTION() // do nothing
+#define MODMESH_PROFILE_SCOPE(scopeName) // do nothing
 #endif
 
 } /* end namespace modmesh */
