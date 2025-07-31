@@ -49,21 +49,17 @@ class Profiling(PilotFeature):
         with open(filenames[0], "r") as f:
             result = json.loads(f.read())
 
-        self._add_result_window(filenames[0], result)
+        self._add_result_window(result)
 
-    def _add_result_window(self, file_name: str, result: list[dict[str, Any]]):
+    def _add_result_window(self, result: list[dict[str, Any]]):
         self._table = self._mgr.addSubWindow(QWidget())
         self._tree_view = QTreeView(self._table)
 
         self._model = QStandardItemModel(self._tree_view)
         self._model.setHorizontalHeaderLabels(["Total Time", "Symbol Name"])
 
-        def _recursive_add_item(
-                parent: QStandardItem,
-                data: dict[str, Any],
-                total_time: float
-        ):
-            percent = data["total_time"] * 100 / total_time
+        def _recursive_add_item(parent: QStandardItem, data: dict, tot: float):
+            percent = data["total_time"] * 100 / tot
 
             first_item = QStandardItem(f"{data['total_time']} ({percent:2f}%)")
             second_item = QStandardItem(data["name"])
