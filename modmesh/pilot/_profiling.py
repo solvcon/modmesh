@@ -92,11 +92,9 @@ class Profiling(PilotFeature):
 
             parent.appendRow([first_item, second_item])
 
-            sorted_child_data = sorted(
-                data["children"],
-                key=lambda d: d["total_time"],
-                reverse=True
-            )
+            children = data["children"]
+            key_func = lambda d: d["total_time"]
+            sorted_child_data = sorted(children, key=key_func, reverse=True)
 
             for child_data in sorted_child_data:
                 _recursive_add_item(first_item, child_data, data["total_time"])
