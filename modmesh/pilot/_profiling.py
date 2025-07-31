@@ -5,8 +5,9 @@ from ._gui_common import PilotFeature
 
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QTreeView,
-    QWidget,
+    QWidget
 )
 from PySide6.QtGui import (
     QStandardItem,
@@ -109,6 +110,7 @@ class Profiling(PilotFeature):
         self._tree_view.setModel(self._model)
         self._tree_view.setColumnWidth(0, 400)
         self._tree_view.setColumnWidth(1, 200)
+        self._tree_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         self._table.setWidget(self._tree_view)
         self._table.showMaximized()
