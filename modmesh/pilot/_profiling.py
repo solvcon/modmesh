@@ -5,12 +5,13 @@ from ._gui_common import PilotFeature
 
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtWidgets import (
-    QTableWidgetItem,
-    QTableWidget,
+    QTreeView,
     QWidget,
-    QHeaderView,
 )
-from modmesh.profiling import ProfilingResultPrinter
+from PySide6.QtGui import (
+    QStandardItem,
+    QStandardItemModel
+)
 
 __all__ = ["Profiling"]
 
@@ -51,47 +52,64 @@ class Profiling(PilotFeature):
 
     def _add_result_window(self, file_name: str, result: list[dict[str, Any]]):
         self._table = self._mgr.addSubWindow(QWidget())
+        self._tree_view = QTreeView(self._table)
 
-        self._table_widget = QTableWidget()
-        self._table_widget.setWindowTitle(f"Profiling Result: {file_name}")
-        self._table_widget.setEditTriggers(
-            QTableWidget.EditTrigger.NoEditTriggers
-        )
+        self._model = QStandardItemModel(self._tree_view)
+        self._model.setHorizontalHeaderLabels(["Total Time", "Symbol Name"])
 
-        style: str = """
-            QTableView {
-                background: white;
-                color: black;
+        def _recursive_add_item(
+                parent: QStandardItem,
+                data: dict[str, Any],
+                total_time: float
+        ):
+            percent = data["total_time"] * 100 / total_time
+
+            first_item = QStandardItem(f"{data['total_time']} ({percent:2f}%)")
+            second_item = QStandardItem(data["name"])
+
+            parent.appendRow([first_item, second_item])
+
+            sorted_child_data = sorted(
+                data["children"],
+                key=lambda d: d["total_time"],
+                reverse=True
+            )
+
+            for child_data in sorted_child_data:
+                _recursive_add_item(first_item, child_data, data["total_time"])
+
+        for data in result:
+            first_item = QStandardItem(f"{data['total_time']} (100%)")
+            second_item = QStandardItem(data["name"])
+
+            self._model.appendRow([first_item, second_item])
+
+            for child_data in data["children"]:
+                _recursive_add_item(first_item, child_data, data['total_time'])
+
+        self._tree_view.setStyleSheet(
+            """
+            QTreeView {
+                background-color: #2e2e2e;
+                color: #dcdcdc;
+                border: 1px solid #555555;
             }
-        """
-
-        self._table_widget.setStyleSheet(style)
-
-        printer = ProfilingResultPrinter(result)
-
-        printer.add_column("total_time", lambda r: r.total_time)
-
-        column_data = printer.column_data
-        column_names = [column.column_name for column in printer.column_data]
-        column_count = len(column_names)
-
-        self._table_widget.setColumnCount(len(column_names))
-        self._table_widget.setHorizontalHeaderLabels(column_names)
-        self._table_widget.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.ResizeToContents
+            QTreeView::item {
+                border: 1px solid #3c3c3c;
+                border-right: none;
+                border-bottom: none;
+            }
+            QTreeView::item:selected {
+                background-color: #4f4f4f;
+                color: white;
+            }
+            """
         )
 
-        if len(column_names) != 0:
-            first_column = printer.column_data[0]
-            row_count = len(first_column.column_value)
-            self._table_widget.setRowCount(row_count)
+        self._tree_view.setModel(self._model)
+        self._tree_view.setColumnWidth(0, 400)
+        self._tree_view.setColumnWidth(1, 200)
 
-            for column, c_index in zip(column_data, range(column_count)):
-                column_value: list[str | float] = column.column_value
-                for value, r_index in zip(column_value, range(row_count)):
-                    item = QTableWidgetItem(str(value))
-                    self._table_widget.setItem(r_index, c_index, item)
-
-        self._table.setWidget(self._table_widget)
-        # self._table.showMaximized()
+        self._table.setWidget(self._tree_view)
+        self._table.showMaximized()
         self._table.show()
