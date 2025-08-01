@@ -93,7 +93,7 @@ class Profiling(PilotFeature):
             parent.appendRow([first_item, second_item])
 
             children = data["children"]
-            key_func = lambda d: d["total_time"]
+            def key_func(d): d["total_time"]
             sorted_child_data = sorted(children, key=key_func, reverse=True)
 
             for child_data in sorted_child_data:
