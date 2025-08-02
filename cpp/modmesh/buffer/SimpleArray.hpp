@@ -239,7 +239,7 @@ public:
 
     value_type median_op(small_vector<value_type> & sv) const
     {
-        USE_CALLPROFILER_PROFILE_THIS_SCOPE("SimpleArray::median_op()");
+        MODMESH_PROFILE_SCOPE("SimpleArray::median_op()");
         const size_t n = sv.size();
         if (n % 2 != 0)
         {
@@ -257,7 +257,7 @@ public:
 
     value_type median() const
     {
-        USE_CALLPROFILER_PROFILE_THIS_SCOPE("SimpleArray::median()");
+        MODMESH_PROFILE_SCOPE("SimpleArray::median()");
         auto athis = static_cast<A const *>(this);
         const size_t n = athis->size();
         small_vector<T> acopy(n);

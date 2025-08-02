@@ -35,7 +35,7 @@ constexpr int uniqueTime3 = 7;
 
 void foo3()
 {
-    USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
+    MODMESH_PROFILE_FUNCTION();
     auto start_time = std::chrono::high_resolution_clock::now();
     while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count() < uniqueTime1)
     {
@@ -45,7 +45,7 @@ void foo3()
 
 void foo2()
 {
-    USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
+    MODMESH_PROFILE_FUNCTION();
     auto start_time = std::chrono::high_resolution_clock::now();
     while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count() < uniqueTime2)
     {
@@ -56,7 +56,7 @@ void foo2()
 
 void foo1()
 {
-    USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
+    MODMESH_PROFILE_FUNCTION();
     foo2();
     auto start_time = std::chrono::high_resolution_clock::now();
     while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count() < uniqueTime3)
@@ -191,11 +191,11 @@ TEST_F(CallProfilerTest, cancel)
 
     auto test1 = [&]()
     {
-        USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
+        MODMESH_PROFILE_FUNCTION();
 
         auto test2 = [&]()
         {
-            USE_CALLPROFILER_PROFILE_THIS_FUNCTION();
+            MODMESH_PROFILE_FUNCTION();
             pProfiler->cancel();
         };
 

@@ -305,7 +305,7 @@ public:
 
     T select_kth(size_t k)
     {
-        USE_CALLPROFILER_PROFILE_THIS_SCOPE("small_vector::select_kth()");
+        MODMESH_PROFILE_SCOPE("small_vector::select_kth()");
         iterator it = quick_select(begin(), end(), k);
         return *it;
     }
