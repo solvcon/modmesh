@@ -5,7 +5,7 @@
 #error "Python.h should not be included."
 #endif
 
-#define CALLPROFILER 1
+#define MODMESH_PROFILE 1
 #include <modmesh/toggle/RadixTree.hpp>
 namespace modmesh
 {

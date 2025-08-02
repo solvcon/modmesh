@@ -273,6 +273,7 @@ private:
 /*
  * MODMESH_PROFILE defined: Enable profiling API.
  */
+// TODO: https://github.com/solvcon/modmesh/pull/559
 #ifdef MODMESH_PROFILE
 
 #define MODMESH_TIME(NAME) \
