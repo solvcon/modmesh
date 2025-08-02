@@ -140,6 +140,7 @@ void RManager::setUpMenu()
     }
     m_oneMenu = m_mainWindow->menuBar()->addMenu(QString("One"));
     m_meshMenu = m_mainWindow->menuBar()->addMenu(QString("Mesh"));
+    m_profilingMenu = m_mainWindow->menuBar()->addMenu(QString("Profiling"));
     m_windowMenu = m_mainWindow->menuBar()->addMenu(QString("Window"));
 }
 
