@@ -33,6 +33,10 @@
 #include <vector>
 #include <algorithm>
 
+// TODO: Solve circular include between <modmesh/toggle/toggle.hpp> and SimpleArray class.
+// buffer/ (higher level) should depend on toggle/ (lower level).
+#include <modmesh/toggle/RadixTree.hpp>
+
 namespace modmesh
 {
 
@@ -301,6 +305,7 @@ public:
 
     T select_kth(size_t k)
     {
+        USE_CALLPROFILER_PROFILE_THIS_SCOPE("small_vector::select_kth()");
         iterator it = quick_select(begin(), end(), k);
         return *it;
     }

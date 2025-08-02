@@ -32,6 +32,11 @@
 #include <modmesh/math/math.hpp>
 #include <modmesh/simd/simd.hpp>
 
+// TODO: Solve circular include between <modmesh/toggle/toggle.hpp> and SimpleArray class.
+// Since it will happen circulate include when using <modmesh/toggle/toggle.hpp>,
+// I use <modmesh/toggle/RadixTree.hpp> instead.
+#include <modmesh/toggle/RadixTree.hpp>
+
 #include <limits>
 #include <stdexcept>
 #include <functional>
@@ -234,6 +239,7 @@ public:
 
     value_type median_op(small_vector<value_type> & sv) const
     {
+        USE_CALLPROFILER_PROFILE_THIS_SCOPE("SimpleArray::median_op()");
         const size_t n = sv.size();
         if (n % 2 != 0)
         {
@@ -251,6 +257,7 @@ public:
 
     value_type median() const
     {
+        USE_CALLPROFILER_PROFILE_THIS_SCOPE("SimpleArray::median()");
         auto athis = static_cast<A const *>(this);
         const size_t n = athis->size();
         small_vector<T> acopy(n);

@@ -353,7 +353,8 @@ private:
     CallProfiler & m_profiler;
 }; /* end struct CallProfilerProbe */
 
-#ifdef CALLPROFILER
+// TODO: https://github.com/solvcon/modmesh/pull/559
+#ifdef MODMESH_PROFILE
 
 #ifdef _MSC_VER
 // ref: https://learn.microsoft.com/en-us/cpp/preprocessor/predefined-macros
