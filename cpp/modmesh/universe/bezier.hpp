@@ -49,6 +49,18 @@ public:
 
     static_assert(std::is_arithmetic_v<T>, "T in Point3d<T> must be arithmetic type");
 
+    /**
+     * Return the values of the point object.  Do not include the opening and
+     * closing parentheses.  Example:
+     *   p.value_string(): 0.1234, -2.421, 0
+     *
+     * @return String of the values separated by comma.
+     */
+    std::string value_string() const
+    {
+        return (Formatter() << this->x() << ", " << this->y() << ", " << this->z()).str();
+    }
+
     using value_type = T;
 
     Point3d(T x, T y)

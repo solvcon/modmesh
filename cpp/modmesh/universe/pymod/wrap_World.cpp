@@ -65,13 +65,14 @@ WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const c
         .def(py::init<value_type, value_type>(), py::arg("x"), py::arg("y"))
         .def(py::init<value_type, value_type, value_type>(), py::arg("x"), py::arg("y"), py::arg("z"))
         .def(
-            "__str__",
+            "__repr__",
             [](wrapped_type const & self)
             {
-                return (Formatter()
-                        << "Vector3d(" << self.x() << ", " << self.y() << ", " << self.z() << ")")
-                    .str();
+                // Hard-code the Python type names in the static variable before finding a systematic way.
+                static char const * ptypename = std::is_same_v<T, double> ? "Point3dFp64" : "Point3dFp32";
+                return (Formatter() << ptypename << "(" << self.value_string() << ")").str();
             })
+        .def_alias("__repr__", "__str__")
         .def(
             "__len__",
             [](wrapped_type const & self)
@@ -289,15 +290,19 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
              py::arg("p0"),
              py::arg("p1"))
         .def(
-            "__str__",
+            "__repr__",
             [](wrapped_type const & self)
             {
+                // Hard-code the Python type names in the static variables before finding a systematic way.
+                static char const * stypename = std::is_same_v<T, double> ? "Segment3dFp64" : "Segment3dFp32";
+                static char const * ptypename = std::is_same_v<T, double> ? "Point3dFp64" : "Point3dFp32";
                 return (Formatter()
-                        << "Edge3d("
-                        << self.x0() << ", " << self.y0() << ", " << self.z0() << ", "
-                        << self.x1() << ", " << self.y1() << ", " << self.z1() << ")")
+                        << stypename << "("
+                        << ptypename << "(" << self.p0().value_string() << "), "
+                        << ptypename << "(" << self.p1().value_string() << "))")
                     .str();
             })
+        .def_alias("__repr__", "__str__")
         .def(
             "__len__",
             [](wrapped_type const & self)
@@ -588,6 +593,22 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
              py::arg("p1"),
              py::arg("p2"),
              py::arg("p3"))
+        .def(
+            "__repr__",
+            [](wrapped_type const & self)
+            {
+                // Hard-code the Python type names in the static variables before finding a systematic way.
+                static char const * btypename = std::is_same_v<T, double> ? "Bezier3dFp64" : "Bezier3dFp32";
+                static char const * ptypename = std::is_same_v<T, double> ? "Point3dFp64" : "Point3dFp32";
+                return (Formatter()
+                        << btypename << "("
+                        << ptypename << "(" << self.p0().value_string() << "), "
+                        << ptypename << "(" << self.p1().value_string() << "), "
+                        << ptypename << "(" << self.p2().value_string() << "), "
+                        << ptypename << "(" << self.p3().value_string() << "))")
+                    .str();
+            })
+        .def_alias("__repr__", "__str__")
         .def("__len__",
              [](wrapped_type const &)
              { return 4; })
@@ -598,21 +619,11 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
                 point_type ret;
                 switch (it)
                 {
-                case 0:
-                    ret = self.p0();
-                    break;
-                case 1:
-                    ret = self.p1();
-                    break;
-                case 2:
-                    ret = self.p2();
-                    break;
-                case 3:
-                    ret = self.p3();
-                    break;
-                default:
-                    throw std::out_of_range("Bezier3d: (control) i 4 >= size 4");
-                    break;
+                case 0: ret = self.p0(); break;
+                case 1: ret = self.p1(); break;
+                case 2: ret = self.p2(); break;
+                case 3: ret = self.p3(); break;
+                default: throw std::out_of_range("Bezier3d: (control) i 4 >= size 4"); break;
                 }
                 return ret;
             })
@@ -622,21 +633,11 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
             {
                 switch (it)
                 {
-                case 0:
-                    self.p0() = p;
-                    break;
-                case 1:
-                    self.p1() = p;
-                    break;
-                case 2:
-                    self.p2() = p;
-                    break;
-                case 3:
-                    self.p3() = p;
-                    break;
-                default:
-                    throw py::stop_iteration();
-                    break;
+                case 0: self.p0() = p; break;
+                case 1: self.p1() = p; break;
+                case 2: self.p2() = p; break;
+                case 3: self.p3() = p; break;
+                default: throw py::stop_iteration(); break;
                 }
             })
         //

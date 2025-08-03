@@ -319,6 +319,12 @@ public:
 #undef DECL_MM_PYBIND_CLASS_METHOD_TIMED
 #undef DECL_MM_PYBIND_CLASS_METHOD
 
+    wrapper_type & def_alias(char const * from_name, char const * to_name)
+    {
+        cls().attr(to_name) = cls().attr(from_name);
+        return *static_cast<std::add_pointer_t<wrapper_type>>(this);
+    }
+
     template <typename Func>
     wrapper_type & expose_SimpleArray(char const * name, Func && f)
     {

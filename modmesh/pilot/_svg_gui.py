@@ -34,6 +34,7 @@ from PySide6 import QtCore, QtWidgets
 
 
 from .. import core
+from .. import apputil
 from ..plot import svg
 from ._gui_common import PilotFeature
 
@@ -131,5 +132,10 @@ class SVGFileDialog(PilotFeature):
         wid = self._mgr.add3DWidget()
         wid.updateWorld(world)
         wid.showMark()
+
+        # Add the data objects to the appenv for command-line access.
+        cae = apputil.get_current_appenv()
+        cae.locals['world'] = world
+        cae.locals['widget'] = wid
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

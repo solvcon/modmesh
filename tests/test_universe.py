@@ -229,6 +229,17 @@ class Point3dFp32TC(Point3dTB, unittest.TestCase):
     def test_type(self):
         self.assertIs(modmesh.Point3dFp32, self.Point)
 
+    def test_repr_str(self):
+        from modmesh import Point3dFp32
+        p = Point3dFp32(607.7, -64.2, 0)
+        golden = "Point3dFp32(607.7, -64.2, 0)"
+        # __repr__ is the same as __str__ for Point3d
+        self.assertEqual(repr(p), golden)
+        self.assertEqual(str(p), golden)
+        # Evaluate the string and test the result
+        e = eval(golden)
+        self.assertEqual(p, e)
+
 
 class Point3dFp64TC(Point3dTB, unittest.TestCase):
 
@@ -242,6 +253,17 @@ class Point3dFp64TC(Point3dTB, unittest.TestCase):
 
     def test_type(self):
         self.assertIs(modmesh.Point3dFp64, self.Point)
+
+    def test_repr_str(self):
+        from modmesh import Point3dFp64
+        p = Point3dFp64(607.7, -64.2, 0)
+        golden = "Point3dFp64(607.7, -64.2, 0)"
+        # __repr__ is the same as __str__ for Point3d
+        self.assertEqual(repr(p), golden)
+        self.assertEqual(str(p), golden)
+        # Evaluate the string and test the result
+        e = eval(golden)
+        self.assertEqual(p, e)
 
 
 class Segment3dTB(ModMeshTB):
@@ -280,6 +302,19 @@ class Segment3dFp32TC(Segment3dTB, unittest.TestCase):
             kw['rtol'] = 1.e-7
         return super().assert_allclose(*args, **kw)
 
+    def test_repr_str(self):
+        from modmesh import Point3dFp32, Segment3dFp32
+        s = Segment3dFp32(Point3dFp32(504.8, -64.2, 0),
+                          Point3dFp32(421.4, -250.5, 0))
+        golden = ("Segment3dFp32(Point3dFp32(504.8, -64.2, 0), "
+                  "Point3dFp32(421.4, -250.5, 0))")
+        # __repr__ is the same as __str__ for Segment3d
+        self.assertEqual(repr(s), golden)
+        self.assertEqual(str(s), golden)
+        # Evaluate the string and test the result
+        e = eval(golden)
+        self.assertEqual(s, e)
+
 
 class Segment3dFp64TC(Segment3dTB, unittest.TestCase):
 
@@ -291,6 +326,19 @@ class Segment3dFp64TC(Segment3dTB, unittest.TestCase):
         if 'rtol' not in kw:
             kw['rtol'] = 1.e-15
         return super().assert_allclose(*args, **kw)
+
+    def test_repr_str(self):
+        from modmesh import Point3dFp64, Segment3dFp64
+        s = Segment3dFp64(Point3dFp64(504.8, -64.2, 0),
+                          Point3dFp64(421.4, -250.5, 0))
+        golden = ("Segment3dFp64(Point3dFp64(504.8, -64.2, 0), "
+                  "Point3dFp64(421.4, -250.5, 0))")
+        # __repr__ is the same as __str__ for Segment3d
+        self.assertEqual(repr(s), golden)
+        self.assertEqual(str(s), golden)
+        # Evaluate the string and test the result
+        e = eval(golden)
+        self.assertEqual(s, e)
 
 
 class Bezier3dTB(ModMeshTB):
@@ -367,6 +415,28 @@ class Bezier3dFp32TC(Bezier3dTB, unittest.TestCase):
             kw['rtol'] = 1.e-7
         return super().assert_allclose(*args, **kw)
 
+    def test_repr_str(self):
+        from modmesh import Point3dFp32, Bezier3dFp32
+        b = Bezier3dFp32(Point3dFp32(607.7, -64.2, 0),
+                         Point3dFp32(504.8, -64.2, 0),
+                         Point3dFp32(421.4, -147.6, 0),
+                         Point3dFp32(421.4, -250.5, 0))
+        golden = ("Bezier3dFp32(Point3dFp32(607.7, -64.2, 0), "
+                  "Point3dFp32(504.8, -64.2, 0), "
+                  "Point3dFp32(421.4, -147.6, 0), "
+                  "Point3dFp32(421.4, -250.5, 0))")
+        # __repr__ is the same as __str__ for Bezier3d
+        self.assertEqual(repr(b), golden)
+        self.assertEqual(str(b), golden)
+        # Evaluate the string and test the result
+        e = eval(golden)
+        # FIXME: Bezier3d does not have equality operator
+        # Tracked in https://github.com/solvcon/modmesh/issues/568
+        self.assertEqual(b[0], e[0])
+        self.assertEqual(b[1], e[1])
+        self.assertEqual(b[2], e[2])
+        self.assertEqual(b[3], e[3])
+
 
 class Bezier3dFp64TC(Bezier3dTB, unittest.TestCase):
 
@@ -378,6 +448,28 @@ class Bezier3dFp64TC(Bezier3dTB, unittest.TestCase):
         if 'rtol' not in kw:
             kw['rtol'] = 1.e-15
         return super().assert_allclose(*args, **kw)
+
+    def test_repr_str(self):
+        from modmesh import Point3dFp64, Bezier3dFp64
+        b = Bezier3dFp64(Point3dFp64(607.7, -64.2, 0),
+                         Point3dFp64(504.8, -64.2, 0),
+                         Point3dFp64(421.4, -147.6, 0),
+                         Point3dFp64(421.4, -250.5, 0))
+        golden = ("Bezier3dFp64(Point3dFp64(607.7, -64.2, 0), "
+                  "Point3dFp64(504.8, -64.2, 0), "
+                  "Point3dFp64(421.4, -147.6, 0), "
+                  "Point3dFp64(421.4, -250.5, 0))")
+        # __repr__ is the same as __str__ for Bezier3d
+        self.assertEqual(repr(b), golden)
+        self.assertEqual(str(b), golden)
+        # Evaluate the string and test the result
+        e = eval(golden)
+        # FIXME: Bezier3d does not have equality operator
+        # Tracked in https://github.com/solvcon/modmesh/issues/568
+        self.assertEqual(b[0], e[0])
+        self.assertEqual(b[1], e[1])
+        self.assertEqual(b[2], e[2])
+        self.assertEqual(b[3], e[3])
 
 
 class PointPadTB(ModMeshTB):
@@ -630,9 +722,9 @@ class SegmentPadTB(ModMeshTB):
         x0arr = self.SimpleArray(array=np.array([1, 2, 3], dtype=self.dtype))
         y0arr = self.SimpleArray(array=np.array([4, 5, 6], dtype=self.dtype))
         x1arr = self.SimpleArray(array=np.array([-1, -2, -3],
-                                 dtype=self.dtype))
+                                                dtype=self.dtype))
         y1arr = self.SimpleArray(array=np.array([-4, -5, -6],
-                                 dtype=self.dtype))
+                                                dtype=self.dtype))
         sp = self.SegmentPad(x0=x0arr, y0=y0arr, x1=x1arr, y1=y1arr,
                              clone=False)
         self.assertEqual(sp.ndim, 2)
@@ -676,11 +768,11 @@ class SegmentPadTB(ModMeshTB):
         y0arr = self.SimpleArray(array=np.array([4, 5, 6], dtype=self.dtype))
         z0arr = self.SimpleArray(array=np.array([7, 8, 9], dtype=self.dtype))
         x1arr = self.SimpleArray(array=np.array([-1, -2, -3],
-                                 dtype=self.dtype))
+                                                dtype=self.dtype))
         y1arr = self.SimpleArray(array=np.array([-4, -5, -6],
-                                 dtype=self.dtype))
+                                                dtype=self.dtype))
         z1arr = self.SimpleArray(array=np.array([-7, -8, -9],
-                                 dtype=self.dtype))
+                                                dtype=self.dtype))
         sp = self.SegmentPad(x0=x0arr, y0=y0arr, z0=z0arr,
                              x1=x1arr, y1=y1arr, z1=z1arr, clone=False)
         self.assertEqual(sp.ndim, 3)
