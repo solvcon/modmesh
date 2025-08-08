@@ -83,8 +83,10 @@ SimdFeature detect_simd()
 #endif
 #endif /* defined(__aarch64__) || defined(__arm__) */
 
-    CurrentFeature = SIMD_NONE;
-
+    if (CurrentFeature == SIMD_UNKNOWN)
+    {
+        CurrentFeature = SIMD_NONE;
+    }
     return CurrentFeature;
 }
 
