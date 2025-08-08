@@ -542,14 +542,21 @@ public:
         auto athis = static_cast<A *>(this);
         if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
         {
-            for (size_t i = 0; i < athis->size(); ++i)
+            const value_type * const end = athis->end();
+            value_type * ptr = athis->begin();
+            const value_type * other_ptr = other.begin();
+
+            while (ptr < end)
             {
-                athis->data(i) += other.data(i);
+                *ptr += *other_ptr;
+                ++ptr;
+                ++other_ptr;
             }
         }
         else
         {
-            for (size_t i = 0; i < athis->size(); ++i)
+            size_t size = athis->size();
+            for (size_t i = 0; i < size; ++i)
             {
                 athis->data(i) = athis->data(i) || other.data(i);
             }
@@ -563,9 +570,15 @@ public:
         auto athis = static_cast<A *>(this);
         if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
         {
-            for (size_t i = 0; i < athis->size(); ++i)
+            const value_type * const end = athis->end();
+            value_type * ptr = athis->begin();
+            const value_type * other_ptr = other.begin();
+
+            while (ptr < end)
             {
-                athis->data(i) -= other.data(i);
+                *ptr -= *other_ptr;
+                ++ptr;
+                ++other_ptr;
             }
         }
         else
@@ -580,14 +593,21 @@ public:
         auto athis = static_cast<A *>(this);
         if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
         {
-            for (size_t i = 0; i < athis->size(); ++i)
+            const value_type * const end = athis->end();
+            value_type * ptr = athis->begin();
+            const value_type * other_ptr = other.begin();
+
+            while (ptr < end)
             {
-                athis->data(i) *= other.data(i);
+                *ptr *= *other_ptr;
+                ++ptr;
+                ++other_ptr;
             }
         }
         else
         {
-            for (size_t i = 0; i < athis->size(); ++i)
+            size_t size = athis->size();
+            for (size_t i = 0; i < size; ++i)
             {
                 athis->data(i) = athis->data(i) && other.data(i);
             }
@@ -600,9 +620,15 @@ public:
         auto athis = static_cast<A *>(this);
         if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
         {
-            for (size_t i = 0; i < athis->size(); ++i)
+            const value_type * const end = athis->end();
+            value_type * ptr = athis->begin();
+            const value_type * other_ptr = other.begin();
+
+            while (ptr < end)
             {
-                athis->data(i) /= other.data(i);
+                *ptr /= *other_ptr;
+                ++ptr;
+                ++other_ptr;
             }
         }
         else
