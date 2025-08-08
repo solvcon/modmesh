@@ -640,22 +640,42 @@ public:
 
     A add_simd(A const & other) const
     {
-        return A(*static_cast<A const *>(this)).iadd_simd(other);
+        A const * athis = static_cast<A const *>(this);
+        A ret(athis->shape());
+
+        simd::add<T>(ret.begin(), ret.end(), athis->begin(), other.begin());
+
+        return ret;
     }
 
     A sub_simd(A const & other) const
     {
-        return A(*static_cast<A const *>(this)).isub_simd(other);
+        A const * athis = static_cast<A const *>(this);
+        A ret(athis->shape());
+
+        simd::sub<T>(ret.begin(), ret.end(), athis->begin(), other.begin());
+
+        return ret;
     }
 
     A mul_simd(A const & other) const
     {
-        return A(*static_cast<A const *>(this)).imul_simd(other);
+        A const * athis = static_cast<A const *>(this);
+        A ret(athis->shape());
+
+        simd::mul<T>(ret.begin(), ret.end(), athis->begin(), other.begin());
+
+        return ret;
     }
 
     A div_simd(A const & other) const
     {
-        return A(*static_cast<A const *>(this)).idiv_simd(other);
+        A const * athis = static_cast<A const *>(this);
+        A ret(athis->shape());
+
+        simd::div<T>(ret.begin(), ret.end(), athis->begin(), other.begin());
+
+        return ret;
     }
 
     A & iadd_simd(A const & other)
