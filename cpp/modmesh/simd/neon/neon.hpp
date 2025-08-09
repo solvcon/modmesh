@@ -59,8 +59,8 @@ const T * check_between(T const * start, T const * end, T const & min_val, T con
     using cmpvec_t = type::vector_t<uint64_t>;
     constexpr size_t N_lane = type::vector_lane<T>;
 
-    vec_t max_vec = vdupq<T>(max_val);
-    vec_t min_vec = vdupq<T>(min_val);
+    vec_t max_vec = vdupq(max_val);
+    vec_t min_vec = vdupq(min_val);
     vec_t data_vec = {};
     cmpvec_t cmp_vec = {};
     T const * ret = NULL;
@@ -68,17 +68,17 @@ const T * check_between(T const * start, T const * end, T const & min_val, T con
     T const * ptr = start;
     for (; ptr <= end - N_lane; ptr += N_lane)
     {
-        data_vec = vld1q<T>(ptr);
-        cmp_vec = (cmpvec_t)vcgeq<T>(data_vec, max_vec);
-        if (vgetq<uint64_t, 0>(cmp_vec) ||
-            vgetq<uint64_t, 1>(cmp_vec))
+        data_vec = vld1q(ptr);
+        cmp_vec = (cmpvec_t)vcgeq(data_vec, max_vec);
+        if (vgetq<0>(cmp_vec) ||
+            vgetq<1>(cmp_vec))
         {
             goto OUT_OF_RANGE;
         }
 
-        cmp_vec = (cmpvec_t)vcltq<T>(data_vec, min_vec);
-        if (vgetq<uint64_t, 0>(cmp_vec) ||
-            vgetq<uint64_t, 1>(cmp_vec))
+        cmp_vec = (cmpvec_t)vcltq(data_vec, min_vec);
+        if (vgetq<0>(cmp_vec) ||
+            vgetq<1>(cmp_vec))
         {
             goto OUT_OF_RANGE;
         }
@@ -94,7 +94,7 @@ const T * check_between(T const * start, T const * end, T const & min_val, T con
 OUT_OF_RANGE:
     T cmp_val[N_lane] = {};
     T * cmp = cmp_val;
-    vst1q<T>(cmp_val, cmp_vec);
+    vst1q(cmp_val, cmp_vec);
 
     for (size_t i = 0; i < N_lane; ++i, ++cmp)
     {
@@ -123,10 +123,10 @@ void add(T * dest, T const * dest_end, T const * src1, T const * src2)
         T * ptr = dest;
         for (; ptr <= dest_end - N_lane; ptr += N_lane, src1 += N_lane, src2 += N_lane)
         {
-            src1_vec = vld1q<T>(src1);
-            src2_vec = vld1q<T>(src2);
-            res_vec = vaddq<T>(src1_vec, src2_vec);
-            vst1q<T>(ptr, res_vec);
+            src1_vec = vld1q(src1);
+            src2_vec = vld1q(src2);
+            res_vec = vaddq(src1_vec, src2_vec);
+            vst1q(ptr, res_vec);
         }
         if (ptr != dest_end)
         {
@@ -152,10 +152,10 @@ void sub(T * dest, T const * dest_end, T const * src1, T const * src2)
         T * ptr = dest;
         for (; ptr <= dest_end - N_lane; ptr += N_lane, src1 += N_lane, src2 += N_lane)
         {
-            src1_vec = vld1q<T>(src1);
-            src2_vec = vld1q<T>(src2);
-            res_vec = vsubq<T>(src1_vec, src2_vec);
-            vst1q<T>(ptr, res_vec);
+            src1_vec = vld1q(src1);
+            src2_vec = vld1q(src2);
+            res_vec = vsubq(src1_vec, src2_vec);
+            vst1q(ptr, res_vec);
         }
         if (ptr != dest_end)
         {
@@ -181,10 +181,10 @@ void mul(T * dest, T const * dest_end, T const * src1, T const * src2)
         T * ptr = dest;
         for (; ptr <= dest_end - N_lane; ptr += N_lane, src1 += N_lane, src2 += N_lane)
         {
-            src1_vec = vld1q<T>(src1);
-            src2_vec = vld1q<T>(src2);
-            res_vec = vmulq<T>(src1_vec, src2_vec);
-            vst1q<T>(ptr, res_vec);
+            src1_vec = vld1q(src1);
+            src2_vec = vld1q(src2);
+            res_vec = vmulq(src1_vec, src2_vec);
+            vst1q(ptr, res_vec);
         }
         if (ptr != dest_end)
         {
@@ -210,10 +210,10 @@ void div(T * dest, T const * dest_end, T const * src1, T const * src2)
         T * ptr = dest;
         for (; ptr <= dest_end - N_lane; ptr += N_lane, src1 += N_lane, src2 += N_lane)
         {
-            src1_vec = vld1q<T>(src1);
-            src2_vec = vld1q<T>(src2);
-            res_vec = vdivq<T>(src1_vec, src2_vec);
-            vst1q<T>(ptr, res_vec);
+            src1_vec = vld1q(src1);
+            src2_vec = vld1q(src2);
+            res_vec = vdivq(src1_vec, src2_vec);
+            vst1q(ptr, res_vec);
         }
         if (ptr != dest_end)
         {
