@@ -119,6 +119,10 @@ public:
     }
     std::shared_ptr<segment_pad_type> const & segments() { return m_segments; }
 
+    void add_bezier(bezier_type const & bezier)
+    {
+        m_curves->append(bezier);
+    }
     void add_bezier(point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3)
     {
         m_curves->append(p0, p1, p2, p3);

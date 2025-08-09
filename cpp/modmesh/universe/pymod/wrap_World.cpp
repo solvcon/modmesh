@@ -751,6 +751,34 @@ WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const
         ;
     // clang-format on
 #undef DECL_WRAP
+
+    // x, y, z, point array/batch accessors.
+#define DECL_WRAP(NAME)         \
+    .def_property_readonly(     \
+        #NAME,                  \
+        [](wrapped_type & self) \
+        { return self.NAME(); })
+    // clang-format off
+    (*this)
+        DECL_WRAP(x0)
+        DECL_WRAP(y0)
+        DECL_WRAP(z0)
+        DECL_WRAP(x1)
+        DECL_WRAP(y1)
+        DECL_WRAP(z1)
+        DECL_WRAP(x2)
+        DECL_WRAP(y2)
+        DECL_WRAP(z2)
+        DECL_WRAP(x3)
+        DECL_WRAP(y3)
+        DECL_WRAP(z3)
+        DECL_WRAP(p0)
+        DECL_WRAP(p1)
+        DECL_WRAP(p2)
+        DECL_WRAP(p3)
+        ;
+#undef DECL_WRAP
+    // clang-format on
 }
 
 template <typename T>
@@ -766,7 +794,9 @@ public:
     using value_type = typename wrapped_type::value_type;
     using point_type = typename wrapped_type::point_type;
     using segment_type = typename wrapped_type::segment_type;
+    using segment_pad_type = typename wrapped_type::segment_pad_type;
     using bezier_type = typename wrapped_type::bezier_type;
+    using curve_pad_type = typename wrapped_type::curve_pad_type;
 
     friend typename base_type::root_base_type;
 
@@ -830,9 +860,27 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
             },
             py::arg("p0"),
             py::arg("p1"))
+        .def(
+            "add_segments",
+            [](wrapped_type & self, segment_pad_type const & segment_pad)
+            {
+                for (size_t i = 0; i < segment_pad.size(); ++i)
+                {
+                    self.add_segment(segment_pad.get(i));
+                }
+            },
+            py::arg("pad"))
         .def_property_readonly("nsegment", &wrapped_type::nsegment)
         .def("segment", &wrapped_type::segment_at)
         .def_property_readonly("segments", &wrapped_type::segments)
+        .def(
+            "add_bezier",
+            [](wrapped_type & self, bezier_type const & bezier)
+            {
+                self.add_bezier(bezier);
+                return self.bezier_at(self.nbezier() - 1);
+            },
+            py::arg("bezier"))
         .def(
             "add_bezier",
             [](wrapped_type & self, point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3)
@@ -844,6 +892,16 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
             py::arg("p1"),
             py::arg("p2"),
             py::arg("p3"))
+        .def(
+            "add_beziers",
+            [](wrapped_type & self, curve_pad_type const & curve_pad)
+            {
+                for (size_t i = 0; i < curve_pad.size(); ++i)
+                {
+                    self.add_bezier(curve_pad.get(i));
+                }
+            },
+            py::arg("pad"))
         .def_property_readonly("nbezier", &wrapped_type::nbezier)
         .def(
             "bezier",
