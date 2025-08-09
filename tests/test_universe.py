@@ -1276,6 +1276,13 @@ class WorldTB(ModMeshTB):
         with self.assertRaisesRegex(
                 IndexError, "World: \\(bezier\\) i 1 >= size 1"):
             w.bezier(1)
+        b2 = w.add_bezier(self.Bezier(p0=Point(0, 0, 1), p1=Point(1, 1, 2),
+                                      p2=Point(3, 1, 3), p3=Point(4, 0, 4)))
+        self.assertEqual(w.nbezier, 2)
+        w.bezier(1)
+        with self.assertRaisesRegex(
+                IndexError, "World: \\(bezier\\) i 2 >= size 2"):
+            w.bezier(2)
 
         # Check control points
         self.assertEqual(len(b), 4)
@@ -1283,6 +1290,11 @@ class WorldTB(ModMeshTB):
         self.assertEqual(list(b[1]), [1, 1, 0])
         self.assertEqual(list(b[2]), [3, 1, 0])
         self.assertEqual(list(b[3]), [4, 0, 0])
+        self.assertEqual(len(b2), 4)
+        self.assertEqual(list(b2[0]), [0, 0, 1])
+        self.assertEqual(list(b2[1]), [1, 1, 2])
+        self.assertEqual(list(b2[2]), [3, 1, 3])
+        self.assertEqual(list(b2[3]), [4, 0, 4])
 
         # Check locus points
         segs = b.sample(nlocus=5)
@@ -1295,6 +1307,28 @@ class WorldTB(ModMeshTB):
             list(segs[2]), [[2.0, 0.75, 0.0], [3.09375, 0.5625, 0.0]])
         self.assert_allclose(
             list(segs[3]), [[3.09375, 0.5625, 0.0], [4.0, 0.0, 0.0]])
+
+    def test_beziers(self):
+        cp = self.CurvePad(ndim=3)
+        p0 = self.Point(0, 0, 0)
+        p1 = self.Point(1, 1, 0)
+        p2 = self.Point(3, 1, 0)
+        p3 = self.Point(4, 0, 0)
+        cp.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+        w = self.World()
+        self.assertEqual(w.nbezier, 0)
+        with self.assertRaisesRegex(
+                IndexError, "World: \\(bezier\\) i 0 >= size 0"):
+            w.bezier(0)
+        w.add_beziers(cp)
+        self.assertEqual(w.nbezier, 1)
+        b = w.bezier(0)
+
+        self.assertEqual(list(b[0]), [0, 0, 0])
+        self.assertEqual(list(b[1]), [1, 1, 0])
+        self.assertEqual(list(b[2]), [3, 1, 0])
+        self.assertEqual(list(b[3]), [4, 0, 0])
 
     def test_point(self):
         Point = self.Point
@@ -1384,12 +1418,51 @@ class WorldTB(ModMeshTB):
         self.assertEqual(sndarr.shape, (13, 6))
         self.assertEqual(w.nsegment, 13)
 
+    def test_segments(self):
+        x0arr = self.SimpleArray(array=np.array([1, 2, 3], dtype=self.dtype))
+        y0arr = self.SimpleArray(array=np.array([4, 5, 6], dtype=self.dtype))
+        z0arr = self.SimpleArray(array=np.array([7, 8, 9], dtype=self.dtype))
+        x1arr = self.SimpleArray(array=np.array([-1, -2, -3],
+                                                dtype=self.dtype))
+        y1arr = self.SimpleArray(array=np.array([-4, -5, -6],
+                                                dtype=self.dtype))
+        z1arr = self.SimpleArray(array=np.array([-7, -8, -9],
+                                                dtype=self.dtype))
+        sp = self.SegmentPad(x0=x0arr, y0=y0arr, z0=z0arr,
+                             x1=x1arr, y1=y1arr, z1=z1arr, clone=False)
+
+        w = self.World()
+
+        # Empty
+        self.assertEqual(w.nsegment, 0)
+        with self.assertRaisesRegex(
+                IndexError, "World: \\(segment\\) i 0 >= size 0"):
+            w.segment(0)
+        # Add the SegmentPad
+        w.add_segments(sp)
+        self.assertEqual(w.nsegment, 3)
+
+        s0 = w.segment(0)
+        self.assert_allclose(list(s0[0]), [1, 4, 7])
+        self.assert_allclose(list(s0[1]), [-1, -4, -7])
+        s1 = w.segment(1)
+        self.assert_allclose(list(s1[0]), [2, 5, 8])
+        self.assert_allclose(list(s1[1]), [-2, -5, -8])
+        s2 = w.segment(2)
+        self.assert_allclose(list(s2[0]), [3, 6, 9])
+        self.assert_allclose(list(s2[1]), [-3, -6, -9])
+
 
 class WorldFp32TC(WorldTB, unittest.TestCase):
 
     def setUp(self):
+        self.dtype = 'float32'
+        self.SimpleArray = modmesh.SimpleArrayFloat32
         self.Point = modmesh.Point3dFp32
         self.Segment = modmesh.Segment3dFp32
+        self.Bezier = modmesh.Bezier3dFp32
+        self.SegmentPad = modmesh.SegmentPadFp32
+        self.CurvePad = modmesh.CurvePadFp32
         self.World = modmesh.WorldFp32
 
     def assert_allclose(self, *args, **kw):
@@ -1404,8 +1477,13 @@ class WorldFp32TC(WorldTB, unittest.TestCase):
 class WorldFp64TC(WorldTB, unittest.TestCase):
 
     def setUp(self):
+        self.dtype = 'float64'
+        self.SimpleArray = modmesh.SimpleArrayFloat64
         self.Point = modmesh.Point3dFp64
         self.Segment = modmesh.Segment3dFp64
+        self.Bezier = modmesh.Bezier3dFp64
+        self.SegmentPad = modmesh.SegmentPadFp64
+        self.CurvePad = modmesh.CurvePadFp64
         self.World = modmesh.WorldFp64
 
     def assert_allclose(self, *args, **kw):
