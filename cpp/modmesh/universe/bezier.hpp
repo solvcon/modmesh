@@ -908,8 +908,10 @@ public:
     SimpleArray<value_type> y1() { return m_p1->y(); }
     SimpleArray<value_type> z1() { return m_p1->z(); }
 
-    std::shared_ptr<point_pad_type> p0() const { return m_p0; }
-    std::shared_ptr<point_pad_type> p1() const { return m_p1; }
+    // Should not implement the const versions of p0, p1 because the returned
+    // shared pointers make the contents mutable.
+    std::shared_ptr<point_pad_type> p0() { return m_p0; }
+    std::shared_ptr<point_pad_type> p1() { return m_p1; }
 
     segment_type get_at(size_t i) const
     {
@@ -1328,6 +1330,26 @@ public:
     }
 
     // TODO: missing many accessors
+
+    SimpleArray<value_type> x0() { return m_p0->x(); }
+    SimpleArray<value_type> y0() { return m_p0->y(); }
+    SimpleArray<value_type> z0() { return m_p0->z(); }
+    SimpleArray<value_type> x1() { return m_p1->x(); }
+    SimpleArray<value_type> y1() { return m_p1->y(); }
+    SimpleArray<value_type> z1() { return m_p1->z(); }
+    SimpleArray<value_type> x2() { return m_p2->x(); }
+    SimpleArray<value_type> y2() { return m_p2->y(); }
+    SimpleArray<value_type> z2() { return m_p2->z(); }
+    SimpleArray<value_type> x3() { return m_p3->x(); }
+    SimpleArray<value_type> y3() { return m_p3->y(); }
+    SimpleArray<value_type> z3() { return m_p3->z(); }
+
+    // Should not implement the const versions of p0, p1, p2, p3 because the
+    // returned shared pointers make the contents mutable.
+    std::shared_ptr<point_pad_type> p0() { return m_p0; }
+    std::shared_ptr<point_pad_type> p1() { return m_p1; }
+    std::shared_ptr<point_pad_type> p2() { return m_p2; }
+    std::shared_ptr<point_pad_type> p3() { return m_p3; }
 
     std::shared_ptr<SegmentPad<T>> sample(value_type length) const;
 

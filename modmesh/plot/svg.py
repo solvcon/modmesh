@@ -440,7 +440,9 @@ class EPath(object):
 class PathParser(object):
     def __init__(self, file_path=None):
         self.file_path = file_path
-        self.epaths = None  # list of epath
+        self.epaths = []  # list of epath
+        self.spads = []  # list of SegmentPad
+        self.cpads = []  # list of CurvePad
 
     def parse(self):
         tree = ET.parse(self.file_path)
@@ -449,15 +451,15 @@ class PathParser(object):
         namespace = {'svg': 'http://www.w3.org/2000/svg'}
         pathElements = root.findall('.//svg:path', namespace)
 
-        paths = []
         for elmnt in pathElements:
             d_attr = elmnt.attrib.get('d', '')
             fill_attr = elmnt.attrib.get('fill', '')
-            paths.append(EPath(d_attr=d_attr, fill_attr=fill_attr))
-        """ d_attr = pathElements[0].attrib.get('d', '')
-        fill_attr = pathElements[0].attrib.get('fill', '')
-        paths.append(EPath(d_attr=d_attr, fill_attr=fill_attr)) """
-        self.epaths = paths
+            epath = EPath(d_attr=d_attr, fill_attr=fill_attr)
+            self.epaths.append(epath)
+            # Get SegmentPad and CurvePad from the paths
+            spad, cpad = epath.get_closed_paths()
+            self.spads.append(spad)
+            self.cpads.append(cpad)
 
     def get_epaths(self):
         return self.epaths
