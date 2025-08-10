@@ -982,6 +982,14 @@ class SegmentPadTB(ModMeshTB):
         for i in range(nseg):
             self.assertEqual(sp[i], sp[nseg + i])
 
+        # Assert the equality between value array and PointPad
+        self.assert_allclose(list(sp.x0), list(sp.p0.x))
+        self.assert_allclose(list(sp.y0), list(sp.p0.y))
+        self.assert_allclose(list(sp.z0), list(sp.p0.z))
+        self.assert_allclose(list(sp.x1), list(sp.p1.x))
+        self.assert_allclose(list(sp.y1), list(sp.p1.y))
+        self.assert_allclose(list(sp.z1), list(sp.p1.z))
+
 
 class SegmentPadFp32TC(SegmentPadTB, unittest.TestCase):
 
@@ -1134,6 +1142,40 @@ class CurvePadTB(ModMeshTB):
         self.assertEqual(list(cp[0][2]), [3, 1, 0])
         self.assertEqual(list(cp[0][3]), [4, 0, 0])
 
+        b2 = self.Bezier(
+            p0=self.Point(0, 0, 1),
+            p1=self.Point(1.3, 1.921, 2),
+            p2=self.Point(3.2, 1.224, 3),
+            p3=self.Point(4.87, 0.12, 4))
+        cp.append(c=b2)
+        self.assertEqual(len(cp), 2)
+        # Assert the equality between value array and PointPad
+        self.assert_allclose(list(cp.x0), list(cp.p0.x))
+        self.assert_allclose(list(cp.y0), list(cp.p0.y))
+        self.assert_allclose(list(cp.z0), list(cp.p0.z))
+        self.assert_allclose(list(cp.x1), list(cp.p1.x))
+        self.assert_allclose(list(cp.y1), list(cp.p1.y))
+        self.assert_allclose(list(cp.z1), list(cp.p1.z))
+        self.assert_allclose(list(cp.x2), list(cp.p2.x))
+        self.assert_allclose(list(cp.y2), list(cp.p2.y))
+        self.assert_allclose(list(cp.z2), list(cp.p2.z))
+        self.assert_allclose(list(cp.x3), list(cp.p3.x))
+        self.assert_allclose(list(cp.y3), list(cp.p3.y))
+        self.assert_allclose(list(cp.z3), list(cp.p3.z))
+        # Check the value
+        self.assert_allclose(list(cp.x0), [7, 0])
+        self.assert_allclose(list(cp.y0), [8, 0])
+        self.assert_allclose(list(cp.z0), [-3, 1])
+        self.assert_allclose(list(cp.x1), [1, 1.3])
+        self.assert_allclose(list(cp.y1), [1, 1.921])
+        self.assert_allclose(list(cp.z1), [0, 2])
+        self.assert_allclose(list(cp.x2), [3, 3.2])
+        self.assert_allclose(list(cp.y2), [1, 1.224])
+        self.assert_allclose(list(cp.z2), [0, 3])
+        self.assert_allclose(list(cp.x3), [4, 4.87])
+        self.assert_allclose(list(cp.y3), [0, 0.12])
+        self.assert_allclose(list(cp.z3), [0, 4])
+
     def test_sample_2d(self):
         CurvePad = self.CurvePad
         Point = self.Point
@@ -1276,8 +1318,8 @@ class WorldTB(ModMeshTB):
         with self.assertRaisesRegex(
                 IndexError, "World: \\(bezier\\) i 1 >= size 1"):
             w.bezier(1)
-        b2 = w.add_bezier(self.Bezier(p0=Point(0, 0, 1), p1=Point(1, 1, 2),
-                                      p2=Point(3, 1, 3), p3=Point(4, 0, 4)))
+        b2 = w.add_bezier(b=self.Bezier(p0=Point(0, 0, 1), p1=Point(1, 1, 2),
+                                        p2=Point(3, 1, 3), p3=Point(4, 0, 4)))
         self.assertEqual(w.nbezier, 2)
         w.bezier(1)
         with self.assertRaisesRegex(
@@ -1386,7 +1428,7 @@ class WorldTB(ModMeshTB):
             w.segment(0)
 
         # Add a segment by object
-        s = w.add_segment(Segment(Point(0, 1, 2), Point(7.1, 8.2, 9.3)))
+        s = w.add_segment(s=Segment(Point(0, 1, 2), Point(7.1, 8.2, 9.3)))
         self.assert_allclose(list(s), [[0, 1, 2], [7.1, 8.2, 9.3]])
         self.assert_allclose(list(w.segment(0)), [[0, 1, 2], [7.1, 8.2, 9.3]])
         self.assertIsNot(s, w.segment(0))

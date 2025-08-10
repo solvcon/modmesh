@@ -850,7 +850,7 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
                 self.add_segment(edge);
                 return self.segment_at(self.nsegment() - 1);
             },
-            py::arg("segment"))
+            py::arg("s"))
         .def(
             "add_segment",
             [](wrapped_type & self, point_type const & p0, point_type const & p1)
@@ -880,7 +880,7 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
                 self.add_bezier(bezier);
                 return self.bezier_at(self.nbezier() - 1);
             },
-            py::arg("bezier"))
+            py::arg("b"))
         .def(
             "add_bezier",
             [](wrapped_type & self, point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3)
