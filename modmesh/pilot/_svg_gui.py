@@ -32,7 +32,6 @@ Show a SVG (scalleable vector graphic)
 import os
 from PySide6 import QtCore, QtWidgets
 
-
 from .. import core
 from .. import apputil
 from ..plot import svg
@@ -93,41 +92,24 @@ class SVGFileDialog(PilotFeature):
         return found
 
     def _load_svg_file(self, filename):
-        svgParser = svg.PathParser(filename)
-        svgParser.parse()
-        epaths = svgParser.get_epaths()
-        sp2d = []
-        cp2d = []
-        for p in epaths:
-            closedp = p.get_closed_paths()
-            sp2d.append(closedp[0])
-            cp2d.append(closedp[1])
+        parser = svg.PathParser(filename)
+        parser.parse()
 
         world = core.WorldFp64()
-        Point = core.Point3dFp64
 
-        for i in range(len(sp2d)):
-            for j in range(len(sp2d[i])):
-                # the points are reflected to x-axis: (x, y) -> (x, -y)
-                world.add_segment(Point(sp2d[i].x0_at(j), -sp2d[i].y0_at(j)),
-                                  Point(sp2d[i].x1_at(j), -sp2d[i].y1_at(j)))
+        for spad in parser.spads:
+            # mirror with respect to x-axis: (x, y) -> (x, -y)
+            spad.y0.ndarray[:] = -spad.y0.ndarray
+            spad.y1.ndarray[:] = -spad.y1.ndarray
+            world.add_segments(pad=spad)
 
-        for i in range(len(cp2d)):
-            for j in range(len(cp2d[i])):
-                # the points are reflected to x-axis: (x, y) -> (x, -y)
-                b = world.add_bezier(p0=Point(cp2d[i].x0_at(j),
-                                              -cp2d[i].y0_at(j),
-                                              0),
-                                     p1=Point(cp2d[i].x1_at(j),
-                                              -cp2d[i].y1_at(j),
-                                              0),
-                                     p2=Point(cp2d[i].x2_at(j),
-                                              -cp2d[i].y2_at(j),
-                                              0),
-                                     p3=Point(cp2d[i].x3_at(j),
-                                              -cp2d[i].y3_at(j),
-                                              0))
-                b.sample(nlocus=5)
+        for cpad in parser.cpads:
+            # mirror with respect to x-axis: (x, y) -> (x, -y)
+            cpad.y0.ndarray[:] = -cpad.y0.ndarray
+            cpad.y1.ndarray[:] = -cpad.y1.ndarray
+            cpad.y2.ndarray[:] = -cpad.y2.ndarray
+            cpad.y3.ndarray[:] = -cpad.y3.ndarray
+            world.add_beziers(pad=cpad)
 
         wid = self._mgr.add3DWidget()
         wid.updateWorld(world)
@@ -135,6 +117,7 @@ class SVGFileDialog(PilotFeature):
 
         # Add the data objects to the appenv for command-line access.
         cae = apputil.get_current_appenv()
+        cae.locals['parser'] = parser
         cae.locals['world'] = world
         cae.locals['widget'] = wid
 
