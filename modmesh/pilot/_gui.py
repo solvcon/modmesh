@@ -78,7 +78,8 @@ class _Controller(metaclass=_Singleton):
         self.naca4airfoil = None
         self.eulerone = None
         self.burgers = None
-        self.profiling = None
+        self.openprofiledata = None
+        self.runprofiling = None
 
     def __getattr__(self, name):
         return None if self._rmgr is None else getattr(self._rmgr, name)
@@ -96,7 +97,8 @@ class _Controller(metaclass=_Singleton):
         self.eulerone = _euler1d.Euler1DApp(mgr=self._rmgr)
         self.burgers = _burgers1d.Burgers1DApp(mgr=self._rmgr)
         self.linear_wave = _linear_wave.LinearWave1DApp(mgr=self._rmgr)
-        self.profiling = _profiling.Profiling(mgr=self._rmgr)
+        self.openprofiledata = _profiling.Profiling(mgr=self._rmgr)
+        self.runprofiling = _profiling.RunProfiling(mgr=self._rmgr)
         self.populate_menu()
         self._rmgr.show()
         return self._rmgr.exec()
@@ -127,7 +129,8 @@ class _Controller(metaclass=_Singleton):
         self.eulerone.populate_menu()
         self.burgers.populate_menu()
         self.linear_wave.populate_menu()
-        self.profiling.populate_menu()
+        self.openprofiledata.populate_menu()
+        self.runprofiling.populate_menu()
 
         if sys.platform != 'darwin':
             _addAction(
