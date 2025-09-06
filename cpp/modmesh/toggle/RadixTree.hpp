@@ -334,6 +334,7 @@ public:
     CallProfilerProbe & operator=(CallProfilerProbe const &) = delete;
     CallProfilerProbe & operator=(CallProfilerProbe &&) = delete;
 
+    // FIXME: Remove the suppression NOLINTNEXTLINE(bugprone-exception-escape)
     ~CallProfilerProbe()
     {
         if (!m_cancel)

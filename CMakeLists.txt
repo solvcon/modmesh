@@ -118,7 +118,7 @@ if(MODMESH_PROFILE)
 endif()
 
 if(BUILD_METAL)
-include_directories("${CMAKE_CURRENT_LIST_DIR}/thirdparty/install/metal-cpp")
+include_directories(SYSTEM "${CMAKE_CURRENT_LIST_DIR}/thirdparty/install/metal-cpp")
 endif()
 
 # Pybind11 2.12.0 is the first version that supports compiling for numpy 2.0.0.

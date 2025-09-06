@@ -71,7 +71,7 @@ SimdFeature detect_simd()
 #elif defined(__APPLE__)
     int neon_supported = 0;
     size_t size = sizeof(neon_supported);
-    if (sysctlbyname("hw.optional.neon", &neon_supported, &size, NULL, 0) == 0 && neon_supported)
+    if (sysctlbyname("hw.optional.neon", &neon_supported, &size, nullptr, 0) == 0 && neon_supported)
     {
         CurrentFeature = SIMD_NEON;
     }

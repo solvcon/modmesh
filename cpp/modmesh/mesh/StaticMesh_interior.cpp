@@ -698,6 +698,7 @@ void StaticMesh::calc_metric()
             m_fccnd(ifc, 0) = m_fccnd(ifc, 1) = m_fccnd(ifc, 2) = 0.0;
             for (size_t inf = 1 ; inf <= nnd ; ++inf)
             {
+                // NOLINTBEGIN(readability-math-missing-parentheses)
                 crd[0] = (cfd[0][0] + cfd[inf][0] + cfd[inf+1][0])/3;
                 crd[1] = (cfd[0][1] + cfd[inf][1] + cfd[inf+1][1])/3;
                 crd[2] = (cfd[0][2] + cfd[inf][2] + cfd[inf+1][2])/3;
@@ -715,6 +716,7 @@ void StaticMesh::calc_metric()
                 m_fccnd(ifc, 1) += crd[1] * vob;
                 m_fccnd(ifc, 2) += crd[2] * vob;
                 voc += vob;
+                // NOLINTEND(readability-math-missing-parentheses)
             }
             m_fccnd(ifc, 0) /= voc;
             m_fccnd(ifc, 1) /= voc;
@@ -733,7 +735,7 @@ void StaticMesh::calc_metric()
             // face normal.
             m_fcnml(ifc, 0) = m_ndcrd(ind2, 1) - m_ndcrd(ind1, 1);
             m_fcnml(ifc, 1) = m_ndcrd(ind1, 0) - m_ndcrd(ind2, 0);
-            // face ara.
+            // face area. NOLINTNEXTLINE(readability-math-missing-parentheses)
             m_fcara(ifc) = std::sqrt(m_fcnml(ifc, 0)*m_fcnml(ifc, 0) + m_fcnml(ifc, 1)*m_fcnml(ifc, 1));
             // normalize face normal.
             m_fcnml(ifc, 0) /= m_fcara(ifc);
@@ -755,6 +757,7 @@ void StaticMesh::calc_metric()
                 radvec[inf][2] = m_ndcrd(ind, 2) - m_fccnd(ifc, 2);
             }
             // compute cross product.
+            // NOLINTBEGIN(readability-math-missing-parentheses)
             m_fcnml(ifc, 0) = radvec[nnd-1][1]*radvec[0][2]
                             - radvec[nnd-1][2]*radvec[0][1];
             m_fcnml(ifc, 1) = radvec[nnd-1][2]*radvec[0][0]
@@ -777,6 +780,7 @@ void StaticMesh::calc_metric()
               + m_fcnml(ifc, 1)*m_fcnml(ifc, 1)
               + m_fcnml(ifc, 2)*m_fcnml(ifc, 2)
             );
+            // NOLINTEND(readability-math-missing-parentheses)
             // normalize normal vector.
             m_fcnml(ifc, 0) /= m_fcara(ifc);
             m_fcnml(ifc, 1) /= m_fcara(ifc);
@@ -838,6 +842,7 @@ void StaticMesh::calc_metric()
                 size_t const nfc = m_clfcs(icl, 0);
                 for (size_t ifl = 1 ; ifl <= nfc ; ++ifl)
                 {
+                    // NOLINTBEGIN(readability-math-missing-parentheses)
                     int_type const ifc = m_clfcs(icl, ifl);
                     real_type const du0 = crd[0] - m_fccnd(ifc, 0);
                     real_type const du1 = crd[1] - m_fccnd(ifc, 1);
@@ -847,6 +852,7 @@ void StaticMesh::calc_metric()
                     real_type const dv1 = m_fccnd(ifc, 1) + du1/3;
                     m_clcnd(icl, 0) += dv0 * vob;
                     m_clcnd(icl, 1) += dv1 * vob;
+                    // NOLINTEND(readability-math-missing-parentheses)
                 }
                 m_clcnd(icl, 0) /= voc;
                 m_clcnd(icl, 1) /= voc;
@@ -918,6 +924,7 @@ void StaticMesh::calc_metric()
                 size_t const nfc = m_clfcs(icl, 0);
                 for (size_t ifl = 1 ; ifl <= nfc ; ++ifl)
                 {
+                    // NOLINTBEGIN(readability-math-missing-parentheses)
                     int_type const ifc = m_clfcs(icl, ifl);
                     real_type const du0 = crd[0] - m_fccnd(ifc, 0);
                     real_type const du1 = crd[1] - m_fccnd(ifc, 1);
@@ -930,6 +937,7 @@ void StaticMesh::calc_metric()
                     m_clcnd(icl, 0) += dv0 * vob;
                     m_clcnd(icl, 1) += dv1 * vob;
                     m_clcnd(icl, 2) += dv2 * vob;
+                    // NOLINTEND(readability-math-missing-parentheses)
                 }
                 m_clcnd(icl, 0) /= voc;
                 m_clcnd(icl, 1) /= voc;

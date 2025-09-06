@@ -329,7 +329,7 @@ SimpleArrayPlex::SimpleArrayPlex(SimpleArrayPlex const & other)
     }
 }
 
-SimpleArrayPlex::SimpleArrayPlex(SimpleArrayPlex && other)
+SimpleArrayPlex::SimpleArrayPlex(SimpleArrayPlex && other) noexcept
     : m_data_type(other.m_data_type)
 {
     if (!other.m_instance_ptr)
@@ -461,7 +461,7 @@ SimpleArrayPlex & SimpleArrayPlex::operator=(SimpleArrayPlex const & other)
     return *this;
 }
 
-SimpleArrayPlex & SimpleArrayPlex::operator=(SimpleArrayPlex && other)
+SimpleArrayPlex & SimpleArrayPlex::operator=(SimpleArrayPlex && other) noexcept
 {
     m_data_type = other.m_data_type;
 
