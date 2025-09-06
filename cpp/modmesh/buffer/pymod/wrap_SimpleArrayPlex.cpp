@@ -44,17 +44,17 @@ namespace python
 /// @param callback the callback function, which has the mutable typed array as the argument
 /// @return the return type of the callback function
 template <typename A, typename C, typename = std::enable_if_t<std::is_same_v<std::remove_const_t<A>, SimpleArrayPlex>>>
-// NOLINTNEXTLINE(misc-use-anonymous-namespace)
+// NOLINTNEXTLINE(misc-use-anonymous-namespace,cppcoreguidelines-missing-std-forward)
 static auto execute_callback_with_typed_array(A & arrayplex, C && callback)
 {
 // We get the typed array from the arrayplex and call the callback function with the typed array.
-#define DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType, ArrayType)                                                     \
-    case DataType:                                                                                                     \
-    {                                                                                                                  \
-        using ArrayTypePtr = typename std::conditional<std::is_const<A>::value, const ArrayType *, ArrayType *>::type; \
-        /* NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) */                                              \
-        auto array = reinterpret_cast<ArrayTypePtr>(arrayplex.mutable_instance_ptr());                                 \
-        return callback(*array);                                                                                       \
+#define DECL_MM_RUN_CALLBACK_WITH_TYPED_ARRAY(DataType, ArrayType)                                            \
+    case DataType:                                                                                            \
+    {                                                                                                         \
+        using ArrayTypePtr = typename std::conditional_t<std::is_const_v<A>, const ArrayType *, ArrayType *>; \
+        /* NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) */                                     \
+        auto array = reinterpret_cast<ArrayTypePtr>(arrayplex.mutable_instance_ptr());                        \
+        return callback(*array);                                                                              \
     }
 
     switch (arrayplex.data_type())
@@ -304,12 +304,17 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
             .def("__len__", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(size))
             .def("__getitem__", &get_typed_array_value<ssize_t>)
             .def("__getitem__", &get_typed_array_value<const std::vector<ssize_t> &>)
-            .def("__setitem__", [](wrapped_type & self, pybind11::args const & args)
-                 { return execute_callback_with_typed_array(
-                       self, [&args](auto & array)
-                       { 
-                            using data_type = typename std::remove_reference_t<decltype(array[0])>;
-                            ArrayPropertyHelper<data_type>::setitem_parser(array, args); }); })
+            .def("__setitem__",
+                 [](wrapped_type & self, pybind11::args const & args)
+                 {
+                     execute_callback_with_typed_array(
+                         self,
+                         [&args](auto & array)
+                         {
+                             using data_type = typename std::remove_reference_t<decltype(array[0])>;
+                             ArrayPropertyHelper<data_type>::setitem_parser(array, args);
+                         });
+                 })
             .def("reshape", [](wrapped_type const & self, pybind11::object const & py_shape)
                  { return execute_callback_with_typed_array(
                        self,
@@ -325,9 +330,14 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                 DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(nghost),
                 // setter
                 [](wrapped_type & self, size_t size)
-                { return execute_callback_with_typed_array(
-                      self, [size](auto & array)
-                      { return array.set_nghost(size); }); })
+                {
+                    execute_callback_with_typed_array(
+                        self,
+                        [size](auto & array)
+                        {
+                            return array.set_nghost(size);
+                        });
+                })
             .def_property_readonly("nbody", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(nbody))
             .wrap_modifiers()
             .wrap_calculators()

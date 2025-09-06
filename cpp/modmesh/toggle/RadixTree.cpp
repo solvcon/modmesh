@@ -80,7 +80,7 @@ void CallProfiler::print_profiling_result(const RadixTreeNode<CallerProfile> & n
         outstream << "  ";
     }
 
-    auto profile = node.data();
+    auto const & profile = node.data();
 
     if (depth == 0)
     {

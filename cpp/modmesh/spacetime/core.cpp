@@ -63,17 +63,17 @@ void Grid::init_from_array(array_type const & xloc)
     m_xmin = xloc[0];
     m_xmax = xloc[m_ncelm];
     // Mark the boundary of conservation celms.
-    const size_t nx = m_ncelm * 2 + (1 + BOUND_COUNT * 2);
+    const size_t nx = m_ncelm * 2 + (1 + BOUND_COUNT * 2); // NOLINT(readability-math-missing-parentheses)
     m_agrid = modmesh::AscendantGrid1d(nx);
     // Fill x-coordinates at CE boundary.
     for (size_t it = 0; it < xloc.size(); ++it)
     {
-        m_agrid[it * 2 + BOUND_COUNT] = xloc[it];
+        m_agrid[it * 2 + BOUND_COUNT] = xloc[it]; // NOLINT(readability-math-missing-parentheses)
     }
     // Fill x-coordinates at CE center.
     for (size_t it = 0; it < m_ncelm; ++it)
     {
-        const size_t ref = it * 2 + BOUND_COUNT + 1;
+        const size_t ref = it * 2 + BOUND_COUNT + 1; // NOLINT(readability-math-missing-parentheses)
         m_agrid[ref] = (m_agrid[ref - 1] + m_agrid[ref + 1]) / 2;
     }
     // Fill the front and back value.

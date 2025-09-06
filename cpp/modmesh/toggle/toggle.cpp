@@ -144,7 +144,7 @@ HierarchicalToggleAccess HierarchicalToggleAccess::get_subkey(const std::string 
 
 void HierarchicalToggleAccess::add_subkey(const std::string & key)
 {
-    return m_table->add_subkey(rekey(key));
+    m_table->add_subkey(rekey(key));
 }
 
 void DynamicToggleTable::add_subkey(std::string const & key)
@@ -194,9 +194,9 @@ ProcessInfo & ProcessInfo::set_environment_variables()
 // At the time of testing (Qt 6.4), RHI is not stable.  A workaround is to use
 // OpenGL instead of RHI.  See more detail at
 // https://doc.qt.io/qtforpython/overviews/qt3drender-porting-to-rhi.html
-#if defined(QT3D_USE_RHI)
+#ifdef QT3D_USE_RHI
     setenv("QT3D_RENDERER", "rhi", 1);
-#else
+#else // QT3D_USE_RHI
     setenv("QT3D_RENDERER", "opengl", 1);
 #endif // QT3D_USE_RHI
 

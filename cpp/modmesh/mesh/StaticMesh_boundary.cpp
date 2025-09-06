@@ -261,7 +261,7 @@ inline void StaticMesh::fill_ghost()
                 }
                 for (size_t idm = 0; idm < m_ndim; ++idm)
                 {
-                    m_ndcrd(ignd, idm) = m_ndcrd(ind, idm) + 2 * dist * m_fcnml(ibfc, idm);
+                    m_ndcrd(ignd, idm) = m_ndcrd(ind, idm) + 2 * dist * m_fcnml(ibfc, idm); // NOLINT(readability-math-missing-parentheses)
                 }
                 // decrement ghost node counter.
                 ignd -= 1;
@@ -355,6 +355,7 @@ inline void StaticMesh::fill_ghost()
             real_type voc = 0.0;
             for (size_t inf = 1; inf <= nnd; ++inf)
             {
+                // NOLINTBEGIN(readability-math-missing-parentheses)
                 std::array<real_type, 3> crd; // NOLINT(cppcoreguidelines-pro-type-member-init)
                 crd[0] = (cfd[0][0] + cfd[inf][0] + cfd[inf + 1][0]) / 3;
                 crd[1] = (cfd[0][1] + cfd[inf][1] + cfd[inf + 1][1]) / 3;
@@ -373,6 +374,7 @@ inline void StaticMesh::fill_ghost()
                 m_fccnd(ifc, 1) += crd[1] * vob;
                 m_fccnd(ifc, 2) += crd[2] * vob;
                 voc += vob;
+                // NOLINTEND(readability-math-missing-parentheses)
             }
             m_fccnd(ifc, 0) /= voc;
             m_fccnd(ifc, 1) /= voc;
@@ -391,7 +393,7 @@ inline void StaticMesh::fill_ghost()
             // face normal.
             m_fcnml(ifc, 0) = m_ndcrd(jnd, 1) - m_ndcrd(ind, 1);
             m_fcnml(ifc, 1) = m_ndcrd(ind, 0) - m_ndcrd(jnd, 0);
-            // face ara.
+            // face area. NOLINTNEXTLINE(readability-math-missing-parentheses)
             m_fcara(ifc) = std::sqrt(m_fcnml(ifc, 0) * m_fcnml(ifc, 0) + m_fcnml(ifc, 1) * m_fcnml(ifc, 1));
             // normalize face normal.
             m_fcnml(ifc, 0) /= m_fcara(ifc);
@@ -412,6 +414,7 @@ inline void StaticMesh::fill_ghost()
                 radvec[inf][1] = m_ndcrd(ind, 1) - m_fccnd(ifc, 1);
                 radvec[inf][2] = m_ndcrd(ind, 2) - m_fccnd(ifc, 2);
             }
+            // NOLINTBEGIN(readability-math-missing-parentheses)
             // compute cross product.
             m_fcnml(ifc, 0) = radvec[nnd - 1][1] * radvec[0][2] - radvec[nnd - 1][2] * radvec[0][1];
             m_fcnml(ifc, 1) = radvec[nnd - 1][2] * radvec[0][0] - radvec[nnd - 1][0] * radvec[0][2];
@@ -425,6 +428,7 @@ inline void StaticMesh::fill_ghost()
             // compute face area.
             m_fcara(ifc, 0) = std::sqrt(
                 m_fcnml(ifc, 0) * m_fcnml(ifc, 0) + m_fcnml(ifc, 1) * m_fcnml(ifc, 1) + m_fcnml(ifc, 2) * m_fcnml(ifc, 2));
+            // NOLINTEND(readability-math-missing-parentheses)
             // normalize normal vector.
             m_fcnml(ifc, 0) /= m_fcnml(ifc);
             m_fcnml(ifc, 1) /= m_fcnml(ifc);
@@ -457,6 +461,7 @@ inline void StaticMesh::fill_ghost()
             size_t const nfc = m_clfcs(icl, 0);
             for (size_t ifl = 1; ifl <= nfc; ++ifl)
             {
+                // NOLINTBEGIN(readability-math-missing-parentheses)
                 int_type const ifc = m_clfcs(icl, ifl);
                 real_type const du0 = crd[0] - m_fccnd(ifc, 0);
                 real_type const du1 = crd[1] - m_fccnd(ifc, 1);
@@ -466,6 +471,7 @@ inline void StaticMesh::fill_ghost()
                 real_type const dv1 = m_fccnd(ifc, 1) + du1 / 3;
                 m_clcnd(icl, 0) += dv0 * vob;
                 m_clcnd(icl, 1) += dv1 * vob;
+                // NOLINTEND(readability-math-missing-parentheses)
             }
             m_clcnd(icl, 0) /= voc;
             m_clcnd(icl, 1) /= voc;
@@ -494,6 +500,7 @@ inline void StaticMesh::fill_ghost()
             size_t const nfc = m_clfcs(icl, 0);
             for (size_t ifl = 1; ifl <= nfc; ++ifl)
             {
+                // NOLINTBEGIN(readability-math-missing-parentheses)
                 int_type const ifc = m_clfcs(icl, ifl);
                 real_type const du0 = crd[0] - m_fccnd(ifc, 0);
                 real_type const du1 = crd[1] - m_fccnd(ifc, 1);
@@ -512,6 +519,7 @@ inline void StaticMesh::fill_ghost()
                 m_clcnd(icl, 0) += dv0 * vob;
                 m_clcnd(icl, 1) += dv1 * vob;
                 m_clcnd(icl, 2) += dv2 * vob;
+                // NOLINTEND(readability-math-missing-parentheses)
             }
             m_clcnd(icl, 0) /= voc;
             m_clcnd(icl, 1) /= voc;

@@ -3,6 +3,7 @@ Checks: >
     -clang-diagnostic-ignored-optimization-argument,
     -altera-*,
     -abseil-*,
+    -boost-*,
     -bugprone-macro-parentheses,
     -bugprone-narrowing-conversions,-cppcoreguidelines-narrowing-conversions,
     -llvmlibc-*,
@@ -28,13 +29,16 @@ Checks: >
     -llvm-header-guard,
     -llvm-include-order,
     -performance-noexcept-move-constructor,
+    -performance-avoid-endl,
     -readability-identifier-length,
     -readability-implicit-bool-conversion,
     -readability-named-parameter,
     -readability-magic-numbers,
     -readability-redundant-access-specifiers,
     -misc-non-private-member-variables-in-classes,
-    -misc-confusable-identifiers
+    -misc-confusable-identifiers,
+    -misc-include-cleaner,
+    -misc-use-internal-linkage
 WarningsAsErrors: ''
 HeaderFilterRegex: 'modmesh.*'
 AnalyzeTemporaryDtors: false

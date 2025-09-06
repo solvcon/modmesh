@@ -116,7 +116,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                             owner = next;
                         }
 
-                        char * base_ptr = static_cast<char *>(owner.mutable_data());
+                        char const * base_ptr = static_cast<char *>(owner.mutable_data());
                         char * view_ptr = static_cast<char *>(arr_in.mutable_data());
                         const ptrdiff_t offset_bytes = view_ptr - base_ptr;
                         if (offset_bytes < 0)

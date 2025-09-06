@@ -105,7 +105,7 @@ void Euler1DCore::update_cfl(bool odd_plane)
         const double ke = wspd / (2.0 * m_so0(it, 0));
         double pr = (ga - 1.0) * (m_so0(it, 2) - ke);
         pr = (pr + std::abs(pr)) / 2.0;
-        wspd = std::sqrt(ga * pr / m_so0(it, 0)) + std::sqrt(wspd) / m_so0(it, 0);
+        wspd = std::sqrt(ga * pr / m_so0(it, 0)) + std::sqrt(wspd) / m_so0(it, 0); // NOLINT(readability-math-missing-parentheses)
         // CFL.
         const double dxpos = m_coord(it + 1) - m_coord(it);
         const double dxneg = m_coord(it) - m_coord(it - 1);

@@ -89,7 +89,7 @@ struct CellType : NumberBase<int32_t, double>
     uint8_t nnode() const { return m_attrs[NNODE_IDX]; }
     uint8_t nedge() const { return m_attrs[NEDGE_IDX]; }
     uint8_t nsurface() const { return m_attrs[NSURFACE_IDX]; }
-    uint8_t nface() const { return m_attrs[m_ndim - 1]; }
+    uint8_t nface() const { return m_attrs[m_ndim - 1]; } // FIXME: Review the suppression NOLINT(clang-analyzer-security.ArrayBound)
 
     const char * name() const
     {

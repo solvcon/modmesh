@@ -1645,9 +1645,9 @@ public:
     }
 
     SimpleArrayPlex(SimpleArrayPlex const & other);
-    SimpleArrayPlex(SimpleArrayPlex && other);
+    SimpleArrayPlex(SimpleArrayPlex && other) noexcept;
     SimpleArrayPlex & operator=(SimpleArrayPlex const & other);
-    SimpleArrayPlex & operator=(SimpleArrayPlex && other);
+    SimpleArrayPlex & operator=(SimpleArrayPlex && other) noexcept;
 
     ~SimpleArrayPlex();
 
