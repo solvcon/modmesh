@@ -221,10 +221,10 @@ jobs:
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
           # This has been replaced by the 'install qt' section below to manage
           # qt6 versioning independently from the OS.
-          # brew install llvm@16 qt6
-          brew install llvm@16
-          ln -s "$(brew --prefix llvm@16)/bin/clang-format" "/usr/local/bin/clang-format"
-          ln -s "$(brew --prefix llvm@16)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+          # brew install llvm@21 qt6
+          brew install llvm@21
+          ln -s "$(brew --prefix llvm@21)/bin/clang-format" "/usr/local/bin/clang-format"
+          ln -s "$(brew --prefix llvm@21)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 
       - name: install qt
         uses: jurplel/install-qt-action@v4
