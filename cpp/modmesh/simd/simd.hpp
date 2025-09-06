@@ -115,6 +115,12 @@ void div(T * dest, T const * dest_end, T const * src1, T const * src2)
     }
 }
 
+template <typename T>
+T max(T const * start, T const * end)
+{
+    return generic::max<T>(start, end);
+}
+
 } /* namespace simd */
 
 } /* namespace modmesh */

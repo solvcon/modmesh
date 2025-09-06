@@ -312,6 +312,9 @@ public:
 
     iterator choose_pivot(iterator left, iterator right)
     {
+        // For performance debugging, uncomment below for an additional profiling node,
+        // but do not turn it on by default.
+        // USE_CALLPROFILER_PROFILE_THIS_SCOPE("small_vector::choose_pivot()");
         iterator first = left;
         iterator mid = left + (right - left) / 2;
         iterator last = right - 1;
@@ -330,45 +333,9 @@ public:
         return mid;
     }
 
-    iterator quick_select(iterator first, iterator last, size_t k)
-    {
-        size_t len = last - first;
-        if (k >= len)
-        {
-            throw std::out_of_range("quick_select: k out of range");
-        }
-        iterator left = first;
-        iterator right = last;
-        while (true)
-        {
-            iterator pivot_it = choose_pivot(left, right);
-            std::iter_swap(pivot_it, right - 1);
-            iterator store = left;
-            for (iterator it = left; it < right - 1; ++it)
-            {
-                if (*it < *(right - 1))
-                {
-                    std::iter_swap(it, store);
-                    ++store;
-                }
-            }
-            std::iter_swap(store, right - 1);
-            size_t pivot_rank = store - left;
-            if (pivot_rank == k)
-            {
-                return store;
-            }
-            else if (pivot_rank < k)
-            {
-                k -= pivot_rank + 1;
-                left = store + 1;
-            }
-            else
-            {
-                right = store;
-            }
-        }
-    }
+    iterator partition(iterator left, iterator right, iterator pivot);
+
+    iterator quick_select(iterator first, iterator last, size_t k);
 
 private:
 
@@ -386,6 +353,100 @@ private:
     std::array<T, N> m_data;
 
 }; /* end class small_vector */
+
+/**
+ * Partition function using lomuto_branchless_cyclic_opt algorithm.
+ * This implementation optimizes the partition step to reduce branch misses and cache misses.
+ *
+ * Reference: https://github.com/Voultapher/sort-research-rs/blob/main/writeup/lomcyc_partition/text.md
+ */
+template <typename T, size_t N>
+typename small_vector<T, N>::iterator
+small_vector<T, N>::partition(iterator left, iterator right, iterator pivot)
+{
+    // For performance debugging, uncomment below for an additional profiling node,
+    // but do not turn it on by default.
+    // USE_CALLPROFILER_PROFILE_THIS_SCOPE("small_vector::partition()");
+
+    const std::size_t len = right - left;
+    if (len == 0)
+    {
+        return left;
+    }
+
+    std::iter_swap(left, pivot);
+    T gap_val = std::move(*left);
+    iterator gap_pos = left;
+
+    iterator it = left + 1;
+    std::size_t lt_count = 0;
+
+    const int unroll = (sizeof(T) <= 16 ? 2 : 1);
+    iterator unroll_end = left + (len - (unroll - 1));
+
+    while (it < unroll_end)
+    {
+        for (int u = 0; u < unroll; ++u)
+        {
+            bool is_lt = (*it < gap_val);
+            iterator dst = left + lt_count;
+            *gap_pos = std::move(*dst);
+            *dst = std::move(*it);
+            gap_pos = it;
+            lt_count += static_cast<std::size_t>(is_lt);
+            ++it;
+        }
+    }
+
+    for (; it < right; ++it)
+    {
+        bool is_lt = (*it < gap_val);
+        iterator dst = left + lt_count;
+        *gap_pos = std::move(*dst);
+        *dst = std::move(*it);
+        gap_pos = it;
+        lt_count += static_cast<std::size_t>(is_lt);
+    }
+
+    iterator dst = left + lt_count;
+    *gap_pos = std::move(*dst);
+    *dst = std::move(gap_val);
+
+    return left + lt_count;
+}
+
+template <typename T, size_t N>
+typename small_vector<T, N>::iterator
+small_vector<T, N>::quick_select(iterator first, iterator last, size_t k)
+{
+    USE_CALLPROFILER_PROFILE_THIS_SCOPE("small_vector::quick_select()");
+    size_t len = last - first;
+    if (k >= len)
+    {
+        throw std::out_of_range("quick_select: k out of range");
+    }
+
+    while (true)
+    {
+        iterator pivot_it = choose_pivot(first, last);
+        iterator store = partition(first, last, pivot_it);
+
+        size_t pivot_rank = store - first;
+        if (pivot_rank == k)
+        {
+            return store;
+        }
+        else if (pivot_rank > k)
+        {
+            last = store;
+        }
+        else
+        {
+            k = k - pivot_rank - 1;
+            first = store + 1;
+        }
+    }
+}
 
 template <typename T>
 bool operator==(small_vector<T> const & lhs, small_vector<T> const & rhs)

@@ -237,18 +237,9 @@ public:
         return result;
     }
 
-    value_type median_op(small_vector<value_type> & sv) const
-    {
-        USE_CALLPROFILER_PROFILE_THIS_SCOPE("SimpleArray::median_op()");
-        const size_t n = sv.size();
-        if (n % 2 != 0)
-        {
-            return sv.select_kth(n / 2);
-        }
-        auto v1 = sv.select_kth(n / 2 - 1);
-        auto v2 = sv.select_kth(n / 2);
-        return static_cast<value_type>(v1 + v2) / static_cast<value_type>(2.0);
-    }
+    value_type median_op(small_vector<value_type> & sv) const;
+
+    value_type median_freq(small_vector<value_type> & sv) const;
 
     A median(const small_vector<size_t> & axis) const
     {
@@ -734,7 +725,130 @@ public:
         }
     }
 
+private:
+    static void find_two_bins(const uint32_t * freq, size_t n, int & bin1, int & bin2);
 }; /* end class SimpleArrayMixinCalculators */
+
+template <typename A, typename T>
+typename detail::SimpleArrayMixinCalculators<A, T>::value_type
+detail::SimpleArrayMixinCalculators<A, T>::median_op(small_vector<value_type> & sv) const
+{
+    USE_CALLPROFILER_PROFILE_THIS_SCOPE("SimpleArray::median_op()");
+    const size_t n = sv.size();
+
+    if constexpr (std::is_same_v<value_type, int8_t> ||
+                  std::is_same_v<value_type, uint8_t> ||
+                  std::is_same_v<value_type, bool>)
+    {
+        return median_freq(sv);
+    }
+    else
+    {
+        value_type v1 = sv.select_kth(n / 2);
+        if (n % 2 != 0)
+        {
+            return v1;
+        }
+        value_type v2 = simd::max(sv.begin(), sv.begin() + n / 2);
+        value_type result = static_cast<value_type>(v1 + v2) / static_cast<value_type>(2.0);
+        return result;
+    }
+}
+
+/**
+ * Calculate median using frequency counting for small data types.
+ * This algorithm is optimized for uint8_t, int8_t, and bool types where
+ * the range of possible values is small (≤256). Instead of sorting,
+ * it counts the frequency of each value and finds the median position.
+ *
+ * Algorithm:
+ * 1. Count frequency of each possible value (0-255 for uint8, -128-127 for int8, 0-1 for bool)
+ * 2. Find the two bins that contain the median elements using cumulative frequency
+ * 3. Calculate median based on the positions found
+ *
+ * Time complexity: O(n)
+ * Space complexity: O(k) for the frequency array (k = 256 for 8-bit types)
+ */
+template <typename A, typename T>
+typename detail::SimpleArrayMixinCalculators<A, T>::value_type
+detail::SimpleArrayMixinCalculators<A, T>::median_freq(small_vector<value_type> & sv) const
+{
+    USE_CALLPROFILER_PROFILE_THIS_SCOPE("SimpleArray::median_freq()");
+
+    const size_t n = sv.size();
+    if (n == 0)
+    {
+        throw std::runtime_error("median_freq(): empty container");
+    }
+
+    uint32_t freq[256] = {};
+
+    if constexpr (std::is_same_v<value_type, uint8_t>)
+    {
+        for (uint8_t v : sv) { ++freq[v]; }
+    }
+    else if constexpr (std::is_same_v<value_type, int8_t>)
+    {
+        for (int8_t v : sv) { ++freq[static_cast<unsigned>(static_cast<int>(v) + 128)]; }
+    }
+    else
+    {
+        for (bool v : sv) { ++freq[v ? 1 : 0]; }
+    }
+
+    int b1, b2;
+    find_two_bins(freq, n, b1, b2);
+
+    if constexpr (std::is_same_v<value_type, uint8_t>)
+    {
+        const int m = (b1 + b2) / 2;
+        return static_cast<value_type>(m);
+    }
+    else if constexpr (std::is_same_v<value_type, int8_t>)
+    {
+        const int v1 = b1 - 128;
+        const int v2 = b2 - 128;
+        return static_cast<value_type>((v1 + v2) / 2);
+    }
+    else
+    {
+        const uint32_t ones = freq[1];
+        return static_cast<value_type>(ones * 2 >= n);
+    }
+}
+
+/**
+ * Find the two bins that correspond to the median values for frequency-based median calculation.
+ * This function is used for small data types (uint8_t, int8_t, bool) where frequency counting
+ * is more efficient than sorting.
+ */
+template <typename A, typename T>
+void SimpleArrayMixinCalculators<A, T>::find_two_bins(const uint32_t * freq, size_t n, int & bin1, int & bin2)
+{
+    const size_t k1 = (n - 1) / 2;
+    const size_t k2 = n / 2;
+
+    uint32_t cumulative = 0;
+    bin1 = -1;
+    bin2 = -1;
+
+    for (int i = 0; i < 256; ++i)
+    {
+        cumulative += freq[i];
+        if (bin1 < 0 && cumulative > k1)
+        {
+            bin1 = i;
+        }
+        if (bin2 < 0 && cumulative > k2)
+        {
+            bin2 = i;
+        }
+        if (bin1 >= 0 && bin2 >= 0)
+        {
+            break;
+        }
+    }
+}
 
 template <typename A, typename T>
 class SimpleArrayMixinSort

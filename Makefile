@@ -124,6 +124,7 @@ PROFRESDIR = profiling/results
 .PHONY: pyprof
 pyprof: buildext $(PROFFILES)
 	@mkdir -p profiling/results
+	@mkdir -p profiling/results/png
 	@for fn in $(PROFFILES); \
 	do \
 		outfn=$${fn%%.py}; \
