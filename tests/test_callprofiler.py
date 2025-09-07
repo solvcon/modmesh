@@ -76,7 +76,7 @@ class CallProfilerTC(unittest.TestCase):
 
         @profile_function
         def foo1():
-            busy_loop(1)
+            busy_loop(0.001)
 
         modmesh.call_profiler.reset()
         foo1()
@@ -96,7 +96,7 @@ class CallProfilerTC(unittest.TestCase):
 
         @profile_function
         def foo():
-            busy_loop(0.1)
+            busy_loop(0.001)
 
         modmesh.call_profiler.reset()
         foo()
@@ -106,17 +106,17 @@ class CallProfilerTC(unittest.TestCase):
         foo_result = root_result["children"][0]
         self.assertEqual(len(foo_result["children"]), 0)
         self.assertEqual(foo_result["count"], 1)
-        self.assertGreaterEqual(foo_result["total_time"], 100)
+        self.assertGreaterEqual(foo_result["total_time"], 1)
 
     def test_caller_profiling(self):
 
         @profile_function
         def bar():
-            busy_loop(0.5)
+            busy_loop(0.005)
 
         @profile_function
         def foo():
-            busy_loop(0.1)
+            busy_loop(0.001)
             bar()
 
         modmesh.call_profiler.reset()
@@ -126,24 +126,24 @@ class CallProfilerTC(unittest.TestCase):
         self.assertEqual(root_result["children"][0]["name"], "foo")
         foo_result = root_result["children"][0]
         self.assertEqual(foo_result["count"], 1)
-        self.assertGreaterEqual(foo_result["total_time"], 600)
+        self.assertGreaterEqual(foo_result["total_time"], 6)
 
         self.assertEqual(len(foo_result["children"]), 1)
         self.assertEqual(foo_result["children"][0]["name"], "bar")
         bar_result = foo_result["children"][0]
         self.assertEqual(len(bar_result["children"]), 0)
         self.assertEqual(bar_result["count"], 1)
-        self.assertGreaterEqual(bar_result["total_time"], 500)
+        self.assertGreaterEqual(bar_result["total_time"], 5)
 
     def test_two_callers_profiling(self):
 
         @profile_function
         def bar():
-            busy_loop(0.5)
+            busy_loop(0.005)
 
         @profile_function
         def foo():
-            busy_loop(0.1)
+            busy_loop(0.001)
             bar()
 
         modmesh.call_profiler.reset()
@@ -158,28 +158,28 @@ class CallProfilerTC(unittest.TestCase):
 
         bar_result = search_bar[0]
         self.assertEqual(bar_result["count"], 1)
-        self.assertGreaterEqual(bar_result["total_time"], 500)
+        self.assertGreaterEqual(bar_result["total_time"], 5)
 
         foo_result = search_foo[0]
         self.assertEqual(foo_result["count"], 1)
-        self.assertGreaterEqual(foo_result["total_time"], 600)
+        self.assertGreaterEqual(foo_result["total_time"], 6)
         self.assertEqual(len(foo_result["children"]), 1)
         self.assertEqual(foo_result["children"][0]["name"], "bar")
 
         second_bar_result = foo_result["children"][0]
         self.assertEqual(len(second_bar_result["children"]), 0)
         self.assertEqual(second_bar_result["count"], 1)
-        self.assertGreaterEqual(second_bar_result["total_time"], 500)
+        self.assertGreaterEqual(second_bar_result["total_time"], 5)
 
     def test_get_result_during_profiling(self):
 
         @profile_function
         def bar():
-            busy_loop(0.5)
+            busy_loop(0.005)
 
         @profile_function
         def foo():
-            busy_loop(0.1)
+            busy_loop(0.001)
             root_result = modmesh.call_profiler.result()
             self.assertEqual(len(root_result["children"]), 1)
             self.assertEqual(root_result["children"][0]["name"], "foo")
@@ -194,9 +194,9 @@ class CallProfilerTC(unittest.TestCase):
         foo()
 
     def test_get_stat(self):
-        time1 = 0.5
-        time2 = 0.1
-        time3 = 0.2
+        time1 = 0.005
+        time2 = 0.001
+        time3 = 0.002
 
         @profile_function
         def bar():
@@ -305,11 +305,11 @@ class CallProfilerTC(unittest.TestCase):
 
         @profile_function
         def bar():
-            busy_loop(0.5)
+            busy_loop(0.005)
 
         @profile_function
         def foo():
-            busy_loop(0.1)
+            busy_loop(0.001)
             bar()
 
         modmesh.call_profiler.reset()
@@ -336,33 +336,33 @@ class CallProfilerTC(unittest.TestCase):
         self.assertEqual(bar_child["key"], 0)
         self.assertEqual(bar_child["name"], "bar")
         self.assertEqual(bar_child["call_count"], 1)
-        self.assertGreaterEqual(bar_child["total_time"], 5e8)
+        self.assertGreaterEqual(bar_child["total_time"], 5e6)
         self.assertEqual(bar_child["children"], [])
 
         foo_child = children[1]
         self.assertEqual(foo_child["key"], 1)
         self.assertEqual(foo_child["name"], "foo")
         self.assertEqual(foo_child["call_count"], 1)
-        self.assertGreaterEqual(foo_child["total_time"], 1e8)
+        self.assertGreaterEqual(foo_child["total_time"], 1e6)
         self.assertEqual(len(foo_child["children"]), 1)
 
         foo_bar_child = foo_child["children"][0]
         self.assertEqual(foo_bar_child["key"], 0)
         self.assertEqual(foo_bar_child["name"], "bar")
         self.assertEqual(foo_bar_child["call_count"], 1)
-        self.assertGreaterEqual(foo_bar_child["total_time"], 5e8)
+        self.assertGreaterEqual(foo_bar_child["total_time"], 5e6)
         self.assertEqual(foo_bar_child["children"], [])
 
     def test_serialize_during_profiling(self):
 
         @profile_function
         def bar():
-            busy_loop(0.5)
+            busy_loop(0.005)
 
         @profile_function
         def foo():
             bar()
-            busy_loop(0.1)
+            busy_loop(0.001)
             sdict = json.loads(modmesh.call_profiler.serialize())
 
             # There are 3 keys in the serialization_dict
