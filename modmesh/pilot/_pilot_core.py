@@ -41,30 +41,62 @@ try:
 except ImportError:
     pass
 
-_from_impl = [  # noqa: F822
+# pilot directory symbols organized by source files
+
+# R3DWidget.hpp/.cpp
+list_of_r3dwidget = [
     'R3DWidget',
+]
+
+# RAxisMark.hpp/.cpp
+list_of_raxismark = [
     'RLine',
-    'RPythonConsoleDockWidget',
+]
+
+# RManager.hpp/.cpp
+list_of_rmanager = [
     'RManager',
-    'RCameraController',
     'mgr',
 ]
+
+# RPythonConsoleDockWidget.hpp/.cpp
+list_of_rpythonconsole = [
+    'RPythonConsoleDockWidget',
+]
+
+# RCameraController.hpp/.cpp
+list_of_rcameracontroller = [
+    'RCameraController',
+]
+
+_from_impl = (  # noqa: F822
+    list_of_r3dwidget +
+    list_of_raxismark +
+    list_of_rmanager +
+    list_of_rpythonconsole +
+    list_of_rcameracontroller
+)
 
 __all__ = _from_impl + [  # noqa: F822
     'enable',
 ]
 
 
-def _load():
+def _load(symbol_list):
     if enable:
-        for name in _from_impl:
+        for name in symbol_list:
             globals()[name] = getattr(_pilot_impl, name)
     else:
-        for name in _from_impl:
+        for name in symbol_list:
             globals()[name] = None
 
 
-_load()
+_load(list_of_r3dwidget)
+_load(list_of_raxismark)
+_load(list_of_rmanager)
+_load(list_of_rpythonconsole)
+_load(list_of_rcameracontroller)
+
 del _load
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
