@@ -37,23 +37,10 @@ import os
 
 from . import pylibmgr
 
-__all__ = [  # noqa: F822
-    'WrapperProfilerStatus',
-    'wrapper_profiler_status',
-    'StopWatch',
-    'stop_watch',
-    'TimeRegistry',
-    'time_registry',
-    'CallProfiler',
-    'call_profiler',
-    'CallProfilerProbe',
+# buffer directory symbols
+list_of_buffer = [
     'ConcreteBuffer',
     'BufferExpander',
-    'Gmsh',
-    'Plot3d',
-    'complex64',
-    'complex128',
-    'FourierTransform',
     'SimpleArray',
     'SimpleArrayBool',
     'SimpleArrayInt8',
@@ -79,18 +66,69 @@ __all__ = [  # noqa: F822
     'SimpleCollectorUint64',
     'SimpleCollectorFloat32',
     'SimpleCollectorFloat64',
+]
+
+# inout directory symbols
+list_of_inout = [
+    'Gmsh',
+    'Plot3d',
+]
+
+# math directory symbols
+list_of_math = [
+    'complex64',
+    'complex128',
+]
+
+# mesh directory symbols
+list_of_mesh = [
     'StaticGrid1d',
     'StaticGrid2d',
     'StaticGrid3d',
     'StaticMesh',
+]
+
+# multidim directory symbols
+list_of_multidim = [
     'EulerCore',
-    'HierarchicalToggleAccess',
-    'Toggle',
+]
+
+# python directory symbols
+list_of_python = [
     'CommandLineInfo',
     'ProcessInfo',
+    'HAS_PILOT',
+]
+
+# testhelper directory symbols
+list_of_testhelper = [
+    'testhelper',
+]
+
+# toggle directory symbols
+list_of_toggle = [
+    'WrapperProfilerStatus',
+    'wrapper_profiler_status',
+    'StopWatch',
+    'stop_watch',
+    'TimeRegistry',
+    'time_registry',
+    'CallProfiler',
+    'call_profiler',
+    'CallProfilerProbe',
+    'HierarchicalToggleAccess',
+    'Toggle',
     'METAL_BUILT',
     'metal_running',
-    'HAS_PILOT',
+]
+
+# transform directory symbols
+list_of_transform = [
+    'FourierTransform',
+]
+
+# universe directory symbols
+list_of_universe = [
     'calc_bernstein_polynomial',
     'interpolate_bernstein',
     'Point3dFp32',
@@ -107,8 +145,20 @@ __all__ = [  # noqa: F822
     'CurvePadFp64',
     'WorldFp32',
     'WorldFp64',
-    'testhelper'
 ]
+
+__all__ = (  # noqa: F822
+    list_of_buffer +
+    list_of_inout +
+    list_of_math +
+    list_of_mesh +
+    list_of_multidim +
+    list_of_python +
+    list_of_testhelper +
+    list_of_toggle +
+    list_of_transform +
+    list_of_universe
+)
 
 
 # A hidden loophole to impolementation; it should only be used for testing
@@ -119,16 +169,26 @@ except ImportError:
     from . import _modmesh as _impl  # noqa: F401
 
 
-def _load():
-    for name in __all__:
+def _load(symbol_list):
+    for name in symbol_list:
         globals()[name] = getattr(_impl, name)
 
-    # Walk through the thirdparty folder and register all library
-    # into a dictionary.
-    pylibmgr.search_library_root(os.getcwd(), 'thirdparty')
 
+_load(list_of_buffer)
+_load(list_of_inout)
+_load(list_of_math)
+_load(list_of_mesh)
+_load(list_of_multidim)
+_load(list_of_python)
+_load(list_of_testhelper)
+_load(list_of_toggle)
+_load(list_of_transform)
+_load(list_of_universe)
 
-_load()
+# Walk through the thirdparty folder and register all library
+# into a dictionary.
+pylibmgr.search_library_root(os.getcwd(), 'thirdparty')
+
 del _load
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
