@@ -105,6 +105,20 @@ void div(T * dest, T const * dest_end, T const * src1, T const * src2)
     }
 }
 
+template <typename T>
+T max(T const * start, T const * end)
+{
+    T max_val = *start;
+    for (T const * ptr = start + 1; ptr < end; ++ptr)
+    {
+        if (*ptr > max_val)
+        {
+            max_val = *ptr;
+        }
+    }
+    return max_val;
+}
+
 } /* namespace generic */
 
 } /* namespace simd */

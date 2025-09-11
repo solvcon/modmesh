@@ -25,7 +25,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import functools
+
 import numpy as np
+import matplotlib.pyplot as plt
+
 import modmesh
 
 
@@ -43,8 +46,14 @@ def make_container(data, dtype=None):
         dtype = data.dtype
     if np.issubdtype(dtype, np.float64):
         return modmesh.SimpleArrayFloat64(array=data)
+    elif np.issubdtype(dtype, np.float32):
+        return modmesh.SimpleArrayFloat32(array=data)
+    elif np.issubdtype(dtype, np.int64):
+        return modmesh.SimpleArrayInt64(array=data)
     elif np.issubdtype(dtype, np.int32):
         return modmesh.SimpleArrayInt32(array=data)
+    elif np.issubdtype(dtype, np.int8):
+        return modmesh.SimpleArrayInt8(array=data)
     else:
         raise ValueError(f"Unsupported dtype: {dtype}")
 
@@ -103,6 +112,9 @@ def profile_stat_op(op, prof_func_np, prof_func_sa, dtype, sizes, it=10,
                     axis=None):
     axis_str = f" (axis={axis})" if axis is not None else ""
     print(f"\n# {op} (dtype={dtype}){axis_str}")
+
+    results = []
+
     for N in sizes:
         if axis is not None:
             shape = (N//100, 100) if axis == 1 else (100, N//100)
@@ -111,13 +123,23 @@ def profile_stat_op(op, prof_func_np, prof_func_sa, dtype, sizes, it=10,
             if np.issubdtype(dtype, np.floating):
                 src = np.random.rand(*shape).astype(dtype, copy=False)
             else:
-                src = np.random.randint(-1000, 1000, shape, dtype=dtype)
+                if dtype == np.int8:
+                    src = np.random.randint(-100, 100, shape, dtype=dtype)
+                elif dtype == np.int32:
+                    src = np.random.randint(-1000, 1000, shape, dtype=dtype)
+                else:
+                    src = np.random.randint(-1000, 1000, shape, dtype=dtype)
             src_sa = make_container(src, dtype)
         else:
             if np.issubdtype(dtype, np.floating):
                 src = np.random.rand(N).astype(dtype, copy=False)
             else:
-                src = np.random.randint(-1000, 1000, N, dtype=dtype)
+                if dtype == np.int8:
+                    src = np.random.randint(-100, 100, N, dtype=dtype)
+                elif dtype == np.int32:
+                    src = np.random.randint(-1000, 1000, N, dtype=dtype)
+                else:
+                    src = np.random.randint(-1000, 1000, N, dtype=dtype)
             src_sa = make_container(src, dtype)
         modmesh.call_profiler.reset()
         for _ in range(it):
@@ -133,6 +155,17 @@ def profile_stat_op(op, prof_func_np, prof_func_sa, dtype, sizes, it=10,
             name = r["name"].replace(f"profile_{op}_", "")
             time_per_call = r["total_time"] / r["count"]
             out[name] = time_per_call
+
+        result_row = {
+            'operation': op,
+            'dtype': str(dtype),
+            'size': N if axis is None else f"{shape[0]}x{shape[1]}",
+            'size_numeric': N,
+            'axis': axis
+        }
+        result_row.update(out)
+        results.append(result_row)
+
         print(f"## N = {N if axis is None else shape}")
 
         def print_row(*cols):
@@ -146,6 +179,8 @@ def profile_stat_op(op, prof_func_np, prof_func_sa, dtype, sizes, it=10,
         for k, v in out.items():
             print_row(f"{k:8s}", f"{v:.3E}", f"{v/npbase:.3f}")
         print()
+
+    return results
 
 
 @profile_function
@@ -198,28 +233,173 @@ def profile_average_np_axis(src, axis=None):
     return np.average(src, axis=axis)
 
 
+def create_performance_plots(all_results):
+    plt.ioff()
+
+    operations = set(r['operation'] for r in all_results)
+    dtypes = set(r['dtype'] for r in all_results)
+
+    for op in operations:
+        create_1d_performance_plot(all_results, op, dtypes)
+        create_axis_performance_plot(all_results, op, dtypes)
+
+
+def create_1d_performance_plot(all_results, op, dtypes):
+    sorted_dtypes = sorted(dtypes)
+    n_dtypes = len(sorted_dtypes)
+
+    fig, axes = plt.subplots(n_dtypes, 2, figsize=(15, 4*n_dtypes))
+    fig.suptitle(f'1D Performance: {op.title()}', fontsize=16)
+
+    if n_dtypes == 1:
+        axes = axes.reshape(1, -1)
+
+    op_data = [r for r in all_results
+               if r['operation'] == op and r['axis'] is None]
+
+    for i, dtype in enumerate(sorted_dtypes):
+        dtype_data = [r for r in op_data if r['dtype'] == dtype]
+
+        sizes = [r['size_numeric'] for r in dtype_data]
+        np_times = [r['np'] for r in dtype_data]
+        sa_times = [r['sa'] for r in dtype_data]
+
+        ax1 = axes[i, 0]
+        ax1.plot(sizes, np_times, 'o-', label='NumPy', color='blue')
+        ax1.plot(sizes, sa_times, 's-', label='SimpleArray', color='red')
+        ax1.set_xlabel('Array Size')
+        ax1.set_ylabel('Time per Call (ms)')
+        ax1.set_title(f'{dtype} - Performance')
+        ax1.set_xscale('log')
+        ax1.set_yscale('log')
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
+
+        ax2 = axes[i, 1]
+        speedups = [r['np'] / r['sa'] for r in dtype_data]
+        ax2.plot(sizes, speedups, 'D-', color='green')
+        ax2.set_xlabel('Array Size')
+        ax2.set_ylabel('Speedup (NumPy / SimpleArray)')
+        ax2.set_title(f'{dtype} - Speedup')
+        ax2.set_xscale('log')
+        ax2.axhline(y=1, color='black', linestyle='--', alpha=0.5)
+        ax2.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(f'profiling/results/png/performance_1d_{op}.png',
+                dpi=300, bbox_inches='tight')
+    plt.close()
+
+
+def create_axis_performance_plot(all_results, op, dtypes):
+    sorted_dtypes = sorted(dtypes)
+    n_dtypes = len(sorted_dtypes)
+
+    fig, axes = plt.subplots(n_dtypes, 4, figsize=(20, 4*n_dtypes))
+    fig.suptitle(f'Axis Performance: {op.title()}', fontsize=16)
+
+    if n_dtypes == 1:
+        axes = axes.reshape(1, -1)
+
+    axis0_data = [r for r in all_results
+                  if r['operation'] == op and r['axis'] == 0]
+    axis1_data = [r for r in all_results
+                  if r['operation'] == op and r['axis'] == 1]
+
+    for i, dtype in enumerate(sorted_dtypes):
+        dtype_axis0 = [r for r in axis0_data if r['dtype'] == dtype]
+        dtype_axis1 = [r for r in axis1_data if r['dtype'] == dtype]
+
+        sizes_0 = [r['size_numeric'] for r in dtype_axis0]
+        np_times_0 = [r['np_axis'] for r in dtype_axis0]
+        sa_times_0 = [r['sa_axis'] for r in dtype_axis0]
+
+        axes[i, 0].plot(sizes_0, np_times_0, 'o-', label='NumPy',
+                        color='blue')
+        axes[i, 0].plot(sizes_0, sa_times_0, 's-', label='SimpleArray',
+                        color='red')
+        axes[i, 0].set_xlabel('Array Size')
+        axes[i, 0].set_ylabel('Time per Call (ms)')
+        axes[i, 0].set_title(f'{dtype} - Axis 0 Performance')
+        axes[i, 0].set_xscale('log')
+        axes[i, 0].set_yscale('log')
+        axes[i, 0].legend()
+        axes[i, 0].grid(True, alpha=0.3)
+
+        speedups_0 = [r['np_axis'] / r['sa_axis'] for r in dtype_axis0]
+        axes[i, 2].plot(sizes_0, speedups_0, 'D-', color='green')
+        axes[i, 2].set_xlabel('Array Size')
+        axes[i, 2].set_ylabel('Speedup (NumPy / SimpleArray)')
+        axes[i, 2].set_title(f'{dtype} - Axis 0 Speedup')
+        axes[i, 2].set_xscale('log')
+        axes[i, 2].axhline(y=1, color='black', linestyle='--', alpha=0.5)
+        axes[i, 2].grid(True, alpha=0.3)
+
+        sizes_1 = [r['size_numeric'] for r in dtype_axis1]
+        np_times_1 = [r['np_axis'] for r in dtype_axis1]
+        sa_times_1 = [r['sa_axis'] for r in dtype_axis1]
+
+        axes[i, 1].plot(sizes_1, np_times_1, 'o-', label='NumPy',
+                        color='blue')
+        axes[i, 1].plot(sizes_1, sa_times_1, 's-', label='SimpleArray',
+                        color='red')
+        axes[i, 1].set_xlabel('Array Size')
+        axes[i, 1].set_ylabel('Time per Call (ms)')
+        axes[i, 1].set_title(f'{dtype} - Axis 1 Performance')
+        axes[i, 1].set_xscale('log')
+        axes[i, 1].set_yscale('log')
+        axes[i, 1].legend()
+        axes[i, 1].grid(True, alpha=0.3)
+
+        speedups_1 = [r['np_axis'] / r['sa_axis'] for r in dtype_axis1]
+        axes[i, 3].plot(sizes_1, speedups_1, 'D-', color='green')
+        axes[i, 3].set_xlabel('Array Size')
+        axes[i, 3].set_ylabel('Speedup (NumPy / SimpleArray)')
+        axes[i, 3].set_title(f'{dtype} - Axis 1 Speedup')
+        axes[i, 3].set_xscale('log')
+        axes[i, 3].axhline(y=1, color='black', linestyle='--', alpha=0.5)
+        axes[i, 3].grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(f'profiling/results/png/performance_axis_{op}.png',
+                dpi=300, bbox_inches='tight')
+    plt.close()
+
+
 def main():
-    sizes = [10**3, 10**4, 10**5, 10**6, 10**7]
-    for dtype in [np.float64, np.int32]:
-        profile_stat_op("median", profile_median_np, profile_median_sa,
-                        dtype, sizes)
-        profile_stat_op("mean", profile_mean_np, profile_mean_sa, dtype,
-                        sizes)
-        profile_stat_op("var", profile_var_np, profile_var_sa, dtype, sizes)
-        profile_stat_op("std", profile_std_np, profile_std_sa, dtype, sizes)
-        profile_stat_op("average", profile_average_np, profile_average_sa,
-                        dtype, sizes)
+    sizes = [10, 10**3, 10**6]
+    dtypes = [np.float64, np.float32, np.int64, np.int32, np.int8]
+    all_results = []
+
+    for dtype in dtypes:
+        operations_1d = [
+            ("median", profile_median_np, profile_median_sa),
+            ("mean", profile_mean_np, profile_mean_sa),
+            ("var", profile_var_np, profile_var_sa),
+            ("std", profile_std_np, profile_std_sa),
+            ("average", profile_average_np, profile_average_sa)
+        ]
+
+        for op, prof_func_np, prof_func_sa in operations_1d:
+            results = profile_stat_op(
+                op, prof_func_np, prof_func_sa, dtype, sizes)
+            all_results.extend(results)
+
+        operations_axis = [
+            ("median", profile_median_np_axis, profile_median_sa_axis),
+            ("mean", profile_mean_np_axis, profile_mean_sa_axis),
+            ("var", profile_var_np_axis, profile_var_sa_axis),
+            ("std", profile_std_np_axis, profile_std_sa_axis),
+            ("average", profile_average_np_axis, profile_average_sa_axis)
+        ]
+
         for axis in [0, 1]:
-            profile_stat_op("median", profile_median_np_axis,
-                            profile_median_sa_axis, dtype, sizes, axis=axis)
-            profile_stat_op("mean", profile_mean_np_axis,
-                            profile_mean_sa_axis, dtype, sizes, axis=axis)
-            profile_stat_op("var", profile_var_np_axis, profile_var_sa_axis,
-                            dtype, sizes, axis=axis)
-            profile_stat_op("std", profile_std_np_axis, profile_std_sa_axis,
-                            dtype, sizes, axis=axis)
-            profile_stat_op("average", profile_average_np_axis,
-                            profile_average_sa_axis, dtype, sizes, axis=axis)
+            for op, prof_func_np, prof_func_sa in operations_axis:
+                results = profile_stat_op(
+                    op, prof_func_np, prof_func_sa, dtype, sizes, axis=axis)
+                all_results.extend(results)
+
+    create_performance_plots(all_results)
 
 
 if __name__ == "__main__":

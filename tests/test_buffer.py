@@ -1095,6 +1095,104 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
+    def test_median_freq(self):
+        bool_data_odd = np.array([True, False, True, False, True], dtype=bool)
+        sarr_bool_odd = modmesh.SimpleArrayBool(array=bool_data_odd)
+        expected_bool_odd = np.median(bool_data_odd)
+        result_bool_odd = sarr_bool_odd.median()
+        self.assertEqual(bool(expected_bool_odd), bool(result_bool_odd))
+
+        bool_data_even = np.array([True, False, True, False], dtype=bool)
+        sarr_bool_even = modmesh.SimpleArrayBool(array=bool_data_even)
+        expected_bool_even = np.median(bool_data_even)
+        result_bool_even = sarr_bool_even.median()
+        self.assertEqual(bool(expected_bool_even), bool(result_bool_even))
+
+        bool_data_all_true = np.array([True, True, True], dtype=bool)
+        sarr_bool_all_true = modmesh.SimpleArrayBool(array=bool_data_all_true)
+        expected_bool_all_true = np.median(bool_data_all_true)
+        result_bool_all_true = sarr_bool_all_true.median()
+        self.assertEqual(bool(expected_bool_all_true),
+                         bool(result_bool_all_true))
+
+        bool_data_all_false = np.array([False, False, False, False],
+                                       dtype=bool)
+        sarr_bool_all_false = modmesh.SimpleArrayBool(
+            array=bool_data_all_false)
+        expected_bool_all_false = np.median(bool_data_all_false)
+        result_bool_all_false = sarr_bool_all_false.median()
+        self.assertEqual(bool(expected_bool_all_false),
+                         bool(result_bool_all_false))
+
+        uint8_data_odd = np.array([10, 5, 20, 15, 25], dtype=np.uint8)
+        sarr_uint8_odd = modmesh.SimpleArrayUint8(array=uint8_data_odd)
+        expected_uint8_odd = np.median(uint8_data_odd)
+        result_uint8_odd = sarr_uint8_odd.median()
+        self.assertEqual(int(expected_uint8_odd), int(result_uint8_odd))
+
+        uint8_data_even = np.array([10, 5, 20, 15], dtype=np.uint8)
+        sarr_uint8_even = modmesh.SimpleArrayUint8(array=uint8_data_even)
+        expected_uint8_even = np.median(uint8_data_even)
+        result_uint8_even = sarr_uint8_even.median()
+        self.assertEqual(int(expected_uint8_even), int(result_uint8_even))
+
+        uint8_data_dup_odd = np.array([0, 0, 0, 0, 0], dtype=np.uint8)
+        sarr_uint8_dup_odd = modmesh.SimpleArrayUint8(
+            array=uint8_data_dup_odd)
+        expected_uint8_dup_odd = np.median(uint8_data_dup_odd)
+        result_uint8_dup_odd = sarr_uint8_dup_odd.median()
+        self.assertEqual(int(expected_uint8_dup_odd),
+                         int(result_uint8_dup_odd))
+
+        uint8_data_dup_even = np.array([255, 255, 255, 255], dtype=np.uint8)
+        sarr_uint8_dup_even = modmesh.SimpleArrayUint8(
+            array=uint8_data_dup_even)
+        expected_uint8_dup_even = np.median(uint8_data_dup_even)
+        result_uint8_dup_even = sarr_uint8_dup_even.median()
+        self.assertEqual(int(expected_uint8_dup_even),
+                         int(result_uint8_dup_even))
+
+        int8_data_odd_pos = np.array([10, 5, 20, 15, 25], dtype=np.int8)
+        sarr_int8_odd_pos = modmesh.SimpleArrayInt8(array=int8_data_odd_pos)
+        expected_int8_odd_pos = np.median(int8_data_odd_pos)
+        result_int8_odd_pos = sarr_int8_odd_pos.median()
+        self.assertEqual(int(expected_int8_odd_pos),
+                         int(result_int8_odd_pos))
+
+        int8_data_even_pos = np.array([10, 5, 20, 15], dtype=np.int8)
+        sarr_int8_even_pos = modmesh.SimpleArrayInt8(array=int8_data_even_pos)
+        expected_int8_even_pos = np.median(int8_data_even_pos)
+        result_int8_even_pos = sarr_int8_even_pos.median()
+        self.assertEqual(int(expected_int8_even_pos),
+                         int(result_int8_even_pos))
+
+        int8_data_odd_neg = np.array([-10, -5, -20, -15, -25], dtype=np.int8)
+        sarr_int8_odd_neg = modmesh.SimpleArrayInt8(array=int8_data_odd_neg)
+        expected_int8_odd_neg = np.median(int8_data_odd_neg)
+        result_int8_odd_neg = sarr_int8_odd_neg.median()
+        self.assertEqual(int(expected_int8_odd_neg),
+                         int(result_int8_odd_neg))
+
+        int8_data_even_neg = np.array([-10, -5, -20, -15], dtype=np.int8)
+        sarr_int8_even_neg = modmesh.SimpleArrayInt8(array=int8_data_even_neg)
+        expected_int8_even_neg = np.median(int8_data_even_neg)
+        result_int8_even_neg = sarr_int8_even_neg.median()
+        self.assertEqual(int(expected_int8_even_neg),
+                         int(result_int8_even_neg))
+
+        int8_data_edge = np.array([-128, -128, -128, -128], dtype=np.int8)
+        sarr_int8_edge = modmesh.SimpleArrayInt8(array=int8_data_edge)
+        expected_int8_edge = np.median(int8_data_edge)
+        result_int8_edge = sarr_int8_edge.median()
+        self.assertEqual(int(expected_int8_edge), int(result_int8_edge))
+
+        int8_data_dup_even = np.array([127, 127, 127, 127], dtype=np.int8)
+        sarr_int8_dup_even = modmesh.SimpleArrayInt8(array=int8_data_dup_even)
+        expected_int8_dup_even = np.median(int8_data_dup_even)
+        result_int8_dup_even = sarr_int8_dup_even.median()
+        self.assertEqual(int(expected_int8_dup_even),
+                         int(result_int8_dup_even))
+
     def test_average(self):
         nparr = np.arange(24, dtype='float64')
         np.random.shuffle(nparr)
