@@ -254,7 +254,8 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 [](wrapped_type const & self)
                 {
                     return self.median();
-                }, modmesh::python::mmtag{})
+                },
+                modmesh::python::mmtag{})
             .def(
                 "median",
                 [](wrapped_type const & self, py::object const & axis)

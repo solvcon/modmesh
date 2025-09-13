@@ -128,7 +128,7 @@ struct process_attribute<modmesh::python::mmtag>
         }
     }
 
-    static void postcall(function_call & , handle &)
+    static void postcall(function_call &, handle &)
     {
         if (modmesh::python::WrapperProfilerStatus::me().enabled())
         {
