@@ -28,6 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "modmesh/toggle/RadixTree.hpp"
 #include <pybind11/pybind11.h> // Must be the first include.
 #include <pybind11/attr.h>
 #include <pybind11/numpy.h>
@@ -124,15 +125,15 @@ struct process_attribute<modmesh::python::mmtag>
     {
         if (modmesh::python::WrapperProfilerStatus::me().enabled())
         {
-            modmesh::TimeRegistry::me().entry(get_name(call)).start();
+            modmesh::CallProfiler::instance().start_caller(get_name(call), nullptr);
         }
     }
 
-    static void postcall(function_call & call, handle &)
+    static void postcall(function_call & , handle &)
     {
         if (modmesh::python::WrapperProfilerStatus::me().enabled())
         {
-            modmesh::TimeRegistry::me().entry(get_name(call)).stop();
+            modmesh::CallProfiler::instance().end_caller();
         }
     }
 
