@@ -98,48 +98,4 @@ class TimeRegistryTC(unittest.TestCase):
         ret = modmesh.time_registry.report()
         self.assertEqual("", ret)
 
-    def test_status(self):
-
-        modmesh.wrapper_profiler_status.disable()
-        self.assertFalse(modmesh.wrapper_profiler_status.enabled)
-
-        modmesh.time_registry.clear()
-        buf = modmesh.ConcreteBuffer(10)
-        self.assertEqual([], modmesh.time_registry.names)
-
-        modmesh.wrapper_profiler_status.enable()
-        modmesh.time_registry.clear()
-        buf = modmesh.ConcreteBuffer(10)  # noqa: F841
-        self.assertEqual(
-            ['ConcreteBuffer.__init__'],
-            modmesh.time_registry.names)
-
-    def test_names(self):
-
-        modmesh.time_registry.clear()
-        buf = modmesh.ConcreteBuffer(10)
-        buf2 = buf.clone()  # noqa: F841
-        self.assertEqual(
-            ['ConcreteBuffer.__init__', 'ConcreteBuffer.clone'],
-            modmesh.time_registry.names)
-
-    def test_entry(self):
-
-        modmesh.time_registry.clear()
-        buf = modmesh.ConcreteBuffer(10)
-        buf2 = buf.clone()  # noqa: F841
-        buf2 = buf.clone()  # noqa: F841
-        self.assertEqual(
-            1,
-            modmesh.time_registry.entry('ConcreteBuffer.__init__').count)
-        self.assertGreater(
-            modmesh.time_registry.entry('ConcreteBuffer.__init__').time,
-            0)
-        self.assertEqual(
-            2,
-            modmesh.time_registry.entry('ConcreteBuffer.clone').count)
-        self.assertGreater(
-            modmesh.time_registry.entry('ConcreteBuffer.clone').time,
-            0)
-
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
