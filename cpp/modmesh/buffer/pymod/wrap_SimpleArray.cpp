@@ -26,7 +26,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "modmesh/python/common.hpp"
 #include <modmesh/buffer/pymod/buffer_pymod.hpp> // Must be the first include.
 
 #include <modmesh/buffer/pymod/array_common.hpp>
