@@ -248,7 +248,7 @@ public:
 
     value_type median() const
     {
-        USE_CALLPROFILER_PROFILE_THIS_SCOPE("SimpleArray::median()");
+        MODMESH_PROFILE_SCOPE("SimpleArray::median()");
         auto athis = static_cast<A const *>(this);
         const size_t n = athis->size();
         small_vector<T> acopy(n);
@@ -733,7 +733,7 @@ template <typename A, typename T>
 typename detail::SimpleArrayMixinCalculators<A, T>::value_type
 detail::SimpleArrayMixinCalculators<A, T>::median_op(small_vector<value_type> & sv) const
 {
-    USE_CALLPROFILER_PROFILE_THIS_SCOPE("SimpleArray::median_op()");
+    MODMESH_PROFILE_SCOPE("SimpleArray::median_op()");
     const size_t n = sv.size();
 
     if constexpr (std::is_same_v<value_type, int8_t> ||
@@ -773,7 +773,7 @@ template <typename A, typename T>
 typename detail::SimpleArrayMixinCalculators<A, T>::value_type
 detail::SimpleArrayMixinCalculators<A, T>::median_freq(small_vector<value_type> & sv) const
 {
-    USE_CALLPROFILER_PROFILE_THIS_SCOPE("SimpleArray::median_freq()");
+    MODMESH_PROFILE_SCOPE("SimpleArray::median_freq()");
 
     const size_t n = sv.size();
     if (n == 0)

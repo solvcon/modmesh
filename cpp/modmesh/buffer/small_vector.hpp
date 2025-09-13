@@ -305,7 +305,7 @@ public:
 
     T select_kth(size_t k)
     {
-        USE_CALLPROFILER_PROFILE_THIS_SCOPE("small_vector::select_kth()");
+        MODMESH_PROFILE_SCOPE("small_vector::select_kth()");
         iterator it = quick_select(begin(), end(), k);
         return *it;
     }
@@ -314,7 +314,7 @@ public:
     {
         // For performance debugging, uncomment below for an additional profiling node,
         // but do not turn it on by default.
-        // USE_CALLPROFILER_PROFILE_THIS_SCOPE("small_vector::choose_pivot()");
+        // MODMESH_PROFILE_SCOPE("small_vector::choose_pivot()");
         iterator first = left;
         iterator mid = left + (right - left) / 2;
         iterator last = right - 1;
@@ -366,7 +366,7 @@ small_vector<T, N>::partition(iterator left, iterator right, iterator pivot)
 {
     // For performance debugging, uncomment below for an additional profiling node,
     // but do not turn it on by default.
-    // USE_CALLPROFILER_PROFILE_THIS_SCOPE("small_vector::partition()");
+    // MODMESH_PROFILE_SCOPE("small_vector::partition()");
 
     const std::size_t len = right - left;
     if (len == 0)
@@ -419,7 +419,7 @@ template <typename T, size_t N>
 typename small_vector<T, N>::iterator
 small_vector<T, N>::quick_select(iterator first, iterator last, size_t k)
 {
-    USE_CALLPROFILER_PROFILE_THIS_SCOPE("small_vector::quick_select()");
+    MODMESH_PROFILE_SCOPE("small_vector::quick_select()");
     size_t len = last - first;
     if (k >= len)
     {
