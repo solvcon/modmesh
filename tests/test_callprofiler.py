@@ -380,4 +380,47 @@ class CallProfilerTC(unittest.TestCase):
         modmesh.call_profiler.reset()
         foo()
 
+    def test_status(self):
+        modmesh.wrapper_profiler_status.disable()
+        self.assertFalse(modmesh.wrapper_profiler_status.enabled)
+
+        modmesh.call_profiler.reset()
+        buf = modmesh.ConcreteBuffer(10)
+        result = modmesh.call_profiler.result()
+        self.assertEqual({}, result)
+
+        modmesh.wrapper_profiler_status.enable()
+        modmesh.call_profiler.reset()
+        buf = modmesh.ConcreteBuffer(10)  # noqa: F841
+        result = modmesh.call_profiler.result().get("children")
+        names = [data["name"] for data in result]
+        self.assertEqual(['ConcreteBuffer.__init__'], names)
+
+    def test_names(self):
+        modmesh.call_profiler.reset()
+        buf = modmesh.ConcreteBuffer(10)
+        buf2 = buf.clone()  # noqa: F841
+        result = modmesh.call_profiler.result().get("children")
+        names = [data["name"] for data in result]
+        expected_name = ['ConcreteBuffer.__init__', 'ConcreteBuffer.clone']
+        self.assertEqual(expected_name, names)
+
+    def test_entry(self):
+        modmesh.call_profiler.reset()
+        buf = modmesh.ConcreteBuffer(10)
+        buf2 = buf.clone()  # noqa: F841
+        buf2 = buf.clone()  # noqa: F841
+        result = modmesh.call_profiler.result().get("children")
+        init_result = list(filter(
+            lambda d : d["name"] == "ConcreteBuffer.__init__", result
+        ))[0]
+        clone_result = list(filter(
+            lambda d : d["name"] == "ConcreteBuffer.clone", result)
+        )[0]
+        
+        self.assertEqual(1, init_result["count"])
+        self.assertGreater(init_result["total_time"], 0)
+        self.assertEqual(2, clone_result["count"])
+        self.assertGreater(clone_result["total_time"], 0)
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
