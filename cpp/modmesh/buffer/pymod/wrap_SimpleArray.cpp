@@ -26,6 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "modmesh/python/common.hpp"
 #include <modmesh/buffer/pymod/buffer_pymod.hpp> // Must be the first include.
 
 #include <modmesh/buffer/pymod/array_common.hpp>
@@ -253,7 +254,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 [](wrapped_type const & self)
                 {
                     return self.median();
-                })
+                }, modmesh::python::mmtag{})
             .def(
                 "median",
                 [](wrapped_type const & self, py::object const & axis)
