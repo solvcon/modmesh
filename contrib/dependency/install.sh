@@ -46,8 +46,8 @@ pybind11() {
   cmakeargs+=("-DPYTHON_EXECUTABLE:FILEPATH=`which python3`")
   cmakeargs+=("-DPYBIND11_TEST=OFF")
   echo "cmakeargs: ${cmakeargs[@]}"
-  install ${PYBIND_ORG:-pybind} pybind11 ${PYBIND_BRANCH:-v2.12.0} \
-    ${PYBIND_LOCAL:-pybind11-2.12.0} "${cmakeargs[@]}"
+  install ${PYBIND_ORG:-pybind} pybind11 ${PYBIND_BRANCH:-v3.0.1} \
+    ${PYBIND_LOCAL:-pybind11-3.0.1} "${cmakeargs[@]}"
 
 }
 
