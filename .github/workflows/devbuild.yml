@@ -138,6 +138,16 @@ jobs:
         #       libgl1-mesa-dev
         # fi
 
+    - name: Add 8G swap (Ubuntu) 
+      # Prevent OOM during Qt builds: extra swap gives compiler/linker headroom so cc1plus isn't killed.
+      if: runner.os == 'Linux'
+      run: |
+        sudo fallocate -l 8G /swapfile
+        sudo chmod 600 /swapfile
+        sudo mkswap /swapfile
+        sudo swapon /swapfile
+        free -h
+
     - name: install qt
       uses: jurplel/install-qt-action@v4
       with:
