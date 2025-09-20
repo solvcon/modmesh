@@ -183,14 +183,6 @@ protected:
                 "instance",
                 [](py::object const &) -> wrapped_type &
                 { return wrapped_type::instance(); })
-            .def(
-                "stat",
-                [](CallProfiler & profiler)
-                {
-                    std::stringstream ss;
-                    profiler.print_statistics(ss);
-                    return ss.str();
-                })
             .def("result", &result)
             .def("reset", &wrapped_type::reset)
             .def("serialize", &CallProfilerSerializer::serialize);
