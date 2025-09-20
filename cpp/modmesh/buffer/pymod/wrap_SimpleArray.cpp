@@ -314,6 +314,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def("sub", &wrapped_type::sub)
             .def("mul", &wrapped_type::mul)
             .def("div", &wrapped_type::div)
+            .def("matmul", &wrapped_type::matmul)
             // TODO: In-place operation should return reference to self to support function chaining
             .def("iadd", [](wrapped_type & self, wrapped_type const & other)
                  { self.iadd(other); })
