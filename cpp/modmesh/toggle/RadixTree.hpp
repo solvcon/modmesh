@@ -273,12 +273,6 @@ public:
         print_profiling_result(*(m_radix_tree.get_current_node()), 0, outstream);
     }
 
-    /// Print the statistics of the profiling result
-    void print_statistics(std::ostream & outstream) const
-    {
-        print_statistics(*(m_radix_tree.get_current_node()), outstream);
-    }
-
     /// Reset the profiler
     void reset();
 
