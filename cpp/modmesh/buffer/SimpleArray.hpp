@@ -830,14 +830,20 @@ A SimpleArrayMixinCalculators<A, T>::matmul(A const & other) const
     const size_t this_ndim = athis->ndim();
     const size_t other_ndim = other.ndim();
 
-    auto format_shape = [](A const * arr) -> std::string {
+    auto format_shape = [](A const * arr) -> std::string
+    {
         Formatter shape_formatter;
-        if (arr->ndim() == 0) {
+        if (arr->ndim() == 0)
+        {
             shape_formatter << "()";
-        } else {
+        }
+        else
+        {
             shape_formatter << "(";
-            for (size_t i = 0; i < arr->ndim(); ++i) {
-                if (i > 0) shape_formatter << ",";
+            for (size_t i = 0; i < arr->ndim(); ++i)
+            {
+                if (i > 0)
+                    shape_formatter << ",";
                 shape_formatter << arr->shape(i);
             }
             shape_formatter << ")";
