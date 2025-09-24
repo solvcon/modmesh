@@ -725,201 +725,7 @@ public:
         }
     }
 
-    A matmul(A const & other) const
-    {
-        auto athis = static_cast<A const *>(this);
-        const size_t this_ndim = athis->ndim();
-        const size_t other_ndim = other.ndim();
-
-        if (this_ndim == 1 && other_ndim == 1)
-        {
-            if (athis->shape(0) != other.shape(0))
-            {
-                throw std::out_of_range(Formatter() << "SimpleArray::matmul(): 1D shape mismatch: this=("
-                                                    << athis->shape(0) << ") other=(" << other.shape(0) << ")");
-            }
-
-            value_type result = static_cast<value_type>(0);
-            for (size_t i = 0; i < athis->shape(0); ++i)
-            {
-                result += athis->operator()(i) * other(i);
-            }
-
-            A scalar_result(shape_type{1});
-            scalar_result(0) = result;
-            return scalar_result;
-        }
-
-        if (this_ndim == 1 && other_ndim == 2)
-        {
-            if (athis->shape(0) != other.shape(0))
-            {
-                throw std::out_of_range(Formatter() << "SimpleArray::matmul(): shape mismatch: this=("
-                                                    << athis->shape(0) << ") other=(" << other.shape(0)
-                                                    << "," << other.shape(1) << ")");
-            }
-
-            const size_t k = athis->shape(0);
-            const size_t n = other.shape(1);
-
-            shape_type result_shape{n};
-            A result(result_shape);
-            result.fill(static_cast<value_type>(0));
-
-            for (size_t j = 0; j < n; ++j)
-            {
-                for (size_t l = 0; l < k; ++l)
-                {
-                    result(j) += athis->operator()(l) * other(l, j);
-                }
-            }
-
-            return result;
-        }
-
-        if (this_ndim == 2 && other_ndim == 1)
-        {
-            if (athis->shape(1) != other.shape(0))
-            {
-                throw std::out_of_range(Formatter() << "SimpleArray::matmul(): shape mismatch: this=("
-                                                    << athis->shape(0) << "," << athis->shape(1)
-                                                    << ") other=(" << other.shape(0) << ")");
-            }
-
-            const size_t m = athis->shape(0);
-            const size_t k = athis->shape(1);
-
-            shape_type result_shape{m};
-            A result(result_shape);
-            result.fill(static_cast<value_type>(0));
-
-            for (size_t i = 0; i < m; ++i)
-            {
-                for (size_t l = 0; l < k; ++l)
-                {
-                    result(i) += athis->operator()(i, l) * other(l);
-                }
-            }
-
-            return result;
-        }
-
-        if (this_ndim == 2 && other_ndim == 2)
-        {
-            const size_t m = athis->shape(0);
-            const size_t k = athis->shape(1);
-            const size_t n = other.shape(1);
-
-            if (k != other.shape(0))
-            {
-                throw std::out_of_range(Formatter() << "SimpleArray::matmul(): shape mismatch: this=(" << m << "," << k
-                                                    << ") other=(" << other.shape(0) << "," << n << ")");
-            }
-
-            shape_type result_shape{m, n};
-            A result(result_shape);
-            result.fill(static_cast<value_type>(0));
-
-            for (size_t i = 0; i < m; ++i)
-            {
-                for (size_t j = 0; j < n; ++j)
-                {
-                    for (size_t l = 0; l < k; ++l)
-                    {
-                        result(i, j) += athis->operator()(i, l) * other(l, j);
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        if (this_ndim >= 2 && other_ndim >= 2)
-        {
-            const size_t m = athis->shape(this_ndim - 2);
-            const size_t k = athis->shape(this_ndim - 1);
-            const size_t k_other = other.shape(other_ndim - 2);
-            const size_t n = other.shape(other_ndim - 1);
-
-            if (k != k_other)
-            {
-                throw std::out_of_range(Formatter() << "SimpleArray::matmul(): inner dimensions mismatch: "
-                                                    << k << " != " << k_other);
-            }
-
-            shape_type this_batch_shape(athis->shape().begin(), athis->shape().end() - 2);
-            shape_type other_batch_shape(other.shape().begin(), other.shape().end() - 2);
-
-            if (!this_batch_shape.empty() && !other_batch_shape.empty())
-            {
-                if (this_batch_shape.size() != other_batch_shape.size())
-                {
-                    throw std::out_of_range(Formatter() << "SimpleArray::matmul(): batch dimensions must be the same");
-                }
-                for (size_t i = 0; i < this_batch_shape.size(); ++i)
-                {
-                    if (this_batch_shape[i] != other_batch_shape[i])
-                    {
-                        throw std::out_of_range(Formatter() << "SimpleArray::matmul(): batch dimensions must be the same");
-                    }
-                }
-            }
-
-            shape_type batch_shape = this_batch_shape.empty() ? other_batch_shape : this_batch_shape;
-
-            shape_type result_shape = batch_shape;
-            result_shape.push_back(m);
-            result_shape.push_back(n);
-
-            A result(result_shape);
-            result.fill(static_cast<value_type>(0));
-
-            size_t batch_size = 1;
-            for (size_t dim : batch_shape)
-            {
-                batch_size *= dim;
-            }
-
-            for (size_t batch = 0; batch < batch_size; ++batch)
-            {
-                shape_type batch_idx(batch_shape.size());
-                size_t temp_batch = batch;
-                for (int dim = static_cast<int>(batch_shape.size()) - 1; dim >= 0; --dim)
-                {
-                    batch_idx[dim] = temp_batch % batch_shape[dim];
-                    temp_batch /= batch_shape[dim];
-                }
-
-                for (size_t i = 0; i < m; ++i)
-                {
-                    for (size_t j = 0; j < n; ++j)
-                    {
-                        for (size_t l = 0; l < k; ++l)
-                        {
-                            shape_type this_idx = batch_idx;
-                            this_idx.push_back(i);
-                            this_idx.push_back(l);
-
-                            shape_type other_idx = batch_idx;
-                            other_idx.push_back(l);
-                            other_idx.push_back(j);
-
-                            shape_type result_idx = batch_idx;
-                            result_idx.push_back(i);
-                            result_idx.push_back(j);
-
-                            result.at(result_idx) += athis->at(this_idx) * other.at(other_idx);
-                        }
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        throw std::out_of_range(Formatter() << "SimpleArray::matmul(): unsupported dimensions: this="
-                                            << this_ndim << " other=" << other_ndim);
-    }
+    A matmul(A const & other) const;
 
 private:
     static void find_two_bins(const uint32_t * freq, size_t n, int & bin1, int & bin2);
@@ -1011,6 +817,52 @@ detail::SimpleArrayMixinCalculators<A, T>::median_freq(small_vector<value_type> 
         const uint32_t ones = freq[1];
         return static_cast<value_type>(ones * 2 >= n);
     }
+}
+
+/**
+ * Perform matrix multiplication for 2D arrays.
+ * This implementation supports only 2D × 2D matrix multiplication.
+ */
+template <typename A, typename T>
+A SimpleArrayMixinCalculators<A, T>::matmul(A const & other) const
+{
+    auto athis = static_cast<A const *>(this);
+    const size_t this_ndim = athis->ndim();
+    const size_t other_ndim = other.ndim();
+
+    if (this_ndim == 2 && other_ndim == 2)
+    {
+        const size_t m = athis->shape(0);
+        const size_t k = athis->shape(1);
+        const size_t n = other.shape(1);
+
+        if (k != other.shape(0))
+        {
+            throw std::out_of_range(Formatter() << "SimpleArray::matmul(): shape mismatch: this=(" << m << "," << k
+                                                << ") other=(" << other.shape(0) << "," << n << ")");
+        }
+
+        typename detail::SimpleArrayInternalTypes<T>::shape_type result_shape{m, n};
+        A result(result_shape);
+        result.fill(static_cast<value_type>(0));
+
+        for (size_t i = 0; i < m; ++i)
+        {
+            for (size_t j = 0; j < n; ++j)
+            {
+                for (size_t l = 0; l < k; ++l)
+                {
+                    result(i, j) += athis->operator()(i, l) * other(l, j);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    throw std::out_of_range(Formatter() << "SimpleArray::matmul(): unsupported dimensions: this="
+                                        << this_ndim << " other=" << other_ndim
+                                        << ". Only 2D x 2D matrix multiplication is supported.");
 }
 
 /**

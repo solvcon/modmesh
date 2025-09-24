@@ -101,18 +101,6 @@ class GemmTestBase(mm.testing.TestBase):
     def test_dimension_mismatch_error(self):
         """Test error handling for incompatible dimensions"""
 
-        # Test case 1: Wrong number of dimensions (ndim != 2)
-        a_1d = self.SimpleArray(shape=(4,))  # 1D array
-        b_2d_data = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=self.dtype)
-        b_2d = self.SimpleArray(array=b_2d_data)
-
-        with self.assertRaisesRegex(
-            IndexError,
-            r"shape mismatch: this=\(4\) other=\(2,2\)"
-        ):
-            a_1d.matmul(b_2d)
-
-        # Test case 2: Both arrays 2D but incompatible inner dimensions
         a_data = np.array([[1.0, 2.0], [3.0, 4.0]],
                           dtype=self.dtype)  # 2x2
         b_data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0],
@@ -125,7 +113,8 @@ class GemmTestBase(mm.testing.TestBase):
         # (incompatible inner dimensions: 2 != 3)
         with self.assertRaisesRegex(
             IndexError,
-            r"shape mismatch: this=\(2,2\)\s+other=\(3,3\)"
+            r"SimpleArray::matmul\(\): shape mismatch: this=\(2,2\) other="
+            r"\(3,3\)"
         ):
             a.matmul(b)
 
@@ -213,149 +202,63 @@ class GemmTestBase(mm.testing.TestBase):
                     np.testing.assert_array_almost_equal(
                         result.ndarray, expected, decimal=10)
 
-    def test_1d_dot_product(self):
-        """Test 1D dot product (vector inner product)"""
-        a_data = np.array([1.0, 2.0, 3.0], dtype=self.dtype)
-        b_data = np.array([4.0, 5.0, 6.0], dtype=self.dtype)
+    def test_unsupported_dimensions_error(self):
+        """Test error handling for unsupported dimensions"""
 
-        a = self.SimpleArray(array=a_data)
-        b = self.SimpleArray(array=b_data)
-
-        result = a.matmul(b)
-
-        # Result should be scalar (1D array with single element)
-        self.assertEqual(list(result.shape), [1])
-        expected_value = 32.0
-        self.assertAlmostEqual(result[0], expected_value, places=10)
-
-    def test_1d_2d_multiplication(self):
-        """Test 1D × 2D matrix multiplication"""
-        # Vector (3,) × Matrix (3,2) → Vector (2,)
-        a_data = np.array([1.0, 2.0, 3.0], dtype=self.dtype)
-        b_data = np.array([[4.0, 5.0], [6.0, 7.0], [8.0, 9.0]],
-                          dtype=self.dtype)
-
-        a = self.SimpleArray(array=a_data)
-        b = self.SimpleArray(array=b_data)
-
-        result = a.matmul(b)
-        expected = np.array([40.0, 46.0], dtype=self.dtype)
-
-        self.assertEqual(list(result.shape), [2])
-        np.testing.assert_array_almost_equal(result.ndarray, expected)
-
-    def test_2d_1d_multiplication(self):
-        """Test 2D × 1D matrix multiplication"""
-        # Matrix (2,3) × Vector (3,) → Vector (2,)
-        a_data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=self.dtype)
-        b_data = np.array([7.0, 8.0, 9.0], dtype=self.dtype)
-
-        a = self.SimpleArray(array=a_data)
-        b = self.SimpleArray(array=b_data)
-
-        result = a.matmul(b)
-        expected = np.array([50.0, 122.0], dtype=self.dtype)
-
-        self.assertEqual(list(result.shape), [2])
-        np.testing.assert_array_almost_equal(result.ndarray, expected)
-
-    def test_batch_matrix_multiplication(self):
-        """Test batch matrix multiplication with 3D arrays"""
-        # Batch (2,3,3) × Batch (2,3,2) → Batch (2,3,2)
-        a_data = np.array([
-            [[1.0, 2.0, 3.0],
-             [4.0, 5.0, 6.0],
-             [7.0, 8.0, 9.0]],
-            [[2.0, 3.0, 4.0],
-             [5.0, 6.0, 7.0],
-             [8.0, 9.0, 1.0]]
-        ], dtype=self.dtype)
-
-        b_data = np.array([
-            [[1.0, 2.0],
-             [3.0, 4.0],
-             [5.0, 6.0]],
-            [[7.0, 8.0],
-             [9.0, 1.0],
-             [2.0, 3.0]]
-        ], dtype=self.dtype)
-
-        a = self.SimpleArray(array=a_data)
-        b = self.SimpleArray(array=b_data)
-
-        result = a.matmul(b)
-
-        # Compare with NumPy
-        np_result = np.matmul(a_data, b_data)
-
-        self.assertEqual(list(result.shape), list(np_result.shape))
-        if self.dtype == np.float32:
-            np.testing.assert_array_almost_equal(result.ndarray, np_result,
-                                                 decimal=4)
-        else:
-            np.testing.assert_array_almost_equal(result.ndarray, np_result,
-                                                 decimal=10)
-
-    def test_multidimensional_errors(self):
-        """Test error handling for multidimensional cases"""
-
-        # Test 1D dimension mismatch
+        # Test 1D × 1D (not supported)
         a_1d = self.SimpleArray(array=np.array([1.0, 2.0, 3.0],
                                                dtype=self.dtype))
-        b_1d_wrong = self.SimpleArray(array=np.array([4.0, 5.0],
-                                                     dtype=self.dtype))
+        b_1d = self.SimpleArray(array=np.array([4.0, 5.0, 6.0],
+                                               dtype=self.dtype))
 
         with self.assertRaisesRegex(
             IndexError,
-            r"1D shape mismatch: this=\(3\) other=\(2\)"
+            r"SimpleArray::matmul\(\): unsupported dimensions: this=1 "
+            r"other=1\. Only 2D x 2D matrix multiplication is supported"
         ):
-            a_1d.matmul(b_1d_wrong)
+            a_1d.matmul(b_1d)
 
-        # Test 1D × 2D dimension mismatch
+        # Test 1D × 2D (not supported)
         a_1d = self.SimpleArray(array=np.array([1.0, 2.0], dtype=self.dtype))
-        b_2d = self.SimpleArray(array=np.array([[1.0, 2.0], [3.0, 4.0],
-                                               [5.0, 6.0]], dtype=self.dtype))
+        b_2d = self.SimpleArray(array=np.array([[1.0, 2.0], [3.0, 4.0]],
+                                               dtype=self.dtype))
 
         with self.assertRaisesRegex(
             IndexError,
-            r"shape mismatch: this=\(2\) other=\(3,2\)"
+            r"SimpleArray::matmul\(\): unsupported dimensions: this=1 "
+            r"other=2\. Only 2D x 2D matrix multiplication is supported"
         ):
             a_1d.matmul(b_2d)
 
-        # Test 2D × 1D dimension mismatch
+        # Test 2D × 1D (not supported)
         a_2d = self.SimpleArray(array=np.array([[1.0, 2.0, 3.0],
                                                [4.0, 5.0, 6.0]],
                                                dtype=self.dtype))
-        b_1d = self.SimpleArray(array=np.array([7.0, 8.0], dtype=self.dtype))
+        b_1d = self.SimpleArray(array=np.array([7.0, 8.0, 9.0],
+                                               dtype=self.dtype))
 
         with self.assertRaisesRegex(
             IndexError,
-            r"shape mismatch: this=\(2,3\) other=\(2\)"
+            r"SimpleArray::matmul\(\): unsupported dimensions: this=2 "
+            r"other=1\. Only 2D x 2D matrix multiplication is supported"
         ):
             a_2d.matmul(b_1d)
 
-    def test_high_dimensional_batch_multiplication(self):
-        """Test high-dimensional batch matrix multiplication (4D)"""
-        # Batch (2,3,4,4) × Batch (2,3,4,3) → Batch (2,3,4,3)
-        # Using fixed test data instead of random numbers
-        a_data = np.arange(96).reshape(2, 3, 4, 4).astype(self.dtype) / 10.0
-        b_data = np.arange(72).reshape(2, 3, 4, 3).astype(self.dtype) / 10.0
+        # Test 3D × 3D (not supported - tensor operation)
+        a_3d_data = np.array([[[1.0, 2.0], [3.0, 4.0]],
+                              [[5.0, 6.0], [7.0, 8.0]]], dtype=self.dtype)
+        b_3d_data = np.array([[[1.0, 0.0], [0.0, 1.0]],
+                              [[2.0, 0.0], [0.0, 2.0]]], dtype=self.dtype)
 
-        a = self.SimpleArray(array=a_data)
-        b = self.SimpleArray(array=b_data)
+        a_3d = self.SimpleArray(array=a_3d_data)
+        b_3d = self.SimpleArray(array=b_3d_data)
 
-        result = a.matmul(b)
-
-        # Compare with NumPy
-        np_result = np.matmul(a_data, b_data)
-
-        self.assertEqual(list(result.shape), list(np_result.shape))
-        if self.dtype == np.float32:
-            np.testing.assert_array_almost_equal(result.ndarray, np_result,
-                                                 decimal=4)
-        else:
-            np.testing.assert_array_almost_equal(result.ndarray, np_result,
-                                                 decimal=10)
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::matmul\(\): unsupported dimensions: this=3 "
+            r"other=3\. Only 2D x 2D matrix multiplication is supported"
+        ):
+            a_3d.matmul(b_3d)
 
 
 class GemmFloat32TC(GemmTestBase, unittest.TestCase):
