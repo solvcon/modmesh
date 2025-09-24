@@ -213,8 +213,8 @@ class GemmTestBase(mm.testing.TestBase):
 
         with self.assertRaisesRegex(
             IndexError,
-            r"SimpleArray::matmul\(\): unsupported dimensions: this=1 "
-            r"other=1\. Only 2D x 2D matrix multiplication is supported"
+            r"SimpleArray::matmul\(\): unsupported dimensions: this=\(3\) "
+            r"other=\(3\)\. Only 2D x 2D matrix multiplication is supported"
         ):
             a_1d.matmul(b_1d)
 
@@ -225,8 +225,8 @@ class GemmTestBase(mm.testing.TestBase):
 
         with self.assertRaisesRegex(
             IndexError,
-            r"SimpleArray::matmul\(\): unsupported dimensions: this=1 "
-            r"other=2\. Only 2D x 2D matrix multiplication is supported"
+            r"SimpleArray::matmul\(\): unsupported dimensions: this=\(2\) "
+            r"other=\(2,2\)\. Only 2D x 2D matrix multiplication is supported"
         ):
             a_1d.matmul(b_2d)
 
@@ -239,8 +239,8 @@ class GemmTestBase(mm.testing.TestBase):
 
         with self.assertRaisesRegex(
             IndexError,
-            r"SimpleArray::matmul\(\): unsupported dimensions: this=2 "
-            r"other=1\. Only 2D x 2D matrix multiplication is supported"
+            r"SimpleArray::matmul\(\): unsupported dimensions: this=\(2,3\) "
+            r"other=\(3\)\. Only 2D x 2D matrix multiplication is supported"
         ):
             a_2d.matmul(b_1d)
 
@@ -255,8 +255,9 @@ class GemmTestBase(mm.testing.TestBase):
 
         with self.assertRaisesRegex(
             IndexError,
-            r"SimpleArray::matmul\(\): unsupported dimensions: this=3 "
-            r"other=3\. Only 2D x 2D matrix multiplication is supported"
+            r"SimpleArray::matmul\(\): unsupported dimensions: "
+            r"this=\(2,2,2\) other=\(2,2,2\)\. Only 2D x 2D matrix "
+            r"multiplication is supported"
         ):
             a_3d.matmul(b_3d)
 
