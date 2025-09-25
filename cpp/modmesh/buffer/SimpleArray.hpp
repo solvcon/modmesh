@@ -725,6 +725,8 @@ public:
         }
     }
 
+    A matmul(A const & other) const;
+
 private:
     static void find_two_bins(const uint32_t * freq, size_t n, int & bin1, int & bin2);
 }; /* end class SimpleArrayMixinCalculators */
@@ -815,6 +817,73 @@ detail::SimpleArrayMixinCalculators<A, T>::median_freq(small_vector<value_type> 
         const uint32_t ones = freq[1];
         return static_cast<value_type>(ones * 2 >= n);
     }
+}
+
+/**
+ * Perform matrix multiplication for 2D arrays.
+ * This implementation supports only 2D × 2D matrix multiplication.
+ */
+template <typename A, typename T>
+A SimpleArrayMixinCalculators<A, T>::matmul(A const & other) const
+{
+    auto athis = static_cast<A const *>(this);
+    const size_t this_ndim = athis->ndim();
+    const size_t other_ndim = other.ndim();
+
+    auto format_shape = [](A const * arr) -> std::string
+    {
+        Formatter shape_formatter;
+        if (arr->ndim() == 0)
+        {
+            shape_formatter << "()";
+        }
+        else
+        {
+            shape_formatter << "(";
+            for (size_t i = 0; i < arr->ndim(); ++i)
+            {
+                if (i > 0)
+                    shape_formatter << ",";
+                shape_formatter << arr->shape(i);
+            }
+            shape_formatter << ")";
+        }
+        return shape_formatter.str();
+    };
+
+    if (this_ndim != 2 || other_ndim != 2)
+    {
+        throw std::out_of_range(Formatter() << "SimpleArray::matmul(): unsupported dimensions: this="
+                                            << format_shape(athis) << " other=" << format_shape(&other)
+                                            << ". Only 2D x 2D matrix multiplication is supported");
+    }
+
+    const size_t m = athis->shape(0);
+    const size_t k = athis->shape(1);
+    const size_t n = other.shape(1);
+
+    if (k != other.shape(0))
+    {
+        throw std::out_of_range(Formatter() << "SimpleArray::matmul(): shape mismatch: this="
+                                            << format_shape(athis) << " other=" << format_shape(&other));
+    }
+
+    typename detail::SimpleArrayInternalTypes<T>::shape_type result_shape{m, n};
+    A result(result_shape);
+    result.fill(static_cast<value_type>(0));
+
+    for (size_t i = 0; i < m; ++i)
+    {
+        for (size_t j = 0; j < n; ++j)
+        {
+            for (size_t l = 0; l < k; ++l)
+            {
+                result(i, j) += athis->operator()(i, l) * other(l, j);
+            }
+        }
+    }
+
+    return result;
 }
 
 /**
