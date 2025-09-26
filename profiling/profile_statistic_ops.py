@@ -109,9 +109,10 @@ def profile_average_np(src):
 
 
 def profile_stat_op(op, prof_func_np, prof_func_sa, dtype, sizes, it=10,
-                    axis=None):
+                    axis=None, dims=None):
     axis_str = f" (axis={axis})" if axis is not None else ""
-    print(f"\n# {op} (dtype={dtype}){axis_str}")
+    dims_str = f" ({dims}D)" if dims is not None else ""
+    print(f"\n# {op} (dtype={dtype}){axis_str}{dims_str}")
 
     results = []
 
@@ -130,9 +131,29 @@ def profile_stat_op(op, prof_func_np, prof_func_sa, dtype, sizes, it=10,
                 else:
                     src = np.random.randint(-1000, 1000, shape, dtype=dtype)
             src_sa = make_container(src, dtype)
+        elif dims == 3:
+            cube_size = int(N ** (1/3))
+            if cube_size < 2:
+                cube_size = 2
+            larger_shape = (cube_size * 3, cube_size * 3, cube_size * 3)
+            if np.issubdtype(dtype, np.floating):
+                src = np.random.rand(*larger_shape).astype(dtype, copy=False)
+            else:
+                if dtype == np.int8:
+                    src = np.random.randint(
+                        -100, 100, larger_shape, dtype=dtype)
+                elif dtype == np.int32:
+                    src = np.random.randint(
+                        -1000, 1000, larger_shape, dtype=dtype)
+                else:
+                    src = np.random.randint(
+                        -1000, 1000, larger_shape, dtype=dtype)
+            src = src[::3, ::3, ::3]
+            shape = src.shape
+            src_sa = make_container(src, dtype)
         else:
             if np.issubdtype(dtype, np.floating):
-                src = np.random.rand(N).astype(dtype, copy=False)
+                src = np.random.rand(N * 5).astype(dtype, copy=False)
             else:
                 if dtype == np.int8:
                     src = np.random.randint(-100, 100, N, dtype=dtype)
@@ -142,7 +163,7 @@ def profile_stat_op(op, prof_func_np, prof_func_sa, dtype, sizes, it=10,
                     src = np.random.randint(-1000, 1000, N, dtype=dtype)
             src_sa = make_container(src, dtype)
         modmesh.call_profiler.reset()
-        for _ in range(it):
+        for i in range(it):
             if axis is not None:
                 prof_func_np(src, axis=axis)
                 prof_func_sa(src_sa, axis=axis)
@@ -159,14 +180,22 @@ def profile_stat_op(op, prof_func_np, prof_func_sa, dtype, sizes, it=10,
         result_row = {
             'operation': op,
             'dtype': str(dtype),
-            'size': N if axis is None else f"{shape[0]}x{shape[1]}",
+            'size': N if axis is None and dims is None
+            else f"{shape[0]}x{shape[1]}" if axis is not None
+            else f"{shape[0]}x{shape[1]}x{shape[2]}" if dims == 3 else N,
             'size_numeric': N,
-            'axis': axis
+            'axis': axis,
+            'dims': dims
         }
         result_row.update(out)
         results.append(result_row)
 
-        print(f"## N = {N if axis is None else shape}")
+        if axis is not None:
+            print(f"## N = {shape}")
+        elif dims == 3:
+            print(f"## N = {shape}")
+        else:
+            print(f"## N = {N}")
 
         def print_row(*cols):
             print(str.format("| {:10s} | {:15s} | {:15s} |", *(cols[0:3])))
@@ -242,6 +271,7 @@ def create_performance_plots(all_results):
     for op in operations:
         create_1d_performance_plot(all_results, op, dtypes)
         create_axis_performance_plot(all_results, op, dtypes)
+        create_3d_performance_plot(all_results, op, dtypes)
 
 
 def create_1d_performance_plot(all_results, op, dtypes):
@@ -255,7 +285,9 @@ def create_1d_performance_plot(all_results, op, dtypes):
         axes = axes.reshape(1, -1)
 
     op_data = [r for r in all_results
-               if r['operation'] == op and r['axis'] is None]
+               if r['operation'] == op
+               and r['axis'] is None
+               and r.get('dims') is None]
 
     for i, dtype in enumerate(sorted_dtypes):
         dtype_data = [r for r in op_data if r['dtype'] == dtype]
@@ -366,12 +398,63 @@ def create_axis_performance_plot(all_results, op, dtypes):
     plt.close()
 
 
+def create_3d_performance_plot(all_results, op, dtypes):
+    sorted_dtypes = sorted(dtypes)
+    n_dtypes = len(sorted_dtypes)
+
+    fig, axes = plt.subplots(n_dtypes, 2, figsize=(15, 4*n_dtypes))
+    fig.suptitle(f'3D Performance: {op.title()}', fontsize=16)
+
+    if n_dtypes == 1:
+        axes = axes.reshape(1, -1)
+
+    op_data = [r for r in all_results
+               if r['operation'] == op and r['dims'] == 3]
+
+    for i, dtype in enumerate(sorted_dtypes):
+        dtype_data = [r for r in op_data if r['dtype'] == dtype]
+
+        sizes = [r['size_numeric'] for r in dtype_data]
+        np_times = [r['np'] for r in dtype_data]
+        sa_times = [r['sa'] for r in dtype_data]
+
+        ax1 = axes[i, 0]
+        ax1.plot(sizes, np_times, 'o-', label='NumPy', color='blue')
+        ax1.plot(sizes, sa_times, 's-', label='SimpleArray', color='red')
+        ax1.set_xlabel('Array Size')
+        ax1.set_ylabel('Time per Call (ms)')
+        ax1.set_title(f'{dtype} - 3D Performance')
+        ax1.set_xscale('log')
+        ax1.set_yscale('log')
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
+
+        ax2 = axes[i, 1]
+        speedups = [r['np'] / r['sa'] for r in dtype_data]
+        ax2.plot(sizes, speedups, 'D-', color='green')
+        ax2.set_xlabel('Array Size')
+        ax2.set_ylabel('Speedup (NumPy / SimpleArray)')
+        ax2.set_title(f'{dtype} - 3D Speedup')
+        ax2.set_xscale('log')
+        ax2.axhline(y=1, color='black', linestyle='--', alpha=0.5)
+        ax2.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig('profiling/results/png/'
+                + 'performance_3d_non_contiguous_'
+                + f'{op}.png',
+                dpi=300, bbox_inches='tight')
+    plt.close()
+
+
 def main():
+    print("Starting performance profiling...")
     sizes = [10, 10**3, 10**6]
     dtypes = [np.float64, np.float32, np.int64, np.int32, np.int8]
     all_results = []
 
     for dtype in dtypes:
+        print(f"Testing dtype: {dtype}")
         operations_1d = [
             ("median", profile_median_np, profile_median_sa),
             ("mean", profile_mean_np, profile_mean_sa),
@@ -398,6 +481,20 @@ def main():
                 results = profile_stat_op(
                     op, prof_func_np, prof_func_sa, dtype, sizes, axis=axis)
                 all_results.extend(results)
+
+        # 3D without axis tests
+        operations_3d = [
+            ("median", profile_median_np, profile_median_sa),
+            ("mean", profile_mean_np, profile_mean_sa),
+            ("var", profile_var_np, profile_var_sa),
+            ("std", profile_std_np, profile_std_sa),
+            ("average", profile_average_np, profile_average_sa)
+        ]
+
+        for op, prof_func_np, prof_func_sa in operations_3d:
+            results = profile_stat_op(
+                op, prof_func_np, prof_func_sa, dtype, sizes, dims=3)
+            all_results.extend(results)
 
     create_performance_plots(all_results)
 
