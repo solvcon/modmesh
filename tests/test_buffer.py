@@ -986,6 +986,12 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         self.assertEqual(sarr.min(), -2.3)
         self.assertEqual(sarr.max(), 9.2)
 
+    def test_sum_non_contiguous(self):
+        nparr = np.arange(625, dtype='float64').reshape((5, 5, 5, 5))
+        nparr = nparr[:3:2, 1:4:2, :3:3, 3:4:2]
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        self.assertEqual(sarr.sum(), np.sum(nparr))
+
     def test_abs(self):
         sarr = modmesh.SimpleArrayInt64(shape=(3, 2), value=-2)
         self.assertEqual(sarr.sum(), -2 * 3 * 2)
