@@ -39,6 +39,18 @@ target_link_libraries(
     GTest::gmock_main
 )
 
+if (BUILD_CUDA)
+    find_package(CUDA REQUIRED)
+    find_package(CUDAToolkit REQUIRED)
+    enable_language(CUDA)
+    target_link_libraries(
+        test_nopython
+        CUDA::cudart
+        CUDA::cufft
+    )
+    target_compile_definitions(test_nopython PRIVATE BUILD_CUDA)
+endif()
+
 include(GoogleTest)
 gtest_discover_tests(test_nopython)
 
