@@ -89,29 +89,33 @@ class GemmTestBase(mm.testing.TestBase):
         """Test eye method creates correct identity matrices"""
         # Test cases: different sizes
         test_sizes = [1, 2, 3, 4, 5, 10]
-        
+
         for size in test_sizes:
             with self.subTest(size=size):
                 # Create identity matrix using our eye method
                 identity = self.SimpleArray.eye(size)
-                
+
                 # Create expected identity matrix using NumPy
                 expected = np.eye(size, dtype=self.dtype)
-                
+
                 # Check shape
                 self.assertEqual(list(identity.shape), [size, size])
-                
+
                 # Check array values
-                np.testing.assert_array_almost_equal(identity.ndarray, expected)
-                
-                # Verify diagonal and off-diagonal elements explicitly using product
+                np.testing.assert_array_almost_equal(identity.ndarray,
+                                                     expected)
+
+                # Verify diagonal and off-diagonal elements explicitly
+                # using product
                 for i, j in product(range(size), repeat=2):
                     if i == j:
-                        self.assertEqual(identity[i, j], 1.0, 
-                                       f"Diagonal element ({i},{j}) should be 1.0")
+                        self.assertEqual(identity[i, j], 1.0,
+                                         f"Diagonal element ({i},{j}) "
+                                         f"should be 1.0")
                     else:
                         self.assertEqual(identity[i, j], 0.0,
-                                       f"Off-diagonal element ({i},{j}) should be 0.0")
+                                         f"Off-diagonal element ({i},{j}) "
+                                         f"should be 0.0")
 
     def test_zero_matrix(self):
         """Test multiplication with zero matrix"""
