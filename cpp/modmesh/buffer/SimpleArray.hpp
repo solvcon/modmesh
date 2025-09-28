@@ -1248,6 +1248,26 @@ public:
         return data;
     }
 
+    /**
+     * Create an identity matrix of size n x n.
+     *
+     * @param n Size of the square identity matrix
+     * @return SimpleArray representing an n x n identity matrix
+     */
+    static SimpleArray eye(size_t n)
+    {
+        shape_type shape{n, n};
+        SimpleArray result(shape, static_cast<value_type>(0));
+
+        // Set diagonal elements to 1
+        for (size_t i = 0; i < n; ++i)
+        {
+            result(i, i) = static_cast<value_type>(1);
+        }
+
+        return result;
+    }
+
     explicit operator bool() const noexcept { return bool(m_buffer) && bool(*m_buffer); }
 
     size_t nbytes() const noexcept { return size() * ITEMSIZE; }
