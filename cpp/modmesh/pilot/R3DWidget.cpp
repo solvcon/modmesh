@@ -113,12 +113,6 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
     cameraController()->setFarPlane(dist + half_height * 2);
 }
 
-void R3DWidget::closeAndDestroy()
-{
-    this->close();
-    this->deleteLater();
-}
-
 void R3DWidget::resizeEvent(QResizeEvent * event)
 {
     QWidget::resizeEvent(event);

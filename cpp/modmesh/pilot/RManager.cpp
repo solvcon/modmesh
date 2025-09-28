@@ -86,7 +86,7 @@ R3DWidget * RManager::add3DWidget()
     R3DWidget * viewer = nullptr;
     if (m_mdiArea)
     {
-        viewer = new R3DWidget();
+        viewer = new R3DWidget(/*window*/ nullptr, /*scene*/ nullptr, /*parent*/ m_mdiArea);
         viewer->setWindowTitle("3D viewer");
         viewer->show();
         auto * subwin = this->addSubWindow(viewer);

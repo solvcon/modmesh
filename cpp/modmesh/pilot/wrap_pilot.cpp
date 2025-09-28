@@ -173,10 +173,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
                 },
                 py::arg("filename"))
             .def(
-                "close_and_destroy",
-                [](wrapped_base_type & self)
-                { return self.closeAndDestroy(); })
-            .def(
                 "setCameraType",
                 [](wrapped_type & self, std::string const & name)
                 {
