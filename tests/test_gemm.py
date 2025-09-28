@@ -75,10 +75,9 @@ class GemmTestBase(mm.testing.TestBase):
         # 3x3 matrix
         a_data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0],
                            [7.0, 8.0, 9.0]], dtype=self.dtype)
-        identity_data = np.eye(3, dtype=self.dtype)
-
+        
         a = self.SimpleArray(array=a_data)
-        identity = self.SimpleArray(array=identity_data)
+        identity = self.SimpleArray.eye(3)  # Use our new eye method
 
         result = a.matmul(identity)
 
