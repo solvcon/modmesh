@@ -1250,7 +1250,7 @@ public:
 
     /**
      * Create an identity matrix of size n x n.
-     * 
+     *
      * @param n Size of the square identity matrix
      * @return SimpleArray representing an n x n identity matrix
      */
@@ -1258,13 +1258,13 @@ public:
     {
         shape_type shape{n, n};
         SimpleArray result(shape, static_cast<value_type>(0));
-        
+
         // Set diagonal elements to 1
         for (size_t i = 0; i < n; ++i)
         {
             result(i, i) = static_cast<value_type>(1);
         }
-        
+
         return result;
     }
 
