@@ -36,7 +36,7 @@
 #include <QClipboard>
 #include <QMenu>
 
-// Usually MODMESH_PYSIDE6_FULL is not defined unless for debugging.
+// PySide6 is required since 2023 (see issue https://github.com/solvcon/modmesh/issues/220)
 #ifdef MODMESH_PYSIDE6_FULL
 #include <pyside.h>
 #else // MODMESH_PYSIDE6_FULL
