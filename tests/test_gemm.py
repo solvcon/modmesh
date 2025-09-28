@@ -77,7 +77,7 @@ class GemmTestBase(mm.testing.TestBase):
                            [7.0, 8.0, 9.0]], dtype=self.dtype)
         
         a = self.SimpleArray(array=a_data)
-        identity = self.SimpleArray.eye(3)  # Use our new eye method
+        identity = self.SimpleArray.eye(3)
 
         result = a.matmul(identity)
 
