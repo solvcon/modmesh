@@ -68,7 +68,7 @@ class PilotCameraTB:
     @classmethod
     def tearDownClass(cls):
         if modmesh.HAS_PILOT:
-            cls.widget.close_and_destroy()
+            cls.widget = None
 
     def angle_axis(self, angle_deg, axis):
         a = axis
