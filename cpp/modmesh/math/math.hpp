@@ -42,6 +42,45 @@ inline constexpr T pow(T base)
 template <typename T>
 constexpr T pi = detail::pi_v<T>;
 
+template <typename T>
+inline constexpr T conj_mul(T const & a, T const & b)
+{
+    if constexpr (is_complex_v<T>)
+    {
+        return a * b.conj();
+    }
+    else
+    {
+        return a * b;
+    }
+}
+
+template <typename T>
+inline auto real(T const & val)
+{
+    if constexpr (is_complex_v<T>)
+    {
+        return val.real();
+    }
+    else
+    {
+        return val;
+    }
+}
+
+template <typename T>
+inline auto abs(T const & val)
+{
+    if constexpr (is_complex_v<T>)
+    {
+        return std::sqrt(val.norm());
+    }
+    else
+    {
+        return std::abs(val);
+    }
+}
+
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
