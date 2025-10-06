@@ -127,6 +127,12 @@ list_of_transform = [
     'FourierTransform',
 ]
 
+# linalg directory symbols
+list_of_linalg = [
+    'llt_factorization',
+    'llt_solve',
+]
+
 # universe directory symbols
 list_of_universe = [
     'calc_bernstein_polynomial',
@@ -157,6 +163,7 @@ __all__ = (  # noqa: F822
     list_of_testhelper +
     list_of_toggle +
     list_of_transform +
+    list_of_linalg +
     list_of_universe
 )
 
@@ -183,6 +190,7 @@ _load(list_of_python)
 _load(list_of_testhelper)
 _load(list_of_toggle)
 _load(list_of_transform)
+_load(list_of_linalg)
 _load(list_of_universe)
 
 # Walk through the thirdparty folder and register all library
