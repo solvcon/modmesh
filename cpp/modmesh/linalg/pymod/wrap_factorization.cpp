@@ -53,17 +53,17 @@ void def_llt_solve(pybind11::module & mod)
         pybind11::arg("b"));
 }
 
-void wrap_linalg(pybind11::module & mod)
+void wrap_factorization(pybind11::module & mod)
 {
-    def_llt_factorization<double>(mod);
     def_llt_factorization<float>(mod);
-    def_llt_factorization<Complex<double>>(mod);
+    def_llt_factorization<double>(mod);
     def_llt_factorization<Complex<float>>(mod);
+    def_llt_factorization<Complex<double>>(mod);
 
-    def_llt_solve<double>(mod);
     def_llt_solve<float>(mod);
-    def_llt_solve<Complex<double>>(mod);
+    def_llt_solve<double>(mod);
     def_llt_solve<Complex<float>>(mod);
+    def_llt_solve<Complex<double>>(mod);
 }
 
 } /* end namespace python */
