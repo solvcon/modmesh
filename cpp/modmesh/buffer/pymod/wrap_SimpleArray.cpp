@@ -315,6 +315,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def("mul", &wrapped_type::mul)
             .def("div", &wrapped_type::div)
             .def("matmul", &wrapped_type::matmul)
+            .def("__matmul__", &wrapped_type::matmul)
+            .def("__imatmul__", [](wrapped_type & self, wrapped_type const & other)
+                 {
+                     self = self.matmul(other);
+                     return self;
+                 })
             .def_static("eye", &wrapped_type::eye, py::arg("n"), "Create an identity matrix of size n x n")
             // TODO: In-place operation should return reference to self to support function chaining
             .def("iadd", [](wrapped_type & self, wrapped_type const & other)
