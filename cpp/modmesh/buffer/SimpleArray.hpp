@@ -523,6 +523,11 @@ public:
         return A(*static_cast<A const *>(this)).imul(other);
     }
 
+    A mul(value_type scalar) const
+    {
+        return A(*static_cast<A const *>(this)).imul(scalar);
+    }
+
     A div(A const & other) const
     {
         return A(*static_cast<A const *>(this)).idiv(other);
@@ -601,6 +606,34 @@ public:
             for (size_t i = 0; i < size; ++i)
             {
                 athis->data(i) = athis->data(i) && other.data(i);
+            }
+        }
+        return *athis;
+    }
+
+    A & imul(value_type scalar)
+    {
+        auto athis = static_cast<A *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            const value_type * const end = athis->end();
+            value_type * ptr = athis->begin();
+
+            while (ptr < end)
+            {
+                *ptr *= scalar;
+                ++ptr;
+            }
+        }
+        else
+        {
+            if (!scalar)
+            {
+                size_t size = athis->size();
+                for (size_t i = 0; i < size; ++i)
+                {
+                    athis->data(i) = false;
+                }
             }
         }
         return *athis;
