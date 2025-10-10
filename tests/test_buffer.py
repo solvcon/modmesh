@@ -1728,6 +1728,151 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
             self.assertEqual(sarr1[i], res[i])
             self.assertEqual(sres[i], nres[i])
 
+    def test_mul_1d(self):
+        def test_mul_1d_type(type):
+            narr1 = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=type)
+            narr2 = np.array([2, 3, 4, 5, 6, 7, 8, 9], dtype=type)
+            sarr1 = self.type_convertor(type)(array=narr1)
+            sarr2 = self.type_convertor(type)(array=narr2)
+
+            nres = np.multiply(narr1, narr2)
+            sres = sarr1.mul(sarr2)
+            for i in range(len(narr1)):
+                self.assertEqual(sres[i], nres[i])
+
+            sarr1.imul(sarr2)
+            for i in range(len(narr1)):
+                self.assertEqual(sarr1[i], nres[i])
+
+        test_mul_1d_type('int32')
+        test_mul_1d_type('int64')
+        test_mul_1d_type('float32')
+        test_mul_1d_type('float64')
+
+    def test_mul_2d(self):
+        def test_mul_2d_type(type):
+            narr1 = np.array([[1, 2, 3, 4],
+                              [5, 6, 7, 8],
+                              [9, 10, 11, 12]], dtype=type)
+            narr2 = np.array([[2, 2, 2, 2],
+                              [3, 3, 3, 3],
+                              [4, 4, 4, 4]], dtype=type)
+            sarr1 = self.type_convertor(type)(array=narr1)
+            sarr2 = self.type_convertor(type)(array=narr2)
+
+            nres = np.multiply(narr1, narr2)
+            sres = sarr1.mul(sarr2)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    self.assertEqual(sres[i, j], nres[i, j])
+
+            sarr1.imul(sarr2)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    self.assertEqual(sarr1[i, j], nres[i, j])
+
+        test_mul_2d_type('int32')
+        test_mul_2d_type('int64')
+        test_mul_2d_type('float32')
+        test_mul_2d_type('float64')
+
+    def test_mul_3d(self):
+        def test_mul_3d_type(type):
+            narr1 = np.arange(24, dtype=type).reshape((2, 3, 4))
+            narr2 = np.arange(1, 25, dtype=type).reshape((2, 3, 4))
+            sarr1 = self.type_convertor(type)(array=narr1)
+            sarr2 = self.type_convertor(type)(array=narr2)
+
+            nres = np.multiply(narr1, narr2)
+            sres = sarr1.mul(sarr2)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    for k in range(narr1.shape[2]):
+                        self.assertEqual(sres[i, j, k], nres[i, j, k])
+
+            sarr1.imul(sarr2)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    for k in range(narr1.shape[2]):
+                        self.assertEqual(sarr1[i, j, k], nres[i, j, k])
+
+        test_mul_3d_type('int32')
+        test_mul_3d_type('int64')
+        test_mul_3d_type('float32')
+        test_mul_3d_type('float64')
+
+    def test_mul_scalar_1d(self):
+        """Test 1D array scalar multiplication"""
+        def test_mul_scalar_1d_type(type):
+            narr1 = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=type)
+            sarr1 = self.type_convertor(type)(array=narr1)
+            scalar = 3
+
+            nres = np.multiply(narr1, scalar)
+            sres = sarr1.mul(scalar)
+
+            for i in range(len(narr1)):
+                self.assertEqual(sres[i], nres[i])
+
+            sarr1.imul(scalar)
+            for i in range(len(narr1)):
+                self.assertEqual(sarr1[i], nres[i])
+
+        test_mul_scalar_1d_type('int32')
+        test_mul_scalar_1d_type('int64')
+        test_mul_scalar_1d_type('float32')
+        test_mul_scalar_1d_type('float64')
+
+    def test_mul_scalar_2d(self):
+        """Test 2D array (matrix) scalar multiplication"""
+        def test_mul_scalar_2d_type(type):
+            narr1 = np.array([[1, 2, 3, 4],
+                              [5, 6, 7, 8],
+                              [9, 10, 11, 12]], dtype=type)
+            sarr1 = self.type_convertor(type)(array=narr1)
+            scalar = 2
+
+            nres = np.multiply(narr1, scalar)
+            sres = sarr1.mul(scalar)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    self.assertEqual(sres[i, j], nres[i, j])
+
+            sarr1.imul(scalar)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    self.assertEqual(sarr1[i, j], nres[i, j])
+
+        test_mul_scalar_2d_type('int32')
+        test_mul_scalar_2d_type('int64')
+        test_mul_scalar_2d_type('float32')
+        test_mul_scalar_2d_type('float64')
+
+    def test_mul_scalar_3d(self):
+        """Test 3D array scalar multiplication"""
+        def test_mul_scalar_3d_type(type):
+            narr1 = np.arange(24, dtype=type).reshape((2, 3, 4))
+            sarr1 = self.type_convertor(type)(array=narr1)
+            scalar = 5
+
+            nres = np.multiply(narr1, scalar)
+            sres = sarr1.mul(scalar)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    for k in range(narr1.shape[2]):
+                        self.assertEqual(sres[i, j, k], nres[i, j, k])
+
+            sarr1.imul(scalar)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    for k in range(narr1.shape[2]):
+                        self.assertEqual(sarr1[i, j, k], nres[i, j, k])
+
+        test_mul_scalar_3d_type('int32')
+        test_mul_scalar_3d_type('int64')
+        test_mul_scalar_3d_type('float32')
+        test_mul_scalar_3d_type('float64')
+
     def test_div(self):
         arr1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         arr2 = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
