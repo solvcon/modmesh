@@ -629,6 +629,8 @@ public:
         return *athis;
     }
 
+    A & imatmul(A const & other);
+
     A add_simd(A const & other) const
     {
         A const * athis = static_cast<A const *>(this);
@@ -726,8 +728,6 @@ public:
     }
 
     A matmul(A const & other) const;
-
-    A & imatmul(A const & other);
 
 private:
     static void find_two_bins(const uint32_t * freq, size_t n, int & bin1, int & bin2);
