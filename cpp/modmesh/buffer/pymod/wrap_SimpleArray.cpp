@@ -315,8 +315,17 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def("mul", &wrapped_type::mul)
             .def("div", &wrapped_type::div)
             .def("matmul", &wrapped_type::matmul)
+            .def("__matmul__", &wrapped_type::matmul)
             .def_static("eye", &wrapped_type::eye, py::arg("n"), "Create an identity matrix of size n x n")
             // TODO: In-place operation should return reference to self to support function chaining
+            /*
+             * Regular in-place methods (iadd, imul, etc.) are procedural calls and do
+             * NOT need to return self. However, special __i*__ methods (__iadd__,
+             * __imatmul__, etc.) MUST return self because they implement Python's
+             * augmented assignment operators (+=, @=, etc.), which work via re-assignment
+             * (e.g., a = a.__iadd__(b)).
+             * See: https://docs.python.org/3/reference/datamodel.html#emulating-numeric-types
+             */
             .def("iadd", [](wrapped_type & self, wrapped_type const & other)
                  { self.iadd(other); })
             .def("isub", [](wrapped_type & self, wrapped_type const & other)
@@ -325,6 +334,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                  { self.imul(other); })
             .def("idiv", [](wrapped_type & self, wrapped_type const & other)
                  { self.idiv(other); })
+            .def("imatmul", [](wrapped_type & self, wrapped_type const & other)
+                 { self.imatmul(other); })
+            .def("__imatmul__", [](wrapped_type & self, wrapped_type const & other)
+                 {
+                     self.imatmul(other);
+                     return self; })
             .def("add_simd", &wrapped_type::add_simd)
             .def("sub_simd", &wrapped_type::sub_simd)
             .def("mul_simd", &wrapped_type::mul_simd)

@@ -293,6 +293,61 @@ class GemmTestBase(mm.testing.TestBase):
         ):
             a_3d.matmul(b_3d)
 
+    def test_matmul_operator(self):
+        """Test @ operator for matrix multiplication"""
+        # Create 2x2 matrices
+        a_data = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=self.dtype)
+        b_data = np.array([[5.0, 6.0], [7.0, 8.0]], dtype=self.dtype)
+
+        a = self.SimpleArray(array=a_data)
+        b = self.SimpleArray(array=b_data)
+
+        # Expected result: [[19, 22], [43, 50]]
+        expected = np.array([[19.0, 22.0], [43.0, 50.0]], dtype=self.dtype)
+
+        # Test @ operator
+        result = a @ b
+
+        self.assertEqual(list(result.shape), [2, 2])
+        np.testing.assert_array_almost_equal(result.ndarray, expected)
+
+    def test_imatmul_method(self):
+        """Test imatmul() method for in-place matrix multiplication"""
+        # Create 2x2 matrices
+        a_data = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=self.dtype)
+        b_data = np.array([[5.0, 6.0], [7.0, 8.0]], dtype=self.dtype)
+
+        a = self.SimpleArray(array=a_data)
+        b = self.SimpleArray(array=b_data)
+
+        # Expected result: [[19, 22], [43, 50]]
+        expected = np.array([[19.0, 22.0], [43.0, 50.0]], dtype=self.dtype)
+
+        # Test imatmul() method
+        a.imatmul(b)
+
+        # Verify the result
+        self.assertEqual(list(a.shape), [2, 2])
+        np.testing.assert_array_almost_equal(a.ndarray, expected)
+
+    def test_imatmul_operator(self):
+        """Test @= operator for in-place matrix multiplication"""
+        # Create 2x2 matrices
+        a_data = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=self.dtype)
+        b_data = np.array([[5.0, 6.0], [7.0, 8.0]], dtype=self.dtype)
+
+        a = self.SimpleArray(array=a_data)
+        b = self.SimpleArray(array=b_data)
+
+        # Expected result: [[19, 22], [43, 50]]
+        expected = np.array([[19.0, 22.0], [43.0, 50.0]], dtype=self.dtype)
+
+        # Test @= operator
+        a @= b
+
+        self.assertEqual(list(a.shape), [2, 2])
+        np.testing.assert_array_almost_equal(a.ndarray, expected)
+
 
 class GemmFloat32TC(GemmTestBase, unittest.TestCase):
     """Test matrix multiplication with float32"""

@@ -629,6 +629,8 @@ public:
         return *athis;
     }
 
+    A & imatmul(A const & other);
+
     A add_simd(A const & other) const
     {
         A const * athis = static_cast<A const *>(this);
@@ -884,6 +886,21 @@ A SimpleArrayMixinCalculators<A, T>::matmul(A const & other) const
     }
 
     return result;
+}
+
+/**
+ * Perform in-place matrix multiplication for 2D arrays.
+ * This implementation supports only 2D × 2D matrix multiplication.
+ * The result replaces the content of the current array.
+ */
+template <typename A, typename T>
+A & SimpleArrayMixinCalculators<A, T>::imatmul(A const & other)
+{
+    auto athis = static_cast<A *>(this);
+    A result = athis->matmul(other);
+    *athis = std::move(result);
+
+    return *athis;
 }
 
 /**
