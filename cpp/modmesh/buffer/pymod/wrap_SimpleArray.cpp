@@ -312,7 +312,14 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def("abs", &wrapped_type::abs)
             .def("add", &wrapped_type::add)
             .def("sub", &wrapped_type::sub)
-            .def("mul", &wrapped_type::mul)
+            .def(
+                "mul",
+                [](wrapped_type const & self, wrapped_type const & other)
+                { return self.mul(other); })
+            .def(
+                "mul",
+                [](wrapped_type const & self, value_type scalar)
+                { return self.mul(scalar); })
             .def("div", &wrapped_type::div)
             .def("matmul", &wrapped_type::matmul)
             .def("__matmul__", &wrapped_type::matmul)
@@ -330,8 +337,14 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                  { self.iadd(other); })
             .def("isub", [](wrapped_type & self, wrapped_type const & other)
                  { self.isub(other); })
-            .def("imul", [](wrapped_type & self, wrapped_type const & other)
-                 { self.imul(other); })
+            .def(
+                "imul",
+                [](wrapped_type & self, wrapped_type const & other)
+                { self.imul(other); })
+            .def(
+                "imul",
+                [](wrapped_type & self, value_type scalar)
+                { self.imul(scalar); })
             .def("idiv", [](wrapped_type & self, wrapped_type const & other)
                  { self.idiv(other); })
             .def("imatmul", [](wrapped_type & self, wrapped_type const & other)
