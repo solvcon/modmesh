@@ -163,7 +163,7 @@ public:
 
     void fill(real_type val)
     {
-        MODMESH_TIME("StaticGrid1d::fill");
+        MODMESH_PROFILE_SCOPE("StaticGrid1d::fill");
         std::fill(m_coord.begin(), m_coord.end(), val);
     }
 

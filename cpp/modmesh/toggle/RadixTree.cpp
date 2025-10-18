@@ -27,7 +27,6 @@
  */
 
 #include <modmesh/toggle/RadixTree.hpp>
-#include <modmesh/toggle/profile.hpp>
 
 namespace modmesh
 {
