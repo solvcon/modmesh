@@ -56,9 +56,6 @@ $(SETUPROOT)/simd_support.o: $(SETUPROOT)/modmesh/simd/simd_support.cpp Makefile
 $(SETUPROOT)/modbuf.o: modbuf.cpp
 	c++ $(CFLAGS) -c $< -o $@
 
-$(SETUPROOT)/profile.o: $(SETUPROOT)/modmesh/toggle/profile.cpp Makefile
-	c++ $(CFLAGS) -c $< -o $@
-
 $(SETUPROOT)/radix_tree.o: $(SETUPROOT)/modmesh/toggle/RadixTree.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
@@ -71,7 +68,6 @@ OBJS = \
 	$(SETUPROOT)/buffer_pymod.o \
 	$(SETUPROOT)/simd_support.o \
 	$(SETUPROOT)/radix_tree.o \
-	$(SETUPROOT)/profile.o \
 	$(SETUPROOT)/modbuf.o
 
 $(MODPATH): Makefile $(OBJS)

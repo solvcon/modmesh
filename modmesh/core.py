@@ -109,10 +109,6 @@ list_of_testhelper = [
 list_of_toggle = [
     'WrapperProfilerStatus',
     'wrapper_profiler_status',
-    'StopWatch',
-    'stop_watch',
-    'TimeRegistry',
-    'time_registry',
     'CallProfiler',
     'call_profiler',
     'CallProfilerProbe',

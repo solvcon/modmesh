@@ -27,7 +27,7 @@
  */
 
 #include <modmesh/onedim/Euler1DCore.hpp>
-#include <modmesh/toggle/profile.hpp>
+#include <modmesh/toggle/toggle.hpp>
 #include <cmath>
 
 namespace modmesh
@@ -44,7 +44,7 @@ std::ostream & operator<<(std::ostream & os, const Euler1DCore & sol)
 
 void Euler1DCore::initialize_data(size_t ncoord)
 {
-    MODMESH_TIME("Euler1DCore::initialize_data");
+    MODMESH_PROFILE_SCOPE("Euler1DCore::initialize_data");
     if (0 == ncoord % 2)
     {
         throw std::invalid_argument("ncoord cannot be even");
@@ -58,7 +58,7 @@ void Euler1DCore::initialize_data(size_t ncoord)
 
 SimpleArray<double> Euler1DCore::density() const
 {
-    MODMESH_TIME("Euler1DCore::density");
+    MODMESH_PROFILE_SCOPE("Euler1DCore::density");
     SimpleArray<double> ret(ncoord());
     for (size_t it = 0; it < ncoord(); ++it)
     {
@@ -69,7 +69,7 @@ SimpleArray<double> Euler1DCore::density() const
 
 SimpleArray<double> Euler1DCore::velocity() const
 {
-    MODMESH_TIME("Euler1DCore::velocity");
+    MODMESH_PROFILE_SCOPE("Euler1DCore::velocity");
     SimpleArray<double> ret(ncoord());
     for (size_t it = 0; it < ncoord(); ++it)
     {
@@ -80,7 +80,7 @@ SimpleArray<double> Euler1DCore::velocity() const
 
 SimpleArray<double> Euler1DCore::pressure() const
 {
-    MODMESH_TIME("Euler1DCore::pressure");
+    MODMESH_PROFILE_SCOPE("Euler1DCore::pressure");
     SimpleArray<double> ret(ncoord());
     for (size_t it = 0; it < ncoord(); ++it)
     {
@@ -91,7 +91,7 @@ SimpleArray<double> Euler1DCore::pressure() const
 
 void Euler1DCore::update_cfl(bool odd_plane)
 {
-    MODMESH_TIME("Euler1DCore::update_cfl");
+    MODMESH_PROFILE_SCOPE("Euler1DCore::update_cfl");
     const int_type start = BOUND_COUNT - (odd_plane ? 1 : 0);
     const auto stop = static_cast<int_type>(ncoord() - BOUND_COUNT - (odd_plane ? 0 : 1));
     const double hdt = m_time_increment / 2;
@@ -117,7 +117,7 @@ void Euler1DCore::update_cfl(bool odd_plane)
 
 void Euler1DCore::march_half_so0(bool odd_plane)
 {
-    MODMESH_TIME("Euler1DCore::march_half_so0");
+    MODMESH_PROFILE_SCOPE("Euler1DCore::march_half_so0");
     const int_type start = BOUND_COUNT - (odd_plane ? 1 : 0);
     const auto stop = static_cast<int_type>(ncoord() - BOUND_COUNT - (odd_plane ? 0 : 1));
     // Kernal at xneg solution element.
@@ -195,7 +195,7 @@ void Euler1DCore::treat_boundary_so1()
 
 SimpleArray<double> Euler1DCore::temperature() const
 {
-    MODMESH_TIME("Euler1DCore::temperature");
+    MODMESH_PROFILE_SCOPE("Euler1DCore::temperature");
     SimpleArray<double> ret(ncoord());
     for (size_t it = 0; it < ncoord(); ++it)
     {
@@ -206,7 +206,7 @@ SimpleArray<double> Euler1DCore::temperature() const
 
 SimpleArray<double> Euler1DCore::internal_energy() const
 {
-    MODMESH_TIME("Euler1DCore::internal_energy");
+    MODMESH_PROFILE_SCOPE("Euler1DCore::internal_energy");
     SimpleArray<double> ret(ncoord());
     for (size_t it = 0; it < ncoord(); ++it)
     {
@@ -217,7 +217,7 @@ SimpleArray<double> Euler1DCore::internal_energy() const
 
 SimpleArray<double> Euler1DCore::entropy() const
 {
-    MODMESH_TIME("Euler1DCore::entropy");
+    MODMESH_PROFILE_SCOPE("Euler1DCore::entropy");
     SimpleArray<double> ret(ncoord());
     for (size_t it = 0; it < ncoord(); ++it)
     {
