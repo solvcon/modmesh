@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2025, Chun-Shih Chang <austin20463@gmail.com>
+ * Copyright (c) 2025, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,24 +28,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <pybind11/pybind11.h> // Must be the first include.
-#include <pybind11/stl.h>
-#include <pybind11/complex.h>
+/**
+ * The interface master header file for the linear algebraic code.
+ */
 
-#include <modmesh/python/common.hpp>
-#include <modmesh/linalg/linalg.hpp>
-
-namespace modmesh
-{
-
-namespace python
-{
-
-void initialize_linalg(pybind11::module & mod);
-void wrap_linalg(pybind11::module & mod);
-
-} /* end namespace python */
-
-} /* end namespace modmesh */
+#include <modmesh/linalg/factorization.hpp>
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

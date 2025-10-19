@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/buffer/SimpleArray.hpp>
+#include <modmesh/buffer/buffer.hpp>
 
 namespace modmesh
 {
