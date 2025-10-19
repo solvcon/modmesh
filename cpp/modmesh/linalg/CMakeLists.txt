@@ -4,6 +4,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 set(MODMESH_LINALG_HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/linalg.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/factorization.hpp
     CACHE FILEPATH "" FORCE)
 
