@@ -55,7 +55,7 @@ protected:
 
         (*this)
             // clang-format off
-            .def_property_readonly_static("me", [](py::object const &) -> wrapped_type& { return wrapped_type::me(); })
+                .def_property_readonly_static("me", [](py::object const &) -> wrapped_type& { return wrapped_type::me(); })
             // clang-format on
             .def_property_readonly("enabled", &wrapped_type::enabled)
             .def("enable", &wrapped_type::enable)
@@ -67,104 +67,6 @@ protected:
     }
 
 }; /* end class WrapWrapperTimerStatus */
-
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapStopWatch
-    : public WrapBase<WrapStopWatch, StopWatch>
-{
-
-public:
-
-    friend root_base_type;
-
-protected:
-
-    WrapStopWatch(pybind11::module & mod, char const * pyname, char const * pydoc)
-        : root_base_type(mod, pyname, pydoc)
-    {
-        namespace py = pybind11;
-
-        (*this)
-            .def_property_readonly_static(
-                "me",
-                [](py::object const &) -> wrapped_type &
-                { return wrapped_type::me(); })
-            .def("lap", &wrapped_type::lap)
-            .def_property_readonly("duration", &wrapped_type::duration)
-            .def_property_readonly_static(
-                "resolution",
-                [](py::object const &)
-                { return wrapped_type::resolution(); })
-            //
-            ;
-
-        mod.attr("stop_watch") = mod.attr("StopWatch").attr("me");
-    }
-
-}; /* end class WrapStopWatch */
-
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapTimedEntry
-    : public WrapBase<WrapTimedEntry, TimedEntry>
-{
-
-public:
-
-    friend root_base_type;
-
-protected:
-
-    WrapTimedEntry(pybind11::module & mod, char const * pyname, char const * pydoc)
-        : root_base_type(mod, pyname, pydoc)
-    {
-        namespace py = pybind11;
-
-        (*this)
-            .def_property_readonly("count", &wrapped_type::count)
-            .def_property_readonly("time", &wrapped_type::time)
-            .def("start", &wrapped_type::start)
-            .def("stop", &wrapped_type::stop)
-            .def("add_time", &wrapped_type::add_time, py::arg("time"))
-            //
-            ;
-    }
-
-}; /* end class WrapTimedEntry */
-
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapTimeRegistry
-    : public WrapBase<WrapTimeRegistry, TimeRegistry>
-{
-
-public:
-
-    friend root_base_type;
-
-protected:
-
-    WrapTimeRegistry(pybind11::module & mod, char const * pyname, char const * pydoc)
-        : root_base_type(mod, pyname, pydoc)
-    {
-        namespace py = pybind11;
-
-        (*this)
-            .def_property_readonly_static(
-                "me",
-                [](py::object const &) -> wrapped_type &
-                { return wrapped_type::me(); })
-            .def("clear", &wrapped_type::clear)
-            .def("entry", &wrapped_type::entry, py::arg("name"))
-            .def(
-                "add_time",
-                static_cast<void (wrapped_type::*)(std::string const &, double)>(&wrapped_type::add),
-                py::arg("name"),
-                py::arg("time"))
-            .def_property_readonly("names", &wrapped_type::names)
-            .def("report", &wrapped_type::report)
-            //
-            ;
-
-        mod.attr("time_registry") = mod.attr("TimeRegistry").attr("me");
-    }
-
-}; /* end class WrapTimeRegistry */
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapCallProfiler : public WrapBase<WrapCallProfiler, CallProfiler>
 {
@@ -189,6 +91,7 @@ protected:
 
         mod.attr("call_profiler") = mod.attr("CallProfiler").attr("instance");
     }
+
 }; /* end class WrapCallProfiler */
 
 pybind11::dict WrapCallProfiler::result(CallProfiler & profiler)
@@ -260,9 +163,6 @@ protected:
 void wrap_profile(pybind11::module & mod)
 {
     WrapWrapperProfilerStatus::commit(mod, "WrapperProfilerStatus", "WrapperProfilerStatus");
-    WrapStopWatch::commit(mod, "StopWatch", "StopWatch");
-    WrapTimedEntry::commit(mod, "TimedEntry", "TimeEntry");
-    WrapTimeRegistry::commit(mod, "TimeRegistry", "TimeRegistry");
     WrapCallProfiler::commit(mod, "CallProfiler", "CallProfiler");
     WrapCallProfilerProbe::commit(mod, "CallProfilerProbe", "CallProfilerProbe");
 }
