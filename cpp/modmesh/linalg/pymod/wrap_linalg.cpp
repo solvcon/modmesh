@@ -38,18 +38,18 @@ template <typename T>
 void def_llt_factorization(pybind11::module & mod)
 {
     mod.def(
-        "llt_factorization", [](SimpleArray<T> const & A)
-        { return llt_factorization(A); },
-        pybind11::arg("A"));
+        "llt_factorization", [](SimpleArray<T> const & a)
+        { return llt_factorization(a); },
+        pybind11::arg("a"));
 }
 
 template <typename T>
 void def_llt_solve(pybind11::module & mod)
 {
     mod.def(
-        "llt_solve", [](SimpleArray<T> const & A, SimpleArray<T> const & b)
-        { return llt_solve(A, b); },
-        pybind11::arg("A"),
+        "llt_solve", [](SimpleArray<T> const & a, SimpleArray<T> const & b)
+        { return llt_solve(a, b); },
+        pybind11::arg("a"),
         pybind11::arg("b"));
 }
 
