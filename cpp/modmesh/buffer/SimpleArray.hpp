@@ -513,6 +513,11 @@ public:
         return A(*static_cast<A const *>(this)).iadd(other);
     }
 
+    A add(value_type scalar) const
+    {
+        return A(*static_cast<A const *>(this)).iadd(scalar);
+    }
+
     A sub(A const & other) const
     {
         return A(*static_cast<A const *>(this)).isub(other);
@@ -558,6 +563,34 @@ public:
             }
         }
 
+        return *athis;
+    }
+
+    A & iadd(value_type scalar)
+    {
+        auto athis = static_cast<A *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            const value_type * const end = athis->end();
+            value_type * ptr = athis->begin();
+
+            while (ptr < end)
+            {
+                *ptr += scalar;
+                ++ptr;
+            }
+        }
+        else
+        {
+            if (scalar)
+            {
+                size_t size = athis->size();
+                for (size_t i = 0; i < size; ++i)
+                {
+                    athis->data(i) = true;
+                }
+            }
+        }
         return *athis;
     }
 

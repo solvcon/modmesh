@@ -310,7 +310,14 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def("max", &wrapped_type::max)
             .def("sum", &wrapped_type::sum)
             .def("abs", &wrapped_type::abs)
-            .def("add", &wrapped_type::add)
+            .def(
+                "add",
+                [](wrapped_type const & self, wrapped_type const & other)
+                { return self.add(other); })
+            .def(
+                "add",
+                [](wrapped_type const & self, value_type scalar)
+                { return self.add(scalar); })
             .def("sub", &wrapped_type::sub)
             .def(
                 "mul",
@@ -333,8 +340,14 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
              * (e.g., a = a.__iadd__(b)).
              * See: https://docs.python.org/3/reference/datamodel.html#emulating-numeric-types
              */
-            .def("iadd", [](wrapped_type & self, wrapped_type const & other)
-                 { self.iadd(other); })
+            .def(
+                "iadd",
+                [](wrapped_type & self, wrapped_type const & other)
+                { self.iadd(other); })
+            .def(
+                "iadd",
+                [](wrapped_type & self, value_type scalar)
+                { self.iadd(scalar); })
             .def("isub", [](wrapped_type & self, wrapped_type const & other)
                  { self.isub(other); })
             .def(

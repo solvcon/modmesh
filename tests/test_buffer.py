@@ -1632,6 +1632,148 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
             self.assertEqual(sarr1[i], res[i])
             self.assertEqual(sres[i], nres[i])
 
+    def test_add_1d(self):
+        def test_add_1d_type(type):
+            narr1 = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=type)
+            narr2 = np.array([2, 3, 4, 5, 6, 7, 8, 9], dtype=type)
+            sarr1 = self.type_convertor(type)(array=narr1)
+            sarr2 = self.type_convertor(type)(array=narr2)
+
+            nres = np.add(narr1, narr2)
+            sres = sarr1.add(sarr2)
+            for i in range(len(narr1)):
+                self.assertEqual(sres[i], nres[i])
+
+            sarr1.iadd(sarr2)
+            for i in range(len(narr1)):
+                self.assertEqual(sarr1[i], nres[i])
+
+        test_add_1d_type('int32')
+        test_add_1d_type('int64')
+        test_add_1d_type('float32')
+        test_add_1d_type('float64')
+
+    def test_add_2d(self):
+        def test_add_2d_type(type):
+            narr1 = np.array([[1, 2, 3, 4],
+                              [5, 6, 7, 8],
+                              [9, 10, 11, 12]], dtype=type)
+            narr2 = np.array([[2, 2, 2, 2],
+                              [3, 3, 3, 3],
+                              [4, 4, 4, 4]], dtype=type)
+            sarr1 = self.type_convertor(type)(array=narr1)
+            sarr2 = self.type_convertor(type)(array=narr2)
+
+            nres = np.add(narr1, narr2)
+            sres = sarr1.add(sarr2)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    self.assertEqual(sres[i, j], nres[i, j])
+
+            sarr1.iadd(sarr2)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    self.assertEqual(sarr1[i, j], nres[i, j])
+
+        test_add_2d_type('int32')
+        test_add_2d_type('int64')
+        test_add_2d_type('float32')
+        test_add_2d_type('float64')
+
+    def test_add_3d(self):
+        def test_add_3d_type(type):
+            narr1 = np.arange(24, dtype=type).reshape((2, 3, 4))
+            narr2 = np.arange(1, 25, dtype=type).reshape((2, 3, 4))
+            sarr1 = self.type_convertor(type)(array=narr1)
+            sarr2 = self.type_convertor(type)(array=narr2)
+
+            nres = np.add(narr1, narr2)
+            sres = sarr1.add(sarr2)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    for k in range(narr1.shape[2]):
+                        self.assertEqual(sres[i, j, k], nres[i, j, k])
+
+            sarr1.iadd(sarr2)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    for k in range(narr1.shape[2]):
+                        self.assertEqual(sarr1[i, j, k], nres[i, j, k])
+
+        test_add_3d_type('int32')
+        test_add_3d_type('int64')
+        test_add_3d_type('float32')
+        test_add_3d_type('float64')
+
+    def test_add_scalar_1d(self):
+        def test_add_scalar_1d_type(type):
+            narr1 = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=type)
+            sarr1 = self.type_convertor(type)(array=narr1)
+            scalar = 3
+
+            nres = np.add(narr1, scalar)
+            sres = sarr1.add(scalar)
+
+            for i in range(len(narr1)):
+                self.assertEqual(sres[i], nres[i])
+
+            sarr1.iadd(scalar)
+            for i in range(len(narr1)):
+                self.assertEqual(sarr1[i], nres[i])
+
+        test_add_scalar_1d_type('int32')
+        test_add_scalar_1d_type('int64')
+        test_add_scalar_1d_type('float32')
+        test_add_scalar_1d_type('float64')
+
+    def test_add_scalar_2d(self):
+        def test_add_scalar_2d_type(type):
+            narr1 = np.array([[1, 2, 3, 4],
+                              [5, 6, 7, 8],
+                              [9, 10, 11, 12]], dtype=type)
+            sarr1 = self.type_convertor(type)(array=narr1)
+            scalar = 5
+
+            nres = np.add(narr1, scalar)
+            sres = sarr1.add(scalar)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    self.assertEqual(sres[i, j], nres[i, j])
+
+            sarr1.iadd(scalar)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    self.assertEqual(sarr1[i, j], nres[i, j])
+
+        test_add_scalar_2d_type('int32')
+        test_add_scalar_2d_type('int64')
+        test_add_scalar_2d_type('float32')
+        test_add_scalar_2d_type('float64')
+
+    def test_add_scalar_3d(self):
+        def test_add_scalar_3d_type(type):
+            narr1 = np.arange(24, dtype=type).reshape((2, 3, 4))
+            sarr1 = self.type_convertor(type)(array=narr1)
+            scalar = 10
+
+            nres = np.add(narr1, scalar)
+            sres = sarr1.add(scalar)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    for k in range(narr1.shape[2]):
+                        self.assertEqual(sres[i, j, k], nres[i, j, k])
+
+            sarr1.iadd(scalar)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    for k in range(narr1.shape[2]):
+                        self.assertEqual(sarr1[i, j, k], nres[i, j, k])
+
+        test_add_scalar_3d_type('int32')
+        test_add_scalar_3d_type('int64')
+        test_add_scalar_3d_type('float32')
+        test_add_scalar_3d_type('float64')
+
     def test_sub(self):
         # test integer
         def test_sub_type(type):
