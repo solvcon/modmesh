@@ -311,7 +311,14 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def("sum", &wrapped_type::sum)
             .def("abs", &wrapped_type::abs)
             .def("add", &wrapped_type::add)
-            .def("sub", &wrapped_type::sub)
+            .def(
+                "sub",
+                [](wrapped_type const & self, wrapped_type const & other)
+                { return self.sub(other); })
+            .def(
+                "sub",
+                [](wrapped_type const & self, value_type scalar)
+                { return self.sub(scalar); })
             .def(
                 "mul",
                 [](wrapped_type const & self, wrapped_type const & other)
@@ -335,8 +342,14 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
              */
             .def("iadd", [](wrapped_type & self, wrapped_type const & other)
                  { self.iadd(other); })
-            .def("isub", [](wrapped_type & self, wrapped_type const & other)
-                 { self.isub(other); })
+            .def(
+                "isub",
+                [](wrapped_type & self, wrapped_type const & other)
+                { self.isub(other); })
+            .def(
+                "isub",
+                [](wrapped_type & self, value_type scalar)
+                { self.isub(scalar); })
             .def(
                 "imul",
                 [](wrapped_type & self, wrapped_type const & other)
