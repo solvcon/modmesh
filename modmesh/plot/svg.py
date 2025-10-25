@@ -39,6 +39,7 @@ from .. import core
 
 __all__ = [  # noqa: F822
     'PathParser',
+    'ShapeParser',
 ]
 
 
@@ -463,5 +464,157 @@ class PathParser(object):
 
     def get_epaths(self):
         return self.epaths
+
+
+class ShapeParser(object):
+    """
+    Parse basic shapes in an SVG file, including <circle>, <rect>, <ellipse>,
+    <line>, <polyline>, <polygon> but not <path>.
+    """
+
+    def __init__(self, file_path=None):
+        self.file_path = file_path
+        self.spads = []  # list of SegmentPad
+        self.cpads = []  # list of CurvePad
+
+    def parse(self):
+        tree = ET.parse(self.file_path)
+        root = tree.getroot()
+
+        namespace = {'svg': 'http://www.w3.org/2000/svg'}
+
+        circleElements = root.findall('.//svg:circle', namespace)
+        rectElements = root.findall('.//svg:rect', namespace)
+        ellipseElements = root.findall('.//svg:ellipse', namespace)
+        lineElements = root.findall('.//svg:line', namespace)
+        polylineElements = root.findall('.//svg:polyline', namespace)
+        polygonElements = root.findall('.//svg:polygon', namespace)
+
+        for elmnt in circleElements:
+            cx = float(elmnt.attrib.get('cx', '0'))
+            cy = float(elmnt.attrib.get('cy', '0'))
+            r = float(elmnt.attrib.get('r', '0'))
+
+            # Use 4 cubic Bézier curves to represent the circle
+            # Magic constant for circular arc approximation: kappa = 4/3 * tan(π/8)
+            # This value minimizes the radial error when approximating
+            # a circular arc with a cubic Bézier curve
+            kappa = 0.5522847498
+
+            cpad = core.CurvePadFp64(ndim=2)
+
+            # Top-right quadrant (0 to 90 degrees)
+            p0 = core.Point3dFp64(cx + r, cy, 0)
+            p1 = core.Point3dFp64(cx + r, cy + r * kappa, 0)
+            p2 = core.Point3dFp64(cx + r * kappa, cy + r, 0)
+            p3 = core.Point3dFp64(cx, cy + r, 0)
+            cpad.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+            # Top-left quadrant (90 to 180 degrees)
+            p0 = core.Point3dFp64(cx, cy + r, 0)
+            p1 = core.Point3dFp64(cx - r * kappa, cy + r, 0)
+            p2 = core.Point3dFp64(cx - r, cy + r * kappa, 0)
+            p3 = core.Point3dFp64(cx - r, cy, 0)
+            cpad.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+            # Bottom-left quadrant (180 to 270 degrees)
+            p0 = core.Point3dFp64(cx - r, cy, 0)
+            p1 = core.Point3dFp64(cx - r, cy - r * kappa, 0)
+            p2 = core.Point3dFp64(cx - r * kappa, cy - r, 0)
+            p3 = core.Point3dFp64(cx, cy - r, 0)
+            cpad.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+            # Bottom-right quadrant (270 to 360 degrees)
+            p0 = core.Point3dFp64(cx, cy - r, 0)
+            p1 = core.Point3dFp64(cx + r * kappa, cy - r, 0)
+            p2 = core.Point3dFp64(cx + r, cy - r * kappa, 0)
+            p3 = core.Point3dFp64(cx + r, cy, 0)
+            cpad.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+            self.cpads.append(cpad)
+
+        for elmnt in rectElements:
+            x = float(elmnt.attrib.get('x', '0'))
+            y = float(elmnt.attrib.get('y', '0'))
+            width = float(elmnt.attrib.get('width', '0'))
+            height = float(elmnt.attrib.get('height', '0'))
+
+            p1 = core.Point3dFp64(x, y, 0)
+            p2 = core.Point3dFp64(x + width, y, 0)
+            p3 = core.Point3dFp64(x + width, y + height, 0)
+            p4 = core.Point3dFp64(x, y + height, 0)
+
+            spad = core.SegmentPadFp64(ndim=2)
+            spad.append(core.Segment3dFp64(p1, p2))
+            spad.append(core.Segment3dFp64(p2, p3))
+            spad.append(core.Segment3dFp64(p3, p4))
+            spad.append(core.Segment3dFp64(p4, p1))
+            self.spads.append(spad)
+
+        for elmnt in ellipseElements:
+            cx = float(elmnt.attrib.get('cx', '0'))
+            cy = float(elmnt.attrib.get('cy', '0'))
+            rx = float(elmnt.attrib.get('rx', '0'))
+            ry = float(elmnt.attrib.get('ry', '0'))
+
+            num_segments = 100
+            theta = np.linspace(0, 2 * np.pi, num_segments)
+            x = cx + rx * np.cos(theta)
+            y = cy + ry * np.sin(theta)
+
+            spad = core.SegmentPadFp64(ndim=2)
+            for i in range(num_segments):
+                p_from = core.Point3dFp64(x[i], y[i], 0)
+                p_to = core.Point3dFp64(x[(i + 1) % num_segments],
+                                        y[(i + 1) % num_segments], 0)
+                spad.append(core.Segment3dFp64(p_from, p_to))
+            self.spads.append(spad)
+
+        for elmnt in lineElements:
+            x1 = float(elmnt.attrib.get('x1', '0'))
+            y1 = float(elmnt.attrib.get('y1', '0'))
+            x2 = float(elmnt.attrib.get('x2', '0'))
+            y2 = float(elmnt.attrib.get('y2', '0'))
+
+            p1 = core.Point3dFp64(x1, y1, 0)
+            p2 = core.Point3dFp64(x2, y2, 0)
+
+            spad = core.SegmentPadFp64(ndim=2)
+            spad.append(core.Segment3dFp64(p1, p2))
+            self.spads.append(spad)
+
+        for elmnt in polylineElements:
+            points_attr = elmnt.attrib.get('points', '')
+            points = []
+
+            # TODO: handle commas and spaces properly. Assume points are in format: "x1,y1 x2,y2 x3,y3 ..."
+            for pair in points_attr.strip().split():
+                x_str, y_str = pair.split(',')
+                points.append((float(x_str), float(y_str)))
+
+            spad = core.SegmentPadFp64(ndim=2)
+            for i in range(len(points) - 1):
+                p_from = core.Point3dFp64(points[i][0], points[i][1], 0)
+                p_to = core.Point3dFp64(points[i + 1][0], points[i + 1][1], 0)
+                spad.append(core.Segment3dFp64(p_from, p_to))
+            self.spads.append(spad)
+
+        for elmnt in polygonElements:
+            points_attr = elmnt.attrib.get('points', '')
+            points = []
+
+            # TODO: handle commas and spaces properly. Assume points are in format: "x1,y1 x2,y2 x3,y3 ..."
+            for pair in points_attr.strip().split():
+                x_str, y_str = pair.split(',')
+                points.append((float(x_str), float(y_str)))
+
+            spad = core.SegmentPadFp64(ndim=2)
+            num_points = len(points)
+            for i in range(num_points):
+                p_from = core.Point3dFp64(points[i][0], points[i][1], 0)
+                p_to = core.Point3dFp64(points[(i + 1) % num_points][0],
+                                        points[(i + 1) % num_points][1], 0)
+                spad.append(core.Segment3dFp64(p_from, p_to))
+            self.spads.append(spad)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
