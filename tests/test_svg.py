@@ -444,6 +444,7 @@ class CubicBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(len(sp2d), 0)
         self.assertEqual(len(cp2d), 8)
 
+        # two "C" curves
         self.assertEqual(list(cp2d[0][0]), [10, 90, 0])
         self.assertEqual(list(cp2d[0][1]), [30, 90, 0])
         self.assertEqual(list(cp2d[0][2]), [25, 10, 0])
@@ -454,6 +455,7 @@ class CubicBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[1][2]), [70, 90, 0])
         self.assertEqual(list(cp2d[1][3]), [90, 90, 0])
 
+        # two "S" curves
         self.assertEqual(list(cp2d[2][0]), [90, 90, 0])
         self.assertEqual(list(cp2d[2][1]), [110, 90, 0])
         self.assertEqual(list(cp2d[2][2]), [105, 10, 0])
@@ -464,6 +466,7 @@ class CubicBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[3][2]), [150, 90, 0])
         self.assertEqual(list(cp2d[3][3]), [170, 90, 0])
 
+        # two "c" curves
         self.assertEqual(list(cp2d[4][0]), [170, 90, 0])
         self.assertEqual(list(cp2d[4][1]), [190, 90, 0])
         self.assertEqual(list(cp2d[4][2]), [185, 10, 0])
@@ -474,6 +477,7 @@ class CubicBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[5][2]), [230, 90, 0])
         self.assertEqual(list(cp2d[5][3]), [250, 90, 0])
 
+        # two "s" curves
         self.assertEqual(list(cp2d[6][0]), [250, 90, 0])
         self.assertEqual(list(cp2d[6][1]), [270, 90, 0])
         self.assertEqual(list(cp2d[6][2]), [265, 10, 0])
@@ -615,6 +619,7 @@ class QuadraticBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(len(sp2d), 0)
         self.assertEqual(len(cp2d), 8)
 
+        # two 'Q' curves
         self.assertEqual(list(cp2d[0][0]), [10, 50, 0])
         self.assertEqual(list(cp2d[0][1]), [25, 25, 0])
         self.assertEqual(list(cp2d[0][2]), [40, 50, 0])
@@ -625,6 +630,7 @@ class QuadraticBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[1][2]), [70, 50, 0])
         self.assertEqual(list(cp2d[1][3]), [70, 50, 0])
 
+        # two 'q' curves
         self.assertEqual(list(cp2d[2][0]), [70, 50, 0])
         self.assertEqual(list(cp2d[2][1]), [85, 25, 0])
         self.assertEqual(list(cp2d[2][2]), [100, 50, 0])
@@ -635,6 +641,7 @@ class QuadraticBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[3][2]), [130, 50, 0])
         self.assertEqual(list(cp2d[3][3]), [130, 50, 0])
 
+        # two 'T' curves
         self.assertEqual(list(cp2d[4][0]), [130, 50, 0])
         self.assertEqual(list(cp2d[4][1]), [145, 25, 0])
         self.assertEqual(list(cp2d[4][2]), [160, 50, 0])
@@ -645,6 +652,7 @@ class QuadraticBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[5][2]), [190, 50, 0])
         self.assertEqual(list(cp2d[5][3]), [190, 50, 0])
 
+        # two 't' curves
         self.assertEqual(list(cp2d[6][0]), [190, 50, 0])
         self.assertEqual(list(cp2d[6][1]), [205, 25, 0])
         self.assertEqual(list(cp2d[6][2]), [220, 50, 0])
