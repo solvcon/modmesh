@@ -26,6 +26,7 @@
 
 import unittest
 
+import modmesh
 from modmesh.testing import TestBase as ModMeshTB
 from modmesh.plot.svg import EPath
 
@@ -422,5 +423,13 @@ class SvgParserTC(ModMeshTB, unittest.TestCase):
         self.assertEqual(list(sp2d.y0), [10.0, 10.0, 10.0])
         self.assertEqual(list(sp2d.x1), [20.0, 30.0, 10.0])
         self.assertEqual(list(sp2d.y1), [10.0, 10.0, 10.0])
+
+class SvgBindingTC(ModMeshTB, unittest.TestCase):
+
+    # TODO: DUMMY test for initialization. Will remove later.
+    def test_create_svg_header_basic(self):
+        header = modmesh.svg.create_svg_header(100, 200)
+        self.assertIsInstance(header, str)
+
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

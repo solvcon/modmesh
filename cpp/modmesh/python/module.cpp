@@ -33,6 +33,7 @@
 #include <modmesh/math/pymod/math_pymod.hpp>
 #include <modmesh/transform/pymod/transform_pymod.hpp>
 #include <modmesh/linalg/pymod/linalg_pymod.hpp>
+#include <modmesh/svg/pymod/svg_pymod.hpp>
 
 #ifdef USE_PYTEST_HELPER_BINDING
 #include <modmesh/testhelper/pymod/testbuffer_pymod.hpp>
@@ -58,6 +59,8 @@ void initialize(pybind11::module_ mod)
     initialize_inout(mod);
     initialize_math(mod);
     initialize_linalg(mod);
+    pybind11::module_ svg_mod = mod.def_submodule("svg", "svg");
+    initialize_svg(svg_mod);
     pybind11::module_ spacetime_mod = mod.def_submodule("spacetime", "spacetime");
     initialize_spacetime(spacetime_mod);
     pybind11::module_ onedim_mod = mod.def_submodule("onedim", "onedim");

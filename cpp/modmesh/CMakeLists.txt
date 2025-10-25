@@ -45,6 +45,7 @@ add_subdirectory(transform)
 add_subdirectory(math)
 add_subdirectory(linalg)
 add_subdirectory(simd)
+add_subdirectory(svg)
 
 if(USE_PYTEST_HELPER_BINDING)
     add_subdirectory(testhelper)
@@ -100,6 +101,7 @@ set(MODMESH_TERMINAL_FILES
     ${MODMESH_MATH_FILES}
     ${MODMESH_LINALG_FILES}
     ${MODMESH_SIMD_FILES}
+    ${MODMESH_SVG_FILES}
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_GRAPHIC_FILES
