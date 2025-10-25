@@ -92,18 +92,19 @@ class SVGFileDialog(PilotFeature):
         return found
 
     def _load_svg_file(self, filename):
-        parser = svg.PathParser(filename)
+        parser = svg.SvgParser(file_path=filename)
         parser.parse()
+        spads, cpads = parser.get_pads()
 
         world = core.WorldFp64()
 
-        for spad in parser.spads:
+        for spad in spads:
             # mirror with respect to x-axis: (x, y) -> (x, -y)
             spad.y0.ndarray[:] = -spad.y0.ndarray
             spad.y1.ndarray[:] = -spad.y1.ndarray
             world.add_segments(pad=spad)
 
-        for cpad in parser.cpads:
+        for cpad in cpads:
             # mirror with respect to x-axis: (x, y) -> (x, -y)
             cpad.y0.ndarray[:] = -cpad.y0.ndarray
             cpad.y1.ndarray[:] = -cpad.y1.ndarray
