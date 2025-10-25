@@ -30,7 +30,7 @@ from modmesh.testing import TestBase as ModMeshTB
 from modmesh.plot.svg import EPath
 
 
-class SvgParserBaseTC(ModMeshTB, unittest.TestCase):
+class SvgParserTB(ModMeshTB, unittest.TestCase):
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -38,10 +38,10 @@ class SvgParserBaseTC(ModMeshTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
 
-class SvgParserGeneralTC(SvgParserBaseTC):
+class SvgParserGeneralTC(SvgParserTB):
 
     def test_single_closed_path(self):
-        d_attr = """ M10 10 L60 10 L60 60 L10 60 Z """
+        d_attr = "M10 10 L60 10 L60 60 L10 60 Z"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         self.assertEqual(len(path_element.get_cmds()), 5)
@@ -54,10 +54,7 @@ class SvgParserGeneralTC(SvgParserBaseTC):
              ('Z', [])])
 
     def test_multiple_closed_paths(self):
-        d_attr = """
-                M10 10 L60 10 L60 60 L10 60 Z
-                M100 10 L150 60 L100 60 Z
-                """
+        d_attr = "M10 10 L60 10 L60 60 L10 60 Z M100 10 L150 60 L100 60 Z"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         self.assertEqual(len(path_element.get_cmds()), 9)
@@ -74,12 +71,10 @@ class SvgParserGeneralTC(SvgParserBaseTC):
              ('Z', [])])
 
 
-class MoveToCommandTC(SvgParserBaseTC):
+class SvgMoveToCommandTC(SvgParserTB):
 
     def test_moveto_absolute(self):
-        d_attr = """
-                M 10 10 h 10
-                """
+        d_attr = "M 10 10 h 10"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -94,10 +89,7 @@ class MoveToCommandTC(SvgParserBaseTC):
         self.assertEqual(list(sp2d.y1), [10.0])
 
     def test_moveto_relative(self):
-        d_attr = """
-                M 10 10 h 10
-                m 0 10 h 10
-                """
+        d_attr = "M 10 10 h 10 m 0 10 h 10"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -112,10 +104,7 @@ class MoveToCommandTC(SvgParserBaseTC):
         self.assertEqual(list(sp2d.y1), [10.0, 20.0])
 
     def test_moveto_absolute_and_relative(self):
-        d_attr = """
-                M 10 10 h 10
-                m  0 10 h 10
-                """
+        d_attr = "M 10 10 h 10 m  0 10 h 10"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -130,10 +119,7 @@ class MoveToCommandTC(SvgParserBaseTC):
         self.assertEqual(list(sp2d.y1), [10.0, 20.0])
 
     def test_moveto_implicit_lineto(self):
-        d_attr = """
-                M 10 10 20 10
-                m 0 10 10 0
-                """
+        d_attr = "M 10 10 20 10 m 0 10 10 0"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -148,14 +134,10 @@ class MoveToCommandTC(SvgParserBaseTC):
         self.assertEqual(list(sp2d.y1), [10.0, 20.0])
 
 
-class LineToCommandTC(SvgParserBaseTC):
+class SvgLineToCommandTC(SvgParserTB):
 
     def test_lineto_absolute(self):
-        d_attr = """
-                M 10 10
-                L 30 20
-                L 50 30
-                """
+        d_attr = "M 10 10 L 30 20 L 50 30"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -170,11 +152,7 @@ class LineToCommandTC(SvgParserBaseTC):
         self.assertEqual(list(sp2d.y1), [20.0, 30.0])
 
     def test_lineto_relative(self):
-        d_attr = """
-                M 10 10
-                l 20 10
-                l 20 10
-                """
+        d_attr = "M 10 10 l 20 10 l 20 10"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -189,11 +167,7 @@ class LineToCommandTC(SvgParserBaseTC):
         self.assertEqual(list(sp2d.y1), [20.0, 30.0])
 
     def test_horizontal_lineto_absolute(self):
-        d_attr = """
-                M 10 10
-                H 30
-                H 50
-                """
+        d_attr = "M 10 10 H 30 H 50"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -208,11 +182,7 @@ class LineToCommandTC(SvgParserBaseTC):
         self.assertEqual(list(sp2d.y1), [10.0, 10.0])
 
     def test_horizontal_lineto_relative(self):
-        d_attr = """
-                M 10 10
-                h 20
-                h 20
-                """
+        d_attr = "M 10 10 h 20 h 20"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -227,11 +197,7 @@ class LineToCommandTC(SvgParserBaseTC):
         self.assertEqual(list(sp2d.y1), [10.0, 10.0])
 
     def test_vertical_lineto_absolute(self):
-        d_attr = """
-                M 10 10
-                V 30
-                V 50
-                """
+        d_attr = "M 10 10 V 30 V 50"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -246,11 +212,7 @@ class LineToCommandTC(SvgParserBaseTC):
         self.assertEqual(list(sp2d.y1), [30.0, 50.0])
 
     def test_vertical_lineto_relative(self):
-        d_attr = """
-                M 10 10
-                v 20
-                v 20
-                """
+        d_attr = "M 10 10 v 20 v 20"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -265,15 +227,7 @@ class LineToCommandTC(SvgParserBaseTC):
         self.assertEqual(list(sp2d.y1), [30.0, 50.0])
 
     def test_lineto_all_variants(self):
-        d_attr = """
-                M 10 10
-                L 20 10
-                l 10 0
-                V 20
-                v 10
-                H 20
-                h -10
-                """
+        d_attr = "M 10 10 L 20 10 l 10 0 V 20 v 10 H 20 h -10"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -288,15 +242,7 @@ class LineToCommandTC(SvgParserBaseTC):
         self.assertEqual(list(sp2d.y1), [10.0, 10.0, 20.0, 30.0, 30.0, 30.0])
 
     def test_lineto_multiple_coordinates(self):
-        d_attr = """
-                M 10 10
-                L 20 10 30 10
-                l 10 0 10 0
-                V 20 30
-                v 10 10
-                H 40 30
-                h -10 -10
-                """
+        d_attr = "M 10 10 L 20 10 30 10 l 10 0 10 0 V 20 30 v 10 10 H 40 30 h -10 -10"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -315,13 +261,10 @@ class LineToCommandTC(SvgParserBaseTC):
                                          40.0, 50.0, 50.0, 50.0, 50.0, 50.0])
 
 
-class CubicBezierCurveCommandTC(SvgParserBaseTC):
+class SvgCubicBezierCurveCommandTC(SvgParserTB):
 
-    def test_cubic_bezier_absolute(self):
-        d_attr = """
-                M 10 90
-                C 30 90 25 10 50 10
-                """
+    def test_absolute(self):
+        d_attr = "M 10 90 C 30 90 25 10 50 10"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -335,11 +278,8 @@ class CubicBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[0][2]), [25, 10, 0])
         self.assertEqual(list(cp2d[0][3]), [50, 10, 0])
 
-    def test_cubic_bezier_relative(self):
-        d_attr = """
-                M 10 90
-                c 20 0 15 -80 40 -80
-                """
+    def test_relative(self):
+        d_attr = "M 10 90 c 20 0 15 -80 40 -80"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -354,11 +294,7 @@ class CubicBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[0][3]), [50, 10, 0])
 
     def test_smooth_cubic_bezier_absolute(self):
-        d_attr = """
-                M 10 90
-                C 30 90 25 10 50 10
-                S 70 90 90 90
-                """
+        d_attr = "M 10 90 C 30 90 25 10 50 10 S 70 90 90 90"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -373,11 +309,7 @@ class CubicBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[1][3]), [90, 90, 0])
 
     def test_smooth_cubic_bezier_relative(self):
-        d_attr = """
-                M 10 90
-                C 30 90 25 10 50 10
-                s 20 80 40 80
-                """
+        d_attr = "M 10 90 C 30 90 25 10 50 10 s 20 80 40 80"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -392,13 +324,7 @@ class CubicBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[1][3]), [90, 90, 0])
 
     def test_cubic_bezier_basic(self):
-        d_attr = """
-                M 10 90
-                C 30 90 25 10 50 10
-                S 70 90 90 90
-                c 20 0 15 -80 40 -80
-                s 20 80 40 80
-                """
+        d_attr = "M 10 90 C 30 90 25 10 50 10 S 70 90 90 90 c 20 0 15 -80 40 -80 s 20 80 40 80"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -428,13 +354,7 @@ class CubicBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[3][3]), [170, 90, 0])
 
     def test_cubic_bezier_implicit_curves(self):
-        d_attr = """
-                M 10 90
-                C 30 90 25 10 50 10 75 10 70 90 90 90
-                S 105 10 130 10 150 90 170 90
-                c 20 0 15 -80 40 -80 25 0 20 80 40 80
-                s 15 -80 40 -80 20 80 40 80
-                """
+        d_attr = "M 10 90 C 30 90 25 10 50 10 75 10 70 90 90 90 S 105 10 130 10 150 90 170 90 c 20 0 15 -80 40 -80 25 0 20 80 40 80 s 15 -80 40 -80 20 80 40 80"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -489,13 +409,7 @@ class CubicBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[7][3]), [330, 90, 0])
 
     def test_cubic_bezier_point_continuity(self):
-        d_attr = """
-                M 10 90
-                C 30 90 25 10 50 10
-                S 70 90 90 90
-                c 20 0 15 -80 40 -80
-                s 20 80 40 80
-                """
+        d_attr = "M 10 90 C 30 90 25 10 50 10 S 70 90 90 90 c 20 0 15 -80 40 -80 s 20 80 40 80"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -511,13 +425,10 @@ class CubicBezierCurveCommandTC(SvgParserBaseTC):
             self.assert_allclose(cp2d[i][3][2], cp2d[i + 1][0][2])
 
 
-class QuadraticBezierCurveCommandTC(SvgParserBaseTC):
+class SvgQuadraticBezierCurveCommandTC(SvgParserTB):
 
     def test_quadratic_bezier_absolute(self):
-        d_attr = """
-                M 10 50
-                Q 25 25 40 50
-                """
+        d_attr = "M 10 50 Q 25 25 40 50"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -532,10 +443,7 @@ class QuadraticBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[0][3]), [40, 50, 0])
 
     def test_quadratic_bezier_relative(self):
-        d_attr = """
-                M 10 50
-                q 15 -25 30 0
-                """
+        d_attr = "M 10 50 q 15 -25 30 0"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -550,11 +458,7 @@ class QuadraticBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[0][3]), [40, 50, 0])
 
     def test_smooth_quadratic_bezier_absolute(self):
-        d_attr = """
-                M 10 50
-                Q 25 25 40 50
-                T 70 50
-                """
+        d_attr = "M 10 50 Q 25 25 40 50 T 70 50"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -569,11 +473,7 @@ class QuadraticBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[1][3]), [70, 50, 0])
 
     def test_smooth_quadratic_bezier_relative(self):
-        d_attr = """
-                M 10 50
-                Q 25 25 40 50
-                t 30 0
-                """
+        d_attr = "M 10 50 Q 25 25 40 50 t 30 0"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -588,13 +488,7 @@ class QuadraticBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[1][3]), [70, 50, 0])
 
     def test_quadratic_bezier_basic(self):
-        d_attr = """
-                M 10 50
-                Q 25 25 40 50
-                q 15 25 30 0
-                T 100 50
-                t 30 0
-                """
+        d_attr = "M 10 50 Q 25 25 40 50 q 15 25 30 0 T 100 50 t 30 0"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -625,13 +519,7 @@ class QuadraticBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[3][3]), [130, 50, 0])
 
     def test_quadratic_bezier_implicit_curves(self):
-        d_attr = """
-                M 10 50
-                Q 25 25 40 50 55 75 70 50
-                q 15 -25 30 0 15 25 30 0
-                T 160 50 190 50
-                t 30 0 30 0
-                """
+        d_attr = "M 10 50 Q 25 25 40 50 55 75 70 50 q 15 -25 30 0 15 25 30 0 T 160 50 190 50 t 30 0 30 0"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -686,13 +574,7 @@ class QuadraticBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[7][3]), [250, 50, 0])
 
     def test_quadratic_bezier_point_continuity(self):
-        d_attr = """
-                M 10 50
-                Q 25 25 40 50
-                q 15 25 30 0
-                T 100 50
-                t 30 0
-                """
+        d_attr = "M 10 50 Q 25 25 40 50 q 15 25 30 0 T 100 50 t 30 0"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -708,14 +590,10 @@ class QuadraticBezierCurveCommandTC(SvgParserBaseTC):
             self.assert_allclose(cp2d[i][2][2], cp2d[i + 1][0][2])
 
 
-class EllipticalArcCurveCommandTC(SvgParserBaseTC):
+class SvgEllipticalArcCurveCommandTC(SvgParserTB):
 
     def test_arc_basic(self):
-        d_attr = """
-                M 6 10
-                A 6 4 10 1 0 14 10
-                A 6 4 10 0 1 20 10
-                """
+        d_attr = "M 6 10 A 6 4 10 1 0 14 10 A 6 4 10 0 1 20 10"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -738,10 +616,7 @@ class EllipticalArcCurveCommandTC(SvgParserBaseTC):
             self.assert_allclose(sp2d.y1_at(i), sp2d.y0_at(i + 1))
 
     def test_arc_implicit_curves(self):
-        d_attr = """
-                M 6 10
-                A 6 4 10 1 0 14 10 6 4 10 0 1 20 10
-                """
+        d_attr = "M 6 10 A 6 4 10 1 0 14 10 6 4 10 0 1 20 10"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -764,11 +639,7 @@ class EllipticalArcCurveCommandTC(SvgParserBaseTC):
             self.assert_allclose(sp2d.y1_at(i), sp2d.y0_at(i + 1))
 
     def test_arc_relative(self):
-        d_attr = """
-                M 6 10
-                a 6 4 10 1 0 8 0
-                a 6 4 10 0 1 6 0
-                """
+        d_attr = "M 6 10 a 6 4 10 1 0 8 0 a 6 4 10 0 1 6 0"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -791,11 +662,7 @@ class EllipticalArcCurveCommandTC(SvgParserBaseTC):
             self.assert_allclose(sp2d.y1_at(i), sp2d.y0_at(i + 1))
 
     def test_arc_mixed_absolute_relative(self):
-        d_attr = """
-                M 6 10
-                A 6 4 10 1 0 14 10
-                a 6 4 10 0 1 6 0
-                """
+        d_attr = "M 6 10 A 6 4 10 1 0 14 10 a 6 4 10 0 1 6 0"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -818,10 +685,7 @@ class EllipticalArcCurveCommandTC(SvgParserBaseTC):
             self.assert_allclose(sp2d.y1_at(i), sp2d.y0_at(i + 1))
 
     def test_arc_point_continuity(self):
-        d_attr = """
-                M 0 0
-                A 10 10 0 0 1 20 0
-                """
+        d_attr = "M 0 0 A 10 10 0 0 1 20 0"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -841,10 +705,7 @@ class EllipticalArcCurveCommandTC(SvgParserBaseTC):
             self.assert_allclose(sp2d.y1_at(i), sp2d.y0_at(i + 1))
 
     def test_arc_circular(self):
-        d_attr = """
-                M 100 100
-                A 50 50 0 1 1 200 100
-                """
+        d_attr = "M 100 100 A 50 50 0 1 1 200 100"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -875,15 +736,10 @@ class EllipticalArcCurveCommandTC(SvgParserBaseTC):
             self.assert_allclose(distance, radius, rtol=1e-2)
 
 
-class ClosePathCommandTC(SvgParserBaseTC):
+class SvgClosePathCommandTC(SvgParserTB):
 
     def test_close_path_uppercase(self):
-        d_attr = """
-                M 10 10
-                L 20 10
-                l 10 0
-                Z
-                """
+        d_attr = "M 10 10 L 20 10 l 10 0 Z"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -898,12 +754,7 @@ class ClosePathCommandTC(SvgParserBaseTC):
         self.assertEqual(list(sp2d.y1), [10.0, 10.0, 10.0])
 
     def test_close_path_lowercase(self):
-        d_attr = """
-                M 10 10
-                L 20 10
-                l 10 0
-                z
-                """
+        d_attr = "M 10 10 L 20 10 l 10 0 z"
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -916,6 +767,5 @@ class ClosePathCommandTC(SvgParserBaseTC):
         self.assertEqual(list(sp2d.y0), [10.0, 10.0, 10.0])
         self.assertEqual(list(sp2d.x1), [20.0, 30.0, 10.0])
         self.assertEqual(list(sp2d.y1), [10.0, 10.0, 10.0])
-
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
