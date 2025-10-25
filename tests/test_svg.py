@@ -424,6 +424,7 @@ class SvgParserTC(ModMeshTB, unittest.TestCase):
         self.assertEqual(list(sp2d.x1), [20.0, 30.0, 10.0])
         self.assertEqual(list(sp2d.y1), [10.0, 10.0, 10.0])
 
+
 class SvgBindingTC(ModMeshTB, unittest.TestCase):
 
     # TODO: DUMMY test for initialization. Will remove later.
