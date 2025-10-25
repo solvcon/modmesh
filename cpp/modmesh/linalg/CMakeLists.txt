@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.16)
 set(MODMESH_LINALG_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/linalg.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/factorization.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/kalman_filter.hpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_LINALG_SOURCES
@@ -17,7 +18,8 @@ set(MODMESH_LINALG_PYMODHEADERS
 
 set(MODMESH_LINALG_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/linalg_pymod.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_linalg.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_factorization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_kalman_filter.cpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_LINALG_FILES

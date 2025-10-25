@@ -32,6 +32,7 @@
 
 #include <pybind11/numpy.h>
 #include <pybind11/operators.h>
+#include <pybind11/complex.h>
 
 namespace modmesh
 {
@@ -71,7 +72,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapComplex
                 py::init(
                     [](const wrapped_type & other)
                     { return std::make_shared<wrapped_type>(wrapped_type{other.real_v, other.imag_v}); }),
-                py::arg("other"))
+                py::arg("complex"))
+            .def(
+                py::init(
+                    [](const std::complex<value_type> & c)
+                    { return std::make_shared<wrapped_type>(wrapped_type{c.real(), c.imag()}); }),
+                py::arg("np_complex"))
             .def(py::self + py::self) // NOLINT(misc-redundant-expression)
             .def(py::self + value_type()) // NOLINT(misc-redundant-expression)
             .def(value_type() + py::self) // NOLINT(misc-redundant-expression)

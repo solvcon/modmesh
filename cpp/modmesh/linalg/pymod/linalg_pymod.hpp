@@ -42,7 +42,8 @@ namespace python
 {
 
 void initialize_linalg(pybind11::module & mod);
-void wrap_linalg(pybind11::module & mod);
+void wrap_factorization(pybind11::module & mod);
+void wrap_kalman_filter(pybind11::module & mod);
 
 } /* end namespace python */
 
