@@ -72,6 +72,10 @@ class SvgParserGeneralTC(SvgParserTB):
 
 
 class SvgMoveToCommandTC(SvgParserTB):
+    """
+    Test 'M' and 'm' commands in SVG path 'd' attribute.
+    See more: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d#moveto_path_commands
+    """
 
     def test_moveto_absolute(self):
         d_attr = "M 10 10 h 10"
@@ -135,6 +139,10 @@ class SvgMoveToCommandTC(SvgParserTB):
 
 
 class SvgLineToCommandTC(SvgParserTB):
+    """
+    Test 'L', 'l', 'H', 'h', 'V', and 'v' commands in SVG path 'd' attribute.
+    See more: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d#lineto_path_commands
+    """
 
     def test_lineto_absolute(self):
         d_attr = "M 10 10 L 30 20 L 50 30"
@@ -262,6 +270,10 @@ class SvgLineToCommandTC(SvgParserTB):
 
 
 class SvgCubicBezierCurveCommandTC(SvgParserTB):
+    """
+    Test 'C', 'c', 'S', and 's' commands in SVG path 'd' attribute.
+    See more: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d#cubic_b%C3%A9zier_curve
+    """
 
     def test_absolute(self):
         d_attr = "M 10 90 C 30 90 25 10 50 10"
@@ -426,6 +438,10 @@ class SvgCubicBezierCurveCommandTC(SvgParserTB):
 
 
 class SvgQuadraticBezierCurveCommandTC(SvgParserTB):
+    """
+    Test 'Q', 'q', 'T', and 't' commands in SVG path 'd' attribute.
+    See more: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d#quadratic_b%C3%A9zier_curve
+    """
 
     def test_quadratic_bezier_absolute(self):
         d_attr = "M 10 50 Q 25 25 40 50"
@@ -591,6 +607,10 @@ class SvgQuadraticBezierCurveCommandTC(SvgParserTB):
 
 
 class SvgEllipticalArcCurveCommandTC(SvgParserTB):
+    """
+    Test 'A' and 'a' commands in SVG path 'd' attribute.
+    See more: https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d#elliptical_arc_curve
+    """
 
     def test_arc_basic(self):
         d_attr = "M 6 10 A 6 4 10 1 0 14 10 A 6 4 10 0 1 20 10"
@@ -737,6 +757,10 @@ class SvgEllipticalArcCurveCommandTC(SvgParserTB):
 
 
 class SvgClosePathCommandTC(SvgParserTB):
+    """
+    Test 'Z' and 'z' commands in SVG path 'd' attribute.
+    See more: https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d#closepath
+    """
 
     def test_close_path_uppercase(self):
         d_attr = "M 10 10 L 20 10 l 10 0 Z"
