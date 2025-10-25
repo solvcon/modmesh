@@ -75,7 +75,7 @@ class SvgMoveToCommandTC(SvgParserTB):
     """
     Test 'M' and 'm' commands in SVG path 'd' attribute.
     See more: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d#moveto_path_commands
-    """
+    """  # noqa: E501
 
     def test_moveto_absolute(self):
         d_attr = "M 10 10 h 10"
@@ -142,7 +142,7 @@ class SvgLineToCommandTC(SvgParserTB):
     """
     Test 'L', 'l', 'H', 'h', 'V', and 'v' commands in SVG path 'd' attribute.
     See more: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d#lineto_path_commands
-    """
+    """  # noqa: E501
 
     def test_lineto_absolute(self):
         d_attr = "M 10 10 L 30 20 L 50 30"
@@ -250,7 +250,7 @@ class SvgLineToCommandTC(SvgParserTB):
         self.assertEqual(list(sp2d.y1), [10.0, 10.0, 20.0, 30.0, 30.0, 30.0])
 
     def test_lineto_multiple_coordinates(self):
-        d_attr = "M 10 10 L 20 10 30 10 l 10 0 10 0 V 20 30 v 10 10 H 40 30 h -10 -10"
+        d_attr = "M 10 10 L 20 10 30 10 l 10 0 10 0 V 20 30 v 10 10 H 40 30 h -10 -10"  # noqa: E501
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -273,7 +273,7 @@ class SvgCubicBezierCurveCommandTC(SvgParserTB):
     """
     Test 'C', 'c', 'S', and 's' commands in SVG path 'd' attribute.
     See more: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d#cubic_b%C3%A9zier_curve
-    """
+    """  # noqa: E501
 
     def test_absolute(self):
         d_attr = "M 10 90 C 30 90 25 10 50 10"
@@ -336,7 +336,7 @@ class SvgCubicBezierCurveCommandTC(SvgParserTB):
         self.assertEqual(list(cp2d[1][3]), [90, 90, 0])
 
     def test_cubic_bezier_basic(self):
-        d_attr = "M 10 90 C 30 90 25 10 50 10 S 70 90 90 90 c 20 0 15 -80 40 -80 s 20 80 40 80"
+        d_attr = "M 10 90 C 30 90 25 10 50 10 S 70 90 90 90 c 20 0 15 -80 40 -80 s 20 80 40 80"  # noqa: E501
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -366,7 +366,7 @@ class SvgCubicBezierCurveCommandTC(SvgParserTB):
         self.assertEqual(list(cp2d[3][3]), [170, 90, 0])
 
     def test_cubic_bezier_implicit_curves(self):
-        d_attr = "M 10 90 C 30 90 25 10 50 10 75 10 70 90 90 90 S 105 10 130 10 150 90 170 90 c 20 0 15 -80 40 -80 25 0 20 80 40 80 s 15 -80 40 -80 20 80 40 80"
+        d_attr = "M 10 90 C 30 90 25 10 50 10 75 10 70 90 90 90 S 105 10 130 10 150 90 170 90 c 20 0 15 -80 40 -80 25 0 20 80 40 80 s 15 -80 40 -80 20 80 40 80"  # noqa: E501
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -421,7 +421,7 @@ class SvgCubicBezierCurveCommandTC(SvgParserTB):
         self.assertEqual(list(cp2d[7][3]), [330, 90, 0])
 
     def test_cubic_bezier_point_continuity(self):
-        d_attr = "M 10 90 C 30 90 25 10 50 10 S 70 90 90 90 c 20 0 15 -80 40 -80 s 20 80 40 80"
+        d_attr = "M 10 90 C 30 90 25 10 50 10 S 70 90 90 90 c 20 0 15 -80 40 -80 s 20 80 40 80"  # noqa: E501
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -441,7 +441,7 @@ class SvgQuadraticBezierCurveCommandTC(SvgParserTB):
     """
     Test 'Q', 'q', 'T', and 't' commands in SVG path 'd' attribute.
     See more: https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d#quadratic_b%C3%A9zier_curve
-    """
+    """  # noqa: E501
 
     def test_quadratic_bezier_absolute(self):
         d_attr = "M 10 50 Q 25 25 40 50"
@@ -535,7 +535,7 @@ class SvgQuadraticBezierCurveCommandTC(SvgParserTB):
         self.assertEqual(list(cp2d[3][3]), [130, 50, 0])
 
     def test_quadratic_bezier_implicit_curves(self):
-        d_attr = "M 10 50 Q 25 25 40 50 55 75 70 50 q 15 -25 30 0 15 25 30 0 T 160 50 190 50 t 30 0 30 0"
+        d_attr = "M 10 50 Q 25 25 40 50 55 75 70 50 q 15 -25 30 0 15 25 30 0 T 160 50 190 50 t 30 0 30 0"  # noqa: E501
         fill_attr = "none"
         path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
         sp2d = path_element.get_closed_paths()[0]
@@ -610,7 +610,7 @@ class SvgEllipticalArcCurveCommandTC(SvgParserTB):
     """
     Test 'A' and 'a' commands in SVG path 'd' attribute.
     See more: https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d#elliptical_arc_curve
-    """
+    """  # noqa: E501
 
     def test_arc_basic(self):
         d_attr = "M 6 10 A 6 4 10 1 0 14 10 A 6 4 10 0 1 20 10"
@@ -760,7 +760,7 @@ class SvgClosePathCommandTC(SvgParserTB):
     """
     Test 'Z' and 'z' commands in SVG path 'd' attribute.
     See more: https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d#closepath
-    """
+    """  # noqa: E501
 
     def test_close_path_uppercase(self):
         d_attr = "M 10 10 L 20 10 l 10 0 Z"
