@@ -488,6 +488,28 @@ class CubicBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[7][2]), [310, 90, 0])
         self.assertEqual(list(cp2d[7][3]), [330, 90, 0])
 
+    def test_cubic_bezier_point_continuity(self):
+        d_attr = """
+                M 10 90
+                C 30 90 25 10 50 10
+                S 70 90 90 90
+                c 20 0 15 -80 40 -80
+                s 20 80 40 80
+                """
+        fill_attr = "none"
+        path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
+        sp2d = path_element.get_closed_paths()[0]
+        cp2d = path_element.get_closed_paths()[1]
+        self.assertEqual(sp2d.ndim, 2)
+        self.assertEqual(cp2d.ndim, 2)
+        self.assertEqual(len(sp2d), 0)
+        self.assertEqual(len(cp2d), 4)
+
+        for i in range(len(cp2d) - 1):
+            self.assert_allclose(cp2d[i][3][0], cp2d[i + 1][0][0])
+            self.assert_allclose(cp2d[i][3][1], cp2d[i + 1][0][1])
+            self.assert_allclose(cp2d[i][3][2], cp2d[i + 1][0][2])
+
 
 class QuadraticBezierCurveCommandTC(SvgParserBaseTC):
 
@@ -662,6 +684,28 @@ class QuadraticBezierCurveCommandTC(SvgParserBaseTC):
         self.assertEqual(list(cp2d[7][1]), [235, 75, 0])
         self.assertEqual(list(cp2d[7][2]), [250, 50, 0])
         self.assertEqual(list(cp2d[7][3]), [250, 50, 0])
+
+    def test_quadratic_bezier_point_continuity(self):
+        d_attr = """
+                M 10 50
+                Q 25 25 40 50
+                q 15 25 30 0
+                T 100 50
+                t 30 0
+                """
+        fill_attr = "none"
+        path_element = EPath(d_attr=d_attr, fill_attr=fill_attr)
+        sp2d = path_element.get_closed_paths()[0]
+        cp2d = path_element.get_closed_paths()[1]
+        self.assertEqual(sp2d.ndim, 2)
+        self.assertEqual(cp2d.ndim, 2)
+        self.assertEqual(len(sp2d), 0)
+        self.assertEqual(len(cp2d), 4)
+
+        for i in range(len(cp2d) - 1):
+            self.assert_allclose(cp2d[i][2][0], cp2d[i + 1][0][0])
+            self.assert_allclose(cp2d[i][2][1], cp2d[i + 1][0][1])
+            self.assert_allclose(cp2d[i][2][2], cp2d[i + 1][0][2])
 
 
 class EllipticalArcCurveCommandTC(SvgParserBaseTC):
