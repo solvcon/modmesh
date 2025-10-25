@@ -92,18 +92,35 @@ class SVGFileDialog(PilotFeature):
         return found
 
     def _load_svg_file(self, filename):
-        parser = svg.PathParser(filename)
-        parser.parse()
+        path_parser = svg.PathParser(filename)
+        path_parser.parse()
+
+        shape_parser = svg.ShapeParser(filename)
+        shape_parser.parse()
 
         world = core.WorldFp64()
 
-        for spad in parser.spads:
+        for spad in path_parser.spads:
             # mirror with respect to x-axis: (x, y) -> (x, -y)
             spad.y0.ndarray[:] = -spad.y0.ndarray
             spad.y1.ndarray[:] = -spad.y1.ndarray
             world.add_segments(pad=spad)
 
-        for cpad in parser.cpads:
+        for cpad in path_parser.cpads:
+            # mirror with respect to x-axis: (x, y) -> (x, -y)
+            cpad.y0.ndarray[:] = -cpad.y0.ndarray
+            cpad.y1.ndarray[:] = -cpad.y1.ndarray
+            cpad.y2.ndarray[:] = -cpad.y2.ndarray
+            cpad.y3.ndarray[:] = -cpad.y3.ndarray
+            world.add_beziers(pad=cpad)
+
+        for spad in shape_parser.spads:
+            # mirror with respect to x-axis: (x, y) -> (x, -y)
+            spad.y0.ndarray[:] = -spad.y0.ndarray
+            spad.y1.ndarray[:] = -spad.y1.ndarray
+            world.add_segments(pad=spad)
+
+        for cpad in shape_parser.cpads:
             # mirror with respect to x-axis: (x, y) -> (x, -y)
             cpad.y0.ndarray[:] = -cpad.y0.ndarray
             cpad.y1.ndarray[:] = -cpad.y1.ndarray
@@ -117,7 +134,8 @@ class SVGFileDialog(PilotFeature):
 
         # Add the data objects to the appenv for command-line access.
         cae = apputil.get_current_appenv()
-        cae.locals['parser'] = parser
+        cae.locals['path_parser'] = path_parser
+        cae.locals['shape_parser'] = shape_parser
         cae.locals['world'] = world
         cae.locals['widget'] = wid
 
