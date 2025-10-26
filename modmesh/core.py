@@ -131,6 +131,10 @@ list_of_transform = [
 list_of_linalg = [
     'llt_factorization',
     'llt_solve',
+    'KalmanFilterFp32',
+    'KalmanFilterFp64',
+    'KalmanFilterComplex64',
+    'KalmanFilterComplex128',
 ]
 
 # universe directory symbols
