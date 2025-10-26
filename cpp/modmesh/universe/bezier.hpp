@@ -1200,7 +1200,7 @@ public:
     Bezier3d & operator=(Bezier3d &&) = default;
     ~Bezier3d() = default;
 
-#define DECL_VALUE_ACCESSOR(C, I)                    \
+#define DECL_VALUE_ACCESSOR(C, I)                     \
     value_type C##I() const { return m_data.f.C##I; } \
     value_type & C##I() { return m_data.f.C##I; }
     // clang-format off
