@@ -38,8 +38,34 @@ import numpy as np
 from .. import core
 
 __all__ = [  # noqa: F822
-    'PathParser',
+    'SvgParser',
 ]
+
+
+class SvgParser(object):
+    """The SVG parser to extract SegmentPad and CurvePad from SVG file.
+
+    Internally uses PathParser and ShapeParser to parse <path> and
+    shape elements respectively.
+    """
+    def __init__(self, file_path=None):
+        self.file_path = file_path
+        self.spads = []  # list of SegmentPad
+        self.cpads = []  # list of CurvePad
+
+    def parse(self):
+        path_parser = PathParser(file_path=self.file_path)
+        path_parser.parse()
+        self.spads = path_parser.spads
+        self.cpads = path_parser.cpads
+
+        shape_parser = ShapeParser(file_path=self.file_path)
+        shape_parser.parse()
+        self.spads.extend(shape_parser.spads)
+        self.cpads.extend(shape_parser.cpads)
+
+    def get_pads(self):
+        return self.spads, self.cpads
 
 
 class EPath(object):
@@ -438,6 +464,12 @@ class EPath(object):
 
 
 class PathParser(object):
+    """The SVG <path> element parser to extract SegmentPad and CurvePad.
+
+    Parse <path> elements from the SVG file and convert them into
+    SegmentPad and CurvePad objects.
+    See more: https://developer.mozilla.org/en-US/docs/Web/SVG/Element/path
+    """
     def __init__(self, file_path=None):
         self.file_path = file_path
         self.epaths = []  # list of epath
@@ -463,5 +495,305 @@ class PathParser(object):
 
     def get_epaths(self):
         return self.epaths
+
+
+class EShapeBase(object):
+    def __init__(self, fill_attr):
+        self.fill_attr = fill_attr
+        self.spads = []  # list of SegmentPad
+        self.cpads = []  # list of CurvePad
+
+    def _calculate(self):
+        raise NotImplementedError()
+
+    def get_pads(self):
+        return self.spads, self.cpads
+
+
+class ECircle(EShapeBase):
+    def __init__(self, cx, cy, r, fill_attr):
+        super().__init__(fill_attr)
+        self.cx = cx
+        self.cy = cy
+        self.r = r
+
+        self._calculate()
+
+    def _calculate(self):
+        # Use 4 cubic Bézier curves to represent the circle
+        # Magic constant for circular arc approximation: kappa = 4/3 * tan(π/8)
+        # This value minimizes the radial error when approximating
+        # a circular arc with a cubic Bézier curve
+        kappa = 0.5522847498
+
+        cpad = core.CurvePadFp64(ndim=2)
+
+        # Top-right quadrant (0 to 90 degrees)
+        p0 = core.Point3dFp64(self.cx + self.r, self.cy, 0)
+        p1 = core.Point3dFp64(self.cx + self.r,
+                              self.cy + self.r * kappa, 0)
+        p2 = core.Point3dFp64(self.cx + self.r * kappa,
+                              self.cy + self.r, 0)
+        p3 = core.Point3dFp64(self.cx, self.cy + self.r, 0)
+        cpad.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+        # Top-left quadrant (90 to 180 degrees)
+        p0 = core.Point3dFp64(self.cx, self.cy + self.r, 0)
+        p1 = core.Point3dFp64(self.cx - self.r * kappa,
+                              self.cy + self.r, 0)
+        p2 = core.Point3dFp64(self.cx - self.r,
+                              self.cy + self.r * kappa, 0)
+        p3 = core.Point3dFp64(self.cx - self.r, self.cy, 0)
+        cpad.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+        # Bottom-left quadrant (180 to 270 degrees)
+        p0 = core.Point3dFp64(self.cx - self.r, self.cy, 0)
+        p1 = core.Point3dFp64(self.cx - self.r,
+                              self.cy - self.r * kappa, 0)
+        p2 = core.Point3dFp64(self.cx - self.r * kappa,
+                              self.cy - self.r, 0)
+        p3 = core.Point3dFp64(self.cx, self.cy - self.r, 0)
+        cpad.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+        # Bottom-right quadrant (270 to 360 degrees)
+        p0 = core.Point3dFp64(self.cx, self.cy - self.r, 0)
+        p1 = core.Point3dFp64(self.cx + self.r * kappa,
+                              self.cy - self.r, 0)
+        p2 = core.Point3dFp64(self.cx + self.r,
+                              self.cy - self.r * kappa, 0)
+        p3 = core.Point3dFp64(self.cx + self.r, self.cy, 0)
+        cpad.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+        self.cpads.append(cpad)
+
+
+class EEllipse(EShapeBase):
+    def __init__(self, cx, cy, rx, ry, fill_attr):
+        super().__init__(fill_attr)
+        self.cx = cx
+        self.cy = cy
+        self.rx = rx
+        self.ry = ry
+
+        self._calculate()
+
+    def _calculate(self):
+        cpad = core.CurvePadFp64(ndim=2)
+
+        # Top-right quadrant (0 to 90 degrees)
+        p0 = core.Point3dFp64(self.cx + self.rx, self.cy, 0)
+        p1 = core.Point3dFp64(self.cx + self.rx,
+                              self.cy + self.ry * 0.5522847498, 0)
+        p2 = core.Point3dFp64(self.cx + self.rx * 0.5522847498,
+                              self.cy + self.ry, 0)
+        p3 = core.Point3dFp64(self.cx, self.cy + self.ry, 0)
+        cpad.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+        # Top-left quadrant (90 to 180 degrees)
+        p0 = core.Point3dFp64(self.cx, self.cy + self.ry, 0)
+        p1 = core.Point3dFp64(self.cx - self.rx * 0.5522847498,
+                              self.cy + self.ry, 0)
+        p2 = core.Point3dFp64(self.cx - self.rx,
+                              self.cy + self.ry * 0.5522847498, 0)
+        p3 = core.Point3dFp64(self.cx - self.rx, self.cy, 0)
+        cpad.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+        # Bottom-left quadrant (180 to 270 degrees)
+        p0 = core.Point3dFp64(self.cx - self.rx, self.cy, 0)
+        p1 = core.Point3dFp64(self.cx - self.rx,
+                              self.cy - self.ry * 0.5522847498, 0)
+        p2 = core.Point3dFp64(self.cx - self.rx * 0.5522847498,
+                              self.cy - self.ry, 0)
+        p3 = core.Point3dFp64(self.cx, self.cy - self.ry, 0)
+        cpad.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+        # Bottom-right quadrant (270 to 360 degrees)
+        p0 = core.Point3dFp64(self.cx, self.cy - self.ry, 0)
+        p1 = core.Point3dFp64(self.cx + self.rx * 0.5522847498,
+                              self.cy - self.ry, 0)
+        p2 = core.Point3dFp64(self.cx + self.rx,
+                              self.cy - self.ry * 0.5522847498, 0)
+        p3 = core.Point3dFp64(self.cx + self.rx, self.cy, 0)
+        cpad.append(p0=p0, p1=p1, p2=p2, p3=p3)
+
+        self.cpads.append(cpad)
+
+
+class ERectangle(EShapeBase):
+    def __init__(self, x, y, width, height, fill_attr):
+        super().__init__(fill_attr)
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+        self._calculate()
+
+    def _calculate(self):
+        p1 = core.Point3dFp64(self.x, self.y, 0)
+        p2 = core.Point3dFp64(self.x + self.width, self.y, 0)
+        p3 = core.Point3dFp64(self.x + self.width, self.y + self.height, 0)
+        p4 = core.Point3dFp64(self.x, self.y + self.height, 0)
+
+        spad = core.SegmentPadFp64(ndim=2)
+        spad.append(core.Segment3dFp64(p1, p2))
+        spad.append(core.Segment3dFp64(p2, p3))
+        spad.append(core.Segment3dFp64(p3, p4))
+        spad.append(core.Segment3dFp64(p4, p1))
+        self.spads.append(spad)
+
+
+class ELine(EShapeBase):
+    def __init__(self, x1, y1, x2, y2, fill_attr):
+        super().__init__(fill_attr)
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
+
+        self._calculate()
+
+    def _calculate(self):
+        p1 = core.Point3dFp64(self.x1, self.y1, 0)
+        p2 = core.Point3dFp64(self.x2, self.y2, 0)
+
+        spad = core.SegmentPadFp64(ndim=2)
+        spad.append(core.Segment3dFp64(p1, p2))
+        self.spads.append(spad)
+
+
+class EPolyline(EShapeBase):
+    def __init__(self, points, fill_attr):
+        super().__init__(fill_attr)
+        self.points = points  # list of (x, y) tuples
+
+        self._calculate()
+
+    def _calculate(self):
+        spad = core.SegmentPadFp64(ndim=2)
+        for i in range(len(self.points) - 1):
+            x1, y1 = self.points[i]
+            x2, y2 = self.points[i + 1]
+            p1 = core.Point3dFp64(x1, y1, 0)
+            p2 = core.Point3dFp64(x2, y2, 0)
+            spad.append(core.Segment3dFp64(p1, p2))
+        self.spads.append(spad)
+
+
+class EPolygon(EShapeBase):
+    def __init__(self, points, fill_attr):
+        super().__init__(fill_attr)
+        self.points = points  # list of (x, y) tuples
+
+        self._calculate()
+
+    def _calculate(self):
+        spad = core.SegmentPadFp64(ndim=2)
+        num_points = len(self.points)
+        for i in range(num_points):
+            x1, y1 = self.points[i]
+            x2, y2 = self.points[(i + 1) % num_points]  # wrap around
+            p1 = core.Point3dFp64(x1, y1, 0)
+            p2 = core.Point3dFp64(x2, y2, 0)
+            spad.append(core.Segment3dFp64(p1, p2))
+        self.spads.append(spad)
+
+
+class ShapeParser(object):
+    """Parse basic shapes from an SVG file to extract SegmentPad and CurvePad.
+
+    Parses the basic shapes, including <circle>, <rect>, <ellipse>,
+    <line>, <polyline>, and <polygon>, but excludes <path>.
+    See more: https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes
+    """  # noqa: E501
+
+    def __init__(self, file_path=None):
+        self.file_path = file_path
+        self.spads = []  # list of SegmentPad
+        self.cpads = []  # list of CurvePad
+
+    def parse(self):
+        tree = ET.parse(self.file_path)
+        root = tree.getroot()
+
+        namespace = {'svg': 'http://www.w3.org/2000/svg'}
+
+        circleElements = root.findall('.//svg:circle', namespace)
+        rectElements = root.findall('.//svg:rect', namespace)
+        ellipseElements = root.findall('.//svg:ellipse', namespace)
+        lineElements = root.findall('.//svg:line', namespace)
+        polylineElements = root.findall('.//svg:polyline', namespace)
+        polygonElements = root.findall('.//svg:polygon', namespace)
+
+        shapes = []
+        for element in circleElements:
+            circle = ECircle(
+                cx=float(element.attrib.get('cx', '0')),
+                cy=float(element.attrib.get('cy', '0')),
+                r=float(element.attrib.get('r', '0')),
+                fill_attr=element.attrib.get('fill', ''),
+            )
+            shapes.append(circle)
+
+        for element in rectElements:
+            rect = ERectangle(
+                x=float(element.attrib.get('x', '0')),
+                y=float(element.attrib.get('y', '0')),
+                width=float(element.attrib.get('width', '0')),
+                height=float(element.attrib.get('height', '0')),
+                fill_attr=element.attrib.get('fill', ''),
+            )
+            shapes.append(rect)
+
+        for element in ellipseElements:
+            ellipse = EEllipse(
+                cx=float(element.attrib.get('cx', '0')),
+                cy=float(element.attrib.get('cy', '0')),
+                rx=float(element.attrib.get('rx', '0')),
+                ry=float(element.attrib.get('ry', '0')),
+                fill_attr=element.attrib.get('fill', ''),
+            )
+            shapes.append(ellipse)
+
+        for element in lineElements:
+            line = ELine(
+                x1=float(element.attrib.get('x1', '0')),
+                y1=float(element.attrib.get('y1', '0')),
+                x2=float(element.attrib.get('x2', '0')),
+                y2=float(element.attrib.get('y2', '0')),
+                fill_attr=element.attrib.get('fill', ''),
+            )
+            shapes.append(line)
+
+        for element in polylineElements:
+            points_attr = element.attrib.get('points', '')
+            points = []
+
+            # TODO: handle commas and spaces properly. Assume points are in format: "x1,y1 x2,y2 x3,y3 ..."  # noqa: E501
+            for pair in points_attr.strip().split():
+                x_str, y_str = pair.split(',')
+                points.append((float(x_str), float(y_str)))
+
+            polyline = EPolyline(points=points,
+                                 fill_attr=element.attrib.get('fill', ''))
+            shapes.append(polyline)
+
+        for element in polygonElements:
+            points_attr = element.attrib.get('points', '')
+            points = []
+
+            # TODO: handle commas and spaces properly. Assume points are in format: "x1,y1 x2,y2 x3,y3 ..."  # noqa: E501
+            for pair in points_attr.strip().split():
+                x_str, y_str = pair.split(',')
+                points.append((float(x_str), float(y_str)))
+
+            polygon = EPolygon(points=points,
+                               fill_attr=element.attrib.get('fill', ''))
+            shapes.append(polygon)
+
+        for shape in shapes:
+            spad, cpad = shape.get_pads()
+            self.spads.extend(spad)
+            self.cpads.extend(cpad)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
