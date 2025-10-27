@@ -181,13 +181,17 @@ public:
     value_type calc_length2() const { return m_coord[0] * m_coord[0] + m_coord[1] * m_coord[1] + m_coord[2] * m_coord[2]; }
     value_type calc_length() const { return std::sqrt(calc_length2()); }
 
+    void mirror_x() { m_coord[0] = -m_coord[0]; }
+    void mirror_y() { m_coord[1] = -m_coord[1]; }
+    void mirror_z() { m_coord[2] = -m_coord[2]; }
+
     void mirror(Axis axis)
     {
         switch (axis)
         {
-        case Axis::X: m_coord[0] = -m_coord[0]; break;
-        case Axis::Y: m_coord[1] = -m_coord[1]; break;
-        case Axis::Z: m_coord[2] = -m_coord[2]; break;
+        case Axis::X: mirror_x(); break;
+        case Axis::Y: mirror_y(); break;
+        case Axis::Z: mirror_z(); break;
         default: throw std::invalid_argument("Point3d::mirror: invalid axis"); break;
         }
     }
@@ -540,35 +544,42 @@ public:
         }
     }
 
+    void mirror_x()
+    {
+        for (size_t i = 0; i < m_x.size(); ++i)
+        {
+            m_x[i] = -m_x[i];
+        }
+    }
+
+    void mirror_y()
+    {
+        for (size_t i = 0; i < m_y.size(); ++i)
+        {
+            m_y[i] = -m_y[i];
+        }
+    }
+
+    void mirror_z()
+    {
+        if (m_ndim != 3)
+        {
+            throw std::out_of_range(Formatter() << "PointPad::mirror_z: ndim must be 3 but is " << int(m_ndim));
+        }
+        for (size_t i = 0; i < m_z.size(); ++i)
+        {
+            m_z[i] = -m_z[i];
+        }
+    }
+
     void mirror(Axis axis)
     {
         switch (axis)
         {
-        case Axis::X:
-            for (size_t i = 0; i < m_x.size(); ++i)
-            {
-                m_x[i] = -m_x[i];
-            }
-            break;
-        case Axis::Y:
-            for (size_t i = 0; i < m_y.size(); ++i)
-            {
-                m_y[i] = -m_y[i];
-            }
-            break;
-        case Axis::Z:
-            if (m_ndim != 3)
-            {
-                throw std::out_of_range(Formatter() << "PointPad::mirror: ndim must be 3 but is " << int(m_ndim));
-            }
-            for (size_t i = 0; i < m_z.size(); ++i)
-            {
-                m_z[i] = -m_z[i];
-            }
-            break;
-        default:
-            throw std::invalid_argument("PointPad::mirror: invalid axis");
-            break;
+        case Axis::X: mirror_x(); break;
+        case Axis::Y: mirror_y(); break;
+        case Axis::Z: mirror_z(); break;
+        default: throw std::invalid_argument("PointPad::mirror: invalid axis"); break;
         }
     }
 
@@ -701,25 +712,32 @@ public:
 
     size_t size() const { return 2; }
 
+    void mirror_x()
+    {
+        m_data.f.x0 = -m_data.f.x0;
+        m_data.f.x1 = -m_data.f.x1;
+    }
+
+    void mirror_y()
+    {
+        m_data.f.y0 = -m_data.f.y0;
+        m_data.f.y1 = -m_data.f.y1;
+    }
+
+    void mirror_z()
+    {
+        m_data.f.z0 = -m_data.f.z0;
+        m_data.f.z1 = -m_data.f.z1;
+    }
+
     void mirror(Axis axis)
     {
         switch (axis)
         {
-        case Axis::X:
-            m_data.f.x0 = -m_data.f.x0;
-            m_data.f.x1 = -m_data.f.x1;
-            break;
-        case Axis::Y:
-            m_data.f.y0 = -m_data.f.y0;
-            m_data.f.y1 = -m_data.f.y1;
-            break;
-        case Axis::Z:
-            m_data.f.z0 = -m_data.f.z0;
-            m_data.f.z1 = -m_data.f.z1;
-            break;
-        default:
-            throw std::invalid_argument("Segment3d::mirror: invalid axis");
-            break;
+        case Axis::X: mirror_x(); break;
+        case Axis::Y: mirror_y(); break;
+        case Axis::Z: mirror_z(); break;
+        default: throw std::invalid_argument("Segment3d::mirror: invalid axis"); break;
         }
     }
 
@@ -1098,33 +1116,49 @@ public:
         }
     }
 
-    void mirror(Axis axis)
+    void mirror_x()
     {
         size_t const nseg = size();
         for (size_t i = 0; i < nseg; ++i)
         {
-            switch (axis)
-            {
-            case Axis::X:
-                x0(i) = -x0(i);
-                x1(i) = -x1(i);
-                break;
-            case Axis::Y:
-                y0(i) = -y0(i);
-                y1(i) = -y1(i);
-                break;
-            case Axis::Z:
-                if (ndim() != 3)
-                {
-                    throw std::out_of_range(
-                        Formatter() << "SegmentPad::mirror: cannot mirror Z axis for ndim " << int(ndim()));
-                }
-                z0(i) = -z0(i);
-                z1(i) = -z1(i);
-                break;
-            default:
-                throw std::invalid_argument(Formatter() << "SegmentPad::mirror: invalid axis " << int(axis));
-            }
+            x0(i) = -x0(i);
+            x1(i) = -x1(i);
+        }
+    }
+
+    void mirror_y()
+    {
+        size_t const nseg = size();
+        for (size_t i = 0; i < nseg; ++i)
+        {
+            y0(i) = -y0(i);
+            y1(i) = -y1(i);
+        }
+    }
+
+    void mirror_z()
+    {
+        if (ndim() != 3)
+        {
+            throw std::out_of_range(
+                Formatter() << "SegmentPad::mirror_z: cannot mirror Z axis for ndim " << int(ndim()));
+        }
+        size_t const nseg = size();
+        for (size_t i = 0; i < nseg; ++i)
+        {
+            z0(i) = -z0(i);
+            z1(i) = -z1(i);
+        }
+    }
+
+    void mirror(Axis axis)
+    {
+        switch (axis)
+        {
+        case Axis::X: mirror_x(); break;
+        case Axis::Y: mirror_y(); break;
+        case Axis::Z: mirror_z(); break;
+        default: throw std::invalid_argument("SegmentPad::mirror: invalid axis"); break;
         }
     }
 
@@ -1237,30 +1271,38 @@ public:
 
     std::shared_ptr<SegmentPad<T>> sample(size_t nlocus) const;
 
+    void mirror_x()
+    {
+        x0() = -x0();
+        x1() = -x1();
+        x2() = -x2();
+        x3() = -x3();
+    }
+
+    void mirror_y()
+    {
+        y0() = -y0();
+        y1() = -y1();
+        y2() = -y2();
+        y3() = -y3();
+    }
+
+    void mirror_z()
+    {
+        z0() = -z0();
+        z1() = -z1();
+        z2() = -z2();
+        z3() = -z3();
+    }
+
     void mirror(Axis axis)
     {
         switch (axis)
         {
-        case Axis::X:
-            x0() = -x0();
-            x1() = -x1();
-            x2() = -x2();
-            x3() = -x3();
-            break;
-        case Axis::Y:
-            y0() = -y0();
-            y1() = -y1();
-            y2() = -y2();
-            y3() = -y3();
-            break;
-        case Axis::Z:
-            z0() = -z0();
-            z1() = -z1();
-            z2() = -z2();
-            z3() = -z3();
-            break;
-        default:
-            throw std::invalid_argument(Formatter() << "Bezier3d::mirror: invalid axis " << int(axis));
+        case Axis::X: mirror_x(); break;
+        case Axis::Y: mirror_y(); break;
+        case Axis::Z: mirror_z(); break;
+        default: throw std::invalid_argument("Bezier3d::mirror: invalid axis"); break;
         }
     }
 
@@ -1485,12 +1527,39 @@ public:
 
     std::shared_ptr<SegmentPad<T>> sample(value_type length) const;
 
+    void mirror_x()
+    {
+        m_p0->mirror_x();
+        m_p1->mirror_x();
+        m_p2->mirror_x();
+        m_p3->mirror_x();
+    }
+
+    void mirror_y()
+    {
+        m_p0->mirror_y();
+        m_p1->mirror_y();
+        m_p2->mirror_y();
+        m_p3->mirror_y();
+    }
+
+    void mirror_z()
+    {
+        m_p0->mirror_z();
+        m_p1->mirror_z();
+        m_p2->mirror_z();
+        m_p3->mirror_z();
+    }
+
     void mirror(Axis axis)
     {
-        m_p0->mirror(axis);
-        m_p1->mirror(axis);
-        m_p2->mirror(axis);
-        m_p3->mirror(axis);
+        switch (axis)
+        {
+        case Axis::X: mirror_x(); break;
+        case Axis::Y: mirror_y(); break;
+        case Axis::Z: mirror_z(); break;
+        default: throw std::invalid_argument("CurvePad::mirror: invalid axis"); break;
+        }
     }
 
 private:
