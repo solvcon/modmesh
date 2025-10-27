@@ -1,0 +1,23 @@
+<!--
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Original source: https://dev.w3.org/SVG/tools/svgweb/samples/svg-files/
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <g fill="#F00" stroke="#3b5998" stroke-width="4">
+    <path d="M28,6h44v16l-22,21l-22-21z" fill="#6d84b4"/>
+    <path d="M28,95h44v-16l-22-21l-22,21z" fill="#6d84b4"/>
+    <path d="M6,30v42h15l21-21l-21-21z" fill="#afbfde"/>
+    <path d="M95,30v42h-15l-21-21l21-21z" fill="#afbfde"/>
+  </g>
+</svg>
