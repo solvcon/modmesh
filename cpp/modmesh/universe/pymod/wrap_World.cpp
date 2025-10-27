@@ -118,6 +118,32 @@ WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const c
        ;
 #undef DECL_WRAP
     // clang-format on
+
+    (*this)
+        .def(
+            "mirror",
+            [](wrapped_type & self, std::string const & axis)
+            {
+                if (axis == "x" || axis == "X")
+                {
+                    self.mirror(Axis::X);
+                }
+                else if (axis == "y" || axis == "Y")
+                {
+                    self.mirror(Axis::Y);
+                }
+                else if (axis == "z" || axis == "Z")
+                {
+                    self.mirror(Axis::Z);
+                }
+                else
+                {
+                    throw std::invalid_argument("Point3d::mirror: axis must be 'x', 'y', or 'z'");
+                }
+            },
+            py::arg("axis"))
+        //
+        ;
 }
 
 template <typename T>
@@ -256,6 +282,32 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
         ;
 #undef DECL_WRAP
     // clang-format on
+
+    (*this)
+        .def(
+            "mirror",
+            [](wrapped_type & self, std::string const & axis)
+            {
+                if (axis == "x" || axis == "X")
+                {
+                    self.mirror(Axis::X);
+                }
+                else if (axis == "y" || axis == "Y")
+                {
+                    self.mirror(Axis::Y);
+                }
+                else if (axis == "z" || axis == "Z")
+                {
+                    self.mirror(Axis::Z);
+                }
+                else
+                {
+                    throw std::invalid_argument("PointPad::mirror: axis must be 'x', 'y', or 'z'");
+                }
+            },
+            py::arg("axis"))
+        //
+        ;
 }
 
 template <typename T>
@@ -358,6 +410,32 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
     (*this)
         .def(py::self == py::self) // NOLINT(misc-redundant-expression)
         .def(py::self != py::self) // NOLINT(misc-redundant-expression)
+        //
+        ;
+
+    (*this)
+        .def(
+            "mirror",
+            [](wrapped_type & self, std::string const & axis)
+            {
+                if (axis == "x" || axis == "X")
+                {
+                    self.mirror(Axis::X);
+                }
+                else if (axis == "y" || axis == "Y")
+                {
+                    self.mirror(Axis::Y);
+                }
+                else if (axis == "z" || axis == "Z")
+                {
+                    self.mirror(Axis::Z);
+                }
+                else
+                {
+                    throw std::invalid_argument("Segment3d::mirror: axis must be 'x', 'y', or 'z'");
+                }
+            },
+            py::arg("axis"))
         //
         ;
 }
@@ -559,6 +637,32 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
         ;
 #undef DECL_WRAP
     // clang-format on
+
+    (*this)
+        .def(
+            "mirror",
+            [](wrapped_type & self, std::string const & axis)
+            {
+                if (axis == "x" || axis == "X")
+                {
+                    self.mirror(Axis::X);
+                }
+                else if (axis == "y" || axis == "Y")
+                {
+                    self.mirror(Axis::Y);
+                }
+                else if (axis == "z" || axis == "Z")
+                {
+                    self.mirror(Axis::Z);
+                }
+                else
+                {
+                    throw std::invalid_argument("SegmentPad::mirror: axis must be 'x', 'y', or 'z'");
+                }
+            },
+            py::arg("axis"))
+        //
+        ;
 }
 
 template <typename T>
@@ -646,6 +750,32 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
     // Sampling
     (*this)
         .def("sample", &wrapped_type::sample, py::arg("nlocus"))
+        //
+        ;
+
+    (*this)
+        .def(
+            "mirror",
+            [](wrapped_type & self, std::string const & axis)
+            {
+                if (axis == "x" || axis == "X")
+                {
+                    self.mirror(Axis::X);
+                }
+                else if (axis == "y" || axis == "Y")
+                {
+                    self.mirror(Axis::Y);
+                }
+                else if (axis == "z" || axis == "Z")
+                {
+                    self.mirror(Axis::Z);
+                }
+                else
+                {
+                    throw std::invalid_argument("Bezier3d::mirror: axis must be 'x', 'y', or 'z'");
+                }
+            },
+            py::arg("axis"))
         //
         ;
 }
@@ -779,6 +909,32 @@ WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const
         ;
 #undef DECL_WRAP
     // clang-format on
+
+    (*this)
+        .def(
+            "mirror",
+            [](wrapped_type & self, std::string const & axis)
+            {
+                if (axis == "x" || axis == "X")
+                {
+                    self.mirror(Axis::X);
+                }
+                else if (axis == "y" || axis == "Y")
+                {
+                    self.mirror(Axis::Y);
+                }
+                else if (axis == "z" || axis == "Z")
+                {
+                    self.mirror(Axis::Z);
+                }
+                else
+                {
+                    throw std::invalid_argument("CurvePad::mirror: axis must be 'x', 'y', or 'z'");
+                }
+            },
+            py::arg("axis"))
+        //
+        ;
 }
 
 template <typename T>
