@@ -99,11 +99,13 @@ class SVGFileDialog(PilotFeature):
         world = core.WorldFp64()
 
         for spad in spads:
-            spad.mirror(axis='y')  # Flip Y axis for GUI coordinate system
+            # Flip against the X axis for GUI coordinate system
+            spad.mirror(axis='x')
             world.add_segments(pad=spad)
 
         for cpad in cpads:
-            cpad.mirror(axis='y')  # Flip Y axis for GUI coordinate system
+            # Flip against the X axis for GUI coordinate system
+            cpad.mirror(axis='x')
             world.add_beziers(pad=cpad)
 
         wid = self._mgr.add3DWidget()
