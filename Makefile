@@ -183,8 +183,12 @@ cinclude: $(CFFILES)
 flake8:
 	cmake --build $(BUILD_PATH) --target $@
 
+.PHONY: checkascii
+checkascii:
+	$(WHICH_PYTHON) contrib/lint/check_ascii.py
+
 .PHONY: lint
-lint: cformat cinclude flake8
+lint: cformat cinclude flake8 checkascii
 
 .PHONY: clean
 clean:

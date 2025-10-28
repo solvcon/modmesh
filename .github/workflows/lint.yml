@@ -154,6 +154,9 @@ jobs:
     - name: make cinclude (check_include)
       run: make cinclude
 
+    - name: make checkascii (check ASCII-only characters)
+      run: make checkascii
+
     - name: make pilot
       run: |
         make pilot \
@@ -285,6 +288,9 @@ jobs:
 
       - name: make cinclude (check_include)
         run: make cinclude
+
+      - name: make checkascii (check ASCII-only characters)
+        run: make checkascii
 
       - name: make pilot USE_PYTEST_HELPER_BINDING=OFF
         run: |

@@ -795,7 +795,7 @@ detail::SimpleArrayMixinCalculators<A, T>::median_op(small_vector<value_type> & 
 /**
  * Calculate median using frequency counting for small data types.
  * This algorithm is optimized for uint8_t, int8_t, and bool types where
- * the range of possible values is small (≤256). Instead of sorting,
+ * the range of possible values is small (<=256). Instead of sorting,
  * it counts the frequency of each value and finds the median position.
  *
  * Algorithm:
@@ -856,7 +856,7 @@ detail::SimpleArrayMixinCalculators<A, T>::median_freq(small_vector<value_type> 
 
 /**
  * Perform matrix multiplication for 2D arrays.
- * This implementation supports only 2D × 2D matrix multiplication.
+ * This implementation supports only 2D x 2D matrix multiplication.
  */
 template <typename A, typename T>
 A SimpleArrayMixinCalculators<A, T>::matmul(A const & other) const
@@ -923,7 +923,7 @@ A SimpleArrayMixinCalculators<A, T>::matmul(A const & other) const
 
 /**
  * Perform in-place matrix multiplication for 2D arrays.
- * This implementation supports only 2D × 2D matrix multiplication.
+ * This implementation supports only 2D x 2D matrix multiplication.
  * The result replaces the content of the current array.
  */
 template <typename A, typename T>
