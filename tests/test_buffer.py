@@ -886,8 +886,8 @@ class SimpleArrayBasicTC(unittest.TestCase):
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             [10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
             [1, 5, 10, 2, 6, 9, 7, 8, 4, 3],
-            [1,  0,  1, -3, -4, -1,  1,  9,  5, -4],
-            [-1.3, -4.8,  1.5,  0.3,  7.1,  2.5,  4.8, -0.1,  9.4,  7.6]
+            [1, 0, 1, -3, -4, -1, 1, 9, 5, -4],
+            [-1.3, -4.8, 1.5, 0.3, 7.1, 2.5, 4.8, -0.1, 9.4, 7.6]
         ]
 
         def _check(arr, use_float=False):
@@ -1038,7 +1038,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         self.assertEqual(npmed.imag, smed.imag)
 
         # Reference: https://github.com/numpy/numpy/issues/12943
-        nparr = np.array([1+10j, 2+1j, 3+0j, 0+3j], dtype='complex128')
+        nparr = np.array([1 + 10j, 2 + 1j, 3 + 0j, 0 + 3j], dtype='complex128')
         sarr = modmesh.SimpleArrayComplex128(array=nparr)
         npmed = np.median(nparr)
         smed = sarr.median()
@@ -2207,5 +2207,105 @@ class SimpleCollectorTC(unittest.TestCase):
         self.assertEqual(20, ct.capacity)  # double capacity but not power of 2
         self.assertEqual(11, len(ct))
         self.assertEqual(ct[10], 3.14159 * 4)
+
+    def test_alignment_validation(self):
+        # Valid alignments: 0, 16, 32, 64
+        ct = modmesh.SimpleCollectorFloat64(16, 16)
+        self.assertEqual(16, ct.alignment)
+
+        ct = modmesh.SimpleCollectorFloat64(32, 32)
+        self.assertEqual(32, ct.alignment)
+
+        ct = modmesh.SimpleCollectorFloat64(64, 64)
+        self.assertEqual(64, ct.alignment)
+
+        ct = modmesh.SimpleCollectorFloat64(16, 0)
+        self.assertEqual(0, ct.alignment)
+
+        # Invalid alignments
+        with self.assertRaisesRegex(
+                ValueError,
+                "BufferExpander: alignment must be 0, 16, 32, or 64, but got 8"
+        ):
+            modmesh.SimpleCollectorFloat64(16, 8)
+
+        with self.assertRaisesRegex(
+                ValueError,
+                "BufferExpander: alignment must be 0, 16, 32, or 64, but got 128"  # noqa E501
+        ):
+            modmesh.SimpleCollectorFloat64(128, 128)
+
+    def test_alignment_size_validation(self):
+        # Size must be a multiple of alignment
+        ct = modmesh.SimpleCollectorFloat64(0, 16)
+        self.assertEqual(16, ct.alignment)
+
+        ct = modmesh.SimpleCollectorFloat64(16, 16)
+        self.assertEqual(16, len(ct))
+
+        ct = modmesh.SimpleCollectorFloat64(32, 16)
+        self.assertEqual(32, len(ct))
+
+        ct = modmesh.SimpleCollectorFloat64(64, 32)
+        self.assertEqual(64, len(ct))
+
+        # Invalid sizes (not multiple of alignment)
+        with self.assertRaisesRegex(
+                ValueError,
+                "BufferExpander: size .* must be a multiple of alignment 16"
+        ):
+            modmesh.SimpleCollectorFloat64(17, 16)
+
+        with self.assertRaisesRegex(
+                ValueError,
+                "BufferExpander: size .* must be a multiple of alignment 32"
+        ):
+            modmesh.SimpleCollectorFloat64(31, 32)
+
+    def test_alignment_with_reserve(self):
+        # Test that reserve maintains alignment
+        ct = modmesh.SimpleCollectorFloat64(16, 16)
+        self.assertEqual(16, ct.capacity)
+
+        # Reserve with aligned size
+        ct.reserve(32)
+        self.assertEqual(32, ct.capacity)
+
+        # Verify alignment is maintained
+        self.assertEqual(16, ct.alignment)
+
+        # Reserve with non-aligned size should fail
+        with self.assertRaisesRegex(
+                ValueError,
+                "BufferExpander: size .* must be a multiple of alignment 16"
+        ):
+            ct.reserve(33)
+
+        ct = modmesh.SimpleCollectorFloat64(0, 32)  # start from 0 capacity
+        self.assertEqual(0, ct.capacity)
+        self.assertEqual(32, ct.alignment)
+        ct.reserve(64)
+        self.assertEqual(64, ct.capacity)
+
+    def test_alignment_with_push_back(self):
+        # Test that push_back works with alignment
+        ct = modmesh.SimpleCollectorFloat64(16, 16)
+        self.assertEqual(16, len(ct))
+        self.assertEqual(16, ct.capacity)
+
+        # Push back should expand with aligned size
+        ct.push_back(3.14159)
+        self.assertEqual(17, len(ct))
+        # Capacity should be doubled and remain aligned (32 elements = 256 bytes aligned to 16)  # noqa E501
+        self.assertEqual(32, ct.capacity)
+
+        # Verify alignment is maintained
+        self.assertEqual(16, ct.alignment)
+
+    def test_alignment_with_simd_operations(self):
+        # TODO: implement tests for SIMD operations if applicable.
+        # It requires more effort on `as_array` and ConcreteBuffer side.
+        # See more: https://github.com/solvcon/modmesh/issues/620
+        pass
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
