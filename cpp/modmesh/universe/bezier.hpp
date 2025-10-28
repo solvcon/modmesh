@@ -181,9 +181,21 @@ public:
     value_type calc_length2() const { return m_coord[0] * m_coord[0] + m_coord[1] * m_coord[1] + m_coord[2] * m_coord[2]; }
     value_type calc_length() const { return std::sqrt(calc_length2()); }
 
-    void mirror_x() { m_coord[0] = -m_coord[0]; }
-    void mirror_y() { m_coord[1] = -m_coord[1]; }
-    void mirror_z() { m_coord[2] = -m_coord[2]; }
+    void mirror_x()
+    {
+        m_coord[1] = -m_coord[1];
+        m_coord[2] = -m_coord[2];
+    }
+    void mirror_y()
+    {
+        m_coord[0] = -m_coord[0];
+        m_coord[2] = -m_coord[2];
+    }
+    void mirror_z()
+    {
+        m_coord[0] = -m_coord[0];
+        m_coord[1] = -m_coord[1];
+    }
 
     void mirror(Axis axis)
     {
@@ -546,17 +558,31 @@ public:
 
     void mirror_x()
     {
-        for (size_t i = 0; i < m_x.size(); ++i)
+        for (size_t i = 0; i < m_y.size(); ++i)
         {
-            m_x[i] = -m_x[i];
+            m_y[i] = -m_y[i];
+        }
+        if (m_ndim == 3)
+        {
+            for (size_t i = 0; i < m_z.size(); ++i)
+            {
+                m_z[i] = -m_z[i];
+            }
         }
     }
 
     void mirror_y()
     {
-        for (size_t i = 0; i < m_y.size(); ++i)
+        for (size_t i = 0; i < m_x.size(); ++i)
         {
-            m_y[i] = -m_y[i];
+            m_x[i] = -m_x[i];
+        }
+        if (m_ndim == 3)
+        {
+            for (size_t i = 0; i < m_z.size(); ++i)
+            {
+                m_z[i] = -m_z[i];
+            }
         }
     }
 
@@ -566,9 +592,13 @@ public:
         {
             throw std::out_of_range(Formatter() << "PointPad::mirror_z: ndim must be 3 but is " << int(m_ndim));
         }
-        for (size_t i = 0; i < m_z.size(); ++i)
+        for (size_t i = 0; i < m_x.size(); ++i)
         {
-            m_z[i] = -m_z[i];
+            m_x[i] = -m_x[i];
+        }
+        for (size_t i = 0; i < m_y.size(); ++i)
+        {
+            m_y[i] = -m_y[i];
         }
     }
 
@@ -714,20 +744,26 @@ public:
 
     void mirror_x()
     {
-        m_data.f.x0 = -m_data.f.x0;
-        m_data.f.x1 = -m_data.f.x1;
+        m_data.f.y0 = -m_data.f.y0;
+        m_data.f.y1 = -m_data.f.y1;
+        m_data.f.z0 = -m_data.f.z0;
+        m_data.f.z1 = -m_data.f.z1;
     }
 
     void mirror_y()
     {
-        m_data.f.y0 = -m_data.f.y0;
-        m_data.f.y1 = -m_data.f.y1;
+        m_data.f.x0 = -m_data.f.x0;
+        m_data.f.x1 = -m_data.f.x1;
+        m_data.f.z0 = -m_data.f.z0;
+        m_data.f.z1 = -m_data.f.z1;
     }
 
     void mirror_z()
     {
-        m_data.f.z0 = -m_data.f.z0;
-        m_data.f.z1 = -m_data.f.z1;
+        m_data.f.x0 = -m_data.f.x0;
+        m_data.f.x1 = -m_data.f.x1;
+        m_data.f.y0 = -m_data.f.y0;
+        m_data.f.y1 = -m_data.f.y1;
     }
 
     void mirror(Axis axis)
@@ -1121,8 +1157,13 @@ public:
         size_t const nseg = size();
         for (size_t i = 0; i < nseg; ++i)
         {
-            x0(i) = -x0(i);
-            x1(i) = -x1(i);
+            y0(i) = -y0(i);
+            y1(i) = -y1(i);
+            if (ndim() == 3)
+            {
+                z0(i) = -z0(i);
+                z1(i) = -z1(i);
+            }
         }
     }
 
@@ -1131,8 +1172,13 @@ public:
         size_t const nseg = size();
         for (size_t i = 0; i < nseg; ++i)
         {
-            y0(i) = -y0(i);
-            y1(i) = -y1(i);
+            x0(i) = -x0(i);
+            x1(i) = -x1(i);
+            if (ndim() == 3)
+            {
+                z0(i) = -z0(i);
+                z1(i) = -z1(i);
+            }
         }
     }
 
@@ -1146,8 +1192,10 @@ public:
         size_t const nseg = size();
         for (size_t i = 0; i < nseg; ++i)
         {
-            z0(i) = -z0(i);
-            z1(i) = -z1(i);
+            x0(i) = -x0(i);
+            x1(i) = -x1(i);
+            y0(i) = -y0(i);
+            y1(i) = -y1(i);
         }
     }
 
@@ -1273,26 +1321,38 @@ public:
 
     void mirror_x()
     {
-        x0() = -x0();
-        x1() = -x1();
-        x2() = -x2();
-        x3() = -x3();
-    }
-
-    void mirror_y()
-    {
         y0() = -y0();
         y1() = -y1();
         y2() = -y2();
         y3() = -y3();
-    }
-
-    void mirror_z()
-    {
         z0() = -z0();
         z1() = -z1();
         z2() = -z2();
         z3() = -z3();
+    }
+
+    void mirror_y()
+    {
+        x0() = -x0();
+        x1() = -x1();
+        x2() = -x2();
+        x3() = -x3();
+        z0() = -z0();
+        z1() = -z1();
+        z2() = -z2();
+        z3() = -z3();
+    }
+
+    void mirror_z()
+    {
+        x0() = -x0();
+        x1() = -x1();
+        x2() = -x2();
+        x3() = -x3();
+        y0() = -y0();
+        y1() = -y1();
+        y2() = -y2();
+        y3() = -y3();
     }
 
     void mirror(Axis axis)

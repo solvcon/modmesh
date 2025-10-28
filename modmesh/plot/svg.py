@@ -43,7 +43,8 @@ __all__ = [  # noqa: F822
 
 
 class SvgParser(object):
-    """The SVG parser to extract SegmentPad and CurvePad from SVG file.
+    """
+    The SVG parser to extract SegmentPad and CurvePad from SVG file.
 
     Internally uses PathParser and ShapeParser to parse <path> and
     shape elements respectively.
@@ -464,7 +465,8 @@ class EPath(object):
 
 
 class PathParser(object):
-    """The SVG <path> element parser to extract SegmentPad and CurvePad.
+    """
+    The SVG <path> element parser to extract SegmentPad and CurvePad.
 
     Parse <path> elements from the SVG file and convert them into
     SegmentPad and CurvePad objects.
@@ -700,7 +702,8 @@ class EPolygon(EShapeBase):
 
 
 class ShapeParser(object):
-    """Parse basic shapes from an SVG file to extract SegmentPad and CurvePad.
+    """
+    Parse basic shapes from an SVG file to extract SegmentPad and CurvePad.
 
     Parses the basic shapes, including <circle>, <rect>, <ellipse>,
     <line>, <polyline>, and <polygon>, but excludes <path>.

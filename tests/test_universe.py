@@ -220,19 +220,19 @@ class Point3dTB(ModMeshTB):
 
         p1 = Point(1, 2, 3)
         p1.mirror(axis='x')
-        self.assertEqual(list(p1), [-1, 2, 3])
+        self.assertEqual(list(p1), [1, -2, -3])
 
         p2 = Point(1, 2, 3)
         p2.mirror('y')
-        self.assertEqual(list(p2), [1, -2, 3])
+        self.assertEqual(list(p2), [-1, 2, -3])
 
         p3 = Point(1, 2, 3)
         p3.mirror('z')
-        self.assertEqual(list(p3), [1, 2, -3])
+        self.assertEqual(list(p3), [-1, -2, 3])
 
         p4 = Point(1, 2, 3)
         p4.mirror('X')
-        self.assertEqual(list(p4), [-1, 2, 3])
+        self.assertEqual(list(p4), [1, -2, -3])
 
         with self.assertRaisesRegex(
                 ValueError, "Point3d::mirror: axis must be 'x', 'y', or 'z'"):
@@ -319,23 +319,23 @@ class Segment3dTB(ModMeshTB):
 
         s1 = Segment(Point(1, 2, 3), Point(4, 5, 6))
         s1.mirror('x')
-        self.assertEqual(list(s1.p0), [-1, 2, 3])
-        self.assertEqual(list(s1.p1), [-4, 5, 6])
+        self.assertEqual(list(s1.p0), [1, -2, -3])
+        self.assertEqual(list(s1.p1), [4, -5, -6])
 
         s2 = Segment(Point(1, 2, 3), Point(4, 5, 6))
         s2.mirror('y')
-        self.assertEqual(list(s2.p0), [1, -2, 3])
-        self.assertEqual(list(s2.p1), [4, -5, 6])
+        self.assertEqual(list(s2.p0), [-1, 2, -3])
+        self.assertEqual(list(s2.p1), [-4, 5, -6])
 
         s3 = Segment(Point(1, 2, 3), Point(4, 5, 6))
         s3.mirror('z')
-        self.assertEqual(list(s3.p0), [1, 2, -3])
-        self.assertEqual(list(s3.p1), [4, 5, -6])
+        self.assertEqual(list(s3.p0), [-1, -2, 3])
+        self.assertEqual(list(s3.p1), [-4, -5, 6])
 
         s4 = Segment(Point(1, 2, 3), Point(4, 5, 6))
         s4.mirror('Y')
-        self.assertEqual(list(s4.p0), [1, -2, 3])
-        self.assertEqual(list(s4.p1), [4, -5, 6])
+        self.assertEqual(list(s4.p0), [-1, 2, -3])
+        self.assertEqual(list(s4.p1), [-4, 5, -6])
 
         with self.assertRaisesRegex(
                 ValueError,
@@ -463,30 +463,30 @@ class Bezier3dTB(ModMeshTB):
                     Point(3, 1, 0), Point(4, 0, 0))
         b1.mirror('x')
         self.assertEqual(list(b1[0]), [0, 0, 0])
-        self.assertEqual(list(b1[1]), [-1, 1, 0])
-        self.assertEqual(list(b1[2]), [-3, 1, 0])
-        self.assertEqual(list(b1[3]), [-4, 0, 0])
+        self.assertEqual(list(b1[1]), [1, -1, 0])
+        self.assertEqual(list(b1[2]), [3, -1, 0])
+        self.assertEqual(list(b1[3]), [4, 0, 0])
 
         b2 = Bezier(Point(0, 0, 0), Point(1, 1, 0),
                     Point(3, 1, 0), Point(4, 0, 0))
         b2.mirror('y')
         self.assertEqual(list(b2[0]), [0, 0, 0])
-        self.assertEqual(list(b2[1]), [1, -1, 0])
-        self.assertEqual(list(b2[2]), [3, -1, 0])
-        self.assertEqual(list(b2[3]), [4, 0, 0])
+        self.assertEqual(list(b2[1]), [-1, 1, 0])
+        self.assertEqual(list(b2[2]), [-3, 1, 0])
+        self.assertEqual(list(b2[3]), [-4, 0, 0])
 
         b3 = Bezier(Point(1, 2, 3), Point(4, 5, 6),
                     Point(7, 8, 9), Point(10, 11, 12))
         b3.mirror('z')
-        self.assertEqual(list(b3[0]), [1, 2, -3])
-        self.assertEqual(list(b3[1]), [4, 5, -6])
-        self.assertEqual(list(b3[2]), [7, 8, -9])
-        self.assertEqual(list(b3[3]), [10, 11, -12])
+        self.assertEqual(list(b3[0]), [-1, -2, 3])
+        self.assertEqual(list(b3[1]), [-4, -5, 6])
+        self.assertEqual(list(b3[2]), [-7, -8, 9])
+        self.assertEqual(list(b3[3]), [-10, -11, 12])
 
         b4 = Bezier(Point(1, 2, 3), Point(4, 5, 6),
                     Point(7, 8, 9), Point(10, 11, 12))
         b4.mirror('Z')
-        self.assertEqual(list(b4[0]), [1, 2, -3])
+        self.assertEqual(list(b4[0]), [-1, -2, 3])
 
         with self.assertRaisesRegex(
                 ValueError,
@@ -762,10 +762,10 @@ class PointPadTB(ModMeshTB):
         pp.append(5.0, 6.0)
 
         pp.mirror('x')
-        self.assert_allclose(pp.x_at(0), -1.0)
-        self.assert_allclose(pp.y_at(0), 2.0)
-        self.assert_allclose(pp.x_at(1), -3.0)
-        self.assert_allclose(pp.y_at(1), 4.0)
+        self.assert_allclose(pp.x_at(0), 1.0)
+        self.assert_allclose(pp.y_at(0), -2.0)
+        self.assert_allclose(pp.x_at(1), 3.0)
+        self.assert_allclose(pp.y_at(1), -4.0)
 
         pp.mirror('y')
         self.assert_allclose(pp.x_at(0), -1.0)
@@ -781,12 +781,20 @@ class PointPadTB(ModMeshTB):
         pp.append(4.0, 5.0, 6.0)
 
         pp.mirror('z')
-        self.assert_allclose(pp.z_at(0), -3.0)
-        self.assert_allclose(pp.z_at(1), -6.0)
+        self.assert_allclose(pp.x_at(0), -1.0)
+        self.assert_allclose(pp.y_at(0), -2.0)
+        self.assert_allclose(pp.z_at(0), 3.0)
+        self.assert_allclose(pp.x_at(1), -4.0)
+        self.assert_allclose(pp.y_at(1), -5.0)
+        self.assert_allclose(pp.z_at(1), 6.0)
 
         pp.mirror('X')
         self.assert_allclose(pp.x_at(0), -1.0)
+        self.assert_allclose(pp.y_at(0), 2.0)
+        self.assert_allclose(pp.z_at(0), -3.0)
         self.assert_allclose(pp.x_at(1), -4.0)
+        self.assert_allclose(pp.y_at(1), 5.0)
+        self.assert_allclose(pp.z_at(1), -6.0)
 
         with self.assertRaisesRegex(
                 ValueError, "PointPad::mirror: axis must be 'x', 'y', or 'z'"):
@@ -1128,15 +1136,23 @@ class SegmentPadTB(ModMeshTB):
         sp.append(5.0, 6.0, 7.0, 8.0)
 
         sp.mirror('x')
-        self.assert_allclose(sp.x0_at(0), -1.0)
-        self.assert_allclose(sp.x1_at(0), -3.0)
-        self.assert_allclose(sp.x0_at(1), -5.0)
-        self.assert_allclose(sp.x1_at(1), -7.0)
+        self.assert_allclose(sp.x0_at(0), 1.0)
+        self.assert_allclose(sp.y0_at(0), -2.0)
+        self.assert_allclose(sp.x1_at(0), 3.0)
+        self.assert_allclose(sp.y1_at(0), -4.0)
+        self.assert_allclose(sp.x0_at(1), 5.0)
+        self.assert_allclose(sp.y0_at(1), -6.0)
+        self.assert_allclose(sp.x1_at(1), 7.0)
+        self.assert_allclose(sp.y1_at(1), -8.0)
 
         sp.mirror('y')
+        self.assert_allclose(sp.x0_at(0), -1.0)
         self.assert_allclose(sp.y0_at(0), -2.0)
+        self.assert_allclose(sp.x1_at(0), -3.0)
         self.assert_allclose(sp.y1_at(0), -4.0)
+        self.assert_allclose(sp.x0_at(1), -5.0)
         self.assert_allclose(sp.y0_at(1), -6.0)
+        self.assert_allclose(sp.x1_at(1), -7.0)
         self.assert_allclose(sp.y1_at(1), -8.0)
 
     def test_mirror_3d(self):
@@ -1147,14 +1163,26 @@ class SegmentPadTB(ModMeshTB):
         sp.append(7.0, 8.0, 9.0, 10.0, 11.0, 12.0)
 
         sp.mirror('z')
-        self.assert_allclose(sp.z0_at(0), -3.0)
-        self.assert_allclose(sp.z1_at(0), -6.0)
-        self.assert_allclose(sp.z0_at(1), -9.0)
-        self.assert_allclose(sp.z1_at(1), -12.0)
+        self.assert_allclose(sp.x0_at(0), -1.0)
+        self.assert_allclose(sp.y0_at(0), -2.0)
+        self.assert_allclose(sp.z0_at(0), 3.0)
+        self.assert_allclose(sp.x1_at(0), -4.0)
+        self.assert_allclose(sp.y1_at(0), -5.0)
+        self.assert_allclose(sp.z1_at(0), 6.0)
+        self.assert_allclose(sp.x0_at(1), -7.0)
+        self.assert_allclose(sp.y0_at(1), -8.0)
+        self.assert_allclose(sp.z0_at(1), 9.0)
+        self.assert_allclose(sp.x1_at(1), -10.0)
+        self.assert_allclose(sp.y1_at(1), -11.0)
+        self.assert_allclose(sp.z1_at(1), 12.0)
 
         sp.mirror('X')
         self.assert_allclose(sp.x0_at(0), -1.0)
+        self.assert_allclose(sp.y0_at(0), 2.0)
+        self.assert_allclose(sp.z0_at(0), -3.0)
         self.assert_allclose(sp.x1_at(0), -4.0)
+        self.assert_allclose(sp.y1_at(0), 5.0)
+        self.assert_allclose(sp.z1_at(0), -6.0)
 
         with self.assertRaisesRegex(
                 ValueError,
@@ -1442,24 +1470,46 @@ class CurvePadTB(ModMeshTB):
                   Point(-7, -8, -9), Point(-10, -11, -12))
 
         cp.mirror('x')
-        self.assert_allclose(list(cp.x0), [-1, 1])
-        self.assert_allclose(list(cp.x1), [-4, 4])
-        self.assert_allclose(list(cp.x2), [-7, 7])
-        self.assert_allclose(list(cp.x3), [-10, 10])
-        self.assert_allclose(list(cp.y0), [2, -2])
-        self.assert_allclose(list(cp.z0), [3, -3])
+        self.assert_allclose(list(cp.x0), [1, -1])
+        self.assert_allclose(list(cp.y0), [-2, 2])
+        self.assert_allclose(list(cp.z0), [-3, 3])
+        self.assert_allclose(list(cp.x1), [4, -4])
+        self.assert_allclose(list(cp.y1), [-5, 5])
+        self.assert_allclose(list(cp.z1), [-6, 6])
+        self.assert_allclose(list(cp.x2), [7, -7])
+        self.assert_allclose(list(cp.y2), [-8, 8])
+        self.assert_allclose(list(cp.z2), [-9, 9])
+        self.assert_allclose(list(cp.x3), [10, -10])
+        self.assert_allclose(list(cp.y3), [-11, 11])
+        self.assert_allclose(list(cp.z3), [-12, 12])
 
         cp.mirror('y')
+        self.assert_allclose(list(cp.x0), [-1, 1])
         self.assert_allclose(list(cp.y0), [-2, 2])
+        self.assert_allclose(list(cp.z0), [3, -3])
+        self.assert_allclose(list(cp.x1), [-4, 4])
         self.assert_allclose(list(cp.y1), [-5, 5])
+        self.assert_allclose(list(cp.z1), [6, -6])
+        self.assert_allclose(list(cp.x2), [-7, 7])
         self.assert_allclose(list(cp.y2), [-8, 8])
+        self.assert_allclose(list(cp.z2), [9, -9])
+        self.assert_allclose(list(cp.x3), [-10, 10])
         self.assert_allclose(list(cp.y3), [-11, 11])
+        self.assert_allclose(list(cp.z3), [12, -12])
 
         cp.mirror('Z')
-        self.assert_allclose(list(cp.z0), [-3, 3])
-        self.assert_allclose(list(cp.z1), [-6, 6])
-        self.assert_allclose(list(cp.z2), [-9, 9])
-        self.assert_allclose(list(cp.z3), [-12, 12])
+        self.assert_allclose(list(cp.x0), [1, -1])
+        self.assert_allclose(list(cp.y0), [2, -2])
+        self.assert_allclose(list(cp.z0), [3, -3])
+        self.assert_allclose(list(cp.x1), [4, -4])
+        self.assert_allclose(list(cp.y1), [5, -5])
+        self.assert_allclose(list(cp.z1), [6, -6])
+        self.assert_allclose(list(cp.x2), [7, -7])
+        self.assert_allclose(list(cp.y2), [8, -8])
+        self.assert_allclose(list(cp.z2), [9, -9])
+        self.assert_allclose(list(cp.x3), [10, -10])
+        self.assert_allclose(list(cp.y3), [11, -11])
+        self.assert_allclose(list(cp.z3), [12, -12])
 
         with self.assertRaisesRegex(
                 ValueError, "CurvePad::mirror: axis must be 'x', 'y', or 'z'"):
