@@ -107,9 +107,9 @@ public:
         , m_measurement_size(h.shape(0))
         , m_control_size((b.ndim() == 2) ? b.shape(1) : 0)
         , m_f(f)
-        , m_q(create_noise_matrix(m_state_size, process_noise * process_noise))
+        , m_q(array_type::scaled_eye(m_state_size, static_cast<T>(process_noise * process_noise)))
         , m_h(h)
-        , m_r(create_noise_matrix(m_measurement_size, measurement_noise * measurement_noise))
+        , m_r(array_type::scaled_eye(m_measurement_size, static_cast<T>(measurement_noise * measurement_noise)))
         , m_p(array_type::eye(m_state_size))
         , m_b(b)
         , m_x(x)
@@ -142,7 +142,7 @@ public:
         predict_covariance();
 
         // P <- 0.5(P + P^H)  (m_p <- 0.5(m_p + m_p^H))
-        m_p = symmetrize(m_p);
+        m_p = m_p.symmetrize();
     }
 
     /**
@@ -171,7 +171,7 @@ public:
         predict_covariance();
 
         // P <- 0.5(P + P^H)  (m_p <- 0.5(m_p + m_p^H))
-        m_p = symmetrize(m_p);
+        m_p = m_p.symmetrize();
     }
 
     /**
@@ -207,15 +207,9 @@ public:
 
 private:
 
-    static array_type create_noise_matrix(size_t size, real_type noise_var)
-    {
-        return array_type::eye(size).mul(static_cast<T>(noise_var));
-    }
     void check_dimensions();
     void check_measurement(array_type const & z);
     void check_control(array_type const & u);
-    static array_type symmetrize(array_type const & p);
-    static array_type hermitian(array_type const & a);
 
     // Predict
     void predict_state();
@@ -392,17 +386,8 @@ template <typename T>
 void KalmanFilter<T>::predict_covariance()
 {
     // P <- F P F^H + Q  (m_p <- m_f @ m_p @ m_f^H + m_q)
-    array_type f_h = hermitian(m_f);
+    array_type f_h = m_f.hermitian();
     m_p = m_f.matmul(m_p).matmul(f_h).add(m_q);
-}
-
-template <typename T>
-typename KalmanFilter<T>::array_type KalmanFilter<T>::symmetrize(array_type const & p)
-{
-    // P <- 0.5(P + P^H)  (p <- 0.5(p + p^H))
-    array_type p_h = p;
-    hermitian(p_h);
-    return p.add(p_h).mul(static_cast<T>(0.5));
 }
 
 template <typename T>
@@ -465,12 +450,12 @@ template <typename T>
 typename KalmanFilter<T>::array_type KalmanFilter<T>::innovation_covariance()
 {
     // S <- H P H^H + R + jitter I  (s <- m_h @ m_p @ m_h^H + m_r + m_jitter @ I)
-    array_type h_h = hermitian(m_h);
+    array_type h_h = m_h.hermitian();
     array_type hph_h = m_h.matmul(m_p).matmul(h_h);
-    array_type s = hph_h.add(m_r).add(create_noise_matrix(m_measurement_size, m_jitter));
+    array_type s = hph_h.add(m_r).add(array_type::scaled_eye(m_measurement_size, static_cast<T>(m_jitter)));
 
     // S <- 0.5(S + S^H)  (s <- 0.5(s + s^H))
-    return symmetrize(s);
+    return s.symmetrize();
 }
 
 template <typename T>
@@ -479,7 +464,7 @@ typename KalmanFilter<T>::array_type KalmanFilter<T>::kalman_gain(array_type con
     // K <- P H^H S^{-1} via LLT solve
     array_type B = m_h.matmul(m_p); // H@P = B
     array_type X = llt_solve(s, B); // S@X = B
-    return hermitian(X); // K = X^H
+    return X.hermitian(); // K = X^H
 }
 
 template <typename T>
@@ -498,29 +483,14 @@ void KalmanFilter<T>::update_covariance(array_type const & k)
     // P <- (I-K H) P (I-K H)^H + K R K^H  (m_p <- (I-k@m_h)@m_p@(I-k@m_h)^H + k@m_r@k^H)
     array_type kh = k.matmul(m_h);
     array_type i_minus_kh = m_i.sub(kh);
-    array_type i_minus_kh_h = hermitian(i_minus_kh);
-    array_type k_h = hermitian(k);
+    array_type i_minus_kh_h = i_minus_kh.hermitian();
+    array_type k_h = k.hermitian();
     array_type term1 = i_minus_kh.matmul(m_p).matmul(i_minus_kh_h);
     array_type term2 = k.matmul(m_r).matmul(k_h);
     m_p = term1.add(term2);
 
     // P <- 0.5(P + P^H)  (m_p <- 0.5(m_p + m_p^H))
-    m_p = symmetrize(m_p);
-}
-
-template <typename T>
-typename KalmanFilter<T>::array_type KalmanFilter<T>::hermitian(array_type const & a)
-{
-    array_type out = a;
-    out.transpose();
-    if constexpr (is_complex_v<T>)
-    {
-        for (auto ptr = out.begin(); ptr != out.end(); ++ptr)
-        {
-            *ptr = ptr->conj();
-        }
-    }
-    return out;
+    m_p = m_p.symmetrize();
 }
 
 } /* end namespace modmesh */

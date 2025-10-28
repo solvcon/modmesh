@@ -3035,6 +3035,104 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         ):
             sarr2.idiv(sarr1)
 
+    def test_eye(self):
+        """Test eye() static method for creating identity matrices"""
+        eye2 = modmesh.SimpleArrayFloat64.eye(10)
+        for i in range(10):
+            for j in range(10):
+                if i == j:
+                    self.assertEqual(eye2[i, j], 1.0)
+                else:
+                    self.assertEqual(eye2[i, j], 0.0)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            r"SimpleArray::eye\(\): size must be greater than 0, but got 0"
+        ):
+            modmesh.SimpleArrayFloat64.eye(0)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            r"SimpleArray::eye\(\): size must be greater than 0, but got -1"
+        ):
+            modmesh.SimpleArrayFloat64.eye(-1)
+
+    def test_scaled_eye(self):
+        """Test scaled_eye() static method for creating scaled identity
+        matrices"""
+        scaled_eye = modmesh.SimpleArrayFloat64.scaled_eye(10, 3.5)
+        for i in range(10):
+            for j in range(10):
+                if i == j:
+                    self.assertEqual(scaled_eye[i, j], 3.5)
+                else:
+                    self.assertEqual(scaled_eye[i, j], 0.0)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            r"SimpleArray::scaled_eye\(\): size must be greater than 0, "
+            r"but got 0"
+        ):
+            modmesh.SimpleArrayFloat64.scaled_eye(0, 2.0)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            r"SimpleArray::scaled_eye\(\): size must be greater than 0, "
+            r"but got -1"
+        ):
+            modmesh.SimpleArrayFloat64.scaled_eye(-1, 2.0)
+
+    def test_hermitian(self):
+        """Test hermitian() method for creating conjugate transpose"""
+        ndarr = np.array([[1.0 + 2.0j, 3.0 + 4.0j, 5.0 + 6.0j],
+                          [7.0 + 8.0j, 9.0 + 10.0j, 11.0 + 12.0j],
+                          [13.0 + 14.0j, 15.0 + 16.0j, 17.0 + 18.0j]],
+                         dtype='complex128')
+
+        sarr = modmesh.SimpleArrayComplex128(array=ndarr)
+        shermitian = sarr.hermitian()
+        ndhermitian = ndarr.conj().T
+        print(shermitian.ndarray)
+        print(ndhermitian)
+        self.assertEqual(shermitian.shape, ndhermitian.shape)
+        np.testing.assert_equal(shermitian.ndarray, ndhermitian)
+
+        vector = modmesh.SimpleArrayFloat64(5)
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"SimpleArray::hermitian\(\): operation requires 2D SimpleArray, "
+            r"but got 1D SimpleArray"
+        ):
+            vector.hermitian()
+
+    def test_symmetrize(self):
+        """Test symmetrize() method for creating symmetric matrices"""
+        ndarr = np.array([[1.0 + 2.0j, 3.0 + 4.0j, 5.0 + 6.0j],
+                         [7.0 + 8.0j, 9.0 + 10.0j, 11.0 + 12.0j],
+                         [13.0 + 14.0j, 15.0 + 16.0j, 17.0 + 18.0j]],
+                         dtype='complex128')
+        sarr = modmesh.SimpleArrayComplex128(array=ndarr)
+        symmetric = sarr.symmetrize()
+        ndsymmetric = (ndarr + ndarr.conj().T) / 2.0
+        self.assertEqual(symmetric.shape, ndsymmetric.shape)
+        np.testing.assert_equal(symmetric.ndarray, ndsymmetric)
+
+        vector = modmesh.SimpleArrayFloat64(5)
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"SimpleArray::symmetrize\(\): operation requires 2D SimpleArray, "
+            r"but got 1D SimpleArray"
+        ):
+            vector.symmetrize()
+
+        non_square = modmesh.SimpleArrayFloat64((3, 4))
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"SimpleArray::symmetrize\(\): operation requires square "
+            r"SimpleArray, but got 3x4 shape"
+        ):
+            non_square.symmetrize()
+
 
 class SimpleArraySearchTC(unittest.TestCase):
 
