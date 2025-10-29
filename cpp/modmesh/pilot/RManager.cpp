@@ -69,6 +69,7 @@ RManager & RManager::setUp()
     if (!m_already_setup)
     {
         this->setUpConsole();
+        this->setUpVision();
         this->setUpCentral();
         this->setUpMenu();
 
@@ -110,11 +111,33 @@ void RManager::toggleConsole()
     }
 }
 
+void RManager::toggleVision()
+{
+    if (m_vision)
+    {
+        if (m_vision->isVisible())
+        {
+            m_vision->hide();
+        }
+        else
+        {
+            m_vision->show();
+        }
+    }
+}
+
 void RManager::setUpConsole()
 {
     m_pycon = new RPythonConsoleDockWidget(QString("Console"), m_mainWindow);
     m_pycon->setAllowedAreas(Qt::AllDockWidgetAreas);
     m_mainWindow->addDockWidget(Qt::BottomDockWidgetArea, m_pycon);
+}
+
+void RManager::setUpVision()
+{
+    m_vision = new RVisionDockWidget(QString("Computer Vision"), m_mainWindow);
+    m_vision->setAllowedAreas(Qt::AllDockWidgetAreas);
+    m_mainWindow->addDockWidget(Qt::BottomDockWidgetArea, m_vision);
 }
 
 void RManager::setUpCentral()
