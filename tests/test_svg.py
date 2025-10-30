@@ -28,6 +28,7 @@ import unittest
 
 from modmesh.testing import TestBase as ModMeshTB
 import modmesh.plot.svg as svg
+import os
 
 
 class SvgParserTB(ModMeshTB, unittest.TestCase):
@@ -920,5 +921,338 @@ class SvgShapeTC(SvgParserTB):
         self.assertEqual(list(spad.y0), [10.0, 20.0, 10.0])
         self.assertEqual(list(spad.x1), [20.0, 30.0, 10.0])
         self.assertEqual(list(spad.y1), [20.0, 10.0, 10.0])
+
+
+class SvgFileTC(SvgParserTB):
+    """
+    Test loading SVG files.
+    """
+
+    TESTDIR = os.path.abspath(os.path.dirname(__file__))
+    DATADIR = os.path.join(TESTDIR, "data/svg")
+
+    def _check_svg_file(self, filename, spads_count, cpads_count,
+                        total_segments, total_curves, spad_lengths,
+                        cpad_lengths, sample_points):
+        """Generic test method for SVG files using test data."""
+        file_path = os.path.join(self.DATADIR, filename)
+
+        parser = svg.SvgParser(file_path)
+        parser.parse()
+        spads, cpads = parser.get_pads()
+
+        self.assertEqual(len(spads), spads_count)
+        self.assertEqual(len(cpads), cpads_count)
+
+        total_segments_actual = sum(len(spad) for spad in spads)
+        total_curves_actual = sum(len(cpad) for cpad in cpads)
+        self.assertEqual(total_segments_actual, total_segments)
+        self.assertEqual(total_curves_actual, total_curves)
+
+        for index, expected_length in spad_lengths:
+            self.assertEqual(len(spads[index]), expected_length)
+            self.assertEqual(spads[index].ndim, 2)
+
+        for index, expected_length in cpad_lengths:
+            self.assertEqual(len(cpads[index]), expected_length)
+            self.assertEqual(cpads[index].ndim, 2)
+
+        spad_sample_points = sample_points['spad']
+        for pad_index, segment_index, x0, y0, x1, y1 in spad_sample_points:
+            if x0 is not None:
+                self.assert_allclose(spads[pad_index].x0_at(segment_index), x0)
+            if y0 is not None:
+                self.assert_allclose(spads[pad_index].y0_at(segment_index), y0)
+            if x1 is not None:
+                self.assert_allclose(spads[pad_index].x1_at(segment_index), x1)
+            if y1 is not None:
+                self.assert_allclose(spads[pad_index].y1_at(segment_index), y1)
+
+        cpad_sample_points = sample_points['cpad']
+        for pad_index, curve_index, p0, p3 in cpad_sample_points:
+            if p0 is not None:
+                self.assert_allclose(list(cpads[pad_index].p0_at(curve_index)),
+                                     p0)
+            if p3 is not None:
+                self.assert_allclose(list(cpads[pad_index].p3_at(curve_index)),
+                                     p3)
+
+    def test_load_android_svg(self):
+        self._check_svg_file(
+            filename='android.svg',
+            spads_count=3,
+            cpads_count=5,
+            total_segments=14,
+            total_curves=9,
+            spad_lengths=[(0, 8), (1, 2), (2, 4)],
+            cpad_lengths=[(2, 1), (3, 4), (4, 4)],
+            sample_points={
+                'spad': [
+                    (0, 0, 14.0, 40.0, 14.0, 64.0),  # M14,40v24
+                    (0, 1, 81.0, 40.0, 81.0, 64.0),  # M81,40v24
+                    (0, 2, 38.0, 68.0, 38.0, 92.0),  # M38,68v24
+                    (0, 3, 57.0, 68.0, 57.0, 92.0),  # M57,68v24
+                    (0, 4, 28.0, 42.0, 28.0, 73.0),  # M28,42v31
+                    (0, 5, 28.0, 73.0, 67.0, 73.0),  # h39
+                    (0, 6, 67.0, 73.0, 67.0, 42.0),  # v-31
+                    (0, 7, 67.0, 42.0, 28.0, 42.0),  # z (close)
+                    (1, 0, 32.0, 5.0, 37.0, 15.0),   # M32,5l5,10
+                    (1, 1, 64.0, 5.0, 58.0, 15.0),   # M64,5l-6,10
+                    (2, 0, 22.0, 35.0, 73.0, 35.0),  # M22,35h51
+                    (2, 1, 73.0, 35.0, 73.0, 45.0),  # v10
+                    (2, 2, 73.0, 45.0, 22.0, 45.0),  # h-51
+                    (2, 3, 22.0, 45.0, 22.0, 35.0),  # z (close)
+                ],
+                'cpad': [
+                    (2, 0, [22.0, 33.0, 0.0], [73.0, 33.0, 0.0]),  # M22,33c0-31,51-31,51,0  # noqa: E501
+                    (3, 0, [38.0, 22.0, 0.0], [36.0, 24.0, 0.0]),  # circle cx="36" cy="22" r="2"  # noqa: E501
+                    (3, 1, [36.0, 24.0, 0.0], [34.0, 22.0, 0.0]),
+                    (3, 2, [34.0, 22.0, 0.0], [36.0, 20.0, 0.0]),
+                    (3, 3, [36.0, 20.0, 0.0], [38.0, 22.0, 0.0]),
+                    (4, 0, [61.0, 22.0, 0.0], [59.0, 24.0, 0.0]),  # circle cx="59" cy="22" r="2"  # noqa: E501
+                    (4, 1, [59.0, 24.0, 0.0], [57.0, 22.0, 0.0]),
+                    (4, 2, [57.0, 22.0, 0.0], [59.0, 20.0, 0.0]),
+                    (4, 3, [59.0, 20.0, 0.0], [61.0, 22.0, 0.0]),
+                ],
+            }
+        )
+
+    def test_load_beacon_svg(self):
+        self._check_svg_file(
+            filename='beacon.svg',
+            spads_count=4,
+            cpads_count=4,
+            total_segments=20,
+            total_curves=0,
+            spad_lengths=[(0, 5), (1, 5), (2, 5), (3, 5)],
+            cpad_lengths=[],
+            sample_points={
+                'spad': [
+                    (0, 0, 28.0, 6.0, 72.0, 6.0),    # M28,6h44
+                    (0, 1, 72.0, 6.0, 72.0, 22.0),   # v16
+                    (0, 2, 72.0, 22.0, 50.0, 43.0),  # l-22,21
+                    (0, 3, 50.0, 43.0, 28.0, 22.0),  # l-22-21
+                    (0, 4, 28.0, 22.0, 28.0, 6.0),   # z (close)
+                    (1, 0, 28.0, 95.0, 72.0, 95.0),  # M28,95h44
+                    (1, 1, 72.0, 95.0, 72.0, 79.0),  # v-16
+                    (1, 2, 72.0, 79.0, 50.0, 58.0),  # l-22-21
+                    (1, 3, 50.0, 58.0, 28.0, 79.0),  # l-22,21
+                    (1, 4, 28.0, 79.0, 28.0, 95.0),  # z (close)
+                    (2, 0, 6.0, 30.0, 6.0, 72.0),    # M6,30v42
+                    (2, 1, 6.0, 72.0, 21.0, 72.0),   # h15
+                    (2, 2, 21.0, 72.0, 42.0, 51.0),  # l21-21
+                    (2, 3, 42.0, 51.0, 21.0, 30.0),  # l-21-21
+                    (2, 4, 21.0, 30.0, 6.0, 30.0),   # z (close)
+                    (3, 0, 95.0, 30.0, 95.0, 72.0),  # M95,30v42
+                    (3, 1, 95.0, 72.0, 80.0, 72.0),  # h-15
+                    (3, 2, 80.0, 72.0, 59.0, 51.0),  # l-21-21
+                    (3, 3, 59.0, 51.0, 80.0, 30.0),  # l21-21
+                    (3, 4, 80.0, 30.0, 95.0, 30.0),  # z (close)
+                ],
+                'cpad': [],
+            }
+        )
+
+    def test_load_bozo_svg(self):
+        self._check_svg_file(
+            filename='bozo.svg',
+            spads_count=4,
+            cpads_count=9,
+            total_segments=1,
+            total_curves=30,
+            spad_lengths=[(1, 1)],
+            cpad_lengths=[(0, 4), (1, 2), (2, 2), (3, 2), (4, 4), (5, 4),
+                          (6, 4), (7, 4), (8, 4)],
+            sample_points={
+                'spad': [
+                    (1, 0, 35.0, 45.0, 35.0, 45.0),
+                ],
+                'cpad': [
+                    (0, 0, [10.0, 15.0, 0.0], [50.0, 15.0, 0.0]),
+                    (0, 1, [50.0, 15.0, 0.0], [90.0, 15.0, 0.0]),
+                    (1, 0, [35.0, 45.0, 0.0], [65.0, 45.0, 0.0]),
+                    (2, 0, [35.0, 30.0, 0.0], [45.0, 30.0, 0.0]),
+                    (3, 0, [55.0, 30.0, 0.0], [65.0, 30.0, 0.0]),
+                    (4, 0, [55.0, 40.0, 0.0], [50.0, 45.0, 0.0]),
+                    (5, 0, [49.0, 38.0, 0.0], [48.0, 39.0, 0.0]),
+                    (6, 0, [42.0, 30.0, 0.0], [40.0, 32.0, 0.0]),
+                    (7, 0, [62.0, 30.0, 0.0], [60.0, 32.0, 0.0]),
+                    (8, 0, [72.0, 40.0, 0.0], [50.0, 75.0, 0.0]),
+                ],
+            }
+        )
+
+    def test_load_caution_svg(self):
+        self._check_svg_file(
+            filename='caution.svg',
+            spads_count=3,
+            cpads_count=4,
+            total_segments=7,
+            total_curves=7,
+            spad_lengths=[(0, 3), (1, 3), (2, 1)],
+            cpad_lengths=[(0, 3), (3, 4)],
+            sample_points={
+                'spad': [
+                    (0, 0, 13.0, 89.0, 91.0, 89.0),
+                    (0, 1, 96.0, 80.0, 56.0, 9.0),
+                    (1, 0, 52.0, 10.0, 10.0, 85.0),
+                    (1, 1, 10.0, 85.0, 93.0, 85.0),
+                    (2, 0, 52.0, 32.0, 52.0, 58.0),
+                ],
+                'cpad': [
+                    (0, 0, [8.0, 80.0, 0.0], [13.0, 89.0, 0.0]),
+                    (0, 1, [91.0, 89.0, 0.0], [96.0, 80.0, 0.0]),
+                    (3, 0, [58.0, 73.0, 0.0], [52.0, 79.0, 0.0]),
+                    (3, 1, [52.0, 79.0, 0.0], [46.0, 73.0, 0.0]),
+                ],
+            }
+        )
+
+    def test_load_debian_svg(self):
+        self._check_svg_file(
+            filename='debian.svg',
+            spads_count=1,
+            cpads_count=1,
+            total_segments=44,
+            total_curves=76,
+            spad_lengths=[(0, 44)],
+            cpad_lengths=[(0, 76)],
+            sample_points={
+                'spad': [
+                    (0, 0, 61.0, 53.0, 63.0, 52.0),
+                    (0, 1, 63.0, 52.0, 59.0, 52.0),
+                    (0, 2, 67.0, 50.0, 69.0, 46.0),
+                ],
+                'cpad': [
+                    (0, 0, [59.0, 52.0, 0.0], [61.0, 53.0, 0.0]),
+                    (0, 1, [68.0, 49.0, 0.0], [68.0, 47.0, 0.0]),
+                    (0, 2, [68.0, 47.0, 0.0], [67.0, 50.0, 0.0]),
+                ],
+            }
+        )
+
+    def test_load_facebook_svg(self):
+        self._check_svg_file(
+            filename='facebook.svg',
+            spads_count=3,
+            cpads_count=1,
+            total_segments=23,
+            total_curves=2,
+            spad_lengths=[(0, 15), (1, 4), (2, 4)],
+            cpad_lengths=[(0, 2)],
+            sample_points={
+                'spad': [
+                    (0, 0, 76.0, 94.0, 58.0, 94.0),
+                    (0, 1, 58.0, 94.0, 58.0, 52.0),
+                    (0, 2, 58.0, 52.0, 50.0, 52.0),
+                    (1, 0, 0.0, 0.0, 100.0, 0.0),
+                    (1, 1, 100.0, 0.0, 100.0, 100.0),
+                    (2, 0, 5.0, 80.0, 95.0, 80.0),
+                    (2, 1, 95.0, 80.0, 95.0, 95.0),
+                ],
+                'cpad': [
+                    (0, 0, [58.0, 29.0, 0.0], [77.0, 10.0, 0.0]),
+                    (0, 1, [82.0, 24.0, 0.0], [76.0, 30.0, 0.0]),
+                ],
+            }
+        )
+
+    def test_load_gnome2_svg(self):
+        self._check_svg_file(
+            filename='gnome2.svg',
+            spads_count=1,
+            cpads_count=1,
+            total_segments=5,
+            total_curves=14,
+            spad_lengths=[(0, 5)],
+            cpad_lengths=[(0, 14)],
+            sample_points={
+                'spad': [
+                    (0, 0, 79.0, 0.0, 79.0, 0.0),
+                    (0, 1, 41.0, 28.0, 41.0, 28.0),
+                    (0, 2, 10.0, 44.0, 10.0, 44.0),
+                ],
+                'cpad': [
+                    (0, 0, [79.0, 0.0, 0.0], [65.0, 32.0, 0.0]),
+                    (0, 1, [65.0, 32.0, 0.0], [79.0, 0.0, 0.0]),
+                    (0, 2, [41.0, 28.0, 0.0], [43.0, 4.0, 0.0]),
+                ],
+            }
+        )
+
+    def test_load_mars_svg(self):
+        self._check_svg_file(
+            filename='mars.svg',
+            spads_count=1,
+            cpads_count=2,
+            total_segments=3,
+            total_curves=4,
+            spad_lengths=[(0, 3)],
+            cpad_lengths=[(1, 4)],
+            sample_points={
+                'spad': [
+                    (0, 0, 71.0, 8.0, 93.0, 8.0),    # M71,8h22
+                    (0, 1, 93.0, 8.0, 93.0, 30.0),   # v22
+                    (0, 2, 68.0, 33.0, 90.0, 11.0),  # M68,33l22-22
+                ],
+                'cpad': [
+                    (1, 0, [77.0, 58.0, 0.0], [43.0, 92.0, 0.0]),  # circle cx="43" cy="58" r="34"  # noqa: E501
+                    (1, 1, [43.0, 92.0, 0.0], [9.0, 58.0, 0.0]),
+                    (1, 2, [9.0, 58.0, 0.0], [43.0, 24.0, 0.0]),
+                    (1, 3, [43.0, 24.0, 0.0], [77.0, 58.0, 0.0]),
+                ],
+            }
+        )
+
+    @unittest.skip("smile.svg contains transforms (translate and matrix) which are not yet supported by the parser")  # noqa: E501
+    def test_load_smile_svg(self):
+        self._check_svg_file(
+            filename='smile.svg',
+            spads_count=2,
+            cpads_count=4,
+            total_segments=43,
+            total_curves=12,
+            spad_lengths=[(0, 39), (1, 4)],
+            cpad_lengths=[(1, 4), (2, 4), (3, 4)],
+            sample_points={
+                'spad': [
+                    (0, 0, 160.0, 304.0, 163.50682991124894, 306.7093364293326),  # Arc from path, scaled by 16  # noqa: E501
+                    (1, 0, 8.0, 8.0, 472.0, 8.0),  # rect x='.5' y='.5' width='29' height='39', scaled by 16  # noqa: E501
+                    (1, 1, 472.0, 8.0, 472.0, 632.0),
+                ],
+                'cpad': [
+                    (1, 0, [400.0, 320.0, 0.0], [240.0, 480.0, 0.0]),  # circle cx='15' cy='15' r='10', translate(0,5), scale(16)  # noqa: E501
+                    (2, 0, [216.0, 272.0, 0.0], [192.0, 296.0, 0.0]),  # circle cx='12' cy='12' r='1.5', translate(0,5), scale(16)  # noqa: E501
+                    (3, 0, [296.0, 272.0, 0.0], [272.0, 296.0, 0.0]),  # circle cx='17' cy='12' r='1.5', translate(0,5), scale(16)  # noqa: E501
+                ],
+            }
+        )
+
+    def test_load_shapes_svg(self):
+        self._check_svg_file(
+            filename='shapes.svg',
+            spads_count=6,
+            cpads_count=3,
+            total_segments=27,
+            total_curves=10,
+            spad_lengths=[(1, 4), (2, 4), (3, 1), (4, 8), (5, 10)],
+            cpad_lengths=[(0, 2), (1, 4), (2, 4)],
+            sample_points={
+                'spad': [
+                    (1, 0, 10.0, 10.0, 40.0, 10.0),
+                    (1, 1, 40.0, 10.0, 40.0, 40.0),
+                    (3, 0, 10.0, 110.0, 50.0, 150.0),
+                    (4, 0, 60.0, 110.0, 65.0, 120.0),
+                    (5, 0, 50.0, 160.0, 55.0, 180.0),
+                ],
+                'cpad': [
+                    (0, 0, [20.0, 230.0, 0.0], [50.0, 230.0, 0.0]),
+                    (0, 1, [50.0, 230.0, 0.0], [90.0, 230.0, 0.0]),
+                    (1, 0, [45.0, 75.0, 0.0], [25.0, 95.0, 0.0]),
+                    (2, 0, [95.0, 75.0, 0.0], [75.0, 80.0, 0.0]),
+                ],
+            }
+        )
+
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
