@@ -153,7 +153,7 @@ class GemmTestBase(mm.testing.TestBase):
     def test_compare_with_numpy(self):
         """Compare results with NumPy using fixed test data"""
 
-        # Test case 1: (2x3) × (3x4)
+        # Test case 1: (2x3) x (3x4)
         a_data_1 = np.array([
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0]
@@ -168,7 +168,7 @@ class GemmTestBase(mm.testing.TestBase):
             [173.0, 188.0, 203.0, 218.0]
         ], dtype=self.dtype)
 
-        # Test case 2: (4x6) × (6x3)
+        # Test case 2: (4x6) x (6x3)
         a_data_2 = np.array([
             [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
             [7.0, 8.0, 9.0, 10.0, 11.0, 12.0],
@@ -190,7 +190,7 @@ class GemmTestBase(mm.testing.TestBase):
             [1149.0, 1278.0, 1407.0]
         ], dtype=self.dtype)
 
-        # Test case 3: (3x3) × (3x3)
+        # Test case 3: (3x3) x (3x3)
         a_data_3 = np.array([
             [2.0, 1.0, 3.0],
             [1.0, 4.0, 2.0],
@@ -208,9 +208,9 @@ class GemmTestBase(mm.testing.TestBase):
         ], dtype=self.dtype)
 
         test_cases = [
-            (a_data_1, b_data_1, expected_1, "2x3 × 3x4"),
-            (a_data_2, b_data_2, expected_2, "4x6 × 6x3"),
-            (a_data_3, b_data_3, expected_3, "3x3 × 3x3")
+            (a_data_1, b_data_1, expected_1, "2x3 x 3x4"),
+            (a_data_2, b_data_2, expected_2, "4x6 x 6x3"),
+            (a_data_3, b_data_3, expected_3, "3x3 x 3x3")
         ]
 
         for a_data, b_data, expected, description in test_cases:
@@ -237,7 +237,7 @@ class GemmTestBase(mm.testing.TestBase):
     def test_unsupported_dimensions_error(self):
         """Test error handling for unsupported dimensions"""
 
-        # Test 1D × 1D (not supported)
+        # Test 1D x 1D (not supported)
         a_1d = self.SimpleArray(array=np.array([1.0, 2.0, 3.0],
                                                dtype=self.dtype))
         b_1d = self.SimpleArray(array=np.array([4.0, 5.0, 6.0],
@@ -250,7 +250,7 @@ class GemmTestBase(mm.testing.TestBase):
         ):
             a_1d.matmul(b_1d)
 
-        # Test 1D × 2D (not supported)
+        # Test 1D x 2D (not supported)
         a_1d = self.SimpleArray(array=np.array([1.0, 2.0], dtype=self.dtype))
         b_2d = self.SimpleArray(array=np.array([[1.0, 2.0], [3.0, 4.0]],
                                                dtype=self.dtype))
@@ -262,7 +262,7 @@ class GemmTestBase(mm.testing.TestBase):
         ):
             a_1d.matmul(b_2d)
 
-        # Test 2D × 1D (not supported)
+        # Test 2D x 1D (not supported)
         a_2d = self.SimpleArray(array=np.array([[1.0, 2.0, 3.0],
                                                [4.0, 5.0, 6.0]],
                                                dtype=self.dtype))
@@ -276,7 +276,7 @@ class GemmTestBase(mm.testing.TestBase):
         ):
             a_2d.matmul(b_1d)
 
-        # Test 3D × 3D (not supported - tensor operation)
+        # Test 3D x 3D (not supported - tensor operation)
         a_3d_data = np.array([[[1.0, 2.0], [3.0, 4.0]],
                               [[5.0, 6.0], [7.0, 8.0]]], dtype=self.dtype)
         b_3d_data = np.array([[[1.0, 0.0], [0.0, 1.0]],

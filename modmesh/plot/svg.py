@@ -363,7 +363,7 @@ class EPath(object):
                     last_control = p1
                     i += 4
             elif cmd in ('T', 't'):
-                # Draw a smooth quadratic Bézier curve from the current point
+                # Draw a smooth quadratic Bezier curve from the current point
                 # to the end point specified by `dx2 dy2`.
                 #   command: [T|t] (relative position in lowercase command)
                 #   parameter: (dx2, dy2)+
@@ -522,10 +522,11 @@ class ECircle(EShapeBase):
         self._calculate()
 
     def _calculate(self):
-        # Use 4 cubic Bézier curves to represent the circle
-        # Magic constant for circular arc approximation: kappa = 4/3 * tan(π/8)
+        # Use 4 cubic Bezier curves to represent the circle
+        # Magic constant for circular arc approximation:
+        # kappa = 4/3 * tan(pi/8)
         # This value minimizes the radial error when approximating
-        # a circular arc with a cubic Bézier curve
+        # a circular arc with a cubic Bezier curve
         kappa = 0.5522847498
 
         cpad = core.CurvePadFp64(ndim=2)
