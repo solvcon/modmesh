@@ -39,6 +39,7 @@ from ._pilot_core import (  # noqa: F401
     R3DWidget,
     RLine,
     RPythonConsoleDockWidget,
+    RVisionDockWidget,
     RManager,
     RCameraController,
 )
