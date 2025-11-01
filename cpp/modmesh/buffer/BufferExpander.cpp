@@ -37,7 +37,7 @@ void BufferExpander::reserve(size_type cap)
     {
         size_type const old_size = size();
         // Create new data holder and copy data.
-        std::unique_ptr<int8_t> new_data_holder = allocate(cap);
+        std::unique_ptr<int8_t, aligned_deleter> new_data_holder = allocate(cap, m_alignment);
         std::copy_n(m_begin, old_size, new_data_holder.get());
         // Process data holders.
         m_data_holder.swap(new_data_holder);

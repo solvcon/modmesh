@@ -60,6 +60,30 @@ public:
     using size_type = std::size_t;
     using difference_type = std::ptrdiff_t;
 
+    /// Ensure the alignment value is valid.
+    static size_type validate_alignment(size_type alignment)
+    {
+        // TODO: support other alignments if needed
+        if (alignment != 0 && alignment != 16 && alignment != 32 && alignment != 64)
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "BufferExpander: alignment must be 0, 16, 32, or 64, but got " << alignment);
+        }
+        return alignment;
+    }
+
+    /// Ensure the size value is valid with respect to alignment.
+    static void validate_size_alignment(size_type size, size_type alignment)
+    {
+        if (alignment > 0 && size % alignment != 0)
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "BufferExpander: size " << size << " must be a multiple of alignment " << alignment);
+        }
+    }
+
     template <typename... Args>
     static std::shared_ptr<BufferExpander> construct(Args &&... args)
     {
@@ -68,26 +92,39 @@ public:
 
     std::shared_ptr<BufferExpander> clone()
     {
-        return BufferExpander::construct(copy_concrete(), /*clone*/ false);
+        return BufferExpander::construct(copy_concrete(), /*clone*/ false, m_alignment);
     }
 
-    BufferExpander(std::shared_ptr<ConcreteBuffer> const & buf, bool clone, ctor_passkey const &)
-        : BufferBase<BufferExpander>() // don't delegate m_begin and m_end, which will be overwritten later
+    BufferExpander(std::shared_ptr<ConcreteBuffer> const & buf, bool clone, size_type alignment, ctor_passkey const &)
+        : BufferBase<BufferExpander>()
         , m_concrete_buffer(clone ? buf->clone() : buf)
+        , m_alignment(validate_alignment(alignment))
     {
-        m_begin = m_concrete_buffer->data(); // overwrite m_begin and m_end once we have the data
+        m_begin = m_concrete_buffer->data();
         m_end = m_begin + m_concrete_buffer->size();
         m_end_cap = m_begin + m_concrete_buffer->size();
     }
 
-    BufferExpander(size_type nbyte, ctor_passkey const &)
-        : BufferBase<BufferExpander>(nullptr, nullptr) // initialize m_begin and m_end to nullptr, which will be overwritten later
+    BufferExpander(std::shared_ptr<ConcreteBuffer> const & buf, bool clone, ctor_passkey const &)
+        : BufferExpander(buf, clone, 0, ctor_passkey())
     {
-        expand(nbyte); // overwrite m_begin and m_end once we have the data
+    }
+
+    BufferExpander(size_type nbyte, size_type alignment, ctor_passkey const &)
+        : BufferBase<BufferExpander>(nullptr, nullptr)
+        , m_alignment(validate_alignment(alignment))
+    {
+        expand(nbyte);
+    }
+
+    BufferExpander(size_type nbyte, ctor_passkey const &)
+        : BufferExpander(nbyte, 0, ctor_passkey())
+    {
     }
 
     BufferExpander(ctor_passkey const &)
-        : BufferBase<BufferExpander>(nullptr, nullptr) // initialize m_begin and m_end to nullptr, which will be overwritten later
+        : BufferBase<BufferExpander>(nullptr, nullptr)
+        , m_alignment(0)
     {
     }
 
@@ -138,21 +175,70 @@ public:
     std::shared_ptr<ConcreteBuffer> const & as_concrete(size_type cap = 0);
     bool is_concrete() const { return bool(m_concrete_buffer); }
 
+    size_type alignment() const noexcept { return m_alignment; }
+
     static constexpr const char * name() { return "BufferExpander"; }
 
 private:
-    static std::unique_ptr<int8_t> allocate(size_type nbytes)
+    struct aligned_deleter
     {
-        std::unique_ptr<int8_t> ret(nullptr);
+        size_type alignment = 0;
+
+        void operator()(int8_t * ptr) const
+        {
+            if (!ptr)
+            {
+                return;
+            }
+#ifdef _WIN32
+            if (alignment > 0)
+            {
+                _aligned_free(ptr);
+            }
+            else
+            {
+                std::free(ptr);
+            }
+#else
+            std::free(ptr);
+#endif
+        }
+    };
+
+    using unique_ptr_type = std::unique_ptr<int8_t, aligned_deleter>;
+
+    static unique_ptr_type allocate(size_type nbytes, size_type alignment)
+    {
+        unique_ptr_type ret(nullptr, aligned_deleter{});
         if (0 != nbytes)
         {
-            ret = std::unique_ptr<int8_t>(new int8_t[nbytes]);
+            void * ptr = nullptr;
+            if (alignment > 0)
+            {
+                validate_size_alignment(nbytes, alignment); // only allow valid nbytes with respect to alignment
+#ifdef _WIN32
+                ptr = _aligned_malloc(nbytes, alignment);
+#else
+                ptr = std::aligned_alloc(alignment, nbytes);
+#endif
+            }
+            else
+            {
+                // Use malloc instead of new[] so we can consistently use free in the deleter
+                ptr = std::malloc(nbytes);
+            }
+            if (!ptr)
+            {
+                throw std::bad_alloc();
+            }
+            ret = unique_ptr_type(static_cast<int8_t *>(ptr), aligned_deleter{alignment});
         }
         return ret;
     }
 
-    std::unique_ptr<int8_t> m_data_holder = nullptr;
+    unique_ptr_type m_data_holder{nullptr, aligned_deleter{}};
     std::shared_ptr<ConcreteBuffer> m_concrete_buffer = nullptr;
+    size_type m_alignment = 0; // alignment for the buffer in bytes, 0 means no alignment
 
     int8_t * m_end_cap = nullptr;
 }; /* end class BufferExpander */

@@ -52,25 +52,20 @@ public:
 
     static constexpr size_t ITEMSIZE = sizeof(value_type);
 
-    explicit SimpleCollector(size_t length)
-        : m_expander(BufferExpander::construct(length * ITEMSIZE))
+    explicit SimpleCollector(size_t length = 0, size_t alignment = 0)
+        : m_expander(BufferExpander::construct(length * ITEMSIZE, alignment))
     {
     }
 
     // Always (forcefully) clone the input array when it is a const reference
-    SimpleCollector(SimpleArray<T> const & arr)
-        : m_expander(BufferExpander::construct(arr.buffer().clone(), /*clone*/ false))
+    SimpleCollector(SimpleArray<T> const & arr, size_t alignment = 0)
+        : m_expander(BufferExpander::construct(arr.buffer().clone(), /*clone*/ false, alignment))
     {
     }
 
     // Allow sharing the buffer when the input array is an lvalue reference
-    SimpleCollector(SimpleArray<T> & arr, bool clone)
-        : m_expander(BufferExpander::construct(arr.buffer().shared_from_this(), clone))
-    {
-    }
-
-    SimpleCollector()
-        : m_expander(BufferExpander::construct())
+    SimpleCollector(SimpleArray<T> & arr, bool clone, size_t alignment = 0)
+        : m_expander(BufferExpander::construct(arr.buffer().shared_from_this(), clone, alignment))
     {
     }
 
@@ -104,6 +99,7 @@ public:
 
     size_t size() const { return expander().size() / ITEMSIZE; }
     size_t capacity() const { return expander().capacity() / ITEMSIZE; }
+    size_t alignment() const { return expander().alignment(); }
 
     value_type const & operator[](size_t it) const noexcept { return data(it); }
     value_type & operator[](size_t it) noexcept { return data(it); }
