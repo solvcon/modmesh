@@ -4,14 +4,12 @@
 cmake_minimum_required(VERSION 3.16)
 
 set(MODMESH_TOGGLE_HEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/profile.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RadixTree.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/toggle.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SerializableProfiler.hpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_TOGGLE_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/profile.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/toggle.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RadixTree.cpp
     CACHE FILEPATH "" FORCE)
