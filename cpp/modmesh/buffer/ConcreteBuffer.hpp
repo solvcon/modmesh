@@ -61,11 +61,26 @@ struct ConcreteBufferRemover
     ConcreteBufferRemover & operator=(ConcreteBufferRemover &&) = default;
     virtual ~ConcreteBufferRemover() = default;
 
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
-    virtual void operator()(int8_t * p) const
+    static void deallocate_memory(int8_t * p, size_t alignment)
     {
-        // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
-        delete[] p;
+        if (alignment > 0)
+        {
+#ifdef _WIN32
+            _aligned_free(p);
+#else
+            std::free(p);
+#endif
+        }
+        else
+        {
+            std::free(p);
+        }
+    }
+
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
+    virtual void operator()(int8_t * p, size_t alignment) const
+    {
+        deallocate_memory(p, alignment);
     }
 
 }; /* end struct ConcreteBufferRemover */
@@ -74,7 +89,7 @@ struct ConcreteBufferNoRemove : public ConcreteBufferRemover
 {
 
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
-    void operator()(int8_t *) const override {}
+    void operator()(int8_t *, size_t) const override {}
 
 }; /* end struct ConcreteBufferNoRemove */
 
@@ -90,8 +105,9 @@ struct ConcreteBufferDataDeleter
     ConcreteBufferDataDeleter(ConcreteBufferDataDeleter &&) = default;
     ConcreteBufferDataDeleter & operator=(ConcreteBufferDataDeleter &&) = default;
     ~ConcreteBufferDataDeleter() = default;
-    explicit ConcreteBufferDataDeleter(std::unique_ptr<remover_type> && remover_in)
+    explicit ConcreteBufferDataDeleter(std::unique_ptr<remover_type> && remover_in, size_t alignment_in = 0)
         : remover(std::move(remover_in))
+        , alignment(alignment_in)
     {
     }
 
@@ -100,16 +116,16 @@ struct ConcreteBufferDataDeleter
     {
         if (!remover)
         {
-            // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
-            delete[] p;
+            remover_type::deallocate_memory(p, alignment);
         }
         else
         {
-            (*remover)(p);
+            (*remover)(p, alignment);
         }
     }
 
     std::unique_ptr<remover_type> remover{nullptr};
+    size_t alignment = 0; // Alignment of the data buffer in bytes. 0 means no alignment.
 
 }; /* end struct ConcreteBufferDataDeleter */
 
@@ -134,10 +150,34 @@ private:
 public:
 
     using remover_type = detail::ConcreteBufferRemover;
+    using size_type = std::size_t;
 
-    static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes)
+    /// Ensure the alignment value is valid.
+    static size_type validate_alignment(size_type alignment)
     {
-        return std::make_shared<ConcreteBuffer>(nbytes, ctor_passkey());
+        if (alignment != 0 && alignment != 16 && alignment != 32 && alignment != 64)
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got " << alignment);
+        }
+        return alignment;
+    }
+
+    /// Ensure the size value is valid with respect to alignment.
+    static void validate_size_alignment(size_type size, size_type alignment)
+    {
+        if (alignment > 0 && size % alignment != 0)
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "ConcreteBuffer: size " << size << " must be a multiple of alignment " << alignment);
+        }
+    }
+
+    static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, size_t alignment = 0)
+    {
+        return std::make_shared<ConcreteBuffer>(nbytes, alignment, ctor_passkey());
     }
 
     /*
@@ -146,21 +186,22 @@ public:
      * number of bytes of the externally owned buffer doesn't match the value
      * passed in (but we cannot know here).
      */
-    static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover)
+    static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover, size_t alignment = 0)
     {
-        return std::make_shared<ConcreteBuffer>(nbytes, data, std::move(remover), ctor_passkey());
+        return std::make_shared<ConcreteBuffer>(nbytes, data, std::move(remover), alignment, ctor_passkey());
     }
 
-    static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, void * data, std::unique_ptr<remover_type> && remover)
+    static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, void * data, std::unique_ptr<remover_type> && remover, size_t alignment = 0)
     {
-        return construct(nbytes, static_cast<int8_t *>(data), std::move(remover));
+        return construct(nbytes, static_cast<int8_t *>(data), std::move(remover), alignment);
     }
 
-    static std::shared_ptr<ConcreteBuffer> construct() { return construct(0); }
+    /// Construct an empty ConcreteBuffer with no data and no alignment.
+    static std::shared_ptr<ConcreteBuffer> construct() { return construct(0, 0); }
 
     std::shared_ptr<ConcreteBuffer> clone() const
     {
-        std::shared_ptr<ConcreteBuffer> ret = construct(nbytes());
+        std::shared_ptr<ConcreteBuffer> ret = construct(nbytes(), m_alignment);
         std::copy_n(data(), size(), (*ret).data());
         return ret;
     }
@@ -168,11 +209,15 @@ public:
     /**
      * \param[in] nbytes
      *      Size of the memory buffer in bytes.
+     * \param[in] alignment
+     *      Alignment for the memory buffer in bytes.
+     *      0 means no alignment. Valid values are 0, 16, 32, or 64.
      */
-    ConcreteBuffer(size_t nbytes, const ctor_passkey &)
+    ConcreteBuffer(size_t nbytes, size_t alignment, const ctor_passkey &)
         : BufferBase<ConcreteBuffer>() // don't delegate m_begin and m_end, which will be overwritten later
         , m_nbytes(nbytes)
-        , m_data(allocate(nbytes))
+        , m_alignment(validate_alignment(alignment))
+        , m_data(allocate(nbytes, m_alignment))
     {
         m_begin = m_data.get(); // overwrite m_begin and m_end once we have the data
         m_end = m_begin + m_nbytes;
@@ -186,12 +231,16 @@ public:
      *      this ConcreteBuffer.
      * \param[in] remover
      *      The memory deallocator for the unowned data buffer passed in.
+     * \param[in] alignment
+     *      Alignment for the memory buffer in bytes.
+     *      0 means no alignment. Valid values are 0, 16, 32, or 64.
      */
     // NOLINTNEXTLINE(readability-non-const-parameter)
-    ConcreteBuffer(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover, const ctor_passkey &)
+    ConcreteBuffer(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover, size_t alignment, const ctor_passkey &)
         : BufferBase<ConcreteBuffer>() // don't delegate m_begin and m_end, which will be overwritten later
         , m_nbytes(nbytes)
-        , m_data(data, data_deleter_type(std::move(remover)))
+        , m_alignment(validate_alignment(alignment))
+        , m_data(data, data_deleter_type(std::move(remover), m_alignment))
     {
         m_begin = m_data.get(); // overwrite m_begin and m_end once we have the data
         m_end = m_begin + m_nbytes;
@@ -211,7 +260,8 @@ public:
     ConcreteBuffer(ConcreteBuffer const & other)
         : BufferBase<ConcreteBuffer>() // don't delegate m_begin and m_end, which will be overwritten later
         , m_nbytes(other.m_nbytes)
-        , m_data(allocate(other.m_nbytes))
+        , m_alignment(other.m_alignment)
+        , m_data(allocate(other.m_nbytes, other.m_alignment))
     {
         m_begin = m_data.get(); // overwrite m_begin and m_end once we have the data
         m_end = m_begin + m_nbytes;
@@ -241,23 +291,44 @@ public:
     remover_type const & get_remover() const { return *m_data.get_deleter().remover; }
     remover_type & get_remover() { return *m_data.get_deleter().remover; }
 
+    size_type alignment() const noexcept { return m_alignment; }
+
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
     using unique_ptr_type = std::unique_ptr<int8_t, data_deleter_type>;
 
     static constexpr const char * name() { return "ConcreteBuffer"; }
 
 private:
-    static unique_ptr_type allocate(size_t nbytes)
+    static unique_ptr_type allocate(size_t nbytes, size_t alignment)
     {
         unique_ptr_type ret(nullptr, data_deleter_type());
         if (0 != nbytes)
         {
-            ret = unique_ptr_type(new int8_t[nbytes], data_deleter_type());
+            void * ptr = nullptr;
+            if (alignment > 0)
+            {
+                validate_size_alignment(nbytes, alignment);
+#ifdef _WIN32
+                ptr = _aligned_malloc(nbytes, alignment);
+#else
+                ptr = std::aligned_alloc(alignment, nbytes);
+#endif
+            }
+            else
+            {
+                ptr = std::malloc(nbytes);
+            }
+            if (!ptr)
+            {
+                throw std::bad_alloc();
+            }
+            ret = unique_ptr_type(static_cast<int8_t *>(ptr), data_deleter_type(nullptr, alignment));
         }
         return ret;
     }
 
     size_t m_nbytes;
+    size_t m_alignment = 0; // Alignment of the data buffer in bytes. 0 means no alignment.
     unique_ptr_type m_data;
 }; /* end class ConcreteBuffer */
 

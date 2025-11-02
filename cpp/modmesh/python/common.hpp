@@ -179,7 +179,7 @@ ConcreteBufferNdarrayRemover : ConcreteBuffer::remover_type
     }
 
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
-    void operator()(int8_t *) const override {}
+    void operator()(int8_t *, size_t) const override {}
 
     pybind11::array ndarray;
 

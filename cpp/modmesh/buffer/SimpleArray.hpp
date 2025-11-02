@@ -37,11 +37,11 @@
 // I use <modmesh/toggle/RadixTree.hpp> instead.
 #include <modmesh/toggle/RadixTree.hpp>
 
-#include <limits>
-#include <stdexcept>
-#include <functional>
-#include <numeric>
 #include <algorithm>
+#include <functional>
+#include <limits>
+#include <numeric>
+#include <stdexcept>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -405,7 +405,8 @@ public:
         }
         else
         {
-            do {
+            do
+            {
                 acc += athis->at(sidx) * athis->at(sidx);
             } while (athis->next_sidx(sidx));
         }
@@ -1111,6 +1112,12 @@ public:
 
 } /* end namespace detail */
 
+// Tag type for explicit alignment constructor
+struct with_alignment_t
+{
+};
+inline constexpr with_alignment_t with_alignment{};
+
 /**
  * Simple array type for contiguous memory storage. Size does not change. The
  * copy semantics performs data copy. The move semantics invalidates the
@@ -1140,8 +1147,11 @@ public:
 
     static constexpr size_t itemsize() { return ITEMSIZE; }
 
-    explicit SimpleArray(size_t length)
-        : m_buffer(buffer_type::construct(length * ITEMSIZE))
+    /// Constructor with length and optional alignment
+    /// @param length the length of the array in items
+    /// @param alignment the memory alignment in bytes (default: 0, no special alignment, and valid values are 16, 32, and 64)
+    explicit SimpleArray(size_t length, size_t alignment = 0)
+        : m_buffer(buffer_type::construct(length * ITEMSIZE, alignment))
         , m_shape{length}
         , m_stride{1}
         , m_body(m_buffer->template data<T>())
@@ -1149,8 +1159,8 @@ public:
     }
 
     template <class InputIt>
-    SimpleArray(InputIt first, InputIt last)
-        : SimpleArray(last - first)
+    SimpleArray(InputIt first, InputIt last, size_t alignment = 0)
+        : SimpleArray(last - first, alignment)
     {
         std::copy(first, last, data());
     }
@@ -1162,13 +1172,30 @@ public:
     {
         if (!m_shape.empty())
         {
-            m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE);
+            m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE, 0);
             m_body = m_buffer->template data<T>();
         }
     }
 
     // NOLINTNEXTLINE(modernize-pass-by-value)
-    explicit SimpleArray(small_vector<size_t> const & shape, value_type const & value)
+    SimpleArray(small_vector<size_t> const & shape, size_t alignment, with_alignment_t)
+        : m_shape(shape)
+        , m_stride(calc_stride(m_shape))
+    {
+        if (!m_shape.empty())
+        {
+            m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE, alignment);
+            m_body = m_buffer->template data<T>();
+        }
+    }
+
+    SimpleArray(small_vector<size_t> const & shape, value_type const & value, size_t alignment)
+        : SimpleArray(shape, alignment, with_alignment)
+    {
+        std::fill(begin(), end(), value);
+    }
+
+    SimpleArray(small_vector<size_t> const & shape, value_type const & value)
         : SimpleArray(shape)
     {
         std::fill(begin(), end(), value);
@@ -1180,12 +1207,29 @@ public:
     {
         if (!m_shape.empty())
         {
-            m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE);
+            m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE, 0);
             m_body = m_buffer->template data<T>();
         }
     }
 
-    explicit SimpleArray(std::vector<size_t> const & shape, value_type const & value)
+    SimpleArray(std::vector<size_t> const & shape, size_t alignment, with_alignment_t)
+        : m_shape(shape)
+        , m_stride(calc_stride(m_shape))
+    {
+        if (!m_shape.empty())
+        {
+            m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE, alignment);
+            m_body = m_buffer->template data<T>();
+        }
+    }
+
+    SimpleArray(std::vector<size_t> const & shape, value_type const & value, size_t alignment)
+        : SimpleArray(shape, alignment, with_alignment)
+    {
+        std::fill(begin(), end(), value);
+    }
+
+    SimpleArray(std::vector<size_t> const & shape, value_type const & value)
         : SimpleArray(shape)
     {
         std::fill(begin(), end(), value);
@@ -1391,6 +1435,9 @@ public:
         }
         return size;
     }
+
+    /// Return the underlying buffer alignment in bytes. If no buffer or no alignment, return 0.
+    size_t alignment() const noexcept { return m_buffer ? m_buffer->alignment() : 0; }
 
     using iterator = T *;
     using const_iterator = T const *;

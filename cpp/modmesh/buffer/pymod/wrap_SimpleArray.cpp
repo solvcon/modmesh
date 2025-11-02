@@ -62,10 +62,23 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 py::arg("shape"))
             .def_timed(
                 py::init(
+                    [](py::object const & shape, size_t alignment)
+                    { return wrapped_type(make_shape(shape), alignment, with_alignment); }),
+                py::arg("shape"),
+                py::arg("alignment"))
+            .def_timed(
+                py::init(
                     [](py::object const & shape, value_type const & value)
                     { return wrapped_type(make_shape(shape), value); }),
                 py::arg("shape"),
                 py::arg("value"))
+            .def_timed(
+                py::init(
+                    [](py::object const & shape, value_type const & value, size_t alignment)
+                    { return wrapped_type(make_shape(shape), value, alignment); }),
+                py::arg("shape"),
+                py::arg("value"),
+                py::arg("alignment"))
             .def(
                 py::init(
                     [](py::array & arr_in)
@@ -151,6 +164,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def_property_readonly("nbytes", &wrapped_type::nbytes)
             .def_property_readonly("size", &wrapped_type::size)
             .def_property_readonly("itemsize", &wrapped_type::itemsize)
+            .def_property_readonly("alignment", &wrapped_type::alignment)
             .def_property_readonly(
                 "shape",
                 [](wrapped_type const & self)
