@@ -3160,4 +3160,59 @@ class SimpleCollectorTC(unittest.TestCase):
         # See more: https://github.com/solvcon/modmesh/issues/620
         pass
 
+    def test_alignment_preserved_in_as_array(self):
+        ct = modmesh.SimpleCollectorFloat64(16, 32)
+        self.assertEqual(32, ct.alignment)
+        self.assertEqual(16, len(ct))
+
+        for it in range(16):
+            ct[it] = it * 3.14
+
+        arr = ct.as_array()
+        self.assertEqual(16, len(arr))
+        self.assertEqual(32, arr.alignment)
+
+        for it in range(16):
+            self.assertEqual(it * 3.14, arr[it])
+
+    def test_alignment_preserved_in_as_concrete(self):
+        ep = modmesh.BufferExpander(128, 16)
+        self.assertEqual(16, ep.alignment)
+        self.assertEqual(128, len(ep))
+
+        for it in range(128):
+            ep[it] = it
+
+        cbuf = ep.as_concrete()
+        self.assertEqual(128, len(cbuf))
+        self.assertEqual(16, cbuf.alignment)
+
+        for it in range(128):
+            self.assertEqual(it, cbuf[it])
+
+    def test_alignment_preserved_in_as_concrete_with_capacity(self):
+        ep = modmesh.BufferExpander(64, 32)
+        self.assertEqual(32, ep.alignment)
+        self.assertEqual(64, len(ep))
+
+        for it in range(64):
+            ep[it] = it
+
+        cbuf = ep.as_concrete(128)
+        self.assertEqual(128, len(cbuf))
+        self.assertEqual(32, cbuf.alignment)
+
+        for it in range(64):
+            self.assertEqual(it, cbuf[it])
+
+    def test_alignment_validation_in_as_concrete(self):
+        ep = modmesh.BufferExpander(64, 32)
+        self.assertEqual(32, ep.alignment)
+
+        with self.assertRaisesRegex(
+                ValueError,
+                "BufferExpander: size .* must be a multiple of alignment 32"
+        ):
+            ep.as_concrete(100)
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
