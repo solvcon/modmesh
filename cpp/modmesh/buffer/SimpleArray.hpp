@@ -1116,7 +1116,6 @@ public:
 struct with_alignment_t
 {
 };
-inline constexpr with_alignment_t with_alignment{};
 
 /**
  * Simple array type for contiguous memory storage. Size does not change. The
@@ -1178,7 +1177,7 @@ public:
     }
 
     // NOLINTNEXTLINE(modernize-pass-by-value)
-    SimpleArray(small_vector<size_t> const & shape, size_t alignment, with_alignment_t)
+    SimpleArray(small_vector<size_t> const & shape, size_t alignment, with_alignment_t const & /* unnamed argument for tagging */)
         : m_shape(shape)
         , m_stride(calc_stride(m_shape))
     {
@@ -1190,7 +1189,7 @@ public:
     }
 
     SimpleArray(small_vector<size_t> const & shape, value_type const & value, size_t alignment)
-        : SimpleArray(shape, alignment, with_alignment)
+        : SimpleArray(shape, alignment, with_alignment_t{})
     {
         std::fill(begin(), end(), value);
     }
@@ -1224,7 +1223,7 @@ public:
     }
 
     SimpleArray(std::vector<size_t> const & shape, value_type const & value, size_t alignment)
-        : SimpleArray(shape, alignment, with_alignment)
+        : SimpleArray(shape, alignment, with_alignment_t{})
     {
         std::fill(begin(), end(), value);
     }

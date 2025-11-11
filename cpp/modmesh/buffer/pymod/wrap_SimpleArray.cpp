@@ -63,7 +63,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def_timed(
                 py::init(
                     [](py::object const & shape, size_t alignment)
-                    { return wrapped_type(make_shape(shape), alignment, with_alignment); }),
+                    { return wrapped_type(make_shape(shape), alignment, with_alignment_t{}); }),
                 py::arg("shape"),
                 py::arg("alignment"))
             .def_timed(
