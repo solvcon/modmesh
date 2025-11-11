@@ -946,6 +946,206 @@ class PointPadTB(ModMeshTB):
                 ValueError, "PointPad::mirror: axis must be 'x', 'y', or 'z'"):
             pp.mirror('w')
 
+    def test_alignment(self):
+        # Test alignment property for PointPad with various configurations
+        pp2d = self.PointPad(ndim=2)
+        self.assertEqual(pp2d.alignment, 0)
+
+        # Test alignment with valid values (16, 32, 64)
+        pp2d_aligned = self.PointPad(ndim=2, nelem=8, alignment=32)
+        self.assertEqual(pp2d_aligned.alignment, 32)
+
+        pp3d_aligned = self.PointPad(ndim=3, nelem=16, alignment=64)
+        self.assertEqual(pp3d_aligned.alignment, 64)
+
+        # Test invalid alignment values
+        invalid_alignments = [
+            1, 2, 4, 8, 128, 256, 1024, 15, 17, 31, 33, 63, 65
+        ]
+        for alignment in invalid_alignments:
+            with self.assertRaisesRegex(
+                    ValueError, "PointPad::PointPad: alignment must be 0, 16, 32, or 64"):  # noqa E501
+                self.PointPad(ndim=2, nelem=4, alignment=alignment)
+
+        # Test alignment with arrays and cloning
+        xarr = self.SimpleArray(
+            array=np.array([1, 2, 3, 4], dtype=self.dtype))
+        yarr = self.SimpleArray(
+            array=np.array([5, 6, 7, 8], dtype=self.dtype))
+        pp_arr_aligned = self.PointPad(
+            x=xarr, y=yarr, clone=True, alignment=16)
+        self.assertEqual(pp_arr_aligned.alignment, 16)
+        self.assertEqual(pp_arr_aligned.ndim, 2)
+
+        # Test invalid alignment values during array initialization
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: alignment must be 0, 16, 32, or 64"):  # noqa E501
+            self.PointPad(x=xarr, y=yarr, clone=True, alignment=12)
+
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: alignment must be 0, 16, 32, or 64"):  # noqa E501
+            self.PointPad(x=xarr, y=yarr, clone=False, alignment=48)
+
+        # Test alignment for 3D arrays
+        zarr = self.SimpleArray(
+            array=np.array([9, 10, 11, 12, 13, 14, 15, 16],
+                           dtype=self.dtype))
+        xarr2 = self.SimpleArray(
+            array=np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=self.dtype))
+        yarr2 = self.SimpleArray(
+            array=np.array([9, 10, 11, 12, 13, 14, 15, 16],
+                           dtype=self.dtype))
+        pp_arr_3d_aligned = self.PointPad(
+            x=xarr2, y=yarr2, z=zarr, clone=True, alignment=32)
+        self.assertEqual(pp_arr_3d_aligned.alignment, 32)
+        self.assertEqual(pp_arr_3d_aligned.ndim, 3)
+
+        # Test invalid alignment values for 3D arrays
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: alignment must be 0, 16, 32, or 64"):  # noqa E501
+            self.PointPad(
+                x=xarr2, y=yarr2, z=zarr, clone=True, alignment=100)
+
+        with self.assertRaisesRegex(
+                ValueError, "PointPad::PointPad: alignment must be 0, 16, 32, or 64"):  # noqa E501
+            self.PointPad(
+                x=xarr2, y=yarr2, z=zarr, clone=False, alignment=512)
+
+    def test_alignment_preservation(self):
+        # Test that alignment is preserved during operations
+        # like append and expand
+        element_size = 4 if self.dtype == 'float32' else 8
+
+        # Test alignment preservation for 2D PointPad
+        nelem_32 = 32 // element_size
+        pp2d_32 = self.PointPad(ndim=2, nelem=nelem_32, alignment=32)
+        self.assertEqual(pp2d_32.alignment, 32)
+
+        pp2d_32.append(1.0, 2.0)
+        pp2d_32.append(3.0, 4.0)
+        self.assertEqual(pp2d_32.alignment, 32)
+
+        pp2d_32.expand(64)
+        self.assertEqual(pp2d_32.alignment, 32)
+
+        packed = pp2d_32.pack_array()
+        self.assertEqual(packed.nbytes % 32, 0)
+
+        # Test alignment preservation for 3D PointPad
+        nelem_64 = 64 // element_size
+        pp3d_64 = self.PointPad(ndim=3, nelem=nelem_64, alignment=64)
+        self.assertEqual(pp3d_64.alignment, 64)
+
+        pp3d_64.append(1.0, 2.0, 3.0)
+        pp3d_64.append(4.0, 5.0, 6.0)
+        self.assertEqual(pp3d_64.alignment, 64)
+
+        pp3d_64.expand(128)
+        self.assertEqual(pp3d_64.alignment, 64)
+
+        packed_3d = pp3d_64.pack_array()
+        self.assertEqual(packed_3d.nbytes % 64, 0)
+
+        # Test alignment preservation for exceeding initial size
+        nelem_16 = 16 // element_size
+        pp2d_16 = self.PointPad(ndim=2, nelem=nelem_16, alignment=16)
+        for i in range(10):
+            pp2d_16.append(float(i), float(i + 1))
+        self.assertEqual(pp2d_16.alignment, 16)
+
+        pp2d_16.expand(200)
+        self.assertEqual(pp2d_16.alignment, 16)
+
+        packed_2d_16 = pp2d_16.pack_array()
+        self.assertEqual(packed_2d_16.nbytes % 16, 0)
+
+        # Test unaligned PointPad
+        pp2d_unaligned = self.PointPad(ndim=2, nelem=5)
+        self.assertEqual(pp2d_unaligned.alignment, 0)
+
+        pp2d_unaligned.append(1.0, 2.0)
+        self.assertEqual(pp2d_unaligned.alignment, 0)
+
+        pp2d_unaligned.expand(20)
+        self.assertEqual(pp2d_unaligned.alignment, 0)
+
+    def test_alignment_valid_values(self):
+        # Test valid alignment values (0, 16, 32, 64) for PointPad
+        element_size = 4 if self.dtype == 'float32' else 8
+
+        for alignment in [0, 16, 32, 64]:
+            if alignment == 0:
+                nelem = 4
+            else:
+                nelem = alignment // element_size
+
+            pp2d = self.PointPad(
+                ndim=2, nelem=nelem, alignment=alignment)
+            self.assertEqual(pp2d.alignment, alignment)
+
+            nelem_3d = max(nelem, 8)
+            pp3d = self.PointPad(
+                ndim=3, nelem=nelem_3d, alignment=alignment)
+            self.assertEqual(pp3d.alignment, alignment)
+
+            if alignment == 0:
+                arr_nelem = 3
+            else:
+                arr_nelem = max(alignment // element_size, 2)
+
+            xarr = self.SimpleArray(
+                array=np.arange(arr_nelem, dtype=self.dtype))
+            yarr = self.SimpleArray(
+                array=np.arange(arr_nelem, arr_nelem * 2,
+                                dtype=self.dtype))
+            pp_arr = self.PointPad(
+                x=xarr, y=yarr, clone=True, alignment=alignment)
+            self.assertEqual(pp_arr.alignment, alignment)
+
+            zarr = self.SimpleArray(
+                array=np.arange(arr_nelem * 2, arr_nelem * 3,
+                                dtype=self.dtype))
+            pp_arr_3d = self.PointPad(
+                x=xarr, y=yarr, z=zarr, clone=True, alignment=alignment)
+            self.assertEqual(pp_arr_3d.alignment, alignment)
+
+    def test_alignment_size_validation(self):
+        # Test that alignment size validation works correctly
+        element_size = 4 if self.dtype == 'float32' else 8
+        test_cases = [
+            (4, [
+                (2, 5, 16,
+                 f"BufferExpander::allocate: size {4 * 5} must be a multiple of alignment 16"),  # noqa E501
+                (2, 7, 32,
+                 f"BufferExpander::allocate: size {4 * 7} must be a multiple of alignment 32"),  # noqa E501
+                (3, 9, 64,
+                 f"BufferExpander::allocate: size {4 * 9} must be a multiple of alignment 64"),  # noqa E501
+                (2, 11, 16,
+                 f"BufferExpander::allocate: size {4 * 11} must be a multiple of alignment 16"),  # noqa E501
+                (3, 13, 32,
+                 f"BufferExpander::allocate: size {4 * 13} must be a multiple of alignment 32"),  # noqa E501
+            ]),
+            (8, [
+                (2, 3, 32,
+                 f"BufferExpander::allocate: size {8 * 3} must be a multiple of alignment 32"),  # noqa E501
+                (2, 5, 64,
+                 f"BufferExpander::allocate: size {8 * 5} must be a multiple of alignment 64"),  # noqa E501
+                (3, 7, 64,
+                 f"BufferExpander::allocate: size {8 * 7} must be a multiple of alignment 64"),  # noqa E501
+                (2, 9, 16,
+                 f"BufferExpander::allocate: size {8 * 9} must be a multiple of alignment 16"),  # noqa E501
+                (3, 11, 32,
+                 f"BufferExpander::allocate: size {8 * 11} must be a multiple of alignment 32"),  # noqa E501
+            ]),
+        ]
+
+        for size, cases in test_cases:
+            if element_size == size:
+                for ndim, nelem, alignment, error_msg in cases:
+                    with self.assertRaisesRegex(ValueError, error_msg):
+                        self.PointPad(
+                            ndim=ndim, nelem=nelem, alignment=alignment)
+
 
 class PointPadFp32TC(PointPadTB, unittest.TestCase):
 

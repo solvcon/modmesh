@@ -35,6 +35,7 @@
 #include <cassert>
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <iostream>
 #include <sstream>
 #include <map>

@@ -70,7 +70,7 @@ std::shared_ptr<ConcreteBuffer> const & BufferExpander::as_concrete(size_type ca
     size_type const old_size = size();
     if (cap > 0 && m_alignment > 0)
     {
-        validate_size_alignment(cap, m_alignment);
+        validate_size_alignment(cap, m_alignment, "BufferExpander::as_concrete");
     }
     if (!m_concrete_buffer)
     {

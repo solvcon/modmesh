@@ -118,38 +118,38 @@ class ConcreteBufferAlignmentTC(unittest.TestCase):
     def test_alignment_validation_invalid_values(self):
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 17"  # noqa: E501
+                "ConcreteBuffer::ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 17"  # noqa E501
         ):
             modmesh.ConcreteBuffer(256, 17)
 
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 100"  # noqa: E501
+                "ConcreteBuffer::ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 100"  # noqa E501
         ):
             modmesh.ConcreteBuffer(256, 100)
 
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 128"  # noqa: E501
+                "ConcreteBuffer::ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 128"  # noqa E501
         ):
             modmesh.ConcreteBuffer(1024, 128)
 
     def test_alignment_size_validation(self):
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: size .* must be a multiple of alignment 64"
+                "ConcreteBuffer::allocate: size .* must be a multiple of alignment 64"  # noqa E501
         ):
             modmesh.ConcreteBuffer(5, 64)
 
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: size .* must be a multiple of alignment 16"
+                "ConcreteBuffer::allocate: size .* must be a multiple of alignment 16"  # noqa E501
         ):
             modmesh.ConcreteBuffer(100, 16)
 
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: size .* must be a multiple of alignment 32"
+                "ConcreteBuffer::allocate: size .* must be a multiple of alignment 32"  # noqa E501
         ):
             modmesh.ConcreteBuffer(200, 32)
 
@@ -1116,19 +1116,19 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
     def test_alignment_validation_invalid_values(self):
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 17"  # noqa: E501
+                "ConcreteBuffer::ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 17"  # noqa E501
         ):
             modmesh.SimpleArrayFloat64((4, 4), 17)
 
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 100"  # noqa: E501
+                "ConcreteBuffer::ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 100"  # noqa E501
         ):
             modmesh.SimpleArrayFloat64((4, 4), 100)
 
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 128"  # noqa: E501
+                "ConcreteBuffer::ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 128"  # noqa E501
         ):
             modmesh.SimpleArrayFloat64((16, 16), 128)
 
@@ -1138,13 +1138,13 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: size .* must be a multiple of alignment 16"
+                "ConcreteBuffer::allocate: size .* must be a multiple of alignment 16"  # noqa E501
         ):
             modmesh.SimpleArrayFloat64((5, 1), 16)
 
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: size .* must be a multiple of alignment 32"
+                "ConcreteBuffer::allocate: size .* must be a multiple of alignment 32"  # noqa E501
         ):
             modmesh.SimpleArrayFloat64((3, 5), 32)
 
@@ -3077,13 +3077,13 @@ class SimpleCollectorTC(unittest.TestCase):
         # Invalid alignments
         with self.assertRaisesRegex(
                 ValueError,
-                "BufferExpander: alignment must be 0, 16, 32, or 64, but got 8"
+                "BufferExpander::BufferExpander: alignment must be 0, 16, 32, or 64, but got 8"  # noqa E501
         ):
             modmesh.SimpleCollectorFloat64(16, 8)
 
         with self.assertRaisesRegex(
                 ValueError,
-                "BufferExpander: alignment must be 0, 16, 32, or 64, but got 128"  # noqa E501
+                "BufferExpander::BufferExpander: alignment must be 0, 16, 32, or 64, but got 128"  # noqa E501
         ):
             modmesh.SimpleCollectorFloat64(128, 128)
 
@@ -3104,13 +3104,13 @@ class SimpleCollectorTC(unittest.TestCase):
         # Invalid sizes (not multiple of alignment)
         with self.assertRaisesRegex(
                 ValueError,
-                "BufferExpander: size .* must be a multiple of alignment 16"
+                "BufferExpander::allocate: size .* must be a multiple of alignment 16"  # noqa E501
         ):
             modmesh.SimpleCollectorFloat64(17, 16)
 
         with self.assertRaisesRegex(
                 ValueError,
-                "BufferExpander: size .* must be a multiple of alignment 32"
+                "BufferExpander::allocate: size .* must be a multiple of alignment 32"  # noqa E501
         ):
             modmesh.SimpleCollectorFloat64(31, 32)
 
@@ -3129,7 +3129,7 @@ class SimpleCollectorTC(unittest.TestCase):
         # Reserve with non-aligned size should fail
         with self.assertRaisesRegex(
                 ValueError,
-                "BufferExpander: size .* must be a multiple of alignment 16"
+                "BufferExpander::allocate: size .* must be a multiple of alignment 16"  # noqa E501
         ):
             ct.reserve(33)
 
@@ -3211,7 +3211,7 @@ class SimpleCollectorTC(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 ValueError,
-                "BufferExpander: size .* must be a multiple of alignment 32"
+                "BufferExpander::as_concrete: size .* must be a multiple of alignment 32"  # noqa E501
         ):
             ep.as_concrete(100)
 

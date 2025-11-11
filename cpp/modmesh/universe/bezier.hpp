@@ -294,6 +294,7 @@ public:
     using real_type = T;
     using value_type = T;
     using point_type = Point3d<T>;
+    using size_type = std::size_t;
 
     template <typename... Args>
     static std::shared_ptr<PointPad<T>> construct(Args &&... args)
@@ -303,6 +304,7 @@ public:
 
     PointPad(uint8_t ndim, ctor_passkey const &)
         : m_ndim(ndim)
+        , m_alignment(0)
     {
         if (ndim > 3)
         {
@@ -322,9 +324,37 @@ public:
 
     PointPad(uint8_t ndim, size_t nelem, ctor_passkey const &)
         : m_ndim(ndim)
-        , m_x(nelem)
-        , m_y(nelem)
-        , m_z()
+        , m_alignment(0)
+        , m_x(nelem, 0)
+        , m_y(nelem, 0)
+        , m_z(0, 0)
+    {
+        if (ndim == 3)
+        {
+            m_z.expand(nelem);
+        }
+        else if (ndim > 3)
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "PointPad::PointPad: "
+                << "ndim = " << int(ndim) << " > 3");
+        }
+        else if (ndim < 2)
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "PointPad::PointPad: "
+                << "ndim = " << int(ndim) << " < 2");
+        }
+    }
+
+    PointPad(uint8_t ndim, size_t nelem, size_type alignment, ctor_passkey const &)
+        : m_ndim(ndim)
+        , m_alignment(validate_alignment(alignment, "PointPad::PointPad"))
+        , m_x(nelem, m_alignment)
+        , m_y(nelem, m_alignment)
+        , m_z(0, m_alignment)
     {
         if (ndim == 3)
         {
@@ -349,8 +379,27 @@ public:
     // Always clone the input arrays
     PointPad(SimpleArray<T> const & x, SimpleArray<T> const & y, ctor_passkey const &)
         : m_ndim(2)
-        , m_x(x)
-        , m_y(y)
+        , m_alignment(0)
+        , m_x(x, 0)
+        , m_y(y, 0)
+        , m_z(0, 0)
+    {
+        if (x.size() != y.size())
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "PointPad::PointPad: "
+                << "x.size() " << x.size() << " y.size() " << y.size()
+                << " are not the same");
+        }
+    }
+
+    PointPad(SimpleArray<T> const & x, SimpleArray<T> const & y, size_type alignment, ctor_passkey const &)
+        : m_ndim(2)
+        , m_alignment(validate_alignment(alignment, "PointPad::PointPad"))
+        , m_x(x, m_alignment)
+        , m_y(y, m_alignment)
+        , m_z(0, m_alignment)
     {
         if (x.size() != y.size())
         {
@@ -365,9 +414,27 @@ public:
     // Always clone the input arrays
     PointPad(SimpleArray<T> const & x, SimpleArray<T> const & y, SimpleArray<T> const & z, ctor_passkey const &)
         : m_ndim(3)
-        , m_x(x)
-        , m_y(y)
-        , m_z(z)
+        , m_alignment(0)
+        , m_x(x, 0)
+        , m_y(y, 0)
+        , m_z(z, 0)
+    {
+        if (x.size() != y.size() || x.size() != z.size() || y.size() != z.size())
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "PointPad::PointPad: "
+                << "x.size() " << x.size() << " y.size() " << y.size() << " z.size() " << z.size()
+                << " are not the same");
+        }
+    }
+
+    PointPad(SimpleArray<T> const & x, SimpleArray<T> const & y, SimpleArray<T> const & z, size_type alignment, ctor_passkey const &)
+        : m_ndim(3)
+        , m_alignment(validate_alignment(alignment, "PointPad::PointPad"))
+        , m_x(x, m_alignment)
+        , m_y(y, m_alignment)
+        , m_z(z, m_alignment)
     {
         if (x.size() != y.size() || x.size() != z.size() || y.size() != z.size())
         {
@@ -381,8 +448,27 @@ public:
 
     PointPad(SimpleArray<T> & x, SimpleArray<T> & y, bool clone, ctor_passkey const &)
         : m_ndim(2)
-        , m_x(x, clone)
-        , m_y(y, clone)
+        , m_alignment(0)
+        , m_x(x, clone, 0)
+        , m_y(y, clone, 0)
+        , m_z(0, 0)
+    {
+        if (x.size() != y.size())
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "PointPad::PointPad: "
+                << "x.size() " << x.size() << " y.size() " << y.size()
+                << " are not the same");
+        }
+    }
+
+    PointPad(SimpleArray<T> & x, SimpleArray<T> & y, bool clone, size_type alignment, ctor_passkey const &)
+        : m_ndim(2)
+        , m_alignment(validate_alignment(alignment, "PointPad::PointPad"))
+        , m_x(x, clone, m_alignment)
+        , m_y(y, clone, m_alignment)
+        , m_z(0, m_alignment)
     {
         if (x.size() != y.size())
         {
@@ -396,9 +482,27 @@ public:
 
     PointPad(SimpleArray<T> & x, SimpleArray<T> & y, SimpleArray<T> & z, bool clone, ctor_passkey const &)
         : m_ndim(3)
-        , m_x(x, clone)
-        , m_y(y, clone)
-        , m_z(z, clone)
+        , m_alignment(0)
+        , m_x(x, clone, 0)
+        , m_y(y, clone, 0)
+        , m_z(z, clone, 0)
+    {
+        if (x.size() != y.size() || x.size() != z.size() || y.size() != z.size())
+        {
+            throw std::invalid_argument(
+                Formatter()
+                << "PointPad::PointPad: "
+                << "x.size() " << x.size() << " y.size() " << y.size() << " z.size() " << z.size()
+                << " are not the same");
+        }
+    }
+
+    PointPad(SimpleArray<T> & x, SimpleArray<T> & y, SimpleArray<T> & z, bool clone, size_type alignment, ctor_passkey const &)
+        : m_ndim(3)
+        , m_alignment(validate_alignment(alignment, "PointPad::PointPad"))
+        , m_x(x, clone, m_alignment)
+        , m_y(y, clone, m_alignment)
+        , m_z(z, clone, m_alignment)
     {
         if (x.size() != y.size() || x.size() != z.size() || y.size() != z.size())
         {
@@ -452,12 +556,14 @@ public:
     // Do not implement setter of m_ndim. It should not be changed after construction.
     uint8_t ndim() const { return m_ndim; }
 
+    size_type alignment() const { return m_alignment; }
+
     size_t size() const { return m_x.size(); }
 
     SimpleArray<T> pack_array() const
     {
         using shape_type = typename SimpleArray<T>::shape_type;
-        SimpleArray<T> ret(shape_type{m_x.size(), m_ndim});
+        SimpleArray<T> ret(shape_type{m_x.size(), m_ndim}, m_alignment, with_alignment_t{});
         if (m_ndim == 3)
         {
             for (size_t i = 0; i < m_x.size(); ++i)
@@ -636,6 +742,7 @@ public:
 private:
 
     uint8_t m_ndim;
+    size_type m_alignment;
     SimpleCollector<value_type> m_x;
     SimpleCollector<value_type> m_y;
     // For 2D point pads, m_z should remain unused and empty.
