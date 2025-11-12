@@ -33,6 +33,31 @@
 namespace modmesh
 {
 
+/// Validate that alignment is one of the supported values (0, 16, 32, 64).
+inline std::size_t validate_alignment(std::size_t alignment, const char * prefix = nullptr)
+{
+    if (alignment != 0 && alignment != 16 && alignment != 32 && alignment != 64)
+    {
+        throw std::invalid_argument(
+            Formatter()
+            << (prefix ? prefix : "") << (prefix ? ": " : "")
+            << "alignment must be 0, 16, 32, or 64, but got " << alignment);
+    }
+    return alignment;
+}
+
+/// Validate that size is a multiple of alignment (when alignment > 0).
+inline void validate_size_alignment(std::size_t size, std::size_t alignment, const char * prefix = nullptr)
+{
+    if (alignment > 0 && size % alignment != 0)
+    {
+        throw std::invalid_argument(
+            Formatter()
+            << (prefix ? prefix : "") << (prefix ? ": " : "")
+            << "size " << size << " must be a multiple of alignment " << alignment);
+    }
+}
+
 /// Base class for buffer-like objects.
 template <typename Derived>
 class BufferBase

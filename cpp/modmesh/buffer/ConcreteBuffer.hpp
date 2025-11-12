@@ -152,29 +152,6 @@ public:
     using remover_type = detail::ConcreteBufferRemover;
     using size_type = std::size_t;
 
-    /// Ensure the alignment value is valid.
-    static size_type validate_alignment(size_type alignment)
-    {
-        if (alignment != 0 && alignment != 16 && alignment != 32 && alignment != 64)
-        {
-            throw std::invalid_argument(
-                Formatter()
-                << "ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got " << alignment);
-        }
-        return alignment;
-    }
-
-    /// Ensure the size value is valid with respect to alignment.
-    static void validate_size_alignment(size_type size, size_type alignment)
-    {
-        if (alignment > 0 && size % alignment != 0)
-        {
-            throw std::invalid_argument(
-                Formatter()
-                << "ConcreteBuffer: size " << size << " must be a multiple of alignment " << alignment);
-        }
-    }
-
     static std::shared_ptr<ConcreteBuffer> construct(size_t nbytes, size_t alignment = 0)
     {
         return std::make_shared<ConcreteBuffer>(nbytes, alignment, ctor_passkey());
@@ -216,7 +193,7 @@ public:
     ConcreteBuffer(size_t nbytes, size_t alignment, const ctor_passkey &)
         : BufferBase<ConcreteBuffer>() // don't delegate m_begin and m_end, which will be overwritten later
         , m_nbytes(nbytes)
-        , m_alignment(validate_alignment(alignment))
+        , m_alignment(validate_alignment(alignment, "ConcreteBuffer::ConcreteBuffer"))
         , m_data(allocate(nbytes, m_alignment))
     {
         m_begin = m_data.get(); // overwrite m_begin and m_end once we have the data
@@ -239,7 +216,7 @@ public:
     ConcreteBuffer(size_t nbytes, int8_t * data, std::unique_ptr<remover_type> && remover, size_t alignment, const ctor_passkey &)
         : BufferBase<ConcreteBuffer>() // don't delegate m_begin and m_end, which will be overwritten later
         , m_nbytes(nbytes)
-        , m_alignment(validate_alignment(alignment))
+        , m_alignment(validate_alignment(alignment, "ConcreteBuffer::ConcreteBuffer"))
         , m_data(data, data_deleter_type(std::move(remover), m_alignment))
     {
         m_begin = m_data.get(); // overwrite m_begin and m_end once we have the data
@@ -307,7 +284,7 @@ private:
             void * ptr = nullptr;
             if (alignment > 0)
             {
-                validate_size_alignment(nbytes, alignment);
+                validate_size_alignment(nbytes, alignment, "ConcreteBuffer::allocate");
 #ifdef _WIN32
                 ptr = _aligned_malloc(nbytes, alignment);
 #else

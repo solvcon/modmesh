@@ -187,11 +187,26 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
             py::arg("nelem"))
         .def(
             py::init(
+                [](uint8_t ndim, size_t nelem, size_t alignment)
+                { return wrapped_type::construct(ndim, nelem, alignment); }),
+            py::arg("ndim"),
+            py::arg("nelem"),
+            py::arg("alignment"))
+        .def(
+            py::init(
                 [](SimpleArray<T> & x, SimpleArray<T> & y, bool clone)
                 { return wrapped_type::construct(x, y, clone); }),
             py::arg("x"),
             py::arg("y"),
             py::arg("clone"))
+        .def(
+            py::init(
+                [](SimpleArray<T> & x, SimpleArray<T> & y, bool clone, size_t alignment)
+                { return wrapped_type::construct(x, y, clone, alignment); }),
+            py::arg("x"),
+            py::arg("y"),
+            py::arg("clone"),
+            py::arg("alignment"))
         .def(
             py::init(
                 [](SimpleArray<T> & x, SimpleArray<T> & y, SimpleArray<T> & z, bool clone)
@@ -200,11 +215,21 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
             py::arg("y"),
             py::arg("z"),
             py::arg("clone"))
+        .def(
+            py::init(
+                [](SimpleArray<T> & x, SimpleArray<T> & y, SimpleArray<T> & z, bool clone, size_t alignment)
+                { return wrapped_type::construct(x, y, z, clone, alignment); }),
+            py::arg("x"),
+            py::arg("y"),
+            py::arg("z"),
+            py::arg("clone"),
+            py::arg("alignment"))
         //
         ;
 
     (*this)
         .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def_property_readonly("alignment", &wrapped_type::alignment)
         .def(
             "append",
             [](wrapped_type & self, value_type x, value_type y)

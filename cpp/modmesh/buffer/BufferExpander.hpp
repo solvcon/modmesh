@@ -60,30 +60,6 @@ public:
     using size_type = std::size_t;
     using difference_type = std::ptrdiff_t;
 
-    /// Ensure the alignment value is valid.
-    static size_type validate_alignment(size_type alignment)
-    {
-        // TODO: support other alignments if needed
-        if (alignment != 0 && alignment != 16 && alignment != 32 && alignment != 64)
-        {
-            throw std::invalid_argument(
-                Formatter()
-                << "BufferExpander: alignment must be 0, 16, 32, or 64, but got " << alignment);
-        }
-        return alignment;
-    }
-
-    /// Ensure the size value is valid with respect to alignment.
-    static void validate_size_alignment(size_type size, size_type alignment)
-    {
-        if (alignment > 0 && size % alignment != 0)
-        {
-            throw std::invalid_argument(
-                Formatter()
-                << "BufferExpander: size " << size << " must be a multiple of alignment " << alignment);
-        }
-    }
-
     template <typename... Args>
     static std::shared_ptr<BufferExpander> construct(Args &&... args)
     {
@@ -98,7 +74,7 @@ public:
     BufferExpander(std::shared_ptr<ConcreteBuffer> const & buf, bool clone, size_type alignment, ctor_passkey const &)
         : BufferBase<BufferExpander>()
         , m_concrete_buffer(clone ? buf->clone() : buf)
-        , m_alignment(validate_alignment(alignment))
+        , m_alignment(validate_alignment(alignment, "BufferExpander::BufferExpander"))
     {
         m_begin = m_concrete_buffer->data();
         m_end = m_begin + m_concrete_buffer->size();
@@ -112,7 +88,7 @@ public:
 
     BufferExpander(size_type nbyte, size_type alignment, ctor_passkey const &)
         : BufferBase<BufferExpander>(nullptr, nullptr)
-        , m_alignment(validate_alignment(alignment))
+        , m_alignment(validate_alignment(alignment, "BufferExpander::BufferExpander"))
     {
         expand(nbyte);
     }
@@ -215,7 +191,7 @@ private:
             void * ptr = nullptr;
             if (alignment > 0)
             {
-                validate_size_alignment(nbytes, alignment); // only allow valid nbytes with respect to alignment
+                validate_size_alignment(nbytes, alignment, "BufferExpander::allocate");
 #ifdef _WIN32
                 ptr = _aligned_malloc(nbytes, alignment);
 #else
