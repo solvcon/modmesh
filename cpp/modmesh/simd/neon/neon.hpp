@@ -59,6 +59,11 @@ const T * check_between(T const * start, T const * end, T const & min_val, T con
     using cmpvec_t = type::vector_t<uint64_t>;
     constexpr size_t N_lane = type::vector_lane<T>;
 
+#ifndef NDEBUG
+    constexpr size_t alignment = get_recommended_alignment();
+    detail::check_alignment(start, alignment, "check_between start");
+#endif
+
     vec_t max_vec = vdupq(max_val);
     vec_t min_vec = vdupq(min_val);
     vec_t data_vec = {};
@@ -117,6 +122,14 @@ void add(T * dest, T const * dest_end, T const * src1, T const * src2)
     {
         using vec_t = type::vector_t<T>;
         constexpr size_t N_lane = type::vector_lane<T>;
+
+#ifndef NDEBUG
+        constexpr size_t alignment = get_recommended_alignment();
+        detail::check_alignment(dest, alignment, "add dest");
+        detail::check_alignment(src1, alignment, "add src1");
+        detail::check_alignment(src2, alignment, "add src2");
+#endif
+
         vec_t src1_vec;
         vec_t src2_vec;
         vec_t res_vec;
@@ -146,6 +159,14 @@ void sub(T * dest, T const * dest_end, T const * src1, T const * src2)
     {
         using vec_t = type::vector_t<T>;
         constexpr size_t N_lane = type::vector_lane<T>;
+
+#ifndef NDEBUG
+        constexpr size_t alignment = get_recommended_alignment();
+        detail::check_alignment(dest, alignment, "sub dest");
+        detail::check_alignment(src1, alignment, "sub src1");
+        detail::check_alignment(src2, alignment, "sub src2");
+#endif
+
         vec_t src1_vec;
         vec_t src2_vec;
         vec_t res_vec;
@@ -175,6 +196,14 @@ void mul(T * dest, T const * dest_end, T const * src1, T const * src2)
     {
         using vec_t = type::vector_t<T>;
         constexpr size_t N_lane = type::vector_lane<T>;
+
+#ifndef NDEBUG
+        constexpr size_t alignment = get_recommended_alignment();
+        detail::check_alignment(dest, alignment, "mul dest");
+        detail::check_alignment(src1, alignment, "mul src1");
+        detail::check_alignment(src2, alignment, "mul src2");
+#endif
+
         vec_t src1_vec;
         vec_t src2_vec;
         vec_t res_vec;
@@ -204,6 +233,14 @@ void div(T * dest, T const * dest_end, T const * src1, T const * src2)
     {
         using vec_t = type::vector_t<T>;
         constexpr size_t N_lane = type::vector_lane<T>;
+
+#ifndef NDEBUG
+        constexpr size_t alignment = get_recommended_alignment();
+        detail::check_alignment(dest, alignment, "div dest");
+        detail::check_alignment(src1, alignment, "div src1");
+        detail::check_alignment(src2, alignment, "div src2");
+#endif
+
         vec_t src1_vec;
         vec_t src2_vec;
         vec_t res_vec;

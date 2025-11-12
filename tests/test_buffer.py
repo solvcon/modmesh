@@ -1220,6 +1220,45 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
         self.assertEqual(64, array3d.alignment)
         self.assertEqual((2, 4, 4), array3d.shape)
 
+    def test_alignment_with_simd_operations(self):
+        size = 16
+        alignments = [16, 32, 64]
+
+        for alignment in alignments:
+            arr1 = modmesh.SimpleArrayFloat64((size,), alignment)
+            arr2 = modmesh.SimpleArrayFloat64((size,), alignment)
+
+            self.assertEqual(alignment, arr1.alignment)
+            self.assertEqual(alignment, arr2.alignment)
+
+            for index in range(size):
+                arr1[index] = index * 2.0
+                arr2[index] = index * 3.0
+
+            result_add = arr1.add_simd(arr2)
+            self.assertEqual(0, result_add.alignment)
+            for index in range(size):
+                expected = index * 2.0 + index * 3.0
+                self.assertAlmostEqual(expected, result_add[index])
+
+            result_sub = arr1.sub_simd(arr2)
+            self.assertEqual(0, result_sub.alignment)
+            for index in range(size):
+                expected = index * 2.0 - index * 3.0
+                self.assertAlmostEqual(expected, result_sub[index])
+
+            result_mul = arr1.mul_simd(arr2)
+            self.assertEqual(0, result_mul.alignment)
+            for index in range(size):
+                expected = index * 2.0 * index * 3.0
+                self.assertAlmostEqual(expected, result_mul[index])
+
+            result_div = arr2.div_simd(arr1)
+            self.assertEqual(0, result_div.alignment)
+            for index in range(1, size):
+                expected = index * 3.0 / (index * 2.0)
+                self.assertAlmostEqual(expected, result_div[index])
+
 
 class SimpleArrayCalculatorsTC(unittest.TestCase):
 
@@ -3153,12 +3192,6 @@ class SimpleCollectorTC(unittest.TestCase):
 
         # Verify alignment is maintained
         self.assertEqual(16, ct.alignment)
-
-    def test_alignment_with_simd_operations(self):
-        # TODO: implement tests for SIMD operations if applicable.
-        # It requires more effort on `as_array` and ConcreteBuffer side.
-        # See more: https://github.com/solvcon/modmesh/issues/620
-        pass
 
     def test_alignment_preserved_in_as_array(self):
         ct = modmesh.SimpleCollectorFloat64(16, 32)
