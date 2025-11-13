@@ -1259,6 +1259,210 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
                 expected = index * 3.0 / (index * 2.0)
                 self.assertAlmostEqual(expected, result_div[index])
 
+    def test_alignment_with_simd_operations_multidimensional(self):
+        alignments = [16, 32, 64]
+
+        for alignment in alignments:
+            array1_2d = modmesh.SimpleArrayFloat64((4, 8), alignment)
+            array2_2d = modmesh.SimpleArrayFloat64((4, 8), alignment)
+
+            self.assertEqual(alignment, array1_2d.alignment)
+            self.assertEqual(alignment, array2_2d.alignment)
+            self.assertEqual((4, 8), array1_2d.shape)
+            self.assertEqual((4, 8), array2_2d.shape)
+
+            for i in range(4):
+                for j in range(8):
+                    array1_2d[i, j] = (i * 8 + j) * 2.0
+                    array2_2d[i, j] = (i * 8 + j) * 3.0
+
+            result_add_2d = array1_2d.add_simd(array2_2d)
+            self.assertEqual(0, result_add_2d.alignment)
+            self.assertEqual((4, 8), result_add_2d.shape)
+            for i in range(4):
+                for j in range(8):
+                    value = i * 8 + j
+                    expected = value * 2.0 + value * 3.0
+                    self.assertAlmostEqual(expected, result_add_2d[i, j])
+
+            result_sub_2d = array1_2d.sub_simd(array2_2d)
+            self.assertEqual(0, result_sub_2d.alignment)
+            self.assertEqual((4, 8), result_sub_2d.shape)
+            for i in range(4):
+                for j in range(8):
+                    value = i * 8 + j
+                    expected = value * 2.0 - value * 3.0
+                    self.assertAlmostEqual(expected, result_sub_2d[i, j])
+
+            result_mul_2d = array1_2d.mul_simd(array2_2d)
+            self.assertEqual(0, result_mul_2d.alignment)
+            self.assertEqual((4, 8), result_mul_2d.shape)
+            for i in range(4):
+                for j in range(8):
+                    value = i * 8 + j
+                    expected = value * 2.0 * value * 3.0
+                    self.assertAlmostEqual(expected, result_mul_2d[i, j])
+
+            result_div_2d = array2_2d.div_simd(array1_2d)
+            self.assertEqual(0, result_div_2d.alignment)
+            self.assertEqual((4, 8), result_div_2d.shape)
+            for i in range(4):
+                for j in range(8):
+                    value = i * 8 + j
+                    if value > 0:
+                        expected = value * 3.0 / (value * 2.0)
+                        self.assertAlmostEqual(expected, result_div_2d[i, j])
+
+            array1_3d = modmesh.SimpleArrayFloat64((2, 4, 4), alignment)
+            array2_3d = modmesh.SimpleArrayFloat64((2, 4, 4), alignment)
+
+            self.assertEqual(alignment, array1_3d.alignment)
+            self.assertEqual(alignment, array2_3d.alignment)
+            self.assertEqual((2, 4, 4), array1_3d.shape)
+            self.assertEqual((2, 4, 4), array2_3d.shape)
+
+            for i in range(2):
+                for j in range(4):
+                    for k in range(4):
+                        array1_3d[i, j, k] = (i * 16 + j * 4 + k) * 2.0
+                        array2_3d[i, j, k] = (i * 16 + j * 4 + k) * 3.0
+
+            result_add_3d = array1_3d.add_simd(array2_3d)
+            self.assertEqual(0, result_add_3d.alignment)
+            self.assertEqual((2, 4, 4), result_add_3d.shape)
+            for i in range(2):
+                for j in range(4):
+                    for k in range(4):
+                        value = i * 16 + j * 4 + k
+                        expected = value * 2.0 + value * 3.0
+                        self.assertAlmostEqual(expected,
+                                               result_add_3d[i, j, k])
+
+            result_sub_3d = array1_3d.sub_simd(array2_3d)
+            self.assertEqual(0, result_sub_3d.alignment)
+            self.assertEqual((2, 4, 4), result_sub_3d.shape)
+            for i in range(2):
+                for j in range(4):
+                    for k in range(4):
+                        value = i * 16 + j * 4 + k
+                        expected = value * 2.0 - value * 3.0
+                        self.assertAlmostEqual(expected,
+                                               result_sub_3d[i, j, k])
+
+            result_mul_3d = array1_3d.mul_simd(array2_3d)
+            self.assertEqual(0, result_mul_3d.alignment)
+            self.assertEqual((2, 4, 4), result_mul_3d.shape)
+            for i in range(2):
+                for j in range(4):
+                    for k in range(4):
+                        value = i * 16 + j * 4 + k
+                        expected = value * 2.0 * value * 3.0
+                        self.assertAlmostEqual(expected,
+                                               result_mul_3d[i, j, k])
+
+            result_div_3d = array2_3d.div_simd(array1_3d)
+            self.assertEqual(0, result_div_3d.alignment)
+            self.assertEqual((2, 4, 4), result_div_3d.shape)
+            for i in range(2):
+                for j in range(4):
+                    for k in range(4):
+                        value = i * 16 + j * 4 + k
+                        if value > 0:
+                            expected = value * 3.0 / (value * 2.0)
+                            self.assertAlmostEqual(expected,
+                                                   result_div_3d[i, j, k])
+
+    def test_alignment_size_validation_multidimensional(self):
+        with self.assertRaisesRegex(
+                ValueError,
+                "ConcreteBuffer: size .* must be a multiple of alignment 16"
+        ):
+            modmesh.SimpleArrayFloat64((1, 3), 16)
+
+        with self.assertRaisesRegex(
+                ValueError,
+                "ConcreteBuffer: size .* must be a multiple of alignment 32"
+        ):
+            modmesh.SimpleArrayFloat64((1, 3), 32)
+
+        with self.assertRaisesRegex(
+                ValueError,
+                "ConcreteBuffer: size .* must be a multiple of alignment 64"
+        ):
+            modmesh.SimpleArrayFloat64((3, 3), 64)
+
+        with self.assertRaisesRegex(
+                ValueError,
+                "ConcreteBuffer: size .* must be a multiple of alignment 16"
+        ):
+            modmesh.SimpleArrayFloat64((1, 1, 1), 16)
+
+        with self.assertRaisesRegex(
+                ValueError,
+                "ConcreteBuffer: size .* must be a multiple of alignment 32"
+        ):
+            modmesh.SimpleArrayFloat64((1, 1, 1), 32)
+
+        with self.assertRaisesRegex(
+                ValueError,
+                "ConcreteBuffer: size .* must be a multiple of alignment 64"
+        ):
+            modmesh.SimpleArrayFloat64((2, 3, 5), 64)
+
+    def test_alignment_with_unaligned_rows(self):
+        # 2D arrays that row is not aligned
+        array1_2d = modmesh.SimpleArrayFloat64((2, 3), 16)
+        array2_2d = modmesh.SimpleArrayFloat64((2, 3), 16)
+
+        self.assertEqual(16, array1_2d.alignment)
+        self.assertEqual(16, array2_2d.alignment)
+        self.assertEqual((2, 3), array1_2d.shape)
+
+        for i in range(2):
+            for j in range(3):
+                array1_2d[i, j] = (i * 3 + j) * 2.0
+                array2_2d[i, j] = (i * 3 + j) * 3.0
+
+        # SIMD ops must tolerate the unaligned row stride and still yield exact math.  # noqa: E501
+        result_add = array1_2d.add_simd(array2_2d)
+        result_sub = array1_2d.sub_simd(array2_2d)
+        result_mul = array1_2d.mul_simd(array2_2d)
+
+        for i in range(2):
+            for j in range(3):
+                value = i * 3 + j
+                self.assertAlmostEqual(value * 5.0, result_add[i, j])
+                self.assertAlmostEqual(value * -1.0, result_sub[i, j])
+                self.assertAlmostEqual(value * value * 6.0, result_mul[i, j])
+
+        # Repeat with 3D data that the innermost dimension is unaligned.
+        array1_3d = modmesh.SimpleArrayFloat64((2, 2, 2), 32)
+        array2_3d = modmesh.SimpleArrayFloat64((2, 2, 2), 32)
+
+        self.assertEqual(32, array1_3d.alignment)
+        self.assertEqual(32, array2_3d.alignment)
+
+        for i in range(2):
+            for j in range(2):
+                for k in range(2):
+                    array1_3d[i, j, k] = (i * 4 + j * 2 + k) * 2.0
+                    array2_3d[i, j, k] = (i * 4 + j * 2 + k) * 3.0
+
+        result_add_3d = array1_3d.add_simd(array2_3d)
+        result_sub_3d = array1_3d.sub_simd(array2_3d)
+        result_mul_3d = array1_3d.mul_simd(array2_3d)
+
+        for i in range(2):
+            for j in range(2):
+                for k in range(2):
+                    value = i * 4 + j * 2 + k
+                    self.assertAlmostEqual(value * 5.0,
+                                           result_add_3d[i, j, k])
+                    self.assertAlmostEqual(value * -1.0,
+                                           result_sub_3d[i, j, k])
+                    self.assertAlmostEqual(value * value * 6.0,
+                                           result_mul_3d[i, j, k])
+
 
 class SimpleArrayCalculatorsTC(unittest.TestCase):
 
