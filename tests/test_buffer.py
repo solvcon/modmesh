@@ -1375,37 +1375,37 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
     def test_alignment_size_validation_multidimensional(self):
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: size .* must be a multiple of alignment 16"
+                "ConcreteBuffer::allocate: size .* must be a multiple of alignment 16"  # noqa E501
         ):
             modmesh.SimpleArrayFloat64((1, 3), 16)
 
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: size .* must be a multiple of alignment 32"
+                "ConcreteBuffer::allocate: size .* must be a multiple of alignment 32"  # noqa E501
         ):
             modmesh.SimpleArrayFloat64((1, 3), 32)
 
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: size .* must be a multiple of alignment 64"
+                "ConcreteBuffer::allocate: size .* must be a multiple of alignment 64"  # noqa E501
         ):
             modmesh.SimpleArrayFloat64((3, 3), 64)
 
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: size .* must be a multiple of alignment 16"
+                "ConcreteBuffer::allocate: size .* must be a multiple of alignment 16"  # noqa E501
         ):
             modmesh.SimpleArrayFloat64((1, 1, 1), 16)
 
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: size .* must be a multiple of alignment 32"
+                "ConcreteBuffer::allocate: size .* must be a multiple of alignment 32"  # noqa E501
         ):
             modmesh.SimpleArrayFloat64((1, 1, 1), 32)
 
         with self.assertRaisesRegex(
                 ValueError,
-                "ConcreteBuffer: size .* must be a multiple of alignment 64"
+                "ConcreteBuffer::allocate: size .* must be a multiple of alignment 64"  # noqa E501
         ):
             modmesh.SimpleArrayFloat64((2, 3, 5), 64)
 
