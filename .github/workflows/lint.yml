@@ -201,7 +201,7 @@ jobs:
         # linter run on macos-15 and revisit in the future.
         # (20251112) Re-enabled macos-15 as macos-13 is being deprecated.
         os: [macos-15]
-        cmake_build_type: [Debug]
+        cmake_build_type: [Release]
 
       fail-fast: false
 
