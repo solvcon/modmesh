@@ -43,13 +43,13 @@ namespace detail
 {
 #ifndef NDEBUG
 template <typename T>
-inline bool is_aligned(T const * pointer, size_t alignment)
+bool is_aligned(T const * pointer, size_t alignment)
 {
     return (reinterpret_cast<std::uintptr_t>(pointer) % alignment) == 0;
 }
 
 template <typename T>
-inline void check_alignment(T const * pointer, size_t required_alignment, const char * name)
+void check_alignment(T const * pointer, size_t required_alignment, const char * name)
 {
     if (!is_aligned(pointer, required_alignment))
     {
