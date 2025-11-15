@@ -55,6 +55,8 @@ list_of_raxismark = [
 
 # RManager.hpp/.cpp
 list_of_rmanager = [
+    'RPythonConsoleDockWidget',
+    'RVisionDockWidget',
     'RManager',
     'mgr',
 ]

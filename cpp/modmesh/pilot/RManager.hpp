@@ -31,6 +31,7 @@
 #include <modmesh/pilot/common_detail.hpp> // Must be the first include.
 
 #include <modmesh/pilot/RPythonConsoleDockWidget.hpp>
+#include <modmesh/pilot/RVisionDockWidget.hpp>
 #include <modmesh/pilot/R3DWidget.hpp>
 #include <modmesh/pilot/RAction.hpp>
 
@@ -61,6 +62,7 @@ public:
     R3DWidget * add3DWidget();
 
     RPythonConsoleDockWidget * pycon() { return m_pycon; }
+    RVisionDockWidget * vision() { return m_vision; }
 
     QMainWindow * mainWindow() { return m_mainWindow; }
 
@@ -77,12 +79,14 @@ public:
     void quit() { m_core->quit(); }
 
     void toggleConsole();
+    void toggleVision();
 
 private:
 
     RManager();
 
     void setUpConsole();
+    void setUpVision();
     void setUpCentral();
     void setUpMenu();
 
@@ -105,6 +109,7 @@ private:
     QMenu * m_windowMenu = nullptr;
 
     RPythonConsoleDockWidget * m_pycon = nullptr;
+    RVisionDockWidget * m_vision = nullptr;
     QMdiArea * m_mdiArea = nullptr;
 }; /* end class RManager */
 

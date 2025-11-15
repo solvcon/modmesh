@@ -149,6 +149,14 @@ class _Controller(metaclass=_Singleton):
             checked=True,
         )
 
+        _addAction(
+            menu=wm.windowMenu,
+            text="Computer Vision",
+            tip="Open / Close Computer Vision Window",
+            func=wm.toggleVision,
+            checkable=True,
+            checked=False,
+        )
 
 controller = _Controller()
 

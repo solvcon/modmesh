@@ -267,6 +267,23 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRPythonConsoleDockWidget
 
 }; /* end class WrapRPythonConsoleDockWidget */
 
+
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRVisionDockWidget
+    : public WrapBase<WrapRVisionDockWidget, RVisionDockWidget>
+{
+
+    friend root_base_type;
+
+    WrapRVisionDockWidget(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : root_base_type(mod, pyname, pydoc)
+    {
+
+        namespace py = pybind11;
+
+    }
+
+}; /* end class WrapRVisionDockWidget */
+
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
     : public WrapBase<WrapRManager, RManager>
 {
@@ -327,6 +344,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
                 [](wrapped_type & self)
                 {
                     return self.toggleConsole();
+                })
+            .def(
+                "toggleVision",
+                [](wrapped_type & self)
+                {
+                    return self.toggleVision();
                 })
             //
             ;
@@ -552,6 +575,7 @@ void wrap_pilot(pybind11::module & mod)
     WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
     WrapRLine::commit(mod, "RLine", "RLine");
     WrapRPythonConsoleDockWidget::commit(mod, "RPythonConsoleDockWidget", "RPythonConsoleDockWidget");
+    WrapRVisionDockWidget::commit(mod, "RVisionDockWidget", "RVisionDockWidget");
     WrapRCameraController::commit(mod, "RCameraController", "RCameraController");
     WrapRManager::commit(mod, "RManager", "RManager");
     WrapRManagerProxy::commit(mod, "RManagerProxy", "RManagerProxy");

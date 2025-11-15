@@ -56,6 +56,13 @@ class PilotFeature(QtCore.QObject):
         :rtype: modmesh.pilot.RPythonConsoleDockWidget
         """
         return self._mgr.pycon
+    
+    @property
+    def _vision(self):
+        """
+        :rtype: modmesh.pilot.RVisionDockWidget
+        """
+        return self._mgr.vision
 
     @property
     def _mainWindow(self):
