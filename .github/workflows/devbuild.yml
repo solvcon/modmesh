@@ -294,9 +294,8 @@ jobs:
 
     strategy:
       matrix:
-        # https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
-        # https://github.com/actions/runner-images/blob/main/images/macos/macos-14-Readme.md
-        os: [macos-13, macos-14]
+        # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
+        os: [macos-15]
         cmake_build_type: [Release]
 
       fail-fast: false
@@ -338,7 +337,7 @@ jobs:
           ls -al $(which python3)
           # suppress the warning of pip because brew forces PEP668 since python3.12
           python3 -m pip -v install --upgrade setuptools
-          # Sometimes pip upgrade fails with macos-14, turn off temporarily (2025/4/27).
+          # Sometimes pip upgrade fails with macos-15, turn off temporarily (2025/4/27).
           #python3 -m pip -v install --upgrade pip
           python3 -m pip -v install --upgrade numpy matplotlib pytest flake8 jsonschema
           # For now (2024/10/22), pyside6 6.6.3 does not support Python 3.13.
@@ -400,7 +399,7 @@ jobs:
       - name: make pytest BUILD_QT=OFF
         run: |
           JOB_MAKE_ARGS="VERBOSE=1"
-          if [ "${{ matrix.os }}" == "macos-13" ] || [ "${{ matrix.os }}" == "macos-14" ] ; then \
+          if [ "${{ matrix.os }}" == "macos-15" ] ; then \
             JOB_MAKE_ARGS="${JOB_MAKE_ARGS} BUILD_METAL=ON" ; \
           fi
           make pytest ${JOB_MAKE_ARGS}
@@ -443,7 +442,7 @@ jobs:
           install_name_tool -add_rpath $(qtpaths --install-prefix)/lib ${PYSIDE6_PATH}/QtGui.abi3.so
           install_name_tool -add_rpath $(qtpaths --install-prefix)/lib ${PYSIDE6_PATH}/QtCore.abi3.so
           JOB_MAKE_ARGS="VERBOSE=1"
-          if [ "${{ matrix.os }}" == "macos-13" ] || [ "${{ matrix.os }}" == "macos-14" ] ; then \
+          if [ "${{ matrix.os }}" == "macos-15" ] ; then \
             JOB_MAKE_ARGS="${JOB_MAKE_ARGS} BUILD_METAL=ON" ; \
           fi
           make pytest ${JOB_MAKE_ARGS}
