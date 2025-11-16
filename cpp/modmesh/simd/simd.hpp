@@ -47,7 +47,6 @@ const T * check_between(T const * start, T const * end, T const & min_val, T con
     {
     case detail::SIMD_NEON:
         return neon::check_between<T>(start, end, min_val, max_val);
-        break;
 
     default:
         return generic::check_between<T>(start, end, min_val, max_val);
@@ -57,12 +56,10 @@ const T * check_between(T const * start, T const * end, T const & min_val, T con
 template <typename T>
 void add(T * dest, T const * dest_end, T const * src1, T const * src2)
 {
-    using namespace detail;
-    switch (detect_simd())
+    switch (detail::detect_simd())
     {
-    case SIMD_NEON:
+    case detail::SIMD_NEON:
         return neon::add<T>(dest, dest_end, src1, src2);
-        break;
 
     default:
         return generic::add<T>(dest, dest_end, src1, src2);
@@ -72,12 +69,10 @@ void add(T * dest, T const * dest_end, T const * src1, T const * src2)
 template <typename T>
 void sub(T * dest, T const * dest_end, T const * src1, T const * src2)
 {
-    using namespace detail;
-    switch (detect_simd())
+    switch (detail::detect_simd())
     {
-    case SIMD_NEON:
+    case detail::SIMD_NEON:
         return neon::sub<T>(dest, dest_end, src1, src2);
-        break;
 
     default:
         return generic::sub<T>(dest, dest_end, src1, src2);
@@ -87,12 +82,10 @@ void sub(T * dest, T const * dest_end, T const * src1, T const * src2)
 template <typename T>
 void mul(T * dest, T const * dest_end, T const * src1, T const * src2)
 {
-    using namespace detail;
-    switch (detect_simd())
+    switch (detail::detect_simd())
     {
-    case SIMD_NEON:
+    case detail::SIMD_NEON:
         return neon::mul<T>(dest, dest_end, src1, src2);
-        break;
 
     default:
         return generic::mul<T>(dest, dest_end, src1, src2);
@@ -102,12 +95,10 @@ void mul(T * dest, T const * dest_end, T const * src1, T const * src2)
 template <typename T>
 void div(T * dest, T const * dest_end, T const * src1, T const * src2)
 {
-    using namespace detail;
-    switch (detect_simd())
+    switch (detail::detect_simd())
     {
-    case SIMD_NEON:
+    case detail::SIMD_NEON:
         return neon::div<T>(dest, dest_end, src1, src2);
-        break;
 
     default:
         return generic::div<T>(dest, dest_end, src1, src2);
@@ -117,7 +108,13 @@ void div(T * dest, T const * dest_end, T const * src1, T const * src2)
 template <typename T>
 T max(T const * start, T const * end)
 {
-    return generic::max<T>(start, end);
+    switch (detail::detect_simd())
+    {
+    case detail::SIMD_NEON:
+        return neon::max<T>(start, end);
+    default:
+        return generic::max<T>(start, end);
+    }
 }
 
 } /* namespace simd */
