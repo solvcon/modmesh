@@ -75,6 +75,7 @@ inline constexpr size_t get_recommended_alignment()
 {
 #if defined(__aarch64__) || defined(__arm__)
     return 16;
+// TODO: The non-NEON conditional should be factored out elsewhere in the future.
 #elif defined(__AVX512F__)
     return 64;
 #elif defined(__AVX__) || defined(__AVX2__)
