@@ -1110,6 +1110,120 @@ public:
     }
 }; /* end class SimpleArrayMixinSearch */
 
+template <typename A, typename T>
+class SimpleArrayMixinMatrix
+{
+
+private:
+
+    using internal_types = detail::SimpleArrayInternalTypes<T>;
+
+public:
+
+    using value_type = typename internal_types::value_type;
+    using shape_type = typename internal_types::shape_type;
+    using sshape_type = typename internal_types::sshape_type;
+
+    static A eye(size_t n)
+    {
+        shape_type shape{n, n};
+        A result(shape, static_cast<value_type>(0));
+
+        for (size_t i = 0; i < n; ++i)
+        {
+            result(i, i) = static_cast<value_type>(1);
+        }
+
+        return result;
+    }
+
+    static A scaled_eye(size_t n, value_type scale)
+    {
+        shape_type shape{n, n};
+        A result(shape, static_cast<value_type>(0));
+
+        for (size_t i = 0; i < n; ++i)
+        {
+            result(i, i) = scale;
+        }
+
+        return result;
+    }
+
+    A hermitian() const
+    {
+        auto athis = static_cast<A const *>(this);
+        validate_2d("hermitian");
+        A result = *athis;
+        result.transpose();
+        if constexpr (is_complex_v<value_type>)
+        {
+            for (auto ptr = result.begin(); ptr != result.end(); ++ptr)
+            {
+                *ptr = ptr->conj();
+            }
+        }
+        return result;
+    }
+
+    A symmetrize() const
+    {
+        auto athis = static_cast<A const *>(this);
+        validate_square("symmetrize");
+        A result = *athis;
+        if constexpr (is_complex_v<value_type>)
+        {
+            for (ssize_t i = 0; i < athis->shape(0); ++i)
+            {
+                for (ssize_t j = 0; j < athis->shape(1); ++j)
+                {
+                    result(i, j) = (result(i, j) + (*athis)(j, i).conj()) / static_cast<value_type>(2.0);
+                }
+            }
+        }
+        else
+        {
+            for (ssize_t i = 0; i < athis->shape(0); ++i)
+            {
+                for (ssize_t j = 0; j < athis->shape(1); ++j)
+                {
+                    result(i, j) = (result(i, j) + (*athis)(j, i)) / static_cast<value_type>(2.0);
+                }
+            }
+        }
+        return result;
+    }
+
+private:
+
+    void validate_2d(const char * operation_name) const
+    {
+        auto athis = static_cast<A const *>(this);
+        if (athis->ndim() != 2)
+        {
+            throw std::runtime_error(
+                Formatter() << "SimpleArray::" << operation_name
+                            << "(): operation requires 2D SimpleArray, but got "
+                            << athis->ndim() << "D SimpleArray");
+        }
+    }
+
+    void validate_square(const char * operation_name) const
+    {
+        auto athis = static_cast<A const *>(this);
+        validate_2d(operation_name);
+        if (athis->shape(0) != athis->shape(1))
+        {
+            throw std::runtime_error(
+                Formatter() << "SimpleArray::" << operation_name
+                            << "(): operation requires square SimpleArray, but got "
+                            << athis->shape(0) << "x" << athis->shape(1)
+                            << " shape");
+        }
+    }
+
+}; /* end class SimpleArrayMixinMatrix */
+
 } /* end namespace detail */
 
 // Tag type for explicit alignment constructor
@@ -1128,6 +1242,7 @@ class SimpleArray
     , public detail::SimpleArrayMixinCalculators<SimpleArray<T>, T>
     , public detail::SimpleArrayMixinSort<SimpleArray<T>, T>
     , public detail::SimpleArrayMixinSearch<SimpleArray<T>, T>
+    , public detail::SimpleArrayMixinMatrix<SimpleArray<T>, T>
 {
 
 private:
@@ -1394,26 +1509,6 @@ public:
             data += buffer_offset(stride, shape);
         }
         return data;
-    }
-
-    /**
-     * Create an identity matrix of size n x n.
-     *
-     * @param n Size of the square identity matrix
-     * @return SimpleArray representing an n x n identity matrix
-     */
-    static SimpleArray eye(size_t n)
-    {
-        shape_type shape{n, n};
-        SimpleArray result(shape, static_cast<value_type>(0));
-
-        // Set diagonal elements to 1
-        for (size_t i = 0; i < n; ++i)
-        {
-            result(i, i) = static_cast<value_type>(1);
-        }
-
-        return result;
     }
 
     explicit operator bool() const noexcept { return bool(m_buffer) && bool(*m_buffer); }
