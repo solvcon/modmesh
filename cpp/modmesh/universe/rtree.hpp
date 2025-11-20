@@ -1,0 +1,709 @@
+#pragma once
+
+/*
+ * Copyright (c) 2025, An-Chi Liu <phy.tiger@gmail.com>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * - Redistributions of source code must retain the above copyright notice,
+ *   this list of conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * - Neither the name of the copyright holder nor the names of its contributors
+ *   may be used to endorse or promote products derived from this software
+ *   without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+// This library implement R-tree based on "R Trees: A Dynamic Index Structure for Spatial Searchin" by Guttman in 1984
+// DOI:10.1145/971697.602266
+
+#include <modmesh/base.hpp>
+
+#include <algorithm>
+#include <limits>
+#include <memory>
+#include <type_traits>
+#include <vector>
+
+namespace modmesh
+{
+
+/// Bounding box for 2D objects, e.g., Point2d, Segment2d, Triangle2d, etc.
+/// @tparam T floating-point type
+template <typename T>
+struct BoundBox2d : public NumberBase<int32_t, T>
+{
+    using value_type = T;
+
+private:
+    value_type m_min_x;
+    value_type m_min_y;
+    value_type m_max_x;
+    value_type m_max_y;
+
+public:
+
+    BoundBox2d(value_type min_x_in, value_type min_y_in, value_type max_x_in, value_type max_y_in)
+        : m_min_x(min_x_in)
+        , m_min_y(min_y_in)
+        , m_max_x(max_x_in)
+        , m_max_y(max_y_in)
+    {
+    }
+
+    /// check if this bounding box overlap another bounding box
+    bool overlap(BoundBox2d const & other) const
+    {
+        return !(other.m_min_x > m_max_x || other.m_max_x < m_min_x || other.m_min_y > m_max_y || other.m_max_y < m_min_y);
+    }
+
+    /// check if this bounding box contain another bounding box
+    bool contain(BoundBox2d const & other) const
+    {
+        return (other.m_min_x >= m_min_x && other.m_max_x <= m_max_x && other.m_min_y >= m_min_y && other.m_max_y <= m_max_y);
+    }
+
+    value_type calc_area() const
+    {
+        return (m_max_x - m_min_x) * (m_max_y - m_min_y);
+    }
+
+    /// expand the bounding box to include another bounding box
+    void expand(BoundBox2d const & other)
+    {
+        m_min_x = std::min(m_min_x, other.m_min_x);
+        m_min_y = std::min(m_min_y, other.m_min_y);
+        m_max_x = std::max(m_max_x, other.m_max_x);
+        m_max_y = std::max(m_max_y, other.m_max_y);
+    }
+
+    /// merge two bounding boxes into a new bounding box
+    /// when merging, the resulting bounding box will be the minimum bounding box that contains both a and b
+    /// for example, if a is (1,1,3,3) and b is (2,2,4,4), the merged bounding box will be (1,1,4,4)
+    /// @return the merged bounding box of a and b
+    static BoundBox2d merge(BoundBox2d const & a, BoundBox2d const & b)
+    {
+        return BoundBox2d(
+            std::min(a.m_min_x, b.m_min_x),
+            std::min(a.m_min_y, b.m_min_y),
+            std::max(a.m_max_x, b.m_max_x),
+            std::max(a.m_max_y, b.m_max_y));
+    }
+}; /* end of struct BoundBox2d */
+
+/// Bounding box for 3D objects, e.g., Point3d, Segment3d, Triangle3d, etc.
+/// @tparam T floating-point type
+template <typename T>
+struct BoundBox3d : public NumberBase<int32_t, T>
+{
+    using value_type = T;
+
+private:
+    value_type m_min_x;
+    value_type m_min_y;
+    value_type m_min_z;
+    value_type m_max_x;
+    value_type m_max_y;
+    value_type m_max_z;
+
+public:
+
+    BoundBox3d(value_type min_x_in, value_type min_y_in, value_type min_z_in, value_type max_x_in, value_type max_y_in, value_type max_z_in)
+        : m_min_x(min_x_in)
+        , m_min_y(min_y_in)
+        , m_min_z(min_z_in)
+        , m_max_x(max_x_in)
+        , m_max_y(max_y_in)
+        , m_max_z(max_z_in)
+    {
+    }
+
+    bool overlap(BoundBox3d const & other) const
+    {
+        return !(other.m_min_x > m_max_x || other.m_max_x < m_min_x ||
+                 other.m_min_y > m_max_y || other.m_max_y < m_min_y ||
+                 other.m_min_z > m_max_z || other.m_max_z < m_min_z);
+    }
+
+    bool contain(BoundBox3d const & other) const
+    {
+        return (other.m_min_x >= m_min_x && other.m_max_x <= m_max_x &&
+                other.m_min_y >= m_min_y && other.m_max_y <= m_max_y &&
+                other.m_min_z >= m_min_z && other.m_max_z <= m_max_z);
+    }
+
+    value_type calc_area() const
+    {
+        return (m_max_x - m_min_x) * (m_max_y - m_min_y) * (m_max_z - m_min_z);
+    }
+
+    void expand(BoundBox3d const & other)
+    {
+        m_min_x = std::min(m_min_x, other.m_min_x);
+        m_min_y = std::min(m_min_y, other.m_min_y);
+        m_min_z = std::min(m_min_z, other.m_min_z);
+        m_max_x = std::max(m_max_x, other.m_max_x);
+        m_max_y = std::max(m_max_y, other.m_max_y);
+        m_max_z = std::max(m_max_z, other.m_max_z);
+    }
+
+    static BoundBox3d merge(BoundBox3d const & a, BoundBox3d const & b)
+    {
+        return BoundBox3d(
+            std::min(a.m_min_x, b.m_min_x),
+            std::min(a.m_min_y, b.m_min_y),
+            std::min(a.m_min_z, b.m_min_z),
+            std::max(a.m_max_x, b.m_max_x),
+            std::max(a.m_max_y, b.m_max_y),
+            std::max(a.m_max_z, b.m_max_z));
+    }
+}; /* end of struct BoundBox3d */
+
+/// Value operations traits for R-tree
+/// @tparam E Item type to be stored in R-tree
+/// @tparam B Bounding box type associated with the item E
+template <typename E, typename B>
+struct RTreeValueOps
+{
+    /// Calculate bounding box for the given item
+    static B calc_bound_box(E const & item);
+
+    /// Calculate bounding box for a group of items
+    static B calc_group_bound_box(std::vector<E> const & items);
+}; /* end of struct RTreeValueOps */
+
+/// R-tree node structure
+/// @tparam E Item type to be stored in R-tree
+/// @tparam B Bounding box type associated
+/// @tparam ValueOps Value operations traits for E and B
+template <typename E, typename B, typename ValueOpsType>
+struct RTreeNode
+{
+    // TODO: optimize memory layout and  pointer operations (https://github.com/solvcon/modmesh/pull/637#discussion_r2552441239)
+    B bbox;
+    std::vector<E> items;
+
+    using RTreeNodeType = RTreeNode<E, B, ValueOpsType>;
+    std::vector<std::unique_ptr<RTreeNodeType>> nodes;
+
+    RTreeNode(B const & bbox_in)
+        : bbox(bbox_in)
+    {
+    }
+
+    RTreeNode() = delete;
+    RTreeNode(RTreeNode const &) = delete;
+    RTreeNode & operator=(RTreeNode const &) = delete;
+    RTreeNode(RTreeNode &&) = delete;
+    RTreeNode & operator=(RTreeNode &&) = delete;
+    ~RTreeNode() = default;
+
+    template <bool IS_LEAF>
+    auto & get_children()
+    {
+        if constexpr (IS_LEAF)
+        {
+            return items;
+        }
+        else
+        {
+            return nodes;
+        }
+    }
+
+    /// Recalculate bounding box based on contained items and nodes
+    void recalculate_bound_box()
+    {
+        if (items.empty() && nodes.empty())
+        {
+            return; // empty node
+        }
+
+        bool first = true;
+        B result_box = bbox;
+
+        // if leaf node
+        for (auto const & item : items)
+        {
+            B item_box = ValueOpsType::calc_bound_box(item);
+            if (first)
+            {
+                result_box = item_box;
+                first = false;
+            }
+            else
+            {
+                result_box.expand(item_box);
+            }
+        }
+
+        // if internal node
+        for (auto const & child : nodes)
+        {
+            if (first)
+            {
+                result_box = child->bbox;
+                first = false;
+            }
+            else
+            {
+                result_box.expand(child->bbox);
+            }
+        }
+
+        bbox = result_box;
+    }
+}; /* end of struct RTreeNode */
+
+/// R-tree implementation for spatial index based on Guttman's R-tree paper
+/// @tparam E Item type to be stored in R-tree
+/// @tparam B Bounding box type associated with E
+/// @tparam ValueOps Value operations traits for E and B
+/// @tparam MAX_ITEMS_PER_NODE Maximum number of items per R-tree node
+template <typename E, typename B, typename ValueOps = RTreeValueOps<E, B>, int MAX_ITEMS_PER_NODE = 64>
+class RTree
+{
+private:
+    static constexpr size_t MIN_ITEMS_PER_NODE = MAX_ITEMS_PER_NODE / 2;
+
+    using value_type = typename B::value_type;
+    using RTreeNodeType = RTreeNode<E, B, ValueOps>;
+    using node_type = std::unique_ptr<RTreeNodeType>;
+    node_type root;
+
+public:
+    RTree()
+        : root(nullptr)
+    {
+    }
+    RTree(RTree const &) = delete;
+    RTree & operator=(RTree const &) = delete;
+    RTree(RTree &&) = delete;
+    RTree & operator=(RTree &&) = delete;
+    ~RTree() = default;
+
+    /// Insert item into R-tree
+    void insert(E const & item)
+    {
+        const B box = ValueOps::calc_bound_box(item);
+
+        // 1. find position for new record
+        if (root == nullptr)
+        {
+            root = std::make_unique<RTreeNodeType>(box);
+        }
+        node_type & leaf = choose_leaf_for_new_entry(root, box);
+
+        // 2. add record to leaf node
+        leaf->items.push_back(item);
+        leaf->recalculate_bound_box();
+
+        node_type new_node = nullptr;
+        if (leaf->items.size() > MAX_ITEMS_PER_NODE)
+        {
+            new_node = split_node(leaf);
+        }
+
+        // 3. propagate changes upward
+        adjust_tree(leaf, std::move(new_node));
+    }
+
+    /// Search for items intersecting the given bounding box
+    /// @param box the bounding box to search
+    /// @param output the vector to store found items
+    void search(const B & box, std::vector<E> & output) const
+    {
+        if (root == nullptr)
+        {
+            return; // empty tree
+        }
+        output.clear();
+
+        search_internal(root, box, output);
+    }
+
+    /// Remove item from R-tree
+    void remove(E const & item)
+    {
+        if (root == nullptr)
+        {
+            return; // empty tree
+        }
+
+        node_type * leaf = find_leaf_with_item(root, item);
+        if (leaf == nullptr)
+        {
+            return; // item not found
+        }
+
+        // Remove item from leaf node
+        auto it = std::find((*leaf)->items.begin(), (*leaf)->items.end(), item);
+        if (it != (*leaf)->items.end())
+        {
+            (*leaf)->items.erase(it);
+        }
+
+        condense_tree(leaf->get());
+
+        // shorten tree if necessary
+        if (root->items.empty() && root->nodes.size() == 1)
+        {
+            root = std::move(root->nodes[0]);
+        }
+    }
+
+private:
+    void search_internal(const node_type & node, const B & box, std::vector<E> & output) const
+    {
+        assert(!(node->nodes.size() > 0 && node->items.size() > 0));
+
+        // search subtree for item
+        for (auto const & child : node->nodes)
+        {
+            if (child->bbox.overlap(box))
+            {
+                search_internal(child, box, output);
+            }
+        }
+
+        // search leaf nodes for item
+        for (auto const & it : node->items)
+        {
+            B item_box = ValueOps::calc_bound_box(it);
+            if (item_box.overlap(box))
+            {
+                output.push_back(it);
+            }
+        }
+    }
+
+    node_type & choose_leaf_for_new_entry(node_type & node, const B & box)
+    {
+        if (node->nodes.empty())
+        {
+            return node;
+        }
+
+        node_type * best_child = nullptr;
+        value_type min_enlargement = std::numeric_limits<value_type>::max();
+
+        for (auto & child : node->nodes)
+        {
+            value_type enlargement = B::merge(child->bbox, box).calc_area() - child->bbox.calc_area();
+
+            if (enlargement < min_enlargement)
+            {
+                min_enlargement = enlargement;
+                best_child = &child;
+            }
+        }
+
+        return choose_leaf_for_new_entry(*best_child, box); // recurse down to leaf
+    }
+
+    node_type * get_parent(node_type & current, RTreeNodeType const * child)
+    {
+        for (auto & c : current->nodes)
+        {
+            if (c.get() == child)
+            {
+                return &current;
+            }
+            node_type * result = get_parent(c, child);
+            if (result != nullptr)
+            {
+                return result;
+            }
+        }
+        return nullptr;
+    }
+
+    node_type * find_leaf_with_item(node_type & current, E const & item)
+    {
+        for (auto const & it : current->items)
+        {
+            if (it == item)
+            {
+                return &current;
+            }
+        }
+
+        for (auto & child : current->nodes)
+        {
+            if (child->bbox.contain(ValueOps::calc_bound_box(item)))
+            {
+                node_type * result = find_leaf_with_item(child, item);
+                if (result != nullptr)
+                {
+                    return result;
+                }
+            }
+        }
+
+        return nullptr;
+    }
+
+    /// Adjust the tree after deletion
+    void condense_tree(RTreeNodeType * node)
+    {
+        RTreeNodeType * current = node;
+        std::vector<node_type> eliminated_nodes;
+
+        while (current != root.get())
+        {
+            node_type * parent = get_parent(root, current);
+            if (parent == nullptr)
+            {
+                break;
+            }
+
+            // Check if node is underfull
+            size_t entry_count = current->items.empty() ? current->nodes.size() : current->items.size();
+
+            if (entry_count < MIN_ITEMS_PER_NODE && entry_count > 0)
+            {
+                // Remove node from parent
+                auto it = std::find_if(
+                    (*parent)->nodes.begin(), (*parent)->nodes.end(), [current](node_type const & child)
+                    { return child.get() == current; });
+
+                if (it != (*parent)->nodes.end())
+                {
+                    eliminated_nodes.push_back(std::move(*it));
+                    (*parent)->nodes.erase(it);
+                }
+            }
+            else
+            {
+                // Adjust bounding box
+                current->recalculate_bound_box();
+            }
+
+            current = (*parent).get();
+        }
+
+        // Reinsert eliminated nodes' items
+        for (auto & eliminated_node : eliminated_nodes)
+        {
+            for (auto & item : eliminated_node->items)
+            {
+                insert(item);
+            }
+
+            for (auto & child : eliminated_node->nodes)
+            {
+                // Reinsert all items from child nodes recursively
+                reinsert_subtree(child);
+            }
+        }
+    }
+
+    void reinsert_subtree(node_type & node)
+    {
+        for (auto & item : node->items)
+        {
+            insert(item);
+        }
+
+        for (auto & child : node->nodes)
+        {
+            reinsert_subtree(child); // recursively reinsert child nodes
+        }
+    }
+
+    /// split the provided node into two nodes
+    /// @param node the node to split which will be modified
+    /// @return the new node created from the split
+    node_type split_node(node_type & node)
+    {
+        if (node->nodes.empty())
+        {
+            return split_node_impl<true>(node);
+        }
+        else
+        {
+            return split_node_impl<false>(node);
+        }
+    }
+
+    /// split the provided node into two nodes
+    /// @tparam IS_LEAF whether the node is a leaf node
+    /// @tparam Container either the vector of items or vector of child nodes
+    /// @param node1 the node to split which will be modified
+    /// @return the new node created from the split
+    template <bool IS_LEAF, typename Container = std::remove_reference_t<decltype(std::declval<node_type>()->template get_children<IS_LEAF>())>>
+    node_type split_node_impl(node_type & node1)
+    {
+        Container entries;
+        auto & original_entries = node1->template get_children<IS_LEAF>();
+        entries.reserve(original_entries.size());
+        for (auto & entry : original_entries)
+        {
+            entries.emplace_back(std::move(entry));
+        }
+
+        auto [seed1_index, seed2_index] = pick_seeds(entries);
+
+        B box1 = calc_bound_box_from_entry(entries[seed1_index]);
+        B box2 = calc_bound_box_from_entry(entries[seed2_index]);
+
+        auto & node1_entries = node1->template get_children<IS_LEAF>();
+        node1_entries.clear();
+        node1_entries.emplace_back(std::move(entries[seed1_index]));
+
+        node_type node2 = std::make_unique<RTreeNodeType>(box2);
+        auto & node2_entries = node2->template get_children<IS_LEAF>();
+        node2_entries.emplace_back(std::move(entries[seed2_index]));
+
+        bool need_recalculate = false;
+        for (size_t i = 0; i < entries.size(); ++i)
+        {
+            if (i == seed1_index || i == seed2_index)
+            {
+                continue;
+            }
+
+            // if one group has so few entries that all the rest must go there
+            size_t remaining = entries.size() - i;
+            if (node1_entries.size() + remaining <= MIN_ITEMS_PER_NODE)
+            {
+                // assign all the remaining to group1
+                node1_entries.emplace_back(std::move(entries[i]));
+                need_recalculate = true;
+                continue;
+            }
+            if (node2_entries.size() + remaining <= MIN_ITEMS_PER_NODE)
+            {
+                // assign all the remaining to group2
+                node2_entries.emplace_back(std::move(entries[i]));
+                need_recalculate = true;
+                continue;
+            }
+
+            B box = calc_bound_box_from_entry(entries[i]);
+            value_type enlargement1 = B::merge(box1, box).calc_area() - box1.calc_area();
+            value_type enlargement2 = B::merge(box2, box).calc_area() - box2.calc_area();
+
+            if (enlargement1 < enlargement2 ||
+                (enlargement1 == enlargement2 && box1.calc_area() < box2.calc_area()))
+            {
+                node1_entries.emplace_back(std::move(entries[i]));
+                node1->recalculate_bound_box();
+            }
+            else
+            {
+                node2_entries.emplace_back(std::move(entries[i]));
+                node2->recalculate_bound_box();
+            }
+        }
+
+        if (need_recalculate)
+        {
+            node1->recalculate_bound_box();
+            node2->recalculate_bound_box();
+        }
+
+        return std::move(node2);
+    }
+
+    template <typename Entry>
+    B calc_bound_box_from_entry(Entry const & entry)
+    {
+        if constexpr (std::is_same_v<Entry, E>)
+        {
+            return ValueOps::calc_bound_box(entry);
+        }
+        else
+        {
+            return entry->bbox;
+        }
+    }
+
+    /// Select two seed entries to start the split process
+    /// @tparam Container either the vector of items or vector of child nodes
+    /// @param entries the entries to pick seeds from
+    /// @return pair of indices of the selected seeds
+    template <typename Container>
+    std::pair<size_t, size_t> pick_seeds(Container const & entries)
+    {
+        value_type max_waste = std::numeric_limits<value_type>::lowest();
+        size_t seed1 = 0, seed2 = 0;
+
+        for (size_t i = 0; i < entries.size(); ++i)
+        {
+            for (size_t j = i + 1; j < entries.size(); ++j)
+            {
+                B box_i = calc_bound_box_from_entry(entries[i]);
+                B box_j = calc_bound_box_from_entry(entries[j]);
+                B combined_box = B::merge(box_i, box_j);
+                value_type waste = combined_box.calc_area() - box_i.calc_area() - box_j.calc_area();
+                if (waste > max_waste)
+                {
+                    max_waste = waste;
+                    seed1 = i;
+                    seed2 = j;
+                }
+            }
+        }
+        return {seed1, seed2};
+    }
+
+    void adjust_tree(node_type & leaf, node_type new_node)
+    {
+        RTreeNodeType * current = leaf.get();
+        node_type split_result = std::move(new_node);
+
+        while (current != root.get())
+        {
+            node_type * parent = get_parent(root, current);
+            if (parent == nullptr)
+            {
+                break;
+            }
+
+            if (split_result)
+            {
+                (*parent)->nodes.push_back(std::move(split_result));
+                split_result = nullptr;
+
+                if ((*parent)->nodes.size() > MAX_ITEMS_PER_NODE)
+                {
+                    split_result = split_node(*parent);
+                }
+            }
+
+            (*parent)->recalculate_bound_box();
+
+            current = (*parent).get(); // move up the tree
+        }
+
+        // Handle root split
+        if (split_result && current == root.get())
+        {
+            B root_bbox = B::merge(root->bbox, split_result->bbox);
+            node_type new_root = std::make_unique<RTreeNodeType>(root_bbox);
+            new_root->nodes.push_back(std::move(root));
+            new_root->nodes.push_back(std::move(split_result));
+            root = std::move(new_root);
+        }
+    }
+
+}; /* end of class RTree */
+
+} /* end of namespace modmesh */
+
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
