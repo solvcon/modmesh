@@ -3216,6 +3216,171 @@ class SimpleArrayPlexTC(unittest.TestCase):
                     self.assertEqual(stride_arr[i, j, k], sarr[i, j, k])
 
 
+class SimpleArrayPlexAlignmentTC(unittest.TestCase):
+
+    def test_default_alignment(self):
+        array = modmesh.SimpleArray((2, 3, 4), dtype='float64')
+        self.assertEqual(0, array.alignment)
+        self.assertEqual((2, 3, 4), array.typed.shape)
+
+    def test_alignment_creation(self):
+        array = modmesh.SimpleArray((4, 4), dtype='float64', alignment=16)
+        self.assertEqual(16, array.alignment)
+        self.assertEqual((4, 4), array.typed.shape)
+
+        array = modmesh.SimpleArray((8, 8), dtype='float64', alignment=32)
+        self.assertEqual(32, array.alignment)
+        self.assertEqual((8, 8), array.typed.shape)
+
+        array = modmesh.SimpleArray((16, 8), dtype='float64', alignment=64)
+        self.assertEqual(64, array.alignment)
+        self.assertEqual((16, 8), array.typed.shape)
+
+    def test_alignment_with_value_initialization(self):
+        array = modmesh.SimpleArray((4, 4), value=3.14159, dtype='float64')
+        self.assertEqual(0, array.alignment)
+        self.assertEqual((4, 4), array.typed.shape)
+        self.assertEqual(3.14159, array[0, 0])
+
+        array = modmesh.SimpleArray((4, 4), value=2.71828,
+                                    dtype='float64', alignment=16)
+        self.assertEqual(16, array.alignment)
+        self.assertEqual((4, 4), array.typed.shape)
+        self.assertEqual(2.71828, array[0, 0])
+
+    def test_alignment_validation_valid_values(self):
+        modmesh.SimpleArray((4, 4), dtype='float64', alignment=16)
+        modmesh.SimpleArray((8, 8), dtype='float64', alignment=32)
+        modmesh.SimpleArray((16, 8), dtype='float64', alignment=64)
+
+    def test_alignment_validation_invalid_values(self):
+        with self.assertRaisesRegex(
+                ValueError,
+                "ConcreteBuffer::ConcreteBuffer: "
+                "alignment must be 0, 16, 32, or 64, but got 17"
+        ):
+            modmesh.SimpleArray((4, 4), dtype='float64', alignment=17)
+
+        with self.assertRaisesRegex(
+                ValueError,
+                "ConcreteBuffer::ConcreteBuffer: "
+                "alignment must be 0, 16, 32, or 64, but got 100"
+        ):
+            modmesh.SimpleArray((4, 4), dtype='float64', alignment=100)
+
+        with self.assertRaisesRegex(
+                ValueError,
+                "ConcreteBuffer::ConcreteBuffer: "
+                "alignment must be 0, 16, 32, or 64, but got 128"
+        ):
+            modmesh.SimpleArray((16, 16), dtype='float64', alignment=128)
+
+    def test_alignment_size_validation(self):
+        modmesh.SimpleArray((2, 2), dtype='float64', alignment=32)
+        modmesh.SimpleArray((4, 4), dtype='float64', alignment=64)
+
+        with self.assertRaisesRegex(
+                ValueError,
+                "ConcreteBuffer::allocate: "
+                "size .* must be a multiple of alignment 16"
+        ):
+            modmesh.SimpleArray((5, 1), dtype='float64', alignment=16)
+
+        with self.assertRaisesRegex(
+                ValueError,
+                "ConcreteBuffer::allocate: "
+                "size .* must be a multiple of alignment 32"
+        ):
+            modmesh.SimpleArray((3, 5), dtype='float64', alignment=32)
+
+    def test_alignment_with_operations(self):
+        array1 = modmesh.SimpleArray((4, 4), dtype='float64', alignment=16)
+        array2 = modmesh.SimpleArray((4, 4), dtype='float64', alignment=32)
+
+        self.assertEqual(16, array1.alignment)
+        self.assertEqual(32, array2.alignment)
+
+        array1.fill(5.0)
+        array2.fill(10.0)
+
+        self.assertEqual(5.0, array1[0, 0])
+        self.assertEqual(10.0, array2[0, 0])
+
+        self.assertEqual(5.0 * 16, array1.sum())
+        self.assertEqual(10.0 * 16, array2.sum())
+
+    def test_alignment_with_ndarray_conversion(self):
+        array = modmesh.SimpleArray((4, 4), dtype='float64', alignment=16)
+        self.assertEqual(16, array.alignment)
+
+        ndarr = np.array(array, copy=False)
+        self.assertEqual((4, 4), ndarr.shape)
+        self.assertEqual(np.float64, ndarr.dtype)
+
+        array[0, 0] = 42.0
+        self.assertEqual(42.0, ndarr[0, 0])
+
+    def test_alignment_with_clone(self):
+        array = modmesh.SimpleArray((4, 4), value=3.14,
+                                    dtype='float64', alignment=32)
+        self.assertEqual(32, array.alignment)
+        self.assertEqual(3.14, array[0, 0])
+
+        cloned = array.clone()
+        self.assertEqual(32, cloned.alignment)
+        self.assertEqual((4, 4), cloned.typed.shape)
+        self.assertEqual(3.14, cloned[0, 0])
+
+        array[0, 0] = 99.9
+        self.assertEqual(99.9, array[0, 0])
+        self.assertEqual(3.14, cloned[0, 0])
+
+    def test_alignment_int32_array(self):
+        array = modmesh.SimpleArray((8, 8), dtype='int32', alignment=16)
+        self.assertEqual(16, array.alignment)
+        self.assertEqual((8, 8), array.typed.shape)
+
+        array.fill(42)
+        self.assertEqual(42, array[0, 0])
+        self.assertEqual(42 * 64, array.sum())
+
+    def test_alignment_uint64_array(self):
+        array = modmesh.SimpleArray((4, 8), dtype='uint64', alignment=32)
+        self.assertEqual(32, array.alignment)
+        self.assertEqual((4, 8), array.typed.shape)
+
+        array.fill(100)
+        self.assertEqual(100, array[0, 0])
+        self.assertEqual(100 * 32, array.sum())
+
+    def test_alignment_with_different_shapes(self):
+        array1d = modmesh.SimpleArray((32,), dtype='float64', alignment=16)
+        self.assertEqual(16, array1d.alignment)
+        self.assertEqual((32,), array1d.typed.shape)
+
+        array2d = modmesh.SimpleArray((4, 8), dtype='float64', alignment=32)
+        self.assertEqual(32, array2d.alignment)
+        self.assertEqual((4, 8), array2d.typed.shape)
+
+        array3d = modmesh.SimpleArray((2, 4, 4), dtype='float64', alignment=64)
+        self.assertEqual(64, array3d.alignment)
+        self.assertEqual((2, 4, 4), array3d.typed.shape)
+
+    def test_alignment_multiple_datatypes(self):
+        dtype_list = ['int8', 'int16', 'int32', 'int64', 'uint8',
+                      'uint16', 'uint32', 'uint64', 'float32', 'float64']
+
+        for dtype in dtype_list:
+            array = modmesh.SimpleArray((4, 4), dtype=dtype, alignment=16)
+            self.assertEqual(16, array.alignment)
+
+            array = modmesh.SimpleArray((8, 8), dtype=dtype, alignment=32)
+            self.assertEqual(32, array.alignment)
+
+            array = modmesh.SimpleArray((16, 8), dtype=dtype, alignment=64)
+            self.assertEqual(64, array.alignment)
+
+
 class SimpleCollectorTC(unittest.TestCase):
 
     def test_construct(self):
