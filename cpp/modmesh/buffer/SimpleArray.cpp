@@ -219,6 +219,37 @@ SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const std::shared_ptr
 
 #undef DECL_MM_CREATE_SIMPLE_ARRAY
 
+SimpleArrayPlex::SimpleArrayPlex(const shape_type & shape, const DataType data_type, size_t alignment)
+    : m_data_type(data_type)
+    , m_has_instance_ownership(true)
+{
+#define DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT(DataType, ArrayType)                            \
+    case DataType:                                                                                 \
+        m_instance_ptr = static_cast<void *>(new ArrayType(shape, alignment, with_alignment_t{})); \
+        break;
+
+    switch (data_type)
+    {
+        DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT(DataType::Bool, SimpleArrayBool)
+        DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT(DataType::Int8, SimpleArrayInt8)
+        DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT(DataType::Int16, SimpleArrayInt16)
+        DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT(DataType::Int32, SimpleArrayInt32)
+        DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT(DataType::Int64, SimpleArrayInt64)
+        DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT(DataType::Uint8, SimpleArrayUint8)
+        DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT(DataType::Uint16, SimpleArrayUint16)
+        DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT(DataType::Uint32, SimpleArrayUint32)
+        DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT(DataType::Uint64, SimpleArrayUint64)
+        DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT(DataType::Float32, SimpleArrayFloat32)
+        DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT(DataType::Float64, SimpleArrayFloat64)
+        DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT(DataType::Complex64, SimpleArrayComplex64)
+        DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT(DataType::Complex128, SimpleArrayComplex128)
+    default:
+        throw std::invalid_argument("Unsupported datatype");
+    }
+
+#undef DECL_MM_CREATE_SIMPLE_ARRAY_WITH_ALIGNMENT
+}
+
 SimpleArrayPlex::SimpleArrayPlex(SimpleArrayPlex const & other)
     : m_data_type(other.m_data_type)
 {
@@ -476,6 +507,46 @@ SimpleArrayPlex & SimpleArrayPlex::operator=(SimpleArrayPlex && other) noexcept
 
     m_instance_ptr = other.m_instance_ptr;
     return *this;
+}
+
+size_t SimpleArrayPlex::alignment() const
+{
+    if (m_instance_ptr == nullptr)
+    {
+        return 0;
+    }
+
+    switch (m_data_type)
+    {
+    case DataType::Bool:
+        return static_cast<const SimpleArrayBool *>(m_instance_ptr)->alignment();
+    case DataType::Int8:
+        return static_cast<const SimpleArrayInt8 *>(m_instance_ptr)->alignment();
+    case DataType::Int16:
+        return static_cast<const SimpleArrayInt16 *>(m_instance_ptr)->alignment();
+    case DataType::Int32:
+        return static_cast<const SimpleArrayInt32 *>(m_instance_ptr)->alignment();
+    case DataType::Int64:
+        return static_cast<const SimpleArrayInt64 *>(m_instance_ptr)->alignment();
+    case DataType::Uint8:
+        return static_cast<const SimpleArrayUint8 *>(m_instance_ptr)->alignment();
+    case DataType::Uint16:
+        return static_cast<const SimpleArrayUint16 *>(m_instance_ptr)->alignment();
+    case DataType::Uint32:
+        return static_cast<const SimpleArrayUint32 *>(m_instance_ptr)->alignment();
+    case DataType::Uint64:
+        return static_cast<const SimpleArrayUint64 *>(m_instance_ptr)->alignment();
+    case DataType::Float32:
+        return static_cast<const SimpleArrayFloat32 *>(m_instance_ptr)->alignment();
+    case DataType::Float64:
+        return static_cast<const SimpleArrayFloat64 *>(m_instance_ptr)->alignment();
+    case DataType::Complex64:
+        return static_cast<const SimpleArrayComplex64 *>(m_instance_ptr)->alignment();
+    case DataType::Complex128:
+        return static_cast<const SimpleArrayComplex128 *>(m_instance_ptr)->alignment();
+    default:
+        return 0;
+    }
 }
 
 SimpleArrayPlex::~SimpleArrayPlex()

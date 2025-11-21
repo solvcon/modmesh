@@ -1989,6 +1989,7 @@ public:
 
     explicit SimpleArrayPlex(const shape_type & shape, const DataType data_type);
     explicit SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const DataType data_type);
+    explicit SimpleArrayPlex(const shape_type & shape, const DataType data_type, size_t alignment);
 
     template <typename T>
     SimpleArrayPlex(const SimpleArray<T> & array)
@@ -2009,6 +2010,8 @@ public:
     {
         return m_data_type;
     }
+
+    size_t alignment() const;
 
     /// Get the pointer to the const instance of SimpleArray<T>.
     const void * instance_ptr() const
