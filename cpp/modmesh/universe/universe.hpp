@@ -31,6 +31,7 @@
 #include <modmesh/universe/bernstein.hpp>
 #include <modmesh/universe/bezier.hpp>
 #include <modmesh/universe/coord.hpp>
+#include <modmesh/universe/polygon.hpp>
 #include <modmesh/universe/World.hpp>
 
 namespace modmesh
