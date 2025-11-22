@@ -27,6 +27,7 @@ add_executable(
     test_nopython_callprofiler.cpp
     test_nopython_serializable.cpp
     test_nopython_transform.cpp
+    test_nopython_rtree.cpp
     ${MODMESH_TOGGLE_SOURCES}
     ${MODMESH_BUFFER_SOURCES}
     ${MODMESH_SERIALIZATION_SOURCES}
