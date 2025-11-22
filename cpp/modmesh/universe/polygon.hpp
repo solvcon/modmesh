@@ -28,6 +28,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * @file Polygons and their containers in 2 and 3 dimensional spaces.
+ */
+
 #include <modmesh/base.hpp>
 #include <modmesh/buffer/buffer.hpp>
 #include <modmesh/universe/coord.hpp>

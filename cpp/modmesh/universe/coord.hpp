@@ -28,6 +28,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * @file Points and line segments and their containers in 2 and 3 dimensional
+ * spaces.
+ */
+
 #include <modmesh/base.hpp>
 #include <modmesh/buffer/buffer.hpp>
 

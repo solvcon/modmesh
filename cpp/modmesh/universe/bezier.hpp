@@ -28,6 +28,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * @file Bezier curve and its container.
+ */
+
 #include <modmesh/base.hpp>
 #include <modmesh/buffer/buffer.hpp>
 #include <modmesh/universe/bernstein.hpp>
