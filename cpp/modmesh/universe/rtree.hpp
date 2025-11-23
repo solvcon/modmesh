@@ -29,7 +29,7 @@
  */
 
 // This library implement R-tree based on "R Trees: A Dynamic Index Structure for Spatial Searchin" by Guttman in 1984
-// DOI:10.1145/971697.602266
+// https://doi.org/10.1145/971697.602266
 
 #include <modmesh/base.hpp>
 
@@ -42,11 +42,13 @@
 namespace modmesh
 {
 
-/// Bounding box for 2D objects, e.g., Point2d, Segment2d, Triangle2d, etc.
+/// Bounding box for 2D objects
 /// @tparam T floating-point type
 template <typename T>
-struct BoundBox2d : public NumberBase<int32_t, T>
+class BoundBox2d : public NumberBase<int32_t, T>
 {
+
+public:
     using value_type = T;
 
 private:
@@ -57,6 +59,7 @@ private:
 
 public:
 
+    /// construct a bounding box with given min and max coordinates
     BoundBox2d(value_type min_x_in, value_type min_y_in, value_type max_x_in, value_type max_y_in)
         : m_min_x(min_x_in)
         , m_min_y(min_y_in)
@@ -64,6 +67,20 @@ public:
         , m_max_y(max_y_in)
     {
     }
+
+    /// construct a bounding box that encloses two bounding boxes
+    BoundBox2d(const BoundBox2d & a, const BoundBox2d & b)
+        : m_min_x(std::min(a.m_min_x, b.m_min_x))
+        , m_min_y(std::min(a.m_min_y, b.m_min_y))
+        , m_max_x(std::max(a.m_max_x, b.m_max_x))
+        , m_max_y(std::max(a.m_max_y, b.m_max_y))
+    {
+    }
+
+    value_type min_x() const { return m_min_x; }
+    value_type min_y() const { return m_min_y; }
+    value_type max_x() const { return m_max_x; }
+    value_type max_y() const { return m_max_y; }
 
     /// check if this bounding box overlap another bounding box
     bool overlap(BoundBox2d const & other) const
@@ -90,26 +107,14 @@ public:
         m_max_x = std::max(m_max_x, other.m_max_x);
         m_max_y = std::max(m_max_y, other.m_max_y);
     }
-
-    /// merge two bounding boxes into a new bounding box
-    /// when merging, the resulting bounding box will be the minimum bounding box that contains both a and b
-    /// for example, if a is (1,1,3,3) and b is (2,2,4,4), the merged bounding box will be (1,1,4,4)
-    /// @return the merged bounding box of a and b
-    static BoundBox2d merge(BoundBox2d const & a, BoundBox2d const & b)
-    {
-        return BoundBox2d(
-            std::min(a.m_min_x, b.m_min_x),
-            std::min(a.m_min_y, b.m_min_y),
-            std::max(a.m_max_x, b.m_max_x),
-            std::max(a.m_max_y, b.m_max_y));
-    }
 }; /* end of struct BoundBox2d */
 
 /// Bounding box for 3D objects, e.g., Point3d, Segment3d, Triangle3d, etc.
 /// @tparam T floating-point type
 template <typename T>
-struct BoundBox3d : public NumberBase<int32_t, T>
+class BoundBox3d : public NumberBase<int32_t, T>
 {
+public:
     using value_type = T;
 
 private:
@@ -122,6 +127,7 @@ private:
 
 public:
 
+    /// construct a bounding box with given min and max coordinates
     BoundBox3d(value_type min_x_in, value_type min_y_in, value_type min_z_in, value_type max_x_in, value_type max_y_in, value_type max_z_in)
         : m_min_x(min_x_in)
         , m_min_y(min_y_in)
@@ -131,6 +137,24 @@ public:
         , m_max_z(max_z_in)
     {
     }
+
+    /// construct a bounding box that encloses two bounding boxes
+    BoundBox3d(const BoundBox3d & a, const BoundBox3d & b)
+        : m_min_x(std::min(a.m_min_x, b.m_min_x))
+        , m_min_y(std::min(a.m_min_y, b.m_min_y))
+        , m_min_z(std::min(a.m_min_z, b.m_min_z))
+        , m_max_x(std::max(a.m_max_x, b.m_max_x))
+        , m_max_y(std::max(a.m_max_y, b.m_max_y))
+        , m_max_z(std::max(a.m_max_z, b.m_max_z))
+    {
+    }
+
+    value_type min_x() const { return m_min_x; }
+    value_type min_y() const { return m_min_y; }
+    value_type max_x() const { return m_max_x; }
+    value_type max_y() const { return m_max_y; }
+    value_type min_z() const { return m_min_z; }
+    value_type max_z() const { return m_max_z; }
 
     bool overlap(BoundBox3d const & other) const
     {
@@ -159,17 +183,6 @@ public:
         m_max_x = std::max(m_max_x, other.m_max_x);
         m_max_y = std::max(m_max_y, other.m_max_y);
         m_max_z = std::max(m_max_z, other.m_max_z);
-    }
-
-    static BoundBox3d merge(BoundBox3d const & a, BoundBox3d const & b)
-    {
-        return BoundBox3d(
-            std::min(a.m_min_x, b.m_min_x),
-            std::min(a.m_min_y, b.m_min_y),
-            std::min(a.m_min_z, b.m_min_z),
-            std::max(a.m_max_x, b.m_max_x),
-            std::max(a.m_max_y, b.m_max_y),
-            std::max(a.m_max_z, b.m_max_z));
     }
 }; /* end of struct BoundBox3d */
 
@@ -403,7 +416,7 @@ private:
 
         for (auto & child : node->nodes)
         {
-            value_type enlargement = B::merge(child->bbox, box).calc_area() - child->bbox.calc_area();
+            value_type enlargement = B(child->bbox, box).calc_area() - child->bbox.calc_area();
 
             if (enlargement < min_enlargement)
             {
@@ -595,8 +608,8 @@ private:
             }
 
             B box = calc_bound_box_from_entry(entries[i]);
-            value_type enlargement1 = B::merge(box1, box).calc_area() - box1.calc_area();
-            value_type enlargement2 = B::merge(box2, box).calc_area() - box2.calc_area();
+            value_type enlargement1 = B(box1, box).calc_area() - box1.calc_area();
+            value_type enlargement2 = B(box2, box).calc_area() - box2.calc_area();
 
             if (enlargement1 < enlargement2 ||
                 (enlargement1 == enlargement2 && box1.calc_area() < box2.calc_area()))
@@ -649,7 +662,7 @@ private:
             {
                 B box_i = calc_bound_box_from_entry(entries[i]);
                 B box_j = calc_bound_box_from_entry(entries[j]);
-                B combined_box = B::merge(box_i, box_j);
+                B combined_box = B(box_i, box_j);
                 value_type waste = combined_box.calc_area() - box_i.calc_area() - box_j.calc_area();
                 if (waste > max_waste)
                 {
@@ -694,7 +707,7 @@ private:
         // Handle root split
         if (split_result && current == root.get())
         {
-            B root_bbox = B::merge(root->bbox, split_result->bbox);
+            B root_bbox(root->bbox, split_result->bbox);
             node_type new_root = std::make_unique<RTreeNodeType>(root_bbox);
             new_root->nodes.push_back(std::move(root));
             new_root->nodes.push_back(std::move(split_result));
