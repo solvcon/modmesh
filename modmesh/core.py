@@ -141,6 +141,8 @@ list_of_linalg = [
 list_of_universe = [
     'calc_bernstein_polynomial',
     'interpolate_bernstein',
+    'BoundBox3dFp32',
+    'BoundBox3dFp64',
     'Point3dFp32',
     'Point3dFp64',
     'Segment3dFp32',
@@ -159,6 +161,8 @@ list_of_universe = [
     'CurvePadFp64',
     'WorldFp32',
     'WorldFp64',
+    'Polygon3dFp32',
+    'Polygon3dFp64',
 ]
 
 __all__ = (  # noqa: F822

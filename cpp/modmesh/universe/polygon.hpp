@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2023, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2025, An-Chi Liu <phy.tiger@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -34,7 +34,13 @@
 
 #include <modmesh/base.hpp>
 #include <modmesh/buffer/buffer.hpp>
+#include <modmesh/universe/bezier.hpp>
 #include <modmesh/universe/coord.hpp>
+#include <modmesh/universe/rtree.hpp>
+
+#include <algorithm>
+#include <cmath>
+#include <vector>
 
 namespace modmesh
 {
@@ -780,6 +786,215 @@ private:
 
 using TrianglePadFp32 = TrianglePad<float>;
 using TrianglePadFp64 = TrianglePad<double>;
+
+template <typename T>
+class Polygon3d
+    : public NumberBase<int32_t, T>
+    , public std::enable_shared_from_this<Polygon3d<T>>
+{
+
+private:
+
+    struct ctor_passkey
+    {
+    };
+
+public:
+
+    static_assert(std::is_arithmetic_v<T>, "T in Polygon3d<T> must be arithmetic type");
+
+    using point_type = Point3d<T>;
+    using value_type = typename point_type::value_type;
+    using segment_type = Segment3d<T>;
+    using segment_pad_type = SegmentPad<T>;
+    using curve_pad_type = CurvePad<T>;
+    using rtree_type = RTree<segment_type, BoundBox3d<T>, RTreeValueOps<segment_type, BoundBox3d<T>>>;
+
+    template <typename... Args>
+    static std::shared_ptr<Polygon3d<T>> construct(Args &&... args)
+    {
+        return std::make_shared<Polygon3d<T>>(std::forward<Args>(args)..., ctor_passkey());
+    }
+
+    Polygon3d(std::shared_ptr<segment_pad_type> segments, ctor_passkey const &)
+        : m_segments(segments)
+        , m_rtree(std::make_unique<rtree_type>())
+    {
+        build_rtree();
+    }
+
+    Polygon3d(std::shared_ptr<curve_pad_type> curves, value_type sample_length, ctor_passkey const &)
+        : m_segments(curves->sample(sample_length))
+        , m_rtree(std::make_unique<rtree_type>())
+    {
+        build_rtree();
+    }
+
+    Polygon3d(std::shared_ptr<segment_pad_type> segments, std::shared_ptr<curve_pad_type> curves, value_type sample_length, ctor_passkey const &)
+        : m_segments(segment_pad_type::construct(segments->ndim()))
+        , m_rtree(std::make_unique<rtree_type>())
+    {
+        m_segments->extend_with(*segments);
+        std::shared_ptr<segment_pad_type> curve_segments = curves->sample(sample_length);
+        m_segments->extend_with(*curve_segments);
+        build_rtree();
+    }
+
+    Polygon3d() = delete;
+    Polygon3d(Polygon3d const &) = delete;
+    Polygon3d(Polygon3d &&) = delete;
+    Polygon3d & operator=(Polygon3d const &) = delete;
+    Polygon3d & operator=(Polygon3d &&) = delete;
+    ~Polygon3d() = default;
+
+    bool operator==(Polygon3d const & other) const
+    {
+        if (size() != other.size())
+        {
+            return false;
+        }
+        if (ndim() != other.ndim())
+        {
+            return false;
+        }
+        for (size_t i = 0; i < size(); ++i)
+        {
+            if (get(i) != other.get(i))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool operator!=(Polygon3d const & other) const
+    {
+        return !(*this == other);
+    }
+
+    std::shared_ptr<segment_pad_type> segments() const { return m_segments; }
+
+    size_t size() const { return m_segments->size(); }
+
+    uint8_t ndim() const { return m_segments->ndim(); }
+
+    segment_type get(size_t i) const { return m_segments->get(i); }
+
+    segment_type get_at(size_t i) const { return m_segments->get_at(i); }
+
+    BoundBox3d<T> calc_bound_box() const
+    {
+        if (m_segments->size() == 0)
+        {
+            return BoundBox3d<T>(0, 0, 0, 0, 0, 0);
+        }
+
+        value_type min_x = std::numeric_limits<value_type>::max();
+        value_type min_y = std::numeric_limits<value_type>::max();
+        value_type min_z = std::numeric_limits<value_type>::max();
+        value_type max_x = std::numeric_limits<value_type>::lowest();
+        value_type max_y = std::numeric_limits<value_type>::lowest();
+        value_type max_z = std::numeric_limits<value_type>::lowest();
+
+        for (size_t i = 0; i < m_segments->size(); ++i)
+        {
+            segment_type const segment = m_segments->get(i);
+            min_x = std::min({min_x, segment.p0().x(), segment.p1().x()});
+            min_y = std::min({min_y, segment.p0().y(), segment.p1().y()});
+            min_z = std::min({min_z, segment.p0().z(), segment.p1().z()});
+            max_x = std::max({max_x, segment.p0().x(), segment.p1().x()});
+            max_y = std::max({max_y, segment.p0().y(), segment.p1().y()});
+            max_z = std::max({max_z, segment.p0().z(), segment.p1().z()});
+        }
+
+        return BoundBox3d<T>(min_x, min_y, min_z, max_x, max_y, max_z);
+    }
+
+    void search_segments(BoundBox3d<T> const & box, std::vector<segment_type> & output) const
+    {
+        m_rtree->search(box, output);
+    }
+
+    void rebuild_rtree()
+    {
+        m_rtree = std::make_unique<rtree_type>();
+        build_rtree();
+    }
+
+private:
+
+    void build_rtree()
+    {
+        for (size_t i = 0; i < m_segments->size(); ++i)
+        {
+            m_rtree->insert(m_segments->get(i));
+        }
+    }
+
+    std::shared_ptr<segment_pad_type> m_segments; ///< Segments composing the polygon
+    std::unique_ptr<rtree_type> m_rtree; ///< RTree for segments in the polygon
+
+}; /* end class Polygon3d */
+
+using Polygon3dFp32 = Polygon3d<float>;
+using Polygon3dFp64 = Polygon3d<double>;
+
+template <typename E, typename B>
+struct RTreeValueOps;
+
+template <typename T>
+struct RTreeValueOps<Segment3d<T>, BoundBox3d<T>>
+{
+    static BoundBox3d<T> calc_bound_box(Segment3d<T> const & item)
+    {
+        T min_x = std::min(item.p0().x(), item.p1().x());
+        T max_x = std::max(item.p0().x(), item.p1().x());
+        T min_y = std::min(item.p0().y(), item.p1().y());
+        T max_y = std::max(item.p0().y(), item.p1().y());
+        T min_z = std::min(item.p0().z(), item.p1().z());
+        T max_z = std::max(item.p0().z(), item.p1().z());
+        return BoundBox3d<T>(min_x, min_y, min_z, max_x, max_y, max_z);
+    }
+
+    static BoundBox3d<T> calc_group_bound_box(std::vector<Segment3d<T>> const & items)
+    {
+        if (items.empty())
+        {
+            return BoundBox3d<T>(0, 0, 0, 0, 0, 0);
+        }
+
+        BoundBox3d<T> result = calc_bound_box(items[0]);
+        for (size_t i = 1; i < items.size(); ++i)
+        {
+            result.expand(calc_bound_box(items[i]));
+        }
+        return result;
+    }
+};
+
+template <typename T>
+struct RTreeValueOps<Polygon3d<T>, BoundBox3d<T>>
+{
+    static BoundBox3d<T> calc_bound_box(Polygon3d<T> const & item)
+    {
+        return item.calc_bound_box();
+    }
+
+    static BoundBox3d<T> calc_group_bound_box(std::vector<Polygon3d<T>> const & items)
+    {
+        if (items.empty())
+        {
+            return BoundBox3d<T>(0, 0, 0, 0, 0, 0);
+        }
+
+        BoundBox3d<T> result = items[0].calc_bound_box();
+        for (size_t i = 1; i < items.size(); ++i)
+        {
+            result.expand(items[i].calc_bound_box());
+        }
+        return result;
+    }
+};
 
 } /* end namespace modmesh */
 
