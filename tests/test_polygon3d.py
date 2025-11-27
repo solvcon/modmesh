@@ -31,287 +31,175 @@ from modmesh.testing import TestBase as ModMeshTB
 
 class Polygon3dTB(ModMeshTB):
 
-    def test_construct_from_segment_pad_2d(self):
-        """Test constructing Polygon3d from a 2D SegmentPad."""
+    def test_polygon_pad_basic(self):
+        """Test PolygonPad with basic operations."""
+        pad = self.PolygonPad(ndim=2)
+        self.assertEqual(pad.ndim, 2)
+        self.assertEqual(pad.num_polygons, 0)
+        self.assertEqual(pad.num_nodes, 0)
+
+        nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+        polygon = pad.add_polygon(nodes)
+
+        self.assertEqual(pad.num_polygons, 1)
+        self.assertEqual(pad.num_nodes, 4)
+        self.assertEqual(polygon.num_nodes, 4)
+
+        node0 = polygon.get_node(0)
+        self.assert_allclose([node0.x, node0.y], [0.0, 0.0])
+
+        node1 = polygon.get_node(1)
+        self.assert_allclose([node1.x, node1.y], [1.0, 0.0])
+
+    def test_polygon_handle_operations(self):
+        """Test Polygon handle operations."""
+        pad = self.PolygonPad(ndim=2)
+        nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+        polygon = pad.add_polygon(nodes)
+
+        self.assertEqual(polygon.ndim, 2)
+        self.assertEqual(polygon.polygon_id, 0)
+        self.assertEqual(polygon.num_nodes, 4)
+
+        node0 = polygon.get_node(0)
+        self.assert_allclose([node0.x, node0.y], [0.0, 0.0])
+
+        edge0 = polygon.get_edge(0)
+        self.assert_allclose([edge0.x0, edge0.y0], [0.0, 0.0])
+        self.assert_allclose([edge0.x1, edge0.y1], [1.0, 0.0])
+
+        edge3 = polygon.get_edge(3)
+        self.assert_allclose([edge3.x0, edge3.y0], [0.0, 1.0])
+        self.assert_allclose([edge3.x1, edge3.y1], [0.0, 0.0])
+
+    def test_right_hand_rule_counter_clockwise(self):
+        """
+        Test right-hand rule validation for counter-clockwise
+        (positive area) polygon.
+        """
+        pad = self.PolygonPad(ndim=2)
+        nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+        polygon = pad.add_polygon(nodes)
+
+        area = polygon.compute_signed_area()
+        self.assertGreater(area, 0.0)
+        self.assertTrue(polygon.is_counter_clockwise())
+
+    def test_right_hand_rule_clockwise(self):
+        """Test right-hand rule: clockwise nodes should have negative area."""
+        pad = self.PolygonPad(ndim=2)
+        nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(0.0, 1.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(1.0, 0.0, 0.0)
+        ]
+        polygon = pad.add_polygon(nodes)
+
+        area = polygon.compute_signed_area()
+        self.assertLess(area, 0.0)
+        self.assertFalse(polygon.is_counter_clockwise())
+
+    def test_multiple_polygons_in_pad(self):
+        """Test storing multiple polygons in one PolygonPad."""
+        pad = self.PolygonPad(ndim=2)
+
+        square = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+        triangle = [
+            self.Point(2.0, 0.0, 0.0),
+            self.Point(3.0, 0.0, 0.0),
+            self.Point(2.5, 1.0, 0.0)
+        ]
+
+        poly1 = pad.add_polygon(square)
+        poly2 = pad.add_polygon(triangle)
+
+        self.assertEqual(pad.num_polygons, 2)
+        self.assertEqual(pad.num_nodes, 7)
+
+        self.assertEqual(poly1.num_nodes, 4)
+        self.assertEqual(poly2.num_nodes, 3)
+
+        self.assertGreater(poly1.compute_signed_area(), 0.0)
+        self.assertGreater(poly2.compute_signed_area(), 0.0)
+
+        retrieved_poly1 = pad.get_polygon(0)
+        retrieved_poly2 = pad.get_polygon(1)
+
+        self.assertEqual(retrieved_poly1.polygon_id, 0)
+        self.assertEqual(retrieved_poly2.polygon_id, 1)
+
+    def test_polygon_pad_from_segments(self):
+        """Test adding polygon from SegmentPad."""
         segment_pad = self.SegmentPad(ndim=2)
         segment_pad.append(0.0, 0.0, 1.0, 0.0)
         segment_pad.append(1.0, 0.0, 1.0, 1.0)
         segment_pad.append(1.0, 1.0, 0.0, 1.0)
         segment_pad.append(0.0, 1.0, 0.0, 0.0)
 
-        polygon = self.Polygon3d(segment_pad)
+        pad = self.PolygonPad(ndim=2)
+        polygon = pad.add_polygon_from_segments(segment_pad)
 
-        self.assertEqual(polygon.ndim, 2)
-        self.assertEqual(polygon.size, 4)
+        self.assertEqual(pad.num_polygons, 1)
+        self.assertEqual(polygon.num_nodes, 4)
 
-        segment0 = polygon.get(0)
-        self.assert_allclose([segment0.x0, segment0.y0], [0.0, 0.0])
-        self.assert_allclose([segment0.x1, segment0.y1], [1.0, 0.0])
+        node0 = polygon.get_node(0)
+        self.assert_allclose([node0.x, node0.y], [0.0, 0.0])
 
-        segment1 = polygon.get(1)
-        self.assert_allclose([segment1.x0, segment1.y0], [1.0, 0.0])
-        self.assert_allclose([segment1.x1, segment1.y1], [1.0, 1.0])
+    def test_polygon_pad_rtree_search(self):
+        """Test RTree search across multiple polygons in PolygonPad."""
+        pad = self.PolygonPad(ndim=2)
 
-    def test_construct_from_segment_pad_3d(self):
-        """Test constructing Polygon3d from a 3D SegmentPad."""
-        segment_pad = self.SegmentPad(ndim=3)
-        segment_pad.append(0.0, 0.0, 0.0, 1.0, 0.0, 0.0)
-        segment_pad.append(1.0, 0.0, 0.0, 1.0, 1.0, 0.0)
-        segment_pad.append(1.0, 1.0, 0.0, 0.0, 1.0, 0.0)
-        segment_pad.append(0.0, 1.0, 0.0, 0.0, 0.0, 0.0)
+        square1 = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+        square2 = [
+            self.Point(5.0, 5.0, 0.0),
+            self.Point(6.0, 5.0, 0.0),
+            self.Point(6.0, 6.0, 0.0),
+            self.Point(5.0, 6.0, 0.0)
+        ]
 
-        polygon = self.Polygon3d(segment_pad)
-
-        self.assertEqual(polygon.ndim, 3)
-        self.assertEqual(polygon.size, 4)
-
-        segment0 = polygon.get(0)
-        self.assert_allclose([segment0.x0, segment0.y0, segment0.z0],
-                             [0.0, 0.0, 0.0])
-        self.assert_allclose([segment0.x1, segment0.y1, segment0.z1],
-                             [1.0, 0.0, 0.0])
-
-    def test_construct_from_curve_pad(self):
-        """Test constructing Polygon3d from a CurvePad by sampling."""
-        curve_pad = self.CurvePad(ndim=3)
-
-        p0 = self.Point(0.0, 0.0, 0.0)
-        p1 = self.Point(0.5, 0.5, 0.0)
-        p2 = self.Point(1.0, 0.5, 0.0)
-        p3 = self.Point(1.0, 0.0, 0.0)
-        curve_pad.append(p0, p1, p2, p3)
-
-        sample_length = 0.2
-        polygon = self.Polygon3d(curve_pad, sample_length)
-
-        self.assertEqual(polygon.ndim, 3)
-        self.assertGreater(polygon.size, 0)
-
-        segments = polygon.segments
-        self.assertIsNotNone(segments)
-        self.assertEqual(segments.ndim, 3)
-        self.assertEqual(len(segments), polygon.size)
-
-    def test_construct_from_both_segment_and_curve(self):
-        """Test constructing Polygon3d from both SegmentPad and CurvePad."""
-        segment_pad = self.SegmentPad(ndim=3)
-        segment_pad.append(0.0, 0.0, 0.0, 1.0, 0.0, 0.0)
-        segment_pad.append(1.0, 0.0, 0.0, 2.0, 0.0, 0.0)
-
-        curve_pad = self.CurvePad(ndim=3)
-        p0 = self.Point(2.0, 0.0, 0.0)
-        p1 = self.Point(2.5, 0.5, 0.0)
-        p2 = self.Point(3.0, 0.5, 0.0)
-        p3 = self.Point(3.0, 0.0, 0.0)
-        curve_pad.append(p0, p1, p2, p3)
-
-        sample_length = 0.2
-        polygon = self.Polygon3d(segment_pad, curve_pad, sample_length)
-
-        self.assertEqual(polygon.ndim, 3)
-        self.assertGreater(polygon.size, 2)
-
-        segments = polygon.segments
-        first_segment = segments[0]
-        self.assert_allclose(
-            [first_segment.x0, first_segment.y0, first_segment.z0],
-            [0.0, 0.0, 0.0])
-        self.assert_allclose(
-            [first_segment.x1, first_segment.y1, first_segment.z1],
-            [1.0, 0.0, 0.0])
-
-        second_segment = segments[1]
-        self.assert_allclose(
-            [second_segment.x0, second_segment.y0, second_segment.z0],
-            [1.0, 0.0, 0.0])
-        self.assert_allclose(
-            [second_segment.x1, second_segment.y1, second_segment.z1],
-            [2.0, 0.0, 0.0])
-
-    def test_bound_box(self):
-        """Test bounding box calculation."""
-        segment_pad = self.SegmentPad(ndim=3)
-        segment_pad.append(-1.0, -2.0, -3.0, 4.0, 5.0, 6.0)
-        segment_pad.append(0.0, 0.0, 0.0, 2.0, 3.0, 1.0)
-
-        polygon = self.Polygon3d(segment_pad)
-        bbox = polygon.calc_bound_box()
-
-        self.assert_allclose(bbox.min_x, -1.0)
-        self.assert_allclose(bbox.min_y, -2.0)
-        self.assert_allclose(bbox.min_z, -3.0)
-        self.assert_allclose(bbox.max_x, 4.0)
-        self.assert_allclose(bbox.max_y, 5.0)
-        self.assert_allclose(bbox.max_z, 6.0)
-
-    def test_empty_polygon_bound_box(self):
-        """Test bounding box of empty polygon."""
-        segment_pad = self.SegmentPad(ndim=3)
-        polygon = self.Polygon3d(segment_pad)
-
-        bbox = polygon.calc_bound_box()
-        self.assert_allclose(bbox.min_x, 0.0)
-        self.assert_allclose(bbox.min_y, 0.0)
-        self.assert_allclose(bbox.min_z, 0.0)
-        self.assert_allclose(bbox.max_x, 0.0)
-        self.assert_allclose(bbox.max_y, 0.0)
-        self.assert_allclose(bbox.max_z, 0.0)
-
-    def test_segment_access(self):
-        """Test accessing individual segments."""
-        segment_pad = self.SegmentPad(ndim=3)
-        segment_pad.append(0.0, 0.0, 0.0, 1.0, 0.0, 0.0)
-        segment_pad.append(1.0, 0.0, 0.0, 1.0, 1.0, 0.0)
-        segment_pad.append(1.0, 1.0, 0.0, 0.0, 1.0, 0.0)
-
-        polygon = self.Polygon3d(segment_pad)
-
-        self.assertEqual(polygon.size, 3)
-
-        seg0 = polygon.get(0)
-        self.assert_allclose([seg0.x0, seg0.y0, seg0.z0], [0.0, 0.0, 0.0])
-        self.assert_allclose([seg0.x1, seg0.y1, seg0.z1], [1.0, 0.0, 0.0])
-
-        seg1 = polygon.get_at(1)
-        self.assert_allclose([seg1.x0, seg1.y0, seg1.z0], [1.0, 0.0, 0.0])
-        self.assert_allclose([seg1.x1, seg1.y1, seg1.z1], [1.0, 1.0, 0.0])
-
-        seg2 = polygon.get(2)
-        self.assert_allclose([seg2.x0, seg2.y0, seg2.z0], [1.0, 1.0, 0.0])
-        self.assert_allclose([seg2.x1, seg2.y1, seg2.z1], [0.0, 1.0, 0.0])
-
-    def test_equality_operators(self):
-        """Test equality and inequality operators."""
-        segment_pad1 = self.SegmentPad(ndim=3)
-        segment_pad1.append(0.0, 0.0, 0.0, 1.0, 0.0, 0.0)
-        segment_pad1.append(1.0, 0.0, 0.0, 1.0, 1.0, 0.0)
-
-        segment_pad2 = self.SegmentPad(ndim=3)
-        segment_pad2.append(0.0, 0.0, 0.0, 1.0, 0.0, 0.0)
-        segment_pad2.append(1.0, 0.0, 0.0, 1.0, 1.0, 0.0)
-
-        segment_pad3 = self.SegmentPad(ndim=3)
-        segment_pad3.append(0.0, 0.0, 0.0, 1.0, 0.0, 0.0)
-        segment_pad3.append(2.0, 0.0, 0.0, 2.0, 1.0, 0.0)
-
-        polygon1 = self.Polygon3d(segment_pad1)
-        polygon2 = self.Polygon3d(segment_pad2)
-        polygon3 = self.Polygon3d(segment_pad3)
-
-        self.assertTrue(polygon1 == polygon2)
-        self.assertFalse(polygon1 != polygon2)
-        self.assertTrue(polygon1 != polygon3)
-        self.assertFalse(polygon1 == polygon3)
-
-    def test_search_segments(self):
-        """Test RTree-based segment searching."""
-        segment_pad = self.SegmentPad(ndim=3)
-        segment_pad.append(0.0, 0.0, 0.0, 1.0, 0.0, 0.0)
-        segment_pad.append(2.0, 0.0, 0.0, 3.0, 0.0, 0.0)
-        segment_pad.append(5.0, 5.0, 0.0, 6.0, 6.0, 0.0)
-        segment_pad.append(10.0, 10.0, 0.0, 11.0, 11.0, 0.0)
-
-        polygon = self.Polygon3d(segment_pad)
+        pad.add_polygon(square1)
+        pad.add_polygon(square2)
 
         BoundBox = (mm.BoundBox3dFp32 if self.dtype == 'float32'
                     else mm.BoundBox3dFp64)
-        search_box = BoundBox(-0.5, -0.5, -0.5, 3.5, 0.5, 0.5)
-        results = polygon.search_segments(search_box)
 
-        self.assertEqual(len(results), 2)
+        search_box1 = BoundBox(-0.5, -0.5, -0.5, 1.5, 1.5, 0.5)
+        results1 = pad.search_segments(search_box1)
+        self.assertEqual(len(results1), 4)
 
         search_box2 = BoundBox(4.5, 4.5, -0.5, 6.5, 6.5, 0.5)
-        results2 = polygon.search_segments(search_box2)
-        self.assertEqual(len(results2), 1)
+        results2 = pad.search_segments(search_box2)
+        self.assertEqual(len(results2), 4)
 
-        search_box3 = BoundBox(100.0, 100.0, 0.0, 200.0, 200.0, 0.0)
-        results3 = polygon.search_segments(search_box3)
-        self.assertEqual(len(results3), 0)
-
-    def test_rebuild_rtree(self):
-        """Test rebuilding the RTree."""
-        segment_pad = self.SegmentPad(ndim=3)
-        segment_pad.append(0.0, 0.0, 0.0, 1.0, 0.0, 0.0)
-
-        polygon = self.Polygon3d(segment_pad)
-
-        self.assertEqual(polygon.size, 1)
-
-        polygon.rebuild_rtree()
-
-        BoundBox = (mm.BoundBox3dFp32 if self.dtype == 'float32'
-                    else mm.BoundBox3dFp64)
-        search_box = BoundBox(-0.5, -0.5, -0.5, 1.5, 0.5, 0.5)
-        results = polygon.search_segments(search_box)
-        self.assertEqual(len(results), 1)
-
-    def test_square_polygon_2d(self):
-        """Test creating a complete square polygon in 2D."""
-        segment_pad = self.SegmentPad(ndim=2)
-        segment_pad.append(0.0, 0.0, 1.0, 0.0)
-        segment_pad.append(1.0, 0.0, 1.0, 1.0)
-        segment_pad.append(1.0, 1.0, 0.0, 1.0)
-        segment_pad.append(0.0, 1.0, 0.0, 0.0)
-
-        polygon = self.Polygon3d(segment_pad)
-
-        self.assertEqual(polygon.size, 4)
-        self.assertEqual(polygon.ndim, 2)
-
-        bbox = polygon.calc_bound_box()
-        self.assert_allclose(bbox.min_x, 0.0)
-        self.assert_allclose(bbox.min_y, 0.0)
-        self.assert_allclose(bbox.max_x, 1.0)
-        self.assert_allclose(bbox.max_y, 1.0)
-
-    def test_curved_polygon(self):
-        """Test creating a polygon with curved edges."""
-        curve_pad = self.CurvePad(ndim=3)
-
-        p0 = self.Point(0.0, 0.0, 0.0)
-        p1 = self.Point(0.0, 1.0, 0.0)
-        p2 = self.Point(1.0, 1.0, 0.0)
-        p3 = self.Point(1.0, 0.0, 0.0)
-        curve_pad.append(p0, p1, p2, p3)
-
-        p0 = self.Point(1.0, 0.0, 0.0)
-        p1 = self.Point(2.0, 0.0, 0.0)
-        p2 = self.Point(2.0, 1.0, 0.0)
-        p3 = self.Point(2.0, 2.0, 0.0)
-        curve_pad.append(p0, p1, p2, p3)
-
-        sample_length = 0.3
-        polygon = self.Polygon3d(curve_pad, sample_length)
-
-        self.assertEqual(polygon.ndim, 3)
-        self.assertGreater(polygon.size, 2)
-
-        bbox = polygon.calc_bound_box()
-        self.assertLessEqual(bbox.min_x, 0.0)
-        self.assertGreaterEqual(bbox.max_x, 1.0)
-
-    def test_mixed_straight_and_curved_edges(self):
-        """Test polygon with both straight segments and curved edges."""
-        segment_pad = self.SegmentPad(ndim=3)
-        segment_pad.append(0.0, 0.0, 0.0, 1.0, 0.0, 0.0)
-
-        curve_pad = self.CurvePad(ndim=3)
-        p0 = self.Point(1.0, 0.0, 0.0)
-        p1 = self.Point(1.5, 0.5, 0.0)
-        p2 = self.Point(1.5, 1.0, 0.0)
-        p3 = self.Point(1.0, 1.0, 0.0)
-        curve_pad.append(p0, p1, p2, p3)
-
-        sample_length = 0.2
-        polygon = self.Polygon3d(segment_pad, curve_pad, sample_length)
-
-        self.assertEqual(polygon.ndim, 3)
-        self.assertGreater(polygon.size, 1)
-
-        first_segment = polygon.segments[0]
-        self.assert_allclose(
-            [first_segment.x0, first_segment.y0, first_segment.z0],
-            [0.0, 0.0, 0.0])
+        search_box3 = BoundBox(-1.0, -1.0, -0.5, 7.0, 7.0, 0.5)
+        results3 = pad.search_segments(search_box3)
+        self.assertEqual(len(results3), 8)
 
 
 class Polygon3dFp32TC(Polygon3dTB, unittest.TestCase):
@@ -320,7 +208,7 @@ class Polygon3dFp32TC(Polygon3dTB, unittest.TestCase):
     Point = mm.Point3dFp32
     SegmentPad = mm.SegmentPadFp32
     CurvePad = mm.CurvePadFp32
-    Polygon3d = mm.Polygon3dFp32
+    PolygonPad = mm.PolygonPadFp32
     SimpleArray = mm.SimpleArrayFloat32
 
 
@@ -330,5 +218,5 @@ class Polygon3dFp64TC(Polygon3dTB, unittest.TestCase):
     Point = mm.Point3dFp64
     SegmentPad = mm.SegmentPadFp64
     CurvePad = mm.CurvePadFp64
-    Polygon3d = mm.Polygon3dFp64
+    PolygonPad = mm.PolygonPadFp64
     SimpleArray = mm.SimpleArrayFloat64

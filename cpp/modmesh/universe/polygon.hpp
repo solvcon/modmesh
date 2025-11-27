@@ -787,10 +787,104 @@ private:
 using TrianglePadFp32 = TrianglePad<float>;
 using TrianglePadFp64 = TrianglePad<double>;
 
+/**
+ * Forward declaration of PolygonPad for use in Polygon handle class.
+ */
 template <typename T>
-class Polygon3d
+class PolygonPad;
+
+/**
+ * Polygon handle class - lightweight view into a polygon stored in PolygonPad.
+ *
+ * This is a non-owning handle that references a polygon stored in a PolygonPad
+ * container. Polygons are defined by an ordered list of nodes following the
+ * right-hand rule: counter-clockwise for positive area, clockwise for negative.
+ *
+ * The handle uses polygon_id as public API, with internal offset/count for efficient access.
+ *
+ * @tparam T floating-point type
+ */
+template <typename T>
+class Polygon
+{
+
+public:
+
+    using point_type = Point3d<T>;
+    using value_type = T;
+    using segment_type = Segment3d<T>;
+    using polygon_pad_type = PolygonPad<T>;
+
+    Polygon(polygon_pad_type * pad, size_t polygon_id, size_t offset, size_t count)
+        : m_pad(pad)
+        , m_polygon_id(polygon_id)
+        , m_offset(offset)
+        , m_count(count)
+    {
+    }
+
+    Polygon() = default;
+    Polygon(Polygon const &) = default;
+    Polygon(Polygon &&) = default;
+    Polygon & operator=(Polygon const &) = default;
+    Polygon & operator=(Polygon &&) = default;
+    ~Polygon() = default;
+
+    size_t polygon_id() const { return m_polygon_id; }
+    polygon_pad_type * pad() const { return m_pad; }
+
+    size_t num_nodes() const;
+    uint8_t ndim() const;
+    point_type node(size_t index) const;
+    segment_type edge(size_t index) const;
+    value_type compute_signed_area() const;
+    bool is_counter_clockwise() const { return compute_signed_area() > 0; }
+    BoundBox3d<T> calc_bound_box() const;
+
+    bool operator==(Polygon const & other) const
+    {
+        return m_pad == other.m_pad && m_polygon_id == other.m_polygon_id;
+    }
+
+    bool operator!=(Polygon const & other) const
+    {
+        return !(*this == other);
+    }
+
+private:
+
+    size_t offset() const { return m_offset; }
+    size_t count() const { return m_count; }
+
+    polygon_pad_type * m_pad = nullptr;
+    size_t m_polygon_id = 0;
+    size_t m_offset = 0;
+    size_t m_count = 0;
+
+    friend class PolygonPad<T>;
+
+}; /* end class Polygon */
+
+/**
+ * PolygonPad - container for multiple polygons stored as node lists.
+ *
+ * Polygons are stored efficiently as sequences of nodes in a shared PointPad,
+ * with each polygon defined by a range [start, end) in the node list. This avoids
+ * memory duplication compared to storing line segments.
+ *
+ * All nodes follow the right-hand rule:
+ *  - Counter-clockwise ordering = positive area polygon
+ *  - Clockwise ordering = negative area polygon (holes)
+ *
+ * Future: Will integrate with trapezoidal map for polygon boolean operations.
+ * Reference: http://www0.cs.ucl.ac.uk/staff/m.slater/Teaching/CG/1997-98/Solutions/Trap/
+ *
+ * @tparam T floating-point type
+ */
+template <typename T>
+class PolygonPad
     : public NumberBase<int32_t, T>
-    , public std::enable_shared_from_this<Polygon3d<T>>
+    , public std::enable_shared_from_this<PolygonPad<T>>
 {
 
 private:
@@ -801,90 +895,280 @@ private:
 
 public:
 
-    static_assert(std::is_arithmetic_v<T>, "T in Polygon3d<T> must be arithmetic type");
+    static_assert(std::is_arithmetic_v<T>, "T in PolygonPad<T> must be arithmetic type");
 
     using point_type = Point3d<T>;
-    using value_type = typename point_type::value_type;
+    using value_type = T;
     using segment_type = Segment3d<T>;
+    using point_pad_type = PointPad<T>;
+    using polygon_type = Polygon<T>;
     using segment_pad_type = SegmentPad<T>;
     using curve_pad_type = CurvePad<T>;
     using rtree_type = RTree<segment_type, BoundBox3d<T>, RTreeValueOps<segment_type, BoundBox3d<T>>>;
 
     template <typename... Args>
-    static std::shared_ptr<Polygon3d<T>> construct(Args &&... args)
+    static std::shared_ptr<PolygonPad<T>> construct(Args &&... args)
     {
-        return std::make_shared<Polygon3d<T>>(std::forward<Args>(args)..., ctor_passkey());
+        return std::make_shared<PolygonPad<T>>(std::forward<Args>(args)..., ctor_passkey());
     }
 
-    Polygon3d(std::shared_ptr<segment_pad_type> segments, ctor_passkey const &)
-        : m_segments(segments)
+    PolygonPad(uint8_t ndim, ctor_passkey const &)
+        : m_nodes(point_pad_type::construct(ndim))
         , m_rtree(std::make_unique<rtree_type>())
     {
-        build_rtree();
     }
 
-    Polygon3d(std::shared_ptr<curve_pad_type> curves, value_type sample_length, ctor_passkey const &)
-        : m_segments(curves->sample(sample_length))
-        , m_rtree(std::make_unique<rtree_type>())
+    PolygonPad() = delete;
+    PolygonPad(PolygonPad const &) = delete;
+    PolygonPad(PolygonPad &&) = delete;
+    PolygonPad & operator=(PolygonPad const &) = delete;
+    PolygonPad & operator=(PolygonPad &&) = delete;
+    ~PolygonPad() = default;
+
+    uint8_t ndim() const { return m_nodes->ndim(); }
+
+    size_t num_polygons() const { return m_polygon_offsets.size(); }
+
+    size_t num_nodes() const { return m_nodes->size(); }
+
+    /**
+     * Add a polygon from a list of nodes.
+     * Nodes must follow right-hand rule: counter-clockwise for positive area.
+     *
+     * @param nodes Vector of points defining the polygon boundary
+     * @return Polygon handle to the newly added polygon
+     */
+    polygon_type add_polygon(std::vector<point_type> const & nodes)
     {
-        build_rtree();
+        if (nodes.empty())
+        {
+            throw std::invalid_argument("PolygonPad::add_polygon: cannot add empty polygon");
+        }
+
+        size_t const offset = m_nodes->size();
+        size_t const count = nodes.size();
+
+        for (point_type const & node : nodes)
+        {
+            m_nodes->append(node);
+        }
+
+        size_t const polygon_id = m_polygon_offsets.size();
+        m_polygon_offsets.push_back(offset);
+        m_polygon_counts.push_back(count);
+
+        polygon_type polygon(this, polygon_id, offset, count);
+        rebuild_polygon_rtree(polygon);
+
+        return polygon;
     }
 
-    Polygon3d(std::shared_ptr<segment_pad_type> segments, std::shared_ptr<curve_pad_type> curves, value_type sample_length, ctor_passkey const &)
-        : m_segments(segment_pad_type::construct(segments->ndim()))
-        , m_rtree(std::make_unique<rtree_type>())
+    /**
+     * Add a polygon from a SegmentPad by extracting nodes.
+     * Assumes segments form a connected chain.
+     *
+     * @param segments SegmentPad containing connected line segments
+     * @return Polygon handle to the newly added polygon
+     */
+    polygon_type add_polygon_from_segments(std::shared_ptr<segment_pad_type> segments)
     {
-        m_segments->extend_with(*segments);
+        if (segments->size() == 0)
+        {
+            throw std::invalid_argument("PolygonPad::add_polygon_from_segments: empty segment pad");
+        }
+
+        std::vector<point_type> nodes;
+        nodes.reserve(segments->size());
+
+        for (size_t i = 0; i < segments->size(); ++i)
+        {
+            nodes.push_back(segments->p0(i));
+        }
+
+        return add_polygon(nodes);
+    }
+
+    /**
+     * Add a polygon from a CurvePad by sampling.
+     *
+     * @param curves CurvePad to sample
+     * @param sample_length Sampling interval
+     * @return Polygon handle to the newly added polygon
+     */
+    polygon_type add_polygon_from_curves(std::shared_ptr<curve_pad_type> curves, value_type sample_length)
+    {
+        std::shared_ptr<segment_pad_type> segments = curves->sample(sample_length);
+        return add_polygon_from_segments(segments);
+    }
+
+    /**
+     * Add a polygon from both segments and curves.
+     *
+     * @param segments SegmentPad containing line segments
+     * @param curves CurvePad to sample
+     * @param sample_length Sampling interval for curves
+     * @return Polygon handle to the newly added polygon
+     */
+    polygon_type add_polygon_from_segments_and_curves(
+        std::shared_ptr<segment_pad_type> segments,
+        std::shared_ptr<curve_pad_type> curves,
+        value_type sample_length)
+    {
+        std::vector<point_type> nodes;
+
+        for (size_t i = 0; i < segments->size(); ++i)
+        {
+            nodes.push_back(segments->p0(i));
+        }
+
         std::shared_ptr<segment_pad_type> curve_segments = curves->sample(sample_length);
-        m_segments->extend_with(*curve_segments);
-        build_rtree();
+        for (size_t i = 0; i < curve_segments->size(); ++i)
+        {
+            nodes.push_back(curve_segments->p0(i));
+        }
+
+        return add_polygon(nodes);
     }
 
-    Polygon3d() = delete;
-    Polygon3d(Polygon3d const &) = delete;
-    Polygon3d(Polygon3d &&) = delete;
-    Polygon3d & operator=(Polygon3d const &) = delete;
-    Polygon3d & operator=(Polygon3d &&) = delete;
-    ~Polygon3d() = default;
-
-    bool operator==(Polygon3d const & other) const
+    /**
+     * Get a polygon handle by polygon_id.
+     *
+     * @param polygon_id ID of the polygon
+     * @return Polygon handle
+     */
+    polygon_type get_polygon(size_t polygon_id) const
     {
-        if (size() != other.size())
+        if (polygon_id >= m_polygon_offsets.size())
         {
-            return false;
+            throw std::out_of_range(
+                Formatter()
+                << "PolygonPad::get_polygon: polygon_id " << polygon_id
+                << " >= num_polygons " << m_polygon_offsets.size());
         }
-        if (ndim() != other.ndim())
-        {
-            return false;
-        }
-        for (size_t i = 0; i < size(); ++i)
-        {
-            if (get(i) != other.get(i))
-            {
-                return false;
-            }
-        }
-        return true;
+        return polygon_type(
+            const_cast<PolygonPad<T> *>(this),
+            polygon_id,
+            m_polygon_offsets[polygon_id],
+            m_polygon_counts[polygon_id]);
     }
 
-    bool operator!=(Polygon3d const & other) const
+    /**
+     * Get number of nodes in a specific polygon.
+     */
+    size_t get_num_nodes(size_t offset, size_t count) const
     {
-        return !(*this == other);
+        return count;
     }
 
-    std::shared_ptr<segment_pad_type> segments() const { return m_segments; }
-
-    size_t size() const { return m_segments->size(); }
-
-    uint8_t ndim() const { return m_segments->ndim(); }
-
-    segment_type get(size_t i) const { return m_segments->get(i); }
-
-    segment_type get_at(size_t i) const { return m_segments->get_at(i); }
-
-    BoundBox3d<T> calc_bound_box() const
+    /**
+     * Get a node from a specific polygon.
+     *
+     * @param polygon_id Index of the polygon
+     * @param node_index Index of the node within the polygon
+     * @return Point at the specified position
+     */
+    point_type get_node(size_t polygon_id, size_t node_index) const
     {
-        if (m_segments->size() == 0)
+        if (polygon_id >= m_polygon_offsets.size())
+        {
+            throw std::out_of_range(
+                Formatter()
+                << "PolygonPad::get_node: polygon_id " << polygon_id
+                << " >= num_polygons " << m_polygon_offsets.size());
+        }
+        size_t const offset = m_polygon_offsets[polygon_id];
+        size_t const count = m_polygon_counts[polygon_id];
+        if (node_index >= count)
+        {
+            throw std::out_of_range(
+                Formatter()
+                << "PolygonPad::get_node: node_index " << node_index
+                << " >= count " << count);
+        }
+        return m_nodes->get(offset + node_index);
+    }
+
+    /**
+     * Get an edge (segment) from a specific polygon.
+     * Edge i connects node i to node (i+1) % num_nodes.
+     *
+     * @param polygon_id Index of the polygon
+     * @param edge_index Index of the edge within the polygon
+     * @return Segment representing the edge
+     */
+    segment_type get_edge(size_t polygon_id, size_t edge_index) const
+    {
+        if (polygon_id >= m_polygon_offsets.size())
+        {
+            throw std::out_of_range(
+                Formatter()
+                << "PolygonPad::get_edge: polygon_id " << polygon_id
+                << " >= num_polygons " << m_polygon_offsets.size());
+        }
+        size_t const offset = m_polygon_offsets[polygon_id];
+        size_t const count = m_polygon_counts[polygon_id];
+        if (edge_index >= count)
+        {
+            throw std::out_of_range(
+                Formatter()
+                << "PolygonPad::get_edge: edge_index " << edge_index
+                << " >= count " << count);
+        }
+        point_type const p0 = m_nodes->get(offset + edge_index);
+        point_type const p1 = m_nodes->get(offset + ((edge_index + 1) % count));
+        return segment_type(p0, p1);
+    }
+
+    /**
+     * Compute signed area of a polygon using the shoelace formula.
+     * Positive area indicates counter-clockwise node ordering (right-hand rule).
+     * Negative area indicates clockwise ordering.
+     * Only meaningful for 2D polygons (uses x, y coordinates).
+     *
+     * @param polygon_id Index of the polygon
+     * @return Signed area (positive = CCW, negative = CW)
+     */
+    value_type compute_signed_area(size_t polygon_id) const
+    {
+        if (polygon_id >= m_polygon_offsets.size())
+        {
+            throw std::out_of_range(
+                Formatter()
+                << "PolygonPad::compute_signed_area: polygon_id " << polygon_id
+                << " >= num_polygons " << m_polygon_offsets.size());
+        }
+        size_t const offset = m_polygon_offsets[polygon_id];
+        size_t const count = m_polygon_counts[polygon_id];
+        if (count < 3)
+        {
+            return 0;
+        }
+
+        value_type area = 0;
+        for (size_t i = 0; i < count; ++i)
+        {
+            point_type const p0 = m_nodes->get(offset + i);
+            point_type const p1 = m_nodes->get(offset + ((i + 1) % count));
+            area += p0.x() * p1.y() - p1.x() * p0.y();
+        }
+
+        return area / 2;
+    }
+
+    /**
+     * Check if polygon nodes are ordered counter-clockwise (right-hand rule).
+     */
+    bool is_counter_clockwise(size_t polygon_id) const
+    {
+        return compute_signed_area(polygon_id) > 0;
+    }
+
+    /**
+     * Calculate bounding box for a specific polygon.
+     */
+    BoundBox3d<T> calc_bound_box(size_t offset, size_t count) const
+    {
+        if (count == 0)
         {
             return BoundBox3d<T>(0, 0, 0, 0, 0, 0);
         }
@@ -896,48 +1180,116 @@ public:
         value_type max_y = std::numeric_limits<value_type>::lowest();
         value_type max_z = std::numeric_limits<value_type>::lowest();
 
-        for (size_t i = 0; i < m_segments->size(); ++i)
+        for (size_t i = 0; i < count; ++i)
         {
-            segment_type const segment = m_segments->get(i);
-            min_x = std::min({min_x, segment.p0().x(), segment.p1().x()});
-            min_y = std::min({min_y, segment.p0().y(), segment.p1().y()});
-            min_z = std::min({min_z, segment.p0().z(), segment.p1().z()});
-            max_x = std::max({max_x, segment.p0().x(), segment.p1().x()});
-            max_y = std::max({max_y, segment.p0().y(), segment.p1().y()});
-            max_z = std::max({max_z, segment.p0().z(), segment.p1().z()});
+            point_type const node = m_nodes->get(offset + i);
+            min_x = std::min(min_x, node.x());
+            min_y = std::min(min_y, node.y());
+            min_z = std::min(min_z, node.z());
+            max_x = std::max(max_x, node.x());
+            max_y = std::max(max_y, node.y());
+            max_z = std::max(max_z, node.z());
         }
 
         return BoundBox3d<T>(min_x, min_y, min_z, max_x, max_y, max_z);
     }
 
+    /**
+     * Search for segments within a bounding box across all polygons.
+     * Returns segments from all polygons that intersect the query box.
+     *
+     * @param box Query bounding box
+     * @param output Vector to store found segments
+     */
     void search_segments(BoundBox3d<T> const & box, std::vector<segment_type> & output) const
     {
         m_rtree->search(box, output);
     }
 
+    /**
+     * Rebuild the spatial index (RTree) for all polygons.
+     * Call this after modifying polygon data.
+     */
     void rebuild_rtree()
     {
         m_rtree = std::make_unique<rtree_type>();
-        build_rtree();
+        for (size_t i = 0; i < m_polygon_offsets.size(); ++i)
+        {
+            polygon_type polygon = get_polygon(i);
+            rebuild_polygon_rtree(polygon);
+        }
     }
 
 private:
 
-    void build_rtree()
+    void rebuild_polygon_rtree(polygon_type const & polygon)
     {
-        for (size_t i = 0; i < m_segments->size(); ++i)
+        size_t const polygon_id = polygon.polygon_id();
+        size_t const count = polygon.count();
+
+        for (size_t i = 0; i < count; ++i)
         {
-            m_rtree->insert(m_segments->get(i));
+            segment_type const edge = get_edge(polygon_id, i);
+            m_rtree->insert(edge);
         }
     }
 
-    std::shared_ptr<segment_pad_type> m_segments; ///< Segments composing the polygon
-    std::unique_ptr<rtree_type> m_rtree; ///< RTree for segments in the polygon
+    std::shared_ptr<point_pad_type> m_nodes;
+    std::vector<size_t> m_polygon_offsets;
+    std::vector<size_t> m_polygon_counts;
+    std::unique_ptr<rtree_type> m_rtree;
 
-}; /* end class Polygon3d */
+    // TODO: Add trapezoidal map data structure for polygon boolean operations
+    // Reference: http://www0.cs.ucl.ac.uk/staff/m.slater/Teaching/CG/1997-98/Solutions/Trap/
+    // Will need:
+    //  - Trapezoid decomposition structure
+    //  - Point location query structure
+    //  - Integration with node lists for synchronization
 
-using Polygon3dFp32 = Polygon3d<float>;
-using Polygon3dFp64 = Polygon3d<double>;
+}; /* end class PolygonPad */
+
+using PolygonPadFp32 = PolygonPad<float>;
+using PolygonPadFp64 = PolygonPad<double>;
+
+using PolygonFp32 = Polygon<float>;
+using PolygonFp64 = Polygon<double>;
+
+// Implement Polygon methods that depend on PolygonPad definition
+template <typename T>
+size_t Polygon<T>::num_nodes() const
+{
+    return m_pad->get_num_nodes(m_offset, m_count);
+}
+
+template <typename T>
+uint8_t Polygon<T>::ndim() const
+{
+    return m_pad->ndim();
+}
+
+template <typename T>
+typename Polygon<T>::point_type Polygon<T>::node(size_t index) const
+{
+    return m_pad->get_node(m_polygon_id, index);
+}
+
+template <typename T>
+typename Polygon<T>::segment_type Polygon<T>::edge(size_t index) const
+{
+    return m_pad->get_edge(m_polygon_id, index);
+}
+
+template <typename T>
+typename Polygon<T>::value_type Polygon<T>::compute_signed_area() const
+{
+    return m_pad->compute_signed_area(m_polygon_id);
+}
+
+template <typename T>
+BoundBox3d<T> Polygon<T>::calc_bound_box() const
+{
+    return m_pad->calc_bound_box(m_offset, m_count);
+}
 
 template <typename E, typename B>
 struct RTreeValueOps;
@@ -947,12 +1299,12 @@ struct RTreeValueOps<Segment3d<T>, BoundBox3d<T>>
 {
     static BoundBox3d<T> calc_bound_box(Segment3d<T> const & item)
     {
-        T min_x = std::min(item.p0().x(), item.p1().x());
-        T max_x = std::max(item.p0().x(), item.p1().x());
-        T min_y = std::min(item.p0().y(), item.p1().y());
-        T max_y = std::max(item.p0().y(), item.p1().y());
-        T min_z = std::min(item.p0().z(), item.p1().z());
-        T max_z = std::max(item.p0().z(), item.p1().z());
+        T min_x = std::min(item.x0(), item.x1());
+        T min_y = std::min(item.y0(), item.y1());
+        T min_z = std::min(item.z0(), item.z1());
+        T max_x = std::max(item.x0(), item.x1());
+        T max_y = std::max(item.y0(), item.y1());
+        T max_z = std::max(item.z0(), item.z1());
         return BoundBox3d<T>(min_x, min_y, min_z, max_x, max_y, max_z);
     }
 
@@ -973,24 +1325,34 @@ struct RTreeValueOps<Segment3d<T>, BoundBox3d<T>>
 };
 
 template <typename T>
-struct RTreeValueOps<Polygon3d<T>, BoundBox3d<T>>
+struct RTreeValueOps<PolygonPad<T>, BoundBox3d<T>>
 {
-    static BoundBox3d<T> calc_bound_box(Polygon3d<T> const & item)
+    static BoundBox3d<T> calc_bound_box(PolygonPad<T> const & item)
     {
-        return item.calc_bound_box();
+        if (item.num_polygons() == 0)
+        {
+            return BoundBox3d<T>(0, 0, 0, 0, 0, 0);
+        }
+
+        BoundBox3d<T> result = item.get_polygon(0).calc_bound_box();
+        for (size_t i = 1; i < item.num_polygons(); ++i)
+        {
+            result.expand(item.get_polygon(i).calc_bound_box());
+        }
+        return result;
     }
 
-    static BoundBox3d<T> calc_group_bound_box(std::vector<Polygon3d<T>> const & items)
+    static BoundBox3d<T> calc_group_bound_box(std::vector<PolygonPad<T>> const & items)
     {
         if (items.empty())
         {
             return BoundBox3d<T>(0, 0, 0, 0, 0, 0);
         }
 
-        BoundBox3d<T> result = items[0].calc_bound_box();
+        BoundBox3d<T> result = calc_bound_box(items[0]);
         for (size_t i = 1; i < items.size(); ++i)
         {
-            result.expand(items[i].calc_bound_box());
+            result.expand(calc_bound_box(items[i]));
         }
         return result;
     }

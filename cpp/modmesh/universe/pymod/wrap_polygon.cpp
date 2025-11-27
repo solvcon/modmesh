@@ -37,25 +37,64 @@ namespace python
 {
 
 template <typename T>
-class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapPolygon3d
-    : public WrapBase<WrapPolygon3d<T>, Polygon3d<T>, std::shared_ptr<Polygon3d<T>>>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapPolygon
+    : public WrapBase<WrapPolygon<T>, Polygon<T>>
 {
 public:
-    using base_type = WrapBase<WrapPolygon3d<T>, Polygon3d<T>, std::shared_ptr<Polygon3d<T>>>;
+    using base_type = WrapBase<WrapPolygon<T>, Polygon<T>>;
+    using wrapped_type = typename base_type::wrapped_type;
+    using value_type = typename wrapped_type::value_type;
+    using point_type = typename wrapped_type::point_type;
+    using segment_type = typename wrapped_type::segment_type;
+    using polygon_pad_type = typename wrapped_type::polygon_pad_type;
+
+    friend typename base_type::root_base_type;
+
+protected:
+    WrapPolygon(pybind11::module & mod, char const * pyname, char const * pydoc);
+};
+
+template <typename T>
+WrapPolygon<T>::WrapPolygon(pybind11::module & mod, const char * pyname, const char * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def_property_readonly("polygon_id", &wrapped_type::polygon_id)
+        .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def_property_readonly("num_nodes", &wrapped_type::num_nodes)
+        .def("get_node", &wrapped_type::node, py::arg("index"))
+        .def("get_edge", &wrapped_type::edge, py::arg("index"))
+        .def("compute_signed_area", &wrapped_type::compute_signed_area)
+        .def("is_counter_clockwise", &wrapped_type::is_counter_clockwise)
+        .def("calc_bound_box", &wrapped_type::calc_bound_box)
+        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
+        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
+        ;
+}
+
+template <typename T>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapPolygonPad
+    : public WrapBase<WrapPolygonPad<T>, PolygonPad<T>, std::shared_ptr<PolygonPad<T>>>
+{
+public:
+    using base_type = WrapBase<WrapPolygonPad<T>, PolygonPad<T>, std::shared_ptr<PolygonPad<T>>>;
     using wrapped_type = typename base_type::wrapped_type;
     using value_type = typename wrapped_type::value_type;
     using point_type = typename wrapped_type::point_type;
     using segment_pad_type = typename wrapped_type::segment_pad_type;
     using curve_pad_type = typename wrapped_type::curve_pad_type;
+    using polygon_type = typename wrapped_type::polygon_type;
 
     friend typename base_type::root_base_type;
 
 protected:
-    WrapPolygon3d(pybind11::module & mod, char const * pyname, char const * pydoc);
+    WrapPolygonPad(pybind11::module & mod, char const * pyname, char const * pydoc);
 };
 
 template <typename T>
-WrapPolygon3d<T>::WrapPolygon3d(pybind11::module & mod, const char * pyname, const char * pydoc)
+WrapPolygonPad<T>::WrapPolygonPad(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
 {
     namespace py = pybind11;
@@ -63,34 +102,37 @@ WrapPolygon3d<T>::WrapPolygon3d(pybind11::module & mod, const char * pyname, con
     (*this)
         .def(
             py::init(
-                [](std::shared_ptr<SegmentPad<T>> segments)
+                [](uint8_t ndim)
                 {
-                    return wrapped_type::construct(segments);
+                    return wrapped_type::construct(ndim);
                 }),
+            py::arg("ndim"))
+        .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def_property_readonly("num_polygons", &wrapped_type::num_polygons)
+        .def_property_readonly("num_nodes", &wrapped_type::num_nodes)
+        .def(
+            "add_polygon",
+            [](wrapped_type & self, std::vector<point_type> const & nodes)
+            {
+                return self.add_polygon(nodes);
+            },
+            py::arg("nodes"))
+        .def(
+            "add_polygon_from_segments",
+            &wrapped_type::add_polygon_from_segments,
             py::arg("segments"))
         .def(
-            py::init(
-                [](std::shared_ptr<CurvePad<T>> curves, value_type sample_length)
-                {
-                    return wrapped_type::construct(curves, sample_length);
-                }),
+            "add_polygon_from_curves",
+            &wrapped_type::add_polygon_from_curves,
             py::arg("curves"),
             py::arg("sample_length"))
         .def(
-            py::init(
-                [](std::shared_ptr<SegmentPad<T>> segments, std::shared_ptr<CurvePad<T>> curves, value_type sample_length)
-                {
-                    return wrapped_type::construct(segments, curves, sample_length);
-                }),
+            "add_polygon_from_segments_and_curves",
+            &wrapped_type::add_polygon_from_segments_and_curves,
             py::arg("segments"),
             py::arg("curves"),
             py::arg("sample_length"))
-        .def_property_readonly("segments", &wrapped_type::segments)
-        .def_property_readonly("ndim", &wrapped_type::ndim)
-        .def_property_readonly("size", &wrapped_type::size)
-        .def("get", &wrapped_type::get, py::arg("index"))
-        .def("get_at", &wrapped_type::get_at, py::arg("index"))
-        .def("calc_bound_box", &wrapped_type::calc_bound_box)
+        .def("get_polygon", &wrapped_type::get_polygon, py::arg("polygon_id"))
         .def(
             "search_segments",
             [](wrapped_type const & self, BoundBox3d<T> const & box)
@@ -100,16 +142,19 @@ WrapPolygon3d<T>::WrapPolygon3d(pybind11::module & mod, const char * pyname, con
                 return results;
             },
             py::arg("box"))
-        .def("rebuild_rtree", &wrapped_type::rebuild_rtree)
-        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
-        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
-        ;
+        .def("rebuild_rtree", &wrapped_type::rebuild_rtree);
 }
 
 void wrap_polygon(pybind11::module & mod)
 {
-    WrapPolygon3d<float>::commit(mod, "Polygon3dFp32", "Polygon3dFp32");
-    WrapPolygon3d<double>::commit(mod, "Polygon3dFp64", "Polygon3dFp64");
+    WrapPolygon<float>::commit(mod, "PolygonFp32", "PolygonFp32");
+    WrapPolygon<double>::commit(mod, "PolygonFp64", "PolygonFp64");
+
+    WrapPolygonPad<float>::commit(mod, "PolygonPadFp32", "PolygonPadFp32");
+    WrapPolygonPad<double>::commit(mod, "PolygonPadFp64", "PolygonPadFp64");
+
+    mod.attr("Polygon3dFp32") = mod.attr("PolygonPadFp32");
+    mod.attr("Polygon3dFp64") = mod.attr("PolygonPadFp64");
 }
 
 } /* end namespace python */

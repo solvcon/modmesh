@@ -161,6 +161,10 @@ list_of_universe = [
     'CurvePadFp64',
     'WorldFp32',
     'WorldFp64',
+    'PolygonFp32',
+    'PolygonFp64',
+    'PolygonPadFp32',
+    'PolygonPadFp64',
     'Polygon3dFp32',
     'Polygon3dFp64',
 ]
