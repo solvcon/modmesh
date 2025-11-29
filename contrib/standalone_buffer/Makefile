@@ -9,7 +9,7 @@ ifeq ($(SETUPROOT),)
 endif
 
 CFLAGS := \
-	-std=c++17 -fPIC \
+	-std=c++23 -fPIC \
 	-I$(SETUPROOT) \
 	-I$(shell python3 -c 'import numpy as np; print(np.get_include())') \
 	-I$(shell $(DIRNAME_PYTHON)/python3-config --prefix)/include \
@@ -17,7 +17,7 @@ CFLAGS := \
 
 LDFLAGS := \
 	-shared \
-	-std=c++17 \
+	-std=c++23 \
 	-L$(shell $(DIRNAME_PYTHON)/python3-config --prefix)/lib \
 	-lpython$(shell python3 -c 'import sys; print("%d.%d" % sys.version_info[0:2])') \
 	$(shell $(DIRNAME_PYTHON)/python3-config --ldflags) \
