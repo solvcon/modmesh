@@ -38,10 +38,11 @@ inline std::size_t validate_alignment(std::size_t alignment, const char * prefix
 {
     if (alignment != 0 && alignment != 16 && alignment != 32 && alignment != 64)
     {
+        const std::string prefix_str = prefix ? std::string(prefix) + ": " : "";
         throw std::invalid_argument(
-            Formatter()
-            << (prefix ? prefix : "") << (prefix ? ": " : "")
-            << "alignment must be 0, 16, 32, or 64, but got " << alignment);
+            std::format("{}alignment must be 0, 16, 32, or 64, but got {}",
+                        prefix_str,
+                        alignment));
     }
     return alignment;
 }
@@ -51,10 +52,12 @@ inline void validate_size_alignment(std::size_t size, std::size_t alignment, con
 {
     if (alignment > 0 && size % alignment != 0)
     {
+        const std::string prefix_str = prefix ? std::string(prefix) + ": " : "";
         throw std::invalid_argument(
-            Formatter()
-            << (prefix ? prefix : "") << (prefix ? ": " : "")
-            << "size " << size << " must be a multiple of alignment " << alignment);
+            std::format("{}size {} must be a multiple of alignment {}",
+                        prefix_str,
+                        size,
+                        alignment));
     }
 }
 
@@ -135,7 +138,7 @@ protected:
     {
         if (it >= size())
         {
-            throw std::out_of_range(Formatter() << name() << ": index " << it << " is out of bounds with size " << size());
+            throw std::out_of_range(std::format("{}: index {} is out of bounds with size {}", name(), it, size()));
         }
     }
 

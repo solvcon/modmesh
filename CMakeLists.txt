@@ -64,7 +64,7 @@ find_program(
 )
 if(USE_CLANG_TIDY)
     if(CLANG_TIDY_EXE)
-        set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-header-filter=/cpp/.\*/modmesh/.\*")
+        set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-header-filter=/cpp/.\*/modmesh/.\*" "--extra-arg=-std=c++2b")
         if(LINT_AS_ERRORS)
             set(DO_CLANG_TIDY "${DO_CLANG_TIDY}" "-warnings-as-errors=*")
         endif()
@@ -88,7 +88,7 @@ endif()
 
 include(Flake8)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)

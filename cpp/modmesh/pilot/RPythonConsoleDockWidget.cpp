@@ -158,15 +158,14 @@ void RPythonConsoleDockWidget::printCommandHistory()
     std::string lead;
     if (m_past_command_strings.size() > 1)
     {
-        lead = Formatter() << "\n[";
+        lead = "\n[";
     }
     else
     {
-        lead = Formatter() << "[";
+        lead = "[";
     }
     m_history_edit->insertPlainText(QString::fromStdString(
-        Formatter() << lead << m_last_command_serial << "] "
-                    << m_command_edit->toPlainText().toStdString() << "\n"));
+        std::format("{}{}] {}\n", lead, m_last_command_serial, m_command_edit->toPlainText().toStdString())));
     cursor.movePosition(QTextCursor::End);
     m_history_edit->setTextCursor(cursor);
 }

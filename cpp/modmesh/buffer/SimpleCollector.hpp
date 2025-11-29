@@ -152,7 +152,10 @@ private:
     {
         if (it >= size())
         {
-            throw std::out_of_range(Formatter() << "SimpleCollector: index " << it << " is out of bounds with size " << size());
+            throw std::out_of_range(
+                std::format("SimpleCollector: index {} is out of bounds with size {}",
+                            it,
+                            size()));
         }
     }
 

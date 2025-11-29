@@ -192,7 +192,7 @@ private:
     {
         if (i >= s)
         {
-            throw std::out_of_range(Formatter() << "Bezier3d: (" << msg << ") i " << i << " >= size " << s);
+            throw std::out_of_range(std::format("Bezier3d: ({}) i {} >= size {}", msg, i, s));
         }
     }
 

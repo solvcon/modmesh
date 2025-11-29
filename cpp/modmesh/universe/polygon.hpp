@@ -239,7 +239,7 @@ private:
     {
         if (i >= s)
         {
-            throw std::out_of_range(Formatter() << "Triangle3d: i " << i << " >= size " << s);
+            throw std::out_of_range(std::format("Triangle3d: i {} >= size {}", i, s));
         }
     }
 
@@ -733,7 +733,7 @@ public:
         if (ndim() != 3)
         {
             throw std::out_of_range(
-                Formatter() << "TrianglePad::mirror_z: cannot mirror Z axis for ndim " << int(ndim()));
+                std::format("TrianglePad::mirror_z: cannot mirror Z axis for ndim {}", int(ndim())));
         }
         size_t const ntri = size();
         for (size_t i = 0; i < ntri; ++i)
@@ -765,10 +765,10 @@ private:
         if (m_p0->size() != m_p1->size() || m_p0->size() != m_p2->size())
         {
             throw std::invalid_argument(
-                Formatter()
-                << "TrianglePad::TrianglePad: "
-                << "p0.size() " << p0.size() << " p1.size() " << p1.size() << " p2.size() " << p2.size()
-                << " are not the same");
+                std::format("TrianglePad::TrianglePad: p0.size() {} p1.size() {} p2.size() {} are not the same",
+                            p0.size(),
+                            p1.size(),
+                            p2.size()));
         }
     }
 

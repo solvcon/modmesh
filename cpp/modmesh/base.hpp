@@ -32,13 +32,14 @@
 #include <cstdint>
 
 // Shared by all code.
-#include <cassert>
 #include <algorithm>
+#include <cassert>
+#include <format>
+#include <iostream>
+#include <map>
 #include <memory>
 #include <optional>
-#include <iostream>
 #include <sstream>
-#include <map>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -132,7 +133,7 @@ public:
 }; /* end class SpaceBase */
 
 // Taken from https://stackoverflow.com/a/12262626
-class Formatter
+class [[deprecated("Use std::format instead")]] Formatter
 {
 
 public:

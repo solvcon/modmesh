@@ -79,7 +79,7 @@ jobs:
     - name: dependency by apt
       run: |
         VERSION_ID=$(bash -c 'source /etc/os-release ; echo $VERSION_ID')        
-        if [ "20.04" == "$VERSION_ID" ] ; then CLANG_TIDY_VERSION=10 ; else CLANG_TIDY_VERSION=14 ; fi
+        if [ "20.04" == "$VERSION_ID" ] ; then CLANG_TIDY_VERSION=10 ; else CLANG_TIDY_VERSION=18 ; fi
         sudo apt-get -qqy update
         sudo apt-get -qy install \
             sudo curl git build-essential make cmake libc6-dev gcc g++ silversearcher-ag \

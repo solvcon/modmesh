@@ -70,7 +70,7 @@ WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const c
             {
                 // Hard-code the Python type names in the static variable before finding a systematic way.
                 static char const * ptypename = std::is_same_v<T, double> ? "Point3dFp64" : "Point3dFp32";
-                return (Formatter() << ptypename << "(" << self.value_string() << ")").str();
+                return std::format("{}({})", ptypename, self.value_string());
             })
         .def_alias("__repr__", "__str__")
         .def(
@@ -373,11 +373,12 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
                 // Hard-code the Python type names in the static variables before finding a systematic way.
                 static char const * stypename = std::is_same_v<T, double> ? "Segment3dFp64" : "Segment3dFp32";
                 static char const * ptypename = std::is_same_v<T, double> ? "Point3dFp64" : "Point3dFp32";
-                return (Formatter()
-                        << stypename << "("
-                        << ptypename << "(" << self.p0().value_string() << "), "
-                        << ptypename << "(" << self.p1().value_string() << "))")
-                    .str();
+                return std::format("{}({}({}), {}({}))",
+                                   stypename,
+                                   ptypename,
+                                   self.p0().value_string(),
+                                   ptypename,
+                                   self.p1().value_string());
             })
         .def_alias("__repr__", "__str__")
         .def(
@@ -728,12 +729,14 @@ WrapTriangle3d<T>::WrapTriangle3d(pybind11::module & mod, const char * pyname, c
             {
                 static char const * ttypename = std::is_same_v<T, double> ? "Triangle3dFp64" : "Triangle3dFp32";
                 static char const * ptypename = std::is_same_v<T, double> ? "Point3dFp64" : "Point3dFp32";
-                return (Formatter()
-                        << ttypename << "("
-                        << ptypename << "(" << self.p0().value_string() << "), "
-                        << ptypename << "(" << self.p1().value_string() << "), "
-                        << ptypename << "(" << self.p2().value_string() << "))")
-                    .str();
+                return std::format("{}({}({}), {}({}), {}({}))",
+                                   ttypename,
+                                   ptypename,
+                                   self.p0().value_string(),
+                                   ptypename,
+                                   self.p1().value_string(),
+                                   ptypename,
+                                   self.p2().value_string());
             })
         .def_alias("__repr__", "__str__")
         .def(
@@ -1102,13 +1105,16 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
                 // Hard-code the Python type names in the static variables before finding a systematic way.
                 static char const * btypename = std::is_same_v<T, double> ? "Bezier3dFp64" : "Bezier3dFp32";
                 static char const * ptypename = std::is_same_v<T, double> ? "Point3dFp64" : "Point3dFp32";
-                return (Formatter()
-                        << btypename << "("
-                        << ptypename << "(" << self.p0().value_string() << "), "
-                        << ptypename << "(" << self.p1().value_string() << "), "
-                        << ptypename << "(" << self.p2().value_string() << "), "
-                        << ptypename << "(" << self.p3().value_string() << "))")
-                    .str();
+                return std::format("{}({}({}), {}({}), {}({}), {}({}))",
+                                   btypename,
+                                   ptypename,
+                                   self.p0().value_string(),
+                                   ptypename,
+                                   self.p1().value_string(),
+                                   ptypename,
+                                   self.p2().value_string(),
+                                   ptypename,
+                                   self.p3().value_string());
             })
         .def_alias("__repr__", "__str__")
         .def("__len__",

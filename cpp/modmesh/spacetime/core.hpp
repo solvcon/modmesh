@@ -5,9 +5,9 @@
  * BSD 3-Clause License, see COPYING
  */
 
+#include <functional>
 #include <memory>
 #include <vector>
-#include <functional>
 
 #include <modmesh/modmesh.hpp>
 
@@ -381,10 +381,12 @@ inline CE const Field::celm_at(int_type ielm, bool odd_plane) const
     const CE elm = celm<CE>(ielm, odd_plane);
     if (elm.xindex() < 2 || elm.xindex() >= grid().xsize() - 2)
     {
-        throw std::out_of_range(Formatter()
-                                << "Field::celm_at(ielm=" << ielm << ", odd_plane=" << odd_plane
-                                << "): xindex = " << elm.xindex()
-                                << " outside the interval [2, " << grid().xsize() - 2 << ")");
+        throw std::out_of_range(
+            std::format("Field::celm_at(ielm={}, odd_plane={}): xindex = {} outside the interval [2, {})",
+                        ielm,
+                        static_cast<int>(odd_plane),
+                        elm.xindex(),
+                        grid().xsize() - 2));
     }
     return elm;
 }
@@ -395,10 +397,12 @@ inline CE Field::celm_at(int_type ielm, bool odd_plane)
     const CE elm = celm<CE>(ielm, odd_plane);
     if (elm.xindex() < 2 || elm.xindex() >= grid().xsize() - 2)
     {
-        throw std::out_of_range(Formatter()
-                                << "Field::celm_at(ielm=" << ielm << ", odd_plane=" << odd_plane
-                                << "): xindex = " << elm.xindex()
-                                << " outside the interval [2, " << grid().xsize() - 2 << ")");
+        throw std::out_of_range(
+            std::format("Field::celm_at(ielm={}, odd_plane={}): xindex = {} outside the interval [2, {})",
+                        ielm,
+                        static_cast<int>(odd_plane),
+                        elm.xindex(),
+                        grid().xsize() - 2));
     }
     return elm;
 }
@@ -410,10 +414,12 @@ inline SE const Field::selm_at(int_type ielm, bool odd_plane) const
     const SE elm = selm<SE>(ielm, odd_plane);
     if (elm.xindex() < 1 || elm.xindex() >= grid().xsize() - 1)
     {
-        throw std::out_of_range(Formatter()
-                                << "Field::selm_at(ielm=" << ielm << ", odd_plane=" << odd_plane
-                                << "): xindex = " << elm.xindex()
-                                << " outside the interval [1, " << grid().xsize() - 1 << ")");
+        throw std::out_of_range(
+            std::format("Field::selm_at(ielm={}, odd_plane={}): xindex = {} outside the interval [1, {})",
+                        ielm,
+                        static_cast<int>(odd_plane),
+                        elm.xindex(),
+                        grid().xsize() - 1));
     }
     return elm;
 }
@@ -424,10 +430,7 @@ inline SE Field::selm_at(int_type ielm, bool odd_plane)
     const SE elm = selm<SE>(ielm, odd_plane);
     if (elm.xindex() < 1 || elm.xindex() >= grid().xsize() - 1)
     {
-        throw std::out_of_range(Formatter()
-                                << "Field::selm_at(ielm=" << ielm << ", odd_plane=" << odd_plane
-                                << "): xindex = " << elm.xindex()
-                                << " outside the interval [1, " << grid().xsize() - 1 << ")");
+        throw std::out_of_range(std::format("Field::selm_at(ielm={}, odd_plane={}): xindex = {} outside the interval [1, {})", ielm, static_cast<int>(odd_plane), elm.xindex(), grid().xsize() - 1));
     }
     return elm;
 }
@@ -880,7 +883,7 @@ SolverBase<ST, CE, SE>::set_so0(size_t iv, typename SolverBase<ST, CE, SE>::arra
 {
     if (iv >= m_field.nvar())
     {
-        throw std::out_of_range(Formatter() << "set_so0(): iv " << iv << " >= nvar " << m_field.nvar());
+        throw std::out_of_range(std::format("set_so0(): iv {} >= nvar {}", iv, m_field.nvar()));
     }
     if (1 != arr.shape().size())
     {
@@ -889,7 +892,7 @@ SolverBase<ST, CE, SE>::set_so0(size_t iv, typename SolverBase<ST, CE, SE>::arra
     const uint_type nselm = static_cast<uint_type>(grid().nselm()) - static_cast<uint_type>(odd_plane);
     if (nselm != arr.size())
     {
-        throw std::out_of_range(Formatter() << "set_so0(): arr size " << arr.size() << " != nselm " << nselm);
+        throw std::out_of_range(std::format("set_so0(): arr size {} != nselm {}", arr.size(), nselm));
     }
     for (uint_type it = 0; it < nselm; ++it) { selm(it, odd_plane).so0(iv) = arr[it]; }
 }
