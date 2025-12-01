@@ -189,7 +189,7 @@ pybind11::object WrapHierarchicalToggleAccess::getattr(wrapped_type & self, std:
     {
     case DynamicToggleIndex::TYPE_NONE:
         throw py::attribute_error(
-            Formatter() << "Cannot get non-existing key \"" << self.rekey(key) << "\"");
+            std::format("Cannot get non-existing key \"{}\"", self.rekey(key)));
         break;
     case DynamicToggleIndex::TYPE_BOOL:
         return py::cast(self.get_bool(key));
@@ -236,8 +236,7 @@ void WrapHierarchicalToggleAccess::setattr(wrapped_type & self, std::string cons
          *
          * Do not try to "fix" the exception using RTTI. */
         throw pybind11::attribute_error(
-            Formatter() << "Cannot set non-existing key \"" << self.rekey(key) << "\"; "
-                        << "use set_TYPE() instead");
+            std::format("Cannot set non-existing key \"{}\"; use set_TYPE() instead", self.rekey(key)));
         break;
     case DynamicToggleIndex::TYPE_BOOL:
         self.set_bool(key, py::cast<bool>(value));
@@ -488,7 +487,7 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
                 }
                 else
                 {
-                    throw py::attribute_error(Formatter() << "Cannot get by key \"" << key << "\"");
+                    throw py::attribute_error(std::format("Cannot get by key \"{}\"", key));
                 }
                 return ret;
             })
@@ -509,7 +508,7 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
                 /* solid toggle is not settable */
                 else
                 {
-                    throw py::attribute_error(Formatter() << "Cannot set by key \"" << key << "\"");
+                    throw py::attribute_error(std::format("Cannot set by key \"{}\"", key));
                 }
             })
         .def("dynamic_keys", &wrapped_type::dynamic_keys)
@@ -568,7 +567,7 @@ WrapToggle::WrapToggle(pybind11::module & mod, char const * pyname, char const *
 
 std::string WrapToggle::report(WrapToggle::wrapped_type const & self)
 {
-    return Formatter() << "Toggle: USE_PYSIDE=" << self.solid().use_pyside();
+    return std::format("Toggle: USE_PYSIDE={}", self.solid().use_pyside());
 }
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapCommandLineInfo

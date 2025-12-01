@@ -18,15 +18,19 @@ Grid::Grid(real_type xmin, real_type xmax, size_t ncelm, ctor_passkey const &)
 {
     if (ncelm < 1)
     {
-        throw std::invalid_argument(modmesh::Formatter()
-                                    << "Grid::Grid(xmin=" << xmin << ", xmax=" << xmax
-                                    << ", ncelm=" << ncelm << ") invalid argument: ncelm smaller than 1");
+        throw std::invalid_argument(
+            std::format("Grid::Grid(xmin={}, xmax={}, ncelm={}) invalid argument: ncelm smaller than 1",
+                        xmin,
+                        xmax,
+                        ncelm));
     }
     if (xmin >= xmax)
     {
-        throw std::invalid_argument(modmesh::Formatter()
-                                    << "Grid::Grid(xmin=" << xmin << ", xmax=" << xmax
-                                    << ", ncelm=" << ncelm << ") invalid arguments: xmin >= xmax");
+        throw std::invalid_argument(
+            std::format("Grid::Grid(xmin={}, xmax={}, ncelm={}) invalid arguments: xmin >= xmax",
+                        xmin,
+                        xmax,
+                        ncelm));
     }
     // Fill the array for CCE boundary.
     const real_type xspace = (xmax - xmin) / ncelm;
@@ -45,18 +49,20 @@ void Grid::init_from_array(array_type const & xloc)
 {
     if (xloc.size() < 2)
     {
-        throw std::invalid_argument(modmesh::Formatter()
-                                    << "Grid::init_from_array(xloc) invalid arguments: "
-                                    << "xloc.size()=" << xloc.size() << " smaller than 2");
+        throw std::invalid_argument(
+            std::format("Grid::init_from_array(xloc) invalid arguments: xloc.size()={} smaller than 2",
+                        xloc.size()));
     }
     for (size_t it = 0; it < xloc.size() - 1; ++it)
     {
         if (xloc[it] >= xloc[it + 1])
         {
-            throw std::invalid_argument(modmesh::Formatter()
-                                        << "Grid::init_from_array(xloc) invalid arguments: "
-                                        << "xloc[" << it << "]=" << xloc[it]
-                                        << " >= xloc[" << it + 1 << "]=" << xloc[it + 1]);
+            throw std::invalid_argument(
+                std::format("Grid::init_from_array(xloc) invalid arguments: xloc[{}]={} >= xloc[{}]={}",
+                            it,
+                            xloc[it],
+                            it + 1,
+                            xloc[it + 1]));
         }
     }
     m_ncelm = xloc.size() - 1;
@@ -114,10 +120,12 @@ void Celm::move_at(int_type offset)
     const size_t xindex = this->xindex() + offset;
     if (xindex < 2 || xindex >= grid().xsize() - 2)
     {
-        throw std::out_of_range(modmesh::Formatter()
-                                << "Celm(xindex=" << this->xindex() << ")::move_at(offset=" << offset
-                                << "): xindex = " << xindex
-                                << " outside the interval [2, " << grid().xsize() - 2 << ")");
+        throw std::out_of_range(
+            std::format("Celm(xindex={})::move_at(offset={}): xindex = {} outside the interval [2, {})",
+                        this->xindex(),
+                        offset,
+                        xindex,
+                        grid().xsize() - 2));
     }
     move(offset);
 }
@@ -127,10 +135,12 @@ void Selm::move_at(int_type offset)
     const size_t xindex = this->xindex() + offset;
     if (xindex < 1 || xindex >= grid().xsize() - 1)
     {
-        throw std::out_of_range(modmesh::Formatter()
-                                << "Selm(xindex=" << this->xindex() << ")::move_at(offset=" << offset
-                                << "): xindex = " << xindex
-                                << " outside the interval [1, " << grid().xsize() - 1 << ")");
+        throw std::out_of_range(
+            std::format("Selm(xindex={})::move_at(offset={}): xindex = {} outside the interval [1, {})",
+                        this->xindex(),
+                        offset,
+                        xindex,
+                        grid().xsize() - 1));
     }
     move(offset);
 }

@@ -81,8 +81,7 @@ inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<si
 {
     if (stride.size() != idx.size())
     {
-        throw std::out_of_range(Formatter() << "stride size " << stride.size() << " != "
-                                            << "index size " << idx.size());
+        throw std::out_of_range(std::format("stride size {} != index size {}", stride.size(), idx.size()));
     }
     size_t offset = 0;
     for (size_t it = 0; it < stride.size(); ++it)
@@ -614,7 +613,8 @@ public:
         }
         else
         {
-            throw std::runtime_error(Formatter() << "SimpleArray<bool>::isub(): boolean value doesn't support this operation");
+            throw std::runtime_error(
+                "SimpleArray<bool>::isub(): boolean value doesn't support this operation");
         }
         return *athis;
     }
@@ -635,7 +635,8 @@ public:
         }
         else
         {
-            throw std::runtime_error(Formatter() << "SimpleArray<bool>::isub(): boolean value doesn't support this operation");
+            throw std::runtime_error(
+                "SimpleArray<bool>::isub(): boolean value doesn't support this operation");
         }
         return *athis;
     }
@@ -713,7 +714,8 @@ public:
         }
         else
         {
-            throw std::runtime_error(Formatter() << "SimpleArray<bool>::idiv(): boolean value doesn't support this operation");
+            throw std::runtime_error(
+                "SimpleArray<bool>::idiv(): boolean value doesn't support this operation");
         }
         return *athis;
     }
@@ -923,30 +925,33 @@ A SimpleArrayMixinCalculators<A, T>::matmul(A const & other) const
 
     auto format_shape = [](A const * arr) -> std::string
     {
-        Formatter shape_formatter;
         if (arr->ndim() == 0)
         {
-            shape_formatter << "()";
+            return "()";
         }
         else
         {
-            shape_formatter << "(";
+            std::string result = "(";
             for (size_t i = 0; i < arr->ndim(); ++i)
             {
                 if (i > 0)
-                    shape_formatter << ",";
-                shape_formatter << arr->shape(i);
+                {
+                    result += ",";
+                }
+                result += std::to_string(arr->shape(i));
             }
-            shape_formatter << ")";
+            result += ")";
+            return result;
         }
-        return shape_formatter.str();
     };
 
     if (this_ndim != 2 || other_ndim != 2)
     {
-        throw std::out_of_range(Formatter() << "SimpleArray::matmul(): unsupported dimensions: this="
-                                            << format_shape(athis) << " other=" << format_shape(&other)
-                                            << ". Only 2D x 2D matrix multiplication is supported");
+        const std::string err = std::format("SimpleArray::matmul(): unsupported dimensions: "
+                                            "this={} other={}. Only 2D x 2D matrix multiplication is supported",
+                                            format_shape(athis),
+                                            format_shape(&other));
+        throw std::out_of_range(err);
     }
 
     const size_t m = athis->shape(0);
@@ -955,8 +960,10 @@ A SimpleArrayMixinCalculators<A, T>::matmul(A const & other) const
 
     if (k != other.shape(0))
     {
-        throw std::out_of_range(Formatter() << "SimpleArray::matmul(): shape mismatch: this="
-                                            << format_shape(athis) << " other=" << format_shape(&other));
+        throw std::out_of_range(
+            std::format("SimpleArray::matmul(): shape mismatch: this={} other={}",
+                        format_shape(athis),
+                        format_shape(&other)));
     }
 
     typename detail::SimpleArrayInternalTypes<T>::shape_type result_shape{m, n};
@@ -1052,8 +1059,9 @@ void SimpleArrayMixinSort<A, T>::sort(void)
     auto athis = static_cast<A *>(this);
     if (athis->ndim() != 1)
     {
-        throw std::runtime_error(Formatter() << "SimpleArray::sort(): currently only support 1D array but the array is "
-                                             << athis->ndim() << " dimension");
+        throw std::runtime_error(
+            std::format(
+                "SimpleArray::sort(): currently only support 1D array but the array is {} dimension", athis->ndim()));
     }
 
     std::sort(athis->begin(), athis->end());
@@ -1264,8 +1272,10 @@ public:
             const size_t nbytes = m_shape[0] * m_stride[0] * ITEMSIZE;
             if (nbytes != buffer->nbytes())
             {
-                throw std::runtime_error(Formatter() << "SimpleArray: shape byte count " << nbytes
-                                                     << " differs from buffer " << buffer->nbytes());
+                throw std::runtime_error(
+                    std::format("SimpleArray: shape byte count {} differs from buffer {}",
+                                nbytes,
+                                buffer->nbytes()));
             }
         }
     }
@@ -1539,12 +1549,14 @@ public:
             if (0 == ndim())
             {
                 throw std::out_of_range(
-                    Formatter() << "SimpleArray: cannot set nghost " << nghost << " > 0 to an empty array");
+                    std::format("SimpleArray: cannot set nghost {} > 0 to an empty array", nghost));
             }
             if (nghost > shape(0))
             {
                 throw std::out_of_range(
-                    Formatter() << "SimpleArray: cannot set nghost " << nghost << " > shape(0) " << shape(0));
+                    std::format("SimpleArray: cannot set nghost {} > shape(0) {}",
+                                nghost,
+                                shape(0)));
             }
         }
         m_nghost = nghost;
@@ -1673,37 +1685,48 @@ private:
         if (m_nghost != 0 && ndim() != 1)
         {
             throw std::out_of_range(
-                Formatter() << "SimpleArray::validate_range(): cannot handle "
-                            << ndim() << "-dimensional (more than 1) array with non-zero nghost: " << m_nghost);
+                std::format("SimpleArray::validate_range(): "
+                            "cannot handle {}-dimensional (more than 1) array with non-zero nghost: {}",
+                            ndim(),
+                            m_nghost));
         }
         if (it < -static_cast<ssize_t>(m_nghost))
         {
-            throw std::out_of_range(Formatter() << "SimpleArray: index " << it << " < -nghost: " << -static_cast<ssize_t>(m_nghost));
+            throw std::out_of_range(
+                std::format("SimpleArray: index {} < -nghost: {}",
+                            it,
+                            -static_cast<ssize_t>(m_nghost)));
         }
         if (it >= static_cast<ssize_t>((buffer().nbytes() / ITEMSIZE) - m_nghost))
         {
             throw std::out_of_range(
-                Formatter() << "SimpleArray: index " << it << " >= " << (buffer().nbytes() / ITEMSIZE) - m_nghost
-                            << " (buffer size: " << (buffer().nbytes() / ITEMSIZE) << " - nghost: " << m_nghost << ")");
+                std::format("SimpleArray: index {} >= {} (buffer size: {} - nghost: {})",
+                            it,
+                            (buffer().nbytes() / ITEMSIZE) - m_nghost,
+                            (buffer().nbytes() / ITEMSIZE),
+                            m_nghost));
         }
     }
 
     void validate_shape(small_vector<ssize_t> const & idx) const
     {
-        auto index2string = [&idx]()
+        auto index2string = [&idx]() -> std::string
         {
-            Formatter ms;
-            ms << "[";
+            if (idx.empty())
+            {
+                return "[]";
+            }
+            std::string result = "[";
             for (size_t it = 0; it < idx.size(); ++it)
             {
-                ms << idx[it];
-                if (it != idx.size() - 1)
+                if (it > 0)
                 {
-                    ms << ", ";
+                    result += ", ";
                 }
+                result += std::to_string(idx[it]);
             }
-            ms << "]";
-            return ms.str();
+            result += "]";
+            return result;
         };
 
         // Test for the "index shape".
@@ -1713,20 +1736,28 @@ private:
         }
         if (idx.size() != m_shape.size())
         {
-            throw std::out_of_range(Formatter() << "SimpleArray: dimension of input indices " << index2string()
-                                                << " != array dimension " << m_shape.size());
+            throw std::out_of_range(
+                std::format("SimpleArray: dimension of input indices {} != array dimension {}",
+                            index2string(),
+                            m_shape.size()));
         }
 
         // Test the first dimension.
         if (idx[0] < -static_cast<ssize_t>(m_nghost))
         {
-            throw std::out_of_range(Formatter() << "SimpleArray: dim 0 in " << index2string()
-                                                << " < -nghost: " << -static_cast<ssize_t>(m_nghost));
+            throw std::out_of_range(
+                std::format("SimpleArray: dim 0 in {} < -nghost: {}",
+                            index2string(),
+                            -static_cast<ssize_t>(m_nghost)));
         }
         if (idx[0] >= static_cast<ssize_t>(nbody()))
         {
-            throw std::out_of_range(Formatter() << "SimpleArray: dim 0 in " << index2string() << " >= nbody: " << nbody()
-                                                << " (shape[0]: " << m_shape[0] << " - nghost: " << nghost() << ")");
+            throw std::out_of_range(
+                std::format("SimpleArray: dim 0 in {} >= nbody: {} (shape[0]: {} - nghost: {})",
+                            index2string(),
+                            nbody(),
+                            m_shape[0],
+                            nghost()));
         }
 
         // Test the rest of the dimensions.
@@ -1734,12 +1765,18 @@ private:
         {
             if (idx[it] < 0)
             {
-                throw std::out_of_range(Formatter() << "SimpleArray: dim " << it << " in " << index2string() << " < 0");
+                throw std::out_of_range(std::format("SimpleArray: dim {} in {} < 0",
+                                                    it,
+                                                    index2string()));
             }
             if (idx[it] >= static_cast<ssize_t>(m_shape[it]))
             {
-                throw std::out_of_range(Formatter() << "SimpleArray: dim " << it << " in " << index2string()
-                                                    << " >= shape[" << it << "]: " << m_shape[it]);
+                throw std::out_of_range(
+                    std::format("SimpleArray: dim {} in {} >= shape[{}]: {}",
+                                it,
+                                index2string(),
+                                it,
+                                m_shape[it]));
             }
         }
     }
@@ -1763,8 +1800,10 @@ SimpleArray<uint64_t> detail::SimpleArrayMixinSort<A, T>::argsort(void)
     auto athis = static_cast<A *>(this);
     if (athis->ndim() != 1)
     {
-        throw std::runtime_error(Formatter() << "SimpleArray::argsort(): currently only support 1D array"
-                                             << " but the array is " << athis->ndim() << " dimension");
+        throw std::runtime_error(
+            std::format("SimpleArray::argsort(): "
+                        "currently only support 1D array but the array is {} dimension",
+                        athis->ndim()));
     }
 
     SimpleArray<uint64_t> ret(athis->shape());
@@ -1792,8 +1831,10 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
     auto athis = static_cast<A *>(this);
     if (athis->ndim() != 1)
     {
-        throw std::runtime_error(Formatter() << "SimpleArray::take_along_axis(): currently only support 1D array"
-                                             << " but the array is " << athis->ndim() << " dimension");
+        throw std::runtime_error(
+            std::format("SimpleArray::take_along_axis(): "
+                        "currently only support 1D array but the array is {} dimension",
+                        athis->ndim()));
     }
 
     size_t max_idx = athis->shape()[0];
@@ -1805,18 +1846,21 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
         {
             size_t offset = src - indices.begin();
             shape_type const & stride = indices.stride();
-            Formatter err_msg;
-            err_msg << "SimpleArray::take_along_axis(): indices[" << offset / stride[0];
+            std::string indices_str = "[" + std::to_string(offset / stride[0]);
             offset %= stride[0];
             for (size_t dim = 1; dim < stride.size(); ++dim)
             {
-                err_msg << ", " << offset / stride[dim];
+                indices_str += ", " + std::to_string(offset / stride[dim]);
                 offset %= stride[dim];
             }
-            err_msg << "] is " << *src << ", which is out of range of the array size "
-                    << max_idx;
+            indices_str += "]";
 
-            throw std::out_of_range(err_msg);
+            throw std::out_of_range(
+                std::format("SimpleArray::take_along_axis(): "
+                            "indices{} is {}, which is out of range of the array size {}",
+                            indices_str,
+                            *src,
+                            max_idx));
         }
         src++;
     }
@@ -1870,8 +1914,10 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis_simd(SimpleArray<I> const 
     auto athis = static_cast<A *>(this);
     if (athis->ndim() != 1)
     {
-        throw std::runtime_error(Formatter() << "SimpleArray::take_along_axis(): currently only support 1D array"
-                                             << " but the array is " << athis->ndim() << " dimension");
+        const auto err = std::format("SimpleArray::take_along_axis(): "
+                                     "currently only support 1D array but the array is {} dimension",
+                                     athis->ndim());
+        throw std::runtime_error(err);
     }
 
     size_t max_idx = athis->shape()[0];
@@ -1882,18 +1928,21 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis_simd(SimpleArray<I> const 
         size_t offset = oor_ptr - indices.begin();
         shape_type const & stride = indices.stride();
         const size_t ndim = stride.size();
-        Formatter err_msg;
-        err_msg << "SimpleArray::take_along_axis_simd(): indices[" << offset / stride[0];
+        std::string indices_str = "[" + std::to_string(offset / stride[0]);
         offset %= stride[0];
         for (size_t dim = 1; dim < ndim; ++dim)
         {
-            err_msg << ", " << offset / stride[dim];
+            indices_str += ", " + std::to_string(offset / stride[dim]);
             offset %= stride[dim];
         }
-        err_msg << "] is " << *oor_ptr << ", which is out of range of the array size "
-                << max_idx;
+        indices_str += "]";
 
-        throw std::out_of_range(err_msg);
+        const auto err = std::format("SimpleArray::take_along_axis_simd(): "
+                                     "indices{} is {}, which is out of range of the array size {}",
+                                     indices_str,
+                                     *oor_ptr,
+                                     max_idx);
+        throw std::out_of_range(err);
     }
 
     I const * src = indices.begin();

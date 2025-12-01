@@ -138,11 +138,11 @@ public:
         if (size() + amount > capacity())
         {
             throw std::out_of_range(
-                Formatter()
-                << name() << ": "
-                << "size() " << size() << " + "
-                << "amount " << amount << " > "
-                << "capacity() " << capacity());
+                std::format("{}: size() {} + amount {} > capacity() {}",
+                            name(),
+                            size(),
+                            amount,
+                            capacity()));
         }
         m_end += amount;
     }

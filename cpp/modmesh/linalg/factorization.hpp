@@ -68,7 +68,7 @@ auto Llt<T>::forward_substitution(array_type const & l, array_type const & b) ->
 {
     if (l.ndim() != 2 || l.shape(0) != l.shape(1))
     {
-        Formatter oss;
+        std::ostringstream oss;
         oss << "Llt::forward_substitution: The first argument l must be a square 2D SimpleArray, but got shape (";
         for (ssize_t i = 0; i < l.ndim(); ++i)
         {
@@ -83,7 +83,7 @@ auto Llt<T>::forward_substitution(array_type const & l, array_type const & b) ->
     }
     if (b.ndim() != 2 || b.shape(0) != l.shape(0))
     {
-        Formatter oss;
+        std::ostringstream oss;
         oss << "Llt::forward_substitution: The second argument b must be a 2D SimpleArray with first dimension matching l, but got shape (";
         for (ssize_t i = 0; i < b.ndim(); ++i)
         {
@@ -121,7 +121,7 @@ auto Llt<T>::backward_substitution(array_type const & l, array_type const & y) -
 {
     if (l.ndim() != 2 || l.shape(0) != l.shape(1))
     {
-        Formatter oss;
+        std::ostringstream oss;
         oss << "Llt::backward_substitution: The first argument l must be a square 2D SimpleArray, but got shape (";
         for (ssize_t i = 0; i < l.ndim(); ++i)
         {
@@ -136,7 +136,7 @@ auto Llt<T>::backward_substitution(array_type const & l, array_type const & y) -
     }
     if (y.ndim() != 2 || y.shape(0) != l.shape(0))
     {
-        Formatter oss;
+        std::ostringstream oss;
         oss << "Llt::backward_substitution: The second argument y must be a 2D SimpleArray with first dimension matching l, but got shape (";
         for (ssize_t i = 0; i < y.ndim(); ++i)
         {
@@ -174,7 +174,7 @@ auto Llt<T>::factorize(array_type const & a) -> array_type
 {
     if (a.ndim() != 2 || a.shape(0) != a.shape(1))
     {
-        Formatter oss;
+        std::ostringstream oss;
         oss << "Llt::factorize: The first argument a must be a square 2D SimpleArray, but got shape (";
         for (ssize_t i = 0; i < a.ndim(); ++i)
         {
@@ -225,7 +225,7 @@ auto Llt<T>::solve(array_type const & a, array_type const & b) -> array_type
 {
     if (a.ndim() != 2 || a.shape(0) != a.shape(1))
     {
-        Formatter oss;
+        std::ostringstream oss;
         oss << "Llt::solve: The first argument a must be a square 2D SimpleArray, but got shape (";
         for (ssize_t i = 0; i < a.ndim(); ++i)
         {
@@ -240,13 +240,13 @@ auto Llt<T>::solve(array_type const & a, array_type const & b) -> array_type
     }
     if (a.shape(0) != b.shape(0))
     {
-        Formatter oss;
+        std::ostringstream oss;
         oss << "Llt::solve: The first argument a and the second argument b dimension mismatch: a.shape[0]=" << a.shape(0) << ", b.shape[0]=" << b.shape(0);
         throw std::invalid_argument(oss.str());
     }
     if (b.ndim() != 1 && b.ndim() != 2)
     {
-        Formatter oss;
+        std::ostringstream oss;
         oss << "Llt::solve: The second argument b must be 1D or 2D, but got " << b.ndim() << "D";
         throw std::invalid_argument(oss.str());
     }

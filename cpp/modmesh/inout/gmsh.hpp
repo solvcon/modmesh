@@ -109,7 +109,7 @@ private:
             // The parse only support ver 2.2 msh file.
             if (msh_ver != 2.2)
             {
-                throw std::invalid_argument(Formatter() << "modmesh does not support msh file ver " << msh_ver << ".");
+                throw std::invalid_argument(std::format("modmesh does not support msh file ver {}.", msh_ver));
             }
 
             msh_file_type = std::stoi(tokens[1]);

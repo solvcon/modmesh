@@ -72,7 +72,7 @@ public:
      */
     std::string value_string() const
     {
-        return (Formatter() << this->x() << ", " << this->y() << ", " << this->z()).str();
+        return std::format("{}, {}, {}", this->x(), this->y(), this->z());
     }
 
     using value_type = T;
@@ -238,7 +238,7 @@ private:
     {
         if (i >= s)
         {
-            throw std::out_of_range(Formatter() << "Point3d: i " << i << " >= size " << s);
+            throw std::out_of_range(std::format("Point3d: i {} >= size {}", i, s));
         }
     }
 
@@ -313,16 +313,12 @@ public:
         if (ndim > 3)
         {
             throw std::invalid_argument(
-                Formatter()
-                << "PointPad::PointPad: "
-                << "ndim = " << int(ndim) << " > 3");
+                std::format("PointPad::PointPad: ndim = {} > 3", int(ndim)));
         }
         else if (ndim < 2)
         {
             throw std::invalid_argument(
-                Formatter()
-                << "PointPad::PointPad: "
-                << "ndim = " << int(ndim) << " < 2");
+                std::format("PointPad::PointPad: ndim = {} < 2", int(ndim)));
         }
     }
 
@@ -340,16 +336,12 @@ public:
         else if (ndim > 3)
         {
             throw std::invalid_argument(
-                Formatter()
-                << "PointPad::PointPad: "
-                << "ndim = " << int(ndim) << " > 3");
+                std::format("PointPad::PointPad: ndim = {} > 3", int(ndim)));
         }
         else if (ndim < 2)
         {
             throw std::invalid_argument(
-                Formatter()
-                << "PointPad::PointPad: "
-                << "ndim = " << int(ndim) << " < 2");
+                std::format("PointPad::PointPad: ndim = {} < 2", int(ndim)));
         }
     }
 
@@ -367,16 +359,12 @@ public:
         else if (ndim > 3)
         {
             throw std::invalid_argument(
-                Formatter()
-                << "PointPad::PointPad: "
-                << "ndim = " << int(ndim) << " > 3");
+                std::format("PointPad::PointPad: ndim = {} > 3", int(ndim)));
         }
         else if (ndim < 2)
         {
             throw std::invalid_argument(
-                Formatter()
-                << "PointPad::PointPad: "
-                << "ndim = " << int(ndim) << " < 2");
+                std::format("PointPad::PointPad: ndim = {} < 2", int(ndim)));
         }
     }
 
@@ -391,10 +379,7 @@ public:
         if (x.size() != y.size())
         {
             throw std::invalid_argument(
-                Formatter()
-                << "PointPad::PointPad: "
-                << "x.size() " << x.size() << " y.size() " << y.size()
-                << " are not the same");
+                std::format("PointPad::PointPad: x.size() {} y.size() {} are not the same", x.size(), y.size()));
         }
     }
 
@@ -408,10 +393,7 @@ public:
         if (x.size() != y.size())
         {
             throw std::invalid_argument(
-                Formatter()
-                << "PointPad::PointPad: "
-                << "x.size() " << x.size() << " y.size() " << y.size()
-                << " are not the same");
+                std::format("PointPad::PointPad: x.size() {} y.size() {} are not the same", x.size(), y.size()));
         }
     }
 
@@ -426,10 +408,10 @@ public:
         if (x.size() != y.size() || x.size() != z.size() || y.size() != z.size())
         {
             throw std::invalid_argument(
-                Formatter()
-                << "PointPad::PointPad: "
-                << "x.size() " << x.size() << " y.size() " << y.size() << " z.size() " << z.size()
-                << " are not the same");
+                std::format("PointPad::PointPad: x.size() {} y.size() {} z.size() {} are not the same",
+                            x.size(),
+                            y.size(),
+                            z.size()));
         }
     }
 
@@ -443,10 +425,10 @@ public:
         if (x.size() != y.size() || x.size() != z.size() || y.size() != z.size())
         {
             throw std::invalid_argument(
-                Formatter()
-                << "PointPad::PointPad: "
-                << "x.size() " << x.size() << " y.size() " << y.size() << " z.size() " << z.size()
-                << " are not the same");
+                std::format("PointPad::PointPad: x.size() {} y.size() {} z.size() {} are not the same",
+                            x.size(),
+                            y.size(),
+                            z.size()));
         }
     }
 
@@ -460,10 +442,7 @@ public:
         if (x.size() != y.size())
         {
             throw std::invalid_argument(
-                Formatter()
-                << "PointPad::PointPad: "
-                << "x.size() " << x.size() << " y.size() " << y.size()
-                << " are not the same");
+                std::format("PointPad::PointPad: x.size() {} y.size() {} are not the same", x.size(), y.size()));
         }
     }
 
@@ -477,10 +456,7 @@ public:
         if (x.size() != y.size())
         {
             throw std::invalid_argument(
-                Formatter()
-                << "PointPad::PointPad: "
-                << "x.size() " << x.size() << " y.size() " << y.size()
-                << " are not the same");
+                std::format("PointPad::PointPad: x.size() {} y.size() {} are not the same", x.size(), y.size()));
         }
     }
 
@@ -494,10 +470,10 @@ public:
         if (x.size() != y.size() || x.size() != z.size() || y.size() != z.size())
         {
             throw std::invalid_argument(
-                Formatter()
-                << "PointPad::PointPad: "
-                << "x.size() " << x.size() << " y.size() " << y.size() << " z.size() " << z.size()
-                << " are not the same");
+                std::format("PointPad::PointPad: x.size() {} y.size() {} z.size() {} are not the same",
+                            x.size(),
+                            y.size(),
+                            z.size()));
         }
     }
 
@@ -511,10 +487,10 @@ public:
         if (x.size() != y.size() || x.size() != z.size() || y.size() != z.size())
         {
             throw std::invalid_argument(
-                Formatter()
-                << "PointPad::PointPad: "
-                << "x.size() " << x.size() << " y.size() " << y.size() << " z.size() " << z.size()
-                << " are not the same");
+                std::format("PointPad::PointPad: x.size() {} y.size() {} z.size() {} are not the same",
+                            x.size(),
+                            y.size(),
+                            z.size()));
         }
     }
 
@@ -540,7 +516,7 @@ public:
     {
         if (m_ndim != 2)
         {
-            throw std::out_of_range(Formatter() << "PointPad::append: ndim must be 2 but is " << int(m_ndim));
+            throw std::out_of_range(std::format("PointPad::append: ndim must be 2 but is {}", int(m_ndim)));
         }
         m_x.push_back(x);
         m_y.push_back(y);
@@ -550,7 +526,7 @@ public:
     {
         if (m_ndim != 3)
         {
-            throw std::out_of_range(Formatter() << "PointPad::append: ndim must be 3 but is " << int(m_ndim));
+            throw std::out_of_range(std::format("PointPad::append: ndim must be 3 but is {}", int(m_ndim)));
         }
         m_x.push_back(x);
         m_y.push_back(y);
@@ -720,7 +696,7 @@ public:
     {
         if (m_ndim != 3)
         {
-            throw std::out_of_range(Formatter() << "PointPad::mirror_z: ndim must be 3 but is " << int(m_ndim));
+            throw std::out_of_range(std::format("PointPad::mirror_z: ndim must be 3 but is {}", int(m_ndim)));
         }
         for (size_t i = 0; i < m_x.size(); ++i)
         {
@@ -914,7 +890,7 @@ private:
     {
         if (i >= s)
         {
-            throw std::out_of_range(Formatter() << "Segment3d: i " << i << " >= size " << s);
+            throw std::out_of_range(std::format("Segment3d: i {} >= size {}", i, s));
         }
     }
 
@@ -1335,7 +1311,7 @@ public:
         if (ndim() != 3)
         {
             throw std::out_of_range(
-                Formatter() << "SegmentPad::mirror_z: cannot mirror Z axis for ndim " << int(ndim()));
+                std::format("SegmentPad::mirror_z: cannot mirror Z axis for ndim {}", int(ndim())));
         }
         size_t const nseg = size();
         for (size_t i = 0; i < nseg; ++i)
@@ -1365,10 +1341,9 @@ private:
         if (m_p0->size() != m_p1->size())
         {
             throw std::invalid_argument(
-                Formatter()
-                << "SegmentPad::SegmentPad: "
-                << "p0.size() " << p0.size() << " p1.size() " << p1.size()
-                << " are not the same");
+                std::format("SegmentPad::SegmentPad: p0.size() {} p1.size() {} are not the same",
+                            p0.size(),
+                            p1.size()));
         }
     }
 

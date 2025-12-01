@@ -53,7 +53,12 @@ namespace detail
 {
 
 template <class T>
-std::string to_str(T const & self) { return Formatter() << self >> Formatter::to_str; }
+std::string to_str(T const & self)
+{
+    std::ostringstream oss;
+    oss << self;
+    return oss.str();
+}
 
 } /* end namespace detail */
 

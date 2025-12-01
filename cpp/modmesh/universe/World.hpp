@@ -142,7 +142,7 @@ private:
     {
         if (i >= s)
         {
-            throw std::out_of_range(Formatter() << "World: (" << msg << ") i " << i << " >= size " << s);
+            throw std::out_of_range(std::format("World: ({}) i {} >= size {}", msg, i, s));
         }
     }
 
