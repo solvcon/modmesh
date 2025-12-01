@@ -36,7 +36,7 @@ class Polygon3dTB(ModMeshTB):
         pad = self.PolygonPad(ndim=2)
         self.assertEqual(pad.ndim, 2)
         self.assertEqual(pad.num_polygons, 0)
-        self.assertEqual(pad.num_nodes, 0)
+        self.assertEqual(pad.num_points, 0)
 
         nodes = [
             self.Point(0.0, 0.0, 0.0),
@@ -47,8 +47,8 @@ class Polygon3dTB(ModMeshTB):
         polygon = pad.add_polygon(nodes)
 
         self.assertEqual(pad.num_polygons, 1)
-        self.assertEqual(pad.num_nodes, 4)
-        self.assertEqual(polygon.num_nodes, 4)
+        self.assertEqual(pad.num_points, 4)
+        self.assertEqual(polygon.nnode, 4)
 
         node0 = polygon.get_node(0)
         self.assert_allclose([node0.x, node0.y], [0.0, 0.0])
@@ -57,7 +57,7 @@ class Polygon3dTB(ModMeshTB):
         self.assert_allclose([node1.x, node1.y], [1.0, 0.0])
 
     def test_polygon_handle_operations(self):
-        """Test Polygon handle operations."""
+        """Test Polygon3d handle operations."""
         pad = self.PolygonPad(ndim=2)
         nodes = [
             self.Point(0.0, 0.0, 0.0),
@@ -69,7 +69,7 @@ class Polygon3dTB(ModMeshTB):
 
         self.assertEqual(polygon.ndim, 2)
         self.assertEqual(polygon.polygon_id, 0)
-        self.assertEqual(polygon.num_nodes, 4)
+        self.assertEqual(polygon.nnode, 4)
 
         node0 = polygon.get_node(0)
         self.assert_allclose([node0.x, node0.y], [0.0, 0.0])
@@ -135,10 +135,10 @@ class Polygon3dTB(ModMeshTB):
         poly2 = pad.add_polygon(triangle)
 
         self.assertEqual(pad.num_polygons, 2)
-        self.assertEqual(pad.num_nodes, 7)
+        self.assertEqual(pad.num_points, 7)
 
-        self.assertEqual(poly1.num_nodes, 4)
-        self.assertEqual(poly2.num_nodes, 3)
+        self.assertEqual(poly1.nnode, 4)
+        self.assertEqual(poly2.nnode, 3)
 
         self.assertGreater(poly1.compute_signed_area(), 0.0)
         self.assertGreater(poly2.compute_signed_area(), 0.0)
@@ -161,7 +161,7 @@ class Polygon3dTB(ModMeshTB):
         polygon = pad.add_polygon_from_segments(segment_pad)
 
         self.assertEqual(pad.num_polygons, 1)
-        self.assertEqual(polygon.num_nodes, 4)
+        self.assertEqual(polygon.nnode, 4)
 
         node0 = polygon.get_node(0)
         self.assert_allclose([node0.x, node0.y], [0.0, 0.0])

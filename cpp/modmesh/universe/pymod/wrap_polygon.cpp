@@ -38,10 +38,10 @@ namespace python
 
 template <typename T>
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapPolygon
-    : public WrapBase<WrapPolygon<T>, Polygon<T>>
+    : public WrapBase<WrapPolygon<T>, Polygon3d<T>>
 {
 public:
-    using base_type = WrapBase<WrapPolygon<T>, Polygon<T>>;
+    using base_type = WrapBase<WrapPolygon<T>, Polygon3d<T>>;
     using wrapped_type = typename base_type::wrapped_type;
     using value_type = typename wrapped_type::value_type;
     using point_type = typename wrapped_type::point_type;
@@ -63,7 +63,7 @@ WrapPolygon<T>::WrapPolygon(pybind11::module & mod, const char * pyname, const c
     (*this)
         .def_property_readonly("polygon_id", &wrapped_type::polygon_id)
         .def_property_readonly("ndim", &wrapped_type::ndim)
-        .def_property_readonly("num_nodes", &wrapped_type::num_nodes)
+        .def_property_readonly("nnode", &wrapped_type::nnode)
         .def("get_node", &wrapped_type::node, py::arg("index"))
         .def("get_edge", &wrapped_type::edge, py::arg("index"))
         .def("compute_signed_area", &wrapped_type::compute_signed_area)
@@ -109,7 +109,7 @@ WrapPolygonPad<T>::WrapPolygonPad(pybind11::module & mod, const char * pyname, c
             py::arg("ndim"))
         .def_property_readonly("ndim", &wrapped_type::ndim)
         .def_property_readonly("num_polygons", &wrapped_type::num_polygons)
-        .def_property_readonly("num_nodes", &wrapped_type::num_nodes)
+        .def_property_readonly("num_points", &wrapped_type::get_num_nodes)
         .def(
             "add_polygon",
             [](wrapped_type & self, std::vector<point_type> const & nodes)
