@@ -125,7 +125,6 @@ protected:
 
         mod.attr("call_profiler") = mod.attr("CallProfiler").attr("instance");
     }
-
 }; /* end class WrapCallProfiler */
 
 pybind11::dict WrapCallProfiler::result(CallProfiler & profiler)
@@ -197,9 +196,9 @@ protected:
 void wrap_profile(pybind11::module & mod)
 {
     WrapWrapperProfilerStatus::commit(mod, "WrapperProfilerStatus", "WrapperProfilerStatus");
+    WrapStopWatch::commit(mod, "StopWatch", "StopWatch");
     WrapCallProfiler::commit(mod, "CallProfiler", "CallProfiler");
     WrapCallProfilerProbe::commit(mod, "CallProfilerProbe", "CallProfilerProbe");
-    WrapStopWatch::commit(mod, "StopWatch", "StopWatch");
 }
 
 } /* end namespace python */
