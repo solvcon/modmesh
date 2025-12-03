@@ -55,7 +55,7 @@ protected:
 
         (*this)
             // clang-format off
-                .def_property_readonly_static("me", [](py::object const &) -> wrapped_type& { return wrapped_type::me(); })
+            .def_property_readonly_static("me", [](py::object const &) -> wrapped_type& { return wrapped_type::me(); })
             // clang-format on
             .def_property_readonly("enabled", &wrapped_type::enabled)
             .def("enable", &wrapped_type::enable)
