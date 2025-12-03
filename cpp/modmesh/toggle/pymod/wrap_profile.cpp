@@ -68,6 +68,40 @@ protected:
 
 }; /* end class WrapWrapperTimerStatus */
 
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapStopWatch
+    : public WrapBase<WrapStopWatch, StopWatch>
+{
+
+public:
+
+    friend root_base_type;
+
+protected:
+
+    WrapStopWatch(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : root_base_type(mod, pyname, pydoc)
+    {
+        namespace py = pybind11;
+
+        (*this)
+            .def_property_readonly_static(
+                "me",
+                [](py::object const &) -> wrapped_type &
+                { return wrapped_type::me(); })
+            .def("lap", &wrapped_type::lap)
+            .def_property_readonly("duration", &wrapped_type::duration)
+            .def_property_readonly_static(
+                "resolution",
+                [](py::object const &)
+                { return wrapped_type::resolution(); })
+            //
+            ;
+
+        mod.attr("stop_watch") = mod.attr("StopWatch").attr("me");
+    }
+
+}; /* end class WrapStopWatch */
+
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapCallProfiler : public WrapBase<WrapCallProfiler, CallProfiler>
 {
 public:
@@ -165,6 +199,7 @@ void wrap_profile(pybind11::module & mod)
     WrapWrapperProfilerStatus::commit(mod, "WrapperProfilerStatus", "WrapperProfilerStatus");
     WrapCallProfiler::commit(mod, "CallProfiler", "CallProfiler");
     WrapCallProfilerProbe::commit(mod, "CallProfilerProbe", "CallProfilerProbe");
+    WrapStopWatch::commit(mod, "StopWatch", "StopWatch");
 }
 
 } /* end namespace python */
