@@ -1920,6 +1920,11 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis_simd(SimpleArray<I> const 
         throw std::runtime_error(err);
     }
 
+    if (indices.size() == 0)
+    {
+        return A(indices.shape());
+    }
+
     size_t max_idx = athis->shape()[0];
 
     I const * oor_ptr = check_index_range(indices, max_idx);

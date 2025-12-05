@@ -33,6 +33,7 @@ add_executable(
     ${MODMESH_BUFFER_SOURCES}
     ${MODMESH_SERIALIZATION_SOURCES}
     ${MODMESH_TRANSFORM_SOURCES}
+    ${MODMESH_SIMD_SOURCES}
 )
 
 target_link_libraries(

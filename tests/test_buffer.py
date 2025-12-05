@@ -1017,7 +1017,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         _check(test_data[3])
         _check(test_data[4], True)
 
-    def test_talk_along_axis(self):
+    def test_take_along_axis(self):
         data = [1, 5, 10, 2, 6, 9, 7, 8, 4, 3]
         narr = np.array(data, dtype='int32')
         data_arr = modmesh.SimpleArrayInt32(array=narr)
