@@ -320,3 +320,32 @@ jobs:
             ${JOB_MAKE_ARGS} \
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
             CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+
+  send_email_on_failure:
+    name: send_emails_when_fails
+    needs: [clang_format_check, tidy_flake8_ubuntu, tidy_flake8_macos]
+    runs-on: ubuntu-latest
+    # Run if any of the dependencies failed in master branch
+    if: ${{ always() && contains(needs.*.result, 'failure') && github.ref_name == 'master' }}
+    steps:
+      - name: Send mail to mailing list
+        uses: dawidd6/action-send-mail@v6
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          # Subject: Uses the Repository name
+          subject: CI Failure in ${{ github.repository }} ${{ github.workflow }} workflow
+          # Body: Lists the result of every job
+          body: |
+            The workflow ${{ github.workflow }} has failed.
+            Job Status Report:
+            ------------------
+            - clang_format_check: ${{ needs.clang_format_check.result }}
+            - tidy_flake8_ubuntu: ${{ needs.tidy_flake8_ubuntu.result }}
+            - tidy_flake8_macos: ${{ needs.tidy_flake8_macos.result }}
+
+            Check the details at ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: solvcon@googlegroups.com
+          from: solvcon_notification
