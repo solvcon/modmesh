@@ -158,7 +158,7 @@ jobs:
         sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-14 100
         sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-14 100
 
-    - name: Add 8G swap (Ubuntu) 
+    - name: Add 8G swap (Ubuntu)
       # Prevent OOM during Qt builds: extra swap gives compiler/linker headroom so cc1plus isn't killed.
       if: runner.os == 'Linux'
       run: |
@@ -265,7 +265,7 @@ jobs:
       run: |
         python3 -c "import modmesh; assert modmesh.HAS_PILOT == True"
         make pytest VERBOSE=1
-        
+
     - name: make pyprof
       run: |
         make pyprof
@@ -287,7 +287,7 @@ jobs:
     # FIXME: turn off until all issues resolved
     - name: make cmake USE_SANITIZER=ON & make pytest
       run: |
-        export ASAN_OPTIONS=verify_asan_link_order=0 
+        export ASAN_OPTIONS=verify_asan_link_order=0
         rm -f build/*/Makefile
         make cmake \
           VERBOSE=1 USE_CLANG_TIDY=OFF \
@@ -483,7 +483,7 @@ jobs:
       # FIXME: turn off until all issues resolved
       - name: make cmake USE_SANITIZER=ON & make pytest
         run: |
-          export ASAN_OPTIONS=verify_asan_link_order=0 
+          export ASAN_OPTIONS=verify_asan_link_order=0
           rm -f build/*/Makefile
           make cmake \
             VERBOSE=1 USE_CLANG_TIDY=OFF \
@@ -539,7 +539,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12' 
+          python-version: '3.12'
 
       - name: dependency by pip
         run: |
@@ -637,7 +637,7 @@ jobs:
           & $py_exec -m pip install numpy matplotlib PySide6==$qt_ver shiboken6-generator==$qt_ver
 
           # Copy pyside6 and shiboken6 DLLs alongside the pilot executable
-          $pyside6_path=$(& $py_exec -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))") 
+          $pyside6_path=$(& $py_exec -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))")
           $shiboken6_path=$(& $py_exec -c "import sys, os, shiboken6; sys.stdout.write(os.path.dirname(shiboken6.__file__))")
           copy "$pyside6_path\pyside6.abi3.dll" $destination
           copy "$shiboken6_path\shiboken6.abi3.dll" $destination
@@ -691,4 +691,3 @@ jobs:
             Check the details at ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           to: solvcon@googlegroups.com
           from: solvcon_notification
-

@@ -365,7 +365,7 @@ struct FaceBuilder
         // clang-format off
         return std::accumulate
         (
-            tcltpn.body(), tcltpn.body()+tcltpn.nbody(), size_t(0) 
+            tcltpn.body(), tcltpn.body()+tcltpn.nbody(), size_t(0)
           , [](size_t a, uint8_t b){ return a + static_cast<size_t>(CellType::by_id(b).nface()); }
         );
         // clang-format on

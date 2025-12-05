@@ -335,7 +335,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                        self,
                        // NOLINTNEXTLINE(fuchsia-trailing-return)
                        [&](const auto & array) -> wrapped_type // need the return type to get correct deduced type
-                       { 
+                       {
                         const auto shape = make_shape(py_shape);
                         return array.reshape(shape); }); })
             .def_property_readonly("has_ghost", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(has_ghost))
@@ -415,7 +415,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
         auto datatype = array_plex.data_type();
         execute_callback_with_typed_array(
             array_plex, [&py_value, datatype](auto & array)
-            { 
+            {
                 using value_type = typename std::remove_reference_t<decltype(array[0])>;
                 verify_python_value_datatype(py_value, datatype);
                 const auto value = py_value.cast<value_type>();
@@ -437,7 +437,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
         auto datatype = array_plex.data_type();
         execute_callback_with_typed_array(
             array_plex, [&py_value, datatype](auto & array)
-            { 
+            {
                 using value_type = typename std::remove_reference_t<decltype(array[0])>;
                 verify_python_value_datatype(py_value, datatype);
                 const auto value = py_value.cast<value_type>();
