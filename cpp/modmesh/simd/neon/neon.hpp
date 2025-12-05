@@ -115,6 +115,13 @@ const T * check_between(T const * start, T const * end, T const & min_val, T con
     T const * ret = NULL;
 
     T const * ptr = start;
+
+    // Check if array is large enough for SIMD processing
+    if (end - start < N_lane)
+    {
+        return generic::check_between<T>(start, end, min_val, max_val);
+    }
+
     for (; ptr <= end - N_lane; ptr += N_lane)
     {
         data_vec = vld1q(ptr);

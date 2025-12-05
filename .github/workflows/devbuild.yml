@@ -404,11 +404,9 @@ jobs:
           fi
           make pytest ${JOB_MAKE_ARGS}
 
-      # FIXME: Temporarily turns off profiling run on macos-15
-      # because it takes 6 hours to fail
-      #- name: make pyprof
-      #  run: |
-      #    make pyprof
+      - name: make pyprof
+        run: |
+          make pyprof
 
       - name: make buildext BUILD_QT=ON USE_PYTEST_HELPER_BINDING=OFF
         run: |
