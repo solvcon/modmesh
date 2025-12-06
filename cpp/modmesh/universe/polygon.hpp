@@ -843,12 +843,38 @@ public:
 
     bool operator==(Polygon3d const & other) const
     {
-        return m_pad == other.m_pad && m_id == other.m_id;
+        if (nnode() != other.nnode())
+        {
+            return false;
+        }
+        if (ndim() != other.ndim())
+        {
+            return false;
+        }
+        size_t const node_count = nnode();
+        for (size_t i = 0; i < node_count; ++i)
+        {
+            if (node(i) != other.node(i))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     bool operator!=(Polygon3d const & other) const
     {
         return !(*this == other);
+    }
+
+    bool is(Polygon3d const & other) const
+    {
+        return m_pad == other.m_pad && m_id == other.m_id;
+    }
+
+    bool is_not(Polygon3d const & other) const
+    {
+        return !is(other);
     }
 
 private:

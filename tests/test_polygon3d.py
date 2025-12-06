@@ -201,6 +201,137 @@ class Polygon3dTB(ModMeshTB):
         results3 = pad.search_segments(search_box3)
         self.assertEqual(len(results3), 8)
 
+    def test_polygon_equality_same_coordinates(self):
+        """Test that polygons with same coordinates are equal."""
+        pad1 = self.PolygonPad(ndim=2)
+        pad2 = self.PolygonPad(ndim=2)
+
+        nodes1 = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+        nodes2 = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+
+        polygon1 = pad1.add_polygon(nodes1)
+        polygon2 = pad2.add_polygon(nodes2)
+
+        self.assertTrue(polygon1 == polygon2)
+        self.assertFalse(polygon1 != polygon2)
+
+    def test_polygon_equality_different_coordinates(self):
+        """Test that polygons with different coordinates are not equal."""
+        pad1 = self.PolygonPad(ndim=2)
+        pad2 = self.PolygonPad(ndim=2)
+
+        nodes1 = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+        nodes2 = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(2.0, 0.0, 0.0),
+            self.Point(2.0, 2.0, 0.0),
+            self.Point(0.0, 2.0, 0.0)
+        ]
+
+        polygon1 = pad1.add_polygon(nodes1)
+        polygon2 = pad2.add_polygon(nodes2)
+
+        self.assertFalse(polygon1 == polygon2)
+        self.assertTrue(polygon1 != polygon2)
+
+    def test_polygon_equality_different_node_count(self):
+        """Test that polygons with different node counts are not equal."""
+        pad1 = self.PolygonPad(ndim=2)
+        pad2 = self.PolygonPad(ndim=2)
+
+        nodes1 = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+        nodes2 = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(0.5, 1.0, 0.0)
+        ]
+
+        polygon1 = pad1.add_polygon(nodes1)
+        polygon2 = pad2.add_polygon(nodes2)
+
+        self.assertFalse(polygon1 == polygon2)
+        self.assertTrue(polygon1 != polygon2)
+
+    def test_polygon_identity_same_pad_same_id(self):
+        """Test identity: same pad and same polygon_id."""
+        pad = self.PolygonPad(ndim=2)
+
+        nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+
+        polygon1 = pad.add_polygon(nodes)
+        polygon2 = pad.get_polygon(0)
+
+        self.assertTrue(polygon1.is_same(polygon2))
+        self.assertFalse(polygon1.is_not_same(polygon2))
+
+    def test_polygon_identity_different_pads(self):
+        """Test identity: different pads with same coordinates."""
+        pad1 = self.PolygonPad(ndim=2)
+        pad2 = self.PolygonPad(ndim=2)
+
+        nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+
+        polygon1 = pad1.add_polygon(nodes)
+        polygon2 = pad2.add_polygon(nodes)
+
+        self.assertTrue(polygon1 == polygon2)
+        self.assertFalse(polygon1.is_same(polygon2))
+        self.assertTrue(polygon1.is_not_same(polygon2))
+
+    def test_polygon_identity_same_pad_different_id(self):
+        """Test identity: same pad but different polygon_id."""
+        pad = self.PolygonPad(ndim=2)
+
+        nodes1 = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+        nodes2 = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+
+        polygon1 = pad.add_polygon(nodes1)
+        polygon2 = pad.add_polygon(nodes2)
+
+        self.assertTrue(polygon1 == polygon2)
+        self.assertFalse(polygon1.is_same(polygon2))
+        self.assertTrue(polygon1.is_not_same(polygon2))
+
 
 class Polygon3dFp32TC(Polygon3dTB, unittest.TestCase):
 
