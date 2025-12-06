@@ -72,8 +72,7 @@ WrapPolygon<T>::WrapPolygon(pybind11::module & mod, const char * pyname, const c
         .def(py::self == py::self) // NOLINT(misc-redundant-expression)
         .def(py::self != py::self) // NOLINT(misc-redundant-expression)
         .def("is_same", &wrapped_type::is, py::arg("other"))
-        .def("is_not_same", &wrapped_type::is_not, py::arg("other"))
-        ;
+        .def("is_not_same", &wrapped_type::is_not, py::arg("other"));
 }
 
 template <typename T>
