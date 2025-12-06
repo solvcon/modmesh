@@ -111,7 +111,7 @@ WrapPolygonPad<T>::WrapPolygonPad(pybind11::module & mod, const char * pyname, c
             py::arg("ndim"))
         .def_property_readonly("ndim", &wrapped_type::ndim)
         .def_property_readonly("num_polygons", &wrapped_type::num_polygons)
-        .def_property_readonly("num_points", &wrapped_type::get_num_nodes)
+        .def_property_readonly("num_points", &wrapped_type::num_points)
         .def(
             "add_polygon",
             [](wrapped_type & self, std::vector<point_type> const & nodes)
