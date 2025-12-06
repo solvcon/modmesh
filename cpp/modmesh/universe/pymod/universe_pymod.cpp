@@ -49,6 +49,7 @@ void initialize_universe(pybind11::module & mod)
     {
         wrap_bernstein(mod);
         wrap_World(mod);
+        wrap_polygon(mod);
     };
 
     OneTimeInitializer<bernstein_pymod_tag>::me()(mod, initialize_impl);
