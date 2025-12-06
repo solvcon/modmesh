@@ -641,3 +641,34 @@ jobs:
         with:
           name: modmesh-pilot-win64
           path: modmesh-pilot-win64/
+
+  send_email_on_failure:
+    name: send_emails_when_fails
+    needs: [standalone_buffer, build_ubuntu, build_macos, build_windows]
+    runs-on: ubuntu-latest
+    # Run if any of the dependencies failed in master branch
+    if: ${{ always() && contains(needs.*.result, 'failure') && github.ref_name == 'master' }}
+    steps:
+      - name: Send mail to mailing list
+        uses: dawidd6/action-send-mail@v6
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          # Subject: Uses the Repository name
+          subject: CI Failure in ${{ github.repository }} ${{ github.workflow }} workflow
+          # Body: Lists the result of every job
+          body: |
+            The workflow ${{ github.workflow }} has failed.
+            Job Status Report:
+            ------------------
+            - standalone_buffer: ${{ needs.standalone_buffer.result }}
+            - build_ubuntu: ${{ needs.build_ubuntu.result }}
+            - build_macos: ${{ needs.build_macos.result }}
+            - build_windows: ${{ needs.build_windows.result }}
+
+            Check the details at ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: solvcon@googlegroups.com
+          from: solvcon_notification
+
