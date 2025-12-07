@@ -101,6 +101,16 @@ jobs:
         #       libgl1-mesa-dev
         # fi
 
+    - name: install and configure gcc-14
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+        sudo apt-get -qqy update
+        sudo apt-get -qy install gcc-14 g++-14
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
+        sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-14 100
+        sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-14 100
+
     - name: install qt
       uses: jurplel/install-qt-action@v4
       with:
