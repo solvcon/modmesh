@@ -28,7 +28,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <algorithm>
+#include <concepts>
+#include <format>
 #include <iomanip>
+#include <ranges>
 #include <sstream>
 #include <string_view>
 #include <type_traits>
@@ -53,7 +57,24 @@ public:
 namespace detail
 {
 
-/// Escape special characters in a string.
+template <typename T>
+concept JsonSerializableConcept = std::is_base_of_v<SerializableItem, T>;
+
+template <typename T>
+concept JsonStringConcept = std::is_convertible_v<T, std::string>;
+
+template <typename T>
+concept JsonBooleanConcept = std::is_same_v<T, bool>;
+
+template <typename T>
+concept JsonIntegralConcept = std::is_integral_v<T> && !JsonBooleanConcept<T>;
+
+template <typename T>
+concept JsonVectorConcept = is_specialization_of_v<std::vector, T>;
+
+template <typename T>
+concept JsonMapConcept = is_specialization_of_v<std::unordered_map, T> && std::is_same_v<typename T::key_type, std::string>;
+
 std::string escape_string(std::string_view str_view);
 
 /// Trim leading and trailing whitespaces and control characters.
@@ -143,43 +164,44 @@ public:
 template <typename T>
 std::string JsonHelper::to_json_string(const T & value)
 {
-    if constexpr (std::is_base_of_v<SerializableItem, T>)
+    if constexpr (JsonSerializableConcept<T>)
     {
         // NOLINTNEXTLINE(misc-no-recursion)
         return value.to_json(); /* recursive here */
     }
-    else if constexpr (std::is_convertible_v<T, std::string>)
+    else if constexpr (JsonStringConcept<T>)
     {
-        return "\"" + escape_string(value) + "\"";
+        return std::format("\"{}\"", escape_string(value));
     }
-    else if constexpr (std::is_same_v<T, bool>)
+    else if constexpr (JsonBooleanConcept<T>)
     {
         return value ? "true" : "false";
     }
-    else if constexpr (is_specialization_of_v<std::vector, T>)
+    else if constexpr (JsonVectorConcept<T>)
     {
         std::ostringstream oss;
         oss << "[";
-        const char * separator = "";
-        for (const auto & item : value)
+
+        constexpr auto transform_function = [](const auto & item)
         {
             // NOLINTNEXTLINE(misc-no-recursion)
-            oss << separator << to_json_string(item); /* recursive here */
+            return to_json_string(item); /* recursive here */
+        };
+        auto json_items = value | std::views::transform(transform_function);
+
+        const char * separator = "";
+        for (const auto & json_item : json_items)
+        {
+            oss << separator << json_item;
             separator = ",";
         }
         oss << "]";
         return oss.str();
     }
-    else if constexpr (is_specialization_of_v<std::unordered_map, T>)
+    else if constexpr (JsonMapConcept<T>)
     {
-        static_assert(std::is_same_v<typename T::key_type, std::string>, "Only support std::unordered_map<std::string, ...>.");
-
-        std::vector<std::string> keys;
-        for (const auto & kv : value)
-        {
-            keys.push_back(kv.first);
-        }
-        std::sort(keys.begin(), keys.end()); // TODO: the sorting may not be necessary. This is more for the testing purpose.
+        auto keys = value | std::views::keys | std::ranges::to<std::vector>();
+        std::ranges::sort(keys);
 
         std::ostringstream oss;
         oss << "{";
@@ -187,7 +209,8 @@ std::string JsonHelper::to_json_string(const T & value)
         for (const auto & key : keys)
         {
             // NOLINTNEXTLINE(misc-no-recursion)
-            oss << separator << "\"" << key << "\":" << to_json_string(value.at(key)); /* recursive here */
+            oss << separator
+                << std::format("\"{}\":{}", key, to_json_string(value.at(key))); /* recursive here */
             separator = ",";
         }
         oss << "}";
@@ -202,14 +225,14 @@ std::string JsonHelper::to_json_string(const T & value)
 template <typename T>
 void JsonHelper::from_json_string(const std::unique_ptr<JsonNode> & node, T & value)
 {
-    if (node->type == detail::JsonType::Null)
+    if (node->type == JsonType::Null)
     {
         return; /* TODO: properly handle null case */
     }
 
-    if constexpr (std::is_integral_v<T> && !std::is_same_v<T, bool>)
+    if constexpr (JsonIntegralConcept<T>)
     {
-        if (node->type != detail::JsonType::Number)
+        if (node->type != JsonType::Number)
         {
             throw std::runtime_error("Invalid JSON format: invalid integer type.");
         }
@@ -217,65 +240,49 @@ void JsonHelper::from_json_string(const std::unique_ptr<JsonNode> & node, T & va
     }
     else if constexpr (std::is_floating_point_v<T>)
     {
-        if (node->type != detail::JsonType::Number)
+        if (node->type != JsonType::Number)
         {
             throw std::runtime_error("Invalid JSON format: invalid floating number type.");
         }
         value = std::stod(std::get<std::string>(node->value));
     }
-    else if constexpr (std::is_same_v<T, std::string>)
+    else if constexpr (JsonStringConcept<T>)
     {
-        if (node->type != detail::JsonType::String)
+        if (node->type != JsonType::String)
         {
-            throw std::runtime_error("Invalid JSON format: invalid number type.");
+            throw std::runtime_error("Invalid JSON format: invalid string type.");
         }
-        auto & str = std::get<std::string>(node->value);
-        value = str.substr(1, str.size() - 2); /* Remove quotes */
+        const auto & str = std::get<std::string>(node->value);
+        value = str.substr(1, str.size() - 2); // remove the surrounding quotes
     }
-    else if constexpr (std::is_same_v<T, bool>)
+    else if constexpr (JsonBooleanConcept<T>)
     {
-        if (node->type != detail::JsonType::Boolean)
+        if (node->type != JsonType::Boolean)
         {
             throw std::runtime_error("Invalid JSON format: invalid boolean type.");
         }
-        if (std::get<std::string>(node->value) == "false")
-        {
-            value = false;
-        }
-        else
-        {
-            value = true;
-        }
+        value = std::get<std::string>(node->value) != "false";
     }
-    else if constexpr (std::is_same_v<T, std::string>)
+    else if constexpr (JsonSerializableConcept<T>)
     {
-        if (node->type != detail::JsonType::String)
-        {
-            throw std::runtime_error("Invalid JSON format: invalid number type.");
-        }
-        auto & str = std::get<std::string>(node->value);
-        value = str.substr(1, str.size() - 2); /* Remove quotes */
-    }
-    else if constexpr (std::is_base_of_v<SerializableItem, T>)
-    {
-        if (node->type != detail::JsonType::Object)
+        if (node->type != JsonType::Object)
         {
             throw std::runtime_error("Invalid JSON format: invalid object type.");
         }
         // NOLINTNEXTLINE(misc-no-recursion)
         value.from_json(std::get<JsonMap>(node->value)); /* recursive here */
     }
-    else if constexpr (is_specialization_of_v<std::unordered_map, T>)
+    else if constexpr (JsonMapConcept<T>)
     {
-        if (node->type != detail::JsonType::Object)
+        if (node->type != JsonType::Object)
         {
             throw std::runtime_error("Invalid JSON format: invalid object type.");
         }
-        auto & obj = std::get<detail::JsonMap>(node->value);
-        for (const auto & [key, jsonNode] : obj)
+        const auto & obj = std::get<JsonMap>(node->value);
+        for (const auto & [key, json_node] : obj)
         {
             // NOLINTNEXTLINE(misc-no-recursion)
-            from_json_string(jsonNode, value[key]); /* recursive here */
+            from_json_string(json_node, value[key]); /* recursive here */
         }
     }
     else
