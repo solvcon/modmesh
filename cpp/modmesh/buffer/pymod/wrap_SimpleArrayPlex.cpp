@@ -43,7 +43,8 @@ namespace python
 /// @param arrayplex the plex array, which is the wrapper of the typed array
 /// @param callback the callback function, which has the mutable typed array as the argument
 /// @return the return type of the callback function
-template <typename A, typename C, typename = std::enable_if_t<std::is_same_v<std::remove_const_t<A>, SimpleArrayPlex>>>
+template <typename A, typename C>
+requires modmesh::IsSameRemoveConstType<A, SimpleArrayPlex>
 // NOLINTNEXTLINE(misc-use-anonymous-namespace,cppcoreguidelines-missing-std-forward)
 static auto execute_callback_with_typed_array(A & arrayplex, C && callback)
 {

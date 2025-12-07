@@ -361,7 +361,7 @@ protected:
                 py::arg("odd_plane") = false)
             .def("get_so0p", &wrapped_type::get_so0p, py::arg("iv"), py::arg("odd_plane") = false);
 
-// clang-format off
+        // clang-format off
 #define DECL_ST_WRAP_ARRAY_ACCESS_0D(NAME) \
     .def_property_readonly \
     ( \
@@ -420,7 +420,7 @@ protected:
             .def("treat_boundary_so1", &wrapped_type::treat_boundary_so1)
             .def("setup_march", &wrapped_type::setup_march);
 
-// clang-format off
+        // clang-format off
 #define DECL_ST_WRAP_MARCH_ALPHA(ALPHA) \
     .def \
     ( \
