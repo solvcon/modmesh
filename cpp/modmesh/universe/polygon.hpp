@@ -976,7 +976,9 @@ public:
 
     bool operator==(Polygon3d const & other) const
     {
-        if (nnode() != other.nnode())
+        size_t const node_count = nnode();
+
+        if (node_count != other.nnode())
         {
             return false;
         }
@@ -984,7 +986,6 @@ public:
         {
             return false;
         }
-        size_t const node_count = nnode();
         for (size_t i = 0; i < node_count; ++i)
         {
             if (node(i) != other.node(i))
