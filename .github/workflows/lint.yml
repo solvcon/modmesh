@@ -336,7 +336,7 @@ jobs:
     needs: [clang_format_check, tidy_flake8_ubuntu, tidy_flake8_macos]
     runs-on: ubuntu-latest
     # Run if any of the dependencies failed in master branch
-    if: ${{ always() && contains(needs.*.result, 'failure') && github.ref_name == 'master' }}
+    if: ${{ always() && contains(needs.*.result, 'failure') && github.ref_name == 'master' && github.event.repository.fork == false }}
     steps:
       - name: Send mail to mailing list
         uses: dawidd6/action-send-mail@v6
