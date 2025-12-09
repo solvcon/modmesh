@@ -809,6 +809,12 @@ template <typename T>
 class Polygon3d
 {
 
+private:
+
+    struct ctor_passkey
+    {
+    };
+
 public:
 
     using point_type = Point3d<T>;
@@ -816,7 +822,7 @@ public:
     using segment_type = Segment3d<T>;
     using polygon_pad_type = PolygonPad<T>;
 
-    Polygon3d(std::shared_ptr<polygon_pad_type> pad, size_t polygon_id)
+    Polygon3d(std::shared_ptr<polygon_pad_type> pad, size_t polygon_id, ctor_passkey const &)
         : m_pad(std::move(pad))
         , m_id(polygon_id)
     {
@@ -1145,7 +1151,7 @@ public:
         m_begins.push_back(begin_index);
         m_ends.push_back(end_index);
 
-        polygon_type polygon(this->shared_from_this(), polygon_id);
+        polygon_type polygon(this->shared_from_this(), polygon_id, typename polygon_type::ctor_passkey());
         rebuild_polygon_rtree(polygon);
 
         return polygon;
@@ -1233,7 +1239,7 @@ public:
                             polygon_id,
                             m_begins.size()));
         }
-        return polygon_type(const_cast<PolygonPad<T> *>(this)->shared_from_this(), polygon_id);
+        return polygon_type(const_cast<PolygonPad<T> *>(this)->shared_from_this(), polygon_id, typename polygon_type::ctor_passkey());
     }
 
     /**
