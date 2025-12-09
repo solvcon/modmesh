@@ -822,7 +822,7 @@ public:
     {
     }
 
-    Polygon3d() = default;
+    Polygon3d() = delete;
     Polygon3d(Polygon3d const &) = default;
     Polygon3d(Polygon3d &&) = default;
     Polygon3d & operator=(Polygon3d const &) = default;
@@ -997,7 +997,23 @@ public:
 
     bool operator!=(Polygon3d const & other) const
     {
-        return !(*this == other);
+        if (nnode() == other.nnode())
+        {
+            return false;
+        }
+        if (ndim() == other.ndim())
+        {
+            return false;
+        }
+        size_t const node_count = nnode();
+        for (size_t i = 0; i < node_count; ++i)
+        {
+            if (node(i) == other.node(i))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     bool is(Polygon3d const & other) const
