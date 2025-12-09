@@ -820,6 +820,13 @@ public:
         : m_pad(std::move(pad))
         , m_id(polygon_id)
     {
+        if (m_id >= m_pad->m_begins.size())
+        {
+            throw std::out_of_range(
+                std::format("Polygon3d::Polygon3d: polygon_id {} >= num_polygons {}",
+                            m_id,
+                            m_pad->m_begins.size()));
+        }
     }
 
     Polygon3d() = delete;
@@ -1226,7 +1233,7 @@ public:
                             polygon_id,
                             m_begins.size()));
         }
-        return polygon_type(const_cast<PolygonPad<T>*>(this)->shared_from_this(), polygon_id);
+        return polygon_type(const_cast<PolygonPad<T> *>(this)->shared_from_this(), polygon_id);
     }
 
     /**
