@@ -1140,8 +1140,6 @@ public:
         polygon_type polygon(this->shared_from_this(), polygon_id);
         rebuild_polygon_rtree(polygon);
 
-        m_polygons.emplace(polygon_id, polygon);
-
         return polygon;
     }
 
@@ -1220,7 +1218,14 @@ public:
      */
     polygon_type get_polygon(size_t polygon_id) const
     {
-        return m_polygons.at(polygon_id);
+        if (polygon_id >= m_begins.size())
+        {
+            throw std::out_of_range(
+                std::format("PolygonPad::get_polygon: polygon_id {} >= num_polygons {}",
+                            polygon_id,
+                            m_begins.size()));
+        }
+        return polygon_type(const_cast<PolygonPad<T>*>(this)->shared_from_this(), polygon_id);
     }
 
     /**
@@ -1327,7 +1332,6 @@ private:
         }
     }
 
-    std::unordered_map<size_t, polygon_type> m_polygons;
     std::shared_ptr<point_pad_type> m_points;
     SimpleCollector<ssize_type> m_begins;
     SimpleCollector<ssize_type> m_ends;
