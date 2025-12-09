@@ -38,6 +38,7 @@
 #include <modmesh/toggle/RadixTree.hpp>
 
 #include <algorithm>
+#include <concepts>
 #include <functional>
 #include <limits>
 #include <numeric>
@@ -53,6 +54,28 @@ namespace modmesh
 
 template <typename T>
 class SimpleArray; // forward declaration
+
+template <typename T>
+concept IntegralType = std::is_integral_v<T>;
+
+template <typename T>
+concept ArithmeticType = std::is_arithmetic_v<T>;
+
+template <typename T>
+concept SimpleArrayType = requires(T t) {
+    { t.data() } -> std::convertible_to<typename T::value_type *>;
+    { t.size() } -> std::convertible_to<size_t>;
+};
+
+template <typename T, typename U>
+concept IsSameRemoveConstType = std::is_same_v<std::remove_const_t<T>, U>;
+
+template <typename It>
+concept InputIterator = requires(It it) {
+    { *it };
+    { ++it } -> std::same_as<It &>;
+    { it++ } -> std::same_as<It>;
+};
 
 namespace detail
 {
@@ -1046,9 +1069,9 @@ public:
 
     void sort(void);
     SimpleArray<uint64_t> argsort(void);
-    template <typename I>
+    template <IntegralType I>
     A take_along_axis(SimpleArray<I> const & indices);
-    template <typename I>
+    template <IntegralType I>
     A take_along_axis_simd(SimpleArray<I> const & indices);
 
 }; /* end class SimpleArrayMixinSort */
@@ -1067,10 +1090,10 @@ void SimpleArrayMixinSort<A, T>::sort(void)
     std::sort(athis->begin(), athis->end());
 }
 
-template <typename T, typename I>
+template <typename T, IntegralType I>
 void indexed_copy(T * dest, T const * data, I const * begin, I const * const end);
 
-template <typename T>
+template <IntegralType T>
 T const * check_index_range(SimpleArray<T> const & indices, size_t max_idx);
 
 template <typename A, typename T>
@@ -1165,7 +1188,7 @@ public:
     {
     }
 
-    template <class InputIt>
+    template <InputIterator InputIt>
     SimpleArray(InputIt first, InputIt last, size_t alignment = 0)
         : SimpleArray(last - first, alignment)
     {
@@ -1824,10 +1847,9 @@ SimpleArray<uint64_t> detail::SimpleArrayMixinSort<A, T>::argsort(void)
 }
 
 template <typename A, typename T>
-template <typename I>
+template <IntegralType I>
 A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & indices)
 {
-    static_assert(std::is_integral_v<I>, "I must be integral type");
     auto athis = static_cast<A *>(this);
     if (athis->ndim() != 1)
     {
@@ -1879,7 +1901,7 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
     return ret;
 }
 
-template <typename T>
+template <IntegralType T>
 T const * detail::check_index_range(SimpleArray<T> const & indices, size_t max_idx)
 {
     constexpr T DataTypeMax = std::numeric_limits<T>::max();
@@ -1892,7 +1914,7 @@ T const * detail::check_index_range(SimpleArray<T> const & indices, size_t max_i
     return simd::check_between<T>(indices.begin(), indices.end(), 0, max_idx);
 }
 
-template <typename T, typename I>
+template <typename T, IntegralType I>
 void detail::indexed_copy(T * dest, T const * data, I const * index0, I const * const index1)
 {
     T * dst = dest;
@@ -1907,10 +1929,9 @@ void detail::indexed_copy(T * dest, T const * data, I const * index0, I const * 
 }
 
 template <typename A, typename T>
-template <typename I>
+template <IntegralType I>
 A detail::SimpleArrayMixinSort<A, T>::take_along_axis_simd(SimpleArray<I> const & indices)
 {
-    static_assert(std::is_integral_v<I>, "I must be integral type");
     auto athis = static_cast<A *>(this);
     if (athis->ndim() != 1)
     {

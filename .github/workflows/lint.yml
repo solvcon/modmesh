@@ -29,9 +29,9 @@ jobs:
           echo "github.event_name: ${{ github.event_name }}"
 
       - name: Run clang-format style check for C/C++/Protobuf programs.
-        uses: jidicula/clang-format-action@v4.11.0
+        uses: jidicula/clang-format-action@v4.16.0
         with:
-          clang-format-version: '16'
+          clang-format-version: '20'
           check-path: ${{ matrix.path }}
           fallback-style: 'LLVM' # optional
 
