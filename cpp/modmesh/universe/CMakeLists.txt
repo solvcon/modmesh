@@ -14,6 +14,7 @@ set(MODMESH_UNIVERSE_HEADERS
 
 set(MODMESH_UNIVERSE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/bernstein.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/polygon.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/World.cpp
     CACHE FILEPATH "" FORCE)
 
@@ -25,6 +26,7 @@ set(MODMESH_UNIVERSE_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/universe_pymod.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_bernstein.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_World.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_polygon.cpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_UNIVERSE_FILES
