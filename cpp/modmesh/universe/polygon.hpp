@@ -817,35 +817,22 @@ public:
     {
         if (m_id >= m_pad->m_begins.size())
         {
-            throw std::out_of_range(
-                std::format("Polygon3d::nnode: polygon_id {} >= num_polygons {}",
-                            m_id,
-                            m_pad->m_begins.size()));
+            throw std::out_of_range(std::format("Polygon3d::nnode: polygon_id {} >= num_polygons {}",
+                                                m_id,
+                                                m_pad->m_begins.size()));
         }
         typename polygon_pad_type::ssize_type const begin_index = m_pad->m_begins[m_id];
         typename polygon_pad_type::ssize_type const end_index = m_pad->m_ends[m_id];
         return static_cast<size_t>(end_index - begin_index);
     }
 
-    uint8_t ndim() const
-    {
-        return m_pad->ndim();
-    }
+    uint8_t ndim() const { return m_pad->ndim(); }
 
-    point_type node(size_t index) const
-    {
-        return m_pad->get_node(m_id, index);
-    }
+    point_type node(size_t index) const { return m_pad->get_node(m_id, index); }
 
-    segment_type edge(size_t index) const
-    {
-        return m_pad->get_edge(m_id, index);
-    }
+    segment_type edge(size_t index) const { return m_pad->get_edge(m_id, index); }
 
-    value_type compute_signed_area() const
-    {
-        return m_pad->compute_signed_area(m_id);
-    }
+    value_type compute_signed_area() const { return m_pad->compute_signed_area(m_id); }
 
     bool is_counter_clockwise() const
     {
@@ -857,10 +844,7 @@ public:
         return m_is_counter_clockwise;
     }
 
-    BoundBox3d<T> calc_bound_box() const
-    {
-        return m_pad->calc_bound_box(m_id);
-    }
+    BoundBox3d<T> calc_bound_box() const { return m_pad->calc_bound_box(m_id); }
 
     bool operator==(Polygon3d const & other) const
     {
@@ -884,20 +868,11 @@ public:
         return true;
     }
 
-    bool operator!=(Polygon3d const & other) const
-    {
-        return !(*this == other);
-    }
+    bool operator!=(Polygon3d const & other) const { return !(*this == other); }
 
-    bool is(Polygon3d const & other) const
-    {
-        return m_pad == other.m_pad && m_id == other.m_id;
-    }
+    bool is(Polygon3d const & other) const { return m_pad == other.m_pad && m_id == other.m_id; }
 
-    bool is_not(Polygon3d const & other) const
-    {
-        return !is(other);
-    }
+    bool is_not(Polygon3d const & other) const { return !is(other); }
 
 private:
     bool calc_counter_clockwise() const
@@ -1039,7 +1014,9 @@ public:
                             polygon_id,
                             m_begins.size()));
         }
-        return polygon_type(const_cast<PolygonPad<T> *>(this)->shared_from_this(), polygon_id, typename polygon_type::ctor_passkey());
+        return polygon_type(const_cast<PolygonPad<T> *>(this)->shared_from_this(),
+                            polygon_id,
+                            typename polygon_type::ctor_passkey());
     }
 
     /**
@@ -1080,10 +1057,7 @@ public:
     /**
      * Check if polygon nodes are ordered counter-clockwise (right-hand rule).
      */
-    bool is_counter_clockwise(size_t polygon_id) const
-    {
-        return get_polygon(polygon_id).is_counter_clockwise();
-    }
+    bool is_counter_clockwise(size_t polygon_id) const { return get_polygon(polygon_id).is_counter_clockwise(); }
 
     /**
      * Calculate bounding box for a specific polygon.
