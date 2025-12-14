@@ -167,6 +167,9 @@ jobs:
     - name: make checkascii (check ASCII-only characters)
       run: make checkascii
 
+    - name: make checktws (check trailing whitespace)
+      run: make checktws
+
     - name: make pilot
       run: |
         make pilot \
