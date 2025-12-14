@@ -73,7 +73,8 @@ def find_source_files():
     patterns = [
         '**/*.py', '**/*.cpp', '**/*.hpp', '**/*.c', '**/*.h',
         '**/*.cxx', '**/*.hxx', '**/*.sh',
-        '**/Makefile', '**/makefile', '**/CMakeLists.txt'
+        '**/Makefile', '**/makefile', '**/CMakeLists.txt',
+        '.github/workflows/*.yml'
     ]
 
     all_files = []
