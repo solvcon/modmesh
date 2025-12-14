@@ -25,9 +25,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 """
-ASCII-only character and trailing whitespace checker for modmesh source code files.
+ASCII-only character and
+no trailing whitespace checker
+for modmesh source code files.
 
-This script checks that all source files contain only ASCII characters and no trailing whitespace,
+This script checks that all source files contain
+only ASCII characters and no trailing whitespace,
 as required by the project coding standards.
 """
 
@@ -59,8 +62,12 @@ def check_no_trailing_whitespace(filepath):
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             lines = f.readlines()
             for lineno, line in enumerate(lines, start=1):
-                if line.rstrip('\n').rstrip('\r').endswith(' ') or line.rstrip('\n').rstrip('\r').endswith('\t'):
-                    print(f"Trailing whitespace found in {filepath} at line {lineno}")
+                if line.rstrip('\n').rstrip('\r').endswith(' ') or \
+                  line.rstrip('\n').rstrip('\r').endswith('\t'):
+                    print(
+                        f"Trailing whitespace found in {filepath} "
+                        f"at line {lineno}"
+                    )
                     no_tws = False
             return no_tws
     except Exception as e:
@@ -88,7 +95,8 @@ def find_source_files():
 def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description='Check that source files contain only ASCII characters or no trailing whitespace'
+        description='Check that source files '
+        'contain only ASCII characters or no trailing whitespace'
     )
     parser.add_argument(
         '--check-tws',
@@ -122,10 +130,15 @@ def check_files(files_to_check, check_tws=False, verbose=False):
     checked_count = 0
 
     if check_tws:
-        print(f"Checking {len(files_to_check)} source files for no trailing whitespace...")
+        print(
+            f"Checking {len(files_to_check)} source files for "
+            f"no trailing whitespace..."
+        )
     else:
-        print(f"Checking {len(files_to_check)} source files for ASCII-only "
-            f"characters...")
+        print(
+            f"Checking {len(files_to_check)} source files for ASCII-only "
+            f"characters..."
+        )
 
     for filepath in files_to_check:
         if verbose:
@@ -158,15 +171,19 @@ def report_results(failed_files, checked_count, check_tws=False):
                   f"trailing whitespace.")
     else:
         if failed_files:
-            print(f"\nFAILED: {len(failed_files)} files contain non-ASCII "
-                f"characters:")
+            print(
+                f"\nFAILED: {len(failed_files)} files contain non-ASCII "
+                f"characters:"
+            )
             for f in failed_files:
                 print(f"  - {f}")
             print(f"\nChecked {checked_count} files total.")
             return 1
         else:
-            print(f"SUCCESS: All {checked_count} source files contain only "
-                f"ASCII characters.")
+            print(
+                f"SUCCESS: All {checked_count} source files contain only "
+                f"ASCII characters."
+            )
     return 0
 
 
@@ -178,7 +195,9 @@ def main():
         print("No files found to check")
         return 0
 
-    failed_files, checked_count = check_files(files_to_check, args.check_tws, args.verbose)
+    failed_files, checked_count = check_files(
+        files_to_check, args.check_tws, args.verbose
+    )
     return report_results(failed_files, checked_count, args.check_tws)
 
 
