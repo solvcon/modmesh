@@ -233,6 +233,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                                    { return pybind11::cast(SimpleArrayPlex(arr)); })
             .wrap_modifiers()
             .wrap_calculators()
+            .wrap_matrix()
             .wrap_sort()
             .wrap_search()
             // ATTENTION: always keep the same interface between WrapSimpleArrayPlex and WrapSimpleArray
@@ -351,7 +352,6 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def("div", &wrapped_type::div)
             .def("matmul", &wrapped_type::matmul)
             .def("__matmul__", &wrapped_type::matmul)
-            .def_static("eye", &wrapped_type::eye, py::arg("n"), "Create an identity matrix of size n x n")
             // TODO: In-place operation should return reference to self to support function chaining
             /*
              * Regular in-place methods (iadd, imul, etc.) are procedural calls and do
@@ -425,6 +425,21 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         return self.average(ashape, w);
     }
     // NOLINTEND(bugprone-easily-swappable-parameters)
+
+    wrapper_type & wrap_matrix()
+    {
+        namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
+
+        (*this)
+            .def_static("eye", &wrapped_type::eye, py::arg("n"), "Create an identity matrix of size n x n")
+            .def_static("scaled_eye", &wrapped_type::scaled_eye, py::arg("n"), py::arg("scale"), "Create a scaled identity matrix of size n x n")
+            .def("hermitian", &wrapped_type::hermitian, "Create hermitian (conjugate transpose) of the matrix")
+            .def("symmetrize", &wrapped_type::symmetrize, "Create symmetric matrix by averaging with its transpose")
+            //
+            ;
+
+        return *this;
+    }
 
     wrapper_type & wrap_sort()
     {
