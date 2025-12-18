@@ -65,7 +65,7 @@ jobs:
     - name: event name
       run: |
         echo "github.event_name: ${{ github.event_name }}"
-    
+
     # Cache the downloaded/extracted Qt bits
     - name: Cache Qt download
       uses: actions/cache@v3
@@ -78,7 +78,7 @@ jobs:
 
     - name: dependency by apt
       run: |
-        VERSION_ID=$(bash -c 'source /etc/os-release ; echo $VERSION_ID')        
+        VERSION_ID=$(bash -c 'source /etc/os-release ; echo $VERSION_ID')
         if [ "20.04" == "$VERSION_ID" ] ; then CLANG_TIDY_VERSION=10 ; else CLANG_TIDY_VERSION=18 ; fi
         sudo apt-get -qqy update
         sudo apt-get -qy install \
@@ -166,6 +166,9 @@ jobs:
 
     - name: make checkascii (check ASCII-only characters)
       run: make checkascii
+
+    - name: make checktws (check trailing whitespace)
+      run: make checktws
 
     - name: make pilot
       run: |
@@ -359,4 +362,3 @@ jobs:
             Check the details at ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           to: solvcon@googlegroups.com
           from: solvcon_notification
-
