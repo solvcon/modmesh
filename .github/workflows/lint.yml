@@ -341,6 +341,9 @@ jobs:
     # Run if any of the dependencies failed in master branch
     if: ${{ always() && contains(needs.*.result, 'failure') && github.ref_name == 'master' && github.event.repository.fork == false }}
     steps:
+      - name: Get current date and set to env
+        run: |
+          echo "DATE=$(date +%m/%d)" >> $GITHUB_ENV
       - name: Send mail to mailing list
         uses: dawidd6/action-send-mail@v6
         with:
@@ -349,7 +352,7 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           # Subject: Uses the Repository name
-          subject: CI Failure in ${{ github.repository }} ${{ github.workflow }} workflow
+          subject: ${{ env.DATE }} CI Failure in ${{ github.repository }} ${{ github.workflow }} workflow
           # Body: Lists the result of every job
           body: |
             The workflow ${{ github.workflow }} has failed.
