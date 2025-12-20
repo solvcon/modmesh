@@ -1342,6 +1342,49 @@ WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const
 }
 
 template <typename T>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapBoundBox3d
+    : public WrapBase<WrapBoundBox3d<T>, BoundBox3d<T>>
+{
+public:
+    using base_type = WrapBase<WrapBoundBox3d<T>, BoundBox3d<T>>;
+    using wrapped_type = typename base_type::wrapped_type;
+    using value_type = T;
+
+    friend typename base_type::root_base_type;
+
+protected:
+    WrapBoundBox3d(pybind11::module & mod, char const * pyname, char const * pydoc);
+};
+
+template <typename T>
+WrapBoundBox3d<T>::WrapBoundBox3d(pybind11::module & mod, const char * pyname, const char * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def(py::init<value_type, value_type, value_type, value_type, value_type, value_type>(),
+             py::arg("min_x"),
+             py::arg("min_y"),
+             py::arg("min_z"),
+             py::arg("max_x"),
+             py::arg("max_y"),
+             py::arg("max_z"))
+        .def_property_readonly("min_x", &wrapped_type::min_x)
+        .def_property_readonly("min_y", &wrapped_type::min_y)
+        .def_property_readonly("min_z", &wrapped_type::min_z)
+        .def_property_readonly("max_x", &wrapped_type::max_x)
+        .def_property_readonly("max_y", &wrapped_type::max_y)
+        .def_property_readonly("max_z", &wrapped_type::max_z)
+        .def("overlap", &wrapped_type::overlap, py::arg("other"))
+        .def("contain", &wrapped_type::contain, py::arg("other"))
+        .def("calc_area", &wrapped_type::calc_area)
+        .def("expand", &wrapped_type::expand, py::arg("other"))
+        //
+        ;
+}
+
+template <typename T>
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapWorld
     : public WrapBase<WrapWorld<T>, World<T>, std::shared_ptr<World<T>>>
 {
@@ -1476,6 +1519,8 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
 
 void wrap_World(pybind11::module & mod)
 {
+    WrapBoundBox3d<float>::commit(mod, "BoundBox3dFp32", "BoundBox3dFp32");
+    WrapBoundBox3d<double>::commit(mod, "BoundBox3dFp64", "BoundBox3dFp64");
     WrapPoint3d<float>::commit(mod, "Point3dFp32", "Point3dFp32");
     WrapPoint3d<double>::commit(mod, "Point3dFp64", "Point3dFp64");
     WrapPointPad<float>::commit(mod, "PointPadFp32", "PointPadFp32");
