@@ -42,6 +42,8 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <set>
+#include <unordered_map>
 #include <vector>
 
 namespace modmesh
@@ -934,6 +936,8 @@ private:
  * with each polygon defined by a range [start, end) in the node list. This avoids
  * memory duplication compared to storing line segments.
  *
+ * Note that PolygonPad assumes polygons are in a XY plane.
+ *
  * All nodes follow the right-hand rule:
  *  - Counter-clockwise ordering = positive area polygon
  *  - Clockwise ordering = negative area polygon (holes)
@@ -968,6 +972,26 @@ public:
     using segment_pad_type = SegmentPad<T>;
     using curve_pad_type = CurvePad<T>;
     using rtree_type = RTree<segment_type, BoundBox3d<T>, RTreeValueOps<segment_type, BoundBox3d<T>>>;
+
+    /**
+     * Trapezoid decomposition structure for boolean operations.
+     *
+     * A trapezoid is a quadrilateral with two parallel horizontal edges (top and bottom).
+     * In polygon decomposition, vertical lines are extended from each vertex to partition
+     * the polygon into trapezoids. This representation simplifies polygon boolean operations
+     * by reducing complex polygons to a set of simple trapezoids that can be easily
+     * classified and merged.
+     *
+     * Uses sweep line algorithm to partition polygon into trapezoids.
+     */
+    struct Trapezoid
+    {
+        value_type top_y; ///< Y-coordinate of the top horizontal edge
+        value_type bottom_y; ///< Y-coordinate of the bottom horizontal edge
+        segment_type left_edge; ///< Left boundary segment of the trapezoid
+        segment_type right_edge; ///< Right boundary segment of the trapezoid
+        size_t source_polygon; ///< ID of the polygon this trapezoid came from
+    };
 
     template <typename... Args>
     static std::shared_ptr<PolygonPad<T>> construct(Args &&... args)
@@ -1129,6 +1153,54 @@ public:
      */
     void rebuild_rtree();
 
+    /**
+     * Decompose a polygon into trapezoids using vertical sweep line algorithm.
+     *
+     * This method partitions a polygon by shooting vertical lines from each vertex,
+     * creating trapezoids bounded by polygon edges on the left/right and horizontal
+     * lines at the top/bottom. The decomposition is cached in m_decompositions for
+     * efficiency - subsequent calls with the same polygon_id return the cached result.
+     *
+     * The algorithm uses a plane sweep approach:
+     * 1. Sort vertices by y-coordinate (top to bottom)
+     * 2. Maintain active edges that intersect the current sweep line
+     * 3. At each vertex, update active edges and create trapezoids between sweep positions
+     *
+     * @param polygon_id ID of the polygon to decompose
+     * @return Const reference to vector of trapezoids partitioning the polygon
+     * @throws std::out_of_range if polygon_id is invalid
+     * @throws std::invalid_argument if polygon has fewer than 3 nodes
+     */
+    std::vector<Trapezoid> const & decompose_polygon(size_t polygon_id);
+
+    /**
+     * Compute union of two polygons using trapezoidal decomposition.
+     * Returns a vector of polygons representing the union.
+     *
+     * @param p1 First polygon
+     * @param p2 Second polygon
+     * @return Vector of polygons forming the union
+     */
+    std::vector<polygon_type> boolean_union(polygon_type const & p1, polygon_type const & p2);
+
+    /**
+     * Compute intersection of two polygons using trapezoidal decomposition.
+     *
+     * @param p1 First polygon
+     * @param p2 Second polygon
+     * @return Vector of polygons forming the intersection
+     */
+    std::vector<polygon_type> boolean_intersection(polygon_type const & p1, polygon_type const & p2);
+
+    /**
+     * Compute difference of two polygons (p1 - p2).
+     *
+     * @param p1 First polygon
+     * @param p2 Second polygon to subtract
+     * @return Vector of polygons forming the difference
+     */
+    std::vector<polygon_type> boolean_difference(polygon_type const & p1, polygon_type const & p2);
+
 private:
 
     friend class Polygon3d<T>;
@@ -1140,12 +1212,8 @@ private:
     SimpleCollector<ssize_type> m_ends;
     std::unique_ptr<rtree_type> m_rtree;
 
-    // TODO: Add trapezoidal map data structure for polygon boolean operations
-    // Reference: http://www0.cs.ucl.ac.uk/staff/m.slater/Teaching/CG/1997-98/Solutions/Trap/
-    // Will need:
-    //  - Trapezoid decomposition structure
-    //  - Point location query structure
-    //  - Integration with node lists for synchronization
+    /// Cache of trapezoidal decompositions, keyed by polygon ID. Computed lazily on first access.
+    std::unordered_map<size_t, std::vector<Trapezoid>> m_decompositions;
 
 }; /* end class PolygonPad */
 
@@ -1201,6 +1269,12 @@ Polygon3d<T> PolygonPad<T>::add_polygon(std::vector<point_type> const & nodes)
 
     for (point_type const & node : nodes)
     {
+        // check if the point is in XY plane
+        if (node.z() != 0)
+        {
+            throw std::invalid_argument("PolygonPad::add_polygon: all nodes must lie in the XY plane (z=0)");
+        }
+
         m_points->append(node);
     }
 
@@ -1209,7 +1283,8 @@ Polygon3d<T> PolygonPad<T>::add_polygon(std::vector<point_type> const & nodes)
     m_begins.push_back(begin_index);
     m_ends.push_back(end_index);
 
-    polygon_type polygon(this->shared_from_this(), polygon_id, typename polygon_type::ctor_passkey());
+    std::shared_ptr<PolygonPad<T> const> const_this = this->shared_from_this();
+    polygon_type polygon(const_this, polygon_id, typename polygon_type::ctor_passkey());
     rebuild_polygon_rtree(polygon);
 
     return polygon;
@@ -1467,6 +1542,54 @@ void PolygonPad<T>::rebuild_polygon_rtree(polygon_type const & polygon)
         segment_type const edge = polygon.edge(i);
         m_rtree->insert(edge);
     }
+}
+
+template <typename T>
+std::vector<typename PolygonPad<T>::Trapezoid> const & PolygonPad<T>::decompose_polygon(size_t polygon_id)
+{
+    std::vector<Trapezoid> trapezoids;
+
+    // TODO
+
+    // Cache the result and return a reference to the cached data
+    m_decompositions[polygon_id] = std::move(trapezoids);
+    return m_decompositions[polygon_id];
+}
+
+template <typename T>
+std::vector<Polygon3d<T>> PolygonPad<T>::boolean_union(polygon_type const & p1, polygon_type const & p2)
+{
+    // Decompose both polygons into trapezoids
+    std::vector<Trapezoid> const & traps1 = decompose_polygon(p1.polygon_id());
+    std::vector<Trapezoid> const & traps2 = decompose_polygon(p2.polygon_id());
+
+    // TODO: Implement the union algorithm:
+    std::vector<polygon_type> result;
+    return result;
+}
+
+template <typename T>
+std::vector<Polygon3d<T>> PolygonPad<T>::boolean_intersection(polygon_type const & p1, polygon_type const & p2)
+{
+    // Decompose both polygons into trapezoids
+    std::vector<Trapezoid> const & traps1 = decompose_polygon(p1.polygon_id());
+    std::vector<Trapezoid> const & traps2 = decompose_polygon(p2.polygon_id());
+
+    // TODO: Implement the intersection algorithm:
+    std::vector<polygon_type> result;
+    return result;
+}
+
+template <typename T>
+std::vector<Polygon3d<T>> PolygonPad<T>::boolean_difference(polygon_type const & p1, polygon_type const & p2)
+{
+    // Decompose both polygons into trapezoids
+    std::vector<Trapezoid> const & traps1 = decompose_polygon(p1.polygon_id());
+    std::vector<Trapezoid> const & traps2 = decompose_polygon(p2.polygon_id());
+
+    // TODO: Implement the difference algorithm:
+    std::vector<polygon_type> result;
+    return result;
 }
 
 } /* end namespace modmesh */
