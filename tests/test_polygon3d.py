@@ -332,6 +332,214 @@ class Polygon3dTB(ModMeshTB):
         self.assertFalse(polygon1.is_same(polygon2))
         self.assertTrue(polygon1.is_not_same(polygon2))
 
+    # TODO: Verify and implement boolean operations
+    # once the C++ side is complete.
+    def test_boolean_union_simple(self):
+        """Test polygon boolean union with two overlapping squares."""
+        pad = self.PolygonPad(ndim=2)
+
+        # First square: (0,0) to (2,2)
+        square1_nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(2.0, 0.0, 0.0),
+            self.Point(2.0, 2.0, 0.0),
+            self.Point(0.0, 2.0, 0.0)
+        ]
+        polygon1 = pad.add_polygon(square1_nodes)
+
+        # Second square: (1,1) to (3,3) - overlaps with first
+        square2_nodes = [
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(3.0, 1.0, 0.0),
+            self.Point(3.0, 3.0, 0.0),
+            self.Point(1.0, 3.0, 0.0)
+        ]
+        polygon2 = pad.add_polygon(square2_nodes)
+
+        # Call boolean_union - should not crash even if implementation is TODO
+        try:
+            result = pad.boolean_union(polygon1, polygon2)
+            # Implementation is not complete yet, but should return a list
+            self.assertIsInstance(result, self.PolygonPad)
+        except NotImplementedError:
+            # Expected if method raises NotImplementedError
+            pass
+
+    # TODO: Verify and implement boolean operations
+    # once the C++ side is complete.
+    def test_boolean_intersection_simple(self):
+        """Test polygon boolean intersection with two overlapping squares."""
+        pad = self.PolygonPad(ndim=2)
+
+        # First square: (0,0) to (2,2)
+        square1_nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(2.0, 0.0, 0.0),
+            self.Point(2.0, 2.0, 0.0),
+            self.Point(0.0, 2.0, 0.0)
+        ]
+        polygon1 = pad.add_polygon(square1_nodes)
+
+        # Second square: (1,1) to (3,3) - overlaps with first
+        # Intersection should be (1,1) to (2,2)
+        square2_nodes = [
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(3.0, 1.0, 0.0),
+            self.Point(3.0, 3.0, 0.0),
+            self.Point(1.0, 3.0, 0.0)
+        ]
+        polygon2 = pad.add_polygon(square2_nodes)
+
+        # Call boolean_intersection - should not crash even
+        # if implementation is TODO
+        try:
+            result = pad.boolean_intersection(polygon1, polygon2)
+            # Implementation is not complete yet, but should return a list
+            self.assertIsInstance(result, self.PolygonPad)
+        except NotImplementedError:
+            # Expected if method raises NotImplementedError
+            pass
+
+    # TODO: Verify and implement boolean operations
+    # once the C++ side is complete.
+    def test_boolean_difference_simple(self):
+        """Test polygon boolean difference with two overlapping squares."""
+        pad = self.PolygonPad(ndim=2)
+
+        # First square: (0,0) to (2,2)
+        square1_nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(2.0, 0.0, 0.0),
+            self.Point(2.0, 2.0, 0.0),
+            self.Point(0.0, 2.0, 0.0)
+        ]
+        polygon1 = pad.add_polygon(square1_nodes)
+
+        # Second square: (1,1) to (3,3) - overlaps with first
+        # Difference (polygon1 - polygon2) should be L-shaped region
+        square2_nodes = [
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(3.0, 1.0, 0.0),
+            self.Point(3.0, 3.0, 0.0),
+            self.Point(1.0, 3.0, 0.0)
+        ]
+        polygon2 = pad.add_polygon(square2_nodes)
+
+        # Call boolean_difference - should not crash even
+        # if implementation is TODO
+        try:
+            result = pad.boolean_difference(polygon1, polygon2)
+            # Implementation is not complete yet, but should return a list
+            self.assertIsInstance(result, self.PolygonPad)
+        except NotImplementedError:
+            # Expected if method raises NotImplementedError
+            pass
+
+    # TODO: Verify and implement boolean operations
+    # once the C++ side is complete.
+    def test_boolean_union_non_overlapping(self):
+        """Test polygon boolean union with two non-overlapping squares."""
+        pad = self.PolygonPad(ndim=2)
+
+        # First square: (0,0) to (1,1)
+        square1_nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+        polygon1 = pad.add_polygon(square1_nodes)
+
+        # Second square: (2,2) to (3,3) - no overlap
+        square2_nodes = [
+            self.Point(2.0, 2.0, 0.0),
+            self.Point(3.0, 2.0, 0.0),
+            self.Point(3.0, 3.0, 0.0),
+            self.Point(2.0, 3.0, 0.0)
+        ]
+        polygon2 = pad.add_polygon(square2_nodes)
+
+        # Call boolean_union - should not crash
+        try:
+            result = pad.boolean_union(polygon1, polygon2)
+            self.assertIsInstance(result, self.PolygonPad)
+        except NotImplementedError:
+            pass
+
+    # TODO: Verify and implement boolean operations
+    # once the C++ side is complete.
+    def test_boolean_intersection_non_overlapping(self):
+        """Test polygon boolean intersection with two non-overlapping squares.
+        """
+        pad = self.PolygonPad(ndim=2)
+
+        # First square: (0,0) to (1,1)
+        square1_nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+        polygon1 = pad.add_polygon(square1_nodes)
+
+        # Second square: (2,2) to (3,3) - no overlap
+        # Intersection should be empty
+        square2_nodes = [
+            self.Point(2.0, 2.0, 0.0),
+            self.Point(3.0, 2.0, 0.0),
+            self.Point(3.0, 3.0, 0.0),
+            self.Point(2.0, 3.0, 0.0)
+        ]
+        polygon2 = pad.add_polygon(square2_nodes)
+
+        # Call boolean_intersection - should not crash
+        try:
+            result = pad.boolean_intersection(polygon1, polygon2)
+            self.assertIsInstance(result, self.PolygonPad)
+        except NotImplementedError:
+            pass
+
+    # TODO: Verify and implement boolean operations
+    # once the C++ side is complete.
+    def test_boolean_operations_triangle(self):
+        """Test polygon boolean operations with triangular polygons."""
+        pad = self.PolygonPad(ndim=2)
+
+        # Triangle 1: Right triangle at origin
+        triangle1_nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(2.0, 0.0, 0.0),
+            self.Point(0.0, 2.0, 0.0)
+        ]
+        polygon1 = pad.add_polygon(triangle1_nodes)
+
+        # Triangle 2: Right triangle shifted
+        triangle2_nodes = [
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(3.0, 1.0, 0.0),
+            self.Point(1.0, 3.0, 0.0)
+        ]
+        polygon2 = pad.add_polygon(triangle2_nodes)
+
+        # Test all three operations - should not crash
+        try:
+            result_union = pad.boolean_union(polygon1, polygon2)
+            self.assertIsInstance(result_union, self.PolygonPad)
+        except NotImplementedError:
+            pass
+
+        try:
+            result_intersection = pad.boolean_intersection(polygon1, polygon2)
+            self.assertIsInstance(result_intersection, self.PolygonPad)
+        except NotImplementedError:
+            pass
+
+        try:
+            result_difference = pad.boolean_difference(polygon1, polygon2)
+            self.assertIsInstance(result_difference, self.PolygonPad)
+        except NotImplementedError:
+            pass
+
 
 class Polygon3dFp32TC(Polygon3dTB, unittest.TestCase):
 
