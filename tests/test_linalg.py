@@ -636,3 +636,126 @@ class KalmanFilterControlTC(unittest.TestCase):
                 "must be 1D of length control_size \\(1\\), but got shape "
                 "\\(2\\)"):
             kf.predict(u_wrong_sa)
+
+
+class KalmanFilterBatchFilterTC(unittest.TestCase):
+
+    def kf_batchfilter_numpy(self, kf, zs, us=None):
+        m = zs.shape[0]
+        n = kf.state.shape[0]
+        xs_pred_np = np.zeros((m, n))
+        ps_pred_np = np.zeros((m, n, n))
+        xs_upd_np = np.zeros((m, n))
+        ps_upd_np = np.zeros((m, n, n))
+        for i in range(m):
+            if us is not None:
+                u = us[i]
+                u_sa = sa_from_np(u, type(kf.state))
+                kf.predict(u_sa)
+            else:
+                kf.predict()
+            x_pred = kf.state.ndarray
+            p_pred = kf.covariance.ndarray
+            xs_pred_np[i] = x_pred
+            ps_pred_np[i] = p_pred
+
+            z = zs[i]
+            z_sa = sa_from_np(z, type(kf.state))
+            kf.update(z_sa)
+            x_upd = kf.state.ndarray
+            p_upd = kf.covariance.ndarray
+            xs_upd_np[i] = x_upd
+            ps_upd_np[i] = p_upd
+        return xs_pred_np, ps_pred_np, xs_upd_np, ps_upd_np
+
+    def test_batchfilter(self):
+        m = 50
+        x0 = np.array([1.0, 2.0, 3.0])
+        f = np.array([[1.1, 0.2, 0.3],
+                      [0.1, 0.9, 0.7],
+                      [4.7, 5.2, 6.7]])
+        h = np.array([[1.0, 3.0, 2.0],
+                      [4.0, 0.2, 0.1]])
+        sigma_w = 0.316
+        zs = np.zeros((m, 2))
+        for i in range(m):
+            zs[i] = np.array([i * i, i * 0.5 + 1.0])
+        x_sa = mm.SimpleArrayFloat64(array=x0)
+        f_sa = mm.SimpleArrayFloat64(array=f)
+        h_sa = mm.SimpleArrayFloat64(array=h)
+        zs_sa = mm.SimpleArrayFloat64(array=zs)
+
+        kf = mm.KalmanFilterFp64(
+            x=x_sa, f=f_sa, h=h_sa,
+            process_noise=sigma_w,
+            measurement_noise=1.0,
+        )
+        bps = kf.batch_filter(zs_sa)
+        xs_pred = bps.prior_states
+        ps_pred = bps.prior_states_covariance
+        xs_upd = bps.posterior_states
+        ps_upd = bps.posterior_states_covariance
+
+        kf = mm.KalmanFilterFp64(
+            x=x_sa, f=f_sa, h=h_sa,
+            process_noise=sigma_w,
+            measurement_noise=1.0,
+        )
+        bps_np = self.kf_batchfilter_numpy(kf, zs)
+        xs_pred_np, ps_pred_np, xs_upd_np, ps_upd_np = bps_np
+
+        np.testing.assert_allclose(xs_pred, xs_pred_np, atol=1e-12, rtol=0.0)
+        np.testing.assert_allclose(ps_pred, ps_pred_np, atol=1e-12, rtol=0.0)
+        np.testing.assert_allclose(xs_upd, xs_upd_np, atol=1e-12, rtol=0.0)
+        np.testing.assert_allclose(ps_upd, ps_upd_np, atol=1e-12, rtol=0.0)
+
+    def test_batchfilter_with_control(self):
+        m = 50
+        x0 = np.array([1.0, 2.0, 3.0])
+        f = np.array([[1.1, 0.2, 0.3],
+                      [0.1, 0.9, 0.7],
+                      [4.7, 5.2, 6.7]])
+        h = np.array([[1.0, 3.0, 2.0],
+                      [4.0, 0.2, 0.1]])
+        b = np.array([[0.7, 0.2, 5.3],
+                      [3.1, 0.9, 1.7],
+                      [4.7, 5.2, 6.7]])
+        sigma_w = 0.316
+        zs = np.zeros((m, 2))
+        for i in range(m):
+            zs[i] = np.array([i * i, i * 0.5 + 1.0])
+        us = np.zeros((m, 3))
+        for i in range(m):
+            us[i] = np.array([i, pow(i, 3.5), pow(i, 0.5)])
+        x_sa = mm.SimpleArrayFloat64(array=x0)
+        f_sa = mm.SimpleArrayFloat64(array=f)
+        b_sa = mm.SimpleArrayFloat64(array=b)
+        h_sa = mm.SimpleArrayFloat64(array=h)
+        zs_sa = mm.SimpleArrayFloat64(array=zs)
+        us_sa = mm.SimpleArrayFloat64(array=us)
+
+        kf = mm.KalmanFilterFp64(
+            x=x_sa, f=f_sa, b=b_sa, h=h_sa,
+            process_noise=sigma_w,
+            measurement_noise=1.0,
+        )
+        bps = kf.batch_filter(zs_sa, us_sa)
+        xs_pred = bps.prior_states
+        ps_pred = bps.prior_states_covariance
+        xs_upd = bps.posterior_states
+        ps_upd = bps.posterior_states_covariance
+
+        kf = mm.KalmanFilterFp64(
+            x=x_sa, f=f_sa, b=b_sa, h=h_sa,
+            process_noise=sigma_w,
+            measurement_noise=1.0,
+        )
+        bps_np = self.kf_batchfilter_numpy(kf, zs, us)
+        xs_pred_np, ps_pred_np, xs_upd_np, ps_upd_np = bps_np
+
+        np.testing.assert_allclose(xs_pred, xs_pred_np, atol=1e-12, rtol=0.0)
+        np.testing.assert_allclose(ps_pred, ps_pred_np, atol=1e-12, rtol=0.0)
+        np.testing.assert_allclose(xs_upd, xs_upd_np, atol=1e-12, rtol=0.0)
+        np.testing.assert_allclose(ps_upd, ps_upd_np, atol=1e-12, rtol=0.0)
+
+# vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
