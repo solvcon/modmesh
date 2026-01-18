@@ -93,7 +93,22 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapKalmanFilter
             .def(
                 "update",
                 &wrapped_type::update,
-                py::arg("z"));
+                py::arg("z"))
+            .def(
+                "batch_filter",
+                [](wrapped_type & self, array_type const & zs, array_type const & us)
+                {
+                    return self.batch_filter(zs, us).to_tuple();
+                },
+                py::arg("zs"),
+                py::arg("us"))
+            .def(
+                "batch_filter",
+                [](wrapped_type & self, array_type const & zs)
+                {
+                    return self.batch_filter(zs).to_tuple();
+                },
+                py::arg("zs"));
     }
 
 }; /* end class WrapKalmanFilter */
