@@ -367,19 +367,14 @@ template <typename T>
 void KalmanFilter<T>::predict_state()
 {
     // x <- F x  (m_x <- m_f @ m_x)
-    array_type x_col = m_x.reshape(small_vector<size_t>{m_state_size, 1});
-    x_col = m_f.matmul(x_col);
-    m_x = x_col.reshape(small_vector<size_t>{m_state_size});
+    m_x = m_f.matmul(m_x);
 }
 
 template <typename T>
 void KalmanFilter<T>::predict_state(array_type const & u)
 {
     // x <- F x + B u  (m_x <- m_f @ m_x + m_b @ u)
-    array_type x_col = m_x.reshape(small_vector<size_t>{m_state_size, 1});
-    array_type u_col = u.reshape(small_vector<size_t>{m_control_size, 1});
-    x_col = m_f.matmul(x_col).add(m_b.matmul(u_col));
-    m_x = x_col.reshape(small_vector<size_t>{m_state_size});
+    m_x = m_f.matmul(m_x).add(m_b.matmul(u));
 }
 
 template <typename T>
@@ -440,10 +435,7 @@ template <typename T>
 typename KalmanFilter<T>::array_type KalmanFilter<T>::innovation(array_type const & z)
 {
     // y <- z - H x  (y <- z - m_h @ m_x)
-    array_type x_col = m_x.reshape(small_vector<size_t>{m_state_size, 1});
-    array_type hx = m_h.matmul(x_col);
-    array_type hx_vec = hx.reshape(small_vector<size_t>{m_measurement_size});
-    return z.sub(hx_vec);
+    return z.sub(m_h.matmul(m_x));
 }
 
 template <typename T>
@@ -471,10 +463,7 @@ template <typename T>
 void KalmanFilter<T>::update_state(array_type const & k, array_type const & y)
 {
     // x <- x + K y  (m_x <- m_x + k @ y)
-    array_type y_col = y.reshape(small_vector<size_t>{m_measurement_size, 1});
-    array_type ky = k.matmul(y_col);
-    array_type ky_vec = ky.reshape(small_vector<size_t>{m_state_size});
-    m_x = m_x.add(ky_vec);
+    m_x = m_x.add(k.matmul(y));
 }
 
 template <typename T>

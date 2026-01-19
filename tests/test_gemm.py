@@ -207,10 +207,40 @@ class GemmTestBase(mm.testing.TestBase):
             [8.0, 11.0, 11.0]
         ], dtype=self.dtype)
 
+        # Test case 4: (4x6) x (6)
+        a_data_4 = np.array([
+            [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+            [7.0, 8.0, 9.0, 10.0, 11.0, 12.0],
+            [13.0, 14.0, 15.0, 16.0, 17.0, 18.0],
+            [19.0, 20.0, 21.0, 22.0, 23.0, 24.0]
+        ], dtype=self.dtype)
+        b_data_4 = np.array([1., 2., 3., 4., 5., 6], dtype=self.dtype)
+        expected_4 = np.array([91., 217., 343., 469.], dtype=self.dtype)
+
+        # Test case 5: (6) x (6 x 4)
+        a_data_5 = np.array([1., 2., 3., 4., 5., 6], dtype=self.dtype)
+        b_data_5 = np.array([
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0, 8.0],
+            [9.0, 10.0, 11.0, 12.0],
+            [13.0, 14.0, 15.0, 16.0],
+            [17.0, 18.0, 19.0, 20.0],
+            [21.0, 22.0, 23.0, 24.0]
+        ], dtype=self.dtype)
+        expected_5 = np.array([301., 322., 343., 364.], dtype=self.dtype)
+
+        # Test case 6: (3) x (3)
+        a_data_6 = np.array([1., 2., 3.], dtype=self.dtype)
+        b_data_6 = np.array([4., 5., 6.], dtype=self.dtype)
+        expected_6 = np.array([32.], dtype=self.dtype)
+
         test_cases = [
             (a_data_1, b_data_1, expected_1, "2x3 x 3x4"),
             (a_data_2, b_data_2, expected_2, "4x6 x 6x3"),
-            (a_data_3, b_data_3, expected_3, "3x3 x 3x3")
+            (a_data_3, b_data_3, expected_3, "3x3 x 3x3"),
+            (a_data_4, b_data_4, expected_4, "4x6 x 6"),
+            (a_data_5, b_data_5, expected_5, "6 x 6x3"),
+            (a_data_6, b_data_6, expected_6, "3 x 3x3")
         ]
 
         for a_data, b_data, expected, description in test_cases:
@@ -234,64 +264,66 @@ class GemmTestBase(mm.testing.TestBase):
                     np.testing.assert_array_almost_equal(
                         result.ndarray, expected, decimal=10)
 
-    def test_unsupported_dimensions_error(self):
-        """Test error handling for unsupported dimensions"""
+    def test_wrong_shape_error(self):
+        """Test error handling for wrong shapes"""
 
-        # Test 1D x 1D (not supported)
-        a_1d = self.SimpleArray(array=np.array([1.0, 2.0, 3.0],
-                                               dtype=self.dtype))
-        b_1d = self.SimpleArray(array=np.array([4.0, 5.0, 6.0],
-                                               dtype=self.dtype))
-
-        with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray::matmul\(\): unsupported dimensions: this=\(3\) "
-            r"other=\(3\)\. Only 2D x 2D matrix multiplication is supported"
-        ):
-            a_1d.matmul(b_1d)
-
-        # Test 1D x 2D (not supported)
-        a_1d = self.SimpleArray(array=np.array([1.0, 2.0], dtype=self.dtype))
-        b_2d = self.SimpleArray(array=np.array([[1.0, 2.0], [3.0, 4.0]],
-                                               dtype=self.dtype))
-
-        with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray::matmul\(\): unsupported dimensions: this=\(2\) "
-            r"other=\(2,2\)\. Only 2D x 2D matrix multiplication is supported"
-        ):
-            a_1d.matmul(b_2d)
-
-        # Test 2D x 1D (not supported)
-        a_2d = self.SimpleArray(array=np.array([[1.0, 2.0, 3.0],
-                                               [4.0, 5.0, 6.0]],
-                                               dtype=self.dtype))
-        b_1d = self.SimpleArray(array=np.array([7.0, 8.0, 9.0],
-                                               dtype=self.dtype))
-
-        with self.assertRaisesRegex(
-            IndexError,
-            r"SimpleArray::matmul\(\): unsupported dimensions: this=\(2,3\) "
-            r"other=\(3\)\. Only 2D x 2D matrix multiplication is supported"
-        ):
-            a_2d.matmul(b_1d)
-
-        # Test 3D x 3D (not supported - tensor operation)
         a_3d_data = np.array([[[1.0, 2.0], [3.0, 4.0]],
                               [[5.0, 6.0], [7.0, 8.0]]], dtype=self.dtype)
         b_3d_data = np.array([[[1.0, 0.0], [0.0, 1.0]],
                               [[2.0, 0.0], [0.0, 2.0]]], dtype=self.dtype)
-
         a_3d = self.SimpleArray(array=a_3d_data)
         b_3d = self.SimpleArray(array=b_3d_data)
 
         with self.assertRaisesRegex(
             IndexError,
             r"SimpleArray::matmul\(\): unsupported dimensions: "
-            r"this=\(2,2,2\) other=\(2,2,2\)\. Only 2D x 2D matrix "
-            r"multiplication is supported"
+            r"this=\(2,2,2\) other=\(2,2,2\)\. SimpleArray must be 1D or 2D."
         ):
             a_3d.matmul(b_3d)
+
+        a = np.zeros((3, 3), dtype=self.dtype)
+        b = np.zeros((2, 3), dtype=self.dtype)
+        a = self.SimpleArray(array=a)
+        b = self.SimpleArray(array=b)
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::matmul\(\): shape mismatch: "
+            r"this=\(3,3\) other=\(2,3\)"
+        ):
+            a.matmul(b)
+
+        a = np.zeros((3, 3), dtype=self.dtype)
+        b = np.zeros((2), dtype=self.dtype)
+        a = self.SimpleArray(array=a)
+        b = self.SimpleArray(array=b)
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::matmul\(\): shape mismatch: "
+            r"this=\(3,3\) other=\(2\)"
+        ):
+            a.matmul(b)
+
+        a = np.zeros((2), dtype=self.dtype)
+        b = np.zeros((3, 3), dtype=self.dtype)
+        a = self.SimpleArray(array=a)
+        b = self.SimpleArray(array=b)
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::matmul\(\): shape mismatch: "
+            r"this=\(2\) other=\(3,3\)"
+        ):
+            a.matmul(b)
+
+        a = np.zeros((2), dtype=self.dtype)
+        b = np.zeros((3), dtype=self.dtype)
+        a = self.SimpleArray(array=a)
+        b = self.SimpleArray(array=b)
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::matmul\(\): shape mismatch: "
+            r"this=\(2\) other=\(3\)"
+        ):
+            a.matmul(b)
 
     def test_matmul_operator(self):
         """Test @ operator for matrix multiplication"""
