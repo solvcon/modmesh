@@ -620,6 +620,23 @@ class SimpleArrayBasicTC(unittest.TestCase):
         sarr.ndarray.fill(100)
         self.assertTrue((ndarr == 100).all())
 
+        ndarr = np.zeros((2, 3, 4), dtype='complex128')
+        sarr = modmesh.SimpleArrayComplex128(array=ndarr)
+        # Reassign the numpy array to ensure data is not shared.
+        ndarr = np.zeros((2, 3, 4), dtype='complex128')
+
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    ndarr[i, j, k] = complex(i + j, k)
+                    sarr[i, j, k] = ndarr[i, j, k]
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    complex_ndarr = complex(ndarr[i, j, k])
+                    complex_sarr = complex(sarr[i, j, k])
+                    self.assertEqual(complex_ndarr, complex_sarr)
+
     def test_SimpleArray_from_ndarray_slice(self):
         ndarr = np.arange(1000, dtype='float64').reshape((10, 10, 10))
         parr = ndarr[1:7:3, 6:2:-1, 3:9]

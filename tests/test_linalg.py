@@ -380,41 +380,6 @@ class KalmanFilterPredictTC(unittest.TestCase):
         np.testing.assert_allclose(p_pred_mm, p_pred_np, atol=1e-12, rtol=0.0)
 
 
-# The bug is reported in issue #604:
-# https://github.com/solvcon/modmesh/issues/604
-# Issue #604: SimpleArrayComplex128[i] = numpy.complex128 fails with cast error
-# This _wrap_complex function provides a workaround for the type conversion
-# issue when assigning numpy.complex128 values to SimpleArrayComplex128
-# elements
-def _wrap_complex(val, cls):
-    if not np.iscomplexobj(val):
-        return val.item() if hasattr(val, "item") else val
-    z = complex(val)
-    name = getattr(cls, "__name__", "")
-    if name.endswith("Complex128"):
-        return mm.complex128(z)
-    if name.endswith("Complex64"):
-        return mm.complex64(z)
-    return z
-
-
-class TestKnownIssues604(unittest.TestCase):
-
-    @unittest.expectedFailure
-    def test_issue_604_numpy_complex128_assignment(self):
-        sa = mm.SimpleArrayComplex128([3])
-        z = np.complex128(1.0 + 2.0j)
-        sa[0] = z
-        self.assertEqual(complex(sa[0]), complex(z))
-
-    @unittest.expectedFailure
-    def test_python_complex_assignment(self):
-        sa = mm.SimpleArrayComplex128([1])
-        z = complex(5.0, -6.0)
-        sa[0] = z
-        self.assertEqual(complex(sa[0]), z)
-
-
 # The bug is reported in issue #603:
 # https://github.com/solvcon/modmesh/issues/603
 # Issue #603: F-contiguous check in SimpleArray breaks when creating
@@ -428,14 +393,14 @@ def sa_from_np(arr: np.ndarray, cls):
     if arr.ndim == 1:
         sa = cls([arr.shape[0]])
         for i in range(arr.shape[0]):
-            sa[i] = _wrap_complex(arr[i], cls)
+            sa[i] = arr[i]
         return sa
     if arr.ndim == 2:
         m, n = arr.shape
         sa = cls([m, n])
         for i in range(m):
             for j in range(n):
-                sa[i, j] = _wrap_complex(arr[i, j], cls)
+                sa[i, j] = arr[i, j]
         return sa
     raise ValueError("sa_from_np supports only 1D or 2D arrays")
 
