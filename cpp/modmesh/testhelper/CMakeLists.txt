@@ -1,7 +1,7 @@
 # Copyright (c) 2024, An-Chi Liu <phy.tiger@gmail.com>
 # BSD-style license; see COPYING
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.0.1)
 
 set(MODMESH_TESTHELPER_HEADERS
     CACHE FILEPATH "" FORCE)

@@ -1,5 +1,5 @@
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.0.1)
 
 set(MODMESH_INOUT_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/inout.hpp
