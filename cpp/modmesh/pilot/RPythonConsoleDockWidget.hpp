@@ -98,7 +98,7 @@ public slots:
     void navigateCommand(int offset);
 
 private:
-    static int calcHeightToFitContents(const QTextEdit* edit);
+    static int calcHeightToFitContents(const QTextEdit * edit);
 
     void commitCommand(std::string const & command);
 

@@ -35,7 +35,8 @@
 namespace modmesh
 {
 
-void RPythonHistoryTextEdit::mouseDoubleClickEvent(QMouseEvent *mouse_event) {
+void RPythonHistoryTextEdit::mouseDoubleClickEvent(QMouseEvent * mouse_event)
+{
     // TODO: currently, it will select the whole content, could change the behavior
     QTextCursor cursor = textCursor();
     std::string text = toPlainText().toStdString();
@@ -54,10 +55,12 @@ void RPythonCommandTextEdit::keyPressEvent(QKeyEvent * event)
 
     if (Qt::Key_Return == event->key() || Qt::Key_Enter == event->key())
     {
-        if (event->modifiers() & Qt::ShiftModifier) {
+        if (event->modifiers() & Qt::ShiftModifier)
+        {
             this->insertPlainText("\n");
         }
-        else {
+        else
+        {
             execute();
         }
     }
@@ -110,20 +113,35 @@ RPythonConsoleDockWidget::RPythonConsoleDockWidget(const QString & title, QWidge
     m_command_edit->setPlaceholderText("Shift+Enter to create new line. Enter to execute.");
     m_container->layout()->addWidget(m_command_edit);
 
-    connect(m_history_edit->document(), &QTextDocument::contentsChanged, this, [this]() {
-        const int newHeight = calcHeightToFitContents(m_history_edit);
-        m_history_edit->setMinimumHeight(newHeight);
-    });
-    connect(m_command_edit->document(), &QTextDocument::contentsChanged, this, [this, commandEditMinHeight]() {
-        const int newHeight = std::max(calcHeightToFitContents(m_command_edit), commandEditMinHeight);
-        m_command_edit->setFixedHeight(newHeight);
-    });
-    connect(m_command_edit, &RPythonCommandTextEdit::cursorPositionChanged, this, [this]() {
-        const QRect rect = m_command_edit->cursorRect();
-        const QPoint point = m_command_edit->mapTo(m_container, rect.bottomRight());
+    connect(
+        m_history_edit->document(),
+        &QTextDocument::contentsChanged,
+        this,
+        [this]()
+        {
+            const int newHeight = calcHeightToFitContents(m_history_edit);
+            m_history_edit->setMinimumHeight(newHeight);
+        });
+    connect(
+        m_command_edit->document(),
+        &QTextDocument::contentsChanged,
+        this,
+        [this, commandEditMinHeight]()
+        {
+            const int newHeight = std::max(calcHeightToFitContents(m_command_edit), commandEditMinHeight);
+            m_command_edit->setFixedHeight(newHeight);
+        });
+    connect(
+        m_command_edit,
+        &RPythonCommandTextEdit::cursorPositionChanged,
+        this,
+        [this]()
+        {
+            const QRect rect = m_command_edit->cursorRect();
+            const QPoint point = m_command_edit->mapTo(m_container, rect.bottomRight());
 
-        m_scroll_area->ensureVisible(point.x(), point.y(), 20, 20);
-    });
+            m_scroll_area->ensureVisible(point.x(), point.y(), 20, 20);
+        });
     connect(m_command_edit, &RPythonCommandTextEdit::execute, this, &RPythonConsoleDockWidget::executeCommand);
     connect(m_command_edit, &RPythonCommandTextEdit::navigate, this, &RPythonConsoleDockWidget::navigateCommand);
 }
@@ -133,7 +151,8 @@ QString RPythonConsoleDockWidget::command() const
     return m_command_edit->toPlainText();
 }
 
-void RPythonConsoleDockWidget::setCommand(const QString & value) const {
+void RPythonConsoleDockWidget::setCommand(const QString & value) const
+{
     m_command_edit->setPlainText(value);
 
     // Move cursor to the end of line.
@@ -152,7 +171,8 @@ void RPythonConsoleDockWidget::executeCommand()
 {
     std::string const command = m_command_edit->toPlainText().trimmed().toStdString();
 
-    if (command.length() == 0) {
+    if (command.length() == 0)
+    {
         return;
     }
 
@@ -186,15 +206,16 @@ void RPythonConsoleDockWidget::navigateCommand(int offset)
 
     const int new_index = std::clamp(m_current_command_index + offset, 0, commands_num);
 
-    const std::string& command_to_show = new_index == commands_num
-        ? m_draft_command
-        : m_committed_commands[new_index];
+    const std::string & command_to_show = new_index == commands_num
+                                              ? m_draft_command
+                                              : m_committed_commands[new_index];
 
     m_current_command_index = new_index;
     setCommand(QString::fromStdString(command_to_show));
 }
 
-int RPythonConsoleDockWidget::calcHeightToFitContents(const QTextEdit* edit) {
+int RPythonConsoleDockWidget::calcHeightToFitContents(const QTextEdit * edit)
+{
     edit->document()->setTextWidth(edit->viewport()->width());
 
     const int docH = static_cast<int>(std::ceil(edit->document()->size().height()));
@@ -217,7 +238,8 @@ void RPythonConsoleDockWidget::commitCommand(const std::string & command)
     }
 }
 
-void RPythonConsoleDockWidget::writeToHistory(const std::string & data) const {
+void RPythonConsoleDockWidget::writeToHistory(const std::string & data) const
+{
     QTextCursor cursor = m_history_edit->textCursor();
     cursor.movePosition(QTextCursor::End);
     m_history_edit->setTextCursor(cursor);
