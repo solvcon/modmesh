@@ -37,6 +37,7 @@
 
 #include <Qt>
 #include <QDockWidget>
+#include <QScrollArea>
 #include <QTextEdit>
 
 namespace modmesh
@@ -102,6 +103,7 @@ public slots:
     void navigateCommand(int offset);
 
 private:
+    static int calcHeightToFitContents(const QTextEdit* edit);
 
     void appendPastCommand(std::string const & code);
     void printCommandOutput();
@@ -109,6 +111,8 @@ private:
     void printCommandStdout(const std::string & stdout_message);
     void printCommandStderr(const std::string & stderr_message);
 
+    QScrollArea * m_scrollArea = nullptr;
+    QWidget * m_container = nullptr;
     RPythonHistoryTextEdit * m_history_edit = nullptr;
     RPythonCommandTextEdit * m_command_edit = nullptr;
     std::string m_command_string;

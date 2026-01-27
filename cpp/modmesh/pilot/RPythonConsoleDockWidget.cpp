@@ -29,6 +29,8 @@
 #include <modmesh/pilot/RPythonConsoleDockWidget.hpp>
 #include <QVBoxLayout>
 #include <QKeyEvent>
+#include <QScrollBar>
+#include <QTimer>
 
 namespace modmesh
 {
@@ -59,15 +61,24 @@ void RPythonHistoryTextEdit::doubleClickHistoryEdit()
 
 void RPythonCommandTextEdit::keyPressEvent(QKeyEvent * event)
 {
+    const QTextCursor cursor = textCursor();
+    const bool isFirstLineFocused = cursor.blockNumber() == 0;
+    const bool isLastLineFocused = cursor.blockNumber() == document()->blockCount() - 1;
+
     if (Qt::Key_Return == event->key() || Qt::Key_Enter == event->key())
     {
-        execute();
+        if (event->modifiers() & Qt::ShiftModifier) {
+            this->insertPlainText("\n");
+        }
+        else {
+            execute();
+        }
     }
-    else if (Qt::Key_Up == event->key())
+    else if (Qt::Key_Up == event->key() && isFirstLineFocused)
     {
         navigate(/* offset */ -1);
     }
-    else if (Qt::Key_Down == event->key())
+    else if (Qt::Key_Down == event->key() && isLastLineFocused)
     {
         navigate(/* offset */ 1);
     }
@@ -79,31 +90,53 @@ void RPythonCommandTextEdit::keyPressEvent(QKeyEvent * event)
 
 RPythonConsoleDockWidget::RPythonConsoleDockWidget(const QString & title, QWidget * parent, Qt::WindowFlags flags)
     : QDockWidget(title, parent, flags)
+    , m_scrollArea(new QScrollArea)
+    , m_container(new QWidget)
     , m_history_edit(new RPythonHistoryTextEdit)
     , m_command_edit(new RPythonCommandTextEdit)
     , m_python_redirect(Toggle::instance().fixed().get_python_redirect())
 {
-    setWidget(new QWidget);
-    widget()->setLayout(new QVBoxLayout);
+    m_scrollArea->setWidgetResizable(true);
+    setWidget(m_scrollArea);
 
+    m_container->setLayout(new QVBoxLayout);
+    m_scrollArea->setWidget(m_container);
+
+    QPalette palette = QPalette();
+    palette.setColor(QPalette::Base, Qt::white);
+    palette.setColor(QPalette::Text, Qt::black);
+    palette.setColor(QPalette::PlaceholderText, Qt::darkGray);
+
+    m_history_edit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_history_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_history_edit->setFont(QFont("Courier New"));
-    m_history_edit->setHtml(QString(""));
     m_history_edit->setReadOnly(true);
-    widget()->layout()->addWidget(m_history_edit);
+    m_history_edit->setPalette(palette);
+    m_container->layout()->addWidget(m_history_edit);
 
-    QPalette pal = QPalette();
-    pal.setColor(QPalette::Base, Qt::white);
-    pal.setColor(QPalette::Text, Qt::black);
-
+    constexpr int commandEditMinHeight = 40;
+    m_command_edit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_command_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     m_command_edit->setFont(QFont("Courier New"));
-    m_command_edit->setPlainText(QString(""));
-    m_command_edit->setFixedHeight(40);
-    m_command_edit->setPalette(pal);
-    widget()->layout()->addWidget(m_command_edit);
+    m_command_edit->setFixedHeight(commandEditMinHeight);
+    m_command_edit->setPalette(palette);
+    m_command_edit->setPlaceholderText("Shift+Enter to create new line. Enter to execute.");
+    m_container->layout()->addWidget(m_command_edit);
 
-    widget()->setAutoFillBackground(true);
-    widget()->setPalette(pal);
+    connect(m_history_edit->document(), &QTextDocument::contentsChanged, this, [this]() {
+        const int newHeight = calcHeightToFitContents(m_history_edit);
+        m_history_edit->setMinimumHeight(newHeight);
+    });
+    connect(m_command_edit->document(), &QTextDocument::contentsChanged, this, [this, commandEditMinHeight]() {
+        const int newHeight = std::max(calcHeightToFitContents(m_command_edit), commandEditMinHeight);
+        m_command_edit->setFixedHeight(newHeight);
+    });
+    connect(m_command_edit, &RPythonCommandTextEdit::cursorPositionChanged, this, [this]() {
+        const QRect rect = m_command_edit->cursorRect();
+        const QPoint point = m_command_edit->mapTo(m_container, rect.bottomRight());
 
+        m_scrollArea->ensureVisible(point.x(), point.y(), 20, 20);
+    });
     connect(m_command_edit, &RPythonCommandTextEdit::execute, this, &RPythonConsoleDockWidget::executeCommand);
     connect(m_command_edit, &RPythonCommandTextEdit::navigate, this, &RPythonConsoleDockWidget::navigateCommand);
 }
@@ -131,7 +164,12 @@ void RPythonConsoleDockWidget::setCommand(const QString & value)
 
 void RPythonConsoleDockWidget::executeCommand()
 {
-    std::string const code = m_command_edit->toPlainText().toStdString();
+    std::string const code = m_command_edit->toPlainText().trimmed().toStdString();
+
+    if (code.length() == 0) {
+        return;
+    }
+
     appendPastCommand(code);
     ++m_last_command_serial;
     printCommandHistory();
@@ -238,6 +276,17 @@ void RPythonConsoleDockWidget::navigateCommand(int offset)
             m_command_edit->setTextCursor(cursor);
         }
     }
+}
+
+int RPythonConsoleDockWidget::calcHeightToFitContents(const QTextEdit* edit) {
+    edit->document()->setTextWidth(edit->viewport()->width());
+
+    const int docH = static_cast<int>(std::ceil(edit->document()->size().height()));
+
+    const int frame = 2 * edit->frameWidth();
+    const int margins = edit->contentsMargins().top() + edit->contentsMargins().bottom();
+
+    return docH + frame + margins;
 }
 
 void RPythonConsoleDockWidget::writeToHistory(const std::string & data)
