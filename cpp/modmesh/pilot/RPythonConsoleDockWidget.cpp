@@ -35,20 +35,7 @@
 namespace modmesh
 {
 
-void RPythonConsoleDockWidget::appendPastCommand(const std::string & code)
-{
-    if (code.size() > 0)
-    {
-        m_past_command_strings.push_back(code);
-        if (m_past_command_strings.size() > m_past_limit)
-        {
-            m_past_command_strings.pop_front();
-        }
-    }
-}
-
-void RPythonHistoryTextEdit::doubleClickHistoryEdit()
-{
+void RPythonHistoryTextEdit::mouseDoubleClickEvent(QMouseEvent *mouse_event) {
     // TODO: currently, it will select the whole content, could change the behavior
     QTextCursor cursor = textCursor();
     std::string text = toPlainText().toStdString();
@@ -62,8 +49,8 @@ void RPythonHistoryTextEdit::doubleClickHistoryEdit()
 void RPythonCommandTextEdit::keyPressEvent(QKeyEvent * event)
 {
     const QTextCursor cursor = textCursor();
-    const bool isFirstLineFocused = cursor.blockNumber() == 0;
-    const bool isLastLineFocused = cursor.blockNumber() == document()->blockCount() - 1;
+    const bool is_first_line_focused = cursor.blockNumber() == 0;
+    const bool is_last_line_focused = cursor.blockNumber() == document()->blockCount() - 1;
 
     if (Qt::Key_Return == event->key() || Qt::Key_Enter == event->key())
     {
@@ -74,11 +61,11 @@ void RPythonCommandTextEdit::keyPressEvent(QKeyEvent * event)
             execute();
         }
     }
-    else if (Qt::Key_Up == event->key() && isFirstLineFocused)
+    else if (Qt::Key_Up == event->key() && is_first_line_focused)
     {
         navigate(/* offset */ -1);
     }
-    else if (Qt::Key_Down == event->key() && isLastLineFocused)
+    else if (Qt::Key_Down == event->key() && is_last_line_focused)
     {
         navigate(/* offset */ 1);
     }
@@ -90,17 +77,17 @@ void RPythonCommandTextEdit::keyPressEvent(QKeyEvent * event)
 
 RPythonConsoleDockWidget::RPythonConsoleDockWidget(const QString & title, QWidget * parent, Qt::WindowFlags flags)
     : QDockWidget(title, parent, flags)
-    , m_scrollArea(new QScrollArea)
+    , m_scroll_area(new QScrollArea)
     , m_container(new QWidget)
     , m_history_edit(new RPythonHistoryTextEdit)
     , m_command_edit(new RPythonCommandTextEdit)
     , m_python_redirect(Toggle::instance().fixed().get_python_redirect())
 {
-    m_scrollArea->setWidgetResizable(true);
-    setWidget(m_scrollArea);
+    m_scroll_area->setWidgetResizable(true);
+    setWidget(m_scroll_area);
 
     m_container->setLayout(new QVBoxLayout);
-    m_scrollArea->setWidget(m_container);
+    m_scroll_area->setWidget(m_container);
 
     QPalette palette = QPalette();
     palette.setColor(QPalette::Base, Qt::white);
@@ -135,7 +122,7 @@ RPythonConsoleDockWidget::RPythonConsoleDockWidget(const QString & title, QWidge
         const QRect rect = m_command_edit->cursorRect();
         const QPoint point = m_command_edit->mapTo(m_container, rect.bottomRight());
 
-        m_scrollArea->ensureVisible(point.x(), point.y(), 20, 20);
+        m_scroll_area->ensureVisible(point.x(), point.y(), 20, 20);
     });
     connect(m_command_edit, &RPythonCommandTextEdit::execute, this, &RPythonConsoleDockWidget::executeCommand);
     connect(m_command_edit, &RPythonCommandTextEdit::navigate, this, &RPythonConsoleDockWidget::navigateCommand);
@@ -146,10 +133,9 @@ QString RPythonConsoleDockWidget::command() const
     return m_command_edit->toPlainText();
 }
 
-void RPythonConsoleDockWidget::setCommand(const QString & value)
-{
+void RPythonConsoleDockWidget::setCommand(const QString & value) const {
     m_command_edit->setPlainText(value);
-    m_command_string = value.toStdString();
+
     // Move cursor to the end of line.
     {
         QTextCursor cursor = m_command_edit->textCursor();
@@ -164,118 +150,48 @@ void RPythonConsoleDockWidget::setCommand(const QString & value)
 
 void RPythonConsoleDockWidget::executeCommand()
 {
-    std::string const code = m_command_edit->toPlainText().trimmed().toStdString();
+    std::string const command = m_command_edit->toPlainText().trimmed().toStdString();
 
-    if (code.length() == 0) {
+    if (command.length() == 0) {
         return;
     }
 
-    appendPastCommand(code);
+    commitCommand(command);
     ++m_last_command_serial;
-    printCommandHistory();
-    m_command_edit->setPlainText("");
-    m_command_string = "";
-    m_current_command_index = static_cast<int>(m_past_command_strings.size());
-    auto & interp = modmesh::python::Interpreter::instance();
 
+    const auto formatted_command = std::format("[{}] {}\n\n", m_last_command_serial, command);
+    writeToHistory(formatted_command);
+
+    m_command_edit->clear();
+    m_current_command_index = static_cast<int>(m_committed_commands.size());
+
+    auto & interp = modmesh::python::Interpreter::instance();
     m_python_redirect.activate();
-    interp.exec_code(code);
+    interp.exec_code(command);
     if (m_python_redirect.is_activated())
     {
-        printCommandStdout(m_python_redirect.stdout_string());
-        printCommandStderr(m_python_redirect.stderr_string());
+        writeToHistory(m_python_redirect.stdout_string());
+        writeToHistory(m_python_redirect.stderr_string());
     }
     m_python_redirect.deactivate();
 }
 
-void RPythonConsoleDockWidget::printCommandHistory()
-{
-    QTextCursor cursor = m_history_edit->textCursor();
-    cursor.movePosition(QTextCursor::End);
-    m_history_edit->setTextCursor(cursor);
-    std::string lead;
-    if (m_past_command_strings.size() > 1)
-    {
-        lead = "\n[";
-    }
-    else
-    {
-        lead = "[";
-    }
-    m_history_edit->insertPlainText(QString::fromStdString(
-        std::format("{}{}] {}\n", lead, m_last_command_serial, m_command_edit->toPlainText().toStdString())));
-    cursor.movePosition(QTextCursor::End);
-    m_history_edit->setTextCursor(cursor);
-}
-
-void RPythonConsoleDockWidget::printCommandStdout(const std::string & stdout_message)
-{
-    QTextCursor cursor = m_history_edit->textCursor();
-    cursor.movePosition(QTextCursor::End);
-    m_history_edit->setTextCursor(cursor);
-    m_history_edit->insertPlainText(QString::fromStdString(stdout_message));
-    cursor.movePosition(QTextCursor::End);
-    m_history_edit->setTextCursor(cursor);
-}
-
-void RPythonConsoleDockWidget::printCommandStderr(const std::string & stderr_message)
-{
-    QTextCursor cursor = m_history_edit->textCursor();
-    cursor.movePosition(QTextCursor::End);
-    m_history_edit->setTextCursor(cursor);
-    m_history_edit->insertPlainText(QString::fromStdString(stderr_message));
-    cursor.movePosition(QTextCursor::End);
-    m_history_edit->setTextCursor(cursor);
-}
-
 void RPythonConsoleDockWidget::navigateCommand(int offset)
 {
-    int const cmdsize = static_cast<int>(m_past_command_strings.size()); // make msc happy.
-    if (cmdsize == m_current_command_index)
+    int const commands_num = static_cast<int>(m_committed_commands.size()); // make msc happy.
+    if (commands_num == m_current_command_index)
     {
-        m_command_string = m_command_edit->toPlainText().toStdString();
+        m_draft_command = m_command_edit->toPlainText().toStdString();
     }
 
-    int new_index = m_current_command_index + offset;
-    if (new_index > cmdsize)
-    {
-        new_index = cmdsize;
-    }
-    else if (new_index < 0)
-    {
-        new_index = 0;
-    }
+    const int new_index = std::clamp(m_current_command_index + offset, 0, commands_num);
 
-    if ((0 == m_past_command_strings.size()) || (new_index == m_current_command_index))
-    {
-        // do nothing
-    }
-    else
-    {
-        if (new_index > m_current_command_index)
-        {
-            if (new_index >= static_cast<int>(m_past_command_strings.size()))
-            {
-                m_command_edit->setPlainText(QString::fromStdString(m_command_string));
-            }
-            else
-            {
-                m_command_edit->setPlainText(QString::fromStdString(m_past_command_strings[new_index]));
-            }
-            m_current_command_index = new_index;
-        }
-        else // new_index < m_current_command_index
-        {
-            m_command_edit->setPlainText(QString::fromStdString(m_past_command_strings[new_index]));
-            m_current_command_index = new_index;
-        }
-        // Move cursor to the end of line.
-        {
-            QTextCursor cursor = m_command_edit->textCursor();
-            cursor.movePosition(QTextCursor::EndOfLine);
-            m_command_edit->setTextCursor(cursor);
-        }
-    }
+    const std::string& command_to_show = new_index == commands_num
+        ? m_draft_command
+        : m_committed_commands[new_index];
+
+    m_current_command_index = new_index;
+    setCommand(QString::fromStdString(command_to_show));
 }
 
 int RPythonConsoleDockWidget::calcHeightToFitContents(const QTextEdit* edit) {
@@ -289,14 +205,23 @@ int RPythonConsoleDockWidget::calcHeightToFitContents(const QTextEdit* edit) {
     return docH + frame + margins;
 }
 
-void RPythonConsoleDockWidget::writeToHistory(const std::string & data)
+void RPythonConsoleDockWidget::commitCommand(const std::string & command)
 {
+    if (command.size() > 0)
+    {
+        m_committed_commands.push_back(command);
+        if (m_committed_commands.size() > m_committed_commands_size_limit)
+        {
+            m_committed_commands.pop_front();
+        }
+    }
+}
+
+void RPythonConsoleDockWidget::writeToHistory(const std::string & data) const {
     QTextCursor cursor = m_history_edit->textCursor();
     cursor.movePosition(QTextCursor::End);
     m_history_edit->setTextCursor(cursor);
     m_history_edit->insertPlainText(QString::fromStdString(data));
-    cursor.movePosition(QTextCursor::End);
-    m_history_edit->setTextCursor(cursor);
 }
 
 } /* end namespace modmesh */
