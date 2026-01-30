@@ -143,7 +143,29 @@ WrapPolygonPad<T>::WrapPolygonPad(pybind11::module & mod, const char * pyname, c
                 return results;
             },
             py::arg("box"))
-        .def("rebuild_rtree", &wrapped_type::rebuild_rtree);
+        .def("rebuild_rtree", &wrapped_type::rebuild_rtree)
+        .def(
+            "decompose_to_trapezoid",
+            [](wrapped_type & self, size_t polygon_id)
+            {
+                return self.decompose_to_trapezoid(polygon_id);
+            },
+            py::arg("polygon_id"))
+        .def(
+            "boolean_union",
+            &wrapped_type::boolean_union,
+            py::arg("p1"),
+            py::arg("p2"))
+        .def(
+            "boolean_intersection",
+            &wrapped_type::boolean_intersection,
+            py::arg("p1"),
+            py::arg("p2"))
+        .def(
+            "boolean_difference",
+            &wrapped_type::boolean_difference,
+            py::arg("p1"),
+            py::arg("p2"));
 }
 
 void wrap_polygon(pybind11::module & mod)
