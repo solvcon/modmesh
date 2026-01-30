@@ -937,8 +937,8 @@ detail::SimpleArrayMixinCalculators<A, T>::median_freq(small_vector<value_type> 
 }
 
 /**
- * Perform matrix multiplication for 2D arrays.
- * This implementation supports only 2D x 2D matrix multiplication.
+ * Perform matrix multiplication for SimpleArrays.
+ * This implementation supports 1D x 1D, 1D x 2D, 2D x 1D, and 2D x 2D matrix multiplication.
  */
 template <typename A, typename T>
 A SimpleArrayMixinCalculators<A, T>::matmul(A const & other) const
@@ -969,43 +969,112 @@ A SimpleArrayMixinCalculators<A, T>::matmul(A const & other) const
         }
     };
 
-    if (this_ndim != 2 || other_ndim != 2)
+    auto check_product_shape = [&](A const * athis, A const * other, ssize_t athis_idx, ssize_t other_idx) -> void
+    {
+        if (athis->shape(athis_idx) != other->shape(other_idx))
+        {
+            throw std::out_of_range(
+                std::format("SimpleArray::matmul(): shape mismatch: this={} other={}",
+                            format_shape(athis),
+                            format_shape(other)));
+        }
+    };
+
+    if ((this_ndim != 2 && this_ndim != 1) || (other_ndim != 2 && other_ndim != 1))
     {
         const std::string err = std::format("SimpleArray::matmul(): unsupported dimensions: "
-                                            "this={} other={}. Only 2D x 2D matrix multiplication is supported",
+                                            "this={} other={}. SimpleArray must be 1D or 2D.",
                                             format_shape(athis),
                                             format_shape(&other));
         throw std::out_of_range(err);
     }
 
-    const size_t m = athis->shape(0);
-    const size_t k = athis->shape(1);
-    const size_t n = other.shape(1);
+    bool this_is_1d = (this_ndim == 1);
+    bool other_is_1d = (other_ndim == 1);
 
-    if (k != other.shape(0))
+    // 1D x 1D
+    if (this_is_1d && other_is_1d)
     {
-        throw std::out_of_range(
-            std::format("SimpleArray::matmul(): shape mismatch: this={} other={}",
-                        format_shape(athis),
-                        format_shape(&other)));
+        check_product_shape(athis, &other, 0, 0);
+        A result(1);
+        value_type v = 0;
+        for (size_t i = 0; i < athis->shape(0); ++i)
+        {
+            v += (*athis)(i)*other.data(i);
+        }
+        result.data(0) = v;
+        return result;
     }
-
-    typename detail::SimpleArrayInternalTypes<T>::shape_type result_shape{m, n};
-    A result(result_shape);
-    result.fill(static_cast<value_type>(0));
-
-    for (size_t i = 0; i < m; ++i)
+    // 1D x 2D
+    else if (this_is_1d)
     {
+        const size_t k = athis->shape(0);
+        const size_t n = other.shape(1);
+        check_product_shape(athis, &other, 0, 0);
+        A result(n);
+
         for (size_t j = 0; j < n; ++j)
         {
+            value_type v = 0;
             for (size_t l = 0; l < k; ++l)
             {
-                result(i, j) += athis->operator()(i, l) * other(l, j);
+                v += (*athis)(l)*other(l, j);
+            }
+            result.data(j) = v;
+        }
+        return result;
+    }
+    // 2D x 1D
+    else if (other_is_1d)
+    {
+        const size_t m = athis->shape(0);
+        const size_t k = athis->shape(1);
+
+        check_product_shape(athis, &other, 1, 0);
+        A result(m);
+
+        for (size_t i = 0; i < m; ++i)
+        {
+            value_type v = 0;
+            for (size_t l = 0; l < k; ++l)
+            {
+                v += (*athis)(i, l) * other(l);
+            }
+            result.data(i) = v;
+        }
+        return result;
+    }
+    // 2D x 2D
+    else
+    {
+        const size_t m = athis->shape(0);
+        const size_t k = athis->shape(1);
+        const size_t n = other.shape(1);
+        check_product_shape(athis, &other, 1, 0);
+
+        shape_type result_shape{m, n};
+        A result(result_shape);
+
+        for (size_t i = 0; i < m; ++i)
+        {
+            for (size_t j = 0; j < n; ++j)
+            {
+                value_type v = 0;
+                for (size_t l = 0; l < k; ++l)
+                {
+                    v += (*athis)(i, l) * other(l, j);
+                }
+                result(i, j) = v;
             }
         }
+        return result;
     }
 
-    return result;
+    throw std::out_of_range(
+        std::format("SimpleArray::matmul(): this={} other={}"
+                    " cannot perform matrix multiplication.",
+                    format_shape(athis),
+                    format_shape(&other)));
 }
 
 /**
