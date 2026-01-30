@@ -29,6 +29,7 @@
 #include <type_traits>
 #include <cmath>
 #include <stdexcept>
+#include <complex>
 
 namespace modmesh
 {
@@ -55,6 +56,12 @@ struct ComplexImpl
     ComplexImpl(T t)
         : real_v(t)
         , imag_v(0.0)
+    {
+    }
+
+    ComplexImpl(std::complex<T> const & c)
+        : real_v(c.real())
+        , imag_v(c.imag())
     {
     }
 
@@ -125,6 +132,7 @@ struct ComplexImpl
         return *this;
     }
 
+    std::complex<T> to_std_complex() const { return std::complex<T>(real_v, imag_v); }
     T real() const { return real_v; }
     T imag() const { return imag_v; }
     T norm() const { return real_v * real_v + imag_v * imag_v; }

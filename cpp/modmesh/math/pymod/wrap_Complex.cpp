@@ -71,7 +71,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapComplex
             .def(
                 py::init(
                     [](const wrapped_type & other)
-                    { return std::make_shared<wrapped_type>(wrapped_type{other.real_v, other.imag_v}); }),
+                    { return std::make_shared<wrapped_type>(other); }),
                 py::arg("complex"))
             .def(
                 py::init(
@@ -106,6 +106,11 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapComplex
             .def_readonly("imag", &wrapped_type::imag_v)
             .def("norm", &wrapped_type::norm)
             .def("conj", &wrapped_type::conj)
+            .def("__complex__",
+                 [](const wrapped_type & self)
+                 {
+                     return self.to_std_complex();
+                 })
             .def("dtype",
                  []()
                  { return complex_dtype; });
