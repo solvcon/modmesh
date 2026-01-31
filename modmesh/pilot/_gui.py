@@ -45,6 +45,7 @@ if _pcore.enable:
     from . import _burgers1d
     from . import _svg_gui
     from . import _linear_wave
+    from . import _canvas
     from . import _profiling
 
 __all__ = [  # noqa: F822
@@ -80,6 +81,7 @@ class _Controller(metaclass=_Singleton):
         self.burgers = None
         self.openprofiledata = None
         self.runprofiling = None
+        self.canvas = None
 
     def __getattr__(self, name):
         return None if self._rmgr is None else getattr(self._rmgr, name)
@@ -99,6 +101,7 @@ class _Controller(metaclass=_Singleton):
         self.linear_wave = _linear_wave.LinearWave1DApp(mgr=self._rmgr)
         self.openprofiledata = _profiling.Profiling(mgr=self._rmgr)
         self.runprofiling = _profiling.RunProfiling(mgr=self._rmgr)
+        self.canvas = _canvas.CanvasMenu(mgr=self._rmgr)
         self.populate_menu()
         self._rmgr.show()
         return self._rmgr.exec()
@@ -131,6 +134,7 @@ class _Controller(metaclass=_Singleton):
         self.linear_wave.populate_menu()
         self.openprofiledata.populate_menu()
         self.runprofiling.populate_menu()
+        self.canvas.populate_menu()
 
         if sys.platform != 'darwin':
             _addAction(
