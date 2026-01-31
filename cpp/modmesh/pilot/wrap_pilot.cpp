@@ -351,6 +351,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
             .def_property_readonly("meshMenu", &wrapped_type::meshMenu)
             .def_property_readonly("windowMenu", &wrapped_type::windowMenu)
             .def_property_readonly("profilingMenu", &wrapped_type::profilingMenu)
+            .def_property_readonly("canvaMenu", &wrapped_type::canvaMenu)
             .def(
                 "quit",
                 [](wrapped_type & self)
