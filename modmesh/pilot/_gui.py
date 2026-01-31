@@ -45,8 +45,8 @@ if _pcore.enable:
     from . import _burgers1d
     from . import _svg_gui
     from . import _linear_wave
-    from . import _profiling
     from . import _canvas
+    from . import _profiling
 
 __all__ = [  # noqa: F822
     'controller',
