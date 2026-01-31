@@ -41,6 +41,41 @@ struct select_real_t;
 } /* end namespace detail */
 
 /**
+ * @brief Return type for `KalmanFilter<T>::batch_filter(...)`.
+ *
+ * @details
+ * Due to the iteration of the predict and update steps in `KalmanFilter<T>::batch_filter(...)`, the
+ * intermediate results are stored for each time step, including prior and posterior
+ * states and their covariances.
+ * @see BFType<T> KalmanFilter<T>::batch_filter(array_type const & zs)
+ * @see BFType<T> KalmanFilter<T>::batch_filter(array_type const & zs, array_type const & us)
+ */
+template <typename T>
+struct BFType
+{
+    using tuple_type = std::tuple<SimpleArray<T>, SimpleArray<T>, SimpleArray<T>, SimpleArray<T>>;
+
+    BFType(size_t observation_size, size_t state_size)
+    {
+        small_vector<size_t> xs_shape{observation_size, state_size};
+        small_vector<size_t> ps_shape{observation_size, state_size, state_size};
+        prior_state = SimpleArray<T>(xs_shape);
+        prior_state_covariance = SimpleArray<T>(ps_shape);
+        posterior_state = SimpleArray<T>(xs_shape);
+        posterior_state_covariance = SimpleArray<T>(ps_shape);
+    }
+    tuple_type to_tuple() const
+    {
+        return std::make_tuple(prior_state, prior_state_covariance, posterior_state, posterior_state_covariance);
+    }
+
+    SimpleArray<T> prior_state;
+    SimpleArray<T> prior_state_covariance;
+    SimpleArray<T> posterior_state;
+    SimpleArray<T> posterior_state_covariance;
+}; /* end struct BFType */
+
+/**
  * Reference: FilterPy KalmanFilter documentation
  * https://filterpy.readthedocs.io/en/latest/kalman/KalmanFilter.html
  */
@@ -205,6 +240,31 @@ public:
         update_covariance(k);
     }
 
+    /**
+     * @brief Predict and update in batch mode without a batch of control input us.
+     *
+     * @ref https://filterpy.readthedocs.io/en/latest/_modules/filterpy/kalman/kalman_filter.html#KalmanFilter.batch_filter
+     *
+     * @param zs A batch of measurement inputs.
+     *
+     * @see BFType<T> KalmanFilter<T>::batch_filter(array_type const & zs, array_type const & us)
+     * @see struct BFType<T>;
+     */
+    BFType<T> batch_filter(array_type const & zs);
+
+    /**
+     * @brief Predict and update in batch mode with a batch of control input us.
+     *
+     * @ref https://filterpy.readthedocs.io/en/latest/_modules/filterpy/kalman/kalman_filter.html#KalmanFilter.batch_filter
+     *
+     * @param zs A batch of measurement inputs.
+     * @param us A batch of control inputs.
+     *
+     * @see BFType<T> KalmanFilter<T>::batch_filter(array_type const & zs)
+     * @see struct BFType<T>;
+     */
+    BFType<T> batch_filter(array_type const & zs, array_type const & us);
+
 private:
 
     void check_dimensions();
@@ -222,6 +282,10 @@ private:
     array_type kalman_gain(array_type const & s);
     void update_state(array_type const & k, array_type const & y);
     void update_covariance(array_type const & k);
+
+    // Batch filter
+    void predict_and_update(array_type const & z, BFType<T> & bfs, size_t iter);
+    void predict_and_update(array_type const & z, array_type const & u, BFType<T> & bfs, size_t iter);
 
 }; /* end class KalmanFilter */
 
@@ -480,6 +544,117 @@ void KalmanFilter<T>::update_covariance(array_type const & k)
 
     // P <- 0.5(P + P^H)  (m_p <- 0.5(m_p + m_p^H))
     m_p = m_p.symmetrize();
+}
+
+template <typename T>
+BFType<T> KalmanFilter<T>::batch_filter(array_type const & zs)
+{
+    size_t z_m = zs.shape(0);
+    size_t z_n = zs.shape(1);
+    array_type z(small_vector<size_t>{z_n});
+    BFType<T> bfs(z_m, m_state_size);
+
+    for (size_t iter = 0; iter < z_m; ++iter)
+    {
+        for (size_t j = 0; j < z_n; ++j)
+        {
+            z(j) = zs(iter, j);
+        }
+        predict_and_update(z, bfs, iter);
+    }
+    return bfs;
+}
+
+template <typename T>
+void KalmanFilter<T>::predict_and_update(array_type const & z, BFType<T> & bfs, size_t iter)
+{
+    SimpleArray<T> & prior_state = bfs.prior_state;
+    SimpleArray<T> & prior_state_covariance = bfs.prior_state_covariance;
+    SimpleArray<T> & posterior_state = bfs.posterior_state;
+    SimpleArray<T> & posterior_state_covariance = bfs.posterior_state_covariance;
+
+    predict();
+    for (size_t j = 0; j < m_state_size; ++j)
+    {
+        prior_state(iter, j) = m_x(j);
+        for (size_t k = 0; k < m_state_size; ++k)
+        {
+            prior_state_covariance(iter, j, k) = m_p(j, k);
+        }
+    }
+
+    update(z);
+    for (size_t j = 0; j < m_state_size; ++j)
+    {
+        posterior_state(iter, j) = m_x(j);
+        for (size_t k = 0; k < m_state_size; ++k)
+        {
+            posterior_state_covariance(iter, j, k) = m_p(j, k);
+        }
+    }
+}
+
+template <typename T>
+BFType<T> KalmanFilter<T>::batch_filter(array_type const & zs, array_type const & us)
+{
+    size_t z_m = zs.shape(0);
+    size_t z_n = zs.shape(1);
+    array_type z(small_vector<size_t>{z_n});
+    BFType<T> bfs(z_m, m_state_size);
+
+    array_type u;
+    size_t u_n = 0;
+
+    size_t u_m = us.shape(0);
+    if (u_m != z_m)
+    {
+        throw std::invalid_argument("KalmanFilter::batch_filter: The number of control inputs must match the number of measurements.");
+    }
+    u_n = us.shape(1);
+    u = array_type(small_vector<size_t>{u_n});
+
+    for (size_t iter = 0; iter < z_m; ++iter)
+    {
+        for (size_t j = 0; j < z_n; ++j)
+        {
+            z(j) = zs(iter, j);
+        }
+        for (size_t j = 0; j < u_n; ++j)
+        {
+            u(j) = us(iter, j);
+        }
+        predict_and_update(z, u, bfs, iter);
+    }
+    return bfs;
+}
+
+template <typename T>
+void KalmanFilter<T>::predict_and_update(array_type const & z, array_type const & u, BFType<T> & bfs, size_t iter)
+{
+    SimpleArray<T> & prior_state = bfs.prior_state;
+    SimpleArray<T> & prior_state_covariance = bfs.prior_state_covariance;
+    SimpleArray<T> & posterior_state = bfs.posterior_state;
+    SimpleArray<T> & posterior_state_covariance = bfs.posterior_state_covariance;
+
+    predict(u);
+    for (size_t j = 0; j < m_state_size; ++j)
+    {
+        prior_state(iter, j) = m_x(j);
+        for (size_t k = 0; k < m_state_size; ++k)
+        {
+            prior_state_covariance(iter, j, k) = m_p(j, k);
+        }
+    }
+
+    update(z);
+    for (size_t j = 0; j < m_state_size; ++j)
+    {
+        posterior_state(iter, j) = m_x(j);
+        for (size_t k = 0; k < m_state_size; ++k)
+        {
+            posterior_state_covariance(iter, j, k) = m_p(j, k);
+        }
+    }
 }
 
 } /* end namespace modmesh */
