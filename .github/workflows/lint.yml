@@ -256,7 +256,6 @@ jobs:
           ls -al $(which python3)
           # suppress the warning of pip because brew forces PEP668 since python3.12
           python3 -m pip -v install --upgrade setuptools --break-system-packages
-          python3 -m pip -v install --upgrade pip --break-system-packages
           python3 -m pip -v install --upgrade numpy matplotlib pytest flake8 jsonschema
           # For now (2024/10/22), pyside6 6.6.3 does not support Python 3.13.
           # Use --ignore-requires-python to force installation.

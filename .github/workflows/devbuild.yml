@@ -162,6 +162,11 @@ jobs:
       # Prevent OOM during Qt builds: extra swap gives compiler/linker headroom so cc1plus isn't killed.
       if: runner.os == 'Linux'
       run: |
+        # If a swapfile exists, remove it first to avoid "fallocate: Text file busy" error
+        if sudo swapon --show | grep -q /swapfile; then
+          sudo swapoff -a
+          sudo rm /swapfile
+        fi
         sudo fallocate -l 8G /swapfile
         sudo chmod 600 /swapfile
         sudo mkswap /swapfile
