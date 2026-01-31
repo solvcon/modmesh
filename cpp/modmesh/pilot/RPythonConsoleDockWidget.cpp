@@ -151,7 +151,7 @@ QString RPythonConsoleDockWidget::command() const
     return m_command_edit->toPlainText();
 }
 
-void RPythonConsoleDockWidget::setCommand(const QString & value) const
+void RPythonConsoleDockWidget::setCommand(const QString & value)
 {
     m_command_edit->setPlainText(value);
 
@@ -171,7 +171,7 @@ void RPythonConsoleDockWidget::executeCommand()
 {
     std::string const command = m_command_edit->toPlainText().trimmed().toStdString();
 
-    if (command.length() == 0)
+    if (command.empty())
     {
         return;
     }
@@ -190,8 +190,8 @@ void RPythonConsoleDockWidget::executeCommand()
     interp.exec_code(command);
     if (m_python_redirect.is_activated())
     {
-        writeToHistory(m_python_redirect.stdout_string());
-        writeToHistory(m_python_redirect.stderr_string());
+        printCommandStdout(m_python_redirect.stdout_string());
+        printCommandStderr(m_python_redirect.stderr_string());
     }
     m_python_redirect.deactivate();
 }
@@ -228,14 +228,21 @@ int RPythonConsoleDockWidget::calcHeightToFitContents(const QTextEdit * edit)
 
 void RPythonConsoleDockWidget::commitCommand(const std::string & command)
 {
-    if (command.size() > 0)
+    m_committed_commands.push_back(command);
+
+    if (m_committed_commands.size() > m_committed_commands_size_limit)
     {
-        m_committed_commands.push_back(command);
-        if (m_committed_commands.size() > m_committed_commands_size_limit)
-        {
-            m_committed_commands.pop_front();
-        }
+        m_committed_commands.pop_front();
     }
+}
+
+void RPythonConsoleDockWidget::printCommandStdout(const std::string &stdout_message) const {
+    writeToHistory(stdout_message);
+
+}
+
+void RPythonConsoleDockWidget::printCommandStderr(const std::string &stderr_message) const {
+    writeToHistory(stderr_message);
 }
 
 void RPythonConsoleDockWidget::writeToHistory(const std::string & data) const

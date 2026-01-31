@@ -80,6 +80,7 @@ public:
         Qt::WindowFlags flags = Qt::WindowFlags());
 
     QString command() const;
+    void setCommand(QString const & value);
 
     bool hasPythonRedirect() const { return m_python_redirect.is_enabled(); }
 
@@ -93,7 +94,6 @@ public:
 
 public slots:
 
-    void setCommand(QString const & value) const;
     void executeCommand();
     void navigateCommand(int offset);
 
@@ -101,6 +101,8 @@ private:
     static int calcHeightToFitContents(const QTextEdit * edit);
 
     void commitCommand(std::string const & command);
+    void printCommandStdout(const std::string & stdout_message) const;
+    void printCommandStderr(const std::string & stderr_message) const;
 
     QScrollArea * m_scroll_area = nullptr;
     QWidget * m_container = nullptr;
