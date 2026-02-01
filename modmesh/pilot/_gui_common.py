@@ -35,7 +35,7 @@ class PilotFeature(QtCore.QObject):
 
     :ivar _mgr:
         The modmesh pilot application manager implemented with Qt in C++.
-    :itype mgr: modmesh.pilot.RManager
+    :vartype mgr: modmesh.pilot.RManager
     """
 
     def __init__(self, *args, **kw):

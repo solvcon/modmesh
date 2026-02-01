@@ -86,7 +86,8 @@ class EPath(object):
 
         :param start_pt: coordinates of starting point.
         :param end_pt: coordinates of ending point.
-        :param rx, ry: radius of the ellipse.
+        :param rx: radius of the ellipse.
+        :param ry: radius of the ellipse.
         :param phi_deg: rotation of the ellipse (in degree).
         :param large_arc: arc size.
         :type large_arc: boolean (1: larger, 0: smaller)
