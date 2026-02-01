@@ -236,12 +236,13 @@ void RPythonConsoleDockWidget::commitCommand(const std::string & command)
     }
 }
 
-void RPythonConsoleDockWidget::printCommandStdout(const std::string &stdout_message) const {
+void RPythonConsoleDockWidget::printCommandStdout(const std::string & stdout_message) const
+{
     writeToHistory(stdout_message);
-
 }
 
-void RPythonConsoleDockWidget::printCommandStderr(const std::string &stderr_message) const {
+void RPythonConsoleDockWidget::printCommandStderr(const std::string & stderr_message) const
+{
     writeToHistory(stderr_message);
 }
 
