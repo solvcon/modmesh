@@ -168,6 +168,90 @@ WrapPolygonPad<T>::WrapPolygonPad(pybind11::module & mod, const char * pyname, c
             py::arg("p2"));
 }
 
+template <typename T>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapTrapezoidPad
+    : public WrapBase<WrapTrapezoidPad<T>, TrapezoidPad<T>, std::shared_ptr<TrapezoidPad<T>>>
+{
+public:
+    using base_type = WrapBase<WrapTrapezoidPad<T>, TrapezoidPad<T>, std::shared_ptr<TrapezoidPad<T>>>;
+    using wrapped_type = typename base_type::wrapped_type;
+    using value_type = typename wrapped_type::value_type;
+    using point_type = typename wrapped_type::point_type;
+
+    friend typename base_type::root_base_type;
+
+protected:
+    WrapTrapezoidPad(pybind11::module & mod, char const * pyname, char const * pydoc);
+};
+
+template <typename T>
+WrapTrapezoidPad<T>::WrapTrapezoidPad(pybind11::module & mod, const char * pyname, const char * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def(
+            py::init(
+                [](uint8_t ndim)
+                {
+                    return wrapped_type::construct(ndim);
+                }),
+            py::arg("ndim"))
+        .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def_property_readonly("size", &wrapped_type::size)
+        .def("x0", py::overload_cast<size_t>(&wrapped_type::x0, py::const_), py::arg("index"))
+        .def("y0", py::overload_cast<size_t>(&wrapped_type::y0, py::const_), py::arg("index"))
+        .def("z0", py::overload_cast<size_t>(&wrapped_type::z0, py::const_), py::arg("index"))
+        .def("x1", py::overload_cast<size_t>(&wrapped_type::x1, py::const_), py::arg("index"))
+        .def("y1", py::overload_cast<size_t>(&wrapped_type::y1, py::const_), py::arg("index"))
+        .def("z1", py::overload_cast<size_t>(&wrapped_type::z1, py::const_), py::arg("index"))
+        .def("x2", py::overload_cast<size_t>(&wrapped_type::x2, py::const_), py::arg("index"))
+        .def("y2", py::overload_cast<size_t>(&wrapped_type::y2, py::const_), py::arg("index"))
+        .def("z2", py::overload_cast<size_t>(&wrapped_type::z2, py::const_), py::arg("index"))
+        .def("x3", py::overload_cast<size_t>(&wrapped_type::x3, py::const_), py::arg("index"))
+        .def("y3", py::overload_cast<size_t>(&wrapped_type::y3, py::const_), py::arg("index"))
+        .def("z3", py::overload_cast<size_t>(&wrapped_type::z3, py::const_), py::arg("index"));
+}
+
+template <typename T>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapTrapezoidalDecomposer
+    : public WrapBase<WrapTrapezoidalDecomposer<T>, TrapezoidalDecomposer<T>>
+{
+public:
+    using base_type = WrapBase<WrapTrapezoidalDecomposer<T>, TrapezoidalDecomposer<T>>;
+    using wrapped_type = typename base_type::wrapped_type;
+    using value_type = typename wrapped_type::value_type;
+    using point_type = typename wrapped_type::point_type;
+    using trapezoid_pad_type = typename wrapped_type::trapezoid_pad_type;
+
+    friend typename base_type::root_base_type;
+
+protected:
+    WrapTrapezoidalDecomposer(pybind11::module & mod, char const * pyname, char const * pydoc);
+};
+
+template <typename T>
+WrapTrapezoidalDecomposer<T>::WrapTrapezoidalDecomposer(pybind11::module & mod, const char * pyname, const char * pydoc)
+    : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def(py::init<uint8_t>(), py::arg("ndim"))
+        .def(
+            "decompose",
+            [](wrapped_type & self, size_t polygon_id, std::vector<point_type> const & points)
+            {
+                return self.decompose(polygon_id, points);
+            },
+            py::arg("polygon_id"),
+            py::arg("points"))
+        .def("num_trapezoids", &wrapped_type::num_trapezoids, py::arg("polygon_id"))
+        .def("trapezoids", py::overload_cast<>(&wrapped_type::trapezoids))
+        .def("clear", &wrapped_type::clear);
+}
+
 void wrap_polygon(pybind11::module & mod)
 {
     WrapPolygon<float>::commit(mod, "Polygon3dFp32", "Polygon3dFp32");
@@ -175,6 +259,12 @@ void wrap_polygon(pybind11::module & mod)
 
     WrapPolygonPad<float>::commit(mod, "PolygonPadFp32", "PolygonPadFp32");
     WrapPolygonPad<double>::commit(mod, "PolygonPadFp64", "PolygonPadFp64");
+
+    WrapTrapezoidPad<float>::commit(mod, "TrapezoidPadFp32", "TrapezoidPadFp32");
+    WrapTrapezoidPad<double>::commit(mod, "TrapezoidPadFp64", "TrapezoidPadFp64");
+
+    WrapTrapezoidalDecomposer<float>::commit(mod, "TrapezoidalDecomposerFp32", "TrapezoidalDecomposerFp32");
+    WrapTrapezoidalDecomposer<double>::commit(mod, "TrapezoidalDecomposerFp64", "TrapezoidalDecomposerFp64");
 }
 
 } /* end namespace python */

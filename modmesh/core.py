@@ -163,6 +163,10 @@ list_of_universe = [
     'PolygonPadFp64',
     'Polygon3dFp32',
     'Polygon3dFp64',
+    'TrapezoidPadFp32',
+    'TrapezoidPadFp64',
+    'TrapezoidalDecomposerFp32',
+    'TrapezoidalDecomposerFp64',
 ]
 
 __all__ = (  # noqa: F822
