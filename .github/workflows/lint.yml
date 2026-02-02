@@ -66,6 +66,21 @@ jobs:
       run: |
         echo "github.event_name: ${{ github.event_name }}"
 
+    - name: Add 8G swap (Ubuntu)
+      # Prevent hitting runner's resource limits when running clang-tidy
+      if: runner.os == 'Linux'
+      run: |
+        # If a swapfile exists, remove it first to avoid "fallocate: Text file busy" error
+        if sudo swapon --show | grep -q /swapfile; then
+          sudo swapoff -a
+          sudo rm /swapfile
+        fi
+        sudo fallocate -l 8G /swapfile
+        sudo chmod 600 /swapfile
+        sudo mkswap /swapfile
+        sudo swapon /swapfile
+        free -h
+
     # Cache the downloaded/extracted Qt bits
     - name: Cache Qt download
       uses: actions/cache@v3
