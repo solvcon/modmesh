@@ -28,6 +28,21 @@ jobs:
         run: |
           echo "github.event_name: ${{ github.event_name }}"
 
+      - name: Add 8G swap (Ubuntu)
+        # Prevent hitting runner's resource limits
+        if: runner.os == 'Linux'
+        run: |
+          # If a swapfile exists, remove it first to avoid "fallocate: Text file busy" error
+          if sudo swapon --show | grep -q /swapfile; then
+            sudo swapoff -a
+            sudo rm /swapfile
+          fi
+          sudo fallocate -l 8G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          free -h
+
       - name: Run clang-format style check for C/C++/Protobuf programs.
         uses: jidicula/clang-format-action@v4.16.0
         with:
