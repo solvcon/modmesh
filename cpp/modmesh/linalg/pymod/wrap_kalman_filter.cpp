@@ -37,6 +37,42 @@ namespace python
 {
 
 template <typename T>
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapKalmanStateInfo
+    : public WrapBase<WrapKalmanStateInfo<T>, KalmanStateInfo<T>>
+{
+    using base_type = WrapBase<WrapKalmanStateInfo<T>, KalmanStateInfo<T>>;
+    using wrapped_type = typename base_type::wrapped_type;
+    using array_type = SimpleArray<T>;
+
+    friend base_type;
+
+    WrapKalmanStateInfo(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : base_type(mod, pyname, pydoc)
+    {
+        namespace py = pybind11;
+
+        (*this)
+            .def(
+                py::init(
+                    [](size_t observation_size, size_t state_size)
+                    {
+                        return wrapped_type(observation_size, state_size);
+                    }),
+                py::arg("observation_size"),
+                py::arg("state_size"))
+            .def_readwrite(
+                "prior_states", &wrapped_type::prior_states)
+            .def_readwrite(
+                "prior_states_covariance", &wrapped_type::prior_states_covariance)
+            .def_readwrite(
+                "posterior_states", &wrapped_type::posterior_states)
+            .def_readwrite(
+                "posterior_states_covariance", &wrapped_type::posterior_states_covariance);
+    }
+
+}; /* end class KalmanStateInfo */
+
+template <typename T>
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapKalmanFilter
     : public WrapBase<WrapKalmanFilter<T>, KalmanFilter<T>>
 {
@@ -93,10 +129,33 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapKalmanFilter
             .def(
                 "update",
                 &wrapped_type::update,
-                py::arg("z"));
+                py::arg("z"))
+            .def(
+                "batch_filter",
+                [](wrapped_type & self, array_type const & zs, array_type const & us)
+                {
+                    return self.batch_filter(zs, us);
+                },
+                py::arg("zs"),
+                py::arg("us"))
+            .def(
+                "batch_filter",
+                [](wrapped_type & self, array_type const & zs)
+                {
+                    return self.batch_filter(zs);
+                },
+                py::arg("zs"));
     }
 
 }; /* end class WrapKalmanFilter */
+
+void wrap_states_info(pybind11::module & mod)
+{
+    WrapKalmanStateInfo<float>::commit(mod, "KalmanStateInfoFp32", "KalmanStateInfoFp32");
+    WrapKalmanStateInfo<double>::commit(mod, "KalmanStateInfoFp64", "KalmanStateInfoFp64");
+    WrapKalmanStateInfo<Complex<float>>::commit(mod, "KalmanStateInfoComplex64", "KalmanStateInfoComplex64");
+    WrapKalmanStateInfo<Complex<double>>::commit(mod, "KalmanStateInfoComplex128", "KalmanStateInfoComplex128");
+}
 
 void wrap_kalman_filter(pybind11::module & mod)
 {
