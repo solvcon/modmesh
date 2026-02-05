@@ -32,11 +32,9 @@ jobs:
         # Prevent hitting runner's resource limits
         if: runner.os == 'Linux'
         run: |
-          # If a swapfile exists, remove it first to avoid "fallocate: Text file busy" error
-          if sudo swapon --show | grep -q /swapfile; then
-            sudo swapoff -a
-            sudo rm /swapfile
-          fi
+          # Remove /swapfile first to avoid "fallocate: Text file busy" error
+          sudo swapoff -a
+          sudo rm -f /swapfile
           sudo fallocate -l 8G /swapfile
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
@@ -85,11 +83,9 @@ jobs:
       # Prevent hitting runner's resource limits when running clang-tidy
       if: runner.os == 'Linux'
       run: |
-        # If a swapfile exists, remove it first to avoid "fallocate: Text file busy" error
-        if sudo swapon --show | grep -q /swapfile; then
-          sudo swapoff -a
-          sudo rm /swapfile
-        fi
+        # Remove /swapfile first to avoid "fallocate: Text file busy" error
+        sudo swapoff -a
+        sudo rm -f /swapfile
         sudo fallocate -l 8G /swapfile
         sudo chmod 600 /swapfile
         sudo mkswap /swapfile
