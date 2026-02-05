@@ -957,6 +957,17 @@ private:
         size_t source_polygon;
     }; /* end struct YTrap */
 
+    struct Edge
+    {
+        value_type lower_y, upper_y;
+        value_type dxdy; // delta x / delta y
+        value_type dzdy; // delta z / delta y
+        value_type x_at_lower_y;
+        value_type z_at_lower_y; // TODO: currently unused for 2D decomposition
+    }; /* end struct Edge */
+
+    using SweepEvent = std::vector<Edge>;
+
 public:
 
     TrapezoidalDecomposer(uint8_t ndim)
@@ -976,38 +987,9 @@ public:
      *
      * @param polygon_id ID of the polygon to decompose
      * @param points Vector of polygon vertices in order
-     * @return Pair of begin and end indices into the trapezoid pad
+     * @return Pair of begin and end indices into the trapezoid pad, where the begin index is inclusive and the end index is exclusive
      */
-    std::pair<size_t, size_t> decompose(size_t polygon_id, std::vector<point_type> const & points)
-    {
-        if (polygon_id >= m_begins.size())
-        {
-            m_begins.reserve(polygon_id + 1);
-            m_ends.reserve(polygon_id + 1);
-            while (m_begins.size() <= polygon_id)
-            {
-                m_begins.push_back(-1);
-                m_ends.push_back(-1);
-            }
-        }
-
-        if (m_begins[polygon_id] != -1)
-        {
-            return {static_cast<size_t>(m_begins[polygon_id]), static_cast<size_t>(m_ends[polygon_id])};
-        }
-
-        size_t const begin_index = m_trapezoids->size();
-
-        // TODO: Implement sweep line algorithm to generate trapezoids
-        // For now, just mark the range as empty
-
-        size_t const end_index = m_trapezoids->size();
-
-        m_begins[polygon_id] = static_cast<ssize_type>(begin_index);
-        m_ends[polygon_id] = static_cast<ssize_type>(end_index);
-
-        return {begin_index, end_index};
-    }
+    std::pair<size_t, size_t> decompose(size_t polygon_id, std::vector<point_type> const & points);
 
     size_t num_trapezoids(size_t polygon_id) const
     {
@@ -1030,6 +1012,10 @@ public:
 
 private:
 
+    void build_edges_and_events(std::vector<point_type> const & points,
+                                std::map<value_type, SweepEvent> & events,
+                                std::vector<value_type> & y_values);
+
     std::shared_ptr<trapezoid_pad_type> m_trapezoids;
     std::vector<ssize_type> m_begins;
     std::vector<ssize_type> m_ends;
@@ -1038,6 +1024,160 @@ private:
 
 using TrapezoidalDecomposerFp32 = TrapezoidalDecomposer<float>;
 using TrapezoidalDecomposerFp64 = TrapezoidalDecomposer<double>;
+
+template <typename T>
+void TrapezoidalDecomposer<T>::build_edges_and_events(std::vector<point_type> const & points,
+                                                      std::map<value_type, SweepEvent> & events,
+                                                      std::vector<value_type> & y_values)
+{
+    size_t const npoints = points.size();
+    for (size_t i = 0; i < npoints; ++i)
+    {
+        point_type const & p1 = points[i];
+        point_type const & p2 = points[(i + 1) % npoints];
+
+        if (p1.y() == p2.y())
+        {
+            continue;
+        }
+
+        Edge edge;
+        if (p1.y() < p2.y())
+        {
+            edge.lower_y = p1.y();
+            edge.upper_y = p2.y();
+            edge.x_at_lower_y = p1.x();
+            edge.dxdy = (p2.x() - p1.x()) / (p2.y() - p1.y());
+            if (m_trapezoids->ndim() == 3)
+            {
+                // TODO: currently unused for 2D decomposition
+                throw std::runtime_error("TrapezoidalDecomposer::build_edges_and_events: 3D edge dzdy not implemented");
+            }
+        }
+        else
+        {
+            edge.lower_y = p2.y();
+            edge.upper_y = p1.y();
+            edge.x_at_lower_y = p2.x();
+            edge.dxdy = (p1.x() - p2.x()) / (p1.y() - p2.y());
+            if (m_trapezoids->ndim() == 3)
+            {
+                // TODO: currently unused for 2D decomposition
+                throw std::runtime_error("TrapezoidalDecomposer::build_edges_and_events: 3D edge dzdy not implemented");
+            }
+        }
+
+        events[edge.lower_y].push_back(edge);
+    }
+
+    // TODO: optimize the collection of unique y-values
+    std::set<value_type> unique_y_values;
+    for (const auto & [_, edges] : events)
+    {
+        for (const Edge & e : edges)
+        {
+            unique_y_values.insert(e.lower_y);
+            unique_y_values.insert(e.upper_y);
+        }
+    }
+    y_values.assign(unique_y_values.begin(), unique_y_values.end());
+}
+
+template <typename T>
+std::pair<size_t, size_t> TrapezoidalDecomposer<T>::decompose(size_t polygon_id, std::vector<point_type> const & points)
+{
+    if (polygon_id >= m_begins.size())
+    {
+        m_begins.reserve(polygon_id + 1);
+        m_ends.reserve(polygon_id + 1);
+        while (m_begins.size() <= polygon_id)
+        {
+            m_begins.push_back(-1);
+            m_ends.push_back(-1);
+        }
+    }
+
+    if (m_begins[polygon_id] != -1)
+    {
+        return {static_cast<size_t>(m_begins[polygon_id]), static_cast<size_t>(m_ends[polygon_id])};
+    }
+
+    size_t const begin_index = m_trapezoids->size();
+
+    std::map<value_type, SweepEvent> events; // y-value to events starting at that y
+    std::vector<value_type> y_values;
+    build_edges_and_events(points, events, y_values);
+
+    if (y_values.size() < 2)
+    {
+        // Not enough y-values to form trapezoids
+        m_begins[polygon_id] = static_cast<ssize_type>(begin_index);
+        m_ends[polygon_id] = static_cast<ssize_type>(begin_index);
+        return {begin_index, begin_index};
+    }
+
+    std::vector<Edge> active_edges;
+
+    // Sweep from bottom to top
+    for (size_t i = 0; i < y_values.size() - 1; ++i)
+    {
+        value_type y_current = y_values[i];
+        value_type y_next = y_values[i + 1];
+
+        // Remove ending edges from the active list
+        // TODO: be aware of O(n^2) complexity
+        active_edges.erase(std::remove_if(active_edges.begin(), active_edges.end(), [y_current](const Edge & e)
+                                          { return e.upper_y == y_current; }),
+                           active_edges.end());
+
+        // Add starting edges to the active list
+        for (const Edge & e : events[y_current])
+        {
+            active_edges.push_back(e);
+        }
+
+        if (active_edges.size() % 2 != 0)
+        {
+            throw std::runtime_error("TrapezoidalDecomposer::decompose: odd number of active edges at y = " + std::to_string(y_current));
+        }
+
+        // Sort active edges by x at current y
+        std::sort(active_edges.begin(), active_edges.end(), [y_current](const Edge & a, const Edge & b)
+                  {
+                          value_type ax = a.x_at_lower_y + a.dxdy * (y_current - a.lower_y);
+                          value_type bx = b.x_at_lower_y + b.dxdy * (y_current - b.lower_y);
+                          return ax < bx; });
+
+        // Create trapezoids between pairs of active edges
+        for (size_t j = 0; j < active_edges.size() - 1; j += 2)
+        {
+            const Edge & left_edge = active_edges[j];
+            const Edge & right_edge = active_edges[j + 1];
+
+            value_type lower_x0 = left_edge.x_at_lower_y + left_edge.dxdy * (y_current - left_edge.lower_y);
+            value_type lower_x1 = right_edge.x_at_lower_y + right_edge.dxdy * (y_current - right_edge.lower_y);
+            value_type upper_x0 = left_edge.x_at_lower_y + left_edge.dxdy * (y_next - left_edge.lower_y);
+            value_type upper_x1 = right_edge.x_at_lower_y + right_edge.dxdy * (y_next - right_edge.lower_y);
+
+            if (m_trapezoids->ndim() == 3)
+            {
+                // TODO: currently unused for 2D decomposition
+                throw std::runtime_error("TrapezoidalDecomposer::decompose: 3D trapezoid creation not implemented");
+            }
+            else
+            {
+                m_trapezoids->append(lower_x0, y_current, lower_x1, y_current, upper_x1, y_next, upper_x0, y_next);
+            }
+        }
+    }
+
+    size_t const end_index = m_trapezoids->size();
+
+    m_begins[polygon_id] = static_cast<ssize_type>(begin_index);
+    m_ends[polygon_id] = static_cast<ssize_type>(end_index);
+
+    return {begin_index, end_index};
+}
 
 /**
  * This class implements the union algorithm for two polygons by decomposing them
