@@ -173,6 +173,13 @@ list_of_universe = [
     'TrapezoidalDecomposerFp64',
 ]
 
+# OASIS directory symbols
+list_of_oasis = [
+    'OasisDevice',
+    'OasisRecordRect',
+    'OasisRecordPoly',
+]
+
 __all__ = (  # noqa: F822
     list_of_buffer +
     list_of_inout +
@@ -184,7 +191,8 @@ __all__ = (  # noqa: F822
     list_of_toggle +
     list_of_transform +
     list_of_linalg +
-    list_of_universe
+    list_of_universe +
+    list_of_oasis
 )
 
 
@@ -212,6 +220,7 @@ _load(list_of_toggle)
 _load(list_of_transform)
 _load(list_of_linalg)
 _load(list_of_universe)
+_load(list_of_oasis)
 
 # Walk through the thirdparty folder and register all library
 # into a dictionary.
