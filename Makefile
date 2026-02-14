@@ -134,6 +134,18 @@ pyprof: buildext $(PROFFILES)
 			$(WHICH_PYTHON) $${fn} > $${outfn} || exit 1; \
 	done
 
+.PHONY: track
+NASA_DATASET_DIR := download/Flight1_Catered_Dataset-20201013
+NASA_DLC_CSV := $(NASA_DATASET_DIR)/Data/dlc.csv
+NASA_TRUTH_CSV := $(NASA_DATASET_DIR)/Data/truth.csv
+
+$(NASA_DLC_CSV) $(NASA_TRUTH_CSV) &:
+	@mkdir -p download
+	PYTHONPATH=$(MODMESH_ROOT)/modmesh $(WHICH_PYTHON) -m track.dataset
+
+track: $(NASA_DLC_CSV) $(NASA_TRUTH_CSV)
+	PYTHONPATH=$(MODMESH_ROOT)/modmesh $(WHICH_PYTHON) -m track.track_flight
+
 .PHONY: pilot
 pilot: cmake
 	cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)

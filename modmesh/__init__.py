@@ -41,7 +41,7 @@ from . import onedim  # noqa: F401
 from . import system  # noqa: F401
 from . import testing  # noqa: F401
 from . import toggle  # noqa: F401
-
+from . import track  # noqa: F401
 
 clinfo = core.ProcessInfo.instance.command_line
 
