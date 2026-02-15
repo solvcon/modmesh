@@ -1,0 +1,79 @@
+name: Setup modmesh CI dependencies on MacOS
+description: Sets up the necessary dependencies for running CI tests on Github action MacOS runners
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 1
+
+    - name: Creates /usr/local/include for macos runner
+      shell: bash
+      run: |
+        # Some mac runner does not have /usr/local/include and cmake sometimes crashes
+        sudo mkdir -p /usr/local/include
+
+    - name: dependency by homebrew
+      shell: bash
+      run: |
+        export HOMEBREW_NO_AUTO_UPDATE=1
+        export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1
+        # This has been replaced by the 'install qt' section below to manage
+        # qt6 versioning independently from the OS.
+        # brew install llvm@21 qt6
+        brew install llvm@21
+        ln -s "$(brew --prefix llvm@21)/bin/clang-format" "/usr/local/bin/clang-format"
+        ln -s "$(brew --prefix llvm@21)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+
+    - name: install qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.8.1'
+        host: 'mac'
+        target: 'desktop'
+        arch: 'clang_64'
+        modules: 'qt3d'
+        setup-python: 'false'
+        cache: true
+
+    - name: dependency by pip
+      shell: bash
+      run: |
+        echo "which python3: $(which python3)"
+        ls -al $(which python3)
+        # suppress the warning of pip because brew forces PEP668 since python3.12
+        python3 -m pip -v install --upgrade setuptools --break-system-packages
+        python3 -m pip -v install --upgrade numpy matplotlib pytest flake8 jsonschema
+        # For now (2024/10/22), pyside6 6.6.3 does not support Python 3.13.
+        # Use --ignore-requires-python to force installation.
+        python3 -m pip -v install --upgrade pyside6==$(qmake -query QT_VERSION) --ignore-requires-python
+
+    - name: dependency (manual)
+      shell: bash
+      run: sudo NO_INSTALL_PREFIX=1 ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
+
+    - name: show dependency
+      shell: bash
+      # Copy the commands from contrib/dependency/showdep.sh
+      run: |
+        echo "gcc path: $(which gcc)"
+        echo "gcc version: $(gcc --version)"
+        echo "cmake path: $(which cmake)"
+        echo "cmake version: $(cmake --version)"
+        echo "python3 path: $(which python3)"
+        echo "python3 version: $(python3 --version)"
+        echo "python3-config --prefix: $(python3-config --prefix)"
+        echo "python3-config --exec-prefix: $(python3-config --exec-prefix)"
+        echo "python3-config --includes: $(python3-config --includes)"
+        echo "python3-config --libs: $(python3-config --libs)"
+        echo "python3-config --cflags: $(python3-config --cflags)"
+        echo "python3-config --ldflags: $(python3-config --ldflags)"
+        echo "pip3 path: $(which pip3)"
+        python3 -c 'import numpy as np; print("np.__version__:", np.__version__, np.get_include())'
+        echo "pytest path: $(which pytest)"
+        echo "pytest version: $(pytest --version)"
+        echo "clang-tidy path: $(which clang-tidy)"
+        echo "clang-tidy version: $(clang-tidy -version)"
+        echo "flake8 path: $(which flake8)"
+        echo "flake8 version: $(flake8 --version)"
