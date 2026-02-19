@@ -35,6 +35,7 @@ add_subdirectory(mesh)
 add_subdirectory(toggle)
 add_subdirectory(universe)
 add_subdirectory(onedim)
+add_subdirectory(oasis)
 add_subdirectory(multidim)
 add_subdirectory(python)
 add_subdirectory(spacetime)
@@ -91,6 +92,7 @@ set(MODMESH_TERMINAL_FILES
     ${MODMESH_MULTIDIM_FILES}
     ${MODMESH_DEVICE_FILES}
     ${MODMESH_ONEDIM_FILES}
+    ${MODMESH_OASIS_FILES}
     ${MODMESH_SPACETIME_FILES}
     ${MODMESH_PYTHON_FILES}
     ${MODMESH_INOUT_FILES}
