@@ -37,6 +37,7 @@ import importlib
 
 from . import _pilot_core as _pcore
 from . import airfoil
+from . import vision
 
 if _pcore.enable:
     from PySide6.QtGui import QAction
@@ -83,6 +84,7 @@ class _Controller(metaclass=_Singleton):
         self.canvas = None
         self.openprofiledata = None
         self.runprofiling = None
+        self.vision = None
 
     def __getattr__(self, name):
         return None if self._rmgr is None else getattr(self._rmgr, name)
@@ -103,6 +105,7 @@ class _Controller(metaclass=_Singleton):
         self.canvas = _canvas.CanvasMenu(mgr=self._rmgr)
         self.openprofiledata = _profiling.Profiling(mgr=self._rmgr)
         self.runprofiling = _profiling.RunProfiling(mgr=self._rmgr)
+        self.vision = vision.VisionGui(mgr=self._rmgr)
         self.populate_menu()
         self._rmgr.show()
         return self._rmgr.exec()
@@ -136,6 +139,7 @@ class _Controller(metaclass=_Singleton):
         self.canvas.populate_menu()
         self.openprofiledata.populate_menu()
         self.runprofiling.populate_menu()
+        self.vision.populate_menu()
 
         if sys.platform != 'darwin':
             _addAction(
@@ -153,7 +157,6 @@ class _Controller(metaclass=_Singleton):
             checkable=True,
             checked=True,
         )
-
 
 controller = _Controller()
 
