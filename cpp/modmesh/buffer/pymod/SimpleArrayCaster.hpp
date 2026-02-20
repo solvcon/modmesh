@@ -27,6 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <pybind11/pybind11.h>
+#include <pybind11/functional.h>
 
 #include <modmesh/buffer/buffer.hpp>
 #include <modmesh/math/math.hpp>

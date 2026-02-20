@@ -536,9 +536,23 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         (*this)
             .def("argmin", &wrapped_type::argmin)
             .def("argmax", &wrapped_type::argmax)
+            .def(
+                "argwhere",
+                [](wrapped_type const & self, std::function<bool(value_type const &)> const & condition)
+                {
+                    if (!condition)
+                    {
+                        return py::cast(self.argwhere());
+                    }
+                    return py::cast(self.argwhere(condition));
+                },
+                py::arg("condition") = py::none())
+            .def(
+                "where",
+                [](wrapped_type const & self, std::function<bool(value_type const &)> const & condition, wrapped_type const & other)
+                { return py::cast(self.where(condition, other)); })
             //
             ;
-
         return *this;
     }
 }; /* end class WrapSimpleArray */

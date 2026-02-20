@@ -1209,6 +1209,11 @@ public:
         }
         return max_index;
     }
+
+    SimpleArray<uint64_t> argwhere() const;
+
+    SimpleArray<uint64_t> argwhere(std::function<bool(value_type const &)> const & condition) const;
+    A where(std::function<bool(value_type const &)> const & condition, A const & other) const;
 }; /* end class SimpleArrayMixinSearch */
 
 template <typename A, typename T>
@@ -2157,6 +2162,69 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis_simd(SimpleArray<I> const 
     T * data = athis->begin();
     T * dest = ret.begin();
     detail::indexed_copy(dest, data, src, end);
+    return ret;
+}
+
+template <typename A, typename T>
+SimpleArray<uint64_t> detail::SimpleArrayMixinSearch<A, T>::argwhere() const
+{
+    auto default_condition = [](value_type const & x)
+    {
+        return x != value_type();
+    };
+    return this->argwhere(default_condition);
+}
+
+template <typename A, typename T>
+SimpleArray<uint64_t> detail::SimpleArrayMixinSearch<A, T>::argwhere(std::function<bool(value_type const &)> const & condition) const
+{
+    auto athis = static_cast<A const *>(this);
+    uint64_t const array_size = athis->size();
+    uint64_t const array_dim = athis->ndim();
+    std::vector<uint64_t> indices;
+    for (uint64_t i = 0; i < array_size; ++i)
+    {
+        if (condition(athis->data(i)))
+        {
+            indices.push_back(i);
+        }
+    }
+
+    SimpleArray<uint64_t> coordinates(std::vector<size_t>{indices.size(), array_dim});
+    auto coord = coordinates.begin();
+
+    std::vector<uint64_t> product_of_dims(array_dim, 1);
+    for (size_t i = 1; i < array_dim; ++i) product_of_dims[i] = product_of_dims[i - 1] * athis->shape(i);
+    for (auto const & index : indices)
+    {
+        uint64_t remaining_index = index;
+        for (int i = array_dim - 1; i >= 0; --i)
+        {
+            *coord = remaining_index / product_of_dims[i];
+            remaining_index = remaining_index % product_of_dims[i];
+            ++coord;
+        }
+    }
+    return coordinates;
+}
+
+template <typename A, typename T>
+A detail::SimpleArrayMixinSearch<A, T>::where(std::function<bool(value_type const &)> const & condition, A const & other) const
+{
+    auto athis = static_cast<A const *>(this);
+    uint64_t const array_size = athis->size();
+    A ret(athis->shape());
+    for (uint64_t i = 0; i < array_size; ++i)
+    {
+        if (condition(athis->data(i)))
+        {
+            ret.data(i) = athis->data(i);
+        }
+        else
+        {
+            ret.data(i) = other.data(i);
+        }
+    }
     return ret;
 }
 
