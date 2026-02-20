@@ -89,7 +89,7 @@ class FourierTransformTB(mm.testing.TestBase):
         np_input = np.array(mm_input, copy=False)
 
         mm_output = self.SimpleArray(input_size, self.complex())
-        mm.FourierTransform.fft(mm_input, mm_output)
+        mm.FourierTransform.fft(mm_input, mm_output, "cpu")
 
         np_output = np.fft.fft(np_input)
 
@@ -107,7 +107,7 @@ class FourierTransformTB(mm.testing.TestBase):
         np_input = np.array(mm_input, copy=False)
 
         mm_output = self.SimpleArray(input_size, self.complex())
-        mm.FourierTransform.ifft(mm_input, mm_output)
+        mm.FourierTransform.ifft(mm_input, mm_output, "cpu")
 
         np_output = np.fft.ifft(np_input)
 
