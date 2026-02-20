@@ -21,3 +21,5 @@ setup.mk
 *.pdb
 *.env
 profiling/results/
+
+.DS_Store

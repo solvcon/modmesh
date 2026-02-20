@@ -34,12 +34,14 @@ Graphical-user interface code
 
 import sys
 import importlib
+from qt_material import apply_stylesheet
 
 from . import _pilot_core as _pcore
 from . import airfoil
 
 if _pcore.enable:
     from PySide6.QtGui import QAction
+    from PySide6.QtWidgets import QApplication
     from . import _mesh
     from . import _euler1d
     from . import _burgers1d
@@ -105,6 +107,10 @@ class _Controller(metaclass=_Singleton):
         self.runprofiling = _profiling.RunProfiling(mgr=self._rmgr)
         self.populate_menu()
         self._rmgr.show()
+
+        app = QApplication.instance()
+        apply_stylesheet(app, theme='light_red.xml')
+
         return self._rmgr.exec()
 
     def populate_menu(self):
