@@ -29,69 +29,15 @@
 Canvas utilities and curve/conic drawing utilities for pilot GUI.
 """
 
-import numpy as np
-
 from .. import core, plot
 
 from ._gui_common import PilotFeature
 
 __all__ = [
     'Canvas',
-    'Ellipse',
-    'EllipseSampler',
-    'Parabola',
-    'ParabolaSampler',
-    'Hyperbola',
-    'HyperbolaSampler',
     'BezierSample',
     'BezierSampler',
 ]
-
-
-def _populate_sampler_points(curve, npoint=100, fac=1.0, off_x=0.0,
-                             off_y=0.0):
-    if npoint < 1:
-        raise ValueError("npoint must be at least 1")
-
-    points = curve.calc_points(npoint)
-    points.x.ndarray[:] *= fac
-    points.y.ndarray[:] *= fac
-    points.x.ndarray[:] += off_x
-    points.y.ndarray[:] += off_y
-    return points
-
-
-def _draw_piecewise_bezier(world, points, spacing=0.01):
-    if points is None:
-        raise RuntimeError(
-            "populate_points() must be called before draw_cbc()"
-        )
-    if spacing <= 0:
-        raise ValueError("spacing must be positive")
-    if len(points) < 2:
-        return
-
-    point_type = core.Point3dFp64
-    point_x = points.x.ndarray
-    point_y = points.y.ndarray
-    segment_length = np.hypot(
-        point_x[:-1] - point_x[1:],
-        point_y[:-1] - point_y[1:],
-    )
-    nsample = np.maximum((segment_length // spacing).astype(int) - 1, 2)
-
-    for index in range(len(points) - 1):
-        p0 = np.array(points[index])
-        p3 = np.array(points[index + 1])
-        p1 = p0 + (1.0 / 3.0) * (p3 - p0)
-        p2 = p0 + (2.0 / 3.0) * (p3 - p0)
-        bezier = world.add_bezier(
-            p0=point_type(p0[0], p0[1], 0.0),
-            p1=point_type(p1[0], p1[1], 0.0),
-            p2=point_type(p2[0], p2[1], 0.0),
-            p3=point_type(p3[0], p3[1], 0.0),
-        )
-        bezier.sample(int(nsample[index]))
 
 
 class Canvas(PilotFeature):
@@ -133,6 +79,8 @@ class Canvas(PilotFeature):
                 "points",
             func=self._bezier_loop,
         )
+        # TODO: Add more curve/conic samples in the next PRs,
+        #       e.g. ellipse, parabola, hyperbola, etc.
         self._add_menu_item(
             menu=self._mgr.canvasMenu,
             text="Sample: Ellipse",
@@ -208,134 +156,16 @@ class Canvas(PilotFeature):
         self._update_widget()
 
     def _ellipse(self):
-        ellipse = Ellipse(a=2.0, b=1.0)
-        sampler = EllipseSampler(self._world, ellipse)
-        sampler.populate_points(npoint=100, fac=1.0, off_x=0.0, off_y=0.0)
-        sampler.draw_cbc()
-        self._update_widget()
+        # TODO: Make it in the next PR.
+        raise NotImplementedError("Ellipse sample is not implemented yet")
 
     def _parabola(self):
-        parabola = Parabola(a=0.5, t_min=-3.0, t_max=6.0)
-        sampler = ParabolaSampler(self._world, parabola)
-        sampler.populate_points(npoint=100, fac=1.0, off_x=0.0, off_y=0.0)
-        sampler.draw_cbc()
-        self._update_widget()
+        # TODO: Make it in the next PR.
+        raise NotImplementedError("Parabola sample is not implemented yet")
 
     def _hyperbola(self):
-        hyperbola = Hyperbola(a=1.0, b=1.0, t_min=-2.0, t_max=2.0)
-
-        right_sampler = HyperbolaSampler(self._world, hyperbola)
-        right_sampler.populate_points(
-            npoint=100,
-            fac=1.0,
-            off_x=0.0,
-            off_y=0.0,
-        )
-        right_sampler.draw_cbc()
-
-        left_sampler = HyperbolaSampler(self._world, hyperbola)
-        left_sampler.populate_points(
-            npoint=100,
-            fac=1.0,
-            off_x=0.0,
-            off_y=0.0,
-        )
-        left_sampler.points.x.ndarray[:] *= -1.0
-        left_sampler.draw_cbc()
-
-        self._update_widget()
-
-
-class Ellipse(object):
-    def __init__(self, a=2.0, b=1.0):
-        self.a = a
-        self.b = b
-
-    def calc_points(self, npoint):
-        t_array = np.linspace(0.0, 2.0 * np.pi, npoint + 1, dtype='float64')
-        point_pad = core.PointPadFp64(ndim=2, nelem=npoint + 1)
-        for index, t_value in enumerate(t_array):
-            x_value = self.a * np.cos(t_value)
-            y_value = self.b * np.sin(t_value)
-            point_pad.set_at(index, x_value, y_value)
-        return point_pad
-
-
-class EllipseSampler(object):
-    def __init__(self, world, ellipse):
-        self.world = world
-        self.ellipse = ellipse
-        self.points = None
-
-    def populate_points(self, npoint=100, fac=1.0, off_x=0.0, off_y=0.0):
-        self.points = _populate_sampler_points(
-            self.ellipse, npoint=npoint, fac=fac, off_x=off_x, off_y=off_y)
-
-    def draw_cbc(self, spacing=0.01):
-        _draw_piecewise_bezier(self.world, self.points, spacing=spacing)
-
-
-class Parabola(object):
-    def __init__(self, a=0.5, t_min=-3.0, t_max=3.0):
-        self.a = a
-        self.t_min = t_min
-        self.t_max = t_max
-
-    def calc_points(self, npoint):
-        t_array = np.linspace(self.t_min, self.t_max, npoint + 1,
-                              dtype='float64')
-        point_pad = core.PointPadFp64(ndim=2, nelem=npoint + 1)
-        for index, t_value in enumerate(t_array):
-            x_value = t_value
-            y_value = self.a * t_value * t_value
-            point_pad.set_at(index, x_value, y_value)
-        return point_pad
-
-
-class ParabolaSampler(object):
-    def __init__(self, world, parabola):
-        self.world = world
-        self.parabola = parabola
-        self.points = None
-
-    def populate_points(self, npoint=100, fac=1.0, off_x=0.0, off_y=0.0):
-        self.points = _populate_sampler_points(
-            self.parabola, npoint=npoint, fac=fac, off_x=off_x, off_y=off_y)
-
-    def draw_cbc(self, spacing=0.01):
-        _draw_piecewise_bezier(self.world, self.points, spacing=spacing)
-
-
-class Hyperbola(object):
-    def __init__(self, a=1.0, b=1.0, t_min=-2.0, t_max=2.0):
-        self.a = a
-        self.b = b
-        self.t_min = t_min
-        self.t_max = t_max
-
-    def calc_points(self, npoint):
-        t_array = np.linspace(self.t_min, self.t_max, npoint + 1,
-                              dtype='float64')
-        point_pad = core.PointPadFp64(ndim=2, nelem=npoint + 1)
-        for index, t_value in enumerate(t_array):
-            x_value = self.a * np.cosh(t_value)
-            y_value = self.b * np.sinh(t_value)
-            point_pad.set_at(index, x_value, y_value)
-        return point_pad
-
-
-class HyperbolaSampler(object):
-    def __init__(self, world, hyperbola):
-        self.world = world
-        self.hyperbola = hyperbola
-        self.points = None
-
-    def populate_points(self, npoint=100, fac=1.0, off_x=0.0, off_y=0.0):
-        self.points = _populate_sampler_points(
-            self.hyperbola, npoint=npoint, fac=fac, off_x=off_x, off_y=off_y)
-
-    def draw_cbc(self, spacing=0.01):
-        _draw_piecewise_bezier(self.world, self.points, spacing=spacing)
+        # TODO: Make it in the next PR.
+        raise NotImplementedError("Hyperbola sample is not implemented yet")
 
 
 class BezierSample(object):
