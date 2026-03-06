@@ -99,6 +99,11 @@ class Canvas(PilotFeature):
     Canvas feature providing menu items for drawing curves and polygons.
     """
 
+    def __init__(self, *args, **kw):
+        super(Canvas, self).__init__(*args, **kw)
+        self._world = core.WorldFp64()
+        self._widget = None
+
     def populate_menu(self):
         self._add_menu_item(
             menu=self._mgr.canvasMenu,
@@ -132,19 +137,19 @@ class Canvas(PilotFeature):
             menu=self._mgr.canvasMenu,
             text="Sample: Ellipse",
             tip="Draw a sample ellipse (a=2, b=1)",
-            func=self._ellipse_window,
+            func=self._ellipse,
         )
         self._add_menu_item(
             menu=self._mgr.canvasMenu,
             text="Sample: Parabola",
             tip="Draw a sample parabola (y = 0.5*x^2)",
-            func=self._parabola_window,
+            func=self._parabola,
         )
         self._add_menu_item(
             menu=self._mgr.canvasMenu,
             text="Sample: Hyperbola",
             tip="Draw a sample hyperbola (both branches)",
-            func=self._hyperbola_window,
+            func=self._hyperbola,
         )
 
     @staticmethod
@@ -175,57 +180,51 @@ class Canvas(PilotFeature):
             "70 1140 370 1140 370 1020 70 1020"
         )
 
-        world = core.WorldFp64()
-        self._draw_layer(world, layer)
-        self._show_world(world)
+        self._draw_layer(self._world, layer)
+        self._update_widget()
 
-    def _show_world(self, world):
-        widget = self._mgr.add3DWidget()
-        widget.updateWorld(world)
-        widget.showMark()
+    def _update_widget(self):
+        if self._widget is None:
+            self._widget = self._mgr.add3DWidget()
+        self._widget.updateWorld(self._world)
+        self._widget.showMark()
 
     def _bezier_s_curve(self):
-        world = core.WorldFp64()
         bezier_sample = BezierSample.s_curve()
-        sampler = BezierSampler(world, bezier_sample)
+        sampler = BezierSampler(self._world, bezier_sample)
         sampler.draw(nsample=50, fac=1.0, off_x=0.0, off_y=0.0)
-        self._show_world(world)
+        self._update_widget()
 
     def _bezier_arch(self):
-        world = core.WorldFp64()
         bezier_sample = BezierSample.arch()
-        sampler = BezierSampler(world, bezier_sample)
+        sampler = BezierSampler(self._world, bezier_sample)
         sampler.draw(nsample=50, fac=1.0, off_x=0.0, off_y=0.0)
-        self._show_world(world)
+        self._update_widget()
 
     def _bezier_loop(self):
-        world = core.WorldFp64()
         bezier_sample = BezierSample.loop()
-        sampler = BezierSampler(world, bezier_sample)
+        sampler = BezierSampler(self._world, bezier_sample)
         sampler.draw(nsample=50, fac=1.0, off_x=0.0, off_y=0.0)
-        self._show_world(world)
+        self._update_widget()
 
-    def _ellipse_window(self):
-        world = core.WorldFp64()
+    def _ellipse(self):
         ellipse = Ellipse(a=2.0, b=1.0)
-        sampler = EllipseSampler(world, ellipse)
+        sampler = EllipseSampler(self._world, ellipse)
         sampler.populate_points(npoint=100, fac=1.0, off_x=0.0, off_y=0.0)
         sampler.draw_cbc()
-        self._show_world(world)
+        self._update_widget()
 
-    def _parabola_window(self):
-        world = core.WorldFp64()
+    def _parabola(self):
         parabola = Parabola(a=0.5, t_min=-3.0, t_max=6.0)
-        sampler = ParabolaSampler(world, parabola)
+        sampler = ParabolaSampler(self._world, parabola)
         sampler.populate_points(npoint=100, fac=1.0, off_x=0.0, off_y=0.0)
         sampler.draw_cbc()
-        self._show_world(world)
+        self._update_widget()
 
-    def _hyperbola_window(self):
-        world = core.WorldFp64()
+    def _hyperbola(self):
         hyperbola = Hyperbola(a=1.0, b=1.0, t_min=-2.0, t_max=2.0)
 
-        right_sampler = HyperbolaSampler(world, hyperbola)
+        right_sampler = HyperbolaSampler(self._world, hyperbola)
         right_sampler.populate_points(
             npoint=100,
             fac=1.0,
@@ -234,7 +233,7 @@ class Canvas(PilotFeature):
         )
         right_sampler.draw_cbc()
 
-        left_sampler = HyperbolaSampler(world, hyperbola)
+        left_sampler = HyperbolaSampler(self._world, hyperbola)
         left_sampler.populate_points(
             npoint=100,
             fac=1.0,
@@ -244,7 +243,7 @@ class Canvas(PilotFeature):
         left_sampler.points.x.ndarray[:] *= -1.0
         left_sampler.draw_cbc()
 
-        self._show_world(world)
+        self._update_widget()
 
 
 class Ellipse(object):
