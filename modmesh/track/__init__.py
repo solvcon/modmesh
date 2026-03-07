@@ -13,7 +13,7 @@
 #    software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
 # CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
@@ -25,11 +25,15 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-track: Track nasa flight dataset with Kalman Filter.
+track: Track NASA flight dataset with Kalman Filter.
+
+How to download the dataset::
+
+  python3 -m modmesh.track.dataset
 """
 
 __all__ = [
-    'dataset',
+    "dataset",
 ]
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

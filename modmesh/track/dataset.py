@@ -13,7 +13,7 @@
 #    software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 # TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
 # CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
@@ -41,14 +41,14 @@ class NasaDataset:
     Helper for downloading, extracting NASA files.
     """
 
-    def __init__(self):
+    def __init__(self, url, filename):
         """
         Initialize download/load configuration.
         """
 
-        self.url = "https://techport.nasa.gov/api/file/presignedUrl/380503"
+        self.url = url
         self.download_dir = Path.cwd() / ".cache" / "download"
-        self.filename = "DDL-F1_Dataset-20201013.zip"
+        self.filename = filename
 
     def download(self):
         """
@@ -109,7 +109,10 @@ class NasaDataset:
 
 def main():
     ssl._create_default_https_context = ssl._create_stdlib_context
-    dataset = NasaDataset()
+    dataset = NasaDataset(
+        "https://techport.nasa.gov/api/file/presignedUrl/380503",
+        "DDL-F1_Dataset-20201013.zip",
+    )
     dataset.download()
     dataset.extract()
 
