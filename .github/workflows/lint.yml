@@ -22,7 +22,7 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
 
       - name: event name
         run: |
@@ -71,7 +71,7 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 1
 
@@ -262,7 +262,7 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
