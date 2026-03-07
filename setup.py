@@ -71,6 +71,7 @@ def main():
             'modmesh.pilot.airfoil',
             'modmesh.plot',
             'modmesh.profiling',
+            'modmesh.track',
         ],
         ext_modules=[CMakeExtension("_modmesh")],
         cmdclass={'build_ext': cmake_build_ext},
