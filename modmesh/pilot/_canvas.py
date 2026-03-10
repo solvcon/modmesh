@@ -1,5 +1,4 @@
 # Copyright (c) 2026, Han-Xuan Huang <c1ydehhx@gmail.com>
-# Copyright (c) 2026, Anchi Liu <phy.tiger@gmail.com>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
