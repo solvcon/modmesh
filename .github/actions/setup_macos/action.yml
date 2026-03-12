@@ -1,13 +1,14 @@
-name: Setup modmesh CI dependencies on MacOS
-description: Sets up the necessary dependencies for running CI tests on Github action MacOS runners
+name: Set up modmesh CI dependencies on MacOS
+description: Set up the necessary dependencies for running CI tests on Github action MacOS runners
+
+inputs:
+  workflow:
+    description: The name of the workflow that will use this action
+    required: true
 
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 1
-
     - name: Creates /usr/local/include for macos runner
       shell: bash
       run: |
@@ -52,6 +53,12 @@ runs:
     - name: dependency (manual)
       shell: bash
       run: sudo NO_INSTALL_PREFIX=1 ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
+
+    - name: dependency (manual) for build
+      if: ${{ inputs.workflow == 'build' }}
+      shell: bash
+      run: |
+        thirdparty/metal-cpp.sh
 
     - name: show dependency
       shell: bash

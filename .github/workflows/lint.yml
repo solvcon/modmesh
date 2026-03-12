@@ -86,11 +86,15 @@ jobs:
 
     - name: setup dependencies for Linux
       if: runner.os == 'Linux'
-      uses: ./.github/actions/setup_Linux
+      uses: ./.github/actions/setup_linux
+      with:
+        workflow: 'lint'
 
     - name: setup dependencies for macOS
       if: runner.os == 'macOS'
-      uses: ./.github/actions/setup_macOS
+      uses: ./.github/actions/setup_macos
+      with:
+        workflow: 'lint'
 
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2
