@@ -350,7 +350,7 @@ jobs:
           make pilot \
             ${JOB_MAKE_ARGS} \
             CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
+            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=OFF"
 
       - name: make pilot USE_PYTEST_HELPER_BINDING=ON
         run: |
