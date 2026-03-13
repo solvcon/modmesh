@@ -165,7 +165,13 @@ WrapPolygonPad<T>::WrapPolygonPad(pybind11::module & mod, const char * pyname, c
             "boolean_difference",
             &wrapped_type::boolean_difference,
             py::arg("p1"),
-            py::arg("p2"));
+            py::arg("p2"))
+        .def(
+            "decomposed_trapezoids",
+            [](wrapped_type & self)
+            {
+                return self.decomposed_trapezoids();
+            });
 }
 
 template <typename T>
