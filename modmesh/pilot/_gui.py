@@ -100,7 +100,7 @@ class _Controller(metaclass=_Singleton):
         self.eulerone = _euler1d.Euler1DApp(mgr=self._rmgr)
         self.burgers = _burgers1d.Burgers1DApp(mgr=self._rmgr)
         self.linear_wave = _linear_wave.LinearWave1DApp(mgr=self._rmgr)
-        self.canvas = _canvas.CanvasMenu(mgr=self._rmgr)
+        self.canvas = _canvas.Canvas(mgr=self._rmgr)
         self.openprofiledata = _profiling.Profiling(mgr=self._rmgr)
         self.runprofiling = _profiling.RunProfiling(mgr=self._rmgr)
         self.populate_menu()
