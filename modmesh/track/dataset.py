@@ -25,30 +25,146 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-Download, extract and preprocess nasa flight dataset.
+Download, extract, and load the NASA flight dataset.
 """
 
+import dataclasses
 import json
 import ssl
+import pathlib
 import urllib.request
 import zipfile
 
-from pathlib import Path
+from . import dataframe
+
+__all__ = ["NasaDataset", "EventReference"]
+
+
+@dataclasses.dataclass(frozen=True)
+class _EventDataView:
+    """
+    Lazy view of one row in a source-specific dataframe.
+
+    :ivar dataframe: Source dataframe backing the row view.
+    :vartype dataframe: DataFrame
+    :ivar row: Row index in ``dataframe``.
+    :vartype row: int
+    """
+    dataframe: 'dataframe.DataFrame' = dataclasses.field(
+        repr=False,
+        compare=False,
+    )
+    row: int
+
+    def __getitem__(self, column):
+        """
+        Return the value of one column in the referenced row.
+
+        :param column: Column name in the source dataframe.
+        :type column: str
+        :return: Scalar value stored at ``column`` and ``row``.
+        :rtype: object
+        """
+        value = self.dataframe[column][self.row]
+        return value
+
+    def to_dict(self):
+        """
+        Materialize the referenced row as a dictionary.
+
+        :return: Mapping from column name to row value.
+        :rtype: dict[str, object]
+        """
+        return {
+            column: self[column]
+            for column in self.dataframe.columns
+        }
+
+    def __repr__(self):
+        """
+        Return a dictionary-like representation of the referenced row.
+
+        :return: String form of the materialized row dictionary.
+        :rtype: str
+        """
+        return repr(self.to_dict())
+
+
+@dataclasses.dataclass(frozen=True)
+class EventReference:
+    """
+    Reference one timestamped row in a source-specific dataset.
+
+    :ivar dataset: Parent dataset that owns the referenced row.
+    :vartype dataset: NasaDataset
+    :ivar timestamp: Event timestamp in nanoseconds.
+    :vartype timestamp: int
+    :ivar source: Source dataset name.
+    :vartype source: str
+    :ivar row: Row index in the source dataframe.
+    :vartype row: int
+    """
+    dataset: "NasaDataset" = dataclasses.field(repr=False, compare=False)
+    timestamp: int
+    source: str
+    row: int
+
+    @property
+    def data(self):
+        """
+        Return a lazy view of the original row data.
+
+        :return: Lazy row view backed by the source dataframe.
+        :rtype: _EventDataView
+        """
+        return _EventDataView(self.dataset.dataframes[self.source], self.row)
 
 
 class NasaDataset:
     """
-    Helper for downloading, extracting NASA files.
+    Helper for downloading, extracting, and loading NASA files.
+
+    :ivar url: NASA API endpoint returning a presigned download URL.
+    :vartype url: str
+    :ivar download_dir: Local directory used for downloaded
+        and extracted files.
+    :vartype download_dir: pathlib.Path
+    :ivar filename: Dataset zip filename.
+    :vartype filename: str
+    :ivar imu_csv: Path to the IMU CSV file.
+    :vartype imu_csv: pathlib.Path or str
+    :ivar lidar_csv: Path to the lidar CSV file.
+    :vartype lidar_csv: pathlib.Path or str
+    :ivar gt_csv: Path to the ground-truth CSV file.
+    :vartype gt_csv: pathlib.Path or str
+    :ivar dataframes: Loaded source dataframes keyed by source name.
+    :vartype dataframes: dict[str, DataFrame]
+    :ivar events: Timestamp-ordered event references.
+    :vartype events: list[EventReference]
     """
 
     def __init__(self, url, filename):
         """
         Initialize download/load configuration.
+
+        :param url: NASA API endpoint returning the presigned download URL.
+        :type url: str
+        :param filename: Name of the downloaded zip archive.
+        :type filename: str
+        :return: None
+        :rtype: None
         """
 
         self.url = url
-        self.download_dir = Path.cwd() / ".cache" / "download"
+        self.download_dir = pathlib.Path.cwd() / ".cache" / "download"
         self.filename = filename
+        self.csv_dir = self.download_dir / "Flight1_Catered_Dataset-20201013"
+        self.csv_dir /= "Data"
+        self.imu_csv = self.csv_dir / "dlc.csv"
+        self.lidar_csv = self.csv_dir / "commercial_lidar.csv"
+        self.gt_csv = self.csv_dir / "truth.csv"
+        self.events: list[EventReference] = []
+        self.dataframes: dict[str, dataframe.DataFrame] = {}
 
     def download(self):
         """
@@ -57,7 +173,7 @@ class NasaDataset:
         :return: ``None``.
         :rtype: None
         """
-        file_path = Path(self.download_dir / self.filename)
+        file_path = pathlib.Path(self.download_dir / self.filename)
         if file_path.exists():
             print(f"{file_path} exists,skip download.")
             return
@@ -106,6 +222,81 @@ class NasaDataset:
         bar = "#" * filled + "-" * (width - filled)
         print(f"\rDownloading [{bar}] {ratio:6.2%}", end="", flush=True)
 
+    def load(self):
+        """
+        Load all source datasets and build the timestamp timeline.
+
+        :return: None
+        :rtype: None
+        """
+        self.dataframes["imu"] = self._load_dataframe(self.imu_csv)
+        self.dataframes["lidar"] = self._load_dataframe(self.lidar_csv)
+        self.dataframes["ground_truth"] = self._load_dataframe(self.gt_csv)
+        self._rebuild_timeline()
+
+    def _load_dataframe(self, path):
+        """
+        Load one CSV file into a time-series dataframe.
+
+        :param path: Path to a source CSV file.
+        :type path: pathlib.Path or str
+        :return: Loaded dataframe for the source file.
+        :rtype: DataFrame
+        """
+        tsdf = dataframe.DataFrame()
+        tsdf.read_from_text_file(
+            path,
+            delimiter=",",
+            timestamp_column="TIME_NANOSECONDS_TAI",
+        )
+        return tsdf
+
+    def _rebuild_timeline(self):
+        """
+        Rebuild the timestamp timeline from loaded source dataframes.
+
+        :return: None
+        :rtype: None
+        """
+        timeline_map: dict[int, list[EventReference]] = {}
+        for source, df in self.dataframes.items():
+            for row_index, timestamp in enumerate(df.index):
+                timestamp = int(timestamp)
+                timeline_map.setdefault(timestamp, []).append(
+                    EventReference(
+                        dataset=self,
+                        timestamp=timestamp,
+                        source=source,
+                        row=row_index,
+                    )
+                )
+
+        self.events = [
+            ref
+            for timestamp in sorted(timeline_map)
+            for ref in timeline_map[timestamp]
+        ]
+
+    def __len__(self):
+        """
+        Return the number of events in the timeline.
+
+        :return: Number of loaded events.
+        :rtype: int
+        """
+        return len(self.events)
+
+    def __getitem__(self, idx):
+        """
+        Return the event reference at ``idx``.
+
+        :param idx: Event index.
+        :type idx: int
+        :return: Event reference at the specified index.
+        :rtype: EventReference
+        """
+        return self.events[idx]
+
 
 def main():
     ssl._create_default_https_context = ssl._create_stdlib_context
@@ -119,3 +310,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
