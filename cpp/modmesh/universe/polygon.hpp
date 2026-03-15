@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <set>
 #include <vector>
 
 namespace modmesh
@@ -2378,6 +2379,13 @@ public:
     std::pair<size_t, size_t> decompose_to_trapezoid(size_t polygon_id);
 
     /**
+     * Access the trapezoid pad produced by the decomposer.
+     * Valid after calling decompose_to_trapezoid().
+     */
+    std::shared_ptr<TrapezoidPad<T>> decomposed_trapezoids() { return m_decomposer.trapezoids(); }
+    std::shared_ptr<TrapezoidPad<T> const> decomposed_trapezoids() const { return m_decomposer.trapezoids(); }
+
+    /**
      * Compute union of two polygons using trapezoidal decomposition.
      *
      * @param p1 First polygon
@@ -2779,28 +2787,413 @@ std::pair<size_t, size_t> PolygonPad<T>::decompose_to_trapezoid(size_t polygon_i
     return m_decomposer.decompose(polygon_id, points);
 }
 
+namespace detail
+{
+
+enum class BooleanOperation
+{
+    Union,
+    Intersection,
+    Difference
+}; /* end enum class BooleanOperation */
+
+/**
+ * Boolean operations on two polygons using trapezoidal decomposition.
+ *
+ * A "band" (Y-band) is a horizontal strip between two consecutive critical
+ * Y-values [y_lo, y_hi].  The set of critical Y-values comes from:
+ *   - the top/bottom edges of every trapezoid produced by decomposing both
+ *     input polygons, and
+ *   - the Y-coordinates where a trapezoid edge from one polygon crosses a
+ *     trapezoid edge from the other polygon.
+ *
+ * Within a single band no edges from different polygons cross, so the
+ * left-to-right ordering of edges is stable.  Each polygon's trapezoids
+ * that span the band contribute X-intervals (start at the left edge, end
+ * at the right edge).  Sweeping those interval events along X while
+ * tracking inside/outside counts for each polygon lets us apply the
+ * boolean predicate (union / intersection / difference) and emit result
+ * trapezoids.
+ *
+ * Illustration for two overlapping squares P1=(0,0)-(2,2) and P2=(1,1)-(3,3):
+ *
+ *  Critical Y-values: {0, 1, 2, 3}
+ *  Three y-bands: [0,1], [1,2], [2,3]
+ *
+ *   y=3 - - - - - +----------------+- - - - - - - - - -
+ *                 |          P2    |        band [2,3]
+ *   y=2 +----------------+- - - - -|- - - - - - - - - -
+ *       |   P1    |//////|         |        band [1,2]
+ *   y=1 |- - - - -+------+---------+- - - - - - - - - -
+ *       |                |                  band [0,1]
+ *   y=0 +----------------+- - - - - - - - - - - - - - -
+ *       x=0      x=1    x=2       x=3
+ *
+ *   Band [1,2]: P1 interval [0,2], P2 interval [1,3]
+ *     Events sorted by x position:  P1-start@x=0, P2-start@x=1, P1-end@x=2, P2-end@x=3
+ *     Intersection (P1 AND P2): result interval [1,2]
+ *     Union        (P1 OR  P2): result interval [0,3]
+ *     Difference   (P1-P2)    : result interval [0,1]
+ *
+ * The algorithm works by:
+ * 1. Decomposing both polygons into trapezoids via TrapezoidalDecomposer
+ * 2. Collecting all critical Y-values from both trapezoid sets, plus
+ *    Y-values where trapezoid edges from different polygons cross
+ * 3. For each Y-band, gathering X-intervals from each polygon's trapezoids
+ * 4. Applying the boolean predicate on the interval events
+ * 5. Emitting result trapezoids as polygons
+ */
+template <typename T>
+std::shared_ptr<PolygonPad<T>> compute_boolean_with_decomposition(
+    const std::shared_ptr<PolygonPad<T>> & pad,
+    size_t polygon_id1,
+    size_t polygon_id2,
+    BooleanOperation op)
+{
+    using value_type = T;
+    using point_type = Point3d<T>;
+
+    std::shared_ptr<PolygonPad<T>> result = PolygonPad<T>::construct(pad->ndim());
+
+    // Short-circuit: operating a polygon with itself
+    if (polygon_id1 == polygon_id2)
+    {
+        if (op == BooleanOperation::Difference)
+        {
+            return result; // P - P = empty
+        }
+        // Union(P, P) = P, Intersection(P, P) = P: copy the polygon
+        Polygon3d<T> poly = pad->get_polygon(polygon_id1);
+        std::vector<point_type> nodes;
+        nodes.reserve(poly.nnode());
+        for (size_t i = 0; i < poly.nnode(); ++i)
+        {
+            nodes.push_back(poly.node(i));
+        }
+        result->add_polygon(nodes);
+        return result;
+    }
+
+    // Step 1: Decompose both polygons using the pad's TrapezoidalDecomposer
+    size_t begin1, end1, begin2, end2;
+    std::tie(begin1, end1) = pad->decompose_to_trapezoid(polygon_id1);
+    std::tie(begin2, end2) = pad->decompose_to_trapezoid(polygon_id2);
+    std::shared_ptr<TrapezoidPad<T>> trap_pad = pad->decomposed_trapezoids();
+
+    if (begin1 == end1 && begin2 == end2)
+    {
+        return result;
+    }
+
+    // Step 2: Read trapezoid geometry directly from trap_pad.
+    //
+    // Each trapezoid in the TrapezoidPad has 4 corners stored as:
+    //   p0 = (x0, y0) bottom-left     p1 = (x1, y1) bottom-right
+    //   p3 = (x3, y3) top-left        p2 = (x2, y2) top-right
+    //
+    // A trapezoid forms a horizontal band [y0, y3] (bottom to top).
+    // Its left edge goes from x0 (at y0) to x3 (at y3); its right edge
+    // goes from x1 (at y0) to x2 (at y3).  Both edges are linear in Y.
+    //
+    // The source polygon is determined by the index range:
+    //   [begin1, end1) -> polygon1 (source 0)
+    //   [begin2, end2) -> polygon2 (source 1)
+    auto source_of = [begin1, end1, begin2, end2](size_t idx) -> int
+    {
+        if (idx >= begin1 && idx < end1)
+        {
+            return 0;
+        }
+        if (idx >= begin2 && idx < end2)
+        {
+            return 1;
+        }
+        throw std::logic_error("trapezoid index belongs to neither polygon");
+    };
+
+    // Helper: linearly interpolate X along a trapezoid edge at a given Y.
+    // An edge is defined by two points: bottom_point and top_point.
+    constexpr value_type eps = std::numeric_limits<value_type>::epsilon() * 100;
+
+    auto lerp_x = [eps](const point_type & bottom_point, const point_type & top_point, value_type y) -> value_type
+    {
+        value_type dy = top_point.y() - bottom_point.y();
+        value_type scale = std::max(std::abs(top_point.y()), std::abs(bottom_point.y()));
+        if (std::abs(dy) < eps * std::max(scale, value_type(1)))
+        {
+            return bottom_point.x();
+        }
+        value_type t = (y - bottom_point.y()) / dy;
+        return bottom_point.x() + t * (top_point.x() - bottom_point.x());
+    };
+
+    // TODO: potential performance issue: std container
+    // Collect all unique Y values from trapezoid boundaries
+    std::set<value_type> y_set;
+    for (size_t idx = begin1; idx < end1; ++idx)
+    {
+        y_set.insert(trap_pad->y0(idx));
+        y_set.insert(trap_pad->y3(idx));
+    }
+    for (size_t idx = begin2; idx < end2; ++idx)
+    {
+        y_set.insert(trap_pad->y0(idx));
+        y_set.insert(trap_pad->y3(idx));
+    }
+
+    // Find Y values where trapezoid edges from different polygons cross.
+    // This ensures no two cross-polygon edges swap order within a band.
+    // Only cross-polygon pairs need checking (polygon1 vs polygon2).
+    for (size_t ti = begin1; ti < end1; ++ti)
+    {
+        for (size_t tj = begin2; tj < end2; ++tj)
+        {
+            // Y-range overlap between the two trapezoids
+            value_type y_lo = std::max(trap_pad->y0(ti), trap_pad->y0(tj));
+            value_type y_hi = std::min(trap_pad->y3(ti), trap_pad->y3(tj));
+            if (y_lo >= y_hi)
+            {
+                continue;
+            }
+
+            // TODO: potential performance issue: closure in the nested loop
+            // Find the Y-value where two edges cross within the overlap range.
+            // Each edge is defined by its X-values at y_lo and y_hi.
+            // clang-format off
+            auto find_crossing = [&](value_type edge_a_x_at_bottom, value_type edge_a_x_at_top,
+                                     value_type edge_b_x_at_bottom, value_type edge_b_x_at_top,
+                                     value_type overlap_y_bottom, value_type overlap_y_top) -> void
+            {
+                // clang-format on
+
+                // Parameterize two edges as linear functions of t in [0,1]:
+                //   edge_a(t) = edge_a_x_at_bottom + dx_a * t
+                //   edge_b(t) = edge_b_x_at_bottom + dx_b * t
+                // They cross when (edge_a_x_at_bottom - edge_b_x_at_bottom) + (dx_a - dx_b)*t = 0
+                value_type dx_a = edge_a_x_at_top - edge_a_x_at_bottom;
+                value_type dx_b = edge_b_x_at_top - edge_b_x_at_bottom;
+                value_type denom = dx_a - dx_b;
+                value_type scale = std::max({std::abs(dx_a), std::abs(dx_b), value_type(1)});
+                if (std::abs(denom) < eps * scale)
+                {
+                    return; // edges are parallel, no crossing
+                }
+                value_type t = (edge_b_x_at_bottom - edge_a_x_at_bottom) / denom;
+                if (t > 0 && t < 1)
+                {
+                    value_type crossing_y = overlap_y_bottom + t * (overlap_y_top - overlap_y_bottom);
+                    y_set.insert(crossing_y);
+                }
+            };
+
+            // Trapezoid edges (each edge is a pair of points: bottom -> top):
+            //   Left edge:  p0 (bottom-left)  -> p3 (top-left)
+            //   Right edge: p1 (bottom-right) -> p2 (top-right)
+            point_type trap_i_left_bottom = trap_pad->p0(ti);
+            point_type trap_i_left_top = trap_pad->p3(ti);
+            point_type trap_i_right_bottom = trap_pad->p1(ti);
+            point_type trap_i_right_top = trap_pad->p2(ti);
+            point_type trap_j_left_bottom = trap_pad->p0(tj);
+            point_type trap_j_left_top = trap_pad->p3(tj);
+            point_type trap_j_right_bottom = trap_pad->p1(tj);
+            point_type trap_j_right_top = trap_pad->p2(tj);
+
+            // Interpolate each trapezoid's left/right edges within the Y-overlap range to get X-values at y_lo and y_hi.
+            value_type trap_i_left_at_bottom = lerp_x(trap_i_left_bottom, trap_i_left_top, y_lo);
+            value_type trap_i_left_at_top = lerp_x(trap_i_left_bottom, trap_i_left_top, y_hi);
+            value_type trap_i_right_at_bottom = lerp_x(trap_i_right_bottom, trap_i_right_top, y_lo);
+            value_type trap_i_right_at_top = lerp_x(trap_i_right_bottom, trap_i_right_top, y_hi);
+            value_type trap_j_left_at_bottom = lerp_x(trap_j_left_bottom, trap_j_left_top, y_lo);
+            value_type trap_j_left_at_top = lerp_x(trap_j_left_bottom, trap_j_left_top, y_hi);
+            value_type trap_j_right_at_bottom = lerp_x(trap_j_right_bottom, trap_j_right_top, y_lo);
+            value_type trap_j_right_at_top = lerp_x(trap_j_right_bottom, trap_j_right_top, y_hi);
+
+            // TODO: potential performance issue: closure in the nested loop
+            // Check all 4 edge-pair crossings between the two trapezoids:
+            // left_i vs left_j, left_i vs right_j, right_i vs left_j, right_i vs right_j
+            // Add any crossing Y-values to the set of critical Y-values.
+            find_crossing(trap_i_left_at_bottom, trap_i_left_at_top, trap_j_left_at_bottom, trap_j_left_at_top, y_lo, y_hi);
+            find_crossing(trap_i_left_at_bottom, trap_i_left_at_top, trap_j_right_at_bottom, trap_j_right_at_top, y_lo, y_hi);
+            find_crossing(trap_i_right_at_bottom, trap_i_right_at_top, trap_j_left_at_bottom, trap_j_left_at_top, y_lo, y_hi);
+            find_crossing(trap_i_right_at_bottom, trap_i_right_at_top, trap_j_right_at_bottom, trap_j_right_at_top, y_lo, y_hi);
+        }
+    }
+
+    // Convert to sorted vector and merge near-duplicate Y-values that
+    // differ only by floating-point rounding, avoiding degenerate
+    // near-zero-height bands.
+    std::vector<value_type> y_values(y_set.begin(), y_set.end());
+    {
+        auto merged_end = std::unique(y_values.begin(), y_values.end(), [eps](value_type a, value_type b)
+                                      {
+                                          value_type scale = std::max(std::abs(a), std::abs(b));
+                                          return std::abs(a - b) < eps * std::max(scale, value_type(1)); });
+        y_values.erase(merged_end, y_values.end());
+    }
+
+    if (y_values.size() < 2)
+    {
+        return result;
+    }
+
+    // Boolean predicate
+    auto should_include = [op](int count_p1, int count_p2) -> bool
+    {
+        switch (op)
+        {
+        case BooleanOperation::Union:
+            return (count_p1 > 0) || (count_p2 > 0); // either polygon contributes to this region
+        case BooleanOperation::Intersection:
+            return (count_p1 > 0) && (count_p2 > 0); // both polygons must contribute to this region
+        case BooleanOperation::Difference:
+            return (count_p1 > 0) && (count_p2 == 0); // only include regions where polygon 1 contributes and polygon 2 does not
+        default:
+            return false;
+        }
+    };
+
+    // Step 3: Sweep through Y-bands.
+    // Each consecutive pair [y_values[yi], y_values[yi+1]] forms one band.
+    // Within this band we collect X-interval events from every trapezoid
+    // that vertically spans it, then sweep those events left-to-right to
+    // determine which X-regions satisfy the boolean predicate.
+    struct Event
+    {
+        value_type x_lo, x_hi; // X at y_low and y_high
+        int source;
+        bool is_start; // true = entering the polygon interval, false = leaving
+    }; /* end struct Event */
+
+    // Reuse the events vector across bands to avoid repeated heap allocation
+    std::vector<Event> events;
+
+    for (size_t yi = 0; yi + 1 < y_values.size(); ++yi)
+    {
+        value_type y_low = y_values[yi];
+        value_type y_high = y_values[yi + 1];
+
+        events.clear();
+
+        // Gather interval-boundary events from trapezoids spanning this band
+        auto gather_events = [&](size_t begin, size_t end)
+        {
+            for (size_t idx = begin; idx < end; ++idx)
+            {
+                if (!(trap_pad->y0(idx) <= y_low && trap_pad->y3(idx) >= y_high))
+                {
+                    continue; // trapezoid doesn't vertically span this band
+                }
+                int source = source_of(idx);
+                // Left edge: p0 (bottom-left) -> p3 (top-left)
+                // Right edge: p1 (bottom-right) -> p2 (top-right)
+                point_type left_bottom = trap_pad->p0(idx);
+                point_type left_top = trap_pad->p3(idx);
+                point_type right_bottom = trap_pad->p1(idx);
+                point_type right_top = trap_pad->p2(idx);
+                value_type left_x_at_band_bottom = lerp_x(left_bottom, left_top, y_low);
+                value_type left_x_at_band_top = lerp_x(left_bottom, left_top, y_high);
+                value_type right_x_at_band_bottom = lerp_x(right_bottom, right_top, y_low);
+                value_type right_x_at_band_top = lerp_x(right_bottom, right_top, y_high);
+                events.push_back({left_x_at_band_bottom, left_x_at_band_top, source, true});
+                events.push_back({right_x_at_band_bottom, right_x_at_band_top, source, false});
+            }
+        };
+        gather_events(begin1, end1);
+        gather_events(begin2, end2);
+
+        if (events.empty())
+        {
+            continue;
+        }
+
+        // Sort events by X position (use average of x_lo and x_hi).
+        // Use tolerance-based comparison to avoid nondeterministic ordering
+        // from floating-point rounding at nearly-identical X positions.
+        // clang-format off
+        std::sort(events.begin(), events.end(),
+            [eps](const Event & a, const Event & b)
+            {
+                value_type xa = a.x_lo + a.x_hi;
+                value_type xb = b.x_lo + b.x_hi;
+                value_type scale = std::max({std::abs(xa), std::abs(xb), value_type(1)});
+                if (std::abs(xa - xb) > eps * scale)
+                {
+                    return xa < xb;
+                }
+                // At same X, end events before start events
+                return !a.is_start && b.is_start;
+            }
+        );
+        // clang-format on
+
+        // Sweep left to right
+        int count_p1 = 0;
+        int count_p2 = 0;
+        bool currently_included = false;
+        value_type left_x_low = 0;
+        value_type left_x_high = 0;
+
+        for (const auto & ev : events)
+        {
+            bool was_included = currently_included;
+
+            if (ev.source == 0)
+            {
+                count_p1 += ev.is_start ? 1 : -1;
+            }
+            else
+            {
+                count_p2 += ev.is_start ? 1 : -1;
+            }
+
+            currently_included = should_include(count_p1, count_p2);
+
+            if (!was_included && currently_included)
+            {
+                // Entering an included region
+                left_x_low = ev.x_lo;
+                left_x_high = ev.x_hi;
+            }
+            else if (was_included && !currently_included)
+            {
+                // Leaving an included region -- emit trapezoid as polygon (CCW)
+                value_type bottom_width = std::abs(ev.x_lo - left_x_low);
+                value_type top_width = std::abs(ev.x_hi - left_x_high);
+                // Skip degenerate zero-area trapezoids (edges touching at a point/line)
+                if (bottom_width > eps || top_width > eps)
+                {
+                    std::vector<point_type> nodes = {
+                        point_type(left_x_low, y_low, 0),
+                        point_type(ev.x_lo, y_low, 0),
+                        point_type(ev.x_hi, y_high, 0),
+                        point_type(left_x_high, y_high, 0)};
+                    result->add_polygon(nodes);
+                }
+            }
+        }
+    }
+
+    return result;
+} /* end function compute_boolean_with_decomposition */
+
+} /* end namespace detail */
+
 template <typename T>
 std::shared_ptr<PolygonPad<T>> AreaBooleanUnion<T>::compute(const std::shared_ptr<PolygonPad<T>> & pad, size_t polygon_id1, size_t polygon_id2)
 {
-    // TODO: A proper implementation would merge overlapping regions using trapezoidal decomposition
-    auto empty_pad = PolygonPad<T>::construct(pad->ndim());
-    return empty_pad;
+    return detail::compute_boolean_with_decomposition(pad, polygon_id1, polygon_id2, detail::BooleanOperation::Union);
 }
 
 template <typename T>
 std::shared_ptr<PolygonPad<T>> AreaBooleanIntersection<T>::compute(const std::shared_ptr<PolygonPad<T>> & pad, size_t polygon_id1, size_t polygon_id2)
 {
-    // TODO:  A proper implementation would find overlapping regions using trapezoidal decomposition
-    auto empty_pad = PolygonPad<T>::construct(pad->ndim());
-    return empty_pad;
+    return detail::compute_boolean_with_decomposition(pad, polygon_id1, polygon_id2, detail::BooleanOperation::Intersection);
 }
 
 template <typename T>
 std::shared_ptr<PolygonPad<T>> AreaBooleanDifference<T>::compute(const std::shared_ptr<PolygonPad<T>> & pad, size_t polygon_id1, size_t polygon_id2)
 {
-    // TODO:  A proper implementation would subtract overlapping regions using trapezoidal decomposition
-    auto empty_pad = PolygonPad<T>::construct(pad->ndim());
-    return empty_pad;
+    return detail::compute_boolean_with_decomposition(pad, polygon_id1, polygon_id2, detail::BooleanOperation::Difference);
 }
 
 } /* end namespace modmesh */

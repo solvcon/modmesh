@@ -332,13 +332,26 @@ class Polygon3dTB(ModMeshTB):
         self.assertFalse(polygon1.is_same(polygon2))
         self.assertTrue(polygon1.is_not_same(polygon2))
 
-    # TODO: Verify and implement boolean operations
-    # once the C++ side is complete.
+    def _compute_total_area(self, result_pad):
+        """Helper to compute total unsigned area of all polygons in a pad."""
+        total = 0.0
+        for i in range(result_pad.num_polygons):
+            total += abs(result_pad.get_polygon(i).compute_signed_area())
+        return total
+
+    def _assert_all_ccw(self, result_pad):
+        """Assert all result polygons have counter-clockwise winding."""
+        for i in range(result_pad.num_polygons):
+            area = result_pad.get_polygon(i).compute_signed_area()
+            self.assertGreaterEqual(area, 0.0,
+                                    f"Polygon {i} has negative area {area}"
+                                    " (clockwise winding)")
+
     def test_boolean_union_simple(self):
         """Test polygon boolean union with two overlapping squares."""
         pad = self.PolygonPad(ndim=2)
 
-        # First square: (0,0) to (2,2)
+        # First square: (0,0) to (2,2), area = 4
         square1_nodes = [
             self.Point(0.0, 0.0, 0.0),
             self.Point(2.0, 0.0, 0.0),
@@ -347,7 +360,9 @@ class Polygon3dTB(ModMeshTB):
         ]
         polygon1 = pad.add_polygon(square1_nodes)
 
-        # Second square: (1,1) to (3,3) - overlaps with first
+        # Second square: (1,1) to (3,3), area = 4
+        # Overlap region: (1,1) to (2,2), area = 1
+        # Union area = 4 + 4 - 1 = 7
         square2_nodes = [
             self.Point(1.0, 1.0, 0.0),
             self.Point(3.0, 1.0, 0.0),
@@ -356,17 +371,12 @@ class Polygon3dTB(ModMeshTB):
         ]
         polygon2 = pad.add_polygon(square2_nodes)
 
-        # Call boolean_union - should not crash even if implementation is TODO
-        try:
-            result = pad.boolean_union(polygon1, polygon2)
-            # Implementation is not complete yet, but should return a list
-            self.assertIsInstance(result, self.PolygonPad)
-        except NotImplementedError:
-            # Expected if method raises NotImplementedError
-            pass
+        result = pad.boolean_union(polygon1, polygon2)
+        self.assertIsInstance(result, self.PolygonPad)
+        self.assertGreater(result.num_polygons, 0)
+        total_area = self._compute_total_area(result)
+        self.assert_allclose([total_area], [7.0], rtol=1e-6)
 
-    # TODO: Verify and implement boolean operations
-    # once the C++ side is complete.
     def test_boolean_intersection_simple(self):
         """Test polygon boolean intersection with two overlapping squares."""
         pad = self.PolygonPad(ndim=2)
@@ -380,8 +390,8 @@ class Polygon3dTB(ModMeshTB):
         ]
         polygon1 = pad.add_polygon(square1_nodes)
 
-        # Second square: (1,1) to (3,3) - overlaps with first
-        # Intersection should be (1,1) to (2,2)
+        # Second square: (1,1) to (3,3)
+        # Intersection should be (1,1) to (2,2), area = 1
         square2_nodes = [
             self.Point(1.0, 1.0, 0.0),
             self.Point(3.0, 1.0, 0.0),
@@ -390,23 +400,17 @@ class Polygon3dTB(ModMeshTB):
         ]
         polygon2 = pad.add_polygon(square2_nodes)
 
-        # Call boolean_intersection - should not crash even
-        # if implementation is TODO
-        try:
-            result = pad.boolean_intersection(polygon1, polygon2)
-            # Implementation is not complete yet, but should return a list
-            self.assertIsInstance(result, self.PolygonPad)
-        except NotImplementedError:
-            # Expected if method raises NotImplementedError
-            pass
+        result = pad.boolean_intersection(polygon1, polygon2)
+        self.assertIsInstance(result, self.PolygonPad)
+        self.assertGreater(result.num_polygons, 0)
+        total_area = self._compute_total_area(result)
+        self.assert_allclose([total_area], [1.0], rtol=1e-6)
 
-    # TODO: Verify and implement boolean operations
-    # once the C++ side is complete.
     def test_boolean_difference_simple(self):
         """Test polygon boolean difference with two overlapping squares."""
         pad = self.PolygonPad(ndim=2)
 
-        # First square: (0,0) to (2,2)
+        # First square: (0,0) to (2,2), area = 4
         square1_nodes = [
             self.Point(0.0, 0.0, 0.0),
             self.Point(2.0, 0.0, 0.0),
@@ -415,8 +419,8 @@ class Polygon3dTB(ModMeshTB):
         ]
         polygon1 = pad.add_polygon(square1_nodes)
 
-        # Second square: (1,1) to (3,3) - overlaps with first
-        # Difference (polygon1 - polygon2) should be L-shaped region
+        # Second square: (1,1) to (3,3)
+        # Difference (polygon1 - polygon2) = L-shaped region, area = 4 - 1 = 3
         square2_nodes = [
             self.Point(1.0, 1.0, 0.0),
             self.Point(3.0, 1.0, 0.0),
@@ -425,23 +429,17 @@ class Polygon3dTB(ModMeshTB):
         ]
         polygon2 = pad.add_polygon(square2_nodes)
 
-        # Call boolean_difference - should not crash even
-        # if implementation is TODO
-        try:
-            result = pad.boolean_difference(polygon1, polygon2)
-            # Implementation is not complete yet, but should return a list
-            self.assertIsInstance(result, self.PolygonPad)
-        except NotImplementedError:
-            # Expected if method raises NotImplementedError
-            pass
+        result = pad.boolean_difference(polygon1, polygon2)
+        self.assertIsInstance(result, self.PolygonPad)
+        self.assertGreater(result.num_polygons, 0)
+        total_area = self._compute_total_area(result)
+        self.assert_allclose([total_area], [3.0], rtol=1e-6)
 
-    # TODO: Verify and implement boolean operations
-    # once the C++ side is complete.
     def test_boolean_union_non_overlapping(self):
         """Test polygon boolean union with two non-overlapping squares."""
         pad = self.PolygonPad(ndim=2)
 
-        # First square: (0,0) to (1,1)
+        # First square: (0,0) to (1,1), area = 1
         square1_nodes = [
             self.Point(0.0, 0.0, 0.0),
             self.Point(1.0, 0.0, 0.0),
@@ -450,7 +448,8 @@ class Polygon3dTB(ModMeshTB):
         ]
         polygon1 = pad.add_polygon(square1_nodes)
 
-        # Second square: (2,2) to (3,3) - no overlap
+        # Second square: (2,2) to (3,3), area = 1
+        # No overlap, union area = 2
         square2_nodes = [
             self.Point(2.0, 2.0, 0.0),
             self.Point(3.0, 2.0, 0.0),
@@ -459,15 +458,11 @@ class Polygon3dTB(ModMeshTB):
         ]
         polygon2 = pad.add_polygon(square2_nodes)
 
-        # Call boolean_union - should not crash
-        try:
-            result = pad.boolean_union(polygon1, polygon2)
-            self.assertIsInstance(result, self.PolygonPad)
-        except NotImplementedError:
-            pass
+        result = pad.boolean_union(polygon1, polygon2)
+        self.assertIsInstance(result, self.PolygonPad)
+        total_area = self._compute_total_area(result)
+        self.assert_allclose([total_area], [2.0], rtol=1e-6)
 
-    # TODO: Verify and implement boolean operations
-    # once the C++ side is complete.
     def test_boolean_intersection_non_overlapping(self):
         """Test polygon boolean intersection with two non-overlapping squares.
         """
@@ -492,20 +487,15 @@ class Polygon3dTB(ModMeshTB):
         ]
         polygon2 = pad.add_polygon(square2_nodes)
 
-        # Call boolean_intersection - should not crash
-        try:
-            result = pad.boolean_intersection(polygon1, polygon2)
-            self.assertIsInstance(result, self.PolygonPad)
-        except NotImplementedError:
-            pass
+        result = pad.boolean_intersection(polygon1, polygon2)
+        self.assertIsInstance(result, self.PolygonPad)
+        self.assertEqual(result.num_polygons, 0)
 
-    # TODO: Verify and implement boolean operations
-    # once the C++ side is complete.
     def test_boolean_operations_triangle(self):
         """Test polygon boolean operations with triangular polygons."""
         pad = self.PolygonPad(ndim=2)
 
-        # Triangle 1: Right triangle at origin
+        # Triangle 1: (0,0)-(2,0)-(0,2), area = 2
         triangle1_nodes = [
             self.Point(0.0, 0.0, 0.0),
             self.Point(2.0, 0.0, 0.0),
@@ -513,7 +503,7 @@ class Polygon3dTB(ModMeshTB):
         ]
         polygon1 = pad.add_polygon(triangle1_nodes)
 
-        # Triangle 2: Right triangle shifted
+        # Triangle 2: (1,1)-(3,1)-(1,3), area = 2
         triangle2_nodes = [
             self.Point(1.0, 1.0, 0.0),
             self.Point(3.0, 1.0, 0.0),
@@ -521,24 +511,281 @@ class Polygon3dTB(ModMeshTB):
         ]
         polygon2 = pad.add_polygon(triangle2_nodes)
 
-        # Test all three operations - should not crash
-        try:
-            result_union = pad.boolean_union(polygon1, polygon2)
-            self.assertIsInstance(result_union, self.PolygonPad)
-        except NotImplementedError:
-            pass
+        # Intersection: the overlap region is x>=1, y>=1, x+y<=2.
+        # Since x>=1 and y>=1 imply x+y>=2, the only solution is the single
+        # point (1,1). The two triangles touch at exactly one point, so
+        # the intersection area is 0.
+        result_intersection = pad.boolean_intersection(polygon1, polygon2)
+        self.assertIsInstance(result_intersection, self.PolygonPad)
+        intersection_area = self._compute_total_area(result_intersection)
+        self.assertAlmostEqual(intersection_area, 0.0, places=5)
 
-        try:
-            result_intersection = pad.boolean_intersection(polygon1, polygon2)
-            self.assertIsInstance(result_intersection, self.PolygonPad)
-        except NotImplementedError:
-            pass
+        # Union area = 2 + 2 - 0 = 4
+        result_union = pad.boolean_union(polygon1, polygon2)
+        self.assertIsInstance(result_union, self.PolygonPad)
+        union_area = self._compute_total_area(result_union)
+        self.assert_allclose([union_area], [4.0], rtol=1e-6)
 
-        try:
-            result_difference = pad.boolean_difference(polygon1, polygon2)
-            self.assertIsInstance(result_difference, self.PolygonPad)
-        except NotImplementedError:
-            pass
+        # Difference area = 2 - 0 = 2
+        result_difference = pad.boolean_difference(polygon1, polygon2)
+        self.assertIsInstance(result_difference, self.PolygonPad)
+        diff_area = self._compute_total_area(result_difference)
+        self.assert_allclose([diff_area], [2.0], rtol=1e-6)
+
+    def test_boolean_containment(self):
+        """Test boolean operations when one polygon contains the other."""
+        pad = self.PolygonPad(ndim=2)
+
+        # Large square: (0,0) to (4,4), area = 16
+        large_nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(4.0, 0.0, 0.0),
+            self.Point(4.0, 4.0, 0.0),
+            self.Point(0.0, 4.0, 0.0)
+        ]
+        polygon1 = pad.add_polygon(large_nodes)
+
+        # Small square: (1,1) to (3,3), area = 4
+        small_nodes = [
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(3.0, 1.0, 0.0),
+            self.Point(3.0, 3.0, 0.0),
+            self.Point(1.0, 3.0, 0.0)
+        ]
+        polygon2 = pad.add_polygon(small_nodes)
+
+        # Union = large square, area = 16
+        result_union = pad.boolean_union(polygon1, polygon2)
+        union_area = self._compute_total_area(result_union)
+        self.assert_allclose([union_area], [16.0], rtol=1e-6)
+
+        # Intersection = small square, area = 4
+        result_inter = pad.boolean_intersection(polygon1, polygon2)
+        inter_area = self._compute_total_area(result_inter)
+        self.assert_allclose([inter_area], [4.0], rtol=1e-6)
+
+        # Difference = large - small = 12
+        result_diff = pad.boolean_difference(polygon1, polygon2)
+        diff_area = self._compute_total_area(result_diff)
+        self.assert_allclose([diff_area], [12.0], rtol=1e-6)
+
+    def test_boolean_identical_polygons(self):
+        """Test boolean operations when both polygons are identical."""
+        pad = self.PolygonPad(ndim=2)
+
+        nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(3.0, 0.0, 0.0),
+            self.Point(3.0, 3.0, 0.0),
+            self.Point(0.0, 3.0, 0.0)
+        ]
+        polygon1 = pad.add_polygon(nodes)
+        polygon2 = pad.add_polygon(nodes)
+
+        # Union(P, P) = P, area = 9
+        result_union = pad.boolean_union(polygon1, polygon2)
+        self.assert_allclose(
+            [self._compute_total_area(result_union)], [9.0], rtol=1e-6)
+
+        # Intersection(P, P) = P, area = 9
+        result_inter = pad.boolean_intersection(polygon1, polygon2)
+        self.assert_allclose(
+            [self._compute_total_area(result_inter)], [9.0], rtol=1e-6)
+
+        # Difference(P, P) = empty
+        result_diff = pad.boolean_difference(polygon1, polygon2)
+        self.assertEqual(result_diff.num_polygons, 0)
+
+    def test_boolean_shared_edge(self):
+        """Test boolean operations with two squares sharing an edge."""
+        pad = self.PolygonPad(ndim=2)
+
+        # Square 1: (0,0)-(1,1)
+        nodes1 = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(0.0, 1.0, 0.0)
+        ]
+        polygon1 = pad.add_polygon(nodes1)
+
+        # Square 2: (1,0)-(2,1), shares edge at x=1
+        nodes2 = [
+            self.Point(1.0, 0.0, 0.0),
+            self.Point(2.0, 0.0, 0.0),
+            self.Point(2.0, 1.0, 0.0),
+            self.Point(1.0, 1.0, 0.0)
+        ]
+        polygon2 = pad.add_polygon(nodes2)
+
+        # Union = (0,0)-(2,1), area = 2
+        result_union = pad.boolean_union(polygon1, polygon2)
+        self.assert_allclose(
+            [self._compute_total_area(result_union)], [2.0], rtol=1e-6)
+
+        # Intersection: touching at edge only, area = 0
+        result_inter = pad.boolean_intersection(polygon1, polygon2)
+        inter_area = self._compute_total_area(result_inter)
+        self.assertAlmostEqual(inter_area, 0.0, places=5)
+
+        # Difference(A, B) = square 1, area = 1
+        result_diff = pad.boolean_difference(polygon1, polygon2)
+        self.assert_allclose(
+            [self._compute_total_area(result_diff)], [1.0], rtol=1e-6)
+
+    def test_boolean_commutativity(self):
+        """Test that union and intersection are commutative,
+        and difference is non-commutative."""
+        pad = self.PolygonPad(ndim=2)
+
+        nodes1 = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(2.0, 0.0, 0.0),
+            self.Point(2.0, 2.0, 0.0),
+            self.Point(0.0, 2.0, 0.0)
+        ]
+        polygon1 = pad.add_polygon(nodes1)
+
+        nodes2 = [
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(3.0, 1.0, 0.0),
+            self.Point(3.0, 3.0, 0.0),
+            self.Point(1.0, 3.0, 0.0)
+        ]
+        polygon2 = pad.add_polygon(nodes2)
+
+        # Union(A, B) == Union(B, A)
+        union_ab = self._compute_total_area(
+            pad.boolean_union(polygon1, polygon2))
+        union_ba = self._compute_total_area(
+            pad.boolean_union(polygon2, polygon1))
+        self.assert_allclose([union_ab], [union_ba], rtol=1e-6)
+
+        # Intersection(A, B) == Intersection(B, A)
+        inter_ab = self._compute_total_area(
+            pad.boolean_intersection(polygon1, polygon2))
+        inter_ba = self._compute_total_area(
+            pad.boolean_intersection(polygon2, polygon1))
+        self.assert_allclose([inter_ab], [inter_ba], rtol=1e-6)
+
+        # Difference is non-commutative: A-B=3, B-A=3 in area but
+        # they are different regions. Verify areas are as expected.
+        diff_ab = self._compute_total_area(
+            pad.boolean_difference(polygon1, polygon2))
+        diff_ba = self._compute_total_area(
+            pad.boolean_difference(polygon2, polygon1))
+        self.assert_allclose([diff_ab], [3.0], rtol=1e-6)
+        self.assert_allclose([diff_ba], [3.0], rtol=1e-6)
+
+    def test_boolean_partial_vertical_overlap(self):
+        """Test with rectangles that partially overlap in Y."""
+        pad = self.PolygonPad(ndim=2)
+
+        # Rectangle 1: (0,0)-(2,3), area = 6
+        nodes1 = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(2.0, 0.0, 0.0),
+            self.Point(2.0, 3.0, 0.0),
+            self.Point(0.0, 3.0, 0.0)
+        ]
+        polygon1 = pad.add_polygon(nodes1)
+
+        # Rectangle 2: (1,1)-(3,2), area = 2
+        # Overlap region: (1,1)-(2,2), area = 1
+        nodes2 = [
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(3.0, 1.0, 0.0),
+            self.Point(3.0, 2.0, 0.0),
+            self.Point(1.0, 2.0, 0.0)
+        ]
+        polygon2 = pad.add_polygon(nodes2)
+
+        # Union = 6 + 2 - 1 = 7
+        result_union = pad.boolean_union(polygon1, polygon2)
+        self._assert_all_ccw(result_union)
+        self.assert_allclose(
+            [self._compute_total_area(result_union)], [7.0], rtol=1e-6)
+
+        # Intersection = 1
+        result_inter = pad.boolean_intersection(polygon1, polygon2)
+        self._assert_all_ccw(result_inter)
+        self.assert_allclose(
+            [self._compute_total_area(result_inter)], [1.0], rtol=1e-6)
+
+        # Difference = 6 - 1 = 5
+        result_diff = pad.boolean_difference(polygon1, polygon2)
+        self._assert_all_ccw(result_diff)
+        self.assert_allclose(
+            [self._compute_total_area(result_diff)], [5.0], rtol=1e-6)
+
+    def test_boolean_concave_polygon(self):
+        """Test boolean operations with a concave (L-shaped) polygon."""
+        pad = self.PolygonPad(ndim=2)
+
+        # L-shaped polygon (concave):
+        # (0,0)-(2,0)-(2,1)-(1,1)-(1,2)-(0,2), area = 3
+        l_nodes = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(2.0, 0.0, 0.0),
+            self.Point(2.0, 1.0, 0.0),
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(1.0, 2.0, 0.0),
+            self.Point(0.0, 2.0, 0.0)
+        ]
+        polygon1 = pad.add_polygon(l_nodes)
+
+        # Square overlapping the L: (0.5, 0.5)-(1.5, 1.5), area = 1
+        sq_nodes = [
+            self.Point(0.5, 0.5, 0.0),
+            self.Point(1.5, 0.5, 0.0),
+            self.Point(1.5, 1.5, 0.0),
+            self.Point(0.5, 1.5, 0.0)
+        ]
+        polygon2 = pad.add_polygon(sq_nodes)
+
+        # The square partially extends outside the L's notch:
+        #   Band [0.5, 1.0]: full square width (0.5 to 1.5), height 0.5 -> 0.5
+        #   Band [1.0, 1.5]: only x in [0.5, 1.0] (L's left column), -> 0.25
+        # Intersection area = 0.75
+        result_inter = pad.boolean_intersection(polygon1, polygon2)
+        inter_area = self._compute_total_area(result_inter)
+        self.assert_allclose([inter_area], [0.75], rtol=1e-6)
+
+        # Union = L + square - intersection = 3 + 1 - 0.75 = 3.25
+        result_union = pad.boolean_union(polygon1, polygon2)
+        union_area = self._compute_total_area(result_union)
+        self.assert_allclose([union_area], [3.25], rtol=1e-6)
+
+        # Difference(L, square) = L - intersection = 3 - 0.75 = 2.25
+        result_diff = pad.boolean_difference(polygon1, polygon2)
+        diff_area = self._compute_total_area(result_diff)
+        self.assert_allclose([diff_area], [2.25], rtol=1e-6)
+
+    def test_boolean_result_ccw_winding(self):
+        """Test that all result polygons from boolean operations have
+        counter-clockwise winding (non-negative signed area)."""
+        pad = self.PolygonPad(ndim=2)
+
+        nodes1 = [
+            self.Point(0.0, 0.0, 0.0),
+            self.Point(2.0, 0.0, 0.0),
+            self.Point(2.0, 2.0, 0.0),
+            self.Point(0.0, 2.0, 0.0)
+        ]
+        polygon1 = pad.add_polygon(nodes1)
+
+        nodes2 = [
+            self.Point(1.0, 1.0, 0.0),
+            self.Point(3.0, 1.0, 0.0),
+            self.Point(3.0, 3.0, 0.0),
+            self.Point(1.0, 3.0, 0.0)
+        ]
+        polygon2 = pad.add_polygon(nodes2)
+
+        self._assert_all_ccw(pad.boolean_union(polygon1, polygon2))
+        self._assert_all_ccw(pad.boolean_intersection(polygon1, polygon2))
+        self._assert_all_ccw(pad.boolean_difference(polygon1, polygon2))
+        self._assert_all_ccw(pad.boolean_difference(polygon2, polygon1))
 
 
 class Polygon3dFp32TC(Polygon3dTB, unittest.TestCase):
