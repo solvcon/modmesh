@@ -16,6 +16,7 @@ runs:
         sudo mkdir -p /usr/local/include
 
     - name: dependency by homebrew
+      if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
       shell: bash
       run: |
         export HOMEBREW_NO_AUTO_UPDATE=1
@@ -28,6 +29,7 @@ runs:
         ln -s "$(brew --prefix llvm@21)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
 
     - name: install qt
+      if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
       uses: jurplel/install-qt-action@v4
       with:
         version: '6.8.1'
@@ -38,14 +40,19 @@ runs:
         setup-python: 'false'
         cache: true
 
-    - name: dependency by pip
+    - name: dependency by pip (common)
       shell: bash
       run: |
         echo "which python3: $(which python3)"
         ls -al $(which python3)
         # suppress the warning of pip because brew forces PEP668 since python3.12
-        python3 -m pip -v install --upgrade setuptools --break-system-packages
-        python3 -m pip -v install --upgrade numpy matplotlib pytest flake8 jsonschema
+        python3 -m pip -v install --break-system-packages --upgrade setuptools
+        python3 -m pip -v install --break-system-packages --upgrade numpy matplotlib pytest flake8 jsonschema
+
+    - name: dependency by pip (lint & build)
+      if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
+      shell: bash
+      run: |
         # For now (2024/10/22), pyside6 6.6.3 does not support Python 3.13.
         # Use --ignore-requires-python to force installation.
         python3 -m pip -v install --upgrade pyside6==$(qmake -query QT_VERSION) --ignore-requires-python

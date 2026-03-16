@@ -23,6 +23,7 @@ runs:
         free -h
 
     - name: Cache Qt download
+      if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
       uses: actions/cache@v3
       with:
         path: ${{ github.workspace }}/Qt
@@ -94,6 +95,7 @@ runs:
         sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-14 100
 
     - name: install qt
+      if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
       uses: jurplel/install-qt-action@v4
       with:
         version: '6.8.1'
