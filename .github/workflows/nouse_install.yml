@@ -8,135 +8,7 @@ on:
 
 jobs:
 
-  nouse_install_ubuntu:
-
-    if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
-
-    name: nouse_install_${{ matrix.os }}_Release
-
-    runs-on: ${{ matrix.os }}
-
-    env:
-      JOB_CMAKE_ARGS: -DBUILD_QT=OFF -DUSE_CLANG_TIDY=OFF -DCMAKE_BUILD_TYPE=Release
-
-    strategy:
-        matrix:
-          os: [ubuntu-24.04]
-
-        fail-fast: false
-
-    steps:
-
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 1
-
-    - name: event name
-      run: |
-        echo "github.event_name: ${{ github.event_name }}"
-
-    - name: Add 8G swap (Ubuntu)
-      # Prevent hitting runner's resource limits
-      if: runner.os == 'Linux'
-      run: |
-        # Remove /swapfile first to avoid "fallocate: Text file busy" error
-        sudo swapoff -a
-        sudo rm -f /swapfile
-        sudo fallocate -l 8G /swapfile
-        sudo chmod 600 /swapfile
-        sudo mkswap /swapfile
-        sudo swapon /swapfile
-        free -h
-
-    - name: dependency by apt
-      run: |
-        # To update the cmake version > 4, install the latest cmake by kitware apt repository.
-        # Reference: https://apt.kitware.com/
-        sudo apt-get -y update
-        sudo apt-get -qy install ca-certificates gpg wget
-        test -f /usr/share/doc/kitware-archive-keyring/copyright || \
-            wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | \
-            gpg --dearmor - | \
-            sudo tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null
-        echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ noble main' | \
-            sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
-        sudo apt-get -qqy update
-        test -f /usr/share/doc/kitware-archive-keyring/copyright || \
-            sudo rm /usr/share/keyrings/kitware-archive-keyring.gpg
-        sudo apt-get -qy install kitware-archive-keyring
-        sudo apt-get -qy install \
-            sudo curl git build-essential make cmake libc6-dev gcc g++ \
-            python3 python3-dev python3-venv
-        # The path of apt-get cmake is `/usr/bin/cmake`,
-        # but the path of built-in cmake of runner image is `/usr/local/bin/cmake`.
-        # We remove the built-in cmake.
-        sudo rm -rf /usr/local/bin/cmake
-
-    - name: install and configure gcc-14
-      run: |
-        sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-        sudo apt-get -qqy update
-        sudo apt-get -qy install gcc-14 g++-14
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-        sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-14 100
-        sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-14 100
-
-    - name: dependency by pip
-      run: |
-        sudo pip3 install setuptools
-        sudo pip3 install numpy pytest jsonschema flake8
-
-    - name: dependency by manual script
-      run: sudo ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
-
-    - name: show dependency
-      # Copy the commands from contrib/dependency/showdep.sh
-      run: |
-        echo "gcc path: $(which gcc)"
-        echo "gcc version: $(gcc --version)"
-        echo "cmake path: $(which cmake)"
-        echo "cmake version: $(cmake --version)"
-        echo "python3 path: $(which python3)"
-        echo "python3 version: $(python3 --version)"
-        echo "python3-config --prefix: $(python3-config --prefix)"
-        echo "python3-config --exec-prefix: $(python3-config --exec-prefix)"
-        echo "python3-config --includes: $(python3-config --includes)"
-        echo "python3-config --libs: $(python3-config --libs)"
-        echo "python3-config --cflags: $(python3-config --cflags)"
-        echo "python3-config --ldflags: $(python3-config --ldflags)"
-        echo "pip3 path: $(which pip3)"
-        python3 -c 'import numpy as np; print("np.__version__:", np.__version__, np.get_include())'
-        echo "pytest path: $(which pytest)"
-        echo "pytest version: $(pytest --version)"
-        echo "clang-tidy path: $(which clang-tidy)"
-        echo "clang-tidy version: $(clang-tidy -version)"
-        echo "flake8 path: $(which flake8)"
-        echo "flake8 version: $(flake8 --version)"
-
-    - name: setup.py install build_ext
-      run: |
-        sudo python3 setup.py install build_ext \
-          --cmake-args="${JOB_CMAKE_ARGS} -DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON" \
-          --make-args="VERBOSE=1"
-
-    - name: pytest
-      run: |
-        rm -rf tmp/
-        mkdir -p tmp/
-        cp -a tests tmp/
-        cd tmp/
-        python3 -c 'import os; print(os.getcwd())'
-        python3 -c "import modmesh; print(modmesh.__file__)"
-        python3 -c "import _modmesh; print(_modmesh.__file__)"
-        # The following command is the original commend, and it will fail on pytest == 8.0.0 .
-        # pytest --rootdir=/tmp -v
-        # Here is the issue and temporary solution: https://github.com/pytest-dev/pytest/issues/11781
-        # The alternative command to solve the issue is ```pytest --rootdir=. -v```.
-        pytest --rootdir=. -v
-        cd ..
-
-  nouse_install_macos:
+  nouse_install:
 
     if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
 
@@ -149,8 +21,8 @@ jobs:
 
     strategy:
       matrix:
-        # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
-        os: [macos-15]
+      # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
+        os: [ubuntu-24.04, macos-15]
 
       fail-fast: false
 
@@ -164,50 +36,25 @@ jobs:
         run: |
           echo "github.event_name: ${{ github.event_name }}"
 
-      - name: dependency by brew
-        run: |
-          brew install pybind11
+      - name: setup dependencies for Linux
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/setup_linux
+        with:
+          workflow: 'nouse_install'
 
-      - name: dependency by pip
-        run: |
-          echo "which python3: $(which python3)"
-          ls -al $(which python3)
-          python3 -m pip -v install --break-system-packages --upgrade setuptools
-          # TODO:
-          # This issue was linked to #213
-          # temporary remove pip upgrade, due to latest pip will let cmake
-          # fail to find Numpy
-          # python3 -m pip -v install --upgrade pip
-          python3 -m pip -v install --break-system-packages --upgrade numpy pytest flake8 jsonschema
-
-      - name: show dependency
-        # Copy the commands from contrib/dependency/showdep.sh
-        run: |
-          echo "gcc path: $(which gcc)"
-          echo "gcc version: $(gcc --version)"
-          echo "cmake path: $(which cmake)"
-          echo "cmake version: $(cmake --version)"
-          echo "python3 path: $(which python3)"
-          echo "python3 version: $(python3 --version)"
-          echo "python3-config --prefix: $(python3-config --prefix)"
-          echo "python3-config --exec-prefix: $(python3-config --exec-prefix)"
-          echo "python3-config --includes: $(python3-config --includes)"
-          echo "python3-config --libs: $(python3-config --libs)"
-          echo "python3-config --cflags: $(python3-config --cflags)"
-          echo "python3-config --ldflags: $(python3-config --ldflags)"
-          echo "pip3 path: $(which pip3)"
-          python3 -c 'import numpy as np; print("np.__version__:", np.__version__, np.get_include())'
-          echo "pytest path: $(which pytest)"
-          echo "pytest version: $(pytest --version)"
-          echo "clang-tidy path: $(which clang-tidy)"
-          echo "clang-tidy version: $(clang-tidy -version)"
-          echo "flake8 path: $(which flake8)"
-          echo "flake8 version: $(flake8 --version)"
+      - name: setup dependencies for MacOS
+        if: runner.os == 'MacOS'
+        uses: ./.github/actions/setup_macos
+        with:
+          workflow: 'nouse_install'
 
       - name: setup.py install build_ext
         run: |
-          # Using legacy setup.py install for build_ext with cmake args
-          python3 setup.py install build_ext \
+          SUDO_CMD=""
+          if [ ${{ matrix.os }} == "ubuntu-24.04" ] ; then
+            SUDO_CMD="sudo"
+          fi
+          $SUDO_CMD python3 setup.py install build_ext \
             --cmake-args="${JOB_CMAKE_ARGS} -DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON" \
             --make-args="VERBOSE=1"
 
@@ -223,19 +70,18 @@ jobs:
           # The following command is the original commend, and it will fail on pytest == 8.0.0 .
           # pytest --rootdir=/tmp -v
           # Here is the issue and temporary solution: https://github.com/pytest-dev/pytest/issues/11781
-          # The alternative command to solve the issue is ```pytest --rootdir=. -v``` .
+          # The alternative command to solve the issue is ```pytest --rootdir=. -v```.
           pytest --rootdir=. -v
           cd ..
 
   send_email_on_failure:
-    needs: [nouse_install_ubuntu, nouse_install_macos]
+    needs: [nouse_install]
     # Run if any of the dependencies failed in master branch
     if: ${{ always() && contains(needs.*.result, 'failure') && github.ref_name == 'master' && github.event.repository.fork == false }}
     uses: ./.github/workflows/send_email_on_fail.yml
     with:
       job_results: |
-        - nouse_install_ubuntu: ${{ needs.nouse_install_ubuntu.result }}
-        - nouse_install_macos: ${{ needs.nouse_install_macos.result }}
+        - nouse_install: ${{ needs.nouse_install.result }}
     secrets:
       EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
       EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
