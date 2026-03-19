@@ -1145,9 +1145,14 @@ std::pair<size_t, size_t> TrapezoidalDecomposer<T>::decompose(size_t polygon_id,
         // Sort active edges by x at current y
         std::sort(active_edges.begin(), active_edges.end(), [y_current](const Edge & a, const Edge & b)
                   {
-                          value_type ax = a.x_at_lower_y + a.dxdy * (y_current - a.lower_y);
-                          value_type bx = b.x_at_lower_y + b.dxdy * (y_current - b.lower_y);
-                          return ax < bx; });
+                      value_type ax = a.x_at_lower_y + a.dxdy * (y_current - a.lower_y);
+                      value_type bx = b.x_at_lower_y + b.dxdy * (y_current - b.lower_y);
+                      if (ax != bx)
+                      {
+                          return ax < bx;
+                      }
+                      // If x values are equal, sort by dxdy to ensure consistent ordering of edges
+                      return a.dxdy < b.dxdy; });
 
         // Create trapezoids between pairs of active edges
         for (size_t j = 0; j < active_edges.size() - 1; j += 2)
