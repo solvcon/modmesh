@@ -761,9 +761,45 @@ class Polygon3dTB(ModMeshTB):
         diff_area = self._compute_total_area(result_diff)
         self.assert_allclose([diff_area], [2.25], rtol=1e-6)
 
+    def test_decomposition_edge_order(self):
+        """Test that polygon decomposition produces non-inverted trapezoids.
+        """
+        pad = self.PolygonPad(ndim=2)
+
+        # Triangle 1: apex at bottom y=0, base at y=2
+        # Vertices CCW: (0,2) -> (4,2) -> (2,0)
+        nodes1 = [
+            self.Point(0.0, 2.0, 0.0),
+            self.Point(4.0, 2.0, 0.0),
+            self.Point(2.0, 0.0, 0.0),
+        ]
+        _ = pad.add_polygon(nodes1)
+
+        # Triangle 2: shifted right, apex at bottom y=0
+        # Vertices CCW: (1,3) -> (5,3) -> (3,0)
+        nodes2 = [
+            self.Point(1.0, 3.0, 0.0),
+            self.Point(5.0, 3.0, 0.0),
+            self.Point(3.0, 0.0, 0.0),
+        ]
+        _ = pad.add_polygon(nodes2)
+
+        # Verify decomposition produces non-inverted trapezoids
+        # The apex of each triangles is at y=0,
+        # so the x value at y=0 will be the same for both left and right edges.
+        # Thus, the dxdy should be consider to prevent inverted trapezoids.
+        trap_pad = pad.decomposed_trapezoids()
+        for trap_id in range(trap_pad.size):
+            # At the top of each trapezoid, left_x (p3) <= right_x (p2)
+            self.assertLessEqual(
+                trap_pad.x3(trap_id), trap_pad.x2(trap_id),
+                f"Inverted trapezoid {trap_id}:"
+                f"top-left x={trap_pad.x3(trap_id)}"
+                f" > top-right x={trap_pad.x2(trap_id)}")
+
     def test_boolean_result_ccw_winding(self):
         """Test that all result polygons from boolean operations have
-        counter-clockwise winding (non-negative signed area)."""
+        counter - clockwise winding(non - negative signed area)."""
         pad = self.PolygonPad(ndim=2)
 
         nodes1 = [
