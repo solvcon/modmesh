@@ -258,6 +258,105 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
     }
 }
 
+RLines::RLines(std::shared_ptr<WorldFp64> const & world, QColor const & color, Qt3DCore::QNode * parent)
+    : RLines(world, parent)
+{
+    auto * mat = qobject_cast<Qt3DExtras::QDiffuseSpecularMaterial *>(m_material);
+    if (mat)
+    {
+        mat->setAmbient(color);
+        mat->setDiffuse(color);
+    }
+}
+
+RFilledPolygons::RFilledPolygons(std::shared_ptr<WorldFp64> const & world, QColor const & color, Qt3DCore::QNode * parent)
+    : Qt3DCore::QEntity(parent)
+    , m_geometry(new Qt3DCore::QGeometry())
+    , m_renderer(new Qt3DRender::QGeometryRenderer())
+    , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
+{
+    // Every 4 consecutive points in the world define one quad (trapezoid).
+    // Each quad is split into 2 triangles: (p0,p1,p2) and (p0,p2,p3).
+    size_t const npoint = world->npoint();
+    size_t const nquad = npoint / 4;
+
+    if (nquad > 0)
+    {
+        size_t const nvert = nquad * 4;
+        size_t const ntri = nquad * 2;
+
+        {
+            // Build vertex coordinate buffer.
+            auto * vertices = new Qt3DCore::QAttribute(m_geometry);
+            vertices->setName(Qt3DCore::QAttribute::defaultPositionAttributeName());
+            vertices->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
+            vertices->setVertexBaseType(Qt3DCore::QAttribute::Float);
+            vertices->setVertexSize(3);
+
+            auto * buf = new Qt3DCore::QBuffer(m_geometry);
+            {
+                QByteArray barray;
+                barray.resize(nvert * 3 * sizeof(float));
+                SimpleArray<float> sarr = makeSimpleArray<float>(barray, small_vector<size_t>{nvert, 3}, /*view*/ true);
+                for (size_t i = 0; i < nvert; ++i)
+                {
+                    Point3dFp64 const & v = world->point(i);
+                    sarr(i, 0) = v[0];
+                    sarr(i, 1) = v[1];
+                    sarr(i, 2) = v[2];
+                }
+                buf->setData(barray);
+            }
+            vertices->setBuffer(buf);
+            vertices->setByteStride(3 * sizeof(float));
+            vertices->setCount(nvert);
+            m_geometry->addAttribute(vertices);
+        }
+
+        {
+            // Build triangle index buffer.
+            auto * indices = new Qt3DCore::QAttribute(m_geometry);
+            indices->setVertexBaseType(Qt3DCore::QAttribute::UnsignedInt);
+            indices->setAttributeType(Qt3DCore::QAttribute::IndexAttribute);
+
+            auto * buf = new Qt3DCore::QBuffer(m_geometry);
+            {
+                QByteArray barray;
+                barray.resize(ntri * 3 * sizeof(uint32_t));
+                auto * ptr = reinterpret_cast<uint32_t *>(barray.data());
+                for (size_t q = 0; q < nquad; ++q)
+                {
+                    uint32_t base = q * 4;
+                    // Triangle 1: p0, p1, p2
+                    *ptr++ = base + 0;
+                    *ptr++ = base + 1;
+                    *ptr++ = base + 2;
+                    // Triangle 2: p0, p2, p3
+                    *ptr++ = base + 0;
+                    *ptr++ = base + 2;
+                    *ptr++ = base + 3;
+                }
+                buf->setData(barray);
+            }
+            indices->setBuffer(buf);
+            indices->setCount(ntri * 3);
+            m_geometry->addAttribute(indices);
+        }
+
+        m_renderer->setGeometry(m_geometry);
+        m_renderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Triangles);
+        addComponent(m_renderer);
+
+        auto * mat = qobject_cast<Qt3DExtras::QDiffuseSpecularMaterial *>(m_material);
+        if (mat)
+        {
+            mat->setAmbient(color);
+            mat->setDiffuse(color);
+        }
+        addComponent(m_material);
+    }
+}
+
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Concave star overlapping a concave arrow for polygon boolean operations.
+     P1: 5-pointed star (10 vertices, concave) centered at (200,200),
+         outer radius=150, inner radius=60
+     P2: Right-pointing arrow (7 vertices, concave) centered around (280,200)
+     The arrow partially overlaps the right half of the star, producing
+     non-trivial union, intersection, and difference results. -->
+<svg width="440" height="380" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <polygon points="200.0,50.0 235.3,151.5 342.7,153.6 257.1,218.5 288.2,321.4 200.0,260.0 111.8,321.4 142.9,218.5 57.3,153.6 164.7,151.5"
+      fill="none" stroke="blue" stroke-width="2"/>
+  <polygon points="180,170 300,170 300,140 380,200 300,260 300,230 180,230"
+      fill="none" stroke="red" stroke-width="2"/>
+</svg>

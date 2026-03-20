@@ -113,6 +113,16 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
     cameraController()->setFarPlane(dist + half_height * 2);
 }
 
+void R3DWidget::addColoredSegments(std::shared_ptr<WorldFp64> const & world, QColor const & color)
+{
+    new RLines(world, color, m_scene);
+}
+
+void R3DWidget::addFilledPolygons(std::shared_ptr<WorldFp64> const & world, QColor const & color)
+{
+    new RFilledPolygons(world, color, m_scene);
+}
+
 void R3DWidget::resizeEvent(QResizeEvent * event)
 {
     QWidget::resizeEvent(event);

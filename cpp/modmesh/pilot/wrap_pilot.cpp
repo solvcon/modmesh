@@ -157,6 +157,26 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
             .def_property_readonly("mesh", &wrapped_type::mesh)
             .def("updateMesh", &wrapped_type::updateMesh, py::arg("mesh"))
             .def("updateWorld", &wrapped_type::updateWorld, py::arg("world"))
+            .def(
+                "addColoredSegments",
+                [](wrapped_type & self, std::shared_ptr<WorldFp64> const & world, uint8_t r, uint8_t g, uint8_t b)
+                {
+                    self.addColoredSegments(world, QColor(r, g, b));
+                },
+                py::arg("world"),
+                py::arg("r"),
+                py::arg("g"),
+                py::arg("b"))
+            .def(
+                "addFilledPolygons",
+                [](wrapped_type & self, std::shared_ptr<WorldFp64> const & world, uint8_t r, uint8_t g, uint8_t b)
+                {
+                    self.addFilledPolygons(world, QColor(r, g, b));
+                },
+                py::arg("world"),
+                py::arg("r"),
+                py::arg("g"),
+                py::arg("b"))
             .def("showMark", &wrapped_type::showMark)
             .def(
                 "clipImage",

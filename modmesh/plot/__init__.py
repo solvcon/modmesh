@@ -29,11 +29,12 @@
 No-GUI drawing sub-system (without GUI libraries) of modmesh.
 """
 
-from . import svg, plane_layer
+from . import svg, plane_layer, polygon_boolean
 
 __all__ = [
     'svg',
-    'plane_layer'
+    'plane_layer',
+    'polygon_boolean',
 ]
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

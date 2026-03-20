@@ -46,6 +46,7 @@
 #include <Qt3DCore/QAttribute>
 #include <Qt3DCore/QTransform>
 
+#include <QColor>
 #include <Qt3DExtras/QDiffuseSpecularMaterial>
 
 namespace modmesh
@@ -76,6 +77,7 @@ class RLines
 public:
 
     RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * parent = nullptr);
+    RLines(std::shared_ptr<WorldFp64> const & world, QColor const & color, Qt3DCore::QNode * parent = nullptr);
 
     void update();
 
@@ -86,6 +88,25 @@ private:
     Qt3DRender::QMaterial * m_material = nullptr;
 
 }; /* end class RLines */
+
+class RFilledPolygons
+    : public Qt3DCore::QEntity
+{
+    Q_OBJECT
+
+public:
+
+    // Renders filled quads from world points. Every 4 consecutive points
+    // define one quad, split into 2 triangles: (p0,p1,p2) and (p0,p2,p3).
+    RFilledPolygons(std::shared_ptr<WorldFp64> const & world, QColor const & color, Qt3DCore::QNode * parent = nullptr);
+
+private:
+
+    Qt3DCore::QGeometry * m_geometry = nullptr;
+    Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
+    Qt3DRender::QMaterial * m_material = nullptr;
+
+}; /* end class RFilledPolygons */
 
 } /* end namespace modmesh */
 

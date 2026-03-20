@@ -124,6 +124,8 @@ public:
     void showMark();
     void updateMesh(std::shared_ptr<StaticMesh> const & mesh);
     void updateWorld(std::shared_ptr<WorldFp64> const & world);
+    void addColoredSegments(std::shared_ptr<WorldFp64> const & world, QColor const & color);
+    void addFilledPolygons(std::shared_ptr<WorldFp64> const & world, QColor const & color);
 
     std::shared_ptr<StaticMesh> mesh() const { return m_mesh; }
 

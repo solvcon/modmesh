@@ -53,6 +53,7 @@ class SvgParser(object):
         self.file_path = file_path
         self.spads = []  # list of SegmentPad
         self.cpads = []  # list of CurvePad
+        self.polygon_vertices = []  # list of lists of (x, y) tuples
 
     def parse(self):
         path_parser = PathParser(file_path=self.file_path)
@@ -64,6 +65,7 @@ class SvgParser(object):
         shape_parser.parse()
         self.spads.extend(shape_parser.spads)
         self.cpads.extend(shape_parser.cpads)
+        self.polygon_vertices = shape_parser.polygon_vertices
 
     def get_pads(self):
         return self.spads, self.cpads
@@ -716,6 +718,7 @@ class ShapeParser(object):
         self.file_path = file_path
         self.spads = []  # list of SegmentPad
         self.cpads = []  # list of CurvePad
+        self.polygon_vertices = []  # list of lists of (x, y) tuples
 
     def parse(self):
         tree = ET.parse(self.file_path)
@@ -795,6 +798,7 @@ class ShapeParser(object):
             polygon = EPolygon(points=points,
                                fill_attr=element.attrib.get('fill', ''))
             shapes.append(polygon)
+            self.polygon_vertices.append(points)
 
         for shape in shapes:
             spad, cpad = shape.get_pads()
