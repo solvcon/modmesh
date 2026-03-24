@@ -30,10 +30,10 @@ import unittest
 import numpy as np
 
 import modmesh
-from modmesh.testing import TestBase as ModMeshTB
+from modmesh import testing
 
 
-class BernsteinTB(ModMeshTB):
+class BernsteinTB(testing.TestBase):
     pass
 
 
@@ -165,7 +165,7 @@ class BernsteinInterpolationTC(BernsteinTB, unittest.TestCase):
         _check(t=0.9, values=values)
 
 
-class Point3dTB(ModMeshTB):
+class Point3dTB(testing.TestBase):
 
     def test_construct(self):
         Point = self.Point
@@ -253,14 +253,13 @@ class Point3dFp32TC(Point3dTB, unittest.TestCase):
         self.assertIs(modmesh.Point3dFp32, self.Point)
 
     def test_repr_str(self):
-        from modmesh import Point3dFp32
-        p = Point3dFp32(607.7, -64.2, 0)
+        p = modmesh.Point3dFp32(607.7, -64.2, 0)
         golden = "Point3dFp32(607.7, -64.2, 0)"
         # __repr__ is the same as __str__ for Point3d
         self.assertEqual(repr(p), golden)
         self.assertEqual(str(p), golden)
         # Evaluate the string and test the result
-        e = eval(golden)
+        e = eval(golden, vars(modmesh))
         self.assertEqual(p, e)
 
 
@@ -278,18 +277,17 @@ class Point3dFp64TC(Point3dTB, unittest.TestCase):
         self.assertIs(modmesh.Point3dFp64, self.Point)
 
     def test_repr_str(self):
-        from modmesh import Point3dFp64
-        p = Point3dFp64(607.7, -64.2, 0)
+        p = modmesh.Point3dFp64(607.7, -64.2, 0)
         golden = "Point3dFp64(607.7, -64.2, 0)"
         # __repr__ is the same as __str__ for Point3d
         self.assertEqual(repr(p), golden)
         self.assertEqual(str(p), golden)
         # Evaluate the string and test the result
-        e = eval(golden)
+        e = eval(golden, vars(modmesh))
         self.assertEqual(p, e)
 
 
-class Segment3dTB(ModMeshTB):
+class Segment3dTB(testing.TestBase):
 
     def test_construct(self):
         Point = self.Point
@@ -355,16 +353,15 @@ class Segment3dFp32TC(Segment3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_repr_str(self):
-        from modmesh import Point3dFp32, Segment3dFp32
-        s = Segment3dFp32(Point3dFp32(504.8, -64.2, 0),
-                          Point3dFp32(421.4, -250.5, 0))
+        s = modmesh.Segment3dFp32(modmesh.Point3dFp32(504.8, -64.2, 0),
+                                  modmesh.Point3dFp32(421.4, -250.5, 0))
         golden = ("Segment3dFp32(Point3dFp32(504.8, -64.2, 0), "
                   "Point3dFp32(421.4, -250.5, 0))")
         # __repr__ is the same as __str__ for Segment3d
         self.assertEqual(repr(s), golden)
         self.assertEqual(str(s), golden)
         # Evaluate the string and test the result
-        e = eval(golden)
+        e = eval(golden, vars(modmesh))
         self.assertEqual(s, e)
 
 
@@ -380,20 +377,19 @@ class Segment3dFp64TC(Segment3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_repr_str(self):
-        from modmesh import Point3dFp64, Segment3dFp64
-        s = Segment3dFp64(Point3dFp64(504.8, -64.2, 0),
-                          Point3dFp64(421.4, -250.5, 0))
+        s = modmesh.Segment3dFp64(modmesh.Point3dFp64(504.8, -64.2, 0),
+                                  modmesh.Point3dFp64(421.4, -250.5, 0))
         golden = ("Segment3dFp64(Point3dFp64(504.8, -64.2, 0), "
                   "Point3dFp64(421.4, -250.5, 0))")
         # __repr__ is the same as __str__ for Segment3d
         self.assertEqual(repr(s), golden)
         self.assertEqual(str(s), golden)
         # Evaluate the string and test the result
-        e = eval(golden)
+        e = eval(golden, vars(modmesh))
         self.assertEqual(s, e)
 
 
-class Triangle3dTB(ModMeshTB):
+class Triangle3dTB(testing.TestBase):
 
     def test_construct(self):
         Point = self.Point
@@ -501,16 +497,15 @@ class Triangle3dFp32TC(Triangle3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_repr_str(self):
-        from modmesh import Point3dFp32, Triangle3dFp32
-        t = Triangle3dFp32(Point3dFp32(1.5, 2.5, 3.5),
-                           Point3dFp32(4.5, 5.5, 6.5),
-                           Point3dFp32(7.5, 8.5, 9.5))
+        t = modmesh.Triangle3dFp32(modmesh.Point3dFp32(1.5, 2.5, 3.5),
+                                   modmesh.Point3dFp32(4.5, 5.5, 6.5),
+                                   modmesh.Point3dFp32(7.5, 8.5, 9.5))
         golden = ("Triangle3dFp32(Point3dFp32(1.5, 2.5, 3.5), "
                   "Point3dFp32(4.5, 5.5, 6.5), "
                   "Point3dFp32(7.5, 8.5, 9.5))")
         self.assertEqual(repr(t), golden)
         self.assertEqual(str(t), golden)
-        e = eval(golden)
+        e = eval(golden, vars(modmesh))
         self.assertEqual(t, e)
 
 
@@ -526,20 +521,19 @@ class Triangle3dFp64TC(Triangle3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_repr_str(self):
-        from modmesh import Point3dFp64, Triangle3dFp64
-        t = Triangle3dFp64(Point3dFp64(1.5, 2.5, 3.5),
-                           Point3dFp64(4.5, 5.5, 6.5),
-                           Point3dFp64(7.5, 8.5, 9.5))
+        t = modmesh.Triangle3dFp64(modmesh.Point3dFp64(1.5, 2.5, 3.5),
+                                   modmesh.Point3dFp64(4.5, 5.5, 6.5),
+                                   modmesh.Point3dFp64(7.5, 8.5, 9.5))
         golden = ("Triangle3dFp64(Point3dFp64(1.5, 2.5, 3.5), "
                   "Point3dFp64(4.5, 5.5, 6.5), "
                   "Point3dFp64(7.5, 8.5, 9.5))")
         self.assertEqual(repr(t), golden)
         self.assertEqual(str(t), golden)
-        e = eval(golden)
+        e = eval(golden, vars(modmesh))
         self.assertEqual(t, e)
 
 
-class Bezier3dTB(ModMeshTB):
+class Bezier3dTB(testing.TestBase):
 
     def test_control_points(self):
         Point = self.Point
@@ -653,11 +647,11 @@ class Bezier3dFp32TC(Bezier3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_repr_str(self):
-        from modmesh import Point3dFp32, Bezier3dFp32
-        b = Bezier3dFp32(Point3dFp32(607.7, -64.2, 0),
-                         Point3dFp32(504.8, -64.2, 0),
-                         Point3dFp32(421.4, -147.6, 0),
-                         Point3dFp32(421.4, -250.5, 0))
+        b = modmesh.Bezier3dFp32(
+            modmesh.Point3dFp32(607.7, -64.2, 0),
+            modmesh.Point3dFp32(504.8, -64.2, 0),
+            modmesh.Point3dFp32(421.4, -147.6, 0),
+            modmesh.Point3dFp32(421.4, -250.5, 0))
         golden = ("Bezier3dFp32(Point3dFp32(607.7, -64.2, 0), "
                   "Point3dFp32(504.8, -64.2, 0), "
                   "Point3dFp32(421.4, -147.6, 0), "
@@ -666,7 +660,7 @@ class Bezier3dFp32TC(Bezier3dTB, unittest.TestCase):
         self.assertEqual(repr(b), golden)
         self.assertEqual(str(b), golden)
         # Evaluate the string and test the result
-        e = eval(golden)
+        e = eval(golden, vars(modmesh))
         # FIXME: Bezier3d does not have equality operator
         # Tracked in https://github.com/solvcon/modmesh/issues/568
         self.assertEqual(b[0], e[0])
@@ -687,11 +681,11 @@ class Bezier3dFp64TC(Bezier3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_repr_str(self):
-        from modmesh import Point3dFp64, Bezier3dFp64
-        b = Bezier3dFp64(Point3dFp64(607.7, -64.2, 0),
-                         Point3dFp64(504.8, -64.2, 0),
-                         Point3dFp64(421.4, -147.6, 0),
-                         Point3dFp64(421.4, -250.5, 0))
+        b = modmesh.Bezier3dFp64(
+            modmesh.Point3dFp64(607.7, -64.2, 0),
+            modmesh.Point3dFp64(504.8, -64.2, 0),
+            modmesh.Point3dFp64(421.4, -147.6, 0),
+            modmesh.Point3dFp64(421.4, -250.5, 0))
         golden = ("Bezier3dFp64(Point3dFp64(607.7, -64.2, 0), "
                   "Point3dFp64(504.8, -64.2, 0), "
                   "Point3dFp64(421.4, -147.6, 0), "
@@ -700,7 +694,7 @@ class Bezier3dFp64TC(Bezier3dTB, unittest.TestCase):
         self.assertEqual(repr(b), golden)
         self.assertEqual(str(b), golden)
         # Evaluate the string and test the result
-        e = eval(golden)
+        e = eval(golden, vars(modmesh))
         # FIXME: Bezier3d does not have equality operator
         # Tracked in https://github.com/solvcon/modmesh/issues/568
         self.assertEqual(b[0], e[0])
@@ -709,7 +703,7 @@ class Bezier3dFp64TC(Bezier3dTB, unittest.TestCase):
         self.assertEqual(b[3], e[3])
 
 
-class PointPadTB(ModMeshTB):
+class PointPadTB(testing.TestBase):
 
     def test_ndim(self):
         pp2d = self.PointPad(ndim=2)
@@ -1175,7 +1169,7 @@ class PointPadFp64TC(PointPadTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
 
-class SegmentPadTB(ModMeshTB):
+class SegmentPadTB(testing.TestBase):
 
     def test_ndim(self):
         sp2d = self.SegmentPad(ndim=2)
@@ -1568,7 +1562,7 @@ class SegmentPadFp64TC(SegmentPadTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
 
-class TrianglePadTB(ModMeshTB):
+class TrianglePadTB(testing.TestBase):
 
     def test_ndim(self):
         tp2d = self.TrianglePad(ndim=2)
@@ -1903,7 +1897,7 @@ class TrianglePadFp64TC(TrianglePadTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
 
-class CurvePadTB(ModMeshTB):
+class CurvePadTB(testing.TestBase):
 
     def test_ndim(self):
         cp2d = self.CurvePad(ndim=2)
@@ -2233,7 +2227,7 @@ class CurvePadFp64TC(CurvePadTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
 
-class WorldTB(ModMeshTB):
+class WorldTB(testing.TestBase):
 
     def test_bezier(self):
         Point = self.Point

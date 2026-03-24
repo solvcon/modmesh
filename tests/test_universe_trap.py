@@ -26,10 +26,10 @@
 
 import unittest
 import modmesh as mm
-from modmesh.testing import TestBase as ModMeshTB
+from modmesh import testing
 
 
-class TrapezoidalDecomposerTB(ModMeshTB):
+class TrapezoidalDecomposerTB(testing.TestBase):
 
     def _make_2d_points(self, *coords):
         """Helper to create Point objects from 2D coordinates.

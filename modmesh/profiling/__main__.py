@@ -28,7 +28,7 @@ import functools
 import modmesh
 import numpy as np
 
-from ._result import ProfilingResultPrinter
+from . import _result
 
 
 def profile_function(func):
@@ -99,7 +99,7 @@ def main():
         profile_sort_np(test_data)
         profile_sort_sa(make_container(test_data))
 
-    printer = ProfilingResultPrinter(
+    printer = _result.ProfilingResultPrinter(
         modmesh.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
@@ -116,7 +116,7 @@ def main():
         profile_sort_np(test_data)
         profile_sort_sa(make_container(test_data))
 
-    printer = ProfilingResultPrinter(
+    printer = _result.ProfilingResultPrinter(
         modmesh.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
@@ -134,7 +134,7 @@ def main():
         profile_sort_np(test_data)
         profile_sort_sa(make_container(test_data))
 
-    printer = ProfilingResultPrinter(
+    printer = _result.ProfilingResultPrinter(
         modmesh.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
@@ -151,7 +151,7 @@ def main():
         profile_argsort_np(test_data)
         profile_argsort_sa(make_container(test_data))
 
-    printer = ProfilingResultPrinter(
+    printer = _result.ProfilingResultPrinter(
         modmesh.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
@@ -168,7 +168,7 @@ def main():
         profile_argsort_np(test_data)
         profile_argsort_sa(make_container(test_data))
 
-    printer = ProfilingResultPrinter(
+    printer = _result.ProfilingResultPrinter(
         modmesh.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
@@ -186,7 +186,7 @@ def main():
         profile_argsort_np(test_data)
         profile_argsort_sa(make_container(test_data))
 
-    printer = ProfilingResultPrinter(
+    printer = _result.ProfilingResultPrinter(
         modmesh.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
@@ -207,7 +207,7 @@ def main():
         profile_take_along_axis_sa(test_sa, idx_sa)
         profile_take_along_axis_simd(test_sa, idx_sa)
 
-    printer = ProfilingResultPrinter(
+    printer = _result.ProfilingResultPrinter(
         modmesh.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
@@ -228,7 +228,7 @@ def main():
         profile_take_along_axis_sa(test_sa, idx_sa)
         profile_take_along_axis_simd(test_sa, idx_sa)
 
-    printer = ProfilingResultPrinter(
+    printer = _result.ProfilingResultPrinter(
         modmesh.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
@@ -251,7 +251,7 @@ def main():
         profile_take_along_axis_sa(test_sa, idx_sa)
         profile_take_along_axis_simd(test_sa, idx_sa)
 
-    printer = ProfilingResultPrinter(
+    printer = _result.ProfilingResultPrinter(
         modmesh.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)

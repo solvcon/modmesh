@@ -1,4 +1,4 @@
-from enum import IntEnum
+import enum
 import functools
 import numpy as np
 import modmesh
@@ -36,7 +36,7 @@ def _make_container(data):
         return modmesh.SimpleArrayFloat64(array=data)
 
 
-class OpList(IntEnum):
+class OpList(enum.IntEnum):
     ADD = 0
     SUB = 1
     MUL = 2

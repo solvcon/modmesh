@@ -26,10 +26,10 @@
 
 import unittest
 import modmesh as mm
-from modmesh.testing import TestBase as ModMeshTB
+from modmesh import testing
 
 
-class Polygon3dTB(ModMeshTB):
+class Polygon3dTB(testing.TestBase):
 
     def test_polygon_pad_basic(self):
         """Test PolygonPad with basic operations."""

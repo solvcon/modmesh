@@ -5,18 +5,18 @@
 import pathlib
 import subprocess
 
-from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext
+import setuptools
+from setuptools.command import build_ext
 
 
 # Taken from https://stackoverflow.com/a/48015772
-class CMakeExtension(Extension):
+class CMakeExtension(setuptools.Extension):
     def __init__(self, name, **kwa):
         super().__init__(name, sources=[])
 
 
-class cmake_build_ext(build_ext):
-    user_options = build_ext.user_options + [
+class cmake_build_ext(build_ext.build_ext):
+    user_options = build_ext.build_ext.user_options + [
         ('cmake-args=', None, 'arguments to cmake'),
         ('make-args=', None, 'arguments to make'),
     ]
@@ -61,7 +61,7 @@ class cmake_build_ext(build_ext):
 
 
 def main():
-    setup(
+    setuptools.setup(
         name="modmesh",
         version="0.0",
         packages=[

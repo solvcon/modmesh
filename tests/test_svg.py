@@ -26,12 +26,13 @@
 
 import unittest
 
-from modmesh.testing import TestBase as ModMeshTB
-import modmesh.plot.svg as svg
 import os
 
+from modmesh import testing
+from modmesh.plot import svg
 
-class SvgParserTB(ModMeshTB, unittest.TestCase):
+
+class SvgParserTB(testing.TestBase, unittest.TestCase):
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:

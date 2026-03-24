@@ -26,7 +26,7 @@
 
 import unittest
 import numpy as np
-from itertools import product
+import itertools
 import modmesh as mm
 
 
@@ -107,7 +107,7 @@ class GemmTestBase(mm.testing.TestBase):
 
                 # Verify diagonal and off-diagonal elements explicitly
                 # using product
-                for i, j in product(range(size), repeat=2):
+                for i, j in itertools.product(range(size), repeat=2):
                     if i == j:
                         self.assertEqual(identity[i, j], 1.0,
                                          f"Diagonal element ({i},{j}) "
