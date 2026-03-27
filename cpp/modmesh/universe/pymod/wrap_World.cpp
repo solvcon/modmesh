@@ -212,6 +212,7 @@ public:
 
     using base_type = WrapBase<WrapPointPad<T>, PointPad<T>, std::shared_ptr<PointPad<T>>>;
     using wrapped_type = typename base_type::wrapped_type;
+    using wrapper_type = typename base_type::wrapper_type;
 
     using value_type = typename base_type::wrapped_type::value_type;
     using point_type = typename base_type::wrapped_type::point_type;
@@ -221,6 +222,11 @@ public:
 protected:
 
     WrapPointPad(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+    WrapPointPad & wrap_management();
+    WrapPointPad & wrap_accessor_point();
+    WrapPointPad & wrap_accessor_value();
+    WrapPointPad & wrap_geometry();
 }; /* end class WrapPointPad */
 
 template <typename T>
@@ -229,7 +235,21 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
 {
     namespace py = pybind11;
 
-    // Constructors
+    (*this)
+        .wrap_management()
+        .wrap_accessor_point()
+        .wrap_accessor_value()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapPointPad<T> & WrapPointPad<T>::wrap_management()
+{
+    namespace py = pybind11;
+
+    // Constructors.
     (*this)
         .def(
             py::init(
@@ -284,9 +304,36 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
         //
         ;
 
+    // Container management.
     (*this)
         .def_property_readonly("ndim", &wrapped_type::ndim)
         .def_property_readonly("alignment", &wrapped_type::alignment)
+        .def_timed("pack_array", &wrapped_type::pack_array)
+        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapPointPad<T> & WrapPointPad<T>::wrap_accessor_point()
+{
+    namespace py = pybind11;
+
+    // Python dunder accessor.
+    (*this)
+        .def("__len__", &wrapped_type::size)
+        .def("__getitem__",
+             [](wrapped_type const & self, size_t it)
+             {
+                 return self.get_at(it);
+             })
+        //
+        ;
+
+    // Append Point3d
+    (*this)
         .def(
             "append",
             [](wrapped_type & self, value_type x, value_type y)
@@ -304,14 +351,10 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
             py::arg("x"),
             py::arg("y"),
             py::arg("z"))
-        .def_timed("pack_array", &wrapped_type::pack_array)
-        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
-        .def("__len__", &wrapped_type::size)
-        .def("__getitem__",
-             [](wrapped_type const & self, size_t it)
-             {
-                 return self.get_at(it);
-             })
+        //
+        ;
+
+    (*this)
         .def("get_at",
              [](wrapped_type const & self, size_t it)
              {
@@ -334,6 +377,14 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
              })
         //
         ;
+
+    return *this;
+}
+
+template <typename T>
+WrapPointPad<T> & WrapPointPad<T>::wrap_accessor_value()
+{
+    namespace py = pybind11;
 
     // x, y, z element accessors.
 #define DECL_WRAP(NAME)                         \
@@ -365,6 +416,14 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
 #undef DECL_WRAP
     // clang-format on
 
+    return *this;
+}
+
+template <typename T>
+WrapPointPad<T> & WrapPointPad<T>::wrap_geometry()
+{
+    namespace py = pybind11;
+
     (*this)
         .def(
             "mirror",
@@ -390,6 +449,8 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
             py::arg("axis"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
