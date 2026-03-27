@@ -1128,6 +1128,11 @@ public:
 protected:
 
     WrapTrianglePad(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+    WrapTrianglePad & wrap_management();
+    WrapTrianglePad & wrap_accessor_triangle();
+    WrapTrianglePad & wrap_accessor_point();
+    WrapTrianglePad & wrap_geometry();
 }; /* end class WrapTrianglePad */
 
 template <typename T>
@@ -1136,6 +1141,21 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
 {
     namespace py = pybind11;
 
+    (*this)
+        .wrap_management()
+        .wrap_accessor_triangle()
+        .wrap_accessor_point()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapTrianglePad<T> & WrapTrianglePad<T>::wrap_management()
+{
+    namespace py = pybind11;
+
+    // Constructors
     (*this)
         .def(
             py::init(
@@ -1190,11 +1210,37 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
             py::arg("y2"),
             py::arg("z2"),
             py::arg("clone"))
-        .def_timed("clone", &wrapped_type::clone)
-        .def_property_readonly("ndim", &wrapped_type::ndim)
         //
         ;
 
+    (*this)
+        .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def_timed("clone", &wrapped_type::clone)
+        .def_timed("pack_array", &wrapped_type::pack_array)
+        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapTrianglePad<T> & WrapTrianglePad<T>::wrap_accessor_triangle()
+{
+    namespace py = pybind11;
+
+    // Python dunder accessor.
+    (*this)
+        .def("__len__", &wrapped_type::size)
+        .def("__getitem__",
+             [](wrapped_type const & self, size_t it)
+             {
+                 return self.get_at(it);
+             })
+        //
+        ;
+
+    // Append Triangle3d.
     (*this)
         .def(
             "append",
@@ -1239,6 +1285,11 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
             py::arg("x2"),
             py::arg("y2"),
             py::arg("z2"))
+        //
+        ;
+
+    // Extend Triangle3d
+    (*this)
         .def(
             "extend_with",
             [](wrapped_type & self, wrapped_type const & other)
@@ -1246,14 +1297,11 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
                 self.extend_with(other);
             },
             py::arg("triangles"))
-        .def_timed("pack_array", &wrapped_type::pack_array)
-        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
-        .def("__len__", &wrapped_type::size)
-        .def("__getitem__",
-             [](wrapped_type const & self, size_t it)
-             {
-                 return self.get_at(it);
-             })
+        //
+        ;
+
+    // Additional getter and setter for Triangle3d.
+    (*this)
         .def("get_at",
              [](wrapped_type const & self, size_t it)
              {
@@ -1282,13 +1330,22 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
         //
         ;
 
+    return *this;
+}
+
+template <typename T>
+WrapTrianglePad<T> & WrapTrianglePad<T>::wrap_accessor_point()
+{
+    namespace py = pybind11;
+
+    // x, y, z, point element accessors.
 #define DECL_WRAP(NAME)                         \
     .def(                                       \
         #NAME,                                  \
         [](wrapped_type const & self, size_t i) \
         { return self.NAME(i); })
+    // clang-format off
     (*this)
-        // clang-format off
         DECL_WRAP(x0_at)
         DECL_WRAP(y0_at)
         DECL_WRAP(z0_at)
@@ -1304,13 +1361,14 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
     // clang-format on
 #undef DECL_WRAP
 
+    // x, y, z, point array/batch accessors.
 #define DECL_WRAP(NAME)         \
     .def_property_readonly(     \
         #NAME,                  \
         [](wrapped_type & self) \
         { return self.NAME(); })
+    // clang-format off
     (*this)
-        // clang-format off
         DECL_WRAP(x0)
         DECL_WRAP(y0)
         DECL_WRAP(z0)
@@ -1325,6 +1383,14 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
         DECL_WRAP(p2);
     // clang-format on
 #undef DECL_WRAP
+
+    return *this;
+}
+
+template <typename T>
+WrapTrianglePad<T> & WrapTrianglePad<T>::wrap_geometry()
+{
+    namespace py = pybind11;
 
     (*this)
         .def(
@@ -1351,6 +1417,8 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
             py::arg("axis"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
