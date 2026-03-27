@@ -1592,11 +1592,30 @@ public:
 protected:
 
     WrapCurvePad(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+    WrapCurvePad & wrap_management();
+    WrapCurvePad & wrap_accessor_bezier();
+    WrapCurvePad & wrap_accessor_point();
+    WrapCurvePad & wrap_geometry();
 }; /* end class WrapCurvePad */
 
 template <typename T>
 WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .wrap_management()
+        .wrap_accessor_bezier()
+        .wrap_accessor_point()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapCurvePad<T> & WrapCurvePad<T>::wrap_management()
 {
     namespace py = pybind11;
 
@@ -1618,6 +1637,27 @@ WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const
 
     (*this)
         .def_property_readonly("ndim", &wrapped_type::ndim)
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapCurvePad<T> & WrapCurvePad<T>::wrap_accessor_bezier()
+{
+    namespace py = pybind11;
+
+    // Python dunder accessor.
+    (*this)
+        .def("__len__", &wrapped_type::size)
+        .def("__getitem__", &wrapped_type::get_at)
+        .def("__setitem__", &wrapped_type::set_at)
+        //
+        ;
+
+    // Append Bezier3d
+    (*this)
         .def(
             "append",
             [](wrapped_type & self, bezier_type const & c)
@@ -1635,18 +1675,23 @@ WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const
             py::arg("p1"),
             py::arg("p2"),
             py::arg("p3"))
-        .def("__len__", &wrapped_type::size)
-        .def("__getitem__", &wrapped_type::get_at)
-        .def("__setitem__", &wrapped_type::set_at)
+        //
+        ;
+
+    // Additional getter and setter for Bezier3d.
+    (*this)
         .def("get_at", &wrapped_type::get_at)
         .def("set_at", &wrapped_type::set_at)
         //
         ;
 
-    (*this)
-        .def("sample", &wrapped_type::sample, py::arg("length"))
-        //
-        ;
+    return *this;
+}
+
+template <typename T>
+WrapCurvePad<T> & WrapCurvePad<T>::wrap_accessor_point()
+{
+    namespace py = pybind11;
 
     // x, y, z, point element accessors.
 #define DECL_WRAP(NAME) \
@@ -1698,10 +1743,19 @@ WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const
         DECL_WRAP(p2)
         DECL_WRAP(p3)
         ;
-#undef DECL_WRAP
     // clang-format on
+#undef DECL_WRAP
+
+    return *this;
+}
+
+template <typename T>
+WrapCurvePad<T> & WrapCurvePad<T>::wrap_geometry()
+{
+    namespace py = pybind11;
 
     (*this)
+        .def("sample", &wrapped_type::sample, py::arg("length"))
         .def(
             "mirror",
             [](wrapped_type & self, std::string const & axis)
@@ -1726,6 +1780,8 @@ WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const
             py::arg("axis"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
