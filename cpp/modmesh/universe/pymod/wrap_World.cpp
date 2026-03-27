@@ -1244,12 +1244,28 @@ public:
 protected:
 
     WrapBezier3d(pybind11::module & mod, char const * pyname, char const * pydoc);
-};
-/* end class WrapBezier3d */
+
+    WrapBezier3d & wrap_management();
+    WrapBezier3d & wrap_accessor();
+    WrapBezier3d & wrap_geometry();
+}; /* end class WrapBezier3d */
 
 template <typename T>
 WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .wrap_management()
+        .wrap_accessor()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapBezier3d<T> & WrapBezier3d<T>::wrap_management()
 {
     namespace py = pybind11;
 
@@ -1263,7 +1279,6 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
             "__repr__",
             [](wrapped_type const & self)
             {
-                // Hard-code the Python type names in the static variables before finding a systematic way.
                 static char const * btypename = std::is_same_v<T, double> ? "Bezier3dFp64" : "Bezier3dFp32";
                 static char const * ptypename = std::is_same_v<T, double> ? "Point3dFp64" : "Point3dFp32";
                 return std::format("{}({}({}), {}({}), {}({}), {}({}))",
@@ -1278,6 +1293,18 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
                                    self.p3().value_string());
             })
         .def_alias("__repr__", "__str__")
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapBezier3d<T> & WrapBezier3d<T>::wrap_accessor()
+{
+    namespace py = pybind11;
+
+    (*this)
         .def("__len__",
              [](wrapped_type const &)
              { return 4; })
@@ -1312,13 +1339,16 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
         //
         ;
 
-    // Sampling
-    (*this)
-        .def("sample", &wrapped_type::sample, py::arg("nlocus"))
-        //
-        ;
+    return *this;
+}
+
+template <typename T>
+WrapBezier3d<T> & WrapBezier3d<T>::wrap_geometry()
+{
+    namespace py = pybind11;
 
     (*this)
+        .def("sample", &wrapped_type::sample, py::arg("nlocus"))
         .def(
             "mirror",
             [](wrapped_type & self, std::string const & axis)
@@ -1343,6 +1373,8 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
             py::arg("axis"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
