@@ -1547,11 +1547,26 @@ public:
 
 protected:
     WrapBoundBox3d(pybind11::module & mod, char const * pyname, char const * pydoc);
-};
+
+    WrapBoundBox3d & wrap_management();
+    WrapBoundBox3d & wrap_geometry();
+}; /* end class WrapBoundBox3d */
 
 template <typename T>
 WrapBoundBox3d<T>::WrapBoundBox3d(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .wrap_management()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapBoundBox3d<T> & WrapBoundBox3d<T>::wrap_management()
 {
     namespace py = pybind11;
 
@@ -1563,18 +1578,38 @@ WrapBoundBox3d<T>::WrapBoundBox3d(pybind11::module & mod, const char * pyname, c
              py::arg("max_x"),
              py::arg("max_y"),
              py::arg("max_z"))
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapBoundBox3d<T> & WrapBoundBox3d<T>::wrap_geometry()
+{
+    namespace py = pybind11;
+
+    // Bounding value.
+    (*this)
         .def_property_readonly("min_x", &wrapped_type::min_x)
         .def_property_readonly("min_y", &wrapped_type::min_y)
         .def_property_readonly("min_z", &wrapped_type::min_z)
         .def_property_readonly("max_x", &wrapped_type::max_x)
         .def_property_readonly("max_y", &wrapped_type::max_y)
         .def_property_readonly("max_z", &wrapped_type::max_z)
+        //
+        ;
+
+    // Calculation.
+    (*this)
+        .def("calc_area", &wrapped_type::calc_area)
         .def("overlap", &wrapped_type::overlap, py::arg("other"))
         .def("contain", &wrapped_type::contain, py::arg("other"))
-        .def("calc_area", &wrapped_type::calc_area)
         .def("expand", &wrapped_type::expand, py::arg("other"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
