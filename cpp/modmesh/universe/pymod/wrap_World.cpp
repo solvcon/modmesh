@@ -657,6 +657,11 @@ public:
 protected:
 
     WrapSegmentPad(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+    WrapSegmentPad & wrap_management();
+    WrapSegmentPad & wrap_accessor_segment();
+    WrapSegmentPad & wrap_accessor_point();
+    WrapSegmentPad & wrap_geometry();
 }; /* end class WrapSegmentPad */
 
 template <typename T>
@@ -665,7 +670,21 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
 {
     namespace py = pybind11;
 
-    // Constructors
+    (*this)
+        .wrap_management()
+        .wrap_accessor_segment()
+        .wrap_accessor_point()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapSegmentPad<T> & WrapSegmentPad<T>::wrap_management()
+{
+    namespace py = pybind11;
+
+    // Constructors.
     (*this)
         .def(
             py::init(
@@ -715,6 +734,32 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
 
     (*this)
         .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def_timed("pack_array", &wrapped_type::pack_array)
+        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapSegmentPad<T> & WrapSegmentPad<T>::wrap_accessor_segment()
+{
+    namespace py = pybind11;
+
+    // Python dunder accessor.
+    (*this)
+        .def("__len__", &wrapped_type::size)
+        .def("__getitem__",
+             [](wrapped_type const & self, size_t it)
+             {
+                 return self.get_at(it);
+             })
+        //
+        ;
+
+    // Append Segment3d.
+    (*this)
         .def(
             "append",
             [](wrapped_type & self, segment_type const & s)
@@ -752,6 +797,11 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
             py::arg("x1"),
             py::arg("y1"),
             py::arg("z1"))
+        //
+        ;
+
+    // Extend Segment3d.
+    (*this)
         .def(
             "extend_with",
             [](wrapped_type & self, wrapped_type const & other)
@@ -759,14 +809,11 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
                 self.extend_with(other);
             },
             py::arg("segments"))
-        .def_timed("pack_array", &wrapped_type::pack_array)
-        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
-        .def("__len__", &wrapped_type::size)
-        .def("__getitem__",
-             [](wrapped_type const & self, size_t it)
-             {
-                 return self.get_at(it);
-             })
+        //
+        ;
+
+    // Additional getter and setter for Segment3d.
+    (*this)
         .def("get_at",
              [](wrapped_type const & self, size_t it)
              {
@@ -794,6 +841,14 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
              })
         //
         ;
+
+    return *this;
+}
+
+template <typename T>
+WrapSegmentPad<T> & WrapSegmentPad<T>::wrap_accessor_point()
+{
+    namespace py = pybind11;
 
     // x, y, z, point element accessors.
 #define DECL_WRAP(NAME)                         \
@@ -835,6 +890,14 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
 #undef DECL_WRAP
     // clang-format on
 
+    return *this;
+}
+
+template <typename T>
+WrapSegmentPad<T> & WrapSegmentPad<T>::wrap_geometry()
+{
+    namespace py = pybind11;
+
     (*this)
         .def(
             "mirror",
@@ -860,6 +923,8 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
             py::arg("axis"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
