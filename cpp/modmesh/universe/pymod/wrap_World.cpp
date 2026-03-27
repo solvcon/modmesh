@@ -819,12 +819,31 @@ public:
 protected:
 
     WrapTriangle3d(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+    WrapTriangle3d & wrap_management();
+    WrapTriangle3d & wrap_operator();
+    WrapTriangle3d & wrap_accessor();
+    WrapTriangle3d & wrap_geometry();
 };
 /* end class WrapTriangle3d */
 
 template <typename T>
 WrapTriangle3d<T>::WrapTriangle3d(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .wrap_management()
+        .wrap_operator()
+        .wrap_accessor()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapTriangle3d<T> & WrapTriangle3d<T>::wrap_management()
 {
     namespace py = pybind11;
 
@@ -849,6 +868,32 @@ WrapTriangle3d<T>::WrapTriangle3d(pybind11::module & mod, const char * pyname, c
                                    self.p2().value_string());
             })
         .def_alias("__repr__", "__str__")
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapTriangle3d<T> & WrapTriangle3d<T>::wrap_operator()
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
+        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapTriangle3d<T> & WrapTriangle3d<T>::wrap_accessor()
+{
+    namespace py = pybind11;
+
+    (*this)
         .def(
             "__len__",
             [](wrapped_type const & self)
@@ -871,10 +916,12 @@ WrapTriangle3d<T>::WrapTriangle3d(pybind11::module & mod, const char * pyname, c
         { return self.NAME(); },                      \
         [](wrapped_type & self, point_type const & v) \
         { self.set_##NAME(v); })
+    // clang-format off
     (*this)
         DECL_WRAP(p0)
-            DECL_WRAP(p1)
-                DECL_WRAP(p2);
+        DECL_WRAP(p1)
+        DECL_WRAP(p2);
+    // clang-format on
 #undef DECL_WRAP
 
 #define DECL_WRAP(NAME)                                              \
@@ -884,8 +931,8 @@ WrapTriangle3d<T>::WrapTriangle3d(pybind11::module & mod, const char * pyname, c
         { return self.NAME(); },                                     \
         [](wrapped_type & self, typename wrapped_type::value_type v) \
         { self.set_##NAME(v); })
+    // clang-format off
     (*this)
-        // clang-format off
         DECL_WRAP(x0)
         DECL_WRAP(y0)
         DECL_WRAP(z0)
@@ -898,11 +945,13 @@ WrapTriangle3d<T>::WrapTriangle3d(pybind11::module & mod, const char * pyname, c
     // clang-format on
 #undef DECL_WRAP
 
-    (*this)
-        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
-        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
-        //
-        ;
+    return *this;
+}
+
+template <typename T>
+WrapTriangle3d<T> & WrapTriangle3d<T>::wrap_geometry()
+{
+    namespace py = pybind11;
 
     (*this)
         .def(
@@ -929,6 +978,8 @@ WrapTriangle3d<T>::WrapTriangle3d(pybind11::module & mod, const char * pyname, c
             py::arg("axis"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
