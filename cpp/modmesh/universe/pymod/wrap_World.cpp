@@ -1884,12 +1884,31 @@ public:
 protected:
 
     WrapWorld(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+    WrapWorld & wrap_management();
+    WrapWorld & wrap_point();
+    WrapWorld & wrap_segment();
+    WrapWorld & wrap_bezier();
 };
 /* end class WrapWorld */
 
 template <typename T>
 WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .wrap_management()
+        .wrap_point()
+        .wrap_segment()
+        .wrap_bezier()
+        //
+        ;
+}
+
+template <typename T>
+WrapWorld<T> & WrapWorld<T>::wrap_management()
 {
     namespace py = pybind11;
 
@@ -1901,7 +1920,15 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
         //
         ;
 
-    // Bezier curves
+    return *this;
+}
+
+template <typename T>
+WrapWorld<T> & WrapWorld<T>::wrap_point()
+{
+    namespace py = pybind11;
+
+    // Point.
     (*this)
         .def(
             "add_point",
@@ -1924,6 +1951,19 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
         .def_property_readonly("npoint", &wrapped_type::npoint)
         .def("point", &wrapped_type::point_at)
         .def_property_readonly("points", &wrapped_type::points)
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapWorld<T> & WrapWorld<T>::wrap_segment()
+{
+    namespace py = pybind11;
+
+    // Segment.
+    (*this)
         .def(
             "add_segment",
             [](wrapped_type & self, segment_type const & edge)
@@ -1954,6 +1994,19 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
         .def_property_readonly("nsegment", &wrapped_type::nsegment)
         .def("segment", &wrapped_type::segment_at)
         .def_property_readonly("segments", &wrapped_type::segments)
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapWorld<T> & WrapWorld<T>::wrap_bezier()
+{
+    namespace py = pybind11;
+
+    // Bezier curves
+    (*this)
         .def(
             "add_bezier",
             [](wrapped_type & self, bezier_type const & bezier)
@@ -1993,6 +2046,8 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
         .def_property_readonly("curves", &wrapped_type::curves)
         //
         ;
+
+    return *this;
 }
 
 void wrap_World(pybind11::module & mod)
