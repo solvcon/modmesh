@@ -52,6 +52,11 @@ public:
 protected:
 
     WrapPoint3d(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+    WrapPoint3d & wrap_management();
+    WrapPoint3d & wrap_operator();
+    WrapPoint3d & wrap_accessor();
+    WrapPoint3d & wrap_geometry();
 };
 /* end class WrapPoint3d */
 
@@ -62,8 +67,28 @@ WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const c
     namespace py = pybind11;
 
     (*this)
+        .wrap_management()
+        .wrap_operator()
+        .wrap_accessor()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapPoint3d<T> & WrapPoint3d<T>::wrap_management()
+{
+    namespace py = pybind11;
+
+    // Constructors.
+    (*this)
         .def(py::init<value_type, value_type>(), py::arg("x"), py::arg("y"))
         .def(py::init<value_type, value_type, value_type>(), py::arg("x"), py::arg("y"), py::arg("z"))
+        //
+        ;
+
+    // String representations.
+    (*this)
         .def(
             "__repr__",
             [](wrapped_type const & self)
@@ -73,6 +98,40 @@ WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const c
                 return std::format("{}({})", ptypename, self.value_string());
             })
         .def_alias("__repr__", "__str__")
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapPoint3d<T> & WrapPoint3d<T>::wrap_operator()
+{
+    namespace py = pybind11;
+
+    // Wrap for operators.
+    (*this)
+        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
+        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
+        .def(py::self += py::self)
+        .def(py::self += value_type())
+        .def(py::self -= py::self)
+        .def(py::self -= value_type())
+        .def(py::self *= value_type())
+        .def(py::self /= value_type())
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapPoint3d<T> & WrapPoint3d<T>::wrap_accessor()
+{
+    namespace py = pybind11;
+
+    // Python dunder accessors.
+    (*this)
         .def(
             "__len__",
             [](wrapped_type const & self)
@@ -89,19 +148,6 @@ WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const c
         //
         ;
 
-    // Wrap for operators.
-    (*this)
-        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
-        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
-        .def(py::self += py::self)
-        .def(py::self += value_type())
-        .def(py::self -= py::self)
-        .def(py::self -= value_type())
-        .def(py::self *= value_type())
-        .def(py::self /= value_type())
-        //
-        ;
-
     // x, y, z accessors.
 #define DECL_WRAP(NAME)                                              \
     .def_property(                                                   \
@@ -110,6 +156,7 @@ WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const c
         { return self.NAME(); },                                     \
         [](wrapped_type & self, typename wrapped_type::value_type v) \
         { self.NAME() = v; })
+
     // clang-format off
    (*this)
        DECL_WRAP(x)
@@ -118,6 +165,14 @@ WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const c
        ;
 #undef DECL_WRAP
     // clang-format on
+
+    return *this;
+}
+
+template <typename T>
+WrapPoint3d<T> & WrapPoint3d<T>::wrap_geometry()
+{
+    namespace py = pybind11;
 
     (*this)
         .def(
@@ -144,6 +199,8 @@ WrapPoint3d<T>::WrapPoint3d(pybind11::module & mod, const char * pyname, const c
             py::arg("axis"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
@@ -155,6 +212,7 @@ public:
 
     using base_type = WrapBase<WrapPointPad<T>, PointPad<T>, std::shared_ptr<PointPad<T>>>;
     using wrapped_type = typename base_type::wrapped_type;
+    using wrapper_type = typename base_type::wrapper_type;
 
     using value_type = typename base_type::wrapped_type::value_type;
     using point_type = typename base_type::wrapped_type::point_type;
@@ -164,6 +222,11 @@ public:
 protected:
 
     WrapPointPad(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+    WrapPointPad & wrap_management();
+    WrapPointPad & wrap_accessor_point();
+    WrapPointPad & wrap_accessor_value();
+    WrapPointPad & wrap_geometry();
 }; /* end class WrapPointPad */
 
 template <typename T>
@@ -172,7 +235,21 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
 {
     namespace py = pybind11;
 
-    // Constructors
+    (*this)
+        .wrap_management()
+        .wrap_accessor_point()
+        .wrap_accessor_value()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapPointPad<T> & WrapPointPad<T>::wrap_management()
+{
+    namespace py = pybind11;
+
+    // Constructors.
     (*this)
         .def(
             py::init(
@@ -227,9 +304,36 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
         //
         ;
 
+    // Container management.
     (*this)
         .def_property_readonly("ndim", &wrapped_type::ndim)
         .def_property_readonly("alignment", &wrapped_type::alignment)
+        .def_timed("pack_array", &wrapped_type::pack_array)
+        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapPointPad<T> & WrapPointPad<T>::wrap_accessor_point()
+{
+    namespace py = pybind11;
+
+    // Python dunder accessor.
+    (*this)
+        .def("__len__", &wrapped_type::size)
+        .def("__getitem__",
+             [](wrapped_type const & self, size_t it)
+             {
+                 return self.get_at(it);
+             })
+        //
+        ;
+
+    // Append Point3d
+    (*this)
         .def(
             "append",
             [](wrapped_type & self, value_type x, value_type y)
@@ -247,14 +351,10 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
             py::arg("x"),
             py::arg("y"),
             py::arg("z"))
-        .def_timed("pack_array", &wrapped_type::pack_array)
-        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
-        .def("__len__", &wrapped_type::size)
-        .def("__getitem__",
-             [](wrapped_type const & self, size_t it)
-             {
-                 return self.get_at(it);
-             })
+        //
+        ;
+
+    (*this)
         .def("get_at",
              [](wrapped_type const & self, size_t it)
              {
@@ -277,6 +377,14 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
              })
         //
         ;
+
+    return *this;
+}
+
+template <typename T>
+WrapPointPad<T> & WrapPointPad<T>::wrap_accessor_value()
+{
+    namespace py = pybind11;
 
     // x, y, z element accessors.
 #define DECL_WRAP(NAME)                         \
@@ -308,6 +416,14 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
 #undef DECL_WRAP
     // clang-format on
 
+    return *this;
+}
+
+template <typename T>
+WrapPointPad<T> & WrapPointPad<T>::wrap_geometry()
+{
+    namespace py = pybind11;
+
     (*this)
         .def(
             "mirror",
@@ -333,6 +449,8 @@ WrapPointPad<T>::WrapPointPad(pybind11::module & mod, const char * pyname, const
             py::arg("axis"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
@@ -353,8 +471,12 @@ public:
 protected:
 
     WrapSegment3d(pybind11::module & mod, char const * pyname, char const * pydoc);
-};
-/* end class WrapSegment3d */
+
+    WrapSegment3d & wrap_management();
+    WrapSegment3d & wrap_operator();
+    WrapSegment3d & wrap_accessor();
+    WrapSegment3d & wrap_geometry();
+}; /* end class WrapSegment3d */
 
 template <typename T>
 WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, const char * pydoc)
@@ -363,9 +485,29 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
     namespace py = pybind11;
 
     (*this)
+        .wrap_management()
+        .wrap_operator()
+        .wrap_accessor()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapSegment3d<T> & WrapSegment3d<T>::wrap_management()
+{
+    namespace py = pybind11;
+
+    // Constructors.
+    (*this)
         .def(py::init<point_type const &, point_type const &>(),
              py::arg("p0"),
              py::arg("p1"))
+        //
+        ;
+
+    // Python string representations.
+    (*this)
         .def(
             "__repr__",
             [](wrapped_type const & self)
@@ -381,6 +523,32 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
                                    self.p1().value_string());
             })
         .def_alias("__repr__", "__str__")
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapSegment3d<T> & WrapSegment3d<T>::wrap_operator()
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
+        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapSegment3d<T> & WrapSegment3d<T>::wrap_accessor()
+{
+    namespace py = pybind11;
+
+    (*this)
         .def(
             "__len__",
             [](wrapped_type const & self)
@@ -396,7 +564,7 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
         //
         ;
 
-    // v0 (tail) and v1 (head) accessors.
+    // p0 (tail) and p1 (head) accessors.
 #define DECL_WRAP(NAME)                               \
     .def_property(                                    \
         #NAME,                                        \
@@ -421,23 +589,24 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
         [](wrapped_type & self, typename wrapped_type::value_type v) \
         { self.set_##NAME(v); })
     // clang-format off
-   (*this)
-       DECL_WRAP(x0)
-       DECL_WRAP(y0)
-       DECL_WRAP(z0)
-       DECL_WRAP(x1)
-       DECL_WRAP(y1)
-       DECL_WRAP(z1)
-       ;
+    (*this)
+        DECL_WRAP(x0)
+        DECL_WRAP(y0)
+        DECL_WRAP(z0)
+        DECL_WRAP(x1)
+        DECL_WRAP(y1)
+        DECL_WRAP(z1)
+        ;
 #undef DECL_WRAP
     // clang-format on
 
-    // Wrap for operators.
-    (*this)
-        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
-        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
-        //
-        ;
+    return *this;
+}
+
+template <typename T>
+WrapSegment3d<T> & WrapSegment3d<T>::wrap_geometry()
+{
+    namespace py = pybind11;
 
     (*this)
         .def(
@@ -464,6 +633,8 @@ WrapSegment3d<T>::WrapSegment3d(pybind11::module & mod, const char * pyname, con
             py::arg("axis"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
@@ -486,6 +657,11 @@ public:
 protected:
 
     WrapSegmentPad(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+    WrapSegmentPad & wrap_management();
+    WrapSegmentPad & wrap_accessor_segment();
+    WrapSegmentPad & wrap_accessor_point();
+    WrapSegmentPad & wrap_geometry();
 }; /* end class WrapSegmentPad */
 
 template <typename T>
@@ -494,7 +670,21 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
 {
     namespace py = pybind11;
 
-    // Constructors
+    (*this)
+        .wrap_management()
+        .wrap_accessor_segment()
+        .wrap_accessor_point()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapSegmentPad<T> & WrapSegmentPad<T>::wrap_management()
+{
+    namespace py = pybind11;
+
+    // Constructors.
     (*this)
         .def(
             py::init(
@@ -544,6 +734,32 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
 
     (*this)
         .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def_timed("pack_array", &wrapped_type::pack_array)
+        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapSegmentPad<T> & WrapSegmentPad<T>::wrap_accessor_segment()
+{
+    namespace py = pybind11;
+
+    // Python dunder accessor.
+    (*this)
+        .def("__len__", &wrapped_type::size)
+        .def("__getitem__",
+             [](wrapped_type const & self, size_t it)
+             {
+                 return self.get_at(it);
+             })
+        //
+        ;
+
+    // Append Segment3d.
+    (*this)
         .def(
             "append",
             [](wrapped_type & self, segment_type const & s)
@@ -581,6 +797,11 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
             py::arg("x1"),
             py::arg("y1"),
             py::arg("z1"))
+        //
+        ;
+
+    // Extend Segment3d.
+    (*this)
         .def(
             "extend_with",
             [](wrapped_type & self, wrapped_type const & other)
@@ -588,14 +809,11 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
                 self.extend_with(other);
             },
             py::arg("segments"))
-        .def_timed("pack_array", &wrapped_type::pack_array)
-        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
-        .def("__len__", &wrapped_type::size)
-        .def("__getitem__",
-             [](wrapped_type const & self, size_t it)
-             {
-                 return self.get_at(it);
-             })
+        //
+        ;
+
+    // Additional getter and setter for Segment3d.
+    (*this)
         .def("get_at",
              [](wrapped_type const & self, size_t it)
              {
@@ -623,6 +841,14 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
              })
         //
         ;
+
+    return *this;
+}
+
+template <typename T>
+WrapSegmentPad<T> & WrapSegmentPad<T>::wrap_accessor_point()
+{
+    namespace py = pybind11;
 
     // x, y, z, point element accessors.
 #define DECL_WRAP(NAME)                         \
@@ -664,6 +890,14 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
 #undef DECL_WRAP
     // clang-format on
 
+    return *this;
+}
+
+template <typename T>
+WrapSegmentPad<T> & WrapSegmentPad<T>::wrap_geometry()
+{
+    namespace py = pybind11;
+
     (*this)
         .def(
             "mirror",
@@ -689,6 +923,8 @@ WrapSegmentPad<T>::WrapSegmentPad(pybind11::module & mod, const char * pyname, c
             py::arg("axis"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
@@ -709,12 +945,31 @@ public:
 protected:
 
     WrapTriangle3d(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+    WrapTriangle3d & wrap_management();
+    WrapTriangle3d & wrap_operator();
+    WrapTriangle3d & wrap_accessor();
+    WrapTriangle3d & wrap_geometry();
 };
 /* end class WrapTriangle3d */
 
 template <typename T>
 WrapTriangle3d<T>::WrapTriangle3d(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .wrap_management()
+        .wrap_operator()
+        .wrap_accessor()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapTriangle3d<T> & WrapTriangle3d<T>::wrap_management()
 {
     namespace py = pybind11;
 
@@ -739,6 +994,32 @@ WrapTriangle3d<T>::WrapTriangle3d(pybind11::module & mod, const char * pyname, c
                                    self.p2().value_string());
             })
         .def_alias("__repr__", "__str__")
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapTriangle3d<T> & WrapTriangle3d<T>::wrap_operator()
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
+        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapTriangle3d<T> & WrapTriangle3d<T>::wrap_accessor()
+{
+    namespace py = pybind11;
+
+    (*this)
         .def(
             "__len__",
             [](wrapped_type const & self)
@@ -761,10 +1042,12 @@ WrapTriangle3d<T>::WrapTriangle3d(pybind11::module & mod, const char * pyname, c
         { return self.NAME(); },                      \
         [](wrapped_type & self, point_type const & v) \
         { self.set_##NAME(v); })
+    // clang-format off
     (*this)
         DECL_WRAP(p0)
-            DECL_WRAP(p1)
-                DECL_WRAP(p2);
+        DECL_WRAP(p1)
+        DECL_WRAP(p2);
+    // clang-format on
 #undef DECL_WRAP
 
 #define DECL_WRAP(NAME)                                              \
@@ -774,8 +1057,8 @@ WrapTriangle3d<T>::WrapTriangle3d(pybind11::module & mod, const char * pyname, c
         { return self.NAME(); },                                     \
         [](wrapped_type & self, typename wrapped_type::value_type v) \
         { self.set_##NAME(v); })
+    // clang-format off
     (*this)
-        // clang-format off
         DECL_WRAP(x0)
         DECL_WRAP(y0)
         DECL_WRAP(z0)
@@ -788,11 +1071,13 @@ WrapTriangle3d<T>::WrapTriangle3d(pybind11::module & mod, const char * pyname, c
     // clang-format on
 #undef DECL_WRAP
 
-    (*this)
-        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
-        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
-        //
-        ;
+    return *this;
+}
+
+template <typename T>
+WrapTriangle3d<T> & WrapTriangle3d<T>::wrap_geometry()
+{
+    namespace py = pybind11;
 
     (*this)
         .def(
@@ -819,6 +1104,8 @@ WrapTriangle3d<T>::WrapTriangle3d(pybind11::module & mod, const char * pyname, c
             py::arg("axis"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
@@ -841,6 +1128,11 @@ public:
 protected:
 
     WrapTrianglePad(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+    WrapTrianglePad & wrap_management();
+    WrapTrianglePad & wrap_accessor_triangle();
+    WrapTrianglePad & wrap_accessor_point();
+    WrapTrianglePad & wrap_geometry();
 }; /* end class WrapTrianglePad */
 
 template <typename T>
@@ -849,6 +1141,21 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
 {
     namespace py = pybind11;
 
+    (*this)
+        .wrap_management()
+        .wrap_accessor_triangle()
+        .wrap_accessor_point()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapTrianglePad<T> & WrapTrianglePad<T>::wrap_management()
+{
+    namespace py = pybind11;
+
+    // Constructors
     (*this)
         .def(
             py::init(
@@ -903,11 +1210,37 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
             py::arg("y2"),
             py::arg("z2"),
             py::arg("clone"))
-        .def_timed("clone", &wrapped_type::clone)
-        .def_property_readonly("ndim", &wrapped_type::ndim)
         //
         ;
 
+    (*this)
+        .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def_timed("clone", &wrapped_type::clone)
+        .def_timed("pack_array", &wrapped_type::pack_array)
+        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapTrianglePad<T> & WrapTrianglePad<T>::wrap_accessor_triangle()
+{
+    namespace py = pybind11;
+
+    // Python dunder accessor.
+    (*this)
+        .def("__len__", &wrapped_type::size)
+        .def("__getitem__",
+             [](wrapped_type const & self, size_t it)
+             {
+                 return self.get_at(it);
+             })
+        //
+        ;
+
+    // Append Triangle3d.
     (*this)
         .def(
             "append",
@@ -952,6 +1285,11 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
             py::arg("x2"),
             py::arg("y2"),
             py::arg("z2"))
+        //
+        ;
+
+    // Extend Triangle3d
+    (*this)
         .def(
             "extend_with",
             [](wrapped_type & self, wrapped_type const & other)
@@ -959,14 +1297,11 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
                 self.extend_with(other);
             },
             py::arg("triangles"))
-        .def_timed("pack_array", &wrapped_type::pack_array)
-        .def_timed("expand", &wrapped_type::expand, py::arg("length"))
-        .def("__len__", &wrapped_type::size)
-        .def("__getitem__",
-             [](wrapped_type const & self, size_t it)
-             {
-                 return self.get_at(it);
-             })
+        //
+        ;
+
+    // Additional getter and setter for Triangle3d.
+    (*this)
         .def("get_at",
              [](wrapped_type const & self, size_t it)
              {
@@ -995,13 +1330,22 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
         //
         ;
 
+    return *this;
+}
+
+template <typename T>
+WrapTrianglePad<T> & WrapTrianglePad<T>::wrap_accessor_point()
+{
+    namespace py = pybind11;
+
+    // x, y, z, point element accessors.
 #define DECL_WRAP(NAME)                         \
     .def(                                       \
         #NAME,                                  \
         [](wrapped_type const & self, size_t i) \
         { return self.NAME(i); })
+    // clang-format off
     (*this)
-        // clang-format off
         DECL_WRAP(x0_at)
         DECL_WRAP(y0_at)
         DECL_WRAP(z0_at)
@@ -1017,13 +1361,14 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
     // clang-format on
 #undef DECL_WRAP
 
+    // x, y, z, point array/batch accessors.
 #define DECL_WRAP(NAME)         \
     .def_property_readonly(     \
         #NAME,                  \
         [](wrapped_type & self) \
         { return self.NAME(); })
+    // clang-format off
     (*this)
-        // clang-format off
         DECL_WRAP(x0)
         DECL_WRAP(y0)
         DECL_WRAP(z0)
@@ -1038,6 +1383,14 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
         DECL_WRAP(p2);
     // clang-format on
 #undef DECL_WRAP
+
+    return *this;
+}
+
+template <typename T>
+WrapTrianglePad<T> & WrapTrianglePad<T>::wrap_geometry()
+{
+    namespace py = pybind11;
 
     (*this)
         .def(
@@ -1064,6 +1417,8 @@ WrapTrianglePad<T>::WrapTrianglePad(pybind11::module & mod, const char * pyname,
             py::arg("axis"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
@@ -1083,12 +1438,28 @@ public:
 protected:
 
     WrapBezier3d(pybind11::module & mod, char const * pyname, char const * pydoc);
-};
-/* end class WrapBezier3d */
+
+    WrapBezier3d & wrap_management();
+    WrapBezier3d & wrap_accessor();
+    WrapBezier3d & wrap_geometry();
+}; /* end class WrapBezier3d */
 
 template <typename T>
 WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .wrap_management()
+        .wrap_accessor()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapBezier3d<T> & WrapBezier3d<T>::wrap_management()
 {
     namespace py = pybind11;
 
@@ -1102,7 +1473,6 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
             "__repr__",
             [](wrapped_type const & self)
             {
-                // Hard-code the Python type names in the static variables before finding a systematic way.
                 static char const * btypename = std::is_same_v<T, double> ? "Bezier3dFp64" : "Bezier3dFp32";
                 static char const * ptypename = std::is_same_v<T, double> ? "Point3dFp64" : "Point3dFp32";
                 return std::format("{}({}({}), {}({}), {}({}), {}({}))",
@@ -1117,6 +1487,18 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
                                    self.p3().value_string());
             })
         .def_alias("__repr__", "__str__")
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapBezier3d<T> & WrapBezier3d<T>::wrap_accessor()
+{
+    namespace py = pybind11;
+
+    (*this)
         .def("__len__",
              [](wrapped_type const &)
              { return 4; })
@@ -1151,13 +1533,16 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
         //
         ;
 
-    // Sampling
-    (*this)
-        .def("sample", &wrapped_type::sample, py::arg("nlocus"))
-        //
-        ;
+    return *this;
+}
+
+template <typename T>
+WrapBezier3d<T> & WrapBezier3d<T>::wrap_geometry()
+{
+    namespace py = pybind11;
 
     (*this)
+        .def("sample", &wrapped_type::sample, py::arg("nlocus"))
         .def(
             "mirror",
             [](wrapped_type & self, std::string const & axis)
@@ -1182,6 +1567,8 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
             py::arg("axis"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
@@ -1205,11 +1592,30 @@ public:
 protected:
 
     WrapCurvePad(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+    WrapCurvePad & wrap_management();
+    WrapCurvePad & wrap_accessor_bezier();
+    WrapCurvePad & wrap_accessor_point();
+    WrapCurvePad & wrap_geometry();
 }; /* end class WrapCurvePad */
 
 template <typename T>
 WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .wrap_management()
+        .wrap_accessor_bezier()
+        .wrap_accessor_point()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapCurvePad<T> & WrapCurvePad<T>::wrap_management()
 {
     namespace py = pybind11;
 
@@ -1231,6 +1637,27 @@ WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const
 
     (*this)
         .def_property_readonly("ndim", &wrapped_type::ndim)
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapCurvePad<T> & WrapCurvePad<T>::wrap_accessor_bezier()
+{
+    namespace py = pybind11;
+
+    // Python dunder accessor.
+    (*this)
+        .def("__len__", &wrapped_type::size)
+        .def("__getitem__", &wrapped_type::get_at)
+        .def("__setitem__", &wrapped_type::set_at)
+        //
+        ;
+
+    // Append Bezier3d
+    (*this)
         .def(
             "append",
             [](wrapped_type & self, bezier_type const & c)
@@ -1248,18 +1675,23 @@ WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const
             py::arg("p1"),
             py::arg("p2"),
             py::arg("p3"))
-        .def("__len__", &wrapped_type::size)
-        .def("__getitem__", &wrapped_type::get_at)
-        .def("__setitem__", &wrapped_type::set_at)
+        //
+        ;
+
+    // Additional getter and setter for Bezier3d.
+    (*this)
         .def("get_at", &wrapped_type::get_at)
         .def("set_at", &wrapped_type::set_at)
         //
         ;
 
-    (*this)
-        .def("sample", &wrapped_type::sample, py::arg("length"))
-        //
-        ;
+    return *this;
+}
+
+template <typename T>
+WrapCurvePad<T> & WrapCurvePad<T>::wrap_accessor_point()
+{
+    namespace py = pybind11;
 
     // x, y, z, point element accessors.
 #define DECL_WRAP(NAME) \
@@ -1311,10 +1743,19 @@ WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const
         DECL_WRAP(p2)
         DECL_WRAP(p3)
         ;
-#undef DECL_WRAP
     // clang-format on
+#undef DECL_WRAP
+
+    return *this;
+}
+
+template <typename T>
+WrapCurvePad<T> & WrapCurvePad<T>::wrap_geometry()
+{
+    namespace py = pybind11;
 
     (*this)
+        .def("sample", &wrapped_type::sample, py::arg("length"))
         .def(
             "mirror",
             [](wrapped_type & self, std::string const & axis)
@@ -1339,6 +1780,8 @@ WrapCurvePad<T>::WrapCurvePad(pybind11::module & mod, const char * pyname, const
             py::arg("axis"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
@@ -1354,11 +1797,26 @@ public:
 
 protected:
     WrapBoundBox3d(pybind11::module & mod, char const * pyname, char const * pydoc);
-};
+
+    WrapBoundBox3d & wrap_management();
+    WrapBoundBox3d & wrap_geometry();
+}; /* end class WrapBoundBox3d */
 
 template <typename T>
 WrapBoundBox3d<T>::WrapBoundBox3d(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .wrap_management()
+        .wrap_geometry()
+        //
+        ;
+}
+
+template <typename T>
+WrapBoundBox3d<T> & WrapBoundBox3d<T>::wrap_management()
 {
     namespace py = pybind11;
 
@@ -1370,18 +1828,38 @@ WrapBoundBox3d<T>::WrapBoundBox3d(pybind11::module & mod, const char * pyname, c
              py::arg("max_x"),
              py::arg("max_y"),
              py::arg("max_z"))
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapBoundBox3d<T> & WrapBoundBox3d<T>::wrap_geometry()
+{
+    namespace py = pybind11;
+
+    // Bounding value.
+    (*this)
         .def_property_readonly("min_x", &wrapped_type::min_x)
         .def_property_readonly("min_y", &wrapped_type::min_y)
         .def_property_readonly("min_z", &wrapped_type::min_z)
         .def_property_readonly("max_x", &wrapped_type::max_x)
         .def_property_readonly("max_y", &wrapped_type::max_y)
         .def_property_readonly("max_z", &wrapped_type::max_z)
+        //
+        ;
+
+    // Calculation.
+    (*this)
+        .def("calc_area", &wrapped_type::calc_area)
         .def("overlap", &wrapped_type::overlap, py::arg("other"))
         .def("contain", &wrapped_type::contain, py::arg("other"))
-        .def("calc_area", &wrapped_type::calc_area)
         .def("expand", &wrapped_type::expand, py::arg("other"))
         //
         ;
+
+    return *this;
 }
 
 template <typename T>
@@ -1406,12 +1884,31 @@ public:
 protected:
 
     WrapWorld(pybind11::module & mod, char const * pyname, char const * pydoc);
+
+    WrapWorld & wrap_management();
+    WrapWorld & wrap_point();
+    WrapWorld & wrap_segment();
+    WrapWorld & wrap_bezier();
 };
 /* end class WrapWorld */
 
 template <typename T>
 WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char * pydoc)
     : base_type(mod, pyname, pydoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .wrap_management()
+        .wrap_point()
+        .wrap_segment()
+        .wrap_bezier()
+        //
+        ;
+}
+
+template <typename T>
+WrapWorld<T> & WrapWorld<T>::wrap_management()
 {
     namespace py = pybind11;
 
@@ -1423,7 +1920,15 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
         //
         ;
 
-    // Bezier curves
+    return *this;
+}
+
+template <typename T>
+WrapWorld<T> & WrapWorld<T>::wrap_point()
+{
+    namespace py = pybind11;
+
+    // Point.
     (*this)
         .def(
             "add_point",
@@ -1446,6 +1951,19 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
         .def_property_readonly("npoint", &wrapped_type::npoint)
         .def("point", &wrapped_type::point_at)
         .def_property_readonly("points", &wrapped_type::points)
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapWorld<T> & WrapWorld<T>::wrap_segment()
+{
+    namespace py = pybind11;
+
+    // Segment.
+    (*this)
         .def(
             "add_segment",
             [](wrapped_type & self, segment_type const & edge)
@@ -1476,6 +1994,19 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
         .def_property_readonly("nsegment", &wrapped_type::nsegment)
         .def("segment", &wrapped_type::segment_at)
         .def_property_readonly("segments", &wrapped_type::segments)
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapWorld<T> & WrapWorld<T>::wrap_bezier()
+{
+    namespace py = pybind11;
+
+    // Bezier curves
+    (*this)
         .def(
             "add_bezier",
             [](wrapped_type & self, bezier_type const & bezier)
@@ -1515,6 +2046,8 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
         .def_property_readonly("curves", &wrapped_type::curves)
         //
         ;
+
+    return *this;
 }
 
 void wrap_World(pybind11::module & mod)
