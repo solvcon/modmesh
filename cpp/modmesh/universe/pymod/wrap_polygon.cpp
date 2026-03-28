@@ -585,7 +585,11 @@ public:
 
 protected:
     WrapPolygonPad(pybind11::module & mod, char const * pyname, char const * pydoc);
-};
+
+    WrapPolygonPad & wrap_management();
+    WrapPolygonPad & wrap_accessor();
+    WrapPolygonPad & wrap_search();
+}; /* end class WrapPolygonPad */
 
 template <typename T>
 WrapPolygonPad<T>::WrapPolygonPad(pybind11::module & mod, const char * pyname, const char * pydoc)
@@ -594,16 +598,44 @@ WrapPolygonPad<T>::WrapPolygonPad(pybind11::module & mod, const char * pyname, c
     namespace py = pybind11;
 
     (*this)
+        .wrap_management()
+        .wrap_accessor()
+        .wrap_search()
+        //
+        ;
+}
+
+template <typename T>
+WrapPolygonPad<T> & WrapPolygonPad<T>::wrap_management()
+{
+    namespace py = pybind11;
+
+    // Constructors.
+    (*this)
         .def(
             py::init(
                 [](uint8_t ndim)
-                {
-                    return wrapped_type::construct(ndim);
-                }),
+                { return wrapped_type::construct(ndim); }),
             py::arg("ndim"))
+        //
+        ;
+
+    (*this)
         .def_property_readonly("ndim", &wrapped_type::ndim)
         .def_property_readonly("num_polygons", &wrapped_type::num_polygons)
         .def_property_readonly("num_points", &wrapped_type::num_points)
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapPolygonPad<T> & WrapPolygonPad<T>::wrap_accessor()
+{
+    namespace py = pybind11;
+
+    (*this)
         .def(
             "add_polygon",
             [](wrapped_type & self, std::vector<point_type> const & nodes)
@@ -627,6 +659,18 @@ WrapPolygonPad<T>::WrapPolygonPad(pybind11::module & mod, const char * pyname, c
             py::arg("curves"),
             py::arg("sample_length"))
         .def("get_polygon", &wrapped_type::get_polygon, py::arg("polygon_id"))
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapPolygonPad<T> & WrapPolygonPad<T>::wrap_search()
+{
+    namespace py = pybind11;
+
+    (*this)
         .def(
             "search_segments",
             [](wrapped_type const & self, BoundBox3d<T> const & box)
@@ -664,7 +708,11 @@ WrapPolygonPad<T>::WrapPolygonPad(pybind11::module & mod, const char * pyname, c
             [](wrapped_type & self)
             {
                 return self.decomposed_trapezoids();
-            });
+            })
+        //
+        ;
+
+    return *this;
 }
 
 template <typename T>
