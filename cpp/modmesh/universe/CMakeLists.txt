@@ -26,6 +26,7 @@ set(MODMESH_UNIVERSE_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_bernstein.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_shape0d.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_shape1d.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_shape3d.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_World.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_polygon.cpp
     CACHE FILEPATH "" FORCE)
