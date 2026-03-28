@@ -799,7 +799,7 @@ WrapTrapezoidalDecomposer<T>::WrapTrapezoidalDecomposer(pybind11::module & mod, 
         .def("clear", &wrapped_type::clear);
 }
 
-void wrap_polygon(pybind11::module & mod)
+void wrap_shape2d(pybind11::module & mod)
 {
     WrapTriangle3d<float>::commit(mod, "Triangle3dFp32", "Triangle3dFp32");
     WrapTriangle3d<double>::commit(mod, "Triangle3dFp64", "Triangle3dFp64");
