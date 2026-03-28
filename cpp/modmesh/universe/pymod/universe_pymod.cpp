@@ -48,6 +48,7 @@ void initialize_universe(pybind11::module & mod)
     auto initialize_impl = [](pybind11::module & mod)
     {
         wrap_bernstein(mod);
+        wrap_shape0d(mod);
         wrap_World(mod);
         wrap_polygon(mod);
     };
