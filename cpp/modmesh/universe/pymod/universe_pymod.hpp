@@ -41,7 +41,6 @@ namespace python
 {
 
 void initialize_universe(pybind11::module & mod);
-void wrap_bernstein(pybind11::module & mod);
 void wrap_shape0d(pybind11::module & mod);
 void wrap_shape1d(pybind11::module & mod);
 void wrap_shape2d(pybind11::module & mod);

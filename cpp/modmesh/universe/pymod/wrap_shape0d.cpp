@@ -455,6 +455,14 @@ WrapPointPad<T> & WrapPointPad<T>::wrap_geometry()
 
 void wrap_shape0d(pybind11::module & mod)
 {
+    namespace py = pybind11;
+
+    mod
+        .def("calc_bernstein_polynomial", calc_bernstein_polynomial, py::arg("t"), py::arg("i"), py::arg("n"))
+        .def("interpolate_bernstein", interpolate_bernstein, py::arg("t"), py::arg("values"), py::arg("n"))
+        //
+        ;
+
     WrapPoint3d<float>::commit(mod, "Point3dFp32", "Point3dFp32");
     WrapPoint3d<double>::commit(mod, "Point3dFp64", "Point3dFp64");
     WrapPointPad<float>::commit(mod, "PointPadFp32", "PointPadFp32");

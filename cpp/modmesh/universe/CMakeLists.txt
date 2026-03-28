@@ -23,7 +23,6 @@ set(MODMESH_UNIVERSE_PYMODHEADERS
 
 set(MODMESH_UNIVERSE_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/universe_pymod.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_bernstein.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_shape0d.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_shape1d.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_shape2d.cpp
