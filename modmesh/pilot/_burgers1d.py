@@ -27,7 +27,7 @@
 
 import numpy as np
 
-from ._base_app import QuantityLine, SolverConfig, OneDimBaseApp
+from . import _base_app
 
 
 class BurgersEquation:
@@ -89,7 +89,7 @@ class BurgersEquation:
         return np.hstack((self.coord[0], internal, self.coord[-1]))
 
 
-class Burgers1DApp(OneDimBaseApp):
+class Burgers1DApp(_base_app.OneDimBaseApp):
     """
     Main application for Burgers' equation 1D solver.
     """
@@ -149,7 +149,7 @@ class Burgers1DApp(OneDimBaseApp):
             ["max_steps", 200, "Maximum time step"],
             ["profiling", False, "Turn on / off solver profiling"],
         ]
-        self.solver_config = SolverConfig(solver_config_data)
+        self.solver_config = _base_app.SolverConfig(solver_config_data)
 
     def set_plot_data(self):
         """
@@ -159,11 +159,12 @@ class Burgers1DApp(OneDimBaseApp):
         self.plot_ana = True
         self.plot_data = []
 
-        velocity = QuantityLine(name="velocity",
-                                unit=r"$\mathrm{m}/\mathrm{s}$",
-                                color='b',
-                                y_upper_lim=1.2,
-                                y_bottom_lim=-1.2)
+        velocity = _base_app.QuantityLine(
+            name="velocity",
+            unit=r"$\mathrm{m}/\mathrm{s}$",
+            color='b',
+            y_upper_lim=1.2,
+            y_bottom_lim=-1.2)
         setattr(self, velocity.name, velocity)
         self.plot_data.append([self.velocity.name, True])
 

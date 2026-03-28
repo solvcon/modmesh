@@ -31,7 +31,7 @@ Input, output, and process SVG (scalleable vector graphic).
 
 import re
 import xml.etree.ElementTree as ET
-from math import sin, cos, atan2, sqrt, radians, pi
+import math
 
 import numpy as np
 
@@ -100,26 +100,26 @@ class EPath(object):
         x1, y1 = end_pt[0], end_pt[1]
 
         # convert angle to radians
-        phi = radians(phi_deg)
+        phi = math.radians(phi_deg)
 
         # compute rotated midpoint (x1', y1')
         dx = (x0 - x1) / 2.0
         dy = (y0 - y1) / 2.0
-        xp = cos(phi) * dx + sin(phi) * dy
-        yp = -sin(phi) * dx + cos(phi) * dy
+        xp = math.cos(phi) * dx + math.sin(phi) * dy
+        yp = -math.sin(phi) * dx + math.cos(phi) * dy
 
         # correct radii
         rx = abs(rx)
         ry = abs(ry)
         r_check = (xp**2) / (rx**2) + (yp**2) / (ry**2)
         if r_check > 1:
-            rx *= sqrt(r_check)
-            ry *= sqrt(r_check)
+            rx *= math.sqrt(r_check)
+            ry *= math.sqrt(r_check)
 
         # compute center (cx', cy')
         num = rx**2 * ry**2 - rx**2 * yp**2 - ry**2 * xp**2
         denom = rx**2 * yp**2 + ry**2 * xp**2
-        factor = sqrt(max(0, num / denom))  # ensure non-negative
+        factor = math.sqrt(max(0, num / denom))  # ensure non-negative
 
         if large_arc == sweep:
             factor = -factor
@@ -128,14 +128,14 @@ class EPath(object):
         cyp = factor * -(ry * xp) / rx
 
         # compute (cx, cy)
-        cx = cos(phi) * cxp - sin(phi) * cyp + (x0 + x1) / 2
-        cy = sin(phi) * cxp + cos(phi) * cyp + (y0 + y1) / 2
+        cx = math.cos(phi) * cxp - math.sin(phi) * cyp + (x0 + x1) / 2
+        cy = math.sin(phi) * cxp + math.cos(phi) * cyp + (y0 + y1) / 2
 
         # compute angles (start, delta)
         def angle(u, v):
             dot = u[0]*v[0] + u[1]*v[1]
             det = u[0]*v[1] - u[1]*v[0]
-            return atan2(det, dot)
+            return math.atan2(det, dot)
 
         u = [(xp - cxp)/rx, (yp - cyp)/ry]
         v = [(-xp - cxp)/rx, (-yp - cyp)/ry]
@@ -144,18 +144,18 @@ class EPath(object):
         delta_theta = angle(u, v)
 
         if not sweep and delta_theta > 0:
-            delta_theta -= 2 * pi
+            delta_theta -= 2 * math.pi
         elif sweep and delta_theta < 0:
-            delta_theta += 2 * pi
+            delta_theta += 2 * math.pi
 
         # using parametric equations for the ellipse and the arc angles
         t = np.linspace(0, delta_theta, num=steps)
         x_arc = (cx +
-                 rx * np.cos(theta1 + t) * cos(phi) -
-                 ry * np.sin(theta1 + t) * sin(phi))
+                 rx * np.cos(theta1 + t) * math.cos(phi) -
+                 ry * np.sin(theta1 + t) * math.sin(phi))
         y_arc = (cy +
-                 rx * np.cos(theta1 + t) * sin(phi) +
-                 ry * np.sin(theta1 + t) * cos(phi))
+                 rx * np.cos(theta1 + t) * math.sin(phi) +
+                 ry * np.sin(theta1 + t) * math.cos(phi))
 
         return np.column_stack((x_arc, y_arc))
 

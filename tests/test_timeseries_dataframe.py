@@ -24,11 +24,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
-from io import StringIO
-import numpy as np
+import io
 import unittest
 
+import numpy as np
 
 from modmesh.track import dataframe
 
@@ -78,7 +77,7 @@ class TimeSeriesDataFrameTC(unittest.TestCase):
     def test_read_from_text_file_basic(self):
         tsdf = dataframe.DataFrame()
 
-        tsdf.read_from_text_file(StringIO(self.dlc_data))
+        tsdf.read_from_text_file(io.StringIO(self.dlc_data))
         self.assertEqual(tsdf._columns, self.col_sol)
         self.assertEqual(len(tsdf._columns), 3)
         for i in range(len(tsdf._columns)):
@@ -86,7 +85,7 @@ class TimeSeriesDataFrameTC(unittest.TestCase):
         self.assertEqual(tsdf._index_name, 'EPOCH')
 
         tsdf.read_from_text_file(
-            StringIO(self.modified_dlc_data),
+            io.StringIO(self.modified_dlc_data),
             delimiter=',',
             timestamp_column='EPOCH'
         )
@@ -98,7 +97,7 @@ class TimeSeriesDataFrameTC(unittest.TestCase):
         self.assertEqual(tsdf._index_name, 'EPOCH')
 
         tsdf.read_from_text_file(
-            StringIO(self.modified_dlc_data),
+            io.StringIO(self.modified_dlc_data),
             delimiter=',',
             timestamp_in_file=False
         )
@@ -110,19 +109,19 @@ class TimeSeriesDataFrameTC(unittest.TestCase):
 
     def test_dataframe_attribute_columns(self):
         tsdf = dataframe.DataFrame()
-        tsdf.read_from_text_file(StringIO(self.dlc_data))
+        tsdf.read_from_text_file(io.StringIO(self.dlc_data))
         self.assertEqual(tsdf.columns, self.col_sol)
 
     def test_dataframe_attribute_shape(self):
         tsdf = dataframe.DataFrame()
-        tsdf.read_from_text_file(StringIO(self.dlc_data))
+        tsdf.read_from_text_file(io.StringIO(self.dlc_data))
         self.assertEqual(tsdf.shape, (10, 3))
 
     def test_dataframe_attribute_index(self):
         tsdf = dataframe.DataFrame()
-        tsdf.read_from_text_file(StringIO(self.dlc_data))
+        tsdf.read_from_text_file(io.StringIO(self.dlc_data))
 
-        nd_arr = np.genfromtxt(StringIO(self.dlc_data), delimiter=',')[1:]
+        nd_arr = np.genfromtxt(io.StringIO(self.dlc_data), delimiter=',')[1:]
 
         self.assertEqual(
             list(tsdf.index), list(nd_arr[:, 0].astype(np.uint64))
@@ -130,37 +129,37 @@ class TimeSeriesDataFrameTC(unittest.TestCase):
 
     def test_dataframe_get_column(self):
         tsdf = dataframe.DataFrame()
-        tsdf.read_from_text_file(StringIO(self.dlc_data))
+        tsdf.read_from_text_file(io.StringIO(self.dlc_data))
 
         col_data = tsdf['DELTA_VEL[1]']
 
-        nd_arr = np.genfromtxt(StringIO(self.dlc_data), delimiter=',')[1:]
+        nd_arr = np.genfromtxt(io.StringIO(self.dlc_data), delimiter=',')[1:]
 
         self.assertEqual(list(col_data), list(nd_arr[:, 1]))
 
     def test_dataframe_sort(self):
         tsdf = dataframe.DataFrame()
-        tsdf.read_from_text_file(StringIO(self.unsorted_dlc_data))
+        tsdf.read_from_text_file(io.StringIO(self.unsorted_dlc_data))
 
         # Test out-of-place sort
         reordered_tsdf = tsdf.sort(tsdf.columns, index_column=None,
                                    inplace=False)
         col_data = reordered_tsdf['DELTA_VEL[1]']
-        nd_arr = np.genfromtxt(StringIO(self.dlc_data), delimiter=',')[1:]
+        nd_arr = np.genfromtxt(io.StringIO(self.dlc_data), delimiter=',')[1:]
         self.assertEqual(list(col_data), list(nd_arr[:, 1]))
 
         # Test inplace sort_by_index
         tsdf.sort_by_index()
         col_data = tsdf['DELTA_VEL[1]']
-        nd_arr = np.genfromtxt(StringIO(self.dlc_data), delimiter=',')[1:]
+        nd_arr = np.genfromtxt(io.StringIO(self.dlc_data), delimiter=',')[1:]
         self.assertEqual(list(col_data), list(nd_arr[:, 1]))
 
         # Test out-of-place sort with index_column
-        tsdf.read_from_text_file(StringIO(self.unsorted_dlc_data),
+        tsdf.read_from_text_file(io.StringIO(self.unsorted_dlc_data),
                                  timestamp_in_file=False)
 
         reordered_tsdf = tsdf.sort(['EPOCH', 'DELTA_VEL[1]'],
                                    index_column='EPOCH', inplace=False)
         col_data = reordered_tsdf['DELTA_VEL[1]']
-        nd_arr = np.genfromtxt(StringIO(self.dlc_data), delimiter=',')[1:]
+        nd_arr = np.genfromtxt(io.StringIO(self.dlc_data), delimiter=',')[1:]
         self.assertEqual(list(col_data), list(nd_arr[:, 1]))

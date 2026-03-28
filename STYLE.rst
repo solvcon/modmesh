@@ -200,7 +200,8 @@ Python import
 
 Never import everything ("``import *``" or "``from mod import *``").
 
-Only import modules, like:
+Only import modules, not module content (classes, functions, or constants).
+Use ``from`` to specify the module path and ``import`` to import the module:
 
 .. code-block:: python
 
@@ -208,20 +209,115 @@ Only import modules, like:
   # Modules in standard library.
   import os
   import sys
+  import typing
+  import dataclasses
+  import pathlib
 
   # Modules from third-party.
   import numpy as np
+  from matplotlib.backends import backend_qtagg
+  from matplotlib import figure
+  from PySide6 import QtCore, QtWidgets, QtGui
 
   # Modules in the current project.
   import modmesh as mm
   from modmesh import onedim
+  from modmesh.plot import svg
 
   # Explicit relative import is OK.
   from . import core
+  from . import _base_app
 
 .. note::
 
   ``modmesh`` can be shorthanded as ``mm``.
+
+Do not import module content (classes, functions, or constants) directly.
+Always use the ``foo.bar`` pattern to access classes, functions, or constants:
+
+.. code-block:: python
+
+  # BAD: imports a class, not a module.
+  from typing import Any, Callable
+  from dataclasses import dataclass
+  from pathlib import Path
+
+  def foo(x: Any) -> Callable:
+      ...
+  p = Path("/tmp")
+
+  # GOOD: import the module and access content through it.
+  import typing
+  import dataclasses
+  import pathlib
+
+  def foo(x: typing.Any) -> typing.Callable:
+      ...
+  p = pathlib.Path("/tmp")
+
+.. code-block:: python
+
+  # BAD: imports content from a sub-module.
+  from matplotlib.figure import Figure
+  from ._base_app import QuantityLine
+
+  fig = Figure()
+  line = QuantityLine(...)
+
+  # GOOD: import the module.
+  from matplotlib import figure
+  from . import _base_app
+
+  fig = figure.Figure()
+  line = _base_app.QuantityLine(...)
+
+.. note::
+
+  **Exception for Qt (PySide6):** Qt classes may be imported directly because
+  almost all Qt classes have a ``Q`` or ``Qt`` prefix that makes them
+  unmistakable, the module-qualified form (e.g., ``QtWidgets.QDockWidget``)
+  reads mouthy with repeated ``Q``, and the C++ counterpart does not use the
+  module name.
+
+  .. code-block:: python
+
+    # OK: import Qt classes directly.
+    from PySide6.QtCore import QTimer, Slot, Qt
+    from PySide6.QtWidgets import QDockWidget, QWidget
+
+Use relative import for peer modules in the same package:
+
+.. code-block:: python
+
+  # For a module file in modmesh/pilot/
+  # BAD: use absolute import for peer modules.
+  from modmesh.pilot import _gui
+  from modmesh.pilot.airfoil import _naca
+
+  # GOOD: use relative import for peer modules.
+  from . import _gui
+  from .airfoil import _naca
+
+Relative import may not be required for modules outside the current package:
+
+.. code-block:: python
+
+  # For a module file in modmesh/pilot/
+  # GOOD: use absolute import for non-peer modules.
+  from modmesh.plot import svg
+
+  # OK but may be clumsy: use relative import.
+  from ..plot import svg
+
+Do not use dotted import path with ``import`` for project modules:
+
+.. code-block:: python
+
+  # BAD: uses dotted path instead of from...import.
+  import modmesh.plot.svg as svg
+
+  # GOOD: use from to specify the path.
+  from modmesh.plot import svg
 
 Do not import multiple modules in one line:
 

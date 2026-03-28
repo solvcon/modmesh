@@ -25,12 +25,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import json
-from typing import Any
+import typing
 import functools
 import itertools
 import importlib.util
 
-from ._gui_common import PilotFeature
+from . import _gui_common
 
 from .. import call_profiler
 from .. import apputil
@@ -57,7 +57,7 @@ from PySide6.QtGui import (
 __all__ = ["Profiling"]
 
 
-class Profiling(PilotFeature):
+class Profiling(_gui_common.PilotFeature):
     """
     Create profiling windows.
     """
@@ -91,17 +91,20 @@ class Profiling(PilotFeature):
 
         self._add_result_window(result)
 
-    def _add_result_window(self, result: list[dict[str, Any]]):
+    def _add_result_window(self, result: list[dict[str, typing.Any]]):
         self._table = self._mgr.addSubWindow(QWidget())
         self._tree_view = QTreeView(self._table)
 
         self._model = QStandardItemModel(self._tree_view)
         self._model.setHorizontalHeaderLabels(["Total Time", "Symbol Name"])
 
-        def _recursive_add_item(parent: QStandardItem, data: dict, tot: float):
+        def _recursive_add_item(
+                parent: QStandardItem,
+                data: dict, tot: float):
             percent = data["total_time"] * 100 / tot
 
-            first_item = QStandardItem(f"{data['total_time']} ({percent:2f}%)")
+            first_item = QStandardItem(
+                f"{data['total_time']} ({percent:2f}%)")
             second_item = QStandardItem(data["name"])
 
             parent.appendRow([first_item, second_item])
@@ -144,7 +147,8 @@ class Profiling(PilotFeature):
         self._tree_view.setModel(self._model)
         self._tree_view.setColumnWidth(0, 400)
         self._tree_view.setColumnWidth(1, 200)
-        self._tree_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self._tree_view.setEditTriggers(
+            QAbstractItemView.NoEditTriggers)
 
         self._table.setWidget(self._tree_view)
         self._table.showMaximized()
@@ -199,7 +203,7 @@ class ProfileConfigWidget(QWidget):
         self.setLayout(main_layout)
 
 
-class RunProfiling(PilotFeature):
+class RunProfiling(_gui_common.PilotFeature):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self._diag = QtWidgets.QFileDialog()
@@ -285,11 +289,14 @@ class RunProfiling(PilotFeature):
         self._model.setHorizontalHeaderLabels(
             ["Symbol Name", "Total Time", "Count"])
 
-        def _recursive_add_item(parent: QStandardItem, data: dict, tot: float):
+        def _recursive_add_item(
+                parent: QStandardItem,
+                data: dict, tot: float):
             percent = data["total_time"] * 100 / tot
 
             first = QStandardItem(data["name"])
-            second = QStandardItem(f"{data['total_time']} ({percent:2f}%)")
+            second = QStandardItem(
+                f"{data['total_time']} ({percent:2f}%)")
             third = QStandardItem(f"{data['count']}")
 
             parent.appendRow([first, second, third])
@@ -334,7 +341,8 @@ class RunProfiling(PilotFeature):
         self._tree_view.setColumnWidth(0, 200)
         self._tree_view.setColumnWidth(1, 200)
         self._tree_view.setColumnWidth(1, 200)
-        self._tree_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self._tree_view.setEditTriggers(
+            QAbstractItemView.NoEditTriggers)
 
         self._table.setWidget(self._tree_view)
         self._table.show()

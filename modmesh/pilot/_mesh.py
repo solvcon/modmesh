@@ -34,7 +34,7 @@ import os
 from PySide6 import QtCore, QtWidgets
 
 from .. import core
-from ._gui_common import PilotFeature
+from . import _gui_common
 
 __all__ = [  # noqa: F822
     'SampleMesh',
@@ -42,7 +42,7 @@ __all__ = [  # noqa: F822
 ]
 
 
-class SampleMesh(PilotFeature):
+class SampleMesh(_gui_common.PilotFeature):
     """
     Create sample mesh windows.
     """
@@ -316,7 +316,7 @@ class SampleMesh(PilotFeature):
         self._mgr.pycon.writeToHistory(f"3dmix nedge: {mh.nedge}\n")
 
 
-class GmshFileDialog(PilotFeature):
+class GmshFileDialog(_gui_common.PilotFeature):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self._diag = QtWidgets.QFileDialog()
@@ -384,7 +384,7 @@ class GmshFileDialog(PilotFeature):
         self._pycon.writeToHistory(f"nedge: {mh.nedge}\n")
 
 
-class RectangularDomain(PilotFeature):
+class RectangularDomain(_gui_common.PilotFeature):
     """
     Placeholder for prototyping code for generating triangular mesh in a
     rectangular domain.

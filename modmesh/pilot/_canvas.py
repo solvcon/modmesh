@@ -30,7 +30,7 @@ Canvas utilities and curve/conic drawing utilities for pilot GUI.
 
 from .. import core, plot
 
-from ._gui_common import PilotFeature
+from . import _gui_common
 
 __all__ = [
     'Canvas',
@@ -39,7 +39,7 @@ __all__ = [
 ]
 
 
-class Canvas(PilotFeature):
+class Canvas(_gui_common.PilotFeature):
     """
     Canvas feature providing menu items for drawing curves and polygons.
     """

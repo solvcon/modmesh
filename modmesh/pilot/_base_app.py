@@ -26,16 +26,15 @@
 
 
 import sys
-from dataclasses import dataclass
+import dataclasses
 
 import numpy as np
 
 import matplotlib
 import matplotlib.pyplot
-from matplotlib.backends.backend_qtagg import FigureCanvas
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
-from matplotlib.pyplot import setp
+from matplotlib.backends import backend_qtagg
+from matplotlib import figure
+from matplotlib.backends import backend_qt5agg
 
 from PySide6.QtCore import QTimer, Slot, Qt, QAbstractTableModel
 from PySide6.QtWidgets import (QDockWidget, QLabel, QVBoxLayout, QHBoxLayout,
@@ -44,10 +43,10 @@ from PySide6.QtWidgets import (QDockWidget, QLabel, QVBoxLayout, QHBoxLayout,
 
 from .. import core as mcore
 
-from ._gui_common import PilotFeature
+from . import _gui_common
 
 
-@dataclass
+@dataclasses.dataclass
 class QuantityLine(object):
     """
     A class representing a quantity line with associated data.
@@ -327,7 +326,7 @@ class DataConfig(GUIConfig):
         super().__init__(input_data, ["variable", "configuration"])
 
 
-class OneDimBaseApp(PilotFeature):
+class OneDimBaseApp(_gui_common.PilotFeature):
     """
     Main application for 1D solver.
 
@@ -390,7 +389,7 @@ class OneDimBaseApp(PilotFeature):
     plot_config: PlotConfig = None
     config_option: list[list[str, ConfigOption]] = None
     data_config: DataConfig = None
-    plot: FigureCanvas = None
+    plot: backend_qtagg.FigureCanvas = None
     plot_ana: bool = False
     plot_num: bool = False
     use_grid_layout: bool = False
@@ -491,10 +490,10 @@ class OneDimBaseApp(PilotFeature):
         """
         Build a single-figure layout for visualization.
 
-        :return: FigureCanvas
+        :return: backend_qtagg.FigureCanvas
         """
-        fig = Figure()
-        canvas = FigureCanvas(fig)
+        fig = figure.Figure()
+        canvas = backend_qtagg.FigureCanvas(fig)
         ax = canvas.figure.subplots()
         ax.grid()
         fig.tight_layout()
@@ -510,7 +509,7 @@ class OneDimBaseApp(PilotFeature):
                 y_bottom_lim = min(y_bottom_lim, data.y_bottom_lim)
                 y_upper_lim = max(y_upper_lim, data.y_upper_lim)
 
-        setp(ax, ylim=[y_bottom_lim, y_upper_lim])
+        matplotlib.pyplot.setp(ax, ylim=[y_bottom_lim, y_upper_lim])
         self.update_plot()
         return canvas
 
@@ -518,10 +517,10 @@ class OneDimBaseApp(PilotFeature):
         """
         Build a grid figure for visualization.
 
-        :return: FigureCanvas
+        :return: backend_qtagg.FigureCanvas
         """
-        fig = Figure()
-        canvas = FigureCanvas(fig)
+        fig = figure.Figure()
+        canvas = backend_qtagg.FigureCanvas(fig)
         ax = canvas.figure.subplots(3, 2)
         fig.tight_layout()
 
@@ -532,7 +531,9 @@ class OneDimBaseApp(PilotFeature):
                 data.axis.grid()
                 self.init_figure_items(data)
                 self.init_plot_data(data)
-                setp(data.axis, ylim=[data.y_bottom_lim, data.y_upper_lim])
+                matplotlib.pyplot.setp(
+                    data.axis,
+                    ylim=[data.y_bottom_lim, data.y_upper_lim])
 
         self.update_plot()
         return canvas
@@ -697,6 +698,7 @@ class PlotConfigDialog(QDialog):
     plot configuration. It will pop up when clicking "Option" button. It
     includes options for selecting the layout and setting data line config.
     """
+
     def __init__(self, app, parent=None):
         super().__init__(parent)
         self.app = app
@@ -744,6 +746,7 @@ class FigureConfigDialog(QDialog):
     plot configuration. It will pop up when clicking "Option" button. It
     includes options for selecting the layout and setting data line config.
     """
+
     def __init__(self, app, parent=None):
         super().__init__(parent)
         self.app = app
@@ -910,7 +913,8 @@ class ConfigWindow(QWidget):
         vbox2.setStretch(0, 1)
 
         spacer = QSpacerItem(
-            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+            20, 40, QSizePolicy.Minimum,
+            QSizePolicy.Expanding)
         vbox2.addItem(spacer)
 
         time_label = QLabel("Time Control")
@@ -959,6 +963,7 @@ class PlotArea(QWidget):
     :Methods:
         - :py:meth:`init_ui`: Define the GUI layout of the window.
     """
+
     def __init__(self, app, parent=None):
         super().__init__(parent)
         self.app = app
@@ -966,7 +971,9 @@ class PlotArea(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        layout.addWidget(NavigationToolbar2QT(self.app.plot, None))
+        toolbar = backend_qt5agg.NavigationToolbar2QT(
+            self.app.plot, None)
+        layout.addWidget(toolbar)
         layout.addWidget(self.app.plot)
 
         self.setLayout(layout)
@@ -1024,7 +1031,8 @@ class ConfigTableModel(QAbstractTableModel):
         return super().flags(index)
 
     def headerData(self, section, orientation, role):
-        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+        if (role == Qt.DisplayRole
+                and orientation == Qt.Horizontal):
             return self.config.columnHeader(section)
         return None
 

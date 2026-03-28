@@ -49,9 +49,9 @@ import collections
 
 try:
     from docutils import nodes
-    from docutils.parsers.rst import Directive
+    from docutils.parsers import rst
     from docutils.parsers.rst import directives, states
-    from docutils.parsers.rst.roles import set_classes
+    from docutils.parsers.rst import roles
     import sphinx
 
     HAS_SPHINX = True
@@ -583,7 +583,7 @@ if HAS_SPHINX:
         pass
 
 
-    class PstakeDirective(Directive):
+    class PstakeDirective(rst.Directive):
 
         align_h_values = ('left', 'center', 'right')
         align_v_values = ('top', 'middle', 'bottom')
@@ -641,7 +641,7 @@ if HAS_SPHINX:
         def _make_pstake_node(self):
             env = self.state.document.settings.env
             # Make pstake node.
-            set_classes(self.options)
+            roles.set_classes(self.options)
             pstake_node = pstake(self.block_text, **self.options)
             targetid = "pstake-%d" % env.new_serialno("pstake")
             pstake_node['targetid'] = targetid
