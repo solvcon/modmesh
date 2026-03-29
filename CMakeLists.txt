@@ -22,6 +22,9 @@ if(BUILD_METAL)
     add_compile_options(-DMODMESH_METAL)
 endif()
 
+option(BUILD_CUDA "build with CUDA" OFF)
+message(STATUS "BUILD_CUDA: ${BUILD_CUDA}")
+
 option(USE_CLANG_TIDY "use clang-tidy" OFF)
 option(LINT_AS_ERRORS "clang-tidy warnings as errors" OFF)
 

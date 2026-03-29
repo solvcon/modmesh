@@ -148,9 +148,12 @@ TYPED_TEST_SUITE(InverseTest, TestTypes);
 
 TYPED_TEST(ParsevalTest, fft)
 {
-    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
-
+    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out, "cpu");
     this->verify_parseval();
+#if defined(BUILD_CUDA)
+    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out, "cuda");
+    this->verify_parseval();
+#endif
 }
 
 TYPED_TEST(ParsevalTest, dft)
@@ -162,9 +165,12 @@ TYPED_TEST(ParsevalTest, dft)
 
 TYPED_TEST(DeltaFunctionTest, fft)
 {
-    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
-
+    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out, "cpu");
     this->verify_delta_function();
+#if defined(BUILD_CUDA)
+    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out, "cuda");
+    this->verify_delta_function();
+#endif
 }
 
 TYPED_TEST(DeltaFunctionTest, dft)
@@ -176,18 +182,29 @@ TYPED_TEST(DeltaFunctionTest, dft)
 
 TYPED_TEST(InverseTest, fft)
 {
-    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->freq_domain);
-    modmesh::FourierTransform::ifft<modmesh::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain);
-
+    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->freq_domain, "cpu");
+    modmesh::FourierTransform::ifft<modmesh::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain, "cpu");
     this->verify_inverse_fft_function();
+#if defined(BUILD_CUDA)
+    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->freq_domain, "cuda");
+    modmesh::FourierTransform::ifft<modmesh::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain, "cuda");
+    this->verify_inverse_fft_function();
+#endif
 }
 
 TYPED_TEST(InverseTest, dft)
 {
     modmesh::FourierTransform::dft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->freq_domain);
-    modmesh::FourierTransform::ifft<modmesh::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain);
-
+    modmesh::FourierTransform::ifft<modmesh::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain, "cpu");
     this->verify_inverse_fft_function();
+#if defined(BUILD_CUDA)
+    // output buffer must be zero-initialized before calling dft
+    for (size_t i = 0; i < this->freq_domain.size(); ++i)
+        this->freq_domain[i] = {0.0, 0.0};
+    modmesh::FourierTransform::dft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->freq_domain);
+    modmesh::FourierTransform::ifft<modmesh::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain, "cuda");
+    this->verify_inverse_fft_function();
+#endif
 }
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
