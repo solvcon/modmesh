@@ -28,12 +28,18 @@
 Canvas utilities and curve/conic drawing utilities for pilot GUI.
 """
 
+import numpy as np
+
 from .. import core, plot
 
 from . import _gui_common
 
 __all__ = [
     'Canvas',
+    'CurveSampler',
+    'Ellipse',
+    'Parabola',
+    'Hyperbola',
     'BezierSample',
     'BezierSampler',
 ]
@@ -78,8 +84,6 @@ class Canvas(_gui_common.PilotFeature):
                 "points",
             func=self._bezier_loop,
         )
-        # TODO: Add more curve/conic samples in the next PRs,
-        #       e.g. ellipse, parabola, hyperbola, etc.
         self._add_menu_item(
             menu=self._mgr.canvasMenu,
             text="Sample: Ellipse",
@@ -155,16 +159,150 @@ class Canvas(_gui_common.PilotFeature):
         self._update_widget()
 
     def _ellipse(self):
-        # TODO: Make it in the next PR.
-        raise NotImplementedError("Ellipse sample is not implemented yet")
+        ellipse = Ellipse(a=2.0, b=1.0)
+        sampler = CurveSampler(self._world, ellipse)
+        sampler.populate_points(npoint=100)
+        sampler.draw_cbc()
+        self._update_widget()
 
     def _parabola(self):
-        # TODO: Make it in the next PR.
-        raise NotImplementedError("Parabola sample is not implemented yet")
+        parabola = Parabola(a=0.5, t_min=-3.0, t_max=6.0)
+        sampler = CurveSampler(self._world, parabola)
+        sampler.populate_points(npoint=100)
+        sampler.draw_cbc()
+        self._update_widget()
 
     def _hyperbola(self):
-        # TODO: Make it in the next PR.
-        raise NotImplementedError("Hyperbola sample is not implemented yet")
+        hyperbola = Hyperbola(a=1.0, b=1.0, t_min=-2.0, t_max=2.0)
+
+        right_sampler = CurveSampler(self._world, hyperbola)
+        right_sampler.populate_points(npoint=100)
+        right_sampler.draw_cbc()
+
+        left_sampler = CurveSampler(self._world, hyperbola)
+        left_sampler.populate_points(npoint=100)
+        left_sampler.points.x.ndarray[:] *= -1.0
+        left_sampler.draw_cbc()
+
+        self._update_widget()
+
+
+class CurveSampler:
+    """
+    Sample analytic curves into points and draw them as cubic Bezier chains.
+    """
+
+    def __init__(self, world, curve):
+        self.world = world
+        self.curve = curve
+        self.points = None
+
+    def populate_points(self, npoint=100, fac=1.0, off_x=0.0, off_y=0.0):
+        """
+        Populate sampled curve points and apply an affine transform.
+
+        npoint controls sampling density.
+        fac is a uniform scale factor.
+        off_x and off_y are translation offsets in x and y.
+        """
+        if npoint < 1:
+            raise ValueError("npoint must be at least 1")
+
+        self.points = self.curve.calc_points(npoint)
+        self.points.x.ndarray[:] = self.points.x.ndarray * fac + off_x
+        self.points.y.ndarray[:] = self.points.y.ndarray * fac + off_y
+
+    def draw_cbc(self, spacing=0.01):
+        """
+        Draw sampled points as a cubic Bezier chain.
+
+        spacing is the target chord-length step used to choose per-segment
+        Bezier sampling density. Smaller spacing produces denser rendering.
+        """
+        if self.points is None:
+            raise RuntimeError(
+                "populate_points() must be called before draw_cbc()"
+            )
+        if spacing <= 0:
+            raise ValueError("spacing must be positive")
+        if len(self.points) < 2:
+            return
+
+        point_type = core.Point3dFp64
+        point_x = self.points.x.ndarray
+        point_y = self.points.y.ndarray
+        segment_length = np.hypot(
+            point_x[:-1] - point_x[1:],
+            point_y[:-1] - point_y[1:],
+        )
+        # Minimum of 2 so very short segments are still visible.
+        nsample = np.maximum((segment_length // spacing).astype(int) - 1, 2)
+
+        for index in range(len(self.points) - 1):
+            p0 = np.array(self.points[index])
+            p3 = np.array(self.points[index + 1])
+            delta = p3 - p0
+            # Place interior cubic control points at 1/3 and 2/3 so each
+            # cubic segment represents a straight line between p0 and p3.
+            p1 = p0 + (1.0 / 3.0) * delta
+            p2 = p0 + (2.0 / 3.0) * delta
+            bezier = self.world.add_bezier(
+                p0=point_type(p0[0], p0[1], 0.0),
+                p1=point_type(p1[0], p1[1], 0.0),
+                p2=point_type(p2[0], p2[1], 0.0),
+                p3=point_type(p3[0], p3[1], 0.0),
+            )
+            bezier.sample(int(nsample[index]))
+
+
+class Ellipse:
+    def __init__(self, a=2.0, b=1.0):
+        self.a = a
+        self.b = b
+
+    def calc_points(self, npoint):
+        t_array = np.linspace(0.0, 2.0 * np.pi, npoint + 1, dtype='float64')
+        point_pad = core.PointPadFp64(ndim=2, nelem=npoint + 1)
+        for index, t_value in enumerate(t_array):
+            x_value = self.a * np.cos(t_value)
+            y_value = self.b * np.sin(t_value)
+            point_pad.set_at(index, x_value, y_value)
+        return point_pad
+
+
+class Parabola:
+    def __init__(self, a=0.5, t_min=-3.0, t_max=3.0):
+        self.a = a
+        self.t_min = t_min
+        self.t_max = t_max
+
+    def calc_points(self, npoint):
+        t_array = np.linspace(self.t_min, self.t_max, npoint + 1,
+                              dtype='float64')
+        point_pad = core.PointPadFp64(ndim=2, nelem=npoint + 1)
+        for index, t_value in enumerate(t_array):
+            x_value = t_value
+            y_value = self.a * t_value * t_value
+            point_pad.set_at(index, x_value, y_value)
+        return point_pad
+
+
+class Hyperbola:
+    def __init__(self, a=1.0, b=1.0, t_min=-2.0, t_max=2.0):
+        self.a = a
+        self.b = b
+        self.t_min = t_min
+        self.t_max = t_max
+
+    def calc_points(self, npoint):
+        t_array = np.linspace(self.t_min, self.t_max, npoint + 1,
+                              dtype='float64')
+        point_pad = core.PointPadFp64(ndim=2, nelem=npoint + 1)
+        for index, t_value in enumerate(t_array):
+            x_value = self.a * np.cosh(t_value)
+            y_value = self.b * np.sinh(t_value)
+            point_pad.set_at(index, x_value, y_value)
+        return point_pad
 
 
 class BezierSample(object):
