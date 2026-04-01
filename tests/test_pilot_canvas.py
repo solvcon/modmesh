@@ -35,6 +35,91 @@ pytest.importorskip("PySide6")
 from modmesh.pilot import _canvas  # noqa: E402
 
 
+class EllipseTC(unittest.TestCase):
+    def test_default(self):
+        ell = _canvas.Ellipse()
+        self.assertEqual(ell.a, 2.0)
+        self.assertEqual(ell.b, 1.0)
+
+    def test_custom(self):
+        ell = _canvas.Ellipse(a=3.0, b=2.0)
+        self.assertEqual(ell.a, 3.0)
+        self.assertEqual(ell.b, 2.0)
+
+    def test_calc_points(self):
+        ell = _canvas.Ellipse(a=2.0, b=1.0)
+        points = ell.calc_points(10)
+        self.assertEqual(points.ndim, 2)
+        self.assertEqual(len(points), 11)
+
+
+class CurveSamplerTC(unittest.TestCase):
+    def test_construction(self):
+        w = mm.WorldFp64()
+        _canvas.CurveSampler(w, _canvas.Ellipse(a=2.0, b=1.0))
+
+    def test_draw_ellipse(self):
+        w = mm.WorldFp64()
+        sampler = _canvas.CurveSampler(w, _canvas.Ellipse(a=2.0, b=1.0))
+        sampler.populate_points(npoint=20)
+        sampler.draw_cbc()
+        self.assertEqual(w.nbezier, 20)
+
+    def test_draw_parabola(self):
+        w = mm.WorldFp64()
+        sampler = _canvas.CurveSampler(w, _canvas.Parabola(a=0.5))
+        sampler.populate_points(npoint=20)
+        sampler.draw_cbc()
+        self.assertEqual(w.nbezier, 20)
+
+    def test_draw_hyperbola(self):
+        w = mm.WorldFp64()
+        sampler = _canvas.CurveSampler(w, _canvas.Hyperbola(a=1.0, b=1.0))
+        sampler.populate_points(npoint=20)
+        sampler.draw_cbc()
+        self.assertEqual(w.nbezier, 20)
+
+
+class ParabolaTC(unittest.TestCase):
+    def test_default(self):
+        par = _canvas.Parabola()
+        self.assertEqual(par.a, 0.5)
+        self.assertEqual(par.t_min, -3.0)
+        self.assertEqual(par.t_max, 3.0)
+
+    def test_custom(self):
+        par = _canvas.Parabola(a=1.0, t_min=-2.0, t_max=2.0)
+        self.assertEqual(par.a, 1.0)
+        self.assertEqual(par.t_min, -2.0)
+        self.assertEqual(par.t_max, 2.0)
+
+    def test_calc_points(self):
+        par = _canvas.Parabola(a=0.5, t_min=-3.0, t_max=3.0)
+        points = par.calc_points(20)
+        self.assertEqual(len(points), 21)
+
+
+class HyperbolaTC(unittest.TestCase):
+    def test_default(self):
+        hyp = _canvas.Hyperbola()
+        self.assertEqual(hyp.a, 1.0)
+        self.assertEqual(hyp.b, 1.0)
+        self.assertEqual(hyp.t_min, -2.0)
+        self.assertEqual(hyp.t_max, 2.0)
+
+    def test_custom(self):
+        hyp = _canvas.Hyperbola(a=2.0, b=1.5, t_min=-3.0, t_max=3.0)
+        self.assertEqual(hyp.a, 2.0)
+        self.assertEqual(hyp.b, 1.5)
+        self.assertEqual(hyp.t_min, -3.0)
+        self.assertEqual(hyp.t_max, 3.0)
+
+    def test_calc_points(self):
+        hyp = _canvas.Hyperbola(a=1.0, b=1.0)
+        points = hyp.calc_points(50)
+        self.assertEqual(len(points), 51)
+
+
 class BezierSampleTC(unittest.TestCase):
     def test_s_curve(self):
         bs = _canvas.BezierSample.s_curve()
