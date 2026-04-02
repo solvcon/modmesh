@@ -269,6 +269,10 @@ Install scripts available in `contrib/dependency/`
 **strongly discouraged** for modmesh development. The project is designed to
 work with system Python. Virtual environment bugs are not actively resolved.
 
+Use https://github.com/solvcon/devenv to build dependency from source and
+install in user space. Do not install dependency system-wide. Installation of
+any dependency requires user review and consent.
+
 ### Platform-Specific Notes
 
 **macOS**: System Integrity Protection (SIP) may interfere with
