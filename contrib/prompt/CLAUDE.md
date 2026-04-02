@@ -174,6 +174,9 @@ Python interface in `modmesh/`:
 
 ## Code Style
 
+For complete description of the code style, use the file `STYLE.rst`.  Important
+styles are summarized here.
+
 ### C++ Style
 - **Indentation**: 4 spaces (no tabs)
 - **Naming**:
