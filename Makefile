@@ -93,6 +93,8 @@ CMAKE_CMD = cmake $(MODMESH_ROOT) \
 	-DLINT_AS_ERRORS=ON \
 	-DMODMESH_PROFILE=$(MODMESH_PROFILE) \
 	-DQT3D_USE_RHI=$(QT3D_USE_RHI) \
+	-Dpybind11_DIR=`pybind11-config --cmakedir` \
+  -DCMAKE_TOOLCHAIN_FILE=${DEVENVPREFIX}/lib/cmake/Qt6/qt.toolchain.cmake \
 	$(CMAKE_ARGS)
 
 $(BUILD_PATH)/Makefile: CMakeLists.txt Makefile
