@@ -37,7 +37,6 @@
 
 #include <Qt>
 #include <QDockWidget>
-#include <QScrollArea>
 #include <QTextEdit>
 
 namespace modmesh
@@ -103,8 +102,6 @@ private:
     void printCommandStdout(const std::string & stdout_message) const;
     void printCommandStderr(const std::string & stderr_message) const;
 
-    QScrollArea * m_scroll_area = nullptr;
-    QWidget * m_container = nullptr;
     RPythonHistoryTextEdit * m_history_edit = nullptr;
     RPythonCommandTextEdit * m_command_edit = nullptr;
     std::string m_draft_command;

@@ -30,7 +30,6 @@
 #include <QVBoxLayout>
 #include <QKeyEvent>
 #include <QScrollBar>
-#include <QTimer>
 
 namespace modmesh
 {
@@ -80,17 +79,16 @@ void RPythonCommandTextEdit::keyPressEvent(QKeyEvent * event)
 
 RPythonConsoleDockWidget::RPythonConsoleDockWidget(const QString & title, QWidget * parent, Qt::WindowFlags flags)
     : QDockWidget(title, parent, flags)
-    , m_scroll_area(new QScrollArea)
-    , m_container(new QWidget)
     , m_history_edit(new RPythonHistoryTextEdit)
     , m_command_edit(new RPythonCommandTextEdit)
     , m_python_redirect(Toggle::instance().fixed().get_python_redirect())
 {
-    m_scroll_area->setWidgetResizable(true);
-    setWidget(m_scroll_area);
-
-    m_container->setLayout(new QVBoxLayout);
-    m_scroll_area->setWidget(m_container);
+    auto * container = new QWidget;
+    auto * layout = new QVBoxLayout;
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+    container->setLayout(layout);
+    setWidget(container);
 
     QPalette palette = QPalette();
     palette.setColor(QPalette::Base, Qt::white);
@@ -98,11 +96,11 @@ RPythonConsoleDockWidget::RPythonConsoleDockWidget(const QString & title, QWidge
     palette.setColor(QPalette::PlaceholderText, Qt::darkGray);
 
     m_history_edit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    m_history_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_history_edit->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_history_edit->setFont(QFont("Courier New"));
     m_history_edit->setReadOnly(true);
     m_history_edit->setPalette(palette);
-    m_container->layout()->addWidget(m_history_edit);
+    layout->addWidget(m_history_edit, /*stretch=*/1);
 
     constexpr int commandEditMinHeight = 40;
     m_command_edit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -111,7 +109,7 @@ RPythonConsoleDockWidget::RPythonConsoleDockWidget(const QString & title, QWidge
     m_command_edit->setFixedHeight(commandEditMinHeight);
     m_command_edit->setPalette(palette);
     m_command_edit->setPlaceholderText("Shift+Enter to create new line. Enter to execute.");
-    m_container->layout()->addWidget(m_command_edit);
+    layout->addWidget(m_command_edit, /*stretch=*/0);
 
     connect(
         m_history_edit->document(),
@@ -119,8 +117,9 @@ RPythonConsoleDockWidget::RPythonConsoleDockWidget(const QString & title, QWidge
         this,
         [this]()
         {
-            const int newHeight = calcHeightToFitContents(m_history_edit);
-            m_history_edit->setMinimumHeight(newHeight);
+            // Keep the latest output visible to the user
+            QScrollBar * sb = m_history_edit->verticalScrollBar();
+            sb->setValue(sb->maximum());
         });
     connect(
         m_command_edit->document(),
@@ -130,17 +129,6 @@ RPythonConsoleDockWidget::RPythonConsoleDockWidget(const QString & title, QWidge
         {
             const int newHeight = std::max(calcHeightToFitContents(m_command_edit), commandEditMinHeight);
             m_command_edit->setFixedHeight(newHeight);
-        });
-    connect(
-        m_command_edit,
-        &RPythonCommandTextEdit::cursorPositionChanged,
-        this,
-        [this]()
-        {
-            const QRect rect = m_command_edit->cursorRect();
-            const QPoint point = m_command_edit->mapTo(m_container, rect.bottomRight());
-
-            m_scroll_area->ensureVisible(point.x(), point.y(), 20, 20);
         });
     connect(m_command_edit, &RPythonCommandTextEdit::execute, this, &RPythonConsoleDockWidget::executeCommand);
     connect(m_command_edit, &RPythonCommandTextEdit::navigate, this, &RPythonConsoleDockWidget::navigateCommand);
