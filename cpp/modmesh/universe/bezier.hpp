@@ -90,6 +90,38 @@ public:
     Bezier3d & operator=(Bezier3d &&) = default;
     ~Bezier3d() = default;
 
+    bool operator==(Bezier3d const & other) const
+    {
+        return m_data.v[0] == other.m_data.v[0] &&
+               m_data.v[1] == other.m_data.v[1] &&
+               m_data.v[2] == other.m_data.v[2] &&
+               m_data.v[3] == other.m_data.v[3] &&
+               m_data.v[4] == other.m_data.v[4] &&
+               m_data.v[5] == other.m_data.v[5] &&
+               m_data.v[6] == other.m_data.v[6] &&
+               m_data.v[7] == other.m_data.v[7] &&
+               m_data.v[8] == other.m_data.v[8] &&
+               m_data.v[9] == other.m_data.v[9] &&
+               m_data.v[10] == other.m_data.v[10] &&
+               m_data.v[11] == other.m_data.v[11];
+    }
+
+    bool operator!=(Bezier3d const & other) const
+    {
+        return m_data.v[0] != other.m_data.v[0] ||
+               m_data.v[1] != other.m_data.v[1] ||
+               m_data.v[2] != other.m_data.v[2] ||
+               m_data.v[3] != other.m_data.v[3] ||
+               m_data.v[4] != other.m_data.v[4] ||
+               m_data.v[5] != other.m_data.v[5] ||
+               m_data.v[6] != other.m_data.v[6] ||
+               m_data.v[7] != other.m_data.v[7] ||
+               m_data.v[8] != other.m_data.v[8] ||
+               m_data.v[9] != other.m_data.v[9] ||
+               m_data.v[10] != other.m_data.v[10] ||
+               m_data.v[11] != other.m_data.v[11];
+    }
+
 #define DECL_VALUE_ACCESSOR(C, I)                     \
     value_type C##I() const { return m_data.f.C##I; } \
     value_type & C##I() { return m_data.f.C##I; }

@@ -150,6 +150,15 @@ class Bezier3dTB(testing.TestBase):
         self.assertEqual(list(bzr[2]), [3, 1, 0])
         self.assertEqual(list(bzr[3]), [4, 0, 0])
 
+        # Test equality and inequality comparison operators
+        bzr_copy = Bezier(p0=Point(0, 0, 0), p1=Point(1, 1, 0),
+                          p2=Point(3, 1, 0), p3=Point(4, 0, 0))
+        self.assertTrue(bzr_copy == bzr)
+
+        bzr1 = Bezier(p0=Point(0, 0, 0), p1=Point(1, 1, 0), p2=Point(3, 1, 0),
+                      p3=Point(4, 4, 4))
+        self.assertTrue(bzr1 != bzr)
+
         # Range error in C++
         with self.assertRaisesRegex(IndexError,
                                     "Bezier3d: \\(control\\) i 4 >= size 4"):
@@ -263,12 +272,7 @@ class Bezier3dFp32TC(Bezier3dTB, unittest.TestCase):
         self.assertEqual(str(b), golden)
         # Evaluate the string and test the result
         e = eval(golden, vars(modmesh))
-        # FIXME: Bezier3d does not have equality operator
-        # Tracked in https://github.com/solvcon/modmesh/issues/568
-        self.assertEqual(b[0], e[0])
-        self.assertEqual(b[1], e[1])
-        self.assertEqual(b[2], e[2])
-        self.assertEqual(b[3], e[3])
+        self.assertEqual(b, e)
 
 
 class Bezier3dFp64TC(Bezier3dTB, unittest.TestCase):
@@ -297,12 +301,7 @@ class Bezier3dFp64TC(Bezier3dTB, unittest.TestCase):
         self.assertEqual(str(b), golden)
         # Evaluate the string and test the result
         e = eval(golden, vars(modmesh))
-        # FIXME: Bezier3d does not have equality operator
-        # Tracked in https://github.com/solvcon/modmesh/issues/568
-        self.assertEqual(b[0], e[0])
-        self.assertEqual(b[1], e[1])
-        self.assertEqual(b[2], e[2])
-        self.assertEqual(b[3], e[3])
+        self.assertEqual(b, e)
 
 
 class SegmentPadTB(testing.TestBase):
