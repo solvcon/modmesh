@@ -1,0 +1,50 @@
+# Copyright (c) 2026, An-Chi Liu <phy.tiger@gmail.com>
+# BSD-style license; see COPYING
+#
+# See https://pre-commit.com for more information
+# Run `pre-commit install` to set up the git hooks.
+# Run `pre-commit run --all-files` to check the entire project.
+# Run `pre-commit autoupdate` to update hook versions.
+repos:
+  # C++ formatting
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v20.1.0
+    hooks:
+      - id: clang-format
+        files: ^(cpp|gtests)/.*\.[ch]pp$
+
+  # Python linting
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.3.0
+    hooks:
+      - id: flake8
+        exclude: ^(thirdparty|tmp|_deps)/
+
+  # Project-specific checks
+  - repo: local
+    hooks:
+      # Ensure C++ files use angle brackets for includes, not quotes
+      - id: cinclude
+        name: check-include-quotes
+        description: Ensure C++ includes use angle brackets, not quotes
+        entry: '#include\s*"'
+        language: pygrep
+        files: ^cpp/
+
+      # Ensure source files contain only ASCII characters
+      - id: checkascii
+        name: check-ascii
+        description: Ensure source files contain only ASCII characters
+        entry: python3 contrib/lint/check_ascii.py
+        language: system
+        files: \.(py|cpp|hpp|c|h|cxx|hxx|sh|yml|yaml)$|(^|/)(CMakeLists\.txt|[Mm]akefile)$
+        exclude: ^(tmp|_deps|build)/
+
+      # Ensure source files have no trailing whitespace
+      - id: checktws
+        name: check-trailing-whitespace
+        description: Ensure source files have no trailing whitespace
+        entry: python3 contrib/lint/check_ascii.py --check-tws
+        language: system
+        files: \.(py|cpp|hpp|c|h|cxx|hxx|sh|yml|yaml)$|(^|/)(CMakeLists\.txt|[Mm]akefile)$
+        exclude: ^(tmp|_deps|build)/
