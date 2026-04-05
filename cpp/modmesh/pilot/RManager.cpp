@@ -274,6 +274,7 @@ void RManager::setUpCameraMovementMenuItems() const
                                         { input.ryAxisValue = -1.0; }));
 
     reset_camera->setShortcut(QKeySequence(Qt::Key_Escape));
+    reset_camera->setShortcutContext(Qt::WidgetShortcut);
 
     auto cameraMoveSubmenu = m_viewMenu->addMenu("Camera move");
     cameraMoveSubmenu->addAction(reset_camera);
