@@ -8,17 +8,11 @@ on:
 
 jobs:
 
-  clang_format_check:
+  pre_commit:
 
     runs-on: ubuntu-latest
 
     if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
-
-    strategy:
-      matrix:
-        path:
-          - 'cpp'
-          - 'gtests'
 
     steps:
 
@@ -28,29 +22,15 @@ jobs:
         run: |
           echo "github.event_name: ${{ github.event_name }}"
 
-      - name: Add 8G swap (Ubuntu)
-        # Prevent hitting runner's resource limits
-        if: runner.os == 'Linux'
-        run: |
-          # Remove /swapfile first to avoid "fallocate: Text file busy" error
-          sudo swapoff -a
-          sudo rm -f /swapfile
-          sudo fallocate -l 8G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-          free -h
-
-      - name: Run clang-format style check for C/C++/Protobuf programs.
-        uses: jidicula/clang-format-action@v4.16.0
+      - uses: actions/setup-python@v5
         with:
-          clang-format-version: '20'
-          check-path: ${{ matrix.path }}
-          fallback-style: 'LLVM' # optional
+          python-version: '3.x'
 
-  tidy_flake8:
+      - uses: pre-commit/action@v3.0.1
 
-    name: Run clang-tidy and flake8 on ${{ matrix.os }}
+  clang_tidy:
+
+    name: Run clang-tidy on ${{ matrix.os }}
 
     if: ${{ github.event_name != 'schedule' || (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') }}
 
@@ -103,15 +83,6 @@ jobs:
         restore-keys: ${{ runner.os }}-tidy-${{ matrix.cmake_build_type }}
         create-symlink: true
 
-    - name: make cinclude (check_include)
-      run: make cinclude
-
-    - name: make checkascii (check ASCII-only characters)
-      run: make checkascii
-
-    - name: make checktws (check trailing whitespace)
-      run: make checktws
-
     - name: make pilot USE_PYTEST_HELPER_BINDING=OFF
       run: |
         make pilot \
@@ -135,22 +106,15 @@ jobs:
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_PYTEST_HELPER_BINDING=ON"
 
-    - name: make flake8
-      run: |
-        make flake8 \
-          ${JOB_MAKE_ARGS} \
-          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
-
   send_email_on_failure:
-    needs: [clang_format_check, tidy_flake8]
+    needs: [pre_commit, clang_tidy]
     # Run if any of the dependencies failed in master branch
     if: ${{ always() && contains(needs.*.result, 'failure') && github.ref_name == 'master' && github.event.repository.fork == false }}
     uses: ./.github/workflows/send_email_on_fail.yml
     with:
       job_results: |
-        - clang_format_check: ${{ needs.clang_format_check.result }}
-        - tidy_flake8: ${{ needs.tidy_flake8.result }}
+        - pre_commit: ${{ needs.pre_commit.result }}
+        - clang_tidy: ${{ needs.clang_tidy.result }}
     secrets:
       EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
       EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}

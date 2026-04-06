@@ -65,6 +65,20 @@ make flake8       # Python style check
 make checkascii   # ASCII character check
 ```
 
+### Pre-commit
+```bash
+# Run all pre-commit hooks on staged files
+pre-commit run
+
+# Run all pre-commit hooks on the entire project
+pre-commit run --all-files
+```
+
+**IMPORTANT**: Always run `pre-commit run --all-files` before committing and
+pushing changes. This ensures clang-format, flake8, include-quote checks,
+ASCII-only characters, and trailing whitespace checks all pass locally before
+CI runs.
+
 ### Cleanup
 ```bash
 # Clean build artifacts
