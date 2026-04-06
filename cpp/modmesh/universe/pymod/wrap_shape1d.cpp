@@ -528,6 +528,7 @@ protected:
     WrapBezier3d(pybind11::module & mod, char const * pyname, char const * pydoc);
 
     WrapBezier3d & wrap_management();
+    WrapBezier3d & wrap_operator();
     WrapBezier3d & wrap_accessor();
     WrapBezier3d & wrap_geometry();
 }; /* end class WrapBezier3d */
@@ -540,6 +541,7 @@ WrapBezier3d<T>::WrapBezier3d(pybind11::module & mod, const char * pyname, const
 
     (*this)
         .wrap_management()
+        .wrap_operator()
         .wrap_accessor()
         .wrap_geometry()
         //
@@ -575,6 +577,20 @@ WrapBezier3d<T> & WrapBezier3d<T>::wrap_management()
                                    self.p3().value_string());
             })
         .def_alias("__repr__", "__str__")
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapBezier3d<T> & WrapBezier3d<T>::wrap_operator()
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def(py::self == py::self) // NOLINT(misc-redundant-expression)
+        .def(py::self != py::self) // NOLINT(misc-redundant-expression)
         //
         ;
 
