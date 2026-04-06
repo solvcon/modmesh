@@ -36,7 +36,9 @@
 #include <fstream>
 
 #include <Qt>
+#include <QCompleter>
 #include <QDockWidget>
+#include <QStringListModel>
 #include <QTextEdit>
 
 namespace modmesh
@@ -49,12 +51,25 @@ class RPythonCommandTextEdit
 
 public:
 
+    void setCompleter(QCompleter * completer);
+    QCompleter * completer() const { return m_completer; }
+    QString completionPrefix() const;
+
     void keyPressEvent(QKeyEvent * event) override;
 
 signals:
 
     void execute();
     void navigate(int offset);
+    void completionRequested(const QString & prefix);
+
+private slots:
+
+    void insertCompletion(const QString & completion);
+
+private:
+
+    QCompleter * m_completer = nullptr;
 
 }; /* end class RPythonCommandTextEdit */
 
@@ -95,6 +110,10 @@ public slots:
     void executeCommand();
     void navigateCommand(int offset);
 
+private slots:
+    void handleCompletionRequest(const QString & prefix);
+    void updateCompletionPrefix();
+
 private:
     static int calcHeightToFitContents(const QTextEdit * edit);
 
@@ -111,6 +130,10 @@ private:
     int m_last_command_serial = 0;
 
     python::PythonStreamRedirect m_python_redirect;
+
+    QCompleter * m_completer = nullptr;
+    QStringListModel * m_completer_model = nullptr;
+    QString m_completer_root_prefix;
 }; /* end class RPythonConsoleDockWidget */
 
 } /* end namespace modmesh */

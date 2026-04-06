@@ -206,6 +206,29 @@ void Interpreter::exec_code(std::string const & code)
     }
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::vector<std::string> Interpreter::get_completions(std::string const & text)
+{
+    std::vector<std::string> result;
+    try
+    {
+        pybind11::gil_scoped_acquire gil;
+        // NOLINTNEXTLINE(misc-const-correctness)
+        pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
+        pybind11::object py_result = mod_sys.attr("get_completions")(text);
+        result = py_result.cast<std::vector<std::string>>();
+    }
+    catch (const pybind11::error_already_set & e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
+    catch (const std::exception & e)
+    {
+        std::cerr << "get_completions error: " << e.what() << std::endl;
+    }
+    return result;
+}
+
 PythonStreamRedirect & PythonStreamRedirect::activate()
 {
     if (is_enabled())
