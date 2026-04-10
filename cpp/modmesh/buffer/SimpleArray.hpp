@@ -567,6 +567,11 @@ public:
         return A(*static_cast<A const *>(this)).idiv(other);
     }
 
+    A div(value_type scalar) const
+    {
+        return A(*static_cast<A const *>(this)).idiv(scalar);
+    }
+
     A & iadd(A const & other)
     {
         auto athis = static_cast<A *>(this);
@@ -734,6 +739,28 @@ public:
                 *ptr /= *other_ptr;
                 ++ptr;
                 ++other_ptr;
+            }
+        }
+        else
+        {
+            throw std::runtime_error(
+                "SimpleArray<bool>::idiv(): boolean value doesn't support this operation");
+        }
+        return *athis;
+    }
+
+    A & idiv(value_type scalar)
+    {
+        auto athis = static_cast<A *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            const value_type * const end = athis->end();
+            value_type * ptr = athis->begin();
+
+            while (ptr < end)
+            {
+                *ptr /= scalar;
+                ++ptr;
             }
         }
         else
