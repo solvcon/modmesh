@@ -3173,6 +3173,85 @@ class SimpleArraySearchTC(unittest.TestCase):
         self.assertEqual(narr.argmin(), sarr.argmin())
         self.assertEqual(narr.argmax(), sarr.argmax())
 
+    def test_argwhere(self):
+        # test 1-D data
+        data = [1, 3, 5, 7, 9]
+        narr = np.array(data, dtype='uint64')
+        sarr = modmesh.SimpleArrayUint64(array=narr)
+
+        ret_np = np.argwhere(narr > 5)
+        ret_sa = sarr.argwhere(lambda x: x > 5)
+
+        self.assertEqual(ret_np.shape, ret_sa.shape)
+        for i in range(ret_sa.shape[0]):
+            for j in range(ret_sa.shape[1]):
+                self.assertEqual(ret_np[i, j], ret_sa[i, j])
+
+        # test N-D data
+        data = [[-1.3, -4.8,  1.5,  0.3,  7.1],  [2.5,  4.8, -0.1,  9.4,  7.6]]
+        narr = np.array(data, dtype='float64')
+        sarr = modmesh.SimpleArrayFloat64(array=narr)
+
+        ret_np = np.argwhere(narr <= 2.8)
+        ret_sa = sarr.argwhere(lambda x: x <= 2.8)
+
+        self.assertEqual(ret_np.shape, ret_sa.shape)
+        for i in range(ret_sa.shape[0]):
+            for j in range(ret_sa.shape[1]):
+                self.assertEqual(ret_np[i, j], ret_sa[i, j])
+
+        # test N-D data
+        data = [[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[1, 3], [5, 7]]]
+        narr = np.array(data, dtype='int64')
+        sarr = modmesh.SimpleArrayInt64(array=narr)
+
+        ret_np = np.argwhere(narr == 5)
+        ret_sa = sarr.argwhere(lambda x: x == 5)
+
+        self.assertEqual(ret_np.shape, ret_sa.shape)
+        for i in range(ret_sa.shape[0]):
+            for j in range(ret_sa.shape[1]):
+                self.assertEqual(ret_np[i, j], ret_sa[i, j])
+
+        # default case: non-zero
+        ret_np = np.argwhere(narr)
+        ret_sa = sarr.argwhere()
+
+        self.assertEqual(ret_np.shape, ret_sa.shape)
+        for i in range(ret_sa.shape[0]):
+            for j in range(ret_sa.shape[1]):
+                self.assertEqual(ret_np[i, j], ret_sa[i, j])
+
+    def test_where(self):
+        # test 1-D data
+        data = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        narr_1 = np.array(data, dtype='uint64')
+        narr_2 = narr_1 * 10
+        sarr_1 = modmesh.SimpleArrayUint64(array=narr_1)
+        sarr_2 = modmesh.SimpleArrayUint64(array=narr_2)
+
+        ret_np = np.where(narr_1 < 5, narr_1, narr_2)
+        ret_sa = sarr_1.where(lambda x: x < 5, sarr_2)
+
+        self.assertEqual(ret_np.shape, ret_sa.shape)
+        for i in range(len(ret_np)):
+            self.assertEqual(ret_np[i], ret_sa[i])
+
+        # test N-D data
+        data = [[1, 3, 5, 7, 9], [2, 4, 6, 8, 10], [1, 10, 1, 10, 1]]
+        narr_1 = np.array(data, dtype='float64')
+        narr_2 = narr_1 * 10
+        sarr_1 = modmesh.SimpleArrayFloat64(array=narr_1)
+        sarr_2 = modmesh.SimpleArrayFloat64(array=narr_2)
+
+        ret_np = np.where(narr_1 == 1, narr_1, narr_2)
+        ret_sa = sarr_1.where(lambda x: x == 1, sarr_2)
+
+        self.assertEqual(ret_np.shape, ret_sa.shape)
+        for i in range(ret_np.shape[0]):
+            for j in range(ret_np.shape[1]):
+                self.assertEqual(ret_np[i, j], ret_sa[i, j])
+
 
 class SimpleArrayPlexTC(unittest.TestCase):
 
