@@ -3052,6 +3052,175 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         ):
             sarr2.idiv(sarr1)
 
+    def test_div_1d(self):
+        def _check_div_1d_type(type):
+            narr1 = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=type)
+            narr2 = np.array([2, 3, 4, 5, 6, 7, 8, 9], dtype=type)
+            sarr1 = self.type_convertor(type)(array=narr1)
+            sarr2 = self.type_convertor(type)(array=narr2)
+
+            # cast the result array back to the tested data type
+            # Numpy promotes any numerical types to floating point number when
+            # performing division
+            # ref: https://numpy.org/doc/stable/reference/arrays.promotion.html
+            nres = np.divide(narr1, narr2).astype(type)
+            sres = sarr1.div(sarr2)
+            for i in range(len(narr1)):
+                self.assertEqual(sres[i], nres[i])
+
+            sarr1.idiv(sarr2)
+            for i in range(len(narr1)):
+                self.assertEqual(sarr1[i], nres[i])
+
+        _check_div_1d_type('int32')
+        _check_div_1d_type('int64')
+        _check_div_1d_type('float32')
+        _check_div_1d_type('float64')
+
+    def test_div_2d(self):
+        def _check_div_2d_type(type):
+            narr1 = np.array([[1, 2, 3, 4],
+                              [5, 6, 7, 8],
+                              [9, 10, 11, 12]], dtype=type)
+            narr2 = np.array([[2, 2, 2, 2],
+                              [3, 3, 3, 3],
+                              [4, 4, 4, 4]], dtype=type)
+            sarr1 = self.type_convertor(type)(array=narr1)
+            sarr2 = self.type_convertor(type)(array=narr2)
+
+            # cast the result array back to the tested data type
+            # Numpy promotes any numerical types to floating point number when
+            # performing division
+            # ref: https://numpy.org/doc/stable/reference/arrays.promotion.html
+            nres = np.divide(narr1, narr2).astype(type)
+            sres = sarr1.div(sarr2)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    self.assertEqual(sres[i, j], nres[i, j])
+
+            sarr1.idiv(sarr2)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    self.assertEqual(sarr1[i, j], nres[i, j])
+
+        _check_div_2d_type('int32')
+        _check_div_2d_type('int64')
+        _check_div_2d_type('float32')
+        _check_div_2d_type('float64')
+
+    def test_div_3d(self):
+        def _check_div_3d_type(type):
+            narr1 = np.arange(24, dtype=type).reshape((2, 3, 4))
+            narr2 = np.arange(1, 25, dtype=type).reshape((2, 3, 4))
+            sarr1 = self.type_convertor(type)(array=narr1)
+            sarr2 = self.type_convertor(type)(array=narr2)
+
+            # cast the result array back to the tested data type
+            # Numpy promotes any numerical types to floating point number when
+            # performing division
+            # ref: https://numpy.org/doc/stable/reference/arrays.promotion.html
+            nres = np.divide(narr1, narr2).astype(type)
+            sres = sarr1.div(sarr2)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    for k in range(narr1.shape[2]):
+                        self.assertEqual(sres[i, j, k], nres[i, j, k])
+
+            sarr1.idiv(sarr2)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    for k in range(narr1.shape[2]):
+                        self.assertEqual(sarr1[i, j, k], nres[i, j, k])
+
+        _check_div_3d_type('int32')
+        _check_div_3d_type('int64')
+        _check_div_3d_type('float32')
+        _check_div_3d_type('float64')
+
+    def test_div_scalar_1d(self):
+        """Test 1D array scalar divtiplication"""
+        def _check_div_scalar_1d_type(type):
+            narr1 = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=type)
+            sarr1 = self.type_convertor(type)(array=narr1)
+            scalar = 3
+
+            # cast the result array back to the tested data type
+            # Numpy promotes any numerical types to floating point number when
+            # performing division
+            # ref: https://numpy.org/doc/stable/reference/arrays.promotion.html
+            nres = np.divide(narr1, scalar).astype(type)
+            sres = sarr1.div(scalar)
+
+            for i in range(len(narr1)):
+                self.assertEqual(sres[i], nres[i])
+
+            sarr1.idiv(scalar)
+            for i in range(len(narr1)):
+                self.assertEqual(sarr1[i], nres[i])
+
+        _check_div_scalar_1d_type('int32')
+        _check_div_scalar_1d_type('int64')
+        _check_div_scalar_1d_type('float32')
+        _check_div_scalar_1d_type('float64')
+
+    def test_div_scalar_2d(self):
+        """Test 2D array (matrix) scalar divtiplication"""
+        def _check_div_scalar_2d_type(type):
+            narr1 = np.array([[1, 2, 3, 4],
+                              [5, 6, 7, 8],
+                              [9, 10, 11, 12]], dtype=type)
+            sarr1 = self.type_convertor(type)(array=narr1)
+            scalar = 2
+
+            # cast the result array back to the tested data type
+            # Numpy promotes any numerical types to floating point number when
+            # performing division
+            # ref: https://numpy.org/doc/stable/reference/arrays.promotion.html
+            nres = np.divide(narr1, scalar).astype(type)
+            sres = sarr1.div(scalar)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    self.assertEqual(sres[i, j], nres[i, j])
+
+            sarr1.idiv(scalar)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    self.assertEqual(sarr1[i, j], nres[i, j])
+
+        _check_div_scalar_2d_type('int32')
+        _check_div_scalar_2d_type('int64')
+        _check_div_scalar_2d_type('float32')
+        _check_div_scalar_2d_type('float64')
+
+    def test_div_scalar_3d(self):
+        """Test 3D array scalar divtiplication"""
+        def _check_div_scalar_3d_type(type):
+            narr1 = np.arange(24, dtype=type).reshape((2, 3, 4))
+            sarr1 = self.type_convertor(type)(array=narr1)
+            scalar = 5
+
+            # cast the result array back to the tested data type
+            # Numpy promotes any numerical types to floating point number when
+            # performing division
+            # ref: https://numpy.org/doc/stable/reference/arrays.promotion.html
+            nres = np.divide(narr1, scalar).astype(type)
+            sres = sarr1.div(scalar)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    for k in range(narr1.shape[2]):
+                        self.assertEqual(sres[i, j, k], nres[i, j, k])
+
+            sarr1.idiv(scalar)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    for k in range(narr1.shape[2]):
+                        self.assertEqual(sarr1[i, j, k], nres[i, j, k])
+
+        _check_div_scalar_3d_type('int32')
+        _check_div_scalar_3d_type('int64')
+        _check_div_scalar_3d_type('float32')
+        _check_div_scalar_3d_type('float64')
+
     def test_eye(self):
         """Test eye() static method for creating identity matrices"""
         eye2 = modmesh.SimpleArrayFloat64.eye(10)

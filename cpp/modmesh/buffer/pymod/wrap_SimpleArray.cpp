@@ -349,7 +349,14 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 "mul",
                 [](wrapped_type const & self, value_type scalar)
                 { return self.mul(scalar); })
-            .def("div", &wrapped_type::div)
+            .def(
+                "div",
+                [](wrapped_type const & self, wrapped_type const & other)
+                { return self.div(other); })
+            .def(
+                "div",
+                [](wrapped_type const & self, value_type scalar)
+                { return self.div(scalar); })
             .def("matmul", &wrapped_type::matmul)
             .def("__matmul__", &wrapped_type::matmul)
             // TODO: In-place operation should return reference to self to support function chaining
@@ -387,6 +394,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 { self.imul(scalar); })
             .def("idiv", [](wrapped_type & self, wrapped_type const & other)
                  { self.idiv(other); })
+            .def(
+                "idiv",
+                [](wrapped_type & self, value_type scalar)
+                { self.idiv(scalar); })
             .def("imatmul", [](wrapped_type & self, wrapped_type const & other)
                  { self.imatmul(other); })
             .def("__imatmul__", [](wrapped_type & self, wrapped_type const & other)
