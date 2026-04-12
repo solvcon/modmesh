@@ -190,6 +190,22 @@ styles are summarized here.
 - **Includes**: Use angle brackets (`#include <...>`), not quotes
 - **Standard**: C++23
 
+### C++ STL Containers
+- Replace `std::vector` with `SimpleCollector` when `value_type` is a
+  fundamental type. Use `small_vector` for a small amount of data.
+- Do not use STL containers for member data unless it is just in a prototype
+  phase (add a `TODO` comment and a follow-up PR/issue).
+- For local variables, STL is sometimes OK but discouraged.
+
+### C++ Function Body Placement
+- Move non-accessor function bodies to be outside the class declaration when
+  the code is not 2-3 times longer than an accessor.
+- Keep short accessors inline in the class declaration.
+
+### C++ pybind11 Binding Style
+- Separate constructors and other bindings (methods, properties, etc.) into two
+  `(*this)` sections for readability. This can also be addressed in a future PR.
+
 ### Python Style
 - **Indentation**: 4 spaces (no tabs)
 - **Naming**:
