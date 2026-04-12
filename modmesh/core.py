@@ -100,11 +100,6 @@ list_of_python = [
     'HAS_PILOT',
 ]
 
-# testhelper directory symbols
-list_of_testhelper = [
-    'testhelper',
-]
-
 # toggle directory symbols
 list_of_toggle = [
     'WrapperProfilerStatus',
@@ -187,7 +182,6 @@ __all__ = (  # noqa: F822
     list_of_mesh +
     list_of_multidim +
     list_of_python +
-    list_of_testhelper +
     list_of_toggle +
     list_of_transform +
     list_of_linalg +
@@ -215,7 +209,6 @@ _load(list_of_math)
 _load(list_of_mesh)
 _load(list_of_multidim)
 _load(list_of_python)
-_load(list_of_testhelper)
 _load(list_of_toggle)
 _load(list_of_transform)
 _load(list_of_linalg)

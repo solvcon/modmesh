@@ -31,12 +31,6 @@ option(LINT_AS_ERRORS "clang-tidy warnings as errors" OFF)
 # - Address Sanitization: Protecting against address-related vulnerabilities. See https://clang.llvm.org/docs/AddressSanitizer.html
 option(USE_SANITIZER "use sanitizer (undefined, leak, address)" OFF)
 
-option(USE_PYTEST_HELPER_BINDING "use helper bindings to run pytest. should be ON if the build is for pytest" OFF)
-if(USE_PYTEST_HELPER_BINDING)
-    add_definitions(-D USE_PYTEST_HELPER_BINDING)
-endif()
-message(STATUS "USE_PYTEST_HELPER_BINDING: ${USE_PYTEST_HELPER_BINDING}")
-
 
 if(BUILD_QT)
     option(QT3D_USE_RHI "Qt use RHI" OFF)
