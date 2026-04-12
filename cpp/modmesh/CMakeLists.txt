@@ -47,10 +47,6 @@ add_subdirectory(math)
 add_subdirectory(linalg)
 add_subdirectory(simd)
 
-if(USE_PYTEST_HELPER_BINDING)
-    add_subdirectory(testhelper)
-endif() # USE_PYTEST_HELPER_BINDING
-
 set(MODMESH_ROOT_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/modmesh.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/base.hpp
@@ -96,7 +92,6 @@ set(MODMESH_TERMINAL_FILES
     ${MODMESH_SPACETIME_FILES}
     ${MODMESH_PYTHON_FILES}
     ${MODMESH_INOUT_FILES}
-    ${MODMESH_TESTHELPER_FILES}
     ${MODMESH_SERIALIZATION_FILES}
     ${MODMESH_TRANSFORM_FILES}
     ${MODMESH_MATH_FILES}

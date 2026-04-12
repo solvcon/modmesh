@@ -928,61 +928,6 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual(sarr[0, 0], 1)
         self.assertEqual(sarr[0, 1], 2)
 
-    @unittest.skipUnless(modmesh.testhelper.PYTEST_HELPER_BINDING_BUILT,
-                         "TestSimpleArrayHelper is not built")
-    def test_SimpleArray_casting(self):
-        helper = modmesh.testhelper.TestSimpleArrayHelper
-        # first check the caster works if the argument is exact the same type
-        array_float64 = modmesh.SimpleArrayFloat64((2, 3, 4))
-        self.assertEqual(
-            helper.test_load_arrayfloat64_from_arrayplex(array_float64), True)
-
-        # init arrayplex
-        arrayplex_int32 = modmesh.SimpleArray((2, 3, 4), dtype="int32")
-        arrayplex_uint64 = modmesh.SimpleArray((2, 3, 4), dtype="uint64")
-        arrayplex_float64 = modmesh.SimpleArray((2, 3, 4), dtype="float64")
-
-        # check the type is the same with different data types
-        self.assertTrue(type(arrayplex_int32) is type(arrayplex_uint64))
-        self.assertTrue(type(arrayplex_uint64) is type(arrayplex_float64))
-        self.assertEqual(
-            str(type(arrayplex_int32)), "<class '_modmesh.SimpleArray'>")
-        self.assertEqual(
-            str(type(arrayplex_uint64)), "<class '_modmesh.SimpleArray'>")
-        self.assertEqual(
-            str(type(arrayplex_float64)), "<class '_modmesh.SimpleArray'>")
-
-        # check if arrayplex can cast to simplearray
-        self.assertEqual(
-            helper.test_load_arrayin32_from_arrayplex(arrayplex_int32), True)
-
-        # int32 and uint64 are different types
-        with self.assertRaisesRegex(
-                TypeError,
-                r"incompatible function arguments"):
-            helper.test_load_arrayin32_from_arrayplex(arrayplex_uint64)
-
-        # check if arrayplex can cast to simplearray
-        self.assertEqual(
-            helper.test_load_arrayfloat64_from_arrayplex(arrayplex_float64),
-            True)  # noqa: E501
-
-        # float64 and int32 are differet types
-        with self.assertRaisesRegex(TypeError,
-                                    r"incompatible function arguments"):
-            helper.test_load_arrayfloat64_from_arrayplex(arrayplex_int32)
-
-        # explicitly check the `cast` function of the customized caster works
-        # SimpleArray32 from the constructor directly
-        array_int32 = modmesh.SimpleArrayInt32((2, 3, 4))
-        # SimpleArray32 from casting
-        array_int32_2 = helper.test_cast_to_arrayint32()
-        self.assertTrue(type(array_int32) is type(array_int32_2))
-        self.assertEqual(
-            str(type(array_int32)), "<class '_modmesh.SimpleArrayInt32'>")
-        self.assertEqual(
-            str(type(array_int32_2)), "<class '_modmesh.SimpleArrayInt32'>")
-
     def test_SimpleArray_SimpleArrayPlex_type_switch(self):
         arrayplex_int32 = modmesh.SimpleArray((2, 3, 4), dtype="int32")
 
@@ -3498,6 +3443,75 @@ class SimpleArrayPlexTC(unittest.TestCase):
             for j in range(3):
                 for k in range(4):
                     self.assertEqual(stride_arr[i, j, k], sarr[i, j, k])
+
+    def test_SimpleArrayPlex_uniform_type(self):
+        arrayplex_int32 = modmesh.SimpleArray((2, 3, 4), dtype="int32")
+        arrayplex_uint64 = modmesh.SimpleArray((2, 3, 4), dtype="uint64")
+        arrayplex_float64 = modmesh.SimpleArray((2, 3, 4), dtype="float64")
+
+        # all plex instances share the same Python type regardless of dtype
+        self.assertTrue(type(arrayplex_int32) is type(arrayplex_uint64))
+        self.assertTrue(type(arrayplex_uint64) is type(arrayplex_float64))
+        self.assertEqual(
+            str(type(arrayplex_int32)), "<class '_modmesh.SimpleArray'>")
+        self.assertEqual(
+            str(type(arrayplex_uint64)), "<class '_modmesh.SimpleArray'>")
+        self.assertEqual(
+            str(type(arrayplex_float64)), "<class '_modmesh.SimpleArray'>")
+
+    def test_SimpleArrayPlex_cast_to_typed(self):
+        dtype_typed_map = {
+            "int32": ("_modmesh.SimpleArrayInt32", np.int32),
+            "uint64": ("_modmesh.SimpleArrayUint64", np.uint64),
+            "float64": ("_modmesh.SimpleArrayFloat64", np.float64),
+        }
+        for dtype, (typed_name, np_dtype) in dtype_typed_map.items():
+            plex = modmesh.SimpleArray((2, 3, 4), dtype=dtype)
+            typed = plex.typed
+            self.assertEqual(str(type(typed)),
+                             "<class '{}'>".format(typed_name))
+            # verify ndarray dtype matches the expected numpy dtype
+            self.assertEqual(typed.ndarray.dtype, np_dtype)
+
+    def test_SimpleArrayPlex_cast_dtype_mismatch(self):
+        # constructing a typed array from a wrong-dtype plex must fail
+        plex_i32 = modmesh.SimpleArray((2, 3, 4), dtype="int32")
+        ndarr_i32 = np.array(plex_i32, copy=False)
+        with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
+            modmesh.SimpleArrayFloat64(array=ndarr_i32)
+
+        plex_f64 = modmesh.SimpleArray((2, 3, 4), dtype="float64")
+        ndarr_f64 = np.array(plex_f64, copy=False)
+        with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
+            modmesh.SimpleArrayInt32(array=ndarr_f64)
+
+    def test_SimpleArrayPlex_typed_roundtrip(self):
+        plex = modmesh.SimpleArray((2, 3, 4), dtype="int32")
+        typed = plex.typed
+        plex2 = typed.plex
+
+        self.assertEqual(str(type(plex)), "<class '_modmesh.SimpleArray'>")
+        self.assertEqual(
+            str(type(typed)), "<class '_modmesh.SimpleArrayInt32'>")
+        self.assertEqual(str(type(plex2)), "<class '_modmesh.SimpleArray'>")
+
+    def test_SimpleArrayPlex_typed_preserves_data(self):
+        plex = modmesh.SimpleArray((4,), dtype="float64", value=3.14)
+        typed = plex.typed
+        for i in range(4):
+            self.assertEqual(typed[i], 3.14)
+
+    def test_SimpleArrayPlex_typed_from_typed_constructor(self):
+        # typed array built from the constructor directly
+        array_int32 = modmesh.SimpleArrayInt32((2, 3, 4))
+        # typed array obtained via plex.typed
+        array_int32_2 = modmesh.SimpleArray(
+            (2, 3, 4), dtype="int32").typed
+        self.assertTrue(type(array_int32) is type(array_int32_2))
+        self.assertEqual(
+            str(type(array_int32)), "<class '_modmesh.SimpleArrayInt32'>")
+        self.assertEqual(
+            str(type(array_int32_2)), "<class '_modmesh.SimpleArrayInt32'>")
 
 
 class SimpleArrayPlexAlignmentTC(unittest.TestCase):
