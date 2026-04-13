@@ -536,6 +536,102 @@ hundreds of lines) to keep track of.
 
   } /* end namespace modmesh */
 
+C++ STL Containers
+====
+
+Replace ``std::vector`` with ``SimpleCollector`` when ``value_type`` is a
+fundamental type. Use ``small_vector`` for a small amount of data.
+
+Do not use STL containers for member data unless it is just in a prototype
+phase. In that case, add a ``TODO`` comment and create a follow-up PR or issue
+to replace them:
+
+.. code-block:: cpp
+
+  class MyClass
+  {
+
+  private:
+
+      // GOOD: use SimpleCollector for fundamental types.
+      SimpleCollector<double> m_values;
+
+      // BAD: do not use std::vector for member data.
+      std::vector<double> m_values;
+
+      // OK only in prototype phase with a TODO comment.
+      // TODO: Replace with SimpleCollector (see issue #NNN).
+      std::vector<double> m_values;
+
+  }; /* end class MyClass */
+
+For local variables, STL is sometimes acceptable but discouraged:
+
+.. code-block:: cpp
+
+  void do_something()
+  {
+      // Discouraged but sometimes OK for local variables.
+      std::vector<int32_t> temp_indices;
+  }
+
+C++ Function Body Placement
+====
+
+Move non-accessor function bodies to be outside the class declaration when the
+code is not 2-3 times longer than an accessor. Keep short accessors inline in
+the class declaration as described in the encapsulation section. Other function
+bodies should be defined outside:
+
+.. code-block:: cpp
+
+  class MyPowerHouse
+  {
+
+  public:
+
+      // Short accessors stay inline in the class.
+      double internal_value() const { return m_internal_value; }
+      double & internal_value() { return m_internal_value; }
+
+      // Declare non-trivial functions in the class, define outside.
+      void calculate_internal_data();
+
+  private:
+
+      double m_internal_value = 0.0;
+
+  }; /* end class MyPowerHouse */
+
+  // Define non-accessor function bodies outside the class.
+  void MyPowerHouse::calculate_internal_data()
+  {
+      m_internal_value = 42.0;
+      // ... more logic ...
+  }
+
+C++ pybind11 Binding Style
+====
+
+When writing pybind11 bindings, separate constructors and other bindings
+(methods, properties, etc.) into two ``(*this)`` sections for readability. This
+can also be addressed in a future PR if not done immediately:
+
+.. code-block:: cpp
+
+  // Inside a wrapper class constructor:
+  (*this)
+      .def(pybind11::init<>())
+      .def(pybind11::init<int32_t>())
+      //
+      ;
+
+  (*this)
+      .def("do_something", &wrapped_type::do_something)
+      .def_property_readonly("value", &wrapped_type::value)
+      //
+      ;
+
 C++ Curly Braces
 ====
 
