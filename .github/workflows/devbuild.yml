@@ -156,10 +156,6 @@ jobs:
         fi
         make pytest ${JOB_MAKE_ARGS}
 
-    - name: make pyprof
-      run: |
-        make pyprof
-
     - name: make pilot
       run: |
         rm -f build/*/Makefile
