@@ -3444,74 +3444,141 @@ class SimpleArrayPlexTC(unittest.TestCase):
                 for k in range(4):
                     self.assertEqual(stride_arr[i, j, k], sarr[i, j, k])
 
-    def test_SimpleArrayPlex_uniform_type(self):
-        arrayplex_int32 = modmesh.SimpleArray((2, 3, 4), dtype="int32")
-        arrayplex_uint64 = modmesh.SimpleArray((2, 3, 4), dtype="uint64")
-        arrayplex_float64 = modmesh.SimpleArray((2, 3, 4), dtype="float64")
+    # maps dtype with (typed class, typed class name, numpy dtype)
+    _DTINFO = {
+        "bool": (modmesh.SimpleArrayBool,
+                 "_modmesh.SimpleArrayBool", np.bool_),
+        "int8": (modmesh.SimpleArrayInt8,
+                 "_modmesh.SimpleArrayInt8", np.int8),
+        "int16": (modmesh.SimpleArrayInt16,
+                  "_modmesh.SimpleArrayInt16", np.int16),
+        "int32": (modmesh.SimpleArrayInt32,
+                  "_modmesh.SimpleArrayInt32", np.int32),
+        "int64": (modmesh.SimpleArrayInt64,
+                  "_modmesh.SimpleArrayInt64", np.int64),
+        "uint8": (modmesh.SimpleArrayUint8,
+                  "_modmesh.SimpleArrayUint8", np.uint8),
+        "uint16": (modmesh.SimpleArrayUint16,
+                   "_modmesh.SimpleArrayUint16", np.uint16),
+        "uint32": (modmesh.SimpleArrayUint32,
+                   "_modmesh.SimpleArrayUint32", np.uint32),
+        "uint64": (modmesh.SimpleArrayUint64,
+                   "_modmesh.SimpleArrayUint64", np.uint64),
+        "float32": (modmesh.SimpleArrayFloat32,
+                    "_modmesh.SimpleArrayFloat32", np.float32),
+        "float64": (modmesh.SimpleArrayFloat64,
+                    "_modmesh.SimpleArrayFloat64", np.float64),
+        "complex64": (modmesh.SimpleArrayComplex64,
+                      "_modmesh.SimpleArrayComplex64",
+                      np.complex64),
+        "complex128": (modmesh.SimpleArrayComplex128,
+                       "_modmesh.SimpleArrayComplex128",
+                       np.complex128),
+    }
 
-        # all plex instances share the same Python type regardless of dtype
-        self.assertTrue(type(arrayplex_int32) is type(arrayplex_uint64))
-        self.assertTrue(type(arrayplex_uint64) is type(arrayplex_float64))
-        self.assertEqual(
-            str(type(arrayplex_int32)), "<class '_modmesh.SimpleArray'>")
-        self.assertEqual(
-            str(type(arrayplex_uint64)), "<class '_modmesh.SimpleArray'>")
-        self.assertEqual(
-            str(type(arrayplex_float64)), "<class '_modmesh.SimpleArray'>")
+    def test_SimpleArrayPlex_uniform_type(self):
+        arrays = {
+            dtype: modmesh.SimpleArray((2, 3, 4), dtype=dtype)
+            for dtype in self._DTINFO
+        }
+        first = next(iter(arrays.values()))
+        for dtype, arr in arrays.items():
+            with self.subTest(dtype=dtype):
+                self.assertTrue(type(arr) is type(first))
+                self.assertEqual(str(type(arr)),
+                                 "<class '_modmesh.SimpleArray'>")
 
     def test_SimpleArrayPlex_cast_to_typed(self):
-        dtype_typed_map = {
-            "int32": ("_modmesh.SimpleArrayInt32", np.int32),
-            "uint64": ("_modmesh.SimpleArrayUint64", np.uint64),
-            "float64": ("_modmesh.SimpleArrayFloat64", np.float64),
-        }
-        for dtype, (typed_name, np_dtype) in dtype_typed_map.items():
-            plex = modmesh.SimpleArray((2, 3, 4), dtype=dtype)
-            typed = plex.typed
-            self.assertEqual(str(type(typed)),
-                             "<class '{}'>".format(typed_name))
-            # verify ndarray dtype matches the expected numpy dtype
-            self.assertEqual(typed.ndarray.dtype, np_dtype)
+        for dtype, (_, typed_name, np_dtype) in self._DTINFO.items():
+            with self.subTest(dtype=dtype):
+                plex = modmesh.SimpleArray((2, 3, 4), dtype=dtype)
+                typed = plex.typed
+                self.assertEqual(str(type(typed)),
+                                 "<class '{}'>".format(typed_name))
+                self.assertEqual(typed.ndarray.dtype, np_dtype)
 
     def test_SimpleArrayPlex_cast_dtype_mismatch(self):
-        # constructing a typed array from a wrong-dtype plex must fail
-        plex_i32 = modmesh.SimpleArray((2, 3, 4), dtype="int32")
-        ndarr_i32 = np.array(plex_i32, copy=False)
-        with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
-            modmesh.SimpleArrayFloat64(array=ndarr_i32)
-
-        plex_f64 = modmesh.SimpleArray((2, 3, 4), dtype="float64")
-        ndarr_f64 = np.array(plex_f64, copy=False)
-        with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
-            modmesh.SimpleArrayInt32(array=ndarr_f64)
+        # Constructing a typed array from an ndarray whose
+        # dtype doesn't match must raise RuntimeError.
+        mismatch_cases = [
+            ("bool", modmesh.SimpleArrayFloat64),
+            ("int8", modmesh.SimpleArrayUint8),
+            ("int16", modmesh.SimpleArrayInt32),
+            ("int32", modmesh.SimpleArrayFloat64),
+            ("int64", modmesh.SimpleArrayUint64),
+            ("uint8", modmesh.SimpleArrayInt8),
+            ("uint16", modmesh.SimpleArrayUint32),
+            ("uint32", modmesh.SimpleArrayInt32),
+            ("uint64", modmesh.SimpleArrayFloat64),
+            ("float32", modmesh.SimpleArrayFloat64),
+            ("float64", modmesh.SimpleArrayInt32),
+            ("complex64", modmesh.SimpleArrayComplex128),
+            ("complex128", modmesh.SimpleArrayFloat64),
+        ]
+        for dtype, wrong_cls in mismatch_cases:
+            with self.subTest(dtype=dtype):
+                plex = modmesh.SimpleArray((2, 3, 4), dtype=dtype)
+                ndarr = np.array(plex, copy=False)
+                with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
+                    wrong_cls(array=ndarr)
 
     def test_SimpleArrayPlex_typed_roundtrip(self):
-        plex = modmesh.SimpleArray((2, 3, 4), dtype="int32")
-        typed = plex.typed
-        plex2 = typed.plex
+        for dtype, (_, typed_name, _) in self._DTINFO.items():
+            with self.subTest(dtype=dtype):
+                plex = modmesh.SimpleArray((2, 3, 4), dtype=dtype)
+                typed = plex.typed
+                plex2 = typed.plex
 
-        self.assertEqual(str(type(plex)), "<class '_modmesh.SimpleArray'>")
-        self.assertEqual(
-            str(type(typed)), "<class '_modmesh.SimpleArrayInt32'>")
-        self.assertEqual(str(type(plex2)), "<class '_modmesh.SimpleArray'>")
+                self.assertEqual(str(type(plex)),
+                                 "<class '_modmesh.SimpleArray'>")
+                self.assertEqual(str(type(typed)),
+                                 "<class '{}'>".format(typed_name))
+                self.assertEqual(str(type(plex2)),
+                                 "<class '_modmesh.SimpleArray'>")
+
+                # Verify data survives the roundtrip:
+                # write through typed, read back from plex2
+                ndarr = np.array(plex, copy=False)
+                ndarr.flat[0] = 1
+                self.assertEqual(plex2[0], typed[0])
 
     def test_SimpleArrayPlex_typed_preserves_data(self):
-        plex = modmesh.SimpleArray((4,), dtype="float64", value=3.14)
-        typed = plex.typed
-        for i in range(4):
-            self.assertEqual(typed[i], 3.14)
+        # Test non-complex dtypes using value= constructor
+        value_cases = {
+            "bool": True,
+            "int8": 7, "int16": 7, "int32": 7, "int64": 7,
+            "uint8": 7, "uint16": 7, "uint32": 7, "uint64": 7,
+            "float32": 1.5, "float64": 3.14,
+        }
+        for dtype, value in value_cases.items():
+            with self.subTest(dtype=dtype):
+                plex = modmesh.SimpleArray((4,), dtype=dtype, value=value)
+                typed = plex.typed
+                for i in range(4):
+                    self.assertEqual(typed[i], value)
+
+        # Complex dtypes: plex value= constructor does not
+        # accept Python complex, use ndarray constructor
+        for np_dtype in (np.complex64, np.complex128):
+            with self.subTest(dtype=str(np_dtype)):
+                ndarr = np.full((4,), 1.5 + 2.5j, dtype=np_dtype)
+                plex = modmesh.SimpleArray(ndarr)
+                typed = plex.typed
+                for i in range(4):
+                    self.assertEqual(complex(typed[i]), 1.5 + 2.5j)
 
     def test_SimpleArrayPlex_typed_from_typed_constructor(self):
-        # typed array built from the constructor directly
-        array_int32 = modmesh.SimpleArrayInt32((2, 3, 4))
-        # typed array obtained via plex.typed
-        array_int32_2 = modmesh.SimpleArray(
-            (2, 3, 4), dtype="int32").typed
-        self.assertTrue(type(array_int32) is type(array_int32_2))
-        self.assertEqual(
-            str(type(array_int32)), "<class '_modmesh.SimpleArrayInt32'>")
-        self.assertEqual(
-            str(type(array_int32_2)), "<class '_modmesh.SimpleArrayInt32'>")
+        for dtype, (cls, typed_name, _) in self._DTINFO.items():
+            with self.subTest(dtype=dtype):
+                # typed array built from constructor
+                direct = cls((2, 3, 4))
+                # typed array obtained via plex.typed
+                via_plex = modmesh.SimpleArray((2, 3, 4), dtype=dtype).typed
+                self.assertTrue(type(direct) is type(via_plex))
+                self.assertEqual(str(type(direct)),
+                                 "<class '{}'>".format(typed_name))
+                self.assertEqual(str(type(via_plex)),
+                                 "<class '{}'>".format(typed_name))
 
 
 class SimpleArrayPlexAlignmentTC(unittest.TestCase):
