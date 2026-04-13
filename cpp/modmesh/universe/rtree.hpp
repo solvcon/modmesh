@@ -411,7 +411,9 @@ private:
             return node;
         }
 
-        node_type * best_child = nullptr;
+        // Initialize to first child to avoid undefined behavior when all
+        // enlargements equal std::numeric_limits<value_type>::max().
+        node_type * best_child = &node->nodes.front();
         value_type min_enlargement = std::numeric_limits<value_type>::max();
 
         for (auto & child : node->nodes)

@@ -62,6 +62,7 @@ protected:
     WrapWorld & wrap_point();
     WrapWorld & wrap_segment();
     WrapWorld & wrap_bezier();
+    WrapWorld & wrap_triangle();
 };
 /* end class WrapWorld */
 
@@ -76,6 +77,7 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
         .wrap_point()
         .wrap_segment()
         .wrap_bezier()
+        .wrap_triangle()
         //
         ;
 }
@@ -90,6 +92,41 @@ WrapWorld<T> & WrapWorld<T>::wrap_management()
             py::init(
                 []()
                 { return wrapped_type::construct(); }))
+        //
+        ;
+
+    (*this)
+        .def_property_readonly("nshape", &wrapped_type::nshape)
+        .def(
+            "remove_shape",
+            &wrapped_type::remove_shape,
+            py::arg("shape_id"))
+        .def(
+            "shape_type_of",
+            [](wrapped_type const & self, int32_t shape_id)
+            {
+                ShapeType st = self.shape_type_of(shape_id);
+                switch (st)
+                {
+                case ShapeType::TRIANGLE: return std::string("triangle");
+                default: return std::string("unknown");
+                }
+            },
+            py::arg("shape_id"))
+        .def("clear", &wrapped_type::clear)
+        .def(
+            "translate_shape",
+            &wrapped_type::translate_shape,
+            py::arg("shape_id"),
+            py::arg("dx"),
+            py::arg("dy"))
+        .def(
+            "query_visible",
+            &wrapped_type::query_visible,
+            py::arg("min_x"),
+            py::arg("min_y"),
+            py::arg("max_x"),
+            py::arg("max_y"))
         //
         ;
 
@@ -217,6 +254,30 @@ WrapWorld<T> & WrapWorld<T>::wrap_bezier()
                 return self.bezier_at(i);
             })
         .def_property_readonly("curves", &wrapped_type::curves)
+        //
+        ;
+
+    return *this;
+}
+
+template <typename T>
+WrapWorld<T> & WrapWorld<T>::wrap_triangle()
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def(
+            "add_triangle",
+            [](wrapped_type & self, value_type x0, value_type y0, value_type x1, value_type y1, value_type x2, value_type y2)
+            {
+                return self.add_triangle(x0, y0, x1, y1, x2, y2);
+            },
+            py::arg("x0"),
+            py::arg("y0"),
+            py::arg("x1"),
+            py::arg("y1"),
+            py::arg("x2"),
+            py::arg("y2"))
         //
         ;
 

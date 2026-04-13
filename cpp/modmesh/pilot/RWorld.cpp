@@ -146,8 +146,8 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
     , m_renderer(new Qt3DRender::QGeometryRenderer())
     , m_material(new Qt3DExtras::QDiffuseSpecularMaterial())
 {
-    // Create segment pad
-    std::shared_ptr<SegmentPadFp64> segments = world->segments()->clone();
+    // Collect all segments except those from removed shapes.
+    std::shared_ptr<SegmentPadFp64> segments = world->collect_live_segments();
     // Create sampled segments in a pad from the curves
     std::shared_ptr<SegmentPadFp64> csegs = world->curves()->sample(/*length*/ 0.1);
     // Extend the overall segment pad with the sampled segments

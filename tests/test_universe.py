@@ -272,4 +272,119 @@ class WorldFp64TC(WorldTB, unittest.TestCase):
     def test_type(self):
         self.assertIs(modmesh.WorldFp64, self.World)
 
+
+class WorldShapeTC(unittest.TestCase):
+    """Shape registry: add, translate, remove, clear."""
+
+    def setUp(self):
+        self.w = modmesh.WorldFp64()
+
+    def test_add_triangle(self):
+        sid = self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.assertEqual(self.w.nshape, 1)
+        self.assertEqual(self.w.nsegment, 3)
+        self.assertEqual(self.w.shape_type_of(sid), "triangle")
+
+    def test_add_multiple(self):
+        self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.w.add_triangle(2, 2, 3, 2, 2, 3)
+        self.assertEqual(self.w.nshape, 2)
+        self.assertEqual(self.w.nsegment, 6)
+
+    def test_ids_are_unique(self):
+        s0 = self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        s1 = self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.assertNotEqual(s0, s1)
+
+    def test_translate(self):
+        sid = self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.w.translate_shape(sid, 10, 20)
+        seg = self.w.segment(0)
+        self.assertAlmostEqual(seg.x0, 10.0)
+        self.assertAlmostEqual(seg.y0, 20.0)
+        self.assertAlmostEqual(seg.x1, 11.0)
+        self.assertAlmostEqual(seg.y1, 20.0)
+
+    def test_translate_isolates_shapes(self):
+        s0 = self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.w.add_triangle(0, 0, 2, 0, 0, 2)
+        self.w.translate_shape(s0, 10, 10)
+        self.assertAlmostEqual(self.w.segment(0).x0, 10.0)
+        self.assertAlmostEqual(self.w.segment(3).x0, 0.0)
+
+    def test_remove(self):
+        sid = self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.w.remove_shape(sid)
+        self.assertEqual(self.w.nshape, 0)
+
+    def test_remove_nonexistent_raises(self):
+        with self.assertRaises(IndexError):
+            self.w.remove_shape(999)
+
+    def test_remove_dead_raises(self):
+        sid = self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.w.remove_shape(sid)
+        with self.assertRaises(ValueError):
+            self.w.remove_shape(sid)
+
+    def test_translate_dead_raises(self):
+        sid = self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.w.remove_shape(sid)
+        with self.assertRaises(ValueError):
+            self.w.translate_shape(sid, 1, 1)
+
+    def test_shape_type_of_dead_raises(self):
+        sid = self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.w.remove_shape(sid)
+        with self.assertRaises(ValueError):
+            self.w.shape_type_of(sid)
+
+    def test_clear(self):
+        self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.w.add_triangle(2, 2, 3, 2, 2, 3)
+        self.w.add_segment(
+            s=modmesh.Segment3dFp64(
+                modmesh.Point3dFp64(0, 0),
+                modmesh.Point3dFp64(1, 1),
+            )
+        )
+        self.w.clear()
+        self.assertEqual(self.w.nshape, 0)
+        self.assertEqual(self.w.nsegment, 0)
+
+
+class WorldViewportTC(unittest.TestCase):
+    """R-tree spatial index and viewport query."""
+
+    def setUp(self):
+        self.w = modmesh.WorldFp64()
+
+    def test_all_visible(self):
+        self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.w.add_triangle(2, 2, 3, 2, 2, 3)
+        ids = self.w.query_visible(-1, -1, 10, 10)
+        self.assertEqual(len(ids), 2)
+
+    def test_partial_visible(self):
+        self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.w.add_triangle(100, 100, 101, 100, 100, 101)
+        ids = self.w.query_visible(-1, -1, 2, 2)
+        self.assertEqual(len(ids), 1)
+
+    def test_none_visible(self):
+        self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.assertEqual(len(self.w.query_visible(50, 50, 60, 60)), 0)
+
+    def test_visible_after_translate(self):
+        sid = self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.w.translate_shape(sid, 200, 200)
+        self.assertEqual(len(self.w.query_visible(-1, -1, 2, 2)), 0)
+        self.assertEqual(
+            len(self.w.query_visible(199, 199, 202, 202)), 1)
+
+    def test_visible_after_remove(self):
+        sid = self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.w.remove_shape(sid)
+        self.assertEqual(len(self.w.query_visible(-1, -1, 10, 10)), 0)
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
