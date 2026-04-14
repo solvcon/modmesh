@@ -201,6 +201,8 @@ styles are summarized here.
 - Move non-accessor function bodies to be outside the class declaration when
   the code is not 2-3 times longer than an accessor.
 - Keep short accessors inline in the class declaration.
+- If a function body is very simple (e.g., a single return or assignment),
+  write it as a one-liner (e.g., `double value() const { return m_value; }`).
 
 ### C++ pybind11 Binding Style
 - Separate constructors and other bindings (methods, properties, etc.) into two
@@ -229,6 +231,13 @@ Python:
 ```python
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4 tw=79:
 ```
+
+## Pull Request Guidelines
+
+When opening a pull request, reference the related issue (e.g., "Related to
+#725") instead of using closing keywords like "close #725", "closes #725",
+or "fixes #725". We do not let PR and commit log comments to mandate the
+management.
 
 ## Development Workflow
 

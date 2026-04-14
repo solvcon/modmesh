@@ -581,7 +581,24 @@ C++ Function Body Placement
 Move non-accessor function bodies to be outside the class declaration when the
 code is not 2-3 times longer than an accessor. Keep short accessors inline in
 the class declaration as described in the encapsulation section. Other function
-bodies should be defined outside:
+bodies should be defined outside.
+
+If a function body is very simple (e.g., a single return or assignment
+statement), write it as a one-liner to keep the code compact:
+
+.. code-block:: cpp
+
+  // GOOD: very simple function as a one-liner.
+  double internal_value() const { return m_internal_value; }
+  void set_flag(bool v) { m_flag = v; }
+
+  // BAD: unnecessary multi-line form for a trivial body.
+  double internal_value() const
+  {
+      return m_internal_value;
+  }
+
+Other function bodies should be defined outside:
 
 .. code-block:: cpp
 
