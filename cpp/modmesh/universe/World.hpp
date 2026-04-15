@@ -348,8 +348,7 @@ void World<T>::clear()
     m_points = point_pad_type::construct(/* ndim */ 3);
     m_segments = segment_pad_type::construct(/* ndim */ 3);
     m_curves = curve_pad_type::construct(/* ndim */ 3);
-    // TODO: SimpleCollector should have a `clear()` method.
-    m_bare_segment_indices = SimpleCollector<size_t>();
+    m_bare_segment_indices.clear();
     m_shape_registry.clear();
     m_nshape = 0;
     m_rtree = std::make_unique<rtree_type>();

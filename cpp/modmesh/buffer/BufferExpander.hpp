@@ -128,6 +128,8 @@ public:
         m_end = m_begin + length;
     }
 
+    void clear() { m_end = m_begin; }
+
     /**
      * Push up the size by amount.
      * @param amount

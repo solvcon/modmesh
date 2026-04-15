@@ -584,8 +584,13 @@ WrapSimpleCollector<T>::WrapSimpleCollector(pybind11::module & mod, char const *
             py::arg("length"),
             py::arg("alignment") = 0)
         .def_timed(py::init<>())
+        //
+        ;
+
+    (*this)
         .def_timed("reserve", &wrapped_type::reserve, py::arg("cap"))
         .def_timed("expand", &wrapped_type::expand, py::arg("length"))
+        .def_timed("clear", &wrapped_type::clear)
         .def_property_readonly("capacity", &wrapped_type::capacity)
         .def_property_readonly("alignment", &wrapped_type::alignment)
         .def("__len__", &wrapped_type::size)

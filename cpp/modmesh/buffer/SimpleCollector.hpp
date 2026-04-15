@@ -106,6 +106,7 @@ public:
 
     void reserve(size_t cap) { expander().reserve(cap * ITEMSIZE); }
     void expand(size_t length) { expander().expand(length * ITEMSIZE); }
+    void clear() { expander().clear(); }
 
     value_type const & at(size_t it) const
     {

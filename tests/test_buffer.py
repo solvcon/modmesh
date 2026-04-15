@@ -3942,6 +3942,84 @@ class SimpleCollectorTC(unittest.TestCase):
         for it in range(16):
             self.assertEqual(it * 3.14, arr[it])
 
+    def test_clear(self):
+        # Clear an empty collector.
+        ct = modmesh.SimpleCollectorFloat64()
+        self.assertEqual(0, ct.capacity)
+        self.assertEqual(0, len(ct))
+        ct.clear()
+        self.assertEqual(0, ct.capacity)
+        self.assertEqual(0, len(ct))
+
+        # Clear a collector with data from push_back.
+        ct = modmesh.SimpleCollectorFloat64()
+        for it in range(5):
+            ct.push_back(it * 1.1)
+        self.assertEqual(5, len(ct))
+        old_capacity = ct.capacity
+        self.assertGreater(old_capacity, 0)
+
+        ct.clear()
+        self.assertEqual(0, len(ct))
+        self.assertEqual(old_capacity, ct.capacity)  # capacity preserved
+
+        # After clear, accessing index 0 should raise.
+        with self.assertRaisesRegex(
+                IndexError,
+                "SimpleCollector: index 0 is out of bounds with size 0"
+        ):
+            ct[0]
+
+        # Can push_back again after clear.
+        ct.push_back(42.0)
+        self.assertEqual(1, len(ct))
+        self.assertEqual(42.0, ct[0])
+        self.assertEqual(old_capacity, ct.capacity)  # capacity still preserved
+
+        # Clear a collector created with initial size.
+        ct = modmesh.SimpleCollectorFloat64(10)
+        self.assertEqual(10, len(ct))
+        self.assertEqual(10, ct.capacity)
+        ct.clear()
+        self.assertEqual(0, len(ct))
+        self.assertEqual(10, ct.capacity)
+
+    def test_clear_with_alignment(self):
+        ct = modmesh.SimpleCollectorFloat64(16, 16)
+        self.assertEqual(16, ct.alignment)
+        self.assertEqual(16, len(ct))
+
+        ct.clear()
+        self.assertEqual(0, len(ct))
+        self.assertEqual(16, ct.capacity)
+        self.assertEqual(16, ct.alignment)  # alignment preserved
+
+    def test_clear_after_as_array(self):
+        ct = modmesh.SimpleCollectorFloat64()
+        for it in range(5):
+            ct.push_back(it * 1.1)
+        self.assertEqual(5, len(ct))
+
+        arr = ct.as_array()
+        self.assertEqual(5, len(arr))
+        for it in range(5):
+            self.assertEqual(it * 1.1, arr[it])
+
+        # Clearing the collector resets its size but keeps its capacity,
+        # and the SimpleArray returned earlier retains its data.
+        old_capacity = ct.capacity
+        ct.clear()
+        self.assertEqual(0, len(ct))
+        self.assertEqual(old_capacity, ct.capacity)
+        self.assertEqual(5, len(arr))
+        for it in range(5):
+            self.assertEqual(it * 1.1, arr[it])
+
+        # Collector can be reused after clear.
+        ct.push_back(42.0)
+        self.assertEqual(1, len(ct))
+        self.assertEqual(42.0, ct[0])
+
     def test_alignment_preserved_in_as_concrete(self):
         ep = modmesh.BufferExpander(128, 16)
         self.assertEqual(16, ep.alignment)
