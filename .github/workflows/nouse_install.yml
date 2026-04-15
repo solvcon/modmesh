@@ -21,8 +21,8 @@ jobs:
 
     strategy:
       matrix:
-      # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
-        os: [ubuntu-24.04, macos-15]
+      # https://github.com/actions/runner-images/blob/main/images/macos/macos-26-Readme.md
+        os: [ubuntu-24.04, macos-26]
 
       fail-fast: false
 
