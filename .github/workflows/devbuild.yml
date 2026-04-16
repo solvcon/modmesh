@@ -68,7 +68,7 @@ jobs:
 
     strategy:
         matrix:
-          os: [ubuntu-24.04, macos-15]
+          os: [ubuntu-24.04, macos-26]
           cmake_build_type: [Release]
 
         fail-fast: false
@@ -122,7 +122,7 @@ jobs:
       run: |
         python3 -c "import modmesh; assert modmesh.HAS_PILOT == False"
         JOB_MAKE_ARGS="${JOB_MAKE_ARGS} VERBOSE=1"
-        if [ "${{ matrix.os }}" == "macos-15" ] ; then \
+        if [ "${{ matrix.os }}" == "macos-26" ] ; then \
           JOB_MAKE_ARGS="${JOB_MAKE_ARGS} BUILD_METAL=ON" ; \
         fi
         make pytest ${JOB_MAKE_ARGS}
@@ -141,7 +141,7 @@ jobs:
       run: |
         python3 -c "import modmesh; assert modmesh.HAS_PILOT == True"
         JOB_MAKE_ARGS="${JOB_MAKE_ARGS} VERBOSE=1"
-        if [ "${{ matrix.os }}" == "macos-15" ] ; then \
+        if [ "${{ matrix.os }}" == "macos-26" ] ; then \
           # PySide6 installed by pip will bundle with a prebuilt Qt,
           # this will cause duplicated symbol.
           # Solve this issue by removed PySide6 prebuilt Qt library

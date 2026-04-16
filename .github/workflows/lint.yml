@@ -67,9 +67,9 @@ jobs:
 
     strategy:
       matrix:
-        # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
-        # use macos-15-intel to have bigger 14 GB RAM; otherwise, macos-15 only has 7GB RAM
-        os: [ubuntu-24.04, macos-15-intel]
+        # https://github.com/actions/runner-images/blob/main/images/macos/macos-26-Readme.md
+        # use macos-26-intel to have bigger 14 GB RAM; otherwise, macos-26-arm64 only has 7GB RAM
+        os: [ubuntu-24.04, macos-26-intel]
         cmake_build_type: [Debug]
 
       fail-fast: false

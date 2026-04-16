@@ -25,12 +25,12 @@ runs:
         # qt6 versioning independently from the OS.
         # brew install llvm@21 qt6
         brew install llvm@21
-        # The macos-15 runner ships with Homebrew llvm@18 linked into
+        # The macos-26 runner ships with Homebrew llvm@20 linked into
         # /usr/local/bin/ (clang, clang++, clang-format, clang-tidy, etc.).
         # Use -sf to overwrite the existing clang-format/clang-tidy with
         # our llvm@21 versions, and remove clang/clang++ so that
         # ccache-action (create-symlink: true) can create its own symlinks.
-        # Ref: https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
+        # Ref: https://github.com/actions/runner-images/blob/main/images/macos/macos-26-Readme.md
         ln -sf "$(brew --prefix llvm@21)/bin/clang-format" "/usr/local/bin/clang-format"
         ln -sf "$(brew --prefix llvm@21)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
         rm -f /usr/local/bin/clang /usr/local/bin/clang++
@@ -39,7 +39,9 @@ runs:
       if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
       uses: jurplel/install-qt-action@v4
       with:
-        version: '6.8.1'
+        # Use a newer Qt build to avoid -framework AGL linker failures on Tahoe.
+        # Ref: https://qt-project.atlassian.net/browse/QTBUG-137687
+        version: '6.9.2'
         host: 'mac'
         target: 'desktop'
         arch: 'clang_64'
