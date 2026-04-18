@@ -25,65 +25,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import unittest
-import numpy as np
 import itertools
+
+import numpy as np
+
 import modmesh as mm
 
 
-class GemmTestBase(mm.testing.TestBase):
-    """Base class for matrix multiplication (GEMM) tests"""
-
-    def test_square_matrix_multiplication(self):
-        """Test basic square matrix multiplication"""
-        # Create 2x2 matrices
-        a_data = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=self.dtype)
-        b_data = np.array([[5.0, 6.0], [7.0, 8.0]], dtype=self.dtype)
-
-        a = self.SimpleArray(array=a_data)
-        b = self.SimpleArray(array=b_data)
-
-        # Expected result: [[19, 22], [43, 50]]
-        expected = np.array([[19.0, 22.0], [43.0, 50.0]], dtype=self.dtype)
-
-        # Test matrix multiplication
-        result = a.matmul(b)
-
-        self.assertEqual(list(result.shape), [2, 2])
-        np.testing.assert_array_almost_equal(result.ndarray, expected)
-
-    def test_rectangular_matrix_multiplication(self):
-        """Test rectangular matrix multiplication"""
-        # Create 2x3 and 3x2 matrices
-        a_data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
-                          dtype=self.dtype)
-        b_data = np.array([[7.0, 8.0], [9.0, 10.0], [11.0, 12.0]],
-                          dtype=self.dtype)
-
-        a = self.SimpleArray(array=a_data)
-        b = self.SimpleArray(array=b_data)
-
-        # Expected result: [[58, 64], [139, 154]]
-        expected = np.array([[58.0, 64.0], [139.0, 154.0]],
-                            dtype=self.dtype)
-
-        result = a.matmul(b)
-
-        self.assertEqual(list(result.shape), [2, 2])
-        np.testing.assert_array_almost_equal(result.ndarray, expected)
-
-    def test_identity_matrix(self):
-        """Test multiplication with identity matrix"""
-        # 3x3 matrix
-        a_data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0],
-                           [7.0, 8.0, 9.0]], dtype=self.dtype)
-
-        a = self.SimpleArray(array=a_data)
-        identity = self.SimpleArray.eye(3)
-
-        result = a.matmul(identity)
-
-        self.assertEqual(list(result.shape), [3, 3])
-        np.testing.assert_array_almost_equal(result.ndarray, a_data)
+class MatrixTestBase(mm.testing.TestBase):
+    """Base class for matrix operations"""
 
     def test_eye_method(self):
         """Test eye method creates correct identity matrices"""
@@ -117,7 +67,75 @@ class GemmTestBase(mm.testing.TestBase):
                                          f"Off-diagonal element ({i},{j}) "
                                          f"should be 0.0")
 
-    def test_zero_matrix(self):
+
+class MatrixFloat32TC(MatrixTestBase, unittest.TestCase):
+    def setUp(self):
+        self.dtype = np.float32
+        self.SimpleArray = mm.SimpleArrayFloat32
+
+
+class MatrixFloat64TC(MatrixTestBase, unittest.TestCase):
+    def setUp(self):
+        self.dtype = np.float64
+        self.SimpleArray = mm.SimpleArrayFloat64
+
+
+class MatmulTestBase(mm.testing.TestBase):
+    """Tests for matrix-matrix multiplication"""
+
+    def test_square(self):
+        """Test basic square matrix multiplication"""
+        # Create 2x2 matrices
+        a_data = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=self.dtype)
+        b_data = np.array([[5.0, 6.0], [7.0, 8.0]], dtype=self.dtype)
+
+        a = self.SimpleArray(array=a_data)
+        b = self.SimpleArray(array=b_data)
+
+        # Expected result: [[19, 22], [43, 50]]
+        expected = np.array([[19.0, 22.0], [43.0, 50.0]], dtype=self.dtype)
+
+        # Test matrix multiplication
+        result = a.matmul(b)
+
+        self.assertEqual(list(result.shape), [2, 2])
+        np.testing.assert_array_almost_equal(result.ndarray, expected)
+
+    def test_rectangular(self):
+        """Test rectangular matrix multiplication"""
+        # Create 2x3 and 3x2 matrices
+        a_data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+                          dtype=self.dtype)
+        b_data = np.array([[7.0, 8.0], [9.0, 10.0], [11.0, 12.0]],
+                          dtype=self.dtype)
+
+        a = self.SimpleArray(array=a_data)
+        b = self.SimpleArray(array=b_data)
+
+        # Expected result: [[58, 64], [139, 154]]
+        expected = np.array([[58.0, 64.0], [139.0, 154.0]],
+                            dtype=self.dtype)
+
+        result = a.matmul(b)
+
+        self.assertEqual(list(result.shape), [2, 2])
+        np.testing.assert_array_almost_equal(result.ndarray, expected)
+
+    def test_identity(self):
+        """Test multiplication with identity matrix"""
+        # 3x3 matrix
+        a_data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0],
+                           [7.0, 8.0, 9.0]], dtype=self.dtype)
+
+        a = self.SimpleArray(array=a_data)
+        identity = self.SimpleArray.eye(3)
+
+        result = a.matmul(identity)
+
+        self.assertEqual(list(result.shape), [3, 3])
+        np.testing.assert_array_almost_equal(result.ndarray, a_data)
+
+    def test_zero(self):
         """Test multiplication with zero matrix"""
         a_data = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=self.dtype)
         zero_data = np.zeros((2, 2), dtype=self.dtype)
@@ -381,17 +399,13 @@ class GemmTestBase(mm.testing.TestBase):
         np.testing.assert_array_almost_equal(a.ndarray, expected)
 
 
-class GemmFloat32TC(GemmTestBase, unittest.TestCase):
-    """Test matrix multiplication with float32"""
-
+class MatmulFloat32TC(MatmulTestBase, unittest.TestCase):
     def setUp(self):
         self.dtype = np.float32
         self.SimpleArray = mm.SimpleArrayFloat32
 
 
-class GemmFloat64TC(GemmTestBase, unittest.TestCase):
-    """Test matrix multiplication with float64"""
-
+class MatmulFloat64TC(MatmulTestBase, unittest.TestCase):
     def setUp(self):
         self.dtype = np.float64
         self.SimpleArray = mm.SimpleArrayFloat64
