@@ -80,8 +80,6 @@ else()
     message(STATUS "not use sanitizer")
 endif()
 
-include(Flake8)
-
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -192,9 +190,6 @@ add_subdirectory(cpp/binary/pymod_modmesh)
 if(BUILD_QT)
 add_subdirectory(cpp/binary/pilot)
 endif()
-
-add_custom_target(flake8)
-flake8("flake8")
 
 set(USE_GOOGLETEST True CACHE BOOL "Build with googletest")
 message(STATUS "USE_GOOGLETEST: ${USE_GOOGLETEST}")

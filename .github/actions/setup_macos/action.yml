@@ -27,13 +27,15 @@ runs:
         brew install llvm@21
         # The macos-26 runner ships with Homebrew llvm@20 linked into
         # /usr/local/bin/ (clang, clang++, clang-format, clang-tidy, etc.).
-        # Use -sf to overwrite the existing clang-format/clang-tidy with
-        # our llvm@21 versions, and remove clang/clang++ so that
-        # ccache-action (create-symlink: true) can create its own symlinks.
+        # Use -sf to overwrite the existing clang-tidy with our llvm@21
+        # version, and remove clang/clang++ so that ccache-action
+        # (create-symlink: true) can create its own symlinks.
+        # clang-format is installed separately via pip (see below) so that
+        # both CI platforms use the version pinned by
+        # CLANG_FORMAT_CI_VERSION in the Makefile.
         # Ref: https://github.com/actions/runner-images/blob/main/images/macos/macos-26-Readme.md
-        ln -sf "$(brew --prefix llvm@21)/bin/clang-format" "/usr/local/bin/clang-format"
         ln -sf "$(brew --prefix llvm@21)/bin/clang-tidy" "/usr/local/bin/clang-tidy"
-        rm -f /usr/local/bin/clang /usr/local/bin/clang++
+        rm -f /usr/local/bin/clang /usr/local/bin/clang++ /usr/local/bin/clang-format
 
     - name: install qt
       if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
@@ -65,6 +67,16 @@ runs:
         # For now (2024/10/22), pyside6 6.6.3 does not support Python 3.13.
         # Use --ignore-requires-python to force installation.
         python3 -m pip -v install --upgrade pyside6==$(qmake -query QT_VERSION) --ignore-requires-python
+
+    - name: Install clang-format for lint
+      if: ${{ inputs.workflow == 'lint' }}
+      shell: bash
+      run: |
+        # Pinned to the clang-format major version that the Makefile's
+        # CLANG_FORMAT_CI_VERSION expects. Installed via pip so the same
+        # package works on both Linux and macOS runners.
+        python3 -m pip install --break-system-packages --upgrade 'clang-format==20.*'
+        clang-format --version
 
     - name: dependency (manual)
       shell: bash
@@ -98,5 +110,7 @@ runs:
         echo "pytest version: $(pytest --version)"
         echo "clang-tidy path: $(which clang-tidy)"
         echo "clang-tidy version: $(clang-tidy -version)"
+        echo "clang-format path: $(which clang-format 2>/dev/null || echo not-installed)"
+        echo "clang-format version: $(clang-format --version 2>/dev/null || echo not-installed)"
         echo "flake8 path: $(which flake8)"
         echo "flake8 version: $(flake8 --version)"
