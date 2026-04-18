@@ -44,6 +44,7 @@ __all__ = [
     'setup_process',
     'enter_main',
     'exec_code',
+    'get_completions',
 ]
 
 
@@ -125,5 +126,13 @@ def exec_code(code):
         sys.stdout.write("{}: {}\n".format(type(e).__name__, str(e)))
         sys.stdout.write("traceback:\n")
         traceback.print_stack()
+
+
+def get_completions(text):
+    try:
+        return apputil.get_completions(text)
+    except Exception as e:
+        sys.stderr.write("get_completions error: {}\n".format(e))
+        return []
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -34,12 +34,14 @@ Tools to run applications
 
 
 import importlib
+import rlcompleter
 
 
 __all__ = [
     'environ',
     'AppEnvironment',
     'get_current_appenv',
+    'get_completions',
     'run_code',
     'stop_code',
 ]
@@ -98,6 +100,23 @@ def get_current_appenv():
     if not has_key:
         raise KeyError("No AppEnviron is available")
     return environ[k]
+
+
+def get_completions(text):
+    aenv = get_current_appenv()
+    namespace = {'__builtins__': __builtins__}
+    namespace.update(aenv.globals)
+    namespace.update(aenv.locals)
+    completer = rlcompleter.Completer(namespace)
+    completions = []
+    i = 0
+    while True:
+        c = completer.complete(text, i)
+        if c is None:
+            break
+        completions.append(c)
+        i += 1
+    return completions
 
 
 def run_code(code):

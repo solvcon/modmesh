@@ -1,0 +1,84 @@
+name: profiling
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '34 17 * * *'
+
+jobs:
+  profile:
+
+    # Run profiling only on schedule or when MMGH_FORCE_PROFILE is set to 'enable'
+    # You can refer to https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables to set MMGH_FORCE_PROFILE in the fork repository settings for testing purposes.
+    if: ${{ github.event_name == 'schedule' || vars.MMGH_FORCE_PROFILE == 'enable' }}
+
+    name: profile_${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      QT_DEBUG_PLUGINS: 1
+      QT_QPA_PLATFORM: offscreen # for Ubuntu runner
+      PIP_BREAK_SYSTEM_PACKAGES: 1 # disabling PEP668 (for MacOS runner)
+      # Fix issue: https://github.com/solvcon/modmesh/issues/366
+      # Use custom config for jurplel/install-qt-action@v4
+      AQT_CONFIG: "thirdparty/aqt_settings.ini"
+
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, macos-26]
+      fail-fast: false
+
+    steps:
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: event name
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+
+      - name: setup dependencies for Linux
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/setup_linux
+        with:
+          workflow: 'build'
+
+      - name: setup dependencies for macOS
+        if: runner.os == 'macOS'
+        uses: ./.github/actions/setup_macos
+        with:
+          workflow: 'build'
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ runner.os }}-Release
+          restore-keys: ${{ runner.os }}-Release
+          create-symlink: true
+          save: false
+
+      - name: make buildext BUILD_QT=ON
+        run: |
+          make cmake \
+            VERBOSE=1 USE_CLANG_TIDY=OFF \
+            BUILD_QT=ON \
+            CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+          make buildext VERBOSE=1
+
+      - name: make pyprof
+        run: |
+          make pyprof
+
+  send_email_on_failure:
+    needs: [profile]
+    if: ${{ always() && (needs.*.result == 'failure') && github.ref_name == 'master' && github.event.repository.fork == false }}
+    uses: ./.github/workflows/send_email_on_fail.yml
+    with:
+      job_results: |
+        - profile: ${{ needs.profile.result }}
+    secrets:
+      EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
+      EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}

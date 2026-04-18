@@ -1,5 +1,7 @@
+#pragma once
+
 /*
- * Copyright (c) 2023, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2025, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,45 +28,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/toggle/profile.hpp>
+/**
+ * The interface master header file for the linear algebraic code.
+ */
 
-namespace modmesh
-{
-
-std::string TimeRegistry::detailed_report() const
-{
-    std::ostringstream ostm;
-    /// Header
-    ostm
-        << std::setw(79) << total_call_count()
-        << " function calls in " << total_time()
-        << " seconds" << std::endl;
-    ostm
-        << std::endl
-        << std::setw(40) << "Function Name"
-        << std::setw(25) << "Call Count"
-        << std::setw(25) << "Total Time (s)"
-        << std::setw(25) << "Per Call (s)"
-        << std::setw(25) << "Cumulative Time (s)"
-        << std::setw(25) << "Per Call (s)"
-        << std::endl;
-
-    /// Body
-    ostm << std::fixed << std::setprecision(6);
-    for (auto it = m_entry.begin(); it != m_entry.end(); ++it)
-    {
-        ostm
-            << std::setw(40) << it->first
-            << std::setw(25) << it->second.count()
-            << std::setw(25) << it->second.time()
-            << std::setw(25) << it->second.time() / it->second.count()
-            << std::setw(25) << it->second.ctime()
-            << std::setw(25) << it->second.ctime() / it->second.count()
-            << std::endl;
-    }
-    return ostm.str();
-}
-
-} /* end namespace modmesh */
+#include <modmesh/linalg/factorization.hpp>
+#include <modmesh/linalg/kalman_filter.hpp>
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -1,7 +1,7 @@
 # Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
 # BSD-style license; see COPYING
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.0.1)
 
 set(MODMESH_TOGGLE_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/profile.hpp
@@ -11,7 +11,6 @@ set(MODMESH_TOGGLE_HEADERS
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_TOGGLE_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/profile.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/toggle.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RadixTree.cpp
     CACHE FILEPATH "" FORCE)

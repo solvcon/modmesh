@@ -1,7 +1,7 @@
 # Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
 # BSD-style license; see COPYING
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.0.1)
 
 if (BUILD_QT)
     set(CMAKE_AUTOMOC ON)
@@ -35,6 +35,7 @@ add_subdirectory(mesh)
 add_subdirectory(toggle)
 add_subdirectory(universe)
 add_subdirectory(onedim)
+add_subdirectory(oasis)
 add_subdirectory(multidim)
 add_subdirectory(python)
 add_subdirectory(spacetime)
@@ -45,10 +46,6 @@ add_subdirectory(transform)
 add_subdirectory(math)
 add_subdirectory(linalg)
 add_subdirectory(simd)
-
-if(USE_PYTEST_HELPER_BINDING)
-    add_subdirectory(testhelper)
-endif() # USE_PYTEST_HELPER_BINDING
 
 set(MODMESH_ROOT_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/modmesh.hpp
@@ -91,10 +88,10 @@ set(MODMESH_TERMINAL_FILES
     ${MODMESH_MULTIDIM_FILES}
     ${MODMESH_DEVICE_FILES}
     ${MODMESH_ONEDIM_FILES}
+    ${MODMESH_OASIS_FILES}
     ${MODMESH_SPACETIME_FILES}
     ${MODMESH_PYTHON_FILES}
     ${MODMESH_INOUT_FILES}
-    ${MODMESH_TESTHELPER_FILES}
     ${MODMESH_SERIALIZATION_FILES}
     ${MODMESH_TRANSFORM_FILES}
     ${MODMESH_MATH_FILES}

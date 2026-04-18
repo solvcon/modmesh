@@ -1,7 +1,7 @@
 # Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
 # BSD-style license; see COPYING
 
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 4.0.1)
 project(modmesh)
 
 cmake_policy(SET CMP0148 OLD)
@@ -31,12 +31,6 @@ option(LINT_AS_ERRORS "clang-tidy warnings as errors" OFF)
 # - Address Sanitization: Protecting against address-related vulnerabilities. See https://clang.llvm.org/docs/AddressSanitizer.html
 option(USE_SANITIZER "use sanitizer (undefined, leak, address)" OFF)
 
-option(USE_PYTEST_HELPER_BINDING "use helper bindings to run pytest. should be ON if the build is for pytest" OFF)
-if(USE_PYTEST_HELPER_BINDING)
-    add_definitions(-D USE_PYTEST_HELPER_BINDING)
-endif()
-message(STATUS "USE_PYTEST_HELPER_BINDING: ${USE_PYTEST_HELPER_BINDING}")
-
 
 if(BUILD_QT)
     option(QT3D_USE_RHI "Qt use RHI" OFF)
@@ -64,7 +58,7 @@ find_program(
 )
 if(USE_CLANG_TIDY)
     if(CLANG_TIDY_EXE)
-        set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-header-filter=/cpp/.\*/modmesh/.\*")
+        set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-header-filter=/cpp/.\*/modmesh/.\*" "--extra-arg=-std=c++2b")
         if(LINT_AS_ERRORS)
             set(DO_CLANG_TIDY "${DO_CLANG_TIDY}" "-warnings-as-errors=*")
         endif()
@@ -88,7 +82,7 @@ endif()
 
 include(Flake8)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)

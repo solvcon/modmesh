@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2026, Han-Xuan Huang <c1ydehhx@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,7 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/universe/pymod/universe_pymod.hpp> // Must be the first include.
+#include <modmesh/oasis/pymod/oasis_pymod.hpp> // Must be the first include.
+
+#include <modmesh/modmesh.hpp>
+#include <modmesh/python/common.hpp>
 
 namespace modmesh
 {
@@ -34,15 +37,25 @@ namespace modmesh
 namespace python
 {
 
-void wrap_bernstein(pybind11::module & mod)
+struct oasis_pymod_tag
 {
-    namespace py = pybind11;
+};
 
-    mod
-        .def("calc_bernstein_polynomial", calc_bernstein_polynomial, py::arg("t"), py::arg("i"), py::arg("n"))
-        .def("interpolate_bernstein", interpolate_bernstein, py::arg("t"), py::arg("values"), py::arg("n"))
-        //
-        ;
+template <>
+OneTimeInitializer<oasis_pymod_tag> & OneTimeInitializer<oasis_pymod_tag>::me()
+{
+    static OneTimeInitializer<oasis_pymod_tag> instance;
+    return instance;
+}
+
+void initialize_oasis(pybind11::module & mod)
+{
+    auto initialize_impl = [](pybind11::module & mod)
+    {
+        wrap_oasis_device(mod);
+    };
+
+    OneTimeInitializer<oasis_pymod_tag>::me()(mod, initialize_impl);
 }
 
 } /* end namespace python */

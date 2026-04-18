@@ -33,6 +33,34 @@
 namespace modmesh
 {
 
+/// Validate that alignment is one of the supported values (0, 16, 32, 64).
+inline std::size_t validate_alignment(std::size_t alignment, const char * prefix = nullptr)
+{
+    if (alignment != 0 && alignment != 16 && alignment != 32 && alignment != 64)
+    {
+        const std::string prefix_str = prefix ? std::string(prefix) + ": " : "";
+        throw std::invalid_argument(
+            std::format("{}alignment must be 0, 16, 32, or 64, but got {}",
+                        prefix_str,
+                        alignment));
+    }
+    return alignment;
+}
+
+/// Validate that size is a multiple of alignment (when alignment > 0).
+inline void validate_size_alignment(std::size_t size, std::size_t alignment, const char * prefix = nullptr)
+{
+    if (alignment > 0 && size % alignment != 0)
+    {
+        const std::string prefix_str = prefix ? std::string(prefix) + ": " : "";
+        throw std::invalid_argument(
+            std::format("{}size {} must be a multiple of alignment {}",
+                        prefix_str,
+                        size,
+                        alignment));
+    }
+}
+
 /// Base class for buffer-like objects.
 template <typename Derived>
 class BufferBase
@@ -110,7 +138,7 @@ protected:
     {
         if (it >= size())
         {
-            throw std::out_of_range(Formatter() << name() << ": index " << it << " is out of bounds with size " << size());
+            throw std::out_of_range(std::format("{}: index {} is out of bounds with size {}", name(), it, size()));
         }
     }
 

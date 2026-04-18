@@ -27,8 +27,8 @@
 
 import numpy as np
 
-from ._base_app import QuantityLine, SolverConfig, OneDimBaseApp
-from ..onedim.linear_scalar import LinearScalarSolver
+from . import _base_app
+from ..onedim import linear_scalar
 
 
 class LinearWave:
@@ -41,7 +41,7 @@ class LinearWave:
     def build_numerical(self, xmin, xmax, ncelm, cfl):
 
         # Initialize the solver.
-        self.svr = LinearScalarSolver(xmin, xmax, ncelm, cfl)
+        self.svr = linear_scalar.LinearScalarSolver(xmin, xmax, ncelm, cfl)
 
         # Setup the solver for time-marching.
         self.svr.setup_march()
@@ -51,7 +51,7 @@ class LinearWave:
         self.wave_field = self.svr.get_so0(0).ndarray
 
 
-class LinearWave1DApp(OneDimBaseApp):
+class LinearWave1DApp(_base_app.OneDimBaseApp):
 
     def populate_menu(self):
         """
@@ -74,7 +74,7 @@ class LinearWave1DApp(OneDimBaseApp):
             ["max_steps", 0, "Maximum step"],
             ["profiling", False, "Turn on / off solver profiling"],
         ]
-        self.solver_config = SolverConfig(solver_config_data)
+        self.solver_config = _base_app.SolverConfig(solver_config_data)
 
     def set_plot_data(self):
         """
@@ -83,10 +83,11 @@ class LinearWave1DApp(OneDimBaseApp):
         self.plot_ana = True
         self.plot_data = []
 
-        wave = QuantityLine(name="wave",
-                            color='b',
-                            y_upper_lim=1.2,
-                            y_bottom_lim=-1.2)
+        wave = _base_app.QuantityLine(
+            name="wave",
+            color='b',
+            y_upper_lim=1.2,
+            y_bottom_lim=-1.2)
         setattr(self, wave.name, wave)
         self.plot_data.append([self.wave.name, True])
 

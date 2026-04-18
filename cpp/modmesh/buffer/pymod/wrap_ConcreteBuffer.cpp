@@ -53,19 +53,22 @@ WrapConcreteBuffer::WrapConcreteBuffer(pybind11::module & mod, char const * pyna
     (*this)
         .def_timed(
             py::init(
-                [](size_t nbytes)
-                { return wrapped_type::construct(nbytes); }),
-            py::arg("nbytes"))
+                [](size_t nbytes, size_t alignment)
+                { return wrapped_type::construct(nbytes, alignment); }),
+            py::arg("nbytes"),
+            py::arg("alignment") = 0)
         .def(
             py::init(
-                [](py::array & arr_in)
+                [](py::array & arr_in, size_t alignment)
                 {
                     return wrapped_type::construct(
-                        arr_in.nbytes(), arr_in.mutable_data(), std::make_unique<ConcreteBufferNdarrayRemover>(arr_in));
+                        arr_in.nbytes(), arr_in.mutable_data(), std::make_unique<ConcreteBufferNdarrayRemover>(arr_in), alignment);
                 }),
-            py::arg("array"))
+            py::arg("array"),
+            py::arg("alignment") = 0)
         .def_timed("clone", &wrapped_type::clone)
         .def_property_readonly("nbytes", &wrapped_type::nbytes)
+        .def_property_readonly("alignment", &wrapped_type::alignment)
         .def("__len__", &wrapped_type::size)
         .def(
             "__getitem__",
@@ -128,16 +131,20 @@ WrapBufferExpander::WrapBufferExpander(pybind11::module & mod, char const * pyna
     (*this)
         .def_timed(
             py::init(
-                [](size_t length)
-                { return wrapped_type::construct(length); }),
-            py::arg("length"))
+                [](size_t length, size_t alignment)
+                { return wrapped_type::construct(length, alignment); }),
+            py::arg("length"),
+            py::arg("alignment") = 0)
         .def_timed(py::init([]()
                             { return wrapped_type::construct(); }))
-        .def_timed(py::init([](std::shared_ptr<ConcreteBuffer> const & buf)
-                            { return wrapped_type::construct(buf, /*clone*/ true); }))
+        .def_timed(py::init([](std::shared_ptr<ConcreteBuffer> const & buf, size_t alignment)
+                            { return wrapped_type::construct(buf, /*clone*/ true, alignment); }),
+                   py::arg("buffer"),
+                   py::arg("alignment") = 0)
         .def_timed("reserve", &wrapped_type::reserve, py::arg("cap"))
         .def_timed("expand", &wrapped_type::expand, py::arg("length"))
         .def_property_readonly("capacity", &wrapped_type::capacity)
+        .def_property_readonly("alignment", &wrapped_type::alignment)
         .def("__len__", &wrapped_type::size)
         .def(
             "__getitem__",

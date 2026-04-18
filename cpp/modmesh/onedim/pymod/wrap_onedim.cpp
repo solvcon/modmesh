@@ -146,26 +146,26 @@ protected:
 
         (*this)
             .def_timed(
-                (Formatter() << "march_half_so1_alpha" << ALPHA).str().c_str(),
+                std::format("march_half_so1_alpha{}", ALPHA).c_str(),
                 [](wrapped_type & self, bool odd_plane)
                 {
                     return self.template march_half_so1_alpha<ALPHA>(odd_plane);
                 },
                 py::arg("odd_plane"))
             .def_timed(
-                (Formatter() << "march_half1_alpha" << ALPHA).str().c_str(),
+                std::format("march_half1_alpha{}", ALPHA).c_str(),
                 [](wrapped_type & self)
                 {
                     self.template march_half1_alpha<ALPHA>();
                 })
             .def_timed(
-                (Formatter() << "march_half2_alpha" << ALPHA).str().c_str(),
+                std::format("march_half2_alpha{}", ALPHA).c_str(),
                 [](wrapped_type & self)
                 {
                     self.template march_half2_alpha<ALPHA>();
                 })
             .def_timed(
-                (Formatter() << "march_alpha" << ALPHA).str().c_str(),
+                std::format("march_alpha{}", ALPHA).c_str(),
                 [](wrapped_type & self, size_t steps)
                 {
                     self.template march_alpha<ALPHA>(steps);

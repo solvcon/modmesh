@@ -27,10 +27,10 @@
 
 from ..onedim import euler1d
 
-from ._base_app import QuantityLine, SolverConfig, OneDimBaseApp
+from . import _base_app
 
 
-class Euler1DApp(OneDimBaseApp):
+class Euler1DApp(_base_app.OneDimBaseApp):
     """
     Main application for Euler 1D solver.
     """
@@ -65,7 +65,7 @@ class Euler1DApp(OneDimBaseApp):
             ["max_steps", 50, "Maximum step"],
             ["profiling", False, "Turn on / off solver profiling"],
         ]
-        self.solver_config = SolverConfig(solver_config_data)
+        self.solver_config = _base_app.SolverConfig(solver_config_data)
 
     def set_plot_data(self):
         """
@@ -81,51 +81,57 @@ class Euler1DApp(OneDimBaseApp):
         self.plot_num = True
         self.plot_data = []
 
-        density = QuantityLine(name="density",
-                               unit=r"$\mathrm{kg}/\mathrm{m}^3$",
-                               color='r',
-                               y_upper_lim=1.2,
-                               y_bottom_lim=-0.1)
+        density = _base_app.QuantityLine(
+            name="density",
+            unit=r"$\mathrm{kg}/\mathrm{m}^3$",
+            color='r',
+            y_upper_lim=1.2,
+            y_bottom_lim=-0.1)
         setattr(self, density.name, density)
         self.plot_data.append([self.density.name, True])
 
-        pressure = QuantityLine(name="pressure",
-                                unit=r"$\mathrm{Pa}$",
-                                color='g',
-                                y_upper_lim=1.2,
-                                y_bottom_lim=-0.1)
+        pressure = _base_app.QuantityLine(
+            name="pressure",
+            unit=r"$\mathrm{Pa}$",
+            color='g',
+            y_upper_lim=1.2,
+            y_bottom_lim=-0.1)
         setattr(self, pressure.name, pressure)
         self.plot_data.append([self.pressure.name, True])
 
-        velocity = QuantityLine(name="velocity",
-                                unit=r"$\mathrm{m}/\mathrm{s}$",
-                                color='b',
-                                y_upper_lim=1.2,
-                                y_bottom_lim=-0.1)
+        velocity = _base_app.QuantityLine(
+            name="velocity",
+            unit=r"$\mathrm{m}/\mathrm{s}$",
+            color='b',
+            y_upper_lim=1.2,
+            y_bottom_lim=-0.1)
         setattr(self, velocity.name, velocity)
         self.plot_data.append([self.velocity.name, True])
 
-        temperature = QuantityLine(name="temperature",
-                                   unit=r"$\mathrm{K}$",
-                                   color='c',
-                                   y_upper_lim=0.15,
-                                   y_bottom_lim=0.0)
+        temperature = _base_app.QuantityLine(
+            name="temperature",
+            unit=r"$\mathrm{K}$",
+            color='c',
+            y_upper_lim=0.15,
+            y_bottom_lim=0.0)
         setattr(self, temperature.name, temperature)
         self.plot_data.append([self.temperature.name, False])
 
-        internal_energy = QuantityLine(name="internal_energy",
-                                       unit=r"$\mathrm{J}/\mathrm{kg}$",
-                                       color='k',
-                                       y_upper_lim=3.0,
-                                       y_bottom_lim=1.5)
+        internal_energy = _base_app.QuantityLine(
+            name="internal_energy",
+            unit=r"$\mathrm{J}/\mathrm{kg}$",
+            color='k',
+            y_upper_lim=3.0,
+            y_bottom_lim=1.5)
         setattr(self, internal_energy.name, internal_energy)
         self.plot_data.append([self.internal_energy.name, False])
 
-        entropy = QuantityLine(name="entropy",
-                               unit=r"$\mathrm{J}/\mathrm{K}$",
-                               color='m',
-                               y_upper_lim=2.2,
-                               y_bottom_lim=0.9)
+        entropy = _base_app.QuantityLine(
+            name="entropy",
+            unit=r"$\mathrm{J}/\mathrm{K}$",
+            color='m',
+            y_upper_lim=2.2,
+            y_bottom_lim=0.9)
         setattr(self, entropy.name, entropy)
         self.plot_data.append([self.entropy.name, False])
 

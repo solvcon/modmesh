@@ -78,8 +78,8 @@ public:
         std::copy_n(vector.begin(), m_size, begin());
     }
 
-    template <class InputIt>
-    small_vector(InputIt first, InputIt last)
+    template <std::input_iterator It>
+    small_vector(It first, It last)
         : small_vector(last - first)
     {
         std::copy(first, last, begin());

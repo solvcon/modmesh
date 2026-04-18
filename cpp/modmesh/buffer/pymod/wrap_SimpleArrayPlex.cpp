@@ -43,7 +43,8 @@ namespace python
 /// @param arrayplex the plex array, which is the wrapper of the typed array
 /// @param callback the callback function, which has the mutable typed array as the argument
 /// @return the return type of the callback function
-template <typename A, typename C, typename = std::enable_if_t<std::is_same_v<std::remove_const_t<A>, SimpleArrayPlex>>>
+template <typename A, typename C>
+requires modmesh::IsSameRemoveConstType<A, SimpleArrayPlex>
 // NOLINTNEXTLINE(misc-use-anonymous-namespace,cppcoreguidelines-missing-std-forward)
 static auto execute_callback_with_typed_array(A & arrayplex, C && callback)
 {
@@ -234,10 +235,23 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                 pybind11::arg("shape"),
                 pybind11::arg("dtype"))
             .def_timed(
+                pybind11::init(
+                    [](pybind11::object const & shape, std::string const & datatype, size_t alignment)
+                    { return wrapped_type(make_shape(shape), DataType(datatype), alignment); }),
+                pybind11::arg("shape"),
+                pybind11::arg("dtype"),
+                pybind11::arg("alignment"))
+            .def_timed(
                 pybind11::init(&init_array_plex_with_value),
                 pybind11::arg("shape"),
                 pybind11::arg("value"),
                 pybind11::arg("dtype"))
+            .def_timed(
+                pybind11::init(&init_array_plex_with_value_and_alignment),
+                pybind11::arg("shape"),
+                pybind11::arg("value"),
+                pybind11::arg("dtype"),
+                pybind11::arg("alignment"))
             .def(
                 pybind11::init(
                     [](pybind11::array & arr_in)
@@ -271,6 +285,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
             .def_property_readonly("nbytes", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(nbytes))
             .def_property_readonly("size", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(size))
             .def_property_readonly("itemsize", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(itemsize))
+            .def_property_readonly("alignment", &wrapped_type::alignment)
             .def_property_readonly(
                 "shape",
                 [](wrapped_type const & self)
@@ -320,7 +335,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                        self,
                        // NOLINTNEXTLINE(fuchsia-trailing-return)
                        [&](const auto & array) -> wrapped_type // need the return type to get correct deduced type
-                       { 
+                       {
                         const auto shape = make_shape(py_shape);
                         return array.reshape(shape); }); })
             .def_property_readonly("has_ghost", DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(has_ghost))
@@ -389,21 +404,47 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
     }
 
     /// Initialize the arrayplex with the given value
-    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-    static wrapped_type init_array_plex_with_value(pybind11::object const & shape_in, pybind11::object const & py_value, std::string const & datatype_str)
+    // NOLINTBEGIN(bugprone-easily-swappable-parameters)
+    static wrapped_type init_array_plex_with_value(
+        pybind11::object const & shape_in,
+        pybind11::object const & py_value,
+        std::string const & datatype_str)
     {
         const auto shape = make_shape(shape_in);
         wrapped_type array_plex(shape, datatype_str);
         auto datatype = array_plex.data_type();
         execute_callback_with_typed_array(
             array_plex, [&py_value, datatype](auto & array)
-            { 
+            {
                 using value_type = typename std::remove_reference_t<decltype(array[0])>;
                 verify_python_value_datatype(py_value, datatype);
                 const auto value = py_value.cast<value_type>();
                 array.fill(value); });
         return array_plex;
     }
+    // NOLINTEND(bugprone-easily-swappable-parameters)
+
+    /// Initialize the arrayplex with the given value and alignment
+    // NOLINTBEGIN(bugprone-easily-swappable-parameters)
+    static wrapped_type init_array_plex_with_value_and_alignment(
+        pybind11::object const & shape_in,
+        pybind11::object const & py_value,
+        std::string const & datatype_str,
+        size_t alignment)
+    {
+        const auto shape = make_shape(shape_in);
+        wrapped_type array_plex(shape, DataType(datatype_str), alignment);
+        auto datatype = array_plex.data_type();
+        execute_callback_with_typed_array(
+            array_plex, [&py_value, datatype](auto & array)
+            {
+                using value_type = typename std::remove_reference_t<decltype(array[0])>;
+                verify_python_value_datatype(py_value, datatype);
+                const auto value = py_value.cast<value_type>();
+                array.fill(value); });
+        return array_plex;
+    }
+    // NOLINTEND(bugprone-easily-swappable-parameters)
 
 #undef DECL_MM_EXECUTE_TYPED_ARRAY_METHOD
 

@@ -167,4 +167,194 @@ TEST(small_vector, select_kth_random)
         EXPECT_EQ(it, i);
     }
 }
+
+TEST(TakeAlongAxisSimd, basic_int32)
+{
+    using namespace modmesh;
+
+    // Create a simple array with values [10, 20, 30, 40, 50]
+    SimpleArray<int32_t> data(small_vector<size_t>{5});
+    data[0] = 10;
+    data[1] = 20;
+    data[2] = 30;
+    data[3] = 40;
+    data[4] = 50;
+
+    // Create indices [2, 0, 4, 1]
+    SimpleArray<uint64_t> indices(small_vector<size_t>{4});
+    indices[0] = 2;
+    indices[1] = 0;
+    indices[2] = 4;
+    indices[3] = 1;
+
+    // Call take_along_axis_simd
+    SimpleArray<int32_t> result = data.take_along_axis_simd(indices);
+
+    // Verify the result
+    EXPECT_EQ(result.size(), 4);
+    EXPECT_EQ(result[0], 30);
+    EXPECT_EQ(result[1], 10);
+    EXPECT_EQ(result[2], 50);
+    EXPECT_EQ(result[3], 20);
+}
+
+TEST(TakeAlongAxisSimd, basic_float64)
+{
+    using namespace modmesh;
+
+    // Create a simple array with float values
+    SimpleArray<double> data(small_vector<size_t>{6});
+    data[0] = 1.5;
+    data[1] = 2.5;
+    data[2] = 3.5;
+    data[3] = 4.5;
+    data[4] = 5.5;
+    data[5] = 6.5;
+
+    // Create indices [5, 2, 0, 3]
+    SimpleArray<uint64_t> indices(small_vector<size_t>{4});
+    indices[0] = 5;
+    indices[1] = 2;
+    indices[2] = 0;
+    indices[3] = 3;
+
+    // Call take_along_axis_simd
+    SimpleArray<double> result = data.take_along_axis_simd(indices);
+
+    // Verify the result
+    EXPECT_EQ(result.size(), 4);
+    EXPECT_DOUBLE_EQ(result[0], 6.5);
+    EXPECT_DOUBLE_EQ(result[1], 3.5);
+    EXPECT_DOUBLE_EQ(result[2], 1.5);
+    EXPECT_DOUBLE_EQ(result[3], 4.5);
+}
+
+TEST(TakeAlongAxisSimd, large_array)
+{
+    using namespace modmesh;
+
+    // Create a larger array
+    const size_t data_size = 1000;
+    SimpleArray<int64_t> data(small_vector<size_t>{data_size});
+    for (size_t i = 0; i < data_size; ++i)
+    {
+        data[i] = static_cast<int64_t>(i * 10);
+    }
+
+    // Create indices that sample from the array
+    const size_t indices_size = 100;
+    SimpleArray<uint64_t> indices(small_vector<size_t>{indices_size});
+    for (size_t i = 0; i < indices_size; ++i)
+    {
+        indices[i] = i * 10; // Sample every 10th element
+    }
+
+    // Call take_along_axis_simd
+    SimpleArray<int64_t> result = data.take_along_axis_simd(indices);
+
+    // Verify the result
+    EXPECT_EQ(result.size(), indices_size);
+    for (size_t i = 0; i < indices_size; ++i)
+    {
+        EXPECT_EQ(result[i], static_cast<int64_t>(i * 10 * 10));
+    }
+}
+
+TEST(TakeAlongAxisSimd, out_of_range)
+{
+    using namespace modmesh;
+
+    // Create a simple array
+    SimpleArray<int32_t> data(small_vector<size_t>{5});
+    data[0] = 10;
+    data[1] = 20;
+    data[2] = 30;
+    data[3] = 40;
+    data[4] = 50;
+
+    // Create indices with out-of-range value
+    SimpleArray<uint64_t> indices(small_vector<size_t>{3});
+    indices[0] = 2;
+    indices[1] = 10; // Out of range
+    indices[2] = 1;
+
+    // Should throw an exception
+    EXPECT_THROW(data.take_along_axis_simd(indices), std::out_of_range);
+}
+
+TEST(TakeAlongAxisSimd, empty_indices)
+{
+    using namespace modmesh;
+
+    // Create a simple array
+    SimpleArray<int32_t> data(small_vector<size_t>{5});
+    data[0] = 10;
+    data[1] = 20;
+    data[2] = 30;
+    data[3] = 40;
+    data[4] = 50;
+
+    // Create empty indices
+    SimpleArray<uint64_t> indices(small_vector<size_t>{0});
+
+    // Call take_along_axis_simd
+    SimpleArray<int32_t> result = data.take_along_axis_simd(indices);
+
+    // Verify the result is empty
+    EXPECT_EQ(result.size(), 0);
+}
+
+TEST(TakeAlongAxisSimd, sequential_indices)
+{
+    using namespace modmesh;
+
+    // Create array [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    const size_t size = 10;
+    SimpleArray<int32_t> data(small_vector<size_t>{size});
+    for (size_t i = 0; i < size; ++i)
+    {
+        data[i] = static_cast<int32_t>(i);
+    }
+
+    // Create sequential indices [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    SimpleArray<uint64_t> indices(small_vector<size_t>{size});
+    for (size_t i = 0; i < size; ++i)
+    {
+        indices[i] = i;
+    }
+
+    // Call take_along_axis_simd
+    SimpleArray<int32_t> result = data.take_along_axis_simd(indices);
+
+    // Result should be identical to input
+    EXPECT_EQ(result.size(), size);
+    for (size_t i = 0; i < size; ++i)
+    {
+        EXPECT_EQ(result[i], data[i]);
+    }
+}
+
+TEST(TakeAlongAxisSimd, single_index_element)
+{
+    using namespace modmesh;
+
+    // Create a data array with multiple elements
+    SimpleArray<int32_t> data(small_vector<size_t>{10});
+    for (size_t i = 0; i < 10; ++i)
+    {
+        data[i] = static_cast<int32_t>(i * 10);
+    }
+
+    // Create indices array with ONLY 1 ELEMENT (smaller than N_lane=2 on ARM NEON)
+    // This should trigger the bug without the fix!
+    SimpleArray<uint64_t> indices(small_vector<size_t>{1});
+    indices[0] = 3;
+
+    // Call take_along_axis_simd
+    SimpleArray<int32_t> result = data.take_along_axis_simd(indices);
+
+    // Verify the result
+    EXPECT_EQ(result.size(), 1);
+    EXPECT_EQ(result[0], 30);
+}
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -1,7 +1,7 @@
 # Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
 # BSD-style license; see COPYING
 
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 4.0.1)
 
 # See https://google.github.io/googletest/quickstart-cmake.html for the
 # recommended cmake configuration
@@ -27,10 +27,13 @@ add_executable(
     test_nopython_callprofiler.cpp
     test_nopython_serializable.cpp
     test_nopython_transform.cpp
+    test_nopython_rtree.cpp
+    test_nopython_formatter.cpp
     ${MODMESH_TOGGLE_SOURCES}
     ${MODMESH_BUFFER_SOURCES}
     ${MODMESH_SERIALIZATION_SOURCES}
     ${MODMESH_TRANSFORM_SOURCES}
+    ${MODMESH_SIMD_SOURCES}
 )
 
 target_link_libraries(

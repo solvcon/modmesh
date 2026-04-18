@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/simd/simd_support.hpp>
 #include <modmesh/simd/simd_generic.hpp>
+#include <modmesh/simd/simd_support.hpp>
 
 #include <modmesh/simd/neon/neon.hpp>
 
@@ -43,10 +43,9 @@ namespace simd
 template <typename T>
 const T * check_between(T const * start, T const * end, T const & min_val, T const & max_val)
 {
-    using namespace detail;
-    switch (detect_simd())
+    switch (detail::detect_simd())
     {
-    case SIMD_NEON:
+    case detail::SIMD_NEON:
         return neon::check_between<T>(start, end, min_val, max_val);
         break;
 

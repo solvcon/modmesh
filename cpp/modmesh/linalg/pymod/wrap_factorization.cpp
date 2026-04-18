@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, An-Chi Liu <phy.tiger@gmail.com>
+ * Copyright (c) 2025, Chun-Shih Chang <austin20463@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,36 +26,44 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/testhelper/pymod/testbuffer_pymod.hpp> // Must be the first include.
-
-#include <modmesh/modmesh.hpp>
-#include <modmesh/python/common.hpp>
-#include <pybind11/stl.h>
+#include <modmesh/linalg/pymod/linalg_pymod.hpp>
 
 namespace modmesh
 {
+
 namespace python
 {
 
-struct testbuffer_pymod_tag
+template <typename T>
+void def_llt_factorization(pybind11::module & mod)
 {
-};
-
-template <>
-OneTimeInitializer<testbuffer_pymod_tag> & OneTimeInitializer<testbuffer_pymod_tag>::me()
-{
-    static OneTimeInitializer<testbuffer_pymod_tag> instance;
-    return instance;
+    mod.def(
+        "llt_factorization", [](SimpleArray<T> const & a)
+        { return llt_factorization(a); },
+        pybind11::arg("a"));
 }
 
-void initialize_testbuffer(pybind11::module & mod)
+template <typename T>
+void def_llt_solve(pybind11::module & mod)
 {
-    auto initialize_impl = [](pybind11::module & mod)
-    {
-        wrap_TestSimpleArrayHelper(mod);
-    };
+    mod.def(
+        "llt_solve", [](SimpleArray<T> const & a, SimpleArray<T> const & b)
+        { return llt_solve(a, b); },
+        pybind11::arg("a"),
+        pybind11::arg("b"));
+}
 
-    OneTimeInitializer<testbuffer_pymod_tag>::me()(mod, initialize_impl);
+void wrap_factorization(pybind11::module & mod)
+{
+    def_llt_factorization<float>(mod);
+    def_llt_factorization<double>(mod);
+    def_llt_factorization<Complex<float>>(mod);
+    def_llt_factorization<Complex<double>>(mod);
+
+    def_llt_solve<float>(mod);
+    def_llt_solve<double>(mod);
+    def_llt_solve<Complex<float>>(mod);
+    def_llt_solve<Complex<double>>(mod);
 }
 
 } /* end namespace python */

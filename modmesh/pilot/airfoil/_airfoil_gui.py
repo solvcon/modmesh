@@ -31,11 +31,11 @@ GUI for NACA airfoil shape
 
 from ... import core
 
-from .._gui_common import PilotFeature
+from .. import _gui_common
 from . import _naca
 
 
-class Naca4Airfoil(PilotFeature):
+class Naca4Airfoil(_gui_common.PilotFeature):
     """
     Provide pilot GUI control for the NACA 4-digit airfoil shape.
     """

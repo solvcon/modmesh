@@ -41,6 +41,14 @@ if [ $(uname) == Darwin ] ; then
     filename=metal-cpp_macOS14_iOS17.zip
     url=https://developer.apple.com/metal/cpp/files/metal-cpp_macOS14.2_iOS17.2.zip
     checksum=8ec6c894233c834f7c611c575be72315
+  elif [ ${ver:0:2} == "15" ] ; then
+    filename=metal-cpp_macOS15.2_iOS18.2.zip
+    url=https://developer.apple.com/metal/cpp/files/metal-cpp_macOS15.2_iOS18.2.zip
+    checksum=3437e4abfbd3d45217f34772ef3502f3
+  elif [ ${ver:0:2} == "26" ] ; then
+    filename=metal-cpp_26.4.zip
+    url=https://developer.apple.com/metal/cpp/files/metal-cpp_26.4.zip
+    checksum=9065f9930f2e9f1bb48eb0094da46e73
   else
     echo "Unsupported macOS version $ver"
     exit 1

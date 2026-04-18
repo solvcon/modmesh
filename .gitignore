@@ -1,9 +1,11 @@
+/CLAUDE.md
 .vscode
 .vs
 .idea
 __pycache__/
 build/
 dist/
+profiling/results/
 thirdparty/install/
 thirdparty/archive/
 tmp/
@@ -20,6 +22,3 @@ setup.mk
 *.obj
 *.pdb
 *.env
-profiling/results/
-
-.DS_Store

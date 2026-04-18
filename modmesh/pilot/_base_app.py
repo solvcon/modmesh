@@ -26,16 +26,15 @@
 
 
 import sys
-from dataclasses import dataclass
+import dataclasses
 
 import numpy as np
 
 import matplotlib
 import matplotlib.pyplot
-from matplotlib.backends.backend_qtagg import FigureCanvas
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT
-from matplotlib.pyplot import setp
+from matplotlib.backends import backend_qtagg
+from matplotlib import figure
+from matplotlib.backends import backend_qt5agg
 
 from PySide6.QtCore import QTimer, Slot, Qt, QAbstractTableModel
 from PySide6.QtWidgets import (QDockWidget, QLabel, QVBoxLayout, QHBoxLayout,
@@ -44,10 +43,10 @@ from PySide6.QtWidgets import (QDockWidget, QLabel, QVBoxLayout, QHBoxLayout,
 
 from .. import core as mcore
 
-from ._gui_common import PilotFeature
+from . import _gui_common
 
 
-@dataclass
+@dataclasses.dataclass
 class QuantityLine(object):
     """
     A class representing a quantity line with associated data.
@@ -56,20 +55,26 @@ class QuantityLine(object):
     in a plot. It is designed to be used in conjunction with Matplotlib for
     visualizing analytical and numerical data.
 
-    Class attributes:
-        - `ana` (matplotlib.lines.Line2D): Line2D for analytical data.
-        - `num` (matplotlib.lines.Line2D): Line2D for numerical data.
-        - `axis` (matplotlib.pyplot.axis): Axis for the plot.
-        - `name` (str): Name of the quantity.
-        - `unit` (str): Unit of measurement.
-        - `color` (str): Color of line or symbol.
-        - `y_upper_lim` (float): y axis upper limit.
-        - `y_bottom_lim` (float): y axis bottom limit.
+    :cvar ana: Line2D for analytical data.
+    :vartype ana: matplotlib.lines.Line2D
+    :cvar num: Line2D for numerical data.
+    :vartype num: matplotlib.lines.Line2D
+    :cvar axis: Axis for the plot.
+    :vartype axis: matplotlib.pyplot.axis
+    :cvar name: Name of the quantity.
+    :vartype name: str
+    :cvar unit: Unit of measurement.
+    :vartype unit: str
+    :cvar color: Color of line or symbol.
+    :vartype color: str
+    :cvar y_upper_lim: y axis upper limit.
+    :vartype y_upper_lim: float
+    :cvar y_bottom_lim: y axis bottom limit.
+    :vartype y_bottom_lim: float
 
-    Methods:
-        - :meth:`update_ana(x, y)`: Update the line data and redraw the plot.
-        - :meth:`update_num(x, y)`: Update the line data and redraw the plot.
-
+    :Methods:
+        - :py:meth:`update_ana`: Update the line data and redraw the plot.
+        - :py:meth:`update_num`: Update the line data and redraw the plot.
     """
     ana: matplotlib.lines.Line2D = None
     num: matplotlib.lines.Line2D = None
@@ -121,12 +126,13 @@ class _Accessor(object):
     This class allows users to access data by chaining multiple [],
     supporting string-based.
 
-    Attributes:
-        :ivar: _data: handle input data that allow user can using
-            index or string to access it.
-        :ivar: _header (list): list of data's column header name.
-        :ivar: _dim_idx (int): using to indicate which dimension is
-            currenlty being accessed by __getitem__.
+    :ivar _data: handle input data that allow user can using
+        index or string to access it.
+    :ivar _header: list of data's column header name.
+    :vartype _header: list
+    :ivar _dim_idx: using to indicate which dimension is
+        currenlty being accessed by __getitem__.
+    :vartype _dim_idx: int
     """
 
     def __init__(self, data, dim_idx=0, header=None):
@@ -155,24 +161,23 @@ class GUIConfig(object):
     This class provides a configuration interface for the GUI, allowing
     users to set and retrieve parameters related to the simulation.
 
-    Attributes:
-        :ivar: _tbl_content (list[list]): The content of the configuration
-            table.
-        :ivar: _col_header (list): The header for the configuration
-            table columns.
+    :ivar: _tbl_content (list[list]): The content of the configuration
+        table.
+    :ivar: _col_header (list): The header for the configuration
+        table columns.
 
-    Methods:
-        :meth:`data(row, col)`: Get the value at a specific row and column
+    :Methods:
+        - :py:meth:`data`: Get the value at a specific row and column
             in the configuration table.
-        :meth:`setData(row, col, value)`: Set the value at a specific row
+        - :py:meth:`setData`: Set the value at a specific row
             and column in the configuration table.
-        :meth:`columnHeader(col)`: Get the header for a specific column
+        - :py:meth:`columnHeader`: Get the header for a specific column
             in the configuration table.
-        :meth:`editable(row, col)`: Check if a cell in the configuration
+        - :py:meth:`editable`: Check if a cell in the configuration
             table is editable.
-        :meth:`rowCount()`: Get the number of rows in the configuration
+        - :py:meth:`rowCount`: Get the number of rows in the configuration
             table.
-        :meth:`columnCount()`: Get the number of columns in the
+        - :py:meth:`columnCount`: Get the number of columns in the
             configuration table.
     """
 
@@ -266,11 +271,6 @@ class SolverConfig(GUIConfig):
 
     This class provides a configuration interface for the solver, allowing
     users to set and retrieve parameters related to the simulation.
-
-    Attributes:
-        - `_tbl_content` (list[list]): The content of the configuration table.
-        - `_col_header` (list): The header for the configuration
-          table columns.
     """
 
     def __init__(self, input_data):
@@ -283,11 +283,6 @@ class PlotConfig(GUIConfig):
 
     This class provides a configuration interface for the plot, allowing
     users to set and retrieve parameters related to the plotting arae.
-
-    Attributes:
-        - `_tbl_content` (list[list]): The content of the configuration table.
-        - `_col_header` (list): The header for the configuration
-          table columns.
     """
 
     def __init__(self, input_data):
@@ -331,7 +326,7 @@ class DataConfig(GUIConfig):
         super().__init__(input_data, ["variable", "configuration"])
 
 
-class OneDimBaseApp(PilotFeature):
+class OneDimBaseApp(_gui_common.PilotFeature):
     """
     Main application for 1D solver.
 
@@ -339,47 +334,53 @@ class OneDimBaseApp(PilotFeature):
     It includes methods for initializing the solver, configuring parameters,
     setting up timers, and building visualization figures.
 
-    Attributes:
-        - `solver_config` (:class:`SolverConfig`): Configuration object for
-          the solver.
-        - `plot_data` (list[str, bool]): Data list for the plotting area.
-        - `plot_config` (:class:`PlotConfig`): Configuration object for the
-          plotting area.
-        - `plot` (:class:`State`): State object for the holding plots.
-        - `plot_ana` (bool): Flag indicating whether to plot analytical data.
-        - `plot_num` (bool): Flag indicating whether to plot numerical data.
-        - `use_grid_layout` (bool): Flag indicating whether to use a grid
+    :cvar solver_config: Configuration object for the solver.
+    :vartype solver_config: :class:`SolverConfig`
+    :cvar plot_data: Data list for the plotting area.
+    :vartype plot_data: list[str, bool]
+    :cvar plot_config: Configuration object for the plotting area.
+    :vartype plot_config: :class:`PlotConfig`
+    :cvar plot: State object for the holding plots.
+    :vartype plot: :class:`State`
+    :cvar plot_ana: Flag indicating whether to plot analytical data.
+    :vartype plot_ana: bool
+    :cvar plot_num: Flag indicating whether to plot numerical data.
+    :vartype plot_num: bool
+    :cvar use_grid_layout: Flag indicating whether to use a grid
           layout.
-        - `adjust_region` (bool): Flag indicating whether to adjust the region.
+    :vartype use_grid_layout: bool
+    :cvar adjust_region: Flag indicating whether to adjust the region.
+    :vartype adjust_region: bool
 
-    Methods:
-        - :meth:`populate_menu()`: Set menu item for GUI.
-        - :meth:`run()`: Create the GUI environment.
-        - :meth:`setup_app()`: Create the window for solver.
-        - :meth:`init_solver_config()`: Initialize solver configuration data.
-        - :meth:`set_plot_data()`: Set the property of st and set list of data.
-        - :meth:`set_solver_config()`: Initialize solver configure by user's
+    :Methods:
+        - :py:meth:`populate_menu`: Set menu item for GUI.
+        - :py:meth:`run`: Create the GUI environment.
+        - :py:meth:`setup_app`: Create the window for solver.
+        - :py:meth:`init_solver_config`: Initialize solver configuration data.
+        - :py:meth:`set_plot_data`: Set the property of st,
+            and set list of data.
+        - :py:meth:`set_solver_config`: Initialize solver configure by user's
           input, also reset the computational results.
-        - :meth:`init_solver()`: Initialize solver and set up the initial
+        - :py:meth:`init_solver`: Initialize solver and set up the initial
           conditions.
-        - :meth:`setup_timer()`: Set up the Qt timer for data visualization.
-        - :meth:`build_single_figure()`: Build a single-figure layout for
+        - :py:meth:`setup_timer`: Set up the Qt timer for data visualization.
+        - :py:meth:`build_single_figure`: Build a single-figure layout for
           visualization.
-        - :meth:`build_grid_figure()`: Build a grid figure for visualization.
-        - :meth:`init_plot_data(data, y_limit)`: Initialize analytical and
+        - :py:meth:`build_grid_figure`: Build a grid figure for visualization.
+        - :py:meth:`init_plot_data`: Initialize analytical and
           numerical data in figure.
-        - :meth:`step(steps)`: Callback function for the step button.
-        - :meth:`update_step(steps)`: Update data at current step.
-        - :meth:`start()`: Start the solver.
-        - :meth:`set()`: Set the solver configurations and update the timer.
-        - :meth:`update_layout()`: Refresh plotting area layout.
-        - :meth:`stop()`: Stop the solver.
-        - :meth:`single_layout()`: Switch plot holder to a single plot layout.
-        - :meth:`grid_layout()`: Switch plot holder to a grid plot layout.
-        - :meth:`timer_timeout()`: Callback function for Qt timer.
-        - :meth:`log(msg)`: Print log messages to the console window and
+        - :py:meth:`step`: Callback function for the step button.
+        - :py:meth:`update_step`: Update data at current step.
+        - :py:meth:`start`: Start the solver.
+        - :py:meth:`set`: Set the solver configurations and update the timer.
+        - :py:meth:`update_layout`: Refresh plotting area layout.
+        - :py:meth:`stop`: Stop the solver.
+        - :py:meth:`single_layout`: Switch plot holder to a single plot layout.
+        - :py:meth:`grid_layout`: Switch plot holder to a grid plot layout.
+        - :py:meth:`timer_timeout`: Callback function for Qt timer.
+        - :py:meth:`log`: Print log messages to the console window and
           standard output.
-        - :meth:`update_plot()`: Updating plot after the solver finishes its
+        - :py:meth:`update_plot`: Updating plot after the solver finishes its
           computation each time.
     """
     st = None
@@ -388,7 +389,7 @@ class OneDimBaseApp(PilotFeature):
     plot_config: PlotConfig = None
     config_option: list[list[str, ConfigOption]] = None
     data_config: DataConfig = None
-    plot: FigureCanvas = None
+    plot: backend_qtagg.FigureCanvas = None
     plot_ana: bool = False
     plot_num: bool = False
     use_grid_layout: bool = False
@@ -489,10 +490,10 @@ class OneDimBaseApp(PilotFeature):
         """
         Build a single-figure layout for visualization.
 
-        :return: FigureCanvas
+        :return: backend_qtagg.FigureCanvas
         """
-        fig = Figure()
-        canvas = FigureCanvas(fig)
+        fig = figure.Figure()
+        canvas = backend_qtagg.FigureCanvas(fig)
         ax = canvas.figure.subplots()
         ax.grid()
         fig.tight_layout()
@@ -508,7 +509,7 @@ class OneDimBaseApp(PilotFeature):
                 y_bottom_lim = min(y_bottom_lim, data.y_bottom_lim)
                 y_upper_lim = max(y_upper_lim, data.y_upper_lim)
 
-        setp(ax, ylim=[y_bottom_lim, y_upper_lim])
+        matplotlib.pyplot.setp(ax, ylim=[y_bottom_lim, y_upper_lim])
         self.update_plot()
         return canvas
 
@@ -516,10 +517,10 @@ class OneDimBaseApp(PilotFeature):
         """
         Build a grid figure for visualization.
 
-        :return: FigureCanvas
+        :return: backend_qtagg.FigureCanvas
         """
-        fig = Figure()
-        canvas = FigureCanvas(fig)
+        fig = figure.Figure()
+        canvas = backend_qtagg.FigureCanvas(fig)
         ax = canvas.figure.subplots(3, 2)
         fig.tight_layout()
 
@@ -530,7 +531,9 @@ class OneDimBaseApp(PilotFeature):
                 data.axis.grid()
                 self.init_figure_items(data)
                 self.init_plot_data(data)
-                setp(data.axis, ylim=[data.y_bottom_lim, data.y_upper_lim])
+                matplotlib.pyplot.setp(
+                    data.axis,
+                    ylim=[data.y_bottom_lim, data.y_upper_lim])
 
         self.update_plot()
         return canvas
@@ -695,6 +698,7 @@ class PlotConfigDialog(QDialog):
     plot configuration. It will pop up when clicking "Option" button. It
     includes options for selecting the layout and setting data line config.
     """
+
     def __init__(self, app, parent=None):
         super().__init__(parent)
         self.app = app
@@ -742,6 +746,7 @@ class FigureConfigDialog(QDialog):
     plot configuration. It will pop up when clicking "Option" button. It
     includes options for selecting the layout and setting data line config.
     """
+
     def __init__(self, app, parent=None):
         super().__init__(parent)
         self.app = app
@@ -777,22 +782,21 @@ class ConfigWindow(QWidget):
     the solver type, view and edit configuration parameters, and control the
     solver's behavior.
 
-    Attributes:
-        - `app`: The app want to plot something in plotting area.
-        - `solver_config` (:class:`SolverConfig`): Configuration object
-          for the solver.
-        - `plot_config` (:class:`PlotConfig`): Configuration object
-          for the plotting area.
+    :ivar app: The app want to plot something in plotting area.
+    :ivar solver_config: Configuration object for the solver.
+    :vartype solver_config: :class:`SolverConfig`
+    :ivar plot_config: Configuration object for the plotting area.
+    :vartype plot_config: :class:`PlotConfig`
 
-    Methods:
-        - :meth:`setup()`: Setup method to configure the window.
-        - :meth:`on_open_plot_option()`: Callback function when plot configure
-          modal window is opened.
-        - :meth:`on_close_plot_option()`: Callback function when plot configure
-          modal windows is closed.
-        - :meth:`add_region()`: Add data for a new region.
-        - :meth:`delete_region()`: Delete data for a region.
-        - :meth:`init_ui()`: Define the GUI layout of the window.
+    :Methods:
+        - :py:meth:`setup`: Setup method to configure the window.
+        - :py:meth:`on_open_plot_option`: Callback function
+            when plot configure modal window is opened.
+        - :py:meth:`on_close_plot_option`: Callback function
+            when plot configure modal windows is closed.
+        - :py:meth:`add_region`: Add data for a new region.
+        - :py:meth:`delete_region`: Delete data for a region.
+        - :py:meth:`init_ui`: Define the GUI layout of the window.
     """
 
     def __init__(self, app, parent=None):
@@ -909,7 +913,8 @@ class ConfigWindow(QWidget):
         vbox2.setStretch(0, 1)
 
         spacer = QSpacerItem(
-            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+            20, 40, QSizePolicy.Minimum,
+            QSizePolicy.Expanding)
         vbox2.addItem(spacer)
 
         time_label = QLabel("Time Control")
@@ -953,12 +958,12 @@ class PlotArea(QWidget):
     This class inherits from `QWidget` and is responsible for managing the
     display of the plot area in the application.
 
-    Attributes:
-        - `app`: The app want to plot something in plotting area.
+    :ivar app: The app want to plot something in plotting area.
 
-    Methods:
-        - :meth:`init_ui()`: Define the GUI layout of the window.
+    :Methods:
+        - :py:meth:`init_ui`: Define the GUI layout of the window.
     """
+
     def __init__(self, app, parent=None):
         super().__init__(parent)
         self.app = app
@@ -966,7 +971,9 @@ class PlotArea(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout(self)
-        layout.addWidget(NavigationToolbar2QT(self.app.plot, None))
+        toolbar = backend_qt5agg.NavigationToolbar2QT(
+            self.app.plot, None)
+        layout.addWidget(toolbar)
         layout.addWidget(self.app.plot)
 
         self.setLayout(layout)
@@ -980,22 +987,22 @@ class ConfigTableModel(QAbstractTableModel):
     for displaying configuration data using table. It is used in the QTable
     class to display solver and plotting area configurations.
 
-    Attributes:
-        - `config` (:class:`GUIConfig`): Configuration object for the model.
+    :ivar config: Configuration object for the model.
+    :vartype config: :class:`GUIConfig`
 
-    Methods: (Overridden from QAbstractTableModel)
-        - :meth:`rowCount()`: Get the number of rows in the model.
-        - :meth:`columnCount()`: Get the number of columns in the model.
-        - :meth:`data(index, role)`: Get the data at a specific index in the
+    :Methods:
+        - :py:meth:`rowCount`: Get the number of rows in the model.
+        - :py:meth:`columnCount`: Get the number of columns in the model.
+        - :py:meth:`data`: Get the data at a specific index in the
           model.
-        - :meth:`setData(index, value, role)`: Set the data at a specific index
+        - :py:meth:`setData`: Set the data at a specific index
           in the model.
-        - :meth:`flags(index)`: Get the flags for a specific index in the
+        - :py:meth:`flags`: Get the flags for a specific index in the
           model.
-        - :meth:`headerData(section, orientation, role)`: Get the header data
+        - :py:meth:`headerData`: Get the header data
           for a specific section in the model.
-        - :meth:`insertRow(data, position)`: Insert a new row of data.
-        - :meth:`deleteRow(position)`: Delete a row of data.
+        - :py:meth:`insertRow`: Insert a new row of data.
+        - :py:meth:`deleteRow`: Delete a row of data.
     """
 
     def __init__(self, config, parent=None):
@@ -1024,7 +1031,8 @@ class ConfigTableModel(QAbstractTableModel):
         return super().flags(index)
 
     def headerData(self, section, orientation, role):
-        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+        if (role == Qt.DisplayRole
+                and orientation == Qt.Horizontal):
             return self.config.columnHeader(section)
         return None
 

@@ -37,11 +37,13 @@
 // I use <modmesh/toggle/RadixTree.hpp> instead.
 #include <modmesh/toggle/RadixTree.hpp>
 
-#include <limits>
-#include <stdexcept>
-#include <functional>
-#include <numeric>
 #include <algorithm>
+#include <concepts>
+#include <format>
+#include <functional>
+#include <limits>
+#include <numeric>
+#include <stdexcept>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -53,6 +55,28 @@ namespace modmesh
 
 template <typename T>
 class SimpleArray; // forward declaration
+
+template <typename T>
+concept IntegralType = std::is_integral_v<T>;
+
+template <typename T>
+concept ArithmeticType = std::is_arithmetic_v<T>;
+
+template <typename T>
+concept SimpleArrayType = requires(T t) {
+    { t.data() } -> std::convertible_to<typename T::value_type *>;
+    { t.size() } -> std::convertible_to<size_t>;
+};
+
+template <typename T, typename U>
+concept IsSameRemoveConstType = std::is_same_v<std::remove_const_t<T>, U>;
+
+template <typename It>
+concept InputIterator = requires(It it) {
+    { *it };
+    { ++it } -> std::same_as<It &>;
+    { it++ } -> std::same_as<It>;
+};
 
 namespace detail
 {
@@ -81,8 +105,7 @@ inline size_t buffer_offset(small_vector<size_t> const & stride, small_vector<si
 {
     if (stride.size() != idx.size())
     {
-        throw std::out_of_range(Formatter() << "stride size " << stride.size() << " != "
-                                            << "index size " << idx.size());
+        throw std::out_of_range(std::format("stride size {} != index size {}", stride.size(), idx.size()));
     }
     size_t offset = 0;
     for (size_t it = 0; it < stride.size(); ++it)
@@ -405,7 +428,8 @@ public:
         }
         else
         {
-            do {
+            do
+            {
                 acc += athis->at(sidx) * athis->at(sidx);
             } while (athis->next_sidx(sidx));
         }
@@ -513,9 +537,19 @@ public:
         return A(*static_cast<A const *>(this)).iadd(other);
     }
 
+    A add(value_type scalar) const
+    {
+        return A(*static_cast<A const *>(this)).iadd(scalar);
+    }
+
     A sub(A const & other) const
     {
         return A(*static_cast<A const *>(this)).isub(other);
+    }
+
+    A sub(value_type scalar) const
+    {
+        return A(*static_cast<A const *>(this)).isub(scalar);
     }
 
     A mul(A const & other) const
@@ -531,6 +565,11 @@ public:
     A div(A const & other) const
     {
         return A(*static_cast<A const *>(this)).idiv(other);
+    }
+
+    A div(value_type scalar) const
+    {
+        return A(*static_cast<A const *>(this)).idiv(scalar);
     }
 
     A & iadd(A const & other)
@@ -561,6 +600,30 @@ public:
         return *athis;
     }
 
+    A & iadd(value_type scalar)
+    {
+        auto athis = static_cast<A *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            const value_type * const end = athis->end();
+            value_type * ptr = athis->begin();
+
+            while (ptr < end)
+            {
+                *ptr += scalar;
+                ++ptr;
+            }
+        }
+        else
+        {
+            if (scalar)
+            {
+                std::fill(athis->begin(), athis->end(), true);
+            }
+        }
+        return *athis;
+    }
+
     A & isub(A const & other)
     {
         auto athis = static_cast<A *>(this);
@@ -579,7 +642,30 @@ public:
         }
         else
         {
-            throw std::runtime_error(Formatter() << "SimpleArray<bool>::isub(): boolean value doesn't support this operation");
+            throw std::runtime_error(
+                "SimpleArray<bool>::isub(): boolean value doesn't support this operation");
+        }
+        return *athis;
+    }
+
+    A & isub(value_type scalar)
+    {
+        auto athis = static_cast<A *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            const value_type * const end = athis->end();
+            value_type * ptr = athis->begin();
+
+            while (ptr < end)
+            {
+                *ptr -= scalar;
+                ++ptr;
+            }
+        }
+        else
+        {
+            throw std::runtime_error(
+                "SimpleArray<bool>::isub(): boolean value doesn't support this operation");
         }
         return *athis;
     }
@@ -657,7 +743,30 @@ public:
         }
         else
         {
-            throw std::runtime_error(Formatter() << "SimpleArray<bool>::idiv(): boolean value doesn't support this operation");
+            throw std::runtime_error(
+                "SimpleArray<bool>::idiv(): boolean value doesn't support this operation");
+        }
+        return *athis;
+    }
+
+    A & idiv(value_type scalar)
+    {
+        auto athis = static_cast<A *>(this);
+        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            const value_type * const end = athis->end();
+            value_type * ptr = athis->begin();
+
+            while (ptr < end)
+            {
+                *ptr /= scalar;
+                ++ptr;
+            }
+        }
+        else
+        {
+            throw std::runtime_error(
+                "SimpleArray<bool>::idiv(): boolean value doesn't support this operation");
         }
         return *athis;
     }
@@ -795,7 +904,7 @@ detail::SimpleArrayMixinCalculators<A, T>::median_op(small_vector<value_type> & 
 /**
  * Calculate median using frequency counting for small data types.
  * This algorithm is optimized for uint8_t, int8_t, and bool types where
- * the range of possible values is small (≤256). Instead of sorting,
+ * the range of possible values is small (<=256). Instead of sorting,
  * it counts the frequency of each value and finds the median position.
  *
  * Algorithm:
@@ -855,8 +964,8 @@ detail::SimpleArrayMixinCalculators<A, T>::median_freq(small_vector<value_type> 
 }
 
 /**
- * Perform matrix multiplication for 2D arrays.
- * This implementation supports only 2D × 2D matrix multiplication.
+ * Perform matrix multiplication for SimpleArrays.
+ * This implementation supports 1D x 1D, 1D x 2D, 2D x 1D, and 2D x 2D matrix multiplication.
  */
 template <typename A, typename T>
 A SimpleArrayMixinCalculators<A, T>::matmul(A const & other) const
@@ -867,63 +976,137 @@ A SimpleArrayMixinCalculators<A, T>::matmul(A const & other) const
 
     auto format_shape = [](A const * arr) -> std::string
     {
-        Formatter shape_formatter;
         if (arr->ndim() == 0)
         {
-            shape_formatter << "()";
+            return "()";
         }
         else
         {
-            shape_formatter << "(";
+            std::string result = "(";
             for (size_t i = 0; i < arr->ndim(); ++i)
             {
                 if (i > 0)
-                    shape_formatter << ",";
-                shape_formatter << arr->shape(i);
+                {
+                    result += ",";
+                }
+                result += std::to_string(arr->shape(i));
             }
-            shape_formatter << ")";
+            result += ")";
+            return result;
         }
-        return shape_formatter.str();
     };
 
-    if (this_ndim != 2 || other_ndim != 2)
+    auto check_product_shape = [&](A const * athis, A const * other, ssize_t athis_idx, ssize_t other_idx) -> void
     {
-        throw std::out_of_range(Formatter() << "SimpleArray::matmul(): unsupported dimensions: this="
-                                            << format_shape(athis) << " other=" << format_shape(&other)
-                                            << ". Only 2D x 2D matrix multiplication is supported");
+        if (athis->shape(athis_idx) != other->shape(other_idx))
+        {
+            throw std::out_of_range(
+                std::format("SimpleArray::matmul(): shape mismatch: this={} other={}",
+                            format_shape(athis),
+                            format_shape(other)));
+        }
+    };
+
+    if ((this_ndim != 2 && this_ndim != 1) || (other_ndim != 2 && other_ndim != 1))
+    {
+        const std::string err = std::format("SimpleArray::matmul(): unsupported dimensions: "
+                                            "this={} other={}. SimpleArray must be 1D or 2D.",
+                                            format_shape(athis),
+                                            format_shape(&other));
+        throw std::out_of_range(err);
     }
 
-    const size_t m = athis->shape(0);
-    const size_t k = athis->shape(1);
-    const size_t n = other.shape(1);
+    bool this_is_1d = (this_ndim == 1);
+    bool other_is_1d = (other_ndim == 1);
 
-    if (k != other.shape(0))
+    // 1D x 1D
+    if (this_is_1d && other_is_1d)
     {
-        throw std::out_of_range(Formatter() << "SimpleArray::matmul(): shape mismatch: this="
-                                            << format_shape(athis) << " other=" << format_shape(&other));
+        check_product_shape(athis, &other, 0, 0);
+        A result(1);
+        value_type v = 0;
+        for (size_t i = 0; i < athis->shape(0); ++i)
+        {
+            v += (*athis)(i)*other.data(i);
+        }
+        result.data(0) = v;
+        return result;
     }
-
-    typename detail::SimpleArrayInternalTypes<T>::shape_type result_shape{m, n};
-    A result(result_shape);
-    result.fill(static_cast<value_type>(0));
-
-    for (size_t i = 0; i < m; ++i)
+    // 1D x 2D
+    else if (this_is_1d)
     {
+        const size_t k = athis->shape(0);
+        const size_t n = other.shape(1);
+        check_product_shape(athis, &other, 0, 0);
+        A result(n);
+
         for (size_t j = 0; j < n; ++j)
         {
+            value_type v = 0;
             for (size_t l = 0; l < k; ++l)
             {
-                result(i, j) += athis->operator()(i, l) * other(l, j);
+                v += (*athis)(l)*other(l, j);
+            }
+            result.data(j) = v;
+        }
+        return result;
+    }
+    // 2D x 1D
+    else if (other_is_1d)
+    {
+        const size_t m = athis->shape(0);
+        const size_t k = athis->shape(1);
+
+        check_product_shape(athis, &other, 1, 0);
+        A result(m);
+
+        for (size_t i = 0; i < m; ++i)
+        {
+            value_type v = 0;
+            for (size_t l = 0; l < k; ++l)
+            {
+                v += (*athis)(i, l) * other(l);
+            }
+            result.data(i) = v;
+        }
+        return result;
+    }
+    // 2D x 2D
+    else
+    {
+        const size_t m = athis->shape(0);
+        const size_t k = athis->shape(1);
+        const size_t n = other.shape(1);
+        check_product_shape(athis, &other, 1, 0);
+
+        shape_type result_shape{m, n};
+        A result(result_shape);
+
+        for (size_t i = 0; i < m; ++i)
+        {
+            for (size_t j = 0; j < n; ++j)
+            {
+                value_type v = 0;
+                for (size_t l = 0; l < k; ++l)
+                {
+                    v += (*athis)(i, l) * other(l, j);
+                }
+                result(i, j) = v;
             }
         }
+        return result;
     }
 
-    return result;
+    throw std::out_of_range(
+        std::format("SimpleArray::matmul(): this={} other={}"
+                    " cannot perform matrix multiplication.",
+                    format_shape(athis),
+                    format_shape(&other)));
 }
 
 /**
  * Perform in-place matrix multiplication for 2D arrays.
- * This implementation supports only 2D × 2D matrix multiplication.
+ * This implementation supports only 2D x 2D matrix multiplication.
  * The result replaces the content of the current array.
  */
 template <typename A, typename T>
@@ -983,9 +1166,9 @@ public:
 
     void sort(void);
     SimpleArray<uint64_t> argsort(void);
-    template <typename I>
+    template <IntegralType I>
     A take_along_axis(SimpleArray<I> const & indices);
-    template <typename I>
+    template <IntegralType I>
     A take_along_axis_simd(SimpleArray<I> const & indices);
 
 }; /* end class SimpleArrayMixinSort */
@@ -996,17 +1179,18 @@ void SimpleArrayMixinSort<A, T>::sort(void)
     auto athis = static_cast<A *>(this);
     if (athis->ndim() != 1)
     {
-        throw std::runtime_error(Formatter() << "SimpleArray::sort(): currently only support 1D array but the array is "
-                                             << athis->ndim() << " dimension");
+        throw std::runtime_error(
+            std::format(
+                "SimpleArray::sort(): currently only support 1D array but the array is {} dimension", athis->ndim()));
     }
 
     std::sort(athis->begin(), athis->end());
 }
 
-template <typename T, typename I>
+template <typename T, IntegralType I>
 void indexed_copy(T * dest, T const * data, I const * begin, I const * const end);
 
-template <typename T>
+template <IntegralType T>
 T const * check_index_range(SimpleArray<T> const & indices, size_t max_idx);
 
 template <typename A, typename T>
@@ -1054,7 +1238,141 @@ public:
     }
 }; /* end class SimpleArrayMixinSearch */
 
+template <typename A, typename T>
+class SimpleArrayMixinMatrix
+{
+
+private:
+
+    using internal_types = detail::SimpleArrayInternalTypes<T>;
+
+public:
+
+    using value_type = typename internal_types::value_type;
+    using shape_type = typename internal_types::shape_type;
+    using sshape_type = typename internal_types::sshape_type;
+
+    static A eye(ssize_t n)
+    {
+        validate_positive("eye", n);
+        shape_type shape{static_cast<size_t>(n), static_cast<size_t>(n)};
+        A result(shape, static_cast<value_type>(0));
+
+        for (ssize_t i = 0; i < n; ++i)
+        {
+            result(i, i) = static_cast<value_type>(1);
+        }
+
+        return result;
+    }
+
+    static A scaled_eye(ssize_t n, value_type scale)
+    {
+        validate_positive("scaled_eye", n);
+        shape_type shape{static_cast<size_t>(n), static_cast<size_t>(n)};
+        A result(shape, static_cast<value_type>(0));
+
+        for (ssize_t i = 0; i < n; ++i)
+        {
+            result(i, i) = scale;
+        }
+
+        return result;
+    }
+
+    A hermitian() const
+    {
+        auto athis = static_cast<A const *>(this);
+        validate_2d("hermitian");
+        A result = *athis;
+        result.transpose();
+        if constexpr (is_complex_v<value_type>)
+        {
+            for (auto ptr = result.begin(); ptr != result.end(); ++ptr)
+            {
+                *ptr = ptr->conj();
+            }
+        }
+        return result;
+    }
+
+    A symmetrize() const
+    {
+        auto athis = static_cast<A const *>(this);
+        validate_square("symmetrize");
+        A result = *athis;
+        if constexpr (is_complex_v<value_type>)
+        {
+            for (ssize_t i = 0; i < athis->shape(0); ++i)
+            {
+                for (ssize_t j = 0; j < athis->shape(1); ++j)
+                {
+                    result(i, j) = (result(i, j) + (*athis)(j, i).conj()) / static_cast<value_type>(2.0);
+                }
+            }
+        }
+        else
+        {
+            for (ssize_t i = 0; i < athis->shape(0); ++i)
+            {
+                for (ssize_t j = 0; j < athis->shape(1); ++j)
+                {
+                    result(i, j) = (result(i, j) + (*athis)(j, i)) / static_cast<value_type>(2.0);
+                }
+            }
+        }
+        return result;
+    }
+
+private:
+
+    static void validate_positive(const char * operation_name, ssize_t n)
+    {
+        if (n <= 0)
+        {
+            throw std::invalid_argument(
+                std::format("SimpleArray::{}(): size must be greater than 0, but got {}",
+                            operation_name,
+                            n));
+        }
+    }
+
+    void validate_2d(const char * operation_name) const
+    {
+        auto athis = static_cast<A const *>(this);
+        if (athis->ndim() != 2)
+        {
+            throw std::runtime_error(
+                std::format("SimpleArray::{}(): operation requires 2D SimpleArray, "
+                            "but got {}D SimpleArray",
+                            operation_name,
+                            athis->ndim()));
+        }
+    }
+
+    void validate_square(const char * operation_name) const
+    {
+        auto athis = static_cast<A const *>(this);
+        validate_2d(operation_name);
+        if (athis->shape(0) != athis->shape(1))
+        {
+            throw std::runtime_error(
+                std::format("SimpleArray::{}(): operation requires square SimpleArray, "
+                            "but got {}x{} shape",
+                            operation_name,
+                            athis->shape(0),
+                            athis->shape(1)));
+        }
+    }
+
+}; /* end class SimpleArrayMixinMatrix */
+
 } /* end namespace detail */
+
+// Tag type for explicit alignment constructor
+struct with_alignment_t
+{
+};
 
 /**
  * Simple array type for contiguous memory storage. Size does not change. The
@@ -1067,6 +1385,7 @@ class SimpleArray
     , public detail::SimpleArrayMixinCalculators<SimpleArray<T>, T>
     , public detail::SimpleArrayMixinSort<SimpleArray<T>, T>
     , public detail::SimpleArrayMixinSearch<SimpleArray<T>, T>
+    , public detail::SimpleArrayMixinMatrix<SimpleArray<T>, T>
 {
 
 private:
@@ -1085,17 +1404,20 @@ public:
 
     static constexpr size_t itemsize() { return ITEMSIZE; }
 
-    explicit SimpleArray(size_t length)
-        : m_buffer(buffer_type::construct(length * ITEMSIZE))
+    /// Constructor with length and optional alignment
+    /// @param length the length of the array in items
+    /// @param alignment the memory alignment in bytes (default: 0, no special alignment, and valid values are 16, 32, and 64)
+    explicit SimpleArray(size_t length, size_t alignment = 0)
+        : m_buffer(buffer_type::construct(length * ITEMSIZE, alignment))
         , m_shape{length}
         , m_stride{1}
         , m_body(m_buffer->template data<T>())
     {
     }
 
-    template <class InputIt>
-    SimpleArray(InputIt first, InputIt last)
-        : SimpleArray(last - first)
+    template <InputIterator InputIt>
+    SimpleArray(InputIt first, InputIt last, size_t alignment = 0)
+        : SimpleArray(last - first, alignment)
     {
         std::copy(first, last, data());
     }
@@ -1107,13 +1429,30 @@ public:
     {
         if (!m_shape.empty())
         {
-            m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE);
+            m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE, 0);
             m_body = m_buffer->template data<T>();
         }
     }
 
     // NOLINTNEXTLINE(modernize-pass-by-value)
-    explicit SimpleArray(small_vector<size_t> const & shape, value_type const & value)
+    SimpleArray(small_vector<size_t> const & shape, size_t alignment, with_alignment_t const & /* unnamed argument for tagging */)
+        : m_shape(shape)
+        , m_stride(calc_stride(m_shape))
+    {
+        if (!m_shape.empty())
+        {
+            m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE, alignment);
+            m_body = m_buffer->template data<T>();
+        }
+    }
+
+    SimpleArray(small_vector<size_t> const & shape, value_type const & value, size_t alignment)
+        : SimpleArray(shape, alignment, with_alignment_t{})
+    {
+        std::fill(begin(), end(), value);
+    }
+
+    SimpleArray(small_vector<size_t> const & shape, value_type const & value)
         : SimpleArray(shape)
     {
         std::fill(begin(), end(), value);
@@ -1125,12 +1464,29 @@ public:
     {
         if (!m_shape.empty())
         {
-            m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE);
+            m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE, 0);
             m_body = m_buffer->template data<T>();
         }
     }
 
-    explicit SimpleArray(std::vector<size_t> const & shape, value_type const & value)
+    SimpleArray(std::vector<size_t> const & shape, size_t alignment, with_alignment_t)
+        : m_shape(shape)
+        , m_stride(calc_stride(m_shape))
+    {
+        if (!m_shape.empty())
+        {
+            m_buffer = buffer_type::construct(m_shape[0] * m_stride[0] * ITEMSIZE, alignment);
+            m_body = m_buffer->template data<T>();
+        }
+    }
+
+    SimpleArray(std::vector<size_t> const & shape, value_type const & value, size_t alignment)
+        : SimpleArray(shape, alignment, with_alignment_t{})
+    {
+        std::fill(begin(), end(), value);
+    }
+
+    SimpleArray(std::vector<size_t> const & shape, value_type const & value)
         : SimpleArray(shape)
     {
         std::fill(begin(), end(), value);
@@ -1166,8 +1522,10 @@ public:
             const size_t nbytes = m_shape[0] * m_stride[0] * ITEMSIZE;
             if (nbytes != buffer->nbytes())
             {
-                throw std::runtime_error(Formatter() << "SimpleArray: shape byte count " << nbytes
-                                                     << " differs from buffer " << buffer->nbytes());
+                throw std::runtime_error(
+                    std::format("SimpleArray: shape byte count {} differs from buffer {}",
+                                nbytes,
+                                buffer->nbytes()));
             }
         }
     }
@@ -1298,26 +1656,6 @@ public:
         return data;
     }
 
-    /**
-     * Create an identity matrix of size n x n.
-     *
-     * @param n Size of the square identity matrix
-     * @return SimpleArray representing an n x n identity matrix
-     */
-    static SimpleArray eye(size_t n)
-    {
-        shape_type shape{n, n};
-        SimpleArray result(shape, static_cast<value_type>(0));
-
-        // Set diagonal elements to 1
-        for (size_t i = 0; i < n; ++i)
-        {
-            result(i, i) = static_cast<value_type>(1);
-        }
-
-        return result;
-    }
-
     explicit operator bool() const noexcept { return bool(m_buffer) && bool(*m_buffer); }
 
     size_t nbytes() const noexcept { return size() * ITEMSIZE; }
@@ -1336,6 +1674,9 @@ public:
         }
         return size;
     }
+
+    /// Return the underlying buffer alignment in bytes. If no buffer or no alignment, return 0.
+    size_t alignment() const noexcept { return m_buffer ? m_buffer->alignment() : 0; }
 
     using iterator = T *;
     using const_iterator = T const *;
@@ -1438,12 +1779,14 @@ public:
             if (0 == ndim())
             {
                 throw std::out_of_range(
-                    Formatter() << "SimpleArray: cannot set nghost " << nghost << " > 0 to an empty array");
+                    std::format("SimpleArray: cannot set nghost {} > 0 to an empty array", nghost));
             }
             if (nghost > shape(0))
             {
                 throw std::out_of_range(
-                    Formatter() << "SimpleArray: cannot set nghost " << nghost << " > shape(0) " << shape(0));
+                    std::format("SimpleArray: cannot set nghost {} > shape(0) {}",
+                                nghost,
+                                shape(0)));
             }
         }
         m_nghost = nghost;
@@ -1572,37 +1915,48 @@ private:
         if (m_nghost != 0 && ndim() != 1)
         {
             throw std::out_of_range(
-                Formatter() << "SimpleArray::validate_range(): cannot handle "
-                            << ndim() << "-dimensional (more than 1) array with non-zero nghost: " << m_nghost);
+                std::format("SimpleArray::validate_range(): "
+                            "cannot handle {}-dimensional (more than 1) array with non-zero nghost: {}",
+                            ndim(),
+                            m_nghost));
         }
         if (it < -static_cast<ssize_t>(m_nghost))
         {
-            throw std::out_of_range(Formatter() << "SimpleArray: index " << it << " < -nghost: " << -static_cast<ssize_t>(m_nghost));
+            throw std::out_of_range(
+                std::format("SimpleArray: index {} < -nghost: {}",
+                            it,
+                            -static_cast<ssize_t>(m_nghost)));
         }
         if (it >= static_cast<ssize_t>((buffer().nbytes() / ITEMSIZE) - m_nghost))
         {
             throw std::out_of_range(
-                Formatter() << "SimpleArray: index " << it << " >= " << (buffer().nbytes() / ITEMSIZE) - m_nghost
-                            << " (buffer size: " << (buffer().nbytes() / ITEMSIZE) << " - nghost: " << m_nghost << ")");
+                std::format("SimpleArray: index {} >= {} (buffer size: {} - nghost: {})",
+                            it,
+                            (buffer().nbytes() / ITEMSIZE) - m_nghost,
+                            (buffer().nbytes() / ITEMSIZE),
+                            m_nghost));
         }
     }
 
     void validate_shape(small_vector<ssize_t> const & idx) const
     {
-        auto index2string = [&idx]()
+        auto index2string = [&idx]() -> std::string
         {
-            Formatter ms;
-            ms << "[";
+            if (idx.empty())
+            {
+                return "[]";
+            }
+            std::string result = "[";
             for (size_t it = 0; it < idx.size(); ++it)
             {
-                ms << idx[it];
-                if (it != idx.size() - 1)
+                if (it > 0)
                 {
-                    ms << ", ";
+                    result += ", ";
                 }
+                result += std::to_string(idx[it]);
             }
-            ms << "]";
-            return ms.str();
+            result += "]";
+            return result;
         };
 
         // Test for the "index shape".
@@ -1612,20 +1966,28 @@ private:
         }
         if (idx.size() != m_shape.size())
         {
-            throw std::out_of_range(Formatter() << "SimpleArray: dimension of input indices " << index2string()
-                                                << " != array dimension " << m_shape.size());
+            throw std::out_of_range(
+                std::format("SimpleArray: dimension of input indices {} != array dimension {}",
+                            index2string(),
+                            m_shape.size()));
         }
 
         // Test the first dimension.
         if (idx[0] < -static_cast<ssize_t>(m_nghost))
         {
-            throw std::out_of_range(Formatter() << "SimpleArray: dim 0 in " << index2string()
-                                                << " < -nghost: " << -static_cast<ssize_t>(m_nghost));
+            throw std::out_of_range(
+                std::format("SimpleArray: dim 0 in {} < -nghost: {}",
+                            index2string(),
+                            -static_cast<ssize_t>(m_nghost)));
         }
         if (idx[0] >= static_cast<ssize_t>(nbody()))
         {
-            throw std::out_of_range(Formatter() << "SimpleArray: dim 0 in " << index2string() << " >= nbody: " << nbody()
-                                                << " (shape[0]: " << m_shape[0] << " - nghost: " << nghost() << ")");
+            throw std::out_of_range(
+                std::format("SimpleArray: dim 0 in {} >= nbody: {} (shape[0]: {} - nghost: {})",
+                            index2string(),
+                            nbody(),
+                            m_shape[0],
+                            nghost()));
         }
 
         // Test the rest of the dimensions.
@@ -1633,12 +1995,18 @@ private:
         {
             if (idx[it] < 0)
             {
-                throw std::out_of_range(Formatter() << "SimpleArray: dim " << it << " in " << index2string() << " < 0");
+                throw std::out_of_range(std::format("SimpleArray: dim {} in {} < 0",
+                                                    it,
+                                                    index2string()));
             }
             if (idx[it] >= static_cast<ssize_t>(m_shape[it]))
             {
-                throw std::out_of_range(Formatter() << "SimpleArray: dim " << it << " in " << index2string()
-                                                    << " >= shape[" << it << "]: " << m_shape[it]);
+                throw std::out_of_range(
+                    std::format("SimpleArray: dim {} in {} >= shape[{}]: {}",
+                                it,
+                                index2string(),
+                                it,
+                                m_shape[it]));
             }
         }
     }
@@ -1662,8 +2030,10 @@ SimpleArray<uint64_t> detail::SimpleArrayMixinSort<A, T>::argsort(void)
     auto athis = static_cast<A *>(this);
     if (athis->ndim() != 1)
     {
-        throw std::runtime_error(Formatter() << "SimpleArray::argsort(): currently only support 1D array"
-                                             << " but the array is " << athis->ndim() << " dimension");
+        throw std::runtime_error(
+            std::format("SimpleArray::argsort(): "
+                        "currently only support 1D array but the array is {} dimension",
+                        athis->ndim()));
     }
 
     SimpleArray<uint64_t> ret(athis->shape());
@@ -1684,15 +2054,16 @@ SimpleArray<uint64_t> detail::SimpleArrayMixinSort<A, T>::argsort(void)
 }
 
 template <typename A, typename T>
-template <typename I>
+template <IntegralType I>
 A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & indices)
 {
-    static_assert(std::is_integral_v<I>, "I must be integral type");
     auto athis = static_cast<A *>(this);
     if (athis->ndim() != 1)
     {
-        throw std::runtime_error(Formatter() << "SimpleArray::take_along_axis(): currently only support 1D array"
-                                             << " but the array is " << athis->ndim() << " dimension");
+        throw std::runtime_error(
+            std::format("SimpleArray::take_along_axis(): "
+                        "currently only support 1D array but the array is {} dimension",
+                        athis->ndim()));
     }
 
     size_t max_idx = athis->shape()[0];
@@ -1704,18 +2075,21 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
         {
             size_t offset = src - indices.begin();
             shape_type const & stride = indices.stride();
-            Formatter err_msg;
-            err_msg << "SimpleArray::take_along_axis(): indices[" << offset / stride[0];
+            std::string indices_str = "[" + std::to_string(offset / stride[0]);
             offset %= stride[0];
             for (size_t dim = 1; dim < stride.size(); ++dim)
             {
-                err_msg << ", " << offset / stride[dim];
+                indices_str += ", " + std::to_string(offset / stride[dim]);
                 offset %= stride[dim];
             }
-            err_msg << "] is " << *src << ", which is out of range of the array size "
-                    << max_idx;
+            indices_str += "]";
 
-            throw std::out_of_range(err_msg);
+            throw std::out_of_range(
+                std::format("SimpleArray::take_along_axis(): "
+                            "indices{} is {}, which is out of range of the array size {}",
+                            indices_str,
+                            *src,
+                            max_idx));
         }
         src++;
     }
@@ -1734,7 +2108,7 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
     return ret;
 }
 
-template <typename T>
+template <IntegralType T>
 T const * detail::check_index_range(SimpleArray<T> const & indices, size_t max_idx)
 {
     constexpr T DataTypeMax = std::numeric_limits<T>::max();
@@ -1747,7 +2121,7 @@ T const * detail::check_index_range(SimpleArray<T> const & indices, size_t max_i
     return simd::check_between<T>(indices.begin(), indices.end(), 0, max_idx);
 }
 
-template <typename T, typename I>
+template <typename T, IntegralType I>
 void detail::indexed_copy(T * dest, T const * data, I const * index0, I const * const index1)
 {
     T * dst = dest;
@@ -1762,15 +2136,21 @@ void detail::indexed_copy(T * dest, T const * data, I const * index0, I const * 
 }
 
 template <typename A, typename T>
-template <typename I>
+template <IntegralType I>
 A detail::SimpleArrayMixinSort<A, T>::take_along_axis_simd(SimpleArray<I> const & indices)
 {
-    static_assert(std::is_integral_v<I>, "I must be integral type");
     auto athis = static_cast<A *>(this);
     if (athis->ndim() != 1)
     {
-        throw std::runtime_error(Formatter() << "SimpleArray::take_along_axis(): currently only support 1D array"
-                                             << " but the array is " << athis->ndim() << " dimension");
+        const auto err = std::format("SimpleArray::take_along_axis(): "
+                                     "currently only support 1D array but the array is {} dimension",
+                                     athis->ndim());
+        throw std::runtime_error(err);
+    }
+
+    if (indices.size() == 0)
+    {
+        return A(indices.shape());
     }
 
     size_t max_idx = athis->shape()[0];
@@ -1781,18 +2161,21 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis_simd(SimpleArray<I> const 
         size_t offset = oor_ptr - indices.begin();
         shape_type const & stride = indices.stride();
         const size_t ndim = stride.size();
-        Formatter err_msg;
-        err_msg << "SimpleArray::take_along_axis_simd(): indices[" << offset / stride[0];
+        std::string indices_str = "[" + std::to_string(offset / stride[0]);
         offset %= stride[0];
         for (size_t dim = 1; dim < ndim; ++dim)
         {
-            err_msg << ", " << offset / stride[dim];
+            indices_str += ", " + std::to_string(offset / stride[dim]);
             offset %= stride[dim];
         }
-        err_msg << "] is " << *oor_ptr << ", which is out of range of the array size "
-                << max_idx;
+        indices_str += "]";
 
-        throw std::out_of_range(err_msg);
+        const auto err = std::format("SimpleArray::take_along_axis_simd(): "
+                                     "indices{} is {}, which is out of range of the array size {}",
+                                     indices_str,
+                                     *oor_ptr,
+                                     max_idx);
+        throw std::out_of_range(err);
     }
 
     I const * src = indices.begin();
@@ -1888,6 +2271,7 @@ public:
 
     explicit SimpleArrayPlex(const shape_type & shape, const DataType data_type);
     explicit SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const DataType data_type);
+    explicit SimpleArrayPlex(const shape_type & shape, const DataType data_type, size_t alignment);
 
     template <typename T>
     SimpleArrayPlex(const SimpleArray<T> & array)
@@ -1908,6 +2292,8 @@ public:
     {
         return m_data_type;
     }
+
+    size_t alignment() const;
 
     /// Get the pointer to the const instance of SimpleArray<T>.
     const void * instance_ptr() const

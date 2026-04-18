@@ -1,12 +1,16 @@
 # Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
 # BSD-style license; see COPYING
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.0.1)
 
 set(MODMESH_UNIVERSE_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/bernstein.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/bezier.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/coord.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/polygon.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/polygon_boolean.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/World.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/rtree.hpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_UNIVERSE_SOURCES
@@ -20,7 +24,10 @@ set(MODMESH_UNIVERSE_PYMODHEADERS
 
 set(MODMESH_UNIVERSE_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/universe_pymod.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_bernstein.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_shape0d.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_shape1d.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_shape2d.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_shape3d.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_World.cpp
     CACHE FILEPATH "" FORCE)
 

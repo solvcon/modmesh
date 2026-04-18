@@ -32,10 +32,11 @@
 #include <modmesh/buffer/buffer.hpp>
 #include <modmesh/toggle/profile.hpp>
 #include <modmesh/toggle/RadixTree.hpp>
+#include <modmesh/toggle/profile.hpp>
 
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 namespace modmesh
 {
@@ -115,7 +116,7 @@ public:
 
     std::string rekey(std::string const & key) const
     {
-        return m_base.empty() ? key : (Formatter() << m_base << "." << key);
+        return m_base.empty() ? key : std::format("{}.{}", m_base, key);
     }
 
 private:

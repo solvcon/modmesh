@@ -39,9 +39,9 @@ inline bool is_json_number(char c)
     return std::isdigit(c) || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-';
 }
 
-inline void throw_serialization_error(Formatter & formatter, int line, int column)
+inline void throw_serialization_error(std::string const & message, int line, int column)
 {
-    throw std::runtime_error(formatter << " (line: " << line << ", column: " << column << ")");
+    throw std::runtime_error(std::format("{} (line: {}, column: {})", message, line, column));
 }
 
 std::string escape_string(std::string_view str_view)
@@ -120,7 +120,7 @@ JsonArray JsonNode::parse_array(const std::string & json)
 
     if (json.empty())
     {
-        throw_serialization_error(Formatter() << "Invalid JSON format: empty JSON string.", 0, 0);
+        throw_serialization_error("Invalid JSON format: empty JSON string.", 0, 0);
     }
 
     for (size_t index = 0; index < json.size(); index++)
@@ -138,7 +138,7 @@ JsonArray JsonNode::parse_array(const std::string & json)
         case JsonState::Start:
             if (index > 0 || c != '[')
             {
-                throw_serialization_error(Formatter() << "Invalid JSON format: missing opening bracket.", line, column);
+                throw_serialization_error("Invalid JSON format: missing opening bracket.", line, column);
             }
 
             state = JsonState::ObjectValue;
@@ -173,7 +173,7 @@ JsonArray JsonNode::parse_array(const std::string & json)
 
                 if (depth != 0)
                 {
-                    throw_serialization_error(Formatter() << "Invalid JSON format: missing closing bracket.", line, column);
+                    throw_serialization_error("Invalid JSON format: missing closing bracket.", line, column);
                 }
 
                 // NOLINTNEXTLINE(misc-no-recursion)
@@ -182,13 +182,16 @@ JsonArray JsonNode::parse_array(const std::string & json)
             else if (c == '[')
             {
                 // array in array is valid in JSON, but we do not support it yet
-                throw_serialization_error(Formatter() << "Invalid JSON format: unexpected array in array.", line, column);
+                throw_serialization_error("Invalid JSON format: unexpected array in array.", line, column);
             }
             else
             {
                 if (!std::isalpha(c) && !is_json_number(c) && c != '"') // check if the value is a string, number, boolean, or null
                 {
-                    throw_serialization_error(Formatter() << "Invalid JSON format: invalid value expression: " << value_expression, line, column);
+                    throw_serialization_error(std::format("Invalid JSON format: invalid value expression: {}",
+                                                          value_expression),
+                                              line,
+                                              column);
                 }
 
                 // we assume the value is a string, number, boolean, or null, and the expression is correct
@@ -239,7 +242,10 @@ JsonArray JsonNode::parse_array(const std::string & json)
                     }
                     else
                     {
-                        throw_serialization_error(Formatter() << "Invalid JSON format: invalid value expression: " << value_expression, line, column);
+                        throw_serialization_error(std::format("Invalid JSON format: invalid value expression: {}",
+                                                              value_expression),
+                                                  line,
+                                                  column);
                     }
                 }
 
@@ -262,21 +268,21 @@ JsonArray JsonNode::parse_array(const std::string & json)
         case JsonState::End:
             if (index != json.size() - 1)
             {
-                throw_serialization_error(Formatter() << "Invalid JSON format: extra characters after closing bracket.", line, column);
+                throw_serialization_error("Invalid JSON format: extra characters after closing bracket.", line, column);
             }
             break; /* end case JsonState::End */
         case JsonState::ObjectKey:
-            throw_serialization_error(Formatter() << "Invalid JSON format: unexpected key in array.", line, column);
+            throw_serialization_error("Invalid JSON format: unexpected key in array.", line, column);
             break; /* end case JsonState::ObjectKey */
         case JsonState::Column:
-            throw_serialization_error(Formatter() << "Invalid JSON format: unexpected column in array.", line, column);
+            throw_serialization_error("Invalid JSON format: unexpected column in array.", line, column);
             break; /* end case JsonState::Column */
         }
     }
 
     if (state != JsonState::End)
     {
-        throw_serialization_error(Formatter() << "Invalid JSON format: missing closing bracket.", line, column);
+        throw_serialization_error("Invalid JSON format: missing closing bracket.", line, column);
     }
 
     return json_array;
@@ -298,7 +304,7 @@ JsonMap JsonNode::parse_object(const std::string & json)
 
     if (json.empty())
     {
-        throw_serialization_error(Formatter() << "Invalid JSON format: empty JSON string.", 0, 0);
+        throw_serialization_error("Invalid JSON format: empty JSON string.", 0, 0);
     }
 
     for (size_t index = 0; index < json.size(); index++)
@@ -316,7 +322,7 @@ JsonMap JsonNode::parse_object(const std::string & json)
         case JsonState::Start:
             if (index > 0 || c != '{')
             {
-                throw_serialization_error(Formatter() << "Invalid JSON format: missing opening bracket.", line, column);
+                throw_serialization_error("Invalid JSON format: missing opening bracket.", line, column);
             }
 
             state = JsonState::ObjectKey;
@@ -341,7 +347,7 @@ JsonMap JsonNode::parse_object(const std::string & json)
                 }
                 if (!close)
                 {
-                    throw_serialization_error(Formatter() << "Invalid JSON format: missing closing quote for key.", line, column);
+                    throw_serialization_error("Invalid JSON format: missing closing quote for key.", line, column);
                 }
 
                 key = trim_string(key);
@@ -349,7 +355,7 @@ JsonMap JsonNode::parse_object(const std::string & json)
             }
             else
             {
-                throw_serialization_error(Formatter() << "Invalid JSON format: missing opening quote for key.", line, column);
+                throw_serialization_error("Invalid JSON format: missing opening quote for key.", line, column);
             }
             break; /* end case JsonState::ObjectKey */
         case JsonState::Column:
@@ -388,7 +394,7 @@ JsonMap JsonNode::parse_object(const std::string & json)
 
                 if (depth != 0)
                 {
-                    throw_serialization_error(Formatter() << "Invalid JSON format: missing closing bracket.", line, column);
+                    throw_serialization_error("Invalid JSON format: missing closing bracket.", line, column);
                 }
 
                 // NOLINTNEXTLINE(misc-no-recursion)
@@ -421,7 +427,7 @@ JsonMap JsonNode::parse_object(const std::string & json)
 
                 if (depth != 0)
                 {
-                    throw_serialization_error(Formatter() << "Invalid JSON format: missing closing bracket.", line, column);
+                    throw_serialization_error("Invalid JSON format: missing closing bracket.", line, column);
                 }
 
                 // NOLINTNEXTLINE(misc-no-recursion)
@@ -431,7 +437,10 @@ JsonMap JsonNode::parse_object(const std::string & json)
             {
                 if (!std::isalpha(c) && !is_json_number(c) && c != '"') // check if the value is a string, number, boolean, or null
                 {
-                    throw_serialization_error(Formatter() << "Invalid JSON format: invalid value expression: " << value_expression, line, column);
+                    throw_serialization_error(std::format("Invalid JSON format: invalid value expression: {}",
+                                                          value_expression),
+                                              line,
+                                              column);
                 }
 
                 // we assume the value is a string, number, boolean, or null, and the expression is correct
@@ -482,7 +491,10 @@ JsonMap JsonNode::parse_object(const std::string & json)
                     }
                     else
                     {
-                        throw_serialization_error(Formatter() << "Invalid JSON format: invalid value expression: " << value_expression, line, column);
+                        throw_serialization_error(
+                            std::format("Invalid JSON format: invalid value expression: {}", value_expression),
+                            line,
+                            column);
                     }
                 }
 
@@ -505,7 +517,7 @@ JsonMap JsonNode::parse_object(const std::string & json)
         case JsonState::End:
             if (index != json.size() - 1)
             {
-                throw_serialization_error(Formatter() << "Invalid JSON format: extra characters after closing bracket.", line, column);
+                throw_serialization_error("Invalid JSON format: extra characters after closing bracket.", line, column);
             }
             break; /* end case JsonState::End */
         }
@@ -513,7 +525,7 @@ JsonMap JsonNode::parse_object(const std::string & json)
 
     if (state != JsonState::End)
     {
-        throw_serialization_error(Formatter() << "Invalid JSON format: missing closing bracket.", line, column);
+        throw_serialization_error("Invalid JSON format: missing closing bracket.", line, column);
     }
 
     return json_map;

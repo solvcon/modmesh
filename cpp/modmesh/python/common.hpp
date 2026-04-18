@@ -53,7 +53,12 @@ namespace detail
 {
 
 template <class T>
-std::string to_str(T const & self) { return Formatter() << self >> Formatter::to_str; }
+std::string to_str(T const & self)
+{
+    std::ostringstream oss;
+    oss << self;
+    return oss.str();
+}
 
 } /* end namespace detail */
 
@@ -179,7 +184,7 @@ ConcreteBufferNdarrayRemover : ConcreteBuffer::remover_type
     }
 
     // NOLINTNEXTLINE(modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays,readability-non-const-parameter)
-    void operator()(int8_t *) const override {}
+    void operator()(int8_t *, size_t) const override {}
 
     pybind11::array ndarray;
 
@@ -490,6 +495,7 @@ public:
 
     int enter_main();
     void exec_code(std::string const & code);
+    std::vector<std::string> get_completions(std::string const & text);
 
 private:
 

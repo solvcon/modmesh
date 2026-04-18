@@ -1,7 +1,7 @@
 # Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
 # BSD-style license; see COPYING
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.0.1)
 
 set(MODMESH_SPACETIME_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/core.hpp

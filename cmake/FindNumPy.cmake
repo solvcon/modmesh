@@ -3,7 +3,7 @@
 # NUMPY_FOUND
 # will be set by this script
 
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 4.0.1)
 
 if(NOT PYTHON_EXECUTABLE)
   if(NumPy_FIND_QUIETLY)

@@ -36,7 +36,9 @@
 #include <fstream>
 
 #include <Qt>
+#include <QCompleter>
 #include <QDockWidget>
+#include <QStringListModel>
 #include <QTextEdit>
 
 namespace modmesh
@@ -49,12 +51,25 @@ class RPythonCommandTextEdit
 
 public:
 
+    void setCompleter(QCompleter * completer);
+    QCompleter * completer() const { return m_completer; }
+    QString completionPrefix() const;
+
     void keyPressEvent(QKeyEvent * event) override;
 
 signals:
 
     void execute();
     void navigate(int offset);
+    void completionRequested(const QString & prefix);
+
+private slots:
+
+    void insertCompletion(const QString & completion);
+
+private:
+
+    QCompleter * m_completer = nullptr;
 
 }; /* end class RPythonCommandTextEdit */
 
@@ -63,12 +78,7 @@ class RPythonHistoryTextEdit
 {
     Q_OBJECT
 
-    void doubleClickHistoryEdit();
-
-    void mouseDoubleClickEvent(QMouseEvent *) override
-    {
-        doubleClickHistoryEdit();
-    }
+    void mouseDoubleClickEvent(QMouseEvent *) override;
 }; /* end class RPythonHistoryTextEdit */
 
 class RPythonConsoleDockWidget
@@ -84,6 +94,7 @@ public:
         Qt::WindowFlags flags = Qt::WindowFlags());
 
     QString command() const;
+    void setCommand(QString const & value);
 
     bool hasPythonRedirect() const { return m_python_redirect.is_enabled(); }
 
@@ -93,31 +104,36 @@ public:
         return *this;
     }
 
-    void writeToHistory(std::string const & data);
+    void writeToHistory(std::string const & data) const;
 
 public slots:
-
-    void setCommand(QString const & value);
     void executeCommand();
     void navigateCommand(int offset);
 
-private:
+private slots:
+    void handleCompletionRequest(const QString & prefix);
+    void updateCompletionPrefix();
 
-    void appendPastCommand(std::string const & code);
-    void printCommandOutput();
-    void printCommandHistory();
-    void printCommandStdout(const std::string & stdout_message);
-    void printCommandStderr(const std::string & stderr_message);
+private:
+    static int calcHeightToFitContents(const QTextEdit * edit);
+
+    void commitCommand(std::string const & command);
+    void printCommandStdout(const std::string & stdout_message) const;
+    void printCommandStderr(const std::string & stderr_message) const;
 
     RPythonHistoryTextEdit * m_history_edit = nullptr;
     RPythonCommandTextEdit * m_command_edit = nullptr;
-    std::string m_command_string;
-    std::deque<std::string> m_past_command_strings;
+    std::string m_draft_command;
+    std::deque<std::string> m_committed_commands;
+    size_t m_committed_commands_size_limit = 1024;
     int m_current_command_index = 0;
-    size_t m_past_limit = 1024;
     int m_last_command_serial = 0;
 
     python::PythonStreamRedirect m_python_redirect;
+
+    QCompleter * m_completer = nullptr;
+    QStringListModel * m_completer_model = nullptr;
+    QString m_completer_root_prefix;
 }; /* end class RPythonConsoleDockWidget */
 
 } /* end namespace modmesh */

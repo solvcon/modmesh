@@ -35,14 +35,14 @@ from PySide6 import QtCore, QtWidgets
 from .. import core
 from .. import apputil
 from ..plot import svg
-from ._gui_common import PilotFeature
+from . import _gui_common
 
 __all__ = [  # noqa: F822
     'SVGFileDialog',
 ]
 
 
-class SVGFileDialog(PilotFeature):
+class SVGFileDialog(_gui_common.PilotFeature):
     """
     Download an example svg from: https://www.svgrepo.com/svg/530293/tree-2
     """
@@ -92,23 +92,20 @@ class SVGFileDialog(PilotFeature):
         return found
 
     def _load_svg_file(self, filename):
-        parser = svg.PathParser(filename)
+        parser = svg.SvgParser(file_path=filename)
         parser.parse()
+        spads, cpads = parser.get_pads()
 
         world = core.WorldFp64()
 
-        for spad in parser.spads:
-            # mirror with respect to x-axis: (x, y) -> (x, -y)
-            spad.y0.ndarray[:] = -spad.y0.ndarray
-            spad.y1.ndarray[:] = -spad.y1.ndarray
+        for spad in spads:
+            # Flip against the X axis for GUI coordinate system
+            spad.mirror(axis='x')
             world.add_segments(pad=spad)
 
-        for cpad in parser.cpads:
-            # mirror with respect to x-axis: (x, y) -> (x, -y)
-            cpad.y0.ndarray[:] = -cpad.y0.ndarray
-            cpad.y1.ndarray[:] = -cpad.y1.ndarray
-            cpad.y2.ndarray[:] = -cpad.y2.ndarray
-            cpad.y3.ndarray[:] = -cpad.y3.ndarray
+        for cpad in cpads:
+            # Flip against the X axis for GUI coordinate system
+            cpad.mirror(axis='x')
             world.add_beziers(pad=cpad)
 
         wid = self._mgr.add3DWidget()

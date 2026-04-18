@@ -62,10 +62,23 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 py::arg("shape"))
             .def_timed(
                 py::init(
+                    [](py::object const & shape, size_t alignment)
+                    { return wrapped_type(make_shape(shape), alignment, with_alignment_t{}); }),
+                py::arg("shape"),
+                py::arg("alignment"))
+            .def_timed(
+                py::init(
                     [](py::object const & shape, value_type const & value)
                     { return wrapped_type(make_shape(shape), value); }),
                 py::arg("shape"),
                 py::arg("value"))
+            .def_timed(
+                py::init(
+                    [](py::object const & shape, value_type const & value, size_t alignment)
+                    { return wrapped_type(make_shape(shape), value, alignment); }),
+                py::arg("shape"),
+                py::arg("value"),
+                py::arg("alignment"))
             .def(
                 py::init(
                     [](py::array & arr_in)
@@ -151,6 +164,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def_property_readonly("nbytes", &wrapped_type::nbytes)
             .def_property_readonly("size", &wrapped_type::size)
             .def_property_readonly("itemsize", &wrapped_type::itemsize)
+            .def_property_readonly("alignment", &wrapped_type::alignment)
             .def_property_readonly(
                 "shape",
                 [](wrapped_type const & self)
@@ -219,6 +233,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                                    { return pybind11::cast(SimpleArrayPlex(arr)); })
             .wrap_modifiers()
             .wrap_calculators()
+            .wrap_matrix()
             .wrap_sort()
             .wrap_search()
             // ATTENTION: always keep the same interface between WrapSimpleArrayPlex and WrapSimpleArray
@@ -310,8 +325,22 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def("max", &wrapped_type::max)
             .def("sum", &wrapped_type::sum)
             .def("abs", &wrapped_type::abs)
-            .def("add", &wrapped_type::add)
-            .def("sub", &wrapped_type::sub)
+            .def(
+                "add",
+                [](wrapped_type const & self, wrapped_type const & other)
+                { return self.add(other); })
+            .def(
+                "add",
+                [](wrapped_type const & self, value_type scalar)
+                { return self.add(scalar); })
+            .def(
+                "sub",
+                [](wrapped_type const & self, wrapped_type const & other)
+                { return self.sub(other); })
+            .def(
+                "sub",
+                [](wrapped_type const & self, value_type scalar)
+                { return self.sub(scalar); })
             .def(
                 "mul",
                 [](wrapped_type const & self, wrapped_type const & other)
@@ -320,10 +349,16 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 "mul",
                 [](wrapped_type const & self, value_type scalar)
                 { return self.mul(scalar); })
-            .def("div", &wrapped_type::div)
+            .def(
+                "div",
+                [](wrapped_type const & self, wrapped_type const & other)
+                { return self.div(other); })
+            .def(
+                "div",
+                [](wrapped_type const & self, value_type scalar)
+                { return self.div(scalar); })
             .def("matmul", &wrapped_type::matmul)
             .def("__matmul__", &wrapped_type::matmul)
-            .def_static("eye", &wrapped_type::eye, py::arg("n"), "Create an identity matrix of size n x n")
             // TODO: In-place operation should return reference to self to support function chaining
             /*
              * Regular in-place methods (iadd, imul, etc.) are procedural calls and do
@@ -333,10 +368,22 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
              * (e.g., a = a.__iadd__(b)).
              * See: https://docs.python.org/3/reference/datamodel.html#emulating-numeric-types
              */
-            .def("iadd", [](wrapped_type & self, wrapped_type const & other)
-                 { self.iadd(other); })
-            .def("isub", [](wrapped_type & self, wrapped_type const & other)
-                 { self.isub(other); })
+            .def(
+                "iadd",
+                [](wrapped_type & self, wrapped_type const & other)
+                { self.iadd(other); })
+            .def(
+                "iadd",
+                [](wrapped_type & self, value_type scalar)
+                { self.iadd(scalar); })
+            .def(
+                "isub",
+                [](wrapped_type & self, wrapped_type const & other)
+                { self.isub(other); })
+            .def(
+                "isub",
+                [](wrapped_type & self, value_type scalar)
+                { self.isub(scalar); })
             .def(
                 "imul",
                 [](wrapped_type & self, wrapped_type const & other)
@@ -347,6 +394,10 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 { self.imul(scalar); })
             .def("idiv", [](wrapped_type & self, wrapped_type const & other)
                  { self.idiv(other); })
+            .def(
+                "idiv",
+                [](wrapped_type & self, value_type scalar)
+                { self.idiv(scalar); })
             .def("imatmul", [](wrapped_type & self, wrapped_type const & other)
                  { self.imatmul(other); })
             .def("__imatmul__", [](wrapped_type & self, wrapped_type const & other)
@@ -385,6 +436,21 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         return self.average(ashape, w);
     }
     // NOLINTEND(bugprone-easily-swappable-parameters)
+
+    wrapper_type & wrap_matrix()
+    {
+        namespace py = pybind11; // NOLINT(misc-unused-alias-decls)
+
+        (*this)
+            .def_static("eye", &wrapped_type::eye, py::arg("n"), "Create an identity matrix of size n x n")
+            .def_static("scaled_eye", &wrapped_type::scaled_eye, py::arg("n"), py::arg("scale"), "Create a scaled identity matrix of size n x n")
+            .def("hermitian", &wrapped_type::hermitian, "Create hermitian (conjugate transpose) of the matrix")
+            .def("symmetrize", &wrapped_type::symmetrize, "Create symmetric matrix by averaging with its transpose")
+            //
+            ;
+
+        return *this;
+    }
 
     wrapper_type & wrap_sort()
     {
@@ -513,13 +579,20 @@ WrapSimpleCollector<T>::WrapSimpleCollector(pybind11::module & mod, char const *
     (*this)
         .def_timed(
             py::init(
-                [](size_t length)
-                { return wrapped_type(length); }),
-            py::arg("length"))
+                [](size_t length, size_t alignment)
+                { return wrapped_type(length, alignment); }),
+            py::arg("length"),
+            py::arg("alignment") = 0)
         .def_timed(py::init<>())
+        //
+        ;
+
+    (*this)
         .def_timed("reserve", &wrapped_type::reserve, py::arg("cap"))
         .def_timed("expand", &wrapped_type::expand, py::arg("length"))
+        .def_timed("clear", &wrapped_type::clear)
         .def_property_readonly("capacity", &wrapped_type::capacity)
+        .def_property_readonly("alignment", &wrapped_type::alignment)
         .def("__len__", &wrapped_type::size)
         .def(
             "__getitem__",

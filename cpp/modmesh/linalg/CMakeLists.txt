@@ -1,10 +1,12 @@
 # Copyright (c) 2025, Chun-Shih Chang <austin20463@gmail.com>
 # BSD-style license; see COPYING
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 4.0.1)
 
 set(MODMESH_LINALG_HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/linalg.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/factorization.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/kalman_filter.hpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_LINALG_SOURCES
@@ -16,7 +18,8 @@ set(MODMESH_LINALG_PYMODHEADERS
 
 set(MODMESH_LINALG_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/linalg_pymod.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_linalg.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_factorization.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_kalman_filter.cpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_LINALG_FILES

@@ -33,7 +33,7 @@
 #include <pybind11/complex.h>
 
 #include <modmesh/python/common.hpp>
-#include <modmesh/linalg/factorization.hpp>
+#include <modmesh/linalg/linalg.hpp>
 
 namespace modmesh
 {
@@ -42,7 +42,9 @@ namespace python
 {
 
 void initialize_linalg(pybind11::module & mod);
-void wrap_linalg(pybind11::module & mod);
+void wrap_factorization(pybind11::module & mod);
+void wrap_states_info(pybind11::module & mod);
+void wrap_kalman_filter(pybind11::module & mod);
 
 } /* end namespace python */
 

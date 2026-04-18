@@ -45,6 +45,50 @@ namespace simd
 namespace neon
 {
 
+namespace detail
+{
+
+#ifndef NDEBUG
+template <typename T>
+bool is_aligned(T const * pointer, size_t alignment)
+{
+    return (reinterpret_cast<std::uintptr_t>(pointer) % alignment) == 0;
+}
+
+template <typename T>
+void check_alignment(T const * pointer, size_t required_alignment, const char * name)
+{
+    if (!is_aligned(pointer, required_alignment))
+    {
+        std::fprintf(stderr,
+                     "Warning: %s pointer %p is not aligned to %zu bytes. "
+                     "SIMD performance may be degraded.\n",
+                     name,
+                     static_cast<const void *>(pointer),
+                     required_alignment);
+    }
+}
+#endif // NDEBUG
+
+// Get the recommended memory alignment for SIMD operations based on the detected SIMD instruction set.
+inline constexpr size_t get_recommended_alignment()
+{
+#if defined(__aarch64__) || defined(__arm__)
+    return 16;
+// TODO: The non-NEON conditional should be factored out elsewhere in the future.
+#elif defined(__AVX512F__)
+    return 64;
+#elif defined(__AVX__) || defined(__AVX2__)
+    return 32;
+#elif defined(__SSE__) || defined(__SSE2__) || defined(__SSE3__) || defined(__SSSE3__) || defined(__SSE4_1__) || defined(__SSE4_2__)
+    return 16;
+#else
+    return 0;
+#endif
+}
+
+} /* end namespace detail */
+
 #if defined(__aarch64__)
 template <typename T, typename std::enable_if_t<!type::has_vectype<T>> * = nullptr>
 const T * check_between(T const * start, T const * end, T const & min_val, T const & max_val)
@@ -58,6 +102,11 @@ const T * check_between(T const * start, T const * end, T const & min_val, T con
     using vec_t = type::vector_t<T>;
     using cmpvec_t = type::vector_t<uint64_t>;
     constexpr size_t N_lane = type::vector_lane<T>;
+
+#ifndef NDEBUG
+    constexpr size_t alignment = detail::get_recommended_alignment();
+    detail::check_alignment(start, alignment, "check_between start");
+#endif
 
     vec_t max_vec = vdupq(max_val);
     vec_t min_vec = vdupq(min_val);
@@ -117,6 +166,14 @@ void add(T * dest, T const * dest_end, T const * src1, T const * src2)
     {
         using vec_t = type::vector_t<T>;
         constexpr size_t N_lane = type::vector_lane<T>;
+
+#ifndef NDEBUG
+        constexpr size_t alignment = detail::get_recommended_alignment();
+        detail::check_alignment(dest, alignment, "add dest");
+        detail::check_alignment(src1, alignment, "add src1");
+        detail::check_alignment(src2, alignment, "add src2");
+#endif
+
         vec_t src1_vec;
         vec_t src2_vec;
         vec_t res_vec;
@@ -146,6 +203,14 @@ void sub(T * dest, T const * dest_end, T const * src1, T const * src2)
     {
         using vec_t = type::vector_t<T>;
         constexpr size_t N_lane = type::vector_lane<T>;
+
+#ifndef NDEBUG
+        constexpr size_t alignment = detail::get_recommended_alignment();
+        detail::check_alignment(dest, alignment, "sub dest");
+        detail::check_alignment(src1, alignment, "sub src1");
+        detail::check_alignment(src2, alignment, "sub src2");
+#endif
+
         vec_t src1_vec;
         vec_t src2_vec;
         vec_t res_vec;
@@ -175,6 +240,14 @@ void mul(T * dest, T const * dest_end, T const * src1, T const * src2)
     {
         using vec_t = type::vector_t<T>;
         constexpr size_t N_lane = type::vector_lane<T>;
+
+#ifndef NDEBUG
+        constexpr size_t alignment = detail::get_recommended_alignment();
+        detail::check_alignment(dest, alignment, "mul dest");
+        detail::check_alignment(src1, alignment, "mul src1");
+        detail::check_alignment(src2, alignment, "mul src2");
+#endif
+
         vec_t src1_vec;
         vec_t src2_vec;
         vec_t res_vec;
@@ -204,6 +277,14 @@ void div(T * dest, T const * dest_end, T const * src1, T const * src2)
     {
         using vec_t = type::vector_t<T>;
         constexpr size_t N_lane = type::vector_lane<T>;
+
+#ifndef NDEBUG
+        constexpr size_t alignment = detail::get_recommended_alignment();
+        detail::check_alignment(dest, alignment, "div dest");
+        detail::check_alignment(src1, alignment, "div src1");
+        detail::check_alignment(src2, alignment, "div src2");
+#endif
+
         vec_t src1_vec;
         vec_t src2_vec;
         vec_t res_vec;

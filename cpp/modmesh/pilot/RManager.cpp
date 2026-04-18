@@ -140,6 +140,7 @@ void RManager::setUpMenu()
     }
     m_oneMenu = m_mainWindow->menuBar()->addMenu(QString("One"));
     m_meshMenu = m_mainWindow->menuBar()->addMenu(QString("Mesh"));
+    m_canvasMenu = m_mainWindow->menuBar()->addMenu(QString("Canvas"));
     m_profilingMenu = m_mainWindow->menuBar()->addMenu(QString("Profiling"));
     m_windowMenu = m_mainWindow->menuBar()->addMenu(QString("Window"));
 }
@@ -213,38 +214,38 @@ void RManager::setUpCameraMovementMenuItems() const
         });
 
     auto * move_camera_up = new RAction(
-        QString("Move camera up (W/⬆)"),
-        QString("Move camera up (W/⬆)"),
+        QString("Move camera up (W/UP)"),
+        QString("Move camera up (W/UP)"),
         createCameraMovementItemHandler([](CameraInputState & input)
                                         { input.tyAxisValue = 1.0; }));
 
     auto * move_camera_down = new RAction(
-        QString("Move camera down (S/⬇)"),
-        QString("Move camera down (S/⬇)"),
+        QString("Move camera down (S/DOWN)"),
+        QString("Move camera down (S/DOWN)"),
         createCameraMovementItemHandler([](CameraInputState & input)
                                         { input.tyAxisValue = -1.0; }));
 
     auto * move_camera_right = new RAction(
-        QString("Move camera right (D/➡)"),
-        QString("Move camera right (D/➡)"),
+        QString("Move camera right (D/RIGHT)"),
+        QString("Move camera right (D/RIGHT)"),
         createCameraMovementItemHandler([](CameraInputState & input)
                                         { input.txAxisValue = 1.0; }));
 
     auto * move_camera_left = new RAction(
-        QString("Move camera left (A/⬅)"),
-        QString("Move camera left (A/⬅)"),
+        QString("Move camera left (A/LEFT)"),
+        QString("Move camera left (A/LEFT)"),
         createCameraMovementItemHandler([](CameraInputState & input)
                                         { input.txAxisValue = -1.0; }));
 
     auto * move_camera_forward = new RAction(
-        QString("Move camera forward (Ctrl+W/⬆)"),
-        QString("Move camera forward (Ctrl+W/⬆)"),
+        QString("Move camera forward (Ctrl+W/UP)"),
+        QString("Move camera forward (Ctrl+W/UP)"),
         createCameraMovementItemHandler([](CameraInputState & input)
                                         { input.tzAxisValue = 1.0; }));
 
     auto * move_camera_backward = new RAction(
-        QString("Move camera backward (Ctrl+S/⬇)"),
-        QString("Move camera backward (Ctrl+S/⬇)"),
+        QString("Move camera backward (Ctrl+S/DOWN)"),
+        QString("Move camera backward (Ctrl+S/DOWN)"),
         createCameraMovementItemHandler([](CameraInputState & input)
                                         { input.tzAxisValue = -1.0; }));
 
@@ -273,6 +274,7 @@ void RManager::setUpCameraMovementMenuItems() const
                                         { input.ryAxisValue = -1.0; }));
 
     reset_camera->setShortcut(QKeySequence(Qt::Key_Escape));
+    reset_camera->setShortcutContext(Qt::WidgetShortcut);
 
     auto cameraMoveSubmenu = m_viewMenu->addMenu("Camera move");
     cameraMoveSubmenu->addAction(reset_camera);

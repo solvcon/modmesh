@@ -174,6 +174,21 @@ inline modmesh::detail::shape_type make_shape(pybind11::object const & shape_in)
     return shape;
 }
 
+template <typename T>
+struct convert_to_std
+{
+    using type = T;
+};
+
+template <typename T>
+struct convert_to_std<Complex<T>>
+{
+    using type = std::complex<T>;
+};
+
+template <typename T>
+using convert_to_std_t = typename convert_to_std<T>::type;
+
 /// Helper class for array property in Python.
 template <typename T>
 class ArrayPropertyHelper
@@ -211,22 +226,38 @@ public:
             const py::object & py_key = args[0];
             const py::object & py_value = args[1];
 
-            const bool is_number = py::isinstance<py::bool_>(py_value) || py::isinstance<py::int_>(py_value) || py::isinstance<py::float_>(py_value) || is_complex_v<T>;
+            // Determine if py_value is a numpy complexx
+            // Reference: https://stackoverflow.com/a/79673025
+            py::object builtins = py::module_::import("builtins");
+            py::object complex_class = builtins.attr("complex");
+            const bool is_number = py::isinstance<py::bool_>(py_value) || py::isinstance<py::int_>(py_value) || py::isinstance<py::float_>(py_value) || is_complex_v<T> || py::isinstance(py_value, complex_class);
 
             // sarr[K] = V
             if (py::isinstance<py::int_>(py_key) && is_number)
             {
                 const auto key = py_key.cast<ssize_t>();
-
-                arr_out.at(key) = py_value.cast<T>();
+                if (is_complex_v<T> && py::isinstance(py_value, complex_class))
+                {
+                    arr_out.at(key) = py_value.cast<convert_to_std_t<T>>();
+                }
+                else
+                {
+                    arr_out.at(key) = py_value.cast<T>();
+                }
                 return;
             }
             // sarr[K1, K2, K3] = V
             if (py::isinstance<py::tuple>(py_key) && is_number)
             {
                 const auto key = py_key.cast<std::vector<ssize_t>>();
-
-                arr_out.at(key) = py_value.cast<T>();
+                if (is_complex_v<T> && py::isinstance(py_value, complex_class))
+                {
+                    arr_out.at(key) = py_value.cast<convert_to_std_t<T>>();
+                }
+                else
+                {
+                    arr_out.at(key) = py_value.cast<T>();
+                }
                 return;
             }
 

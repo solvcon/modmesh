@@ -33,10 +33,7 @@
 #include <modmesh/math/pymod/math_pymod.hpp>
 #include <modmesh/transform/pymod/transform_pymod.hpp>
 #include <modmesh/linalg/pymod/linalg_pymod.hpp>
-
-#ifdef USE_PYTEST_HELPER_BINDING
-#include <modmesh/testhelper/pymod/testbuffer_pymod.hpp>
-#endif // USE_PYTEST_HELPER_BINDING
+#include <modmesh/oasis/pymod/oasis_pymod.hpp>
 
 #ifdef QT_CORE_LIB
 #include <modmesh/pilot/wrap_pilot.hpp>
@@ -63,14 +60,7 @@ void initialize(pybind11::module_ mod)
     pybind11::module_ onedim_mod = mod.def_submodule("onedim", "onedim");
     initialize_onedim(onedim_mod);
     initialize_transform(mod);
-
-    pybind11::module_ testhelper_mod = mod.def_submodule("testhelper", "testhelper");
-#ifdef USE_PYTEST_HELPER_BINDING
-    initialize_testbuffer(testhelper_mod);
-    testhelper_mod.attr("PYTEST_HELPER_BINDING_BUILT") = true;
-#else
-    testhelper_mod.attr("PYTEST_HELPER_BINDING_BUILT") = false;
-#endif
+    initialize_oasis(mod);
 
 #ifdef QT_CORE_LIB
     mod.attr("HAS_PILOT") = true;

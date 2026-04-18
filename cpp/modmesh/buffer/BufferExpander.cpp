@@ -37,7 +37,7 @@ void BufferExpander::reserve(size_type cap)
     {
         size_type const old_size = size();
         // Create new data holder and copy data.
-        std::unique_ptr<int8_t> new_data_holder = allocate(cap);
+        std::unique_ptr<int8_t, aligned_deleter> new_data_holder = allocate(cap, m_alignment);
         std::copy_n(m_begin, old_size, new_data_holder.get());
         // Process data holders.
         m_data_holder.swap(new_data_holder);
@@ -60,7 +60,7 @@ std::shared_ptr<ConcreteBuffer> BufferExpander::copy_concrete(size_type cap) con
 {
     size_type const old_size = size();
     size_type const csize = cap > old_size ? cap : old_size;
-    auto buf = ConcreteBuffer::construct(csize);
+    auto buf = ConcreteBuffer::construct(csize, m_alignment);
     std::copy_n(m_begin, old_size, buf->data());
     return buf;
 }
@@ -68,6 +68,10 @@ std::shared_ptr<ConcreteBuffer> BufferExpander::copy_concrete(size_type cap) con
 std::shared_ptr<ConcreteBuffer> const & BufferExpander::as_concrete(size_type cap)
 {
     size_type const old_size = size();
+    if (cap > 0 && m_alignment > 0)
+    {
+        validate_size_alignment(cap, m_alignment, "BufferExpander::as_concrete");
+    }
     if (!m_concrete_buffer)
     {
         m_concrete_buffer = copy_concrete(cap);

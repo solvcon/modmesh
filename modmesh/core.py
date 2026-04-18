@@ -100,19 +100,12 @@ list_of_python = [
     'HAS_PILOT',
 ]
 
-# testhelper directory symbols
-list_of_testhelper = [
-    'testhelper',
-]
-
 # toggle directory symbols
 list_of_toggle = [
     'WrapperProfilerStatus',
     'wrapper_profiler_status',
     'StopWatch',
     'stop_watch',
-    'TimeRegistry',
-    'time_registry',
     'CallProfiler',
     'call_profiler',
     'CallProfilerProbe',
@@ -131,26 +124,55 @@ list_of_transform = [
 list_of_linalg = [
     'llt_factorization',
     'llt_solve',
+    'KalmanStateInfoFp32',
+    'KalmanStateInfoFp64',
+    'KalmanStateInfoComplex64',
+    'KalmanStateInfoComplex128',
+    'KalmanFilterFp32',
+    'KalmanFilterFp64',
+    'KalmanFilterComplex64',
+    'KalmanFilterComplex128',
 ]
 
 # universe directory symbols
 list_of_universe = [
     'calc_bernstein_polynomial',
     'interpolate_bernstein',
+    'BoundBox3dFp32',
+    'BoundBox3dFp64',
     'Point3dFp32',
     'Point3dFp64',
     'Segment3dFp32',
     'Segment3dFp64',
+    'Triangle3dFp32',
+    'Triangle3dFp64',
     'Bezier3dFp32',
     'Bezier3dFp64',
     'PointPadFp32',
     'PointPadFp64',
     'SegmentPadFp32',
     'SegmentPadFp64',
+    'TrianglePadFp32',
+    'TrianglePadFp64',
     'CurvePadFp32',
     'CurvePadFp64',
     'WorldFp32',
     'WorldFp64',
+    'PolygonPadFp32',
+    'PolygonPadFp64',
+    'Polygon3dFp32',
+    'Polygon3dFp64',
+    'TrapezoidPadFp32',
+    'TrapezoidPadFp64',
+    'TrapezoidalDecomposerFp32',
+    'TrapezoidalDecomposerFp64',
+]
+
+# OASIS directory symbols
+list_of_oasis = [
+    'OasisDevice',
+    'OasisRecordRect',
+    'OasisRecordPoly',
 ]
 
 __all__ = (  # noqa: F822
@@ -160,11 +182,11 @@ __all__ = (  # noqa: F822
     list_of_mesh +
     list_of_multidim +
     list_of_python +
-    list_of_testhelper +
     list_of_toggle +
     list_of_transform +
     list_of_linalg +
-    list_of_universe
+    list_of_universe +
+    list_of_oasis
 )
 
 
@@ -187,11 +209,11 @@ _load(list_of_math)
 _load(list_of_mesh)
 _load(list_of_multidim)
 _load(list_of_python)
-_load(list_of_testhelper)
 _load(list_of_toggle)
 _load(list_of_transform)
 _load(list_of_linalg)
 _load(list_of_universe)
+_load(list_of_oasis)
 
 # Walk through the thirdparty folder and register all library
 # into a dictionary.

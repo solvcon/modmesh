@@ -1,5 +1,7 @@
+#pragma once
+
 /*
- * Copyright (c) 2025, Chun-Shih Chang <austin20463@gmail.com>
+ * Copyright (c) 2026, Han-Xuan Huang <c1ydehhx@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,7 +28,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/linalg/pymod/linalg_pymod.hpp>
+#include <modmesh/python/python.hpp> // Must be the first include.
+
+#include <modmesh/modmesh.hpp>
+#include <modmesh/python/common.hpp>
 
 namespace modmesh
 {
@@ -34,37 +39,8 @@ namespace modmesh
 namespace python
 {
 
-template <typename T>
-void def_llt_factorization(pybind11::module & mod)
-{
-    mod.def(
-        "llt_factorization", [](SimpleArray<T> const & A)
-        { return llt_factorization(A); },
-        pybind11::arg("A"));
-}
-
-template <typename T>
-void def_llt_solve(pybind11::module & mod)
-{
-    mod.def(
-        "llt_solve", [](SimpleArray<T> const & A, SimpleArray<T> const & b)
-        { return llt_solve(A, b); },
-        pybind11::arg("A"),
-        pybind11::arg("b"));
-}
-
-void wrap_linalg(pybind11::module & mod)
-{
-    def_llt_factorization<double>(mod);
-    def_llt_factorization<float>(mod);
-    def_llt_factorization<Complex<double>>(mod);
-    def_llt_factorization<Complex<float>>(mod);
-
-    def_llt_solve<double>(mod);
-    def_llt_solve<float>(mod);
-    def_llt_solve<Complex<double>>(mod);
-    def_llt_solve<Complex<float>>(mod);
-}
+void initialize_oasis(pybind11::module & mod);
+void wrap_oasis_device(pybind11::module & mod);
 
 } /* end namespace python */
 

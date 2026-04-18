@@ -25,9 +25,9 @@ void import_numpy()
     }
 }
 
-}
+} // namespace python
 
-}
+} // namespace modmesh
 
 PYBIND11_MODULE(modbuf, mod)
 {
