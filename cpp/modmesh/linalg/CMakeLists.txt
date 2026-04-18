@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 4.0.1)
 set(MODMESH_LINALG_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/linalg.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/factorization.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/lu_factorization.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kalman_filter.hpp
     CACHE FILEPATH "" FORCE)
 

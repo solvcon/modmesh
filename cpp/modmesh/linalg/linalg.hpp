@@ -33,6 +33,7 @@
  */
 
 #include <modmesh/linalg/factorization.hpp>
+#include <modmesh/linalg/lu_factorization.hpp>
 #include <modmesh/linalg/kalman_filter.hpp>
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

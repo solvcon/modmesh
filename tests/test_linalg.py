@@ -758,4 +758,451 @@ class KalmanFilterBatchFilterTC(unittest.TestCase):
         np.testing.assert_allclose(xs_upd, xs_upd_np, atol=1e-12, rtol=0.0)
         np.testing.assert_allclose(ps_upd, ps_upd_np, atol=1e-12, rtol=0.0)
 
+
+def _assert_PA_equals_LU(A_np, lu_np, piv, rtol, atol):
+    """Assert PA == L @ U for Lu::factorize output.
+
+    Lu::factorize stores L in the strictly lower triangle (unit diagonal)
+    and U in the upper triangle (including diagonal) of a single array.
+    piv[k] is the row swapped with row k at step k; swaps are replayed
+    sequentially from k = 0 to k = n - 1.
+    """
+    n = A_np.shape[0]
+    L = np.eye(n, dtype=lu_np.dtype)
+    U = np.zeros_like(lu_np)
+    for i in range(n):
+        for j in range(n):
+            if i > j:
+                L[i, j] = lu_np[i, j]
+            else:
+                U[i, j] = lu_np[i, j]
+    PA = A_np.astype(lu_np.dtype, copy=True)
+    for k in range(n):
+        if piv[k] != k:
+            PA[[k, piv[k]]] = PA[[piv[k], k]]
+    np.testing.assert_allclose(L @ U, PA, rtol=rtol, atol=atol)
+
+
+class TestLuFactorization(unittest.TestCase):
+    """Verify lu_factorization() produces a decomposition with PA = LU."""
+
+    def setUp(self):
+        # 3x3 invertible matrix with no zero pivots.
+        self.A_3x3 = np.array([
+            [2.0, 1.0, 1.0],
+            [4.0, -6.0, 0.0],
+            [-2.0, 7.0, 2.0],
+        ], dtype="float64")
+        # 4x4 whose leading element is not the column-max, so partial
+        # pivoting must trigger.
+        self.A_4x4 = np.array([
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 8.0, 8.0],
+            [9.0, 10.0, 11.0, 16.0],
+            [13.0, 15.0, 16.0, 17.0],
+        ], dtype="float64")
+        # 3x3 whose A[0][0] is negligibly small; a correct implementation
+        # must pivot away from it.
+        self.A_tiny_pivot = np.array([
+            [1e-15, 1.0, 0.0],
+            [1.0, 1.0, 1.0],
+            [0.0, 1.0, 2.0],
+        ], dtype="float64")
+        # 3x3 complex matrix to exercise Lu<T> instantiated for
+        # Complex<double>.
+        self.A_complex_3x3 = np.array([
+            [2.0 + 1.0j, 1.0 + 0.0j, 3.0 - 1.0j],
+            [4.0 + 0.0j, -1.0 + 2.0j, 1.0 + 1.0j],
+            [1.0 - 1.0j, 5.0 + 0.0j, 2.0 + 3.0j],
+        ], dtype="complex128")
+
+    def test_factorize_3x3_reconstructs_PA(self):
+        # Baseline: well-conditioned 3x3, also checks output shape/piv length.
+        A = mm.SimpleArrayFloat64(array=self.A_3x3)
+        lu, piv = mm.lu_factorization(A)
+        lu_np = np.array(lu)
+        self.assertEqual(lu_np.shape, (3, 3))
+        self.assertEqual(len(piv), 3)
+        _assert_PA_equals_LU(self.A_3x3, lu_np, piv, rtol=1e-12, atol=1e-14)
+
+    def test_factorize_4x4_reconstructs_PA(self):
+        # Larger 4x4 where partial pivoting must trigger on the first column.
+        A = mm.SimpleArrayFloat64(array=self.A_4x4)
+        lu, piv = mm.lu_factorization(A)
+        lu_np = np.array(lu)
+        _assert_PA_equals_LU(self.A_4x4, lu_np, piv, rtol=1e-12, atol=1e-12)
+
+    def test_factorize_complex_3x3_reconstructs_PA(self):
+        # Complex128 path: exercises the complex template instantiation.
+        A = mm.SimpleArrayComplex128(array=self.A_complex_3x3)
+        lu, piv = mm.lu_factorization(A)
+        lu_np = np.array(lu)
+        _assert_PA_equals_LU(
+            self.A_complex_3x3, lu_np, piv, rtol=1e-12, atol=1e-12)
+
+    def test_factorize_pivots_away_from_tiny_diagonal(self):
+        # Numerical stability: A[0][0] ~ 1e-15 forces a row swap at step 0.
+        A = mm.SimpleArrayFloat64(array=self.A_tiny_pivot)
+        lu, piv = mm.lu_factorization(A)
+        # With A[0][0] ~ 1e-15 and A[1][0] = 1.0, partial pivoting must
+        # swap row 0 with a later row.
+        self.assertNotEqual(piv[0], 0)
+        lu_np = np.array(lu)
+        _assert_PA_equals_LU(
+            self.A_tiny_pivot, lu_np, piv, rtol=1e-10, atol=1e-10)
+
+    def test_factorize_float32_reconstructs_PA(self):
+        # Float32 path: same input as 3x3 case but in single precision.
+        A_np = self.A_3x3.astype(np.float32)
+        A = mm.SimpleArrayFloat32(array=A_np)
+        lu, piv = mm.lu_factorization(A)
+        lu_np = np.array(lu)
+        _assert_PA_equals_LU(A_np, lu_np, piv, rtol=1e-5, atol=1e-5)
+
+
+class TestLuSolve(unittest.TestCase):
+    """Verify lu_solve() against explicit systems with known solutions."""
+
+    def setUp(self):
+        # 2x2: [[2, 3], [4, 7]] x = [5, 11]  =>  x = [1, 1]
+        self.A_2x2 = np.array([[2.0, 3.0], [4.0, 7.0]], dtype="float64")
+        self.b_2x2 = np.array([5.0, 11.0], dtype="float64")
+        self.x_2x2_expected = np.array([1.0, 1.0], dtype="float64")
+
+        # 3x3 system with known exact solution x = [1, 1, 2].
+        self.A_3x3 = np.array([
+            [2.0, 1.0, 1.0],
+            [4.0, -6.0, 0.0],
+            [-2.0, 7.0, 2.0],
+        ], dtype="float64")
+        self.b_3x3 = np.array([5.0, -2.0, 9.0], dtype="float64")
+        self.x_3x3_expected = np.array([1.0, 1.0, 2.0], dtype="float64")
+
+        # 2x2 complex: (2 + j)x + (1 - j)y = 4 + 3j, jx + 3y = 6 + j
+        # Chosen so x = [1 + j, 2] is exact.
+        self.A_c2x2 = np.array([
+            [2.0 + 1.0j, 1.0 - 1.0j],
+            [0.0 + 1.0j, 3.0 + 0.0j],
+        ], dtype="complex128")
+        self.x_c2x2_expected = np.array([1.0 + 1.0j, 2.0], dtype="complex128")
+        self.b_c2x2 = self.A_c2x2 @ self.x_c2x2_expected
+
+    def test_solve_2x2_matches_known_solution(self):
+        # Smallest case: 2x2 with 1D rhs, also checks output shape.
+        A = mm.SimpleArrayFloat64(array=self.A_2x2)
+        b = mm.SimpleArrayFloat64(array=self.b_2x2)
+        x = mm.lu_solve(A, b)
+        self.assertEqual(x.shape, (2,))
+        np.testing.assert_allclose(
+            np.array(x), self.x_2x2_expected, rtol=1e-12, atol=1e-14)
+
+    def test_solve_3x3_matches_known_solution(self):
+        # 3x3 with 1D rhs against a precomputed exact solution.
+        A = mm.SimpleArrayFloat64(array=self.A_3x3)
+        b = mm.SimpleArrayFloat64(array=self.b_3x3)
+        x = mm.lu_solve(A, b)
+        self.assertEqual(x.shape, (3,))
+        np.testing.assert_allclose(
+            np.array(x), self.x_3x3_expected, rtol=1e-12, atol=1e-14)
+
+    def test_solve_float32(self):
+        # Float32 path: same 3x3 system in single precision.
+        A = mm.SimpleArrayFloat32(array=self.A_3x3.astype(np.float32))
+        b = mm.SimpleArrayFloat32(array=self.b_3x3.astype(np.float32))
+        x = mm.lu_solve(A, b)
+        np.testing.assert_allclose(
+            np.array(x), self.x_3x3_expected.astype(np.float32),
+            rtol=1e-5, atol=1e-5)
+
+    def test_solve_complex128_matches_known_solution(self):
+        # Complex128 path with a known exact complex solution.
+        A = mm.SimpleArrayComplex128(array=self.A_c2x2)
+        b = mm.SimpleArrayComplex128(array=self.b_c2x2)
+        x = mm.lu_solve(A, b)
+        np.testing.assert_allclose(
+            np.array(x), self.x_c2x2_expected, rtol=1e-12, atol=1e-14)
+
+    def test_solve_complex64(self):
+        # Complex64 path: same complex system in single precision.
+        A_np = self.A_c2x2.astype(np.complex64)
+        b_np = self.b_c2x2.astype(np.complex64)
+        A = mm.SimpleArrayComplex64(array=A_np)
+        b = mm.SimpleArrayComplex64(array=b_np)
+        x = mm.lu_solve(A, b)
+        np.testing.assert_allclose(
+            np.array(x), self.x_c2x2_expected.astype(np.complex64),
+            rtol=1e-5, atol=1e-5)
+
+    def test_solve_2d_multi_rhs(self):
+        # 2D rhs: each column of B yields an independent solution column in X.
+        B_np = np.array([
+            [5.0, 4.0, 6.0],
+            [-2.0, -10.0, -8.0],
+            [9.0, 3.0, 15.0],
+        ], dtype="float64")
+        A = mm.SimpleArrayFloat64(array=self.A_3x3)
+        B = mm.SimpleArrayFloat64(array=B_np)
+        X = mm.lu_solve(A, B)
+        self.assertEqual(X.shape, (3, 3))
+        # Verify A @ X == B column-by-column.
+        np.testing.assert_allclose(
+            self.A_3x3 @ np.array(X), B_np, rtol=1e-12, atol=1e-12)
+
+    def test_solve_complex_multi_rhs(self):
+        # 2D complex rhs: exercises multi-column solve on the complex path.
+        B_np = np.column_stack([
+            self.b_c2x2,
+            self.b_c2x2 * (1.0 + 0.5j),
+            self.b_c2x2.conj(),
+        ])
+        A = mm.SimpleArrayComplex128(array=self.A_c2x2)
+        B = mm.SimpleArrayComplex128(array=B_np)
+        X = mm.lu_solve(A, B)
+        self.assertEqual(X.shape, (2, 3))
+        np.testing.assert_allclose(
+            self.A_c2x2 @ np.array(X), B_np, rtol=1e-12, atol=1e-12)
+
+
+class TestLuInv(unittest.TestCase):
+    """Verify lu_inv() against matrices with known inverses."""
+
+    def setUp(self):
+        # A = [[4, 7], [2, 6]]; det = 10; A^-1 = [[0.6, -0.7], [-0.2, 0.4]].
+        self.A_2x2 = np.array([[4.0, 7.0], [2.0, 6.0]], dtype="float64")
+        self.A_2x2_inv_expected = np.array(
+            [[0.6, -0.7], [-0.2, 0.4]], dtype="float64")
+        # A 3x3 diagonal matrix whose inverse is 1/diag.
+        self.A_diag = np.diag(np.array([2.0, 4.0, 5.0], dtype="float64"))
+        self.A_diag_inv_expected = np.diag(
+            np.array([0.5, 0.25, 0.2], dtype="float64"))
+
+    def test_inv_2x2_matches_known_inverse(self):
+        # 2x2 against a hand-computed inverse, also checks output shape.
+        A = mm.SimpleArrayFloat64(array=self.A_2x2)
+        A_inv = mm.lu_inv(A)
+        self.assertEqual(A_inv.shape, (2, 2))
+        np.testing.assert_allclose(
+            np.array(A_inv), self.A_2x2_inv_expected,
+            rtol=1e-12, atol=1e-14)
+
+    def test_inv_diagonal_matches_elementwise_reciprocal(self):
+        # Diagonal matrix: inverse must be elementwise 1/diag.
+        A = mm.SimpleArrayFloat64(array=self.A_diag)
+        A_inv = np.array(mm.lu_inv(A))
+        np.testing.assert_allclose(
+            A_inv, self.A_diag_inv_expected, rtol=1e-12, atol=1e-14)
+
+    def test_inv_of_identity_is_identity(self):
+        # Identity edge case: inv(I) must be I.
+        identity = np.eye(4)
+        A = mm.SimpleArrayFloat64(array=identity)
+        A_inv = np.array(mm.lu_inv(A))
+        np.testing.assert_allclose(A_inv, identity, rtol=1e-12, atol=1e-14)
+
+    def test_inv_times_A_equals_identity(self):
+        # Round-trip identity: checks A @ A_inv and A_inv @ A both equal I.
+        A_np = np.array([
+            [2.0, 1.0, 1.0],
+            [4.0, -6.0, 0.0],
+            [-2.0, 7.0, 2.0],
+        ], dtype="float64")
+        A = mm.SimpleArrayFloat64(array=A_np)
+        A_inv = np.array(mm.lu_inv(A))
+        np.testing.assert_allclose(
+            A_np @ A_inv, np.eye(3), rtol=1e-12, atol=1e-12)
+        np.testing.assert_allclose(
+            A_inv @ A_np, np.eye(3), rtol=1e-12, atol=1e-12)
+
+    def test_inv_complex(self):
+        # Complex128 path: verifies A @ A_inv == I for a complex matrix.
+        A_np = np.array([
+            [2.0 + 1.0j, 1.0 - 1.0j],
+            [0.0 + 1.0j, 3.0 + 0.0j],
+        ], dtype="complex128")
+        A = mm.SimpleArrayComplex128(array=A_np)
+        A_inv = np.array(mm.lu_inv(A))
+        np.testing.assert_allclose(
+            A_np @ A_inv, np.eye(2, dtype="complex128"),
+            rtol=1e-12, atol=1e-12)
+
+
+class TestLuSimpleArrayMethods(unittest.TestCase):
+    """Verify .solve()/.inv() work for all floating and complex types and
+    are absent on integer types."""
+
+    # (SimpleArray class, numpy dtype, tolerance)
+    _FLOAT_CASES = [
+        (mm.SimpleArrayFloat32, np.float32, 1e-5),
+        (mm.SimpleArrayFloat64, np.float64, 1e-12),
+        (mm.SimpleArrayComplex64, np.complex64, 1e-5),
+        (mm.SimpleArrayComplex128, np.complex128, 1e-12),
+    ]
+
+    @staticmethod
+    def _build_system(np_dtype):
+        # A = [[4, 7], [2, 6]]; det = 10.  b = [11, 8]  =>  x = [1, 1].
+        A = np.array([[4.0, 7.0], [2.0, 6.0]], dtype=np_dtype)
+        b = np.array([11.0, 8.0], dtype=np_dtype)
+        return A, b
+
+    def test_solve_method_matches_free_function_for_all_dtypes(self):
+        # A.solve(b) must match mm.lu_solve(A, b) across float/complex dtypes.
+        for sa_cls, np_dtype, tol in self._FLOAT_CASES:
+            with self.subTest(cls=sa_cls.__name__):
+                A_np, b_np = self._build_system(np_dtype)
+                A = sa_cls(array=A_np)
+                b = sa_cls(array=b_np)
+                x_free = np.array(mm.lu_solve(A, b))
+                x_method = np.array(A.solve(b))
+                np.testing.assert_allclose(
+                    x_method, x_free, rtol=tol, atol=tol)
+                np.testing.assert_allclose(
+                    A_np @ x_method, b_np, rtol=tol, atol=tol)
+
+    def test_inv_method_matches_free_function_for_all_dtypes(self):
+        # A.inv() must match mm.lu_inv(A) across all float/complex dtypes.
+        for sa_cls, np_dtype, tol in self._FLOAT_CASES:
+            with self.subTest(cls=sa_cls.__name__):
+                A_np, _ = self._build_system(np_dtype)
+                A = sa_cls(array=A_np)
+                inv_free = np.array(mm.lu_inv(A))
+                inv_method = np.array(A.inv())
+                np.testing.assert_allclose(
+                    inv_method, inv_free, rtol=tol, atol=tol)
+                np.testing.assert_allclose(
+                    A_np @ inv_method, np.eye(2, dtype=np_dtype),
+                    rtol=tol, atol=tol)
+
+    def test_solve_inv_absent_on_integer_types(self):
+        # Integer/bool SimpleArrays must not expose .solve()/.inv().
+        int_classes = (
+            mm.SimpleArrayBool,
+            mm.SimpleArrayInt8, mm.SimpleArrayInt16,
+            mm.SimpleArrayInt32, mm.SimpleArrayInt64,
+            mm.SimpleArrayUint8, mm.SimpleArrayUint16,
+            mm.SimpleArrayUint32, mm.SimpleArrayUint64,
+        )
+        for cls in int_classes:
+            with self.subTest(cls=cls.__name__):
+                A = cls([2, 2])
+                self.assertFalse(hasattr(A, 'solve'))
+                self.assertFalse(hasattr(A, 'inv'))
+
+
+class TestLuErrorHandling(unittest.TestCase):
+    """Verify LU routines reject invalid inputs with clear errors."""
+
+    def test_factorize_rejects_non_square(self):
+        # Rectangular 2D input must raise a clear shape error.
+        A_rect = mm.SimpleArrayFloat64(array=np.array(
+            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype="float64"))
+        with self.assertRaisesRegex(
+                ValueError, r"must be a square 2D SimpleArray"):
+            mm.lu_factorization(A_rect)
+
+    def test_factorize_rejects_1d_input(self):
+        # 1D input must raise the same shape error (not silently reshape).
+        A_1d = mm.SimpleArrayFloat64(array=np.array(
+            [1.0, 2.0, 3.0], dtype="float64"))
+        with self.assertRaisesRegex(
+                ValueError, r"must be a square 2D SimpleArray"):
+            mm.lu_factorization(A_1d)
+
+    def test_factorize_rejects_singular_duplicate_row(self):
+        # Singular matrix (duplicate row) must raise the singular error.
+        A_sing = np.array([
+            [1.0, 2.0, 3.0],
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+        ], dtype="float64")
+        A = mm.SimpleArrayFloat64(array=A_sing)
+        with self.assertRaisesRegex(
+                RuntimeError, r"singular or near-singular"):
+            mm.lu_factorization(A)
+
+    def test_factorize_rejects_near_singular_tiny_eigenvalue(self):
+        # A = v v^T + eps * I for v = [1, 1] has eigenvalues {2 + eps, eps}.
+        # With eps = 1e-15 the smaller eigenvalue is tiny but nonzero, unlike
+        # the duplicate-row test above where an eigenvalue is exactly zero.
+        eps = 1e-15
+        A_near_sing = np.array([
+            [1.0 + eps, 1.0],
+            [1.0, 1.0 + eps],
+        ], dtype="float64")
+        A = mm.SimpleArrayFloat64(array=A_near_sing)
+        with self.assertRaisesRegex(
+                RuntimeError, r"singular or near-singular"):
+            mm.lu_factorization(A)
+
+    def test_solve_rejects_non_square_A(self):
+        # lu_solve must reject rectangular A with the same shape error.
+        A_rect = mm.SimpleArrayFloat64(array=np.array(
+            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype="float64"))
+        b = mm.SimpleArrayFloat64(array=np.array(
+            [1.0, 2.0], dtype="float64"))
+        with self.assertRaisesRegex(
+                ValueError, r"must be a square 2D SimpleArray"):
+            mm.lu_solve(A_rect, b)
+
+    def test_solve_rejects_1d_dimension_mismatch(self):
+        # 1D rhs length must match A's dimension; otherwise raise.
+        A = mm.SimpleArrayFloat64(array=np.array(
+            [[1.0, 2.0], [3.0, 4.0]], dtype="float64"))
+        b_wrong = mm.SimpleArrayFloat64(array=np.array(
+            [1.0, 2.0, 3.0], dtype="float64"))
+        with self.assertRaisesRegex(ValueError, r"dimension mismatch"):
+            mm.lu_solve(A, b_wrong)
+
+    def test_solve_rejects_2d_dimension_mismatch(self):
+        # 2D rhs row-count must match A's dimension; otherwise raise.
+        A = mm.SimpleArrayFloat64(array=np.array(
+            [[1.0, 2.0], [3.0, 4.0]], dtype="float64"))
+        B_wrong = mm.SimpleArrayFloat64(array=np.array([
+            [1.0, 2.0], [3.0, 4.0], [5.0, 6.0],
+        ], dtype="float64"))
+        with self.assertRaisesRegex(ValueError, r"dimension mismatch"):
+            mm.lu_solve(A, B_wrong)
+
+    def test_solve_rejects_3d_rhs(self):
+        # rhs must be 1D or 2D; 3D input must raise.
+        A = mm.SimpleArrayFloat64(array=np.array(
+            [[1.0, 2.0], [3.0, 4.0]], dtype="float64"))
+        b_3d = mm.SimpleArrayFloat64(array=np.array(
+            [[[1.0], [2.0]], [[3.0], [4.0]]], dtype="float64"))
+        with self.assertRaisesRegex(ValueError, r"b must be 1D or 2D"):
+            mm.lu_solve(A, b_3d)
+
+    def test_solve_rejects_singular(self):
+        # Singular A must cause lu_solve to raise rather than return garbage.
+        A_sing = np.array([
+            [1.0, 2.0, 3.0],
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+        ], dtype="float64")
+        A = mm.SimpleArrayFloat64(array=A_sing)
+        b = mm.SimpleArrayFloat64(array=np.array(
+            [1.0, 2.0, 3.0], dtype="float64"))
+        with self.assertRaises(RuntimeError):
+            mm.lu_solve(A, b)
+
+    def test_inv_rejects_non_square(self):
+        # lu_inv must reject rectangular input with the same shape error.
+        A_rect = mm.SimpleArrayFloat64(array=np.array(
+            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype="float64"))
+        with self.assertRaisesRegex(
+                ValueError, r"must be a square 2D SimpleArray"):
+            mm.lu_inv(A_rect)
+
+    def test_inv_rejects_singular(self):
+        # Singular A must cause lu_inv to raise rather than return garbage.
+        A_sing = np.array([
+            [1.0, 2.0, 3.0],
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+        ], dtype="float64")
+        A = mm.SimpleArrayFloat64(array=A_sing)
+        with self.assertRaises(RuntimeError):
+            mm.lu_inv(A)
+
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
