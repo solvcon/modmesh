@@ -55,15 +55,25 @@ make run_pilot_pytest
 
 ### Linting
 ```bash
-# Run all linters (clang-format, flake8, check includes, ASCII check)
+# Run every check
 make lint
 
-# Run individual linters
-make cformat      # C++ formatting check
-make cinclude     # Check for #include with quotes
-make flake8       # Python style check
-make checkascii   # ASCII character check
+# Individual checks
+make cinclude    # C++ #include uses <...>, not "..."
+make flake8      # Python style
+make checkascii  # ASCII-only source files
+make checktws    # no trailing whitespace
+
+# Auto-fix formatting
+make cformat     # C++ formatting (clang-format --dry-run -Werror)
+make pyformat    # Python (black)
+make format      # C++ and Python (clang-format -i + black)
 ```
+
+Any target whose tool (`clang-format`, `flake8`, `black`) is missing
+prints an install hint and exits 1. `make cformat` also warns when the
+local `clang-format` major version differs from the CI pin
+(`CLANG_FORMAT_CI_VERSION` in the Makefile).
 
 ### Cleanup
 ```bash

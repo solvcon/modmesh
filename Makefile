@@ -155,19 +155,35 @@ standalone_buffer:
 	$(MAKE) -C contrib/standalone_buffer build
 	$(MAKE) -C contrib/standalone_buffer run
 
+CLANG_FORMAT ?= clang-format
+FLAKE8 ?= flake8
+BLACK ?= black
+# Pinned to the clang-format major version used by CI; see
+# .github/workflows/lint.yml. A different major version may produce a different
+# formatting output and cause CI disagreement with local runs.
+CLANG_FORMAT_CI_VERSION ?= 20
+# Mirror flake8's ignored paths so formatting and linting stay in sync.
+BLACK_OPTS ?= --extend-exclude 'thirdparty|tmp|_deps'
+
 CFFILES = $(shell find cpp gtests -type f -name '*.[ch]pp' | sort)
-ifeq ($(CFCMD),)
-	ifeq ($(FORCE_CLANG_FORMAT),)
-		CFCMD = clang-format --dry-run
-	else ifeq ($(FORCE_CLANG_FORMAT),inplace)
-		CFCMD = clang-format -i
-	else
-		CFCMD = clang-format --dry-run -Werror
-	endif
+ifeq ($(FORCE_CLANG_FORMAT),inplace)
+	CFCMD ?= $(CLANG_FORMAT) -i
+else
+	CFCMD ?= $(CLANG_FORMAT) --dry-run -Werror
 endif
 
 .PHONY: cformat
 cformat: $(CFFILES)
+	@command -v $(CLANG_FORMAT) >/dev/null 2>&1 || { \
+		echo "Error: '$(CLANG_FORMAT)' not found in PATH."; \
+		echo "  Install: pip install 'clang-format==$(CLANG_FORMAT_CI_VERSION).*'"; \
+		echo "  (CI pins clang-format $(CLANG_FORMAT_CI_VERSION))"; \
+		exit 1; \
+	}
+	@ver=$$($(CLANG_FORMAT) --version 2>/dev/null | sed -nE 's/.*version ([0-9]+).*/\1/p' | head -n1); \
+	if [ -n "$$ver" ] && [ "$$ver" != "$(CLANG_FORMAT_CI_VERSION)" ]; then \
+		echo "Warning: $(CLANG_FORMAT) major version $$ver differs from CI ($(CLANG_FORMAT_CI_VERSION)); formatting output may differ."; \
+	fi
 	@for fn in $(CFFILES) ; \
 	do \
 		echo "$(CFCMD) $${fn}:"; \
@@ -177,11 +193,19 @@ cformat: $(CFFILES)
 
 .PHONY: cinclude
 cinclude: $(CFFILES)
-	if [ "$(shell ag \#include\ \*\" cpp/)" != "" ] ; then exit 1 ; fi
+	@if grep -rnE '^[[:space:]]*#[[:space:]]*include[[:space:]]*"' cpp/ gtests/ 2>/dev/null; then \
+		echo "Error: use angle brackets for #include, not quotes (see lines above)."; \
+		exit 1; \
+	fi
 
 .PHONY: flake8
 flake8:
-	cmake --build $(BUILD_PATH) --target $@
+	@command -v $(FLAKE8) >/dev/null 2>&1 || { \
+		echo "Error: '$(FLAKE8)' not found in PATH."; \
+		echo "  Install: pip install flake8"; \
+		exit 1; \
+	}
+	$(FLAKE8) . --exclude thirdparty,tmp,_deps
 
 .PHONY: checkascii
 checkascii:
@@ -193,6 +217,19 @@ checktws:
 
 .PHONY: lint
 lint: cformat cinclude flake8 checkascii checktws
+
+.PHONY: pyformat
+pyformat:
+	@command -v $(BLACK) >/dev/null 2>&1 || { \
+		echo "Error: '$(BLACK)' not found in PATH."; \
+		echo "  Install: pip install black"; \
+		exit 1; \
+	}
+	$(BLACK) $(BLACK_OPTS) .
+
+.PHONY: format
+format: pyformat
+	@$(MAKE) FORCE_CLANG_FORMAT=inplace cformat
 
 .PHONY: clean
 clean:
