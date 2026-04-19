@@ -46,16 +46,16 @@ struct Point2D
     }
 };
 
-using TestBoundBox2d = modmesh::BoundBox2d<double>;
+using TestBoundBox3d = modmesh::BoundBox3d<double>;
 
 struct Point2DValueOps
 {
-    static TestBoundBox2d calc_bound_box(Point2D const & item)
+    static TestBoundBox3d calc_bound_box(Point2D const & item)
     {
-        return TestBoundBox2d(item.x, item.y, item.x, item.y);
+        return TestBoundBox3d(item.x, item.y, 0.0, item.x, item.y, 0.0);
     }
 
-    static TestBoundBox2d calc_group_bound_box(std::vector<Point2D> const & items)
+    static TestBoundBox3d calc_group_bound_box(std::vector<Point2D> const & items)
     {
         double min_x = std::numeric_limits<double>::max();
         double min_y = std::numeric_limits<double>::max();
@@ -69,7 +69,7 @@ struct Point2DValueOps
             max_x = std::max(max_x, item.x);
             max_y = std::max(max_y, item.y);
         }
-        return TestBoundBox2d(min_x, min_y, max_x, max_y);
+        return TestBoundBox3d(min_x, min_y, 0.0, max_x, max_y, 0.0);
     }
 };
 
@@ -85,7 +85,6 @@ struct Point3D
     }
 };
 
-using TestBoundBox3d = modmesh::BoundBox3d<double>;
 struct Point3DValueOps
 {
     static TestBoundBox3d calc_bound_box(Point3D const & item)
@@ -119,14 +118,14 @@ TEST(RTree, basic_operations)
 {
     using namespace modmesh;
 
-    RTree<Point2D, TestBoundBox2d, Point2DValueOps> rtree;
+    RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
     rtree.insert(Point2D{1.0, 1.0});
     rtree.insert(Point2D{2.0, 2.0});
     rtree.insert(Point2D{3.0, 3.0});
 
     std::vector<Point2D> results;
-    rtree.search(TestBoundBox2d(1.5, 1.5, 2.5, 2.5), results);
+    rtree.search(TestBoundBox3d(1.5, 1.5, 0.0, 2.5, 2.5, 0.0), results);
     EXPECT_EQ(results.size(), 1);
     EXPECT_EQ(results[0].x, 2.0);
     EXPECT_EQ(results[0].y, 2.0);
@@ -158,7 +157,7 @@ TEST(RTree, complex_operations)
 {
     using namespace modmesh;
 
-    RTree<Point2D, TestBoundBox2d, Point2DValueOps, 4> rtree; // Small max items per node to force splits
+    RTree<Point2D, TestBoundBox3d, Point2DValueOps, 4> rtree; // Small max items per node to force splits
 
     // Insert multiple points
     for (int i = 0; i < 100; ++i)
@@ -168,13 +167,13 @@ TEST(RTree, complex_operations)
 
     // Search for a range
     std::vector<Point2D> results;
-    rtree.search(TestBoundBox2d(20.0, 20.0, 30.0, 30.0), results);
+    rtree.search(TestBoundBox3d(20.0, 20.0, 0.0, 30.0, 30.0, 0.0), results);
     EXPECT_EQ(results.size(), 11); // Points from (20,20) to (30,30)
 
     // Remove a point and verify it's gone
     rtree.remove(Point2D{25.0, 25.0});
     results.clear();
-    rtree.search(TestBoundBox2d(20.0, 20.0, 30.0, 30.0), results);
+    rtree.search(TestBoundBox3d(20.0, 20.0, 0.0, 30.0, 30.0, 0.0), results);
     EXPECT_EQ(results.size(), 10); // One less after removal
 }
 
@@ -182,10 +181,10 @@ TEST(RTree, empty_tree_operations)
 {
     using namespace modmesh;
 
-    RTree<Point2D, TestBoundBox2d, Point2DValueOps> rtree;
+    RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
     std::vector<Point2D> results;
-    rtree.search(TestBoundBox2d(0.0, 0.0, 10.0, 10.0), results);
+    rtree.search(TestBoundBox3d(0.0, 0.0, 0.0, 10.0, 10.0, 0.0), results);
     EXPECT_EQ(results.size(), 0);
 
     rtree.remove(Point2D{1.0, 1.0});
@@ -196,19 +195,19 @@ TEST(RTree, single_point_operations)
 {
     using namespace modmesh;
 
-    RTree<Point2D, TestBoundBox2d, Point2DValueOps> rtree;
+    RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
     rtree.insert(Point2D{5.0, 5.0});
 
     std::vector<Point2D> results;
-    rtree.search(TestBoundBox2d(0.0, 0.0, 10.0, 10.0), results);
+    rtree.search(TestBoundBox3d(0.0, 0.0, 0.0, 10.0, 10.0, 0.0), results);
     EXPECT_EQ(results.size(), 1);
     EXPECT_EQ(results[0].x, 5.0);
     EXPECT_EQ(results[0].y, 5.0);
 
     rtree.remove(Point2D{5.0, 5.0});
     results.clear();
-    rtree.search(TestBoundBox2d(0.0, 0.0, 10.0, 10.0), results);
+    rtree.search(TestBoundBox3d(0.0, 0.0, 0.0, 10.0, 10.0, 0.0), results);
     EXPECT_EQ(results.size(), 0);
 }
 
@@ -216,18 +215,18 @@ TEST(RTree, overlapping_search_regions)
 {
     using namespace modmesh;
 
-    RTree<Point2D, TestBoundBox2d, Point2DValueOps> rtree;
+    RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
     rtree.insert(Point2D{5.0, 5.0});
     rtree.insert(Point2D{15.0, 15.0});
     rtree.insert(Point2D{25.0, 25.0});
 
     std::vector<Point2D> results;
-    rtree.search(TestBoundBox2d(0.0, 0.0, 20.0, 20.0), results);
+    rtree.search(TestBoundBox3d(0.0, 0.0, 0.0, 20.0, 20.0, 0.0), results);
     EXPECT_EQ(results.size(), 2);
 
     results.clear();
-    rtree.search(TestBoundBox2d(10.0, 10.0, 30.0, 30.0), results);
+    rtree.search(TestBoundBox3d(10.0, 10.0, 0.0, 30.0, 30.0, 0.0), results);
     EXPECT_EQ(results.size(), 2);
 }
 
@@ -235,17 +234,17 @@ TEST(RTree, boundary_conditions)
 {
     using namespace modmesh;
 
-    RTree<Point2D, TestBoundBox2d, Point2DValueOps> rtree;
+    RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
     rtree.insert(Point2D{10.0, 10.0});
     rtree.insert(Point2D{20.0, 20.0});
 
     std::vector<Point2D> results;
-    rtree.search(TestBoundBox2d(10.0, 10.0, 20.0, 20.0), results);
+    rtree.search(TestBoundBox3d(10.0, 10.0, 0.0, 20.0, 20.0, 0.0), results);
     EXPECT_EQ(results.size(), 2);
 
     results.clear();
-    rtree.search(TestBoundBox2d(10.1, 10.1, 19.9, 19.9), results);
+    rtree.search(TestBoundBox3d(10.1, 10.1, 0.0, 19.9, 19.9, 0.0), results);
     EXPECT_EQ(results.size(), 0);
 }
 
@@ -253,7 +252,7 @@ TEST(RTree, large_scale_insertion_2d)
 {
     using namespace modmesh;
 
-    RTree<Point2D, TestBoundBox2d, Point2DValueOps, 8> rtree;
+    RTree<Point2D, TestBoundBox3d, Point2DValueOps, 8> rtree;
 
     for (int i = 0; i < 1000; ++i)
     {
@@ -261,7 +260,7 @@ TEST(RTree, large_scale_insertion_2d)
     }
 
     std::vector<Point2D> results;
-    rtree.search(TestBoundBox2d(0.0, 0.0, 10.0, 10.0), results);
+    rtree.search(TestBoundBox3d(0.0, 0.0, 0.0, 10.0, 10.0, 0.0), results);
     EXPECT_GT(results.size(), 0);
 }
 
@@ -269,7 +268,7 @@ TEST(RTree, random_insertion_and_search_2d)
 {
     using namespace modmesh;
 
-    RTree<Point2D, TestBoundBox2d, Point2DValueOps, 16> rtree;
+    RTree<Point2D, TestBoundBox3d, Point2DValueOps, 16> rtree;
     std::mt19937 gen(42);
     std::uniform_real_distribution<> dis(0.0, 100.0);
 
@@ -282,7 +281,7 @@ TEST(RTree, random_insertion_and_search_2d)
     }
 
     std::vector<Point2D> results;
-    rtree.search(TestBoundBox2d(40.0, 40.0, 60.0, 60.0), results);
+    rtree.search(TestBoundBox3d(40.0, 40.0, 0.0, 60.0, 60.0, 0.0), results);
 
     int expected_count = 0;
     for (const auto & pt : inserted_points)
@@ -299,7 +298,7 @@ TEST(RTree, multiple_removals_2d)
 {
     using namespace modmesh;
 
-    RTree<Point2D, TestBoundBox2d, Point2DValueOps, 4> rtree;
+    RTree<Point2D, TestBoundBox3d, Point2DValueOps, 4> rtree;
 
     for (int i = 0; i < 50; ++i)
     {
@@ -312,7 +311,7 @@ TEST(RTree, multiple_removals_2d)
     }
 
     std::vector<Point2D> results;
-    rtree.search(TestBoundBox2d(0.0, 0.0, 50.0, 50.0), results);
+    rtree.search(TestBoundBox3d(0.0, 0.0, 0.0, 50.0, 50.0, 0.0), results);
     EXPECT_EQ(results.size(), 25);
 }
 
@@ -320,7 +319,7 @@ TEST(RTree, scattered_points_2d)
 {
     using namespace modmesh;
 
-    RTree<Point2D, TestBoundBox2d, Point2DValueOps> rtree;
+    RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
     rtree.insert(Point2D{0.0, 0.0});
     rtree.insert(Point2D{100.0, 100.0});
@@ -328,11 +327,11 @@ TEST(RTree, scattered_points_2d)
     rtree.insert(Point2D{50.0, -50.0});
 
     std::vector<Point2D> results;
-    rtree.search(TestBoundBox2d(-60.0, -60.0, 110.0, 110.0), results);
+    rtree.search(TestBoundBox3d(-60.0, -60.0, 0.0, 110.0, 110.0, 0.0), results);
     EXPECT_EQ(results.size(), 4);
 
     results.clear();
-    rtree.search(TestBoundBox2d(-10.0, -10.0, 10.0, 10.0), results);
+    rtree.search(TestBoundBox3d(-10.0, -10.0, 0.0, 10.0, 10.0, 0.0), results);
     EXPECT_EQ(results.size(), 1);
 }
 
@@ -340,19 +339,19 @@ TEST(RTree, duplicate_points_2d)
 {
     using namespace modmesh;
 
-    RTree<Point2D, TestBoundBox2d, Point2DValueOps> rtree;
+    RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
     rtree.insert(Point2D{5.0, 5.0});
     rtree.insert(Point2D{5.0, 5.0});
     rtree.insert(Point2D{5.0, 5.0});
 
     std::vector<Point2D> results;
-    rtree.search(TestBoundBox2d(0.0, 0.0, 10.0, 10.0), results);
+    rtree.search(TestBoundBox3d(0.0, 0.0, 0.0, 10.0, 10.0, 0.0), results);
     EXPECT_EQ(results.size(), 3);
 
     rtree.remove(Point2D{5.0, 5.0});
     results.clear();
-    rtree.search(TestBoundBox2d(0.0, 0.0, 10.0, 10.0), results);
+    rtree.search(TestBoundBox3d(0.0, 0.0, 0.0, 10.0, 10.0, 0.0), results);
     EXPECT_EQ(results.size(), 2);
 }
 
@@ -454,7 +453,7 @@ TEST(RTree, stress_test_insert_remove_2d)
 {
     using namespace modmesh;
 
-    RTree<Point2D, TestBoundBox2d, Point2DValueOps, 8> rtree;
+    RTree<Point2D, TestBoundBox3d, Point2DValueOps, 8> rtree;
     std::mt19937 gen(999);
     std::uniform_real_distribution<> dis(0.0, 1000.0);
 
@@ -472,7 +471,7 @@ TEST(RTree, stress_test_insert_remove_2d)
     }
 
     std::vector<Point2D> results;
-    rtree.search(TestBoundBox2d(0.0, 0.0, 1000.0, 1000.0), results);
+    rtree.search(TestBoundBox3d(0.0, 0.0, 0.0, 1000.0, 1000.0, 0.0), results);
     EXPECT_EQ(results.size(), points.size() / 2);
 }
 
@@ -480,7 +479,7 @@ TEST(RTree, non_overlapping_searches_2d)
 {
     using namespace modmesh;
 
-    RTree<Point2D, TestBoundBox2d, Point2DValueOps> rtree;
+    RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
     for (int i = 0; i < 10; ++i)
     {
@@ -488,10 +487,10 @@ TEST(RTree, non_overlapping_searches_2d)
     }
 
     std::vector<Point2D> results1;
-    rtree.search(TestBoundBox2d(0.0, 0.0, 25.0, 25.0), results1);
+    rtree.search(TestBoundBox3d(0.0, 0.0, 0.0, 25.0, 25.0, 0.0), results1);
 
     std::vector<Point2D> results2;
-    rtree.search(TestBoundBox2d(50.0, 50.0, 100.0, 100.0), results2);
+    rtree.search(TestBoundBox3d(50.0, 50.0, 0.0, 100.0, 100.0, 0.0), results2);
 
     EXPECT_GT(results1.size(), 0);
     EXPECT_GT(results2.size(), 0);

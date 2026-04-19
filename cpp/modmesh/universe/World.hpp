@@ -63,14 +63,14 @@ template <typename T>
 struct ShapeEntry
 {
     int32_t shape_id;
-    BoundBox2d<T> bbox;
+    BoundBox3d<T> bbox;
     bool operator==(ShapeEntry const & other) const { return shape_id == other.shape_id; }
 }; /* end of struct ShapeEntry */
 
 template <typename T>
-struct RTreeValueOps<ShapeEntry<T>, BoundBox2d<T>>
+struct RTreeValueOps<ShapeEntry<T>, BoundBox3d<T>>
 {
-    static BoundBox2d<T> calc_bound_box(ShapeEntry<T> const & entry) { return entry.bbox; }
+    static BoundBox3d<T> calc_bound_box(ShapeEntry<T> const & entry) { return entry.bbox; }
 }; /* end of struct RTreeValueOps */
 
 /**
@@ -99,7 +99,7 @@ public:
     using point_pad_type = PointPad<T>;
     using segment_pad_type = SegmentPad<T>;
     using curve_pad_type = CurvePad<T>;
-    using bbox_type = BoundBox2d<T>;
+    using bbox_type = BoundBox3d<T>;
     using rtree_type = RTree<ShapeEntry<T>, bbox_type>;
 
     template <typename... Args>
@@ -302,7 +302,7 @@ void World<T>::remove_shape(int32_t shape_id)
 template <typename T>
 std::vector<int32_t> World<T>::query_visible(T min_x, T min_y, T max_x, T max_y) const
 {
-    bbox_type viewport(min_x, min_y, max_x, max_y);
+    bbox_type viewport(min_x, min_y, T(0), max_x, max_y, T(0));
     std::vector<ShapeEntry<T>> hits;
     m_rtree->search(viewport, hits);
     std::vector<int32_t> ids;
@@ -369,7 +369,7 @@ typename World<T>::bbox_type World<T>::compute_shape_bbox(ShapeRecord const & re
         mx_x = std::max({mx_x, m_segments->x0(idx), m_segments->x1(idx)});
         mx_y = std::max({mx_y, m_segments->y0(idx), m_segments->y1(idx)});
     }
-    return bbox_type(mn_x, mn_y, mx_x, mx_y);
+    return bbox_type(mn_x, mn_y, T(0), mx_x, mx_y, T(0));
 }
 
 template <typename T>

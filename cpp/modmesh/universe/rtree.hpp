@@ -42,74 +42,8 @@
 namespace modmesh
 {
 
-/// Bounding box for 2D objects
-/// @tparam T floating-point type
-template <typename T>
-class BoundBox2d : public NumberBase<int32_t, T>
-{
-
-public:
-    using value_type = T;
-
-private:
-    value_type m_min_x;
-    value_type m_min_y;
-    value_type m_max_x;
-    value_type m_max_y;
-
-public:
-
-    /// construct a bounding box with given min and max coordinates
-    BoundBox2d(value_type min_x_in, value_type min_y_in, value_type max_x_in, value_type max_y_in)
-        : m_min_x(min_x_in)
-        , m_min_y(min_y_in)
-        , m_max_x(max_x_in)
-        , m_max_y(max_y_in)
-    {
-    }
-
-    /// construct a bounding box that encloses two bounding boxes
-    BoundBox2d(const BoundBox2d & a, const BoundBox2d & b)
-        : m_min_x(std::min(a.m_min_x, b.m_min_x))
-        , m_min_y(std::min(a.m_min_y, b.m_min_y))
-        , m_max_x(std::max(a.m_max_x, b.m_max_x))
-        , m_max_y(std::max(a.m_max_y, b.m_max_y))
-    {
-    }
-
-    value_type min_x() const { return m_min_x; }
-    value_type min_y() const { return m_min_y; }
-    value_type max_x() const { return m_max_x; }
-    value_type max_y() const { return m_max_y; }
-
-    /// check if this bounding box overlap another bounding box
-    bool overlap(BoundBox2d const & other) const
-    {
-        return !(other.m_min_x > m_max_x || other.m_max_x < m_min_x || other.m_min_y > m_max_y || other.m_max_y < m_min_y);
-    }
-
-    /// check if this bounding box contain another bounding box
-    bool contain(BoundBox2d const & other) const
-    {
-        return (other.m_min_x >= m_min_x && other.m_max_x <= m_max_x && other.m_min_y >= m_min_y && other.m_max_y <= m_max_y);
-    }
-
-    value_type calc_area() const
-    {
-        return (m_max_x - m_min_x) * (m_max_y - m_min_y);
-    }
-
-    /// expand the bounding box to include another bounding box
-    void expand(BoundBox2d const & other)
-    {
-        m_min_x = std::min(m_min_x, other.m_min_x);
-        m_min_y = std::min(m_min_y, other.m_min_y);
-        m_max_x = std::max(m_max_x, other.m_max_x);
-        m_max_y = std::max(m_max_y, other.m_max_y);
-    }
-}; /* end of struct BoundBox2d */
-
-/// Bounding box for 3D objects, e.g., Point3d, Segment3d, Triangle3d, etc.
+/// Bounding box for 2D and 3D objects, e.g., Point3d, Segment3d, Triangle3d, etc.
+/// For 2D usage, callers pass min_z = max_z = 0 explicitly.
 /// @tparam T floating-point type
 template <typename T>
 class BoundBox3d : public NumberBase<int32_t, T>
@@ -170,9 +104,15 @@ public:
                 other.m_min_z >= m_min_z && other.m_max_z <= m_max_z);
     }
 
+    /// 2D area (dx*dy) when z-extent = 0, else 3D volume (dx*dy*dz).
+    /// Do not mix 2D and 3D boxes in one RTree: the split heuristic
+    /// needs a monotonic measure within a single tree.
     value_type calc_area() const
     {
-        return (m_max_x - m_min_x) * (m_max_y - m_min_y) * (m_max_z - m_min_z);
+        const value_type dx = m_max_x - m_min_x;
+        const value_type dy = m_max_y - m_min_y;
+        const value_type dz = m_max_z - m_min_z;
+        return dz == value_type(0) ? dx * dy : dx * dy * dz;
     }
 
     void expand(BoundBox3d const & other)
