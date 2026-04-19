@@ -387,4 +387,163 @@ class WorldViewportTC(unittest.TestCase):
         self.w.remove_shape(sid)
         self.assertEqual(len(self.w.query_visible(-1, -1, 10, 10)), 0)
 
+
+class WorldLineTC(unittest.TestCase):
+    """add_line: one segment per shape."""
+
+    def setUp(self):
+        self.w = modmesh.WorldFp64()
+
+    def test_add_line(self):
+        sid = self.w.add_line(0, 0, 3, 4)
+        self.assertEqual(self.w.nshape, 1)
+        self.assertEqual(self.w.nsegment, 1)
+        self.assertEqual(self.w.shape_type_of(sid), "line")
+        seg = self.w.segment(0)
+        self.assertAlmostEqual(seg.x0, 0.0)
+        self.assertAlmostEqual(seg.y0, 0.0)
+        self.assertAlmostEqual(seg.x1, 3.0)
+        self.assertAlmostEqual(seg.y1, 4.0)
+
+    def test_translate_line(self):
+        sid = self.w.add_line(0, 0, 1, 1)
+        self.w.translate_shape(sid, 10, 20)
+        seg = self.w.segment(0)
+        self.assertAlmostEqual(seg.x0, 10.0)
+        self.assertAlmostEqual(seg.y0, 20.0)
+        self.assertAlmostEqual(seg.x1, 11.0)
+        self.assertAlmostEqual(seg.y1, 21.0)
+
+    def test_line_visible(self):
+        self.w.add_line(0, 0, 1, 1)
+        self.w.add_line(100, 100, 101, 101)
+        self.assertEqual(len(self.w.query_visible(-1, -1, 2, 2)), 1)
+
+
+class WorldRectangleTC(unittest.TestCase):
+    """add_rectangle and specialized add_square."""
+
+    def setUp(self):
+        self.w = modmesh.WorldFp64()
+
+    def test_add_rectangle(self):
+        sid = self.w.add_rectangle(0, 0, 4, 2)
+        self.assertEqual(self.w.nshape, 1)
+        self.assertEqual(self.w.nsegment, 4)
+        self.assertEqual(self.w.shape_type_of(sid), "rectangle")
+
+    def test_rectangle_is_closed(self):
+        self.w.add_rectangle(0, 0, 4, 2)
+        # Segments form a closed loop: each endpoint shared with neighbour.
+        segs = [self.w.segment(i) for i in range(4)]
+        for cur, nxt in zip(segs, segs[1:] + segs[:1]):
+            self.assertAlmostEqual(cur.x1, nxt.x0)
+            self.assertAlmostEqual(cur.y1, nxt.y0)
+
+    def test_add_square(self):
+        sid = self.w.add_square(1, 1, 3)
+        self.assertEqual(self.w.nshape, 1)
+        self.assertEqual(self.w.nsegment, 4)
+        self.assertEqual(self.w.shape_type_of(sid), "square")
+
+    def test_translate_rectangle(self):
+        sid = self.w.add_rectangle(0, 0, 4, 2)
+        self.w.translate_shape(sid, 10, 20)
+        seg = self.w.segment(0)
+        self.assertAlmostEqual(seg.x0, 10.0)
+        self.assertAlmostEqual(seg.y0, 20.0)
+        self.assertAlmostEqual(seg.x1, 14.0)
+        self.assertAlmostEqual(seg.y1, 20.0)
+
+    def test_rectangle_visible(self):
+        self.w.add_rectangle(0, 0, 1, 1)
+        self.w.add_rectangle(100, 100, 101, 101)
+        self.assertEqual(len(self.w.query_visible(-1, -1, 2, 2)), 1)
+
+
+class WorldEllipseTC(unittest.TestCase):
+    """add_ellipse and specialized add_circle."""
+
+    def setUp(self):
+        self.w = modmesh.WorldFp64()
+
+    def test_add_ellipse(self):
+        sid = self.w.add_ellipse(0, 0, 2, 1)
+        self.assertEqual(self.w.nshape, 1)
+        # Ellipse owns 4 cubic Beziers (one per quadrant) and no segments.
+        self.assertEqual(self.w.nbezier, 4)
+        self.assertEqual(self.w.nsegment, 0)
+        self.assertEqual(self.w.shape_type_of(sid), "ellipse")
+
+    def test_add_circle(self):
+        sid = self.w.add_circle(0, 0, 5)
+        self.assertEqual(self.w.nshape, 1)
+        self.assertEqual(self.w.nbezier, 4)
+        self.assertEqual(self.w.nsegment, 0)
+        self.assertEqual(self.w.shape_type_of(sid), "circle")
+
+    def test_ellipse_is_closed(self):
+        # Each quadrant's p3 must match the next quadrant's p0.
+        self.w.add_ellipse(0, 0, 3, 2)
+        for i in range(4):
+            cur = self.w.bezier(i)
+            nxt = self.w.bezier((i + 1) % 4)
+            self.assertAlmostEqual(cur[3][0], nxt[0][0])
+            self.assertAlmostEqual(cur[3][1], nxt[0][1])
+
+    def test_ellipse_anchor_points(self):
+        # The 4 anchor points (p0 of each quadrant) sit at the ellipse's
+        # compass points.
+        cx, cy, rx, ry = 5.0, -3.0, 4.0, 2.0
+        self.w.add_ellipse(cx, cy, rx, ry)
+        anchors = [list(self.w.bezier(i)[0]) for i in range(4)]
+        expected = [
+            [cx + rx, cy, 0],
+            [cx, cy + ry, 0],
+            [cx - rx, cy, 0],
+            [cx, cy - ry, 0],
+        ]
+        for got, want in zip(anchors, expected):
+            for a, b in zip(got, want):
+                self.assertAlmostEqual(a, b, places=12)
+
+    def test_translate_circle(self):
+        sid = self.w.add_circle(0, 0, 1)
+        self.w.translate_shape(sid, 10, 0)
+        # Translated center is (10, 0); every control point should shift.
+        b0 = self.w.bezier(0)
+        self.assertAlmostEqual(b0[0][0], 11.0)
+        self.assertAlmostEqual(b0[0][1], 0.0)
+        b2 = self.w.bezier(2)
+        self.assertAlmostEqual(b2[0][0], 9.0)
+        self.assertAlmostEqual(b2[0][1], 0.0)
+
+    def test_circle_is_ellipse_with_equal_radii(self):
+        w2 = modmesh.WorldFp64()
+        self.w.add_circle(1, 2, 3)
+        w2.add_ellipse(1, 2, 3, 3)
+        for i in range(4):
+            a = self.w.bezier(i)
+            b = w2.bezier(i)
+            for j in range(4):
+                for k in range(3):
+                    self.assertAlmostEqual(a[j][k], b[j][k], places=12)
+
+    def test_circle_visible(self):
+        self.w.add_circle(0, 0, 1)
+        self.w.add_circle(100, 100, 1)
+        self.assertEqual(len(self.w.query_visible(-2, -2, 2, 2)), 1)
+
+    def test_ellipse_visible_after_translate(self):
+        sid = self.w.add_ellipse(0, 0, 1, 1)
+        self.w.translate_shape(sid, 200, 200)
+        self.assertEqual(len(self.w.query_visible(-2, -2, 2, 2)), 0)
+        self.assertEqual(len(self.w.query_visible(198, 198, 202, 202)), 1)
+
+    def test_remove_ellipse(self):
+        sid = self.w.add_ellipse(0, 0, 1, 1)
+        self.w.remove_shape(sid)
+        self.assertEqual(self.w.nshape, 0)
+        self.assertEqual(len(self.w.query_visible(-2, -2, 2, 2)), 0)
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
