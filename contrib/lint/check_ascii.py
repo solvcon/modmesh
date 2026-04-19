@@ -75,7 +75,7 @@ def check_no_trailing_whitespace(filepath):
         return False
 
 
-def find_source_files():
+def find_source_files(args):
     """Find all source code files in the project."""
     patterns = [
         '**/*.py', '**/*.cpp', '**/*.hpp', '**/*.c', '**/*.h',
@@ -84,10 +84,18 @@ def find_source_files():
         '.github/workflows/*.yml'
     ]
 
+    exclude_dirs = [d + '/' for d in args.exclude_dirs.split(',')]
     all_files = []
     for pattern in patterns:
         files = glob.glob(pattern, recursive=True)
-        all_files.extend(files)
+        for fn in files:
+            usefile = True
+            for edir in exclude_dirs:
+                if fn.startswith(edir):
+                    usefile = False
+                    break
+            if usefile:
+                all_files.append(fn)
 
     return sorted(set(all_files))
 
@@ -109,6 +117,12 @@ def parse_arguments():
         help='Show all checked files'
     )
     parser.add_argument(
+        '--exclude-dirs',
+        action='store',
+        default='build,thirdparty,tmp',
+        help='comma-separated list for directories to be excluded'
+    )
+    parser.add_argument(
         'files',
         nargs='*',
         help='Specific files to check (default: all source files)'
@@ -121,7 +135,7 @@ def get_files_to_check(args):
     if args.files:
         return args.files
     else:
-        return find_source_files()
+        return find_source_files(args)
 
 
 def check_files(files_to_check, check_tws=False, verbose=False):
