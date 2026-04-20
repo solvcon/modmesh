@@ -62,7 +62,7 @@ protected:
     WrapWorld & wrap_point();
     WrapWorld & wrap_segment();
     WrapWorld & wrap_bezier();
-    WrapWorld & wrap_triangle();
+    WrapWorld & wrap_shape();
 };
 /* end class WrapWorld */
 
@@ -77,7 +77,7 @@ WrapWorld<T>::WrapWorld(pybind11::module & mod, const char * pyname, const char 
         .wrap_point()
         .wrap_segment()
         .wrap_bezier()
-        .wrap_triangle()
+        .wrap_shape()
         //
         ;
 }
@@ -108,7 +108,14 @@ WrapWorld<T> & WrapWorld<T>::wrap_management()
                 ShapeType st = self.shape_type_of(shape_id);
                 switch (st)
                 {
+                case ShapeType::DEAD: return std::string("DEAD");
+                case ShapeType::POINT: return std::string("point");
+                case ShapeType::LINE: return std::string("line");
                 case ShapeType::TRIANGLE: return std::string("triangle");
+                case ShapeType::RECTANGLE: return std::string("rectangle");
+                case ShapeType::SQUARE: return std::string("square");
+                case ShapeType::ELLIPSE: return std::string("ellipse");
+                case ShapeType::CIRCLE: return std::string("circle");
                 default: return std::string("unknown");
                 }
             },
@@ -261,7 +268,7 @@ WrapWorld<T> & WrapWorld<T>::wrap_bezier()
 }
 
 template <typename T>
-WrapWorld<T> & WrapWorld<T>::wrap_triangle()
+WrapWorld<T> & WrapWorld<T>::wrap_shape()
 {
     namespace py = pybind11;
 
@@ -278,6 +285,54 @@ WrapWorld<T> & WrapWorld<T>::wrap_triangle()
             py::arg("y1"),
             py::arg("x2"),
             py::arg("y2"))
+        .def(
+            "add_line",
+            [](wrapped_type & self, value_type x0, value_type y0, value_type x1, value_type y1)
+            {
+                return self.add_line(x0, y0, x1, y1);
+            },
+            py::arg("x0"),
+            py::arg("y0"),
+            py::arg("x1"),
+            py::arg("y1"))
+        .def(
+            "add_rectangle",
+            [](wrapped_type & self, value_type x_min, value_type y_min, value_type x_max, value_type y_max)
+            {
+                return self.add_rectangle(x_min, y_min, x_max, y_max);
+            },
+            py::arg("x_min"),
+            py::arg("y_min"),
+            py::arg("x_max"),
+            py::arg("y_max"))
+        .def(
+            "add_square",
+            [](wrapped_type & self, value_type x_min, value_type y_min, value_type size)
+            {
+                return self.add_square(x_min, y_min, size);
+            },
+            py::arg("x_min"),
+            py::arg("y_min"),
+            py::arg("size"))
+        .def(
+            "add_ellipse",
+            [](wrapped_type & self, value_type cx, value_type cy, value_type rx, value_type ry)
+            {
+                return self.add_ellipse(cx, cy, rx, ry);
+            },
+            py::arg("cx"),
+            py::arg("cy"),
+            py::arg("rx"),
+            py::arg("ry"))
+        .def(
+            "add_circle",
+            [](wrapped_type & self, value_type cx, value_type cy, value_type r)
+            {
+                return self.add_circle(cx, cy, r);
+            },
+            py::arg("cx"),
+            py::arg("cy"),
+            py::arg("r"))
         //
         ;
 
