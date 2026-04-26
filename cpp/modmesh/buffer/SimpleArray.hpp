@@ -165,6 +165,115 @@ struct select_real_t<Complex<U>>
 };
 
 template <typename A, typename T>
+class SimpleArrayMixinSum
+{
+
+private:
+
+    using internal_types = detail::SimpleArrayInternalTypes<T>;
+
+public:
+
+    using value_type = typename internal_types::value_type;
+
+    value_type sum() const
+    {
+        auto athis = static_cast<A const *>(this);
+        const size_t n = athis->size();
+        if (n == 0)
+        {
+            return zero();
+        }
+        if (athis->is_c_contiguous())
+        {
+            return sum_contiguous(athis->data(), n);
+        }
+        return sum_strided(athis->data(), athis->shape(), athis->stride());
+    }
+
+private:
+
+    static constexpr value_type zero()
+    {
+        if constexpr (is_complex_v<value_type>)
+        {
+            return value_type{};
+        }
+        else
+        {
+            return value_type{0};
+        }
+    }
+
+    static void accumulate(value_type & acc, value_type v)
+    {
+        if constexpr (std::is_same_v<bool, std::remove_const_t<value_type>>)
+        {
+            acc |= v;
+        }
+        else
+        {
+            acc += v;
+        }
+    }
+
+    static value_type sum_contiguous(value_type const * data, size_t n)
+    {
+        value_type acc = zero();
+        for (size_t i = 0; i < n; ++i)
+        {
+            accumulate(acc, data[i]);
+        }
+        return acc;
+    }
+
+    // Walk a strided array by its innermost dimension: compute the row base
+    // offset once per outer iteration, then accumulate along the last axis.
+    // This avoids the per-element multi-dimensional index arithmetic that
+    // at(sidx) performs.
+    static value_type sum_strided(value_type const * data,
+                                  small_vector<size_t> const & shape,
+                                  small_vector<size_t> const & stride)
+    {
+        const size_t ndim = shape.size();
+        const size_t last_dim = shape[ndim - 1];
+        const size_t last_stride = stride[ndim - 1];
+
+        value_type acc = zero();
+        small_vector<size_t> prefix(ndim - 1, 0);
+        do
+        {
+            size_t offset = 0;
+            for (size_t i = 0; i + 1 < ndim; ++i)
+            {
+                offset += prefix[i] * stride[i];
+            }
+            value_type const * row = data + offset;
+            for (size_t j = 0; j < last_dim; ++j)
+            {
+                accumulate(acc, row[j * last_stride]);
+            }
+        } while (next_prefix(prefix, shape));
+        return acc;
+    }
+
+    static bool next_prefix(small_vector<size_t> & idx,
+                            small_vector<size_t> const & shape)
+    {
+        for (size_t i = idx.size(); i > 0; --i)
+        {
+            if (++idx[i - 1] < shape[i - 1])
+            {
+                return true;
+            }
+            idx[i - 1] = 0;
+        }
+        return false;
+    }
+
+}; /* end class SimpleArrayMixinSum */
+
+template <typename A, typename T>
 class SimpleArrayMixinCalculators
 {
 
@@ -365,15 +474,12 @@ public:
     value_type mean() const
     {
         auto athis = static_cast<A const *>(this);
-        auto sidx = athis->first_sidx();
-        value_type sum = 0;
-        int64_t total = 0;
-        do
+        const size_t n = athis->size();
+        if (n == 0)
         {
-            sum += athis->at(sidx);
-            ++total;
-        } while (athis->next_sidx(sidx));
-        return sum / static_cast<value_type>(total);
+            throw std::runtime_error("SimpleArray::mean(): empty array");
+        }
+        return athis->sum() / static_cast<value_type>(n);
     }
 
     real_type var_op(small_vector<value_type> & sv, size_t ddof) const
@@ -483,36 +589,6 @@ public:
             if (athis->data(i) > initial)
             {
                 initial = athis->data(i);
-            }
-        }
-        return initial;
-    }
-
-    value_type sum() const
-    {
-        value_type initial;
-        if constexpr (is_complex_v<value_type>)
-        {
-            initial = value_type();
-        }
-        else
-        {
-            initial = 0;
-        }
-
-        auto athis = static_cast<A const *>(this);
-        if constexpr (!std::is_same_v<bool, std::remove_const_t<value_type>>)
-        {
-            for (size_t i = 0; i < athis->size(); ++i)
-            {
-                initial += athis->data(i);
-            }
-        }
-        else
-        {
-            for (size_t i = 0; i < athis->size(); ++i)
-            {
-                initial |= athis->data(i);
             }
         }
         return initial;
@@ -1382,6 +1458,7 @@ struct with_alignment_t
 template <typename T>
 class SimpleArray
     : public detail::SimpleArrayMixinModifiers<SimpleArray<T>, T>
+    , public detail::SimpleArrayMixinSum<SimpleArray<T>, T>
     , public detail::SimpleArrayMixinCalculators<SimpleArray<T>, T>
     , public detail::SimpleArrayMixinSort<SimpleArray<T>, T>
     , public detail::SimpleArrayMixinSearch<SimpleArray<T>, T>
@@ -1877,20 +1954,32 @@ public:
     value_type const * body() const { return m_body; }
     value_type * body() { return m_body; }
 
+    bool is_c_contiguous() const { return is_c_contiguous(m_shape, m_stride); }
+
 private:
-    void check_c_contiguous(small_vector<size_t> const & shape,
-                            small_vector<size_t> const & stride) const
+    static bool is_c_contiguous(small_vector<size_t> const & shape,
+                                small_vector<size_t> const & stride)
     {
         if (stride[stride.size() - 1] != 1)
         {
-            throw std::runtime_error("SimpleArray: C contiguous stride must end with 1");
+            return false;
         }
         for (size_t it = 0; it < shape.size() - 1; ++it)
         {
             if (stride[it] != shape[it + 1] * stride[it + 1])
             {
-                throw std::runtime_error("SimpleArray: C contiguous stride must match shape");
+                return false;
             }
+        }
+        return true;
+    }
+
+    static void check_c_contiguous(small_vector<size_t> const & shape,
+                                   small_vector<size_t> const & stride)
+    {
+        if (!is_c_contiguous(shape, stride))
+        {
+            throw std::runtime_error("SimpleArray: C contiguous stride must match shape and end with 1");
         }
     }
 

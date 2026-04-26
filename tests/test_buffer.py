@@ -1443,6 +1443,24 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         self.assertEqual(sarr.min(), -2.3)
         self.assertEqual(sarr.max(), 9.2)
 
+    def test_sum_non_contiguous(self):
+        nparr = np.arange(625, dtype='float64').reshape((5, 5, 5, 5))
+        nparr = nparr[:3:2, 1:4:2, :3:3, 3:4:2]
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        self.assertEqual(sarr.sum(), np.sum(nparr))
+
+    def test_sum_empty(self):
+        # Empty array whose inner (non-last) dim is 0; strided path must
+        # not dereference the buffer.
+        sarr = modmesh.SimpleArrayFloat64(shape=(0, 3, 4), value=0.0)
+        sarr = sarr.transpose()  # shape (4, 3, 0) -> (0, 3, 4) non-contiguous
+        self.assertEqual(sarr.sum(), 0.0)
+
+    def test_mean_empty_raises(self):
+        sarr = modmesh.SimpleArrayFloat64(shape=(0, 3), value=0.0)
+        with self.assertRaisesRegex(RuntimeError, "empty array"):
+            sarr.mean()
+
     def test_abs(self):
         sarr = modmesh.SimpleArrayInt64(shape=(3, 2), value=-2)
         self.assertEqual(sarr.sum(), -2 * 3 * 2)
