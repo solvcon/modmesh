@@ -124,6 +124,9 @@ list_of_transform = [
 list_of_linalg = [
     'llt_factorization',
     'llt_solve',
+    'lu_factorization',
+    'lu_solve',
+    'lu_inv',
     'KalmanStateInfoFp32',
     'KalmanStateInfoFp64',
     'KalmanStateInfoComplex64',

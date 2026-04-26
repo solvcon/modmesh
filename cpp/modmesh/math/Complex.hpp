@@ -264,10 +264,16 @@ struct is_complex : std::false_type {};
 
 template <typename T>
 struct is_complex<Complex<T>> : std::true_type {};
+
+template <typename T>
+struct is_real : std::is_floating_point<T> {};
 // clang-format on
 
 template <typename T>
 constexpr bool is_complex_v = is_complex<T>::value;
+
+template <typename T>
+constexpr bool is_real_v = is_real<T>::value;
 
 } /* end namespace modmesh */
 
