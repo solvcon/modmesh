@@ -30,8 +30,8 @@
 
 #if defined(__aarch64__)
 
-#include <cstddef>
 #include <arm_neon.h>
+#include <cstddef>
 
 namespace modmesh
 {
@@ -133,7 +133,7 @@ template <typename T>
 inline constexpr size_t vector_lane = detail::vector<T>::N_lane;
 
 template <typename T>
-inline constexpr size_t has_vectype = detail::vector<T>::N_lane > 0;
+inline constexpr bool has_vectype = detail::vector<T>::N_lane > 0;
 
 } /* namespace type */
 

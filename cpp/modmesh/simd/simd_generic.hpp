@@ -28,6 +28,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <concepts>
+#include <functional>
+
 namespace modmesh
 {
 
@@ -40,26 +43,23 @@ namespace generic
 template <typename T>
 const T * check_between(T const * start, T const * end, T const & min_val, T const & max_val)
 {
-    T const * ptr = start;
-    while (ptr < end)
+    for (T const * ptr = start; ptr < end; ++ptr)
     {
-        T idx = *ptr;
-        if (idx < min_val || idx > max_val)
+        if (*ptr < min_val || *ptr > max_val)
         {
             return ptr;
         }
-        ++ptr;
     }
     return nullptr;
 }
 
-template <typename T>
-void add(T * dest, T const * dest_end, T const * src1, T const * src2)
+template <typename T, std::invocable<T, T> ScalarOp>
+inline void transform_binary(T * dest, T const * dest_end, T const * src1, T const * src2, ScalarOp scalar_op)
 {
     T * ptr = dest;
     while (ptr < dest_end)
     {
-        *ptr = *src1 + *src2;
+        *ptr = scalar_op(*src1, *src2);
         ++ptr;
         ++src1;
         ++src2;
@@ -67,42 +67,27 @@ void add(T * dest, T const * dest_end, T const * src1, T const * src2)
 }
 
 template <typename T>
-void sub(T * dest, T const * dest_end, T const * src1, T const * src2)
+inline void add(T * dest, T const * dest_end, T const * src1, T const * src2)
 {
-    T * ptr = dest;
-    while (ptr < dest_end)
-    {
-        *ptr = *src1 - *src2;
-        ++ptr;
-        ++src1;
-        ++src2;
-    }
+    transform_binary<T>(dest, dest_end, src1, src2, std::plus<T>{});
 }
 
 template <typename T>
-void mul(T * dest, T const * dest_end, T const * src1, T const * src2)
+inline void sub(T * dest, T const * dest_end, T const * src1, T const * src2)
 {
-    T * ptr = dest;
-    while (ptr < dest_end)
-    {
-        *ptr = *src1 * *src2;
-        ++ptr;
-        ++src1;
-        ++src2;
-    }
+    transform_binary<T>(dest, dest_end, src1, src2, std::minus<T>{});
 }
 
 template <typename T>
-void div(T * dest, T const * dest_end, T const * src1, T const * src2)
+inline void mul(T * dest, T const * dest_end, T const * src1, T const * src2)
 {
-    T * ptr = dest;
-    while (ptr < dest_end)
-    {
-        *ptr = *src1 / *src2;
-        ++ptr;
-        ++src1;
-        ++src2;
-    }
+    transform_binary<T>(dest, dest_end, src1, src2, std::multiplies<T>{});
+}
+
+template <typename T>
+inline void div(T * dest, T const * dest_end, T const * src1, T const * src2)
+{
+    transform_binary<T>(dest, dest_end, src1, src2, std::divides<T>{});
 }
 
 template <typename T>
