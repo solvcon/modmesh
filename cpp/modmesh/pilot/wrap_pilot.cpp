@@ -289,15 +289,9 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRMenu
                    bool checkable,
                    bool checked)
                 {
-                    self.addAction(
-                        text,
-                        tip,
-                        [func]()
-                        {
-                            func();
-                        },
-                        checkable,
-                        checked);
+                    auto func_ = [func]()
+                    { func(); };
+                    self.addAction(text, tip, func_, checkable, checked);
                 },
                 py::arg("text"),
                 py::arg("tip"),
