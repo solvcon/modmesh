@@ -267,6 +267,61 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRPythonConsoleDockWidget
 
 }; /* end class WrapRPythonConsoleDockWidget */
 
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRMenu
+    : public WrapBase<WrapRMenu, RMenu, QPointer<RMenu>>
+{
+
+    friend root_base_type;
+
+    WrapRMenu(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : root_base_type(mod, pyname, pydoc)
+    {
+
+        namespace py = pybind11;
+
+        (*this)
+            .def(
+                "add_action",
+                [](wrapped_type & self,
+                   std::string const & text,
+                   std::string const & tip,
+                   py::object func,
+                   bool checkable,
+                   bool checked)
+                {
+                    self.addAction(
+                        text,
+                        tip,
+                        [func]()
+                        {
+                            func();
+                        },
+                        checkable,
+                        checked);
+                },
+                py::arg("text"),
+                py::arg("tip"),
+                py::arg("func"),
+                py::arg("checkable") = false,
+                py::arg("checked") = false)
+            .def(
+                "add_separator",
+                [](wrapped_type & self)
+                {
+                    self.addSeparator();
+                })
+            .def_property_readonly(
+                "title",
+                [](wrapped_type const & self)
+                {
+                    return self.title().toStdString();
+                })
+            //
+            ;
+    }
+
+}; /* end class WrapRMenu */
+
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
     : public WrapBase<WrapRManager, RManager>
 {
@@ -339,19 +394,61 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
         namespace py = pybind11;
 
         (*this)
+            .def(
+                "addMenu",
+                [](wrapped_type & self, std::string const & title) -> RMenu *
+                {
+                    return self.addMenu(title);
+                },
+                py::arg("title"),
+                py::return_value_policy::reference)
+            .def(
+                "addViewMenuCameraItems",
+                [](wrapped_type & self)
+                {
+                    self.addViewMenuCameraItems();
+                })
             .def_property_readonly(
                 "mainWindow",
                 [](wrapped_type & self) -> QMainWindow *
                 {
                     return self.mainWindow();
                 })
-            .def_property_readonly("fileMenu", &wrapped_type::fileMenu)
-            .def_property_readonly("viewMenu", &wrapped_type::viewMenu)
-            .def_property_readonly("oneMenu", &wrapped_type::oneMenu)
-            .def_property_readonly("meshMenu", &wrapped_type::meshMenu)
-            .def_property_readonly("canvasMenu", &wrapped_type::canvasMenu)
-            .def_property_readonly("profilingMenu", &wrapped_type::profilingMenu)
-            .def_property_readonly("windowMenu", &wrapped_type::windowMenu)
+            .def_property_readonly(
+                "fileMenu",
+                [](wrapped_type & self) -> RMenu *
+                { return self.fileMenu(); },
+                py::return_value_policy::reference)
+            .def_property_readonly(
+                "viewMenu",
+                [](wrapped_type & self) -> RMenu *
+                { return self.viewMenu(); },
+                py::return_value_policy::reference)
+            .def_property_readonly(
+                "oneMenu",
+                [](wrapped_type & self) -> RMenu *
+                { return self.oneMenu(); },
+                py::return_value_policy::reference)
+            .def_property_readonly(
+                "meshMenu",
+                [](wrapped_type & self) -> RMenu *
+                { return self.meshMenu(); },
+                py::return_value_policy::reference)
+            .def_property_readonly(
+                "canvasMenu",
+                [](wrapped_type & self) -> RMenu *
+                { return self.canvasMenu(); },
+                py::return_value_policy::reference)
+            .def_property_readonly(
+                "profilingMenu",
+                [](wrapped_type & self) -> RMenu *
+                { return self.profilingMenu(); },
+                py::return_value_policy::reference)
+            .def_property_readonly(
+                "windowMenu",
+                [](wrapped_type & self) -> RMenu *
+                { return self.windowMenu(); },
+                py::return_value_policy::reference)
             .def(
                 "quit",
                 [](wrapped_type & self)
@@ -554,6 +651,7 @@ void wrap_pilot(pybind11::module & mod)
     WrapRLine::commit(mod, "RLine", "RLine");
     WrapRPythonConsoleDockWidget::commit(mod, "RPythonConsoleDockWidget", "RPythonConsoleDockWidget");
     WrapRCameraController::commit(mod, "RCameraController", "RCameraController");
+    WrapRMenu::commit(mod, "RMenu", "RMenu");
     WrapRManager::commit(mod, "RManager", "RManager");
     WrapRManagerProxy::commit(mod, "RManagerProxy", "RManagerProxy");
 

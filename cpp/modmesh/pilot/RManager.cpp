@@ -28,11 +28,9 @@
 
 #include <modmesh/pilot/RManager.hpp> // Must be the first include.
 
-#include <vector>
-
 #include <modmesh/pilot/RAction.hpp>
+#include <modmesh/pilot/RMenu.hpp>
 #include <Qt>
-#include <QMenuBar>
 #include <QMenu>
 #include <QAction>
 #include <QActionGroup>
@@ -83,22 +81,45 @@ void RManager::reset()
     // Qt's parent-child mechanism will delete widget children; we only
     // need to ensure our raw pointers don't dangle after the call.
     m_already_setup = false;
-    m_core.reset();
-    m_mainWindow = nullptr;
-    m_fileMenu = nullptr;
-    m_viewMenu = nullptr;
-    m_oneMenu = nullptr;
-    m_meshMenu = nullptr;
-    m_canvasMenu = nullptr;
-    m_profilingMenu = nullptr;
-    m_windowMenu = nullptr;
+    m_menus.clear();
+    m_menuBar = nullptr;
     m_pycon = nullptr;
     m_mdiArea = nullptr;
+    m_mainWindow = nullptr;
+    m_core.reset();
 }
 
 RManager::~RManager()
 {
     reset();
+}
+
+RMenu * RManager::addMenu(std::string const & title)
+{
+    if (!m_menuBar)
+    {
+        return nullptr;
+    }
+    auto * menu = new RMenu(QString::fromStdString(title), m_menuBar);
+    m_menuBar->addMenu(menu);
+    m_menus[title] = menu;
+    return menu;
+}
+
+void RManager::addViewMenuCameraItems()
+{
+    RMenu * view_menu = viewMenu();
+    if (view_menu)
+    {
+        setUpCameraControllersMenuItems(view_menu);
+        setUpCameraMovementMenuItems(view_menu);
+    }
+}
+
+RMenu * RManager::findMenu(std::string const & title) const
+{
+    auto it = m_menus.find(title);
+    return (it != m_menus.end()) ? it->second : nullptr;
 }
 
 R3DWidget * RManager::add3DWidget()
@@ -147,25 +168,11 @@ void RManager::setUpCentral()
 
 void RManager::setUpMenu()
 {
-    m_mainWindow->setMenuBar(new QMenuBar(nullptr));
-    // NOTE: All menus need to be populated or Windows may crash with
-    // "exited with code -1073740791".  The reason is not yet clarified.
-
-    m_fileMenu = m_mainWindow->menuBar()->addMenu(QString("File"));
-    m_viewMenu = m_mainWindow->menuBar()->addMenu(QString("View"));
-    {
-        // Code for controlling camera is not exposed to Python yet
-        setUpCameraControllersMenuItems();
-        setUpCameraMovementMenuItems();
-    }
-    m_oneMenu = m_mainWindow->menuBar()->addMenu(QString("One"));
-    m_meshMenu = m_mainWindow->menuBar()->addMenu(QString("Mesh"));
-    m_canvasMenu = m_mainWindow->menuBar()->addMenu(QString("Canvas"));
-    m_profilingMenu = m_mainWindow->menuBar()->addMenu(QString("Profiling"));
-    m_windowMenu = m_mainWindow->menuBar()->addMenu(QString("Window"));
+    m_menuBar = new QMenuBar(nullptr);
+    m_mainWindow->setMenuBar(m_menuBar);
 }
 
-void RManager::setUpCameraControllersMenuItems() const
+void RManager::setUpCameraControllersMenuItems(RMenu * view_menu) const
 {
     auto * use_orbit_camera = new RAction(
         QString("Use Orbit Camera Controller"),
@@ -211,11 +218,11 @@ void RManager::setUpCameraControllersMenuItems() const
     use_fps_camera->setCheckable(true);
     use_orbit_camera->setChecked(true);
 
-    m_viewMenu->addAction(use_orbit_camera);
-    m_viewMenu->addAction(use_fps_camera);
+    view_menu->addAction(use_orbit_camera);
+    view_menu->addAction(use_fps_camera);
 }
 
-void RManager::setUpCameraMovementMenuItems() const
+void RManager::setUpCameraMovementMenuItems(RMenu * view_menu) const
 {
     auto * reset_camera = new RAction(
         QString("Reset (esc)"),
@@ -296,7 +303,7 @@ void RManager::setUpCameraMovementMenuItems() const
     reset_camera->setShortcut(QKeySequence(Qt::Key_Escape));
     reset_camera->setShortcutContext(Qt::WidgetShortcut);
 
-    auto cameraMoveSubmenu = m_viewMenu->addMenu("Camera move");
+    auto * cameraMoveSubmenu = view_menu->addMenu("Camera move");
     cameraMoveSubmenu->addAction(reset_camera);
     cameraMoveSubmenu->addAction(move_camera_up);
     cameraMoveSubmenu->addAction(move_camera_down);
@@ -310,7 +317,8 @@ void RManager::setUpCameraMovementMenuItems() const
     cameraMoveSubmenu->addAction(rotate_camera_negative_pitch);
 }
 
-std::function<void()> RManager::createCameraMovementItemHandler(const std::function<void(CameraInputState &)> & func) const
+std::function<void()> RManager::createCameraMovementItemHandler(
+    const std::function<void(CameraInputState &)> & func) const
 {
     return [this, func]()
     {

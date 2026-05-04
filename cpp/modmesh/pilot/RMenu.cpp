@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2026, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,15 +26,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <modmesh/pilot/common_detail.hpp> // Must be the first include.
+#include <modmesh/pilot/RMenu.hpp> // Must be the first include.
 
-#include <modmesh/pilot/R3DWidget.hpp>
-#include <modmesh/pilot/RManager.hpp>
-#include <modmesh/pilot/RMenu.hpp>
-#include <modmesh/pilot/RPythonConsoleDockWidget.hpp>
-#include <modmesh/pilot/RCameraController.hpp>
-#include <modmesh/pilot/RStaticMesh.hpp>
-#include <modmesh/pilot/RWorld.hpp>
-#include <modmesh/pilot/RAxisMark.hpp>
+namespace modmesh
+{
+
+RAction * RMenu::addAction(
+    std::string const & text,
+    std::string const & tip,
+    std::function<void()> callback,
+    bool checkable,
+    bool checked)
+{
+    auto * act = new RAction(
+        QString::fromStdString(text),
+        QString::fromStdString(tip),
+        std::move(callback),
+        this);
+    act->setCheckable(checkable);
+    if (checkable)
+    {
+        act->setChecked(checked);
+    }
+    QMenu::addAction(act);
+    return act;
+}
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

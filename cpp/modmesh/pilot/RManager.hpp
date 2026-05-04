@@ -33,12 +33,17 @@
 #include <modmesh/pilot/RPythonConsoleDockWidget.hpp>
 #include <modmesh/pilot/R3DWidget.hpp>
 #include <modmesh/pilot/RAction.hpp>
+#include <modmesh/pilot/RMenu.hpp>
 
 #include <QMainWindow>
 #include <QMdiArea>
 #include <QMdiSubWindow>
+#include <QMenuBar>
 #include <QApplication>
 #include <Qt>
+
+#include <string>
+#include <unordered_map>
 
 namespace modmesh
 {
@@ -67,13 +72,18 @@ public:
     template <typename... Args>
     QMdiSubWindow * addSubWindow(Args &&... args);
 
-    QMenu * fileMenu() { return m_fileMenu; }
-    QMenu * viewMenu() { return m_viewMenu; }
-    QMenu * oneMenu() { return m_oneMenu; }
-    QMenu * meshMenu() { return m_meshMenu; }
-    QMenu * canvasMenu() { return m_canvasMenu; }
-    QMenu * profilingMenu() { return m_profilingMenu; }
-    QMenu * windowMenu() { return m_windowMenu; }
+    RMenu * addMenu(std::string const & title);
+
+    void addViewMenuCameraItems();
+
+    // Look up the menu registered under the matching title and return.
+    RMenu * fileMenu() { return findMenu("File"); }
+    RMenu * viewMenu() { return findMenu("View"); }
+    RMenu * oneMenu() { return findMenu("One"); }
+    RMenu * meshMenu() { return findMenu("Mesh"); }
+    RMenu * canvasMenu() { return findMenu("Canvas"); }
+    RMenu * profilingMenu() { return findMenu("Profiling"); }
+    RMenu * windowMenu() { return findMenu("Window"); }
 
     void quit() { m_core->quit(); }
 
@@ -90,24 +100,21 @@ private:
     void setUpCentral();
     void setUpMenu();
 
-    void setUpCameraControllersMenuItems() const;
-    void setUpCameraMovementMenuItems() const;
+    void setUpCameraControllersMenuItems(RMenu * view_menu) const;
+    void setUpCameraMovementMenuItems(RMenu * view_menu) const;
 
     std::function<void()> createCameraMovementItemHandler(const std::function<void(CameraInputState &)> &) const;
+
+    RMenu * findMenu(std::string const & title) const;
 
     bool m_already_setup = false;
 
     std::unique_ptr<QCoreApplication> m_core = nullptr;
 
     QMainWindow * m_mainWindow = nullptr;
+    QMenuBar * m_menuBar = nullptr;
 
-    QMenu * m_fileMenu = nullptr;
-    QMenu * m_viewMenu = nullptr;
-    QMenu * m_oneMenu = nullptr;
-    QMenu * m_meshMenu = nullptr;
-    QMenu * m_canvasMenu = nullptr;
-    QMenu * m_profilingMenu = nullptr;
-    QMenu * m_windowMenu = nullptr;
+    std::unordered_map<std::string, RMenu *> m_menus;
 
     RPythonConsoleDockWidget * m_pycon = nullptr;
     QMdiArea * m_mdiArea = nullptr;

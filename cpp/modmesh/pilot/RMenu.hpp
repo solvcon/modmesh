@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2026, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,13 +30,43 @@
 
 #include <modmesh/pilot/common_detail.hpp> // Must be the first include.
 
-#include <modmesh/pilot/R3DWidget.hpp>
-#include <modmesh/pilot/RManager.hpp>
-#include <modmesh/pilot/RMenu.hpp>
-#include <modmesh/pilot/RPythonConsoleDockWidget.hpp>
-#include <modmesh/pilot/RCameraController.hpp>
-#include <modmesh/pilot/RStaticMesh.hpp>
-#include <modmesh/pilot/RWorld.hpp>
-#include <modmesh/pilot/RAxisMark.hpp>
+#include <modmesh/pilot/RAction.hpp>
+
+#include <QMenu>
+
+#include <functional>
+#include <string>
+
+namespace modmesh
+{
+
+/**
+ * Qt menu that accepts Python-callable callbacks through pybind11.
+ *
+ * RMenu extends QMenu with an addAction() overload that takes std::string
+ * text/tip and a std::function callback so that Python callers do not need
+ * to create QAction objects directly.  Checkable items are supported via the
+ * optional checkable/checked parameters.
+ */
+class RMenu
+    : public QMenu
+{
+    Q_OBJECT
+
+public:
+
+    using QMenu::addAction; // Keep all QMenu overloads visible
+    using QMenu::QMenu; // Inherit constructors
+
+    RAction * addAction(
+        std::string const & text,
+        std::string const & tip,
+        std::function<void()> callback,
+        bool checkable = false,
+        bool checked = false);
+
+}; /* end class RMenu */
+
+} /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

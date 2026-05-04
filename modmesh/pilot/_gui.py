@@ -39,7 +39,6 @@ from . import _pilot_core as _pcore
 from . import airfoil
 
 if _pcore.enable:
-    from PySide6.QtGui import QAction
     from . import _mesh
     from . import _euler1d
     from . import _burgers1d
@@ -92,6 +91,7 @@ class _Controller(metaclass=_Singleton):
         self._rmgr.setUp()
         self._rmgr.windowTitle = name
         self._rmgr.resize(w=size[0], h=size[1])
+        self._create_menus()
         self.gmsh_dialog = _mesh.GmshFileDialog(mgr=self._rmgr)
         self.svg_dialog = _svg_gui.SVGFileDialog(mgr=self._rmgr)
         self.sample_mesh = _mesh.SampleMesh(mgr=self._rmgr)
@@ -107,23 +107,29 @@ class _Controller(metaclass=_Singleton):
         self._rmgr.show()
         return self._rmgr.exec()
 
+    def _create_menus(self):
+        wm = self._rmgr
+        # NOTE: All menus must be created before the window is shown or
+        # Windows may crash with "exited with code -1073740791".
+        wm.addMenu("File")
+        wm.addMenu("View")
+        wm.addViewMenuCameraItems()
+        wm.addMenu("One")
+        wm.addMenu("Mesh")
+        wm.addMenu("Canvas")
+        wm.addMenu("Profiling")
+        wm.addMenu("Window")
+
     def populate_menu(self):
         wm = self._rmgr
 
         def _addAction(menu, text, tip, func, checkable=False, checked=False):
-            act = QAction(text, wm.mainWindow)
-            act.setStatusTip(tip)
-            act.setCheckable(checkable)
-            if checkable:
-                act.setChecked(checked)
-            if callable(func):
-                act.triggered.connect(lambda *a: func())
-            elif func:
+            if not callable(func):
                 modname, funcname = func.rsplit('.', maxsplit=1)
                 mod = importlib.import_module(modname)
                 func = getattr(mod, funcname)
-                act.triggered.connect(lambda *a: func())
-            menu.addAction(act)
+            menu.add_action(text=text, tip=tip, func=func,
+                            checkable=checkable, checked=checked)
 
         self.gmsh_dialog.populate_menu()
         self.svg_dialog.populate_menu()

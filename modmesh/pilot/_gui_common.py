@@ -26,7 +26,7 @@
 
 
 from . import _pilot_core as _pcore
-from PySide6 import QtCore, QtGui
+from PySide6 import QtCore
 
 
 class PilotFeature(QtCore.QObject):
@@ -69,17 +69,14 @@ class PilotFeature(QtCore.QObject):
         Add an item to the corresponding menu.
 
         :param menu: The menu to add the item to.
-        :type menu: PySide6.QtWidget.QMenu
+        :type menu: modmesh.pilot.RMenu
         :param text: Menu description string.
         :param tip: Menu tip string.
         :param func: Python callable.
 
         :return: None
         """
-        act = QtGui.QAction(text, self._mainWindow)
-        act.setStatusTip(tip)
-        act.triggered.connect(func)
-        menu.addAction(act)
+        menu.add_action(text=text, tip=tip, func=func)
 
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
