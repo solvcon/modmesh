@@ -359,6 +359,18 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 { return self.div(scalar); })
             .def("matmul", &wrapped_type::matmul)
             .def("__matmul__", &wrapped_type::matmul)
+            .def(
+                "fast_matmul",
+                [](wrapped_type const & self,
+                   wrapped_type const & other,
+                   size_t tile_x,
+                   size_t tile_y,
+                   size_t tile_z)
+                { return self.fast_matmul(other, tile_x, tile_y, tile_z); },
+                py::arg("other"),
+                py::arg("tile_x") = 16,
+                py::arg("tile_y") = 16,
+                py::arg("tile_z") = 16)
             // TODO: In-place operation should return reference to self to support function chaining
             /*
              * Regular in-place methods (iadd, imul, etc.) are procedural calls and do
