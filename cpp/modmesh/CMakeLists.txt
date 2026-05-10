@@ -152,12 +152,14 @@ Checks: '-bugprone-suspicious-include,llvm-twine-local'")
 
 if (APPLE)
     find_library(APPLE_FWK_FOUNDATION Foundation REQUIRED)
+    find_library(APPLE_FWK_ACCELERATE Accelerate REQUIRED)
     find_library(APPLE_FWK_QUARTZ_CORE QuartzCore REQUIRED)
     find_library(APPLE_FWK_METAL Metal REQUIRED)
 
     target_link_libraries(
         modmesh_primary PUBLIC
         ${APPLE_FWK_FOUNDATION}
+        ${APPLE_FWK_ACCELERATE}
         ${APPLE_FWK_QUARTZ_CORE}
         ${APPLE_FWK_METAL}
     )

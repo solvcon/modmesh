@@ -127,6 +127,7 @@ list_of_linalg = [
     'lu_factorization',
     'lu_solve',
     'lu_inv',
+    'EigenSystem',
     'KalmanStateInfoFp32',
     'KalmanStateInfoFp64',
     'KalmanStateInfoComplex64',

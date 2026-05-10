@@ -50,6 +50,7 @@ void initialize_linalg(pybind11::module & mod)
         wrap_factorization(mod);
         wrap_states_info(mod);
         wrap_kalman_filter(mod);
+        wrap_EigenSystem(mod);
     };
 
     OneTimeInitializer<linalg_pymod_tag>::me()(mod, initialize_impl);
