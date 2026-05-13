@@ -38,6 +38,8 @@ jobs:
         with:
           fetch-depth: 1
 
+      - uses: ./.github/actions/job_guard
+
       - name: event name
         run: |
           echo "Event name: ${{ github.event_name }}"
@@ -74,9 +76,11 @@ jobs:
         run: |
           make pyprof
 
+      - uses: ./.github/actions/job_done
+
   send_email_on_failure:
     needs: [profile]
-    if: ${{ always() && (needs.*.result == 'failure') && github.ref_name == 'master' && github.event.repository.fork == false }}
+    if: ${{ always() && contains(needs.*.result, 'failure') && github.ref_name == 'master' && github.event.repository.fork == false }}
     uses: ./.github/workflows/send_email_on_fail.yml
     with:
       job_results: |

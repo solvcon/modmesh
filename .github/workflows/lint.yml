@@ -51,6 +51,8 @@ jobs:
       with:
         fetch-depth: 1
 
+    - uses: ./.github/actions/job_guard
+
     - name: event name
       run: |
         echo "github.event_name: ${{ github.event_name }}"
@@ -104,9 +106,11 @@ jobs:
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
 
+    - uses: ./.github/actions/job_done
+
   send_email_on_failure:
     needs: [lint]
-    # Run if any of the dependencies failed in master branch
+    # Run if any of the dependencies failed or timed out in master branch
     if: ${{ always() && contains(needs.*.result, 'failure') && github.ref_name == 'master' && github.event.repository.fork == false }}
     uses: ./.github/workflows/send_email_on_fail.yml
     with:
