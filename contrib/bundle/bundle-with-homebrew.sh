@@ -11,6 +11,13 @@
 # development or production machine.
 #
 # Usage:
+#   ./contrib/bundle/bundle-with-homebrew.sh check
+#   ./contrib/bundle/bundle-with-homebrew.sh bundle [--skip-build]
+#                                                   [--skip-check]
+#                                                   [--output DIR]
+#   ./contrib/bundle/bundle-with-homebrew.sh verify path/to/pilot.dmg
+#
+# Legacy usage without a subcommand still runs the bundle step:
 #   ./contrib/bundle/bundle-with-homebrew.sh [--skip-build] [--skip-check]
 #                                            [--output DIR]
 #
@@ -24,9 +31,171 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BUNDLE_REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$BUNDLE_REPO_ROOT"
 
+MIN_LOADS=${MIN_LOADS:-50}
+HOST_PREFIX_RE='^(/opt/homebrew|/usr/local)'
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+usage() {
+    cat <<'EOF'
+Usage:
+  contrib/bundle/bundle-with-homebrew.sh check
+  contrib/bundle/bundle-with-homebrew.sh bundle [--skip-build] [--skip-check] [--output DIR]
+  contrib/bundle/bundle-with-homebrew.sh verify path/to/pilot.dmg
+  contrib/bundle/bundle-with-homebrew.sh all [--skip-build] [--skip-check] [--output DIR]
+
+Subcommands:
+  check    Check macOS bundle release dependencies. Does not build or install.
+  bundle   Build/package pilot.app and pilot.dmg with Homebrew dependencies.
+  verify   Verify a generated release DMG artifact.
+  all      Run check, then bundle.
+EOF
+}
+
+note() { printf '==> %s\n' "$*"; }
+ok() { printf 'OK    %s\n' "$*"; }
+fail() { printf 'FAIL  %s\n' "$*" >&2; return 1; }
+
+require_macos() {
+    [[ "$(uname -s)" == "Darwin" ]] || fail "macOS is required for macOS bundle release"
+}
+
+setup_hint() {
+    cat >&2 <<'EOF'
+
+For a fresh macOS bundling environment, try:
+  bash contrib/vm/macos/mac26_vmsetup.sh homebrew
+  bash contrib/vm/macos/mac26_vmsetup.sh dependency
+EOF
+}
+
+find_brew() {
+    if command -v brew >/dev/null 2>&1; then
+        command -v brew
+    elif [[ -x /opt/homebrew/bin/brew ]]; then
+        printf '%s\n' /opt/homebrew/bin/brew
+    elif [[ -x /usr/local/bin/brew ]]; then
+        printf '%s\n' /usr/local/bin/brew
+    else
+        return 1
+    fi
+}
+
+require_command() {
+    local cmd="$1" hint="${2:-}"
+    if command -v "$cmd" >/dev/null 2>&1; then
+        ok "$cmd: $(command -v "$cmd")"
+    else
+        fail "$cmd: not found${hint:+ ($hint)}"
+    fi
+}
+
+python_module_check() {
+    local module="$1" hint="${2:-}" out
+    out=$(mktemp -t modmesh-bundle-pycheck)
+    if python3 - "$module" <<'PY' >"$out" 2>&1
+import importlib
+import sys
+module = sys.argv[1]
+try:
+    mod = importlib.import_module(module)
+except Exception as e:
+    print(f"{type(e).__name__}: {e}")
+    raise SystemExit(1)
+else:
+    print(getattr(mod, "__file__", "built-in"))
+PY
+    then
+        ok "python module $module: $(cat "$out")"
+        rm -f "$out"
+    else
+        cat "$out" >&2 || true
+        rm -f "$out"
+        fail "python module $module: missing${hint:+ ($hint)}"
+    fi
+}
+
+python_framework_check() {
+    python3 <<'PY'
+import os
+import sys
+import sysconfig
+
+fw = sysconfig.get_config_var("PYTHONFRAMEWORKPREFIX")
+if not fw:
+    raise SystemExit("PYTHONFRAMEWORKPREFIX is empty; Homebrew framework Python is required")
+ver = f"{sys.version_info[0]}.{sys.version_info[1]}"
+path = os.path.join(fw, "Python.framework", "Versions", ver, "Python")
+if not os.path.isfile(path):
+    raise SystemExit(f"Python dylib not found: {path}")
+print(path)
+PY
+}
+
+check_pybind11_cmake() {
+    local config_dir prefix
+    if command -v pybind11-config >/dev/null 2>&1; then
+        config_dir=$(pybind11-config --cmakedir 2>/dev/null || true)
+        if [[ -n "$config_dir" && -f "$config_dir/pybind11Config.cmake" ]]; then
+            ok "pybind11 CMake config: $config_dir/pybind11Config.cmake"
+            return 0
+        fi
+    fi
+    prefix=$(brew --prefix pybind11 2>/dev/null || true)
+    if [[ -n "$prefix" && -f "$prefix/share/cmake/pybind11/pybind11Config.cmake" ]]; then
+        ok "pybind11 CMake config: $prefix/share/cmake/pybind11/pybind11Config.cmake"
+    else
+        fail "pybind11 CMake config: not found (brew install pybind11)"
+    fi
+}
+
+check_deps() {
+    local brew_exe brew_prefix python_path fw_path failed=0
+    require_macos
+
+    if brew_exe=$(find_brew); then
+        ok "brew: $brew_exe"
+        eval "$("$brew_exe" shellenv)"
+        brew_prefix=$(brew --prefix)
+        ok "Homebrew prefix: $brew_prefix"
+    else
+        fail "brew: not found (install Homebrew)" || true
+        setup_hint
+        exit 1
+    fi
+
+    for cmd in cmake make python3 macdeployqt qtpaths otool \
+        install_name_tool codesign hdiutil rsync shasum; do
+        require_command "$cmd" || failed=1
+    done
+
+    python_path=$(command -v python3 || true)
+    if [[ -n "$python_path" && "$python_path" == "$brew_prefix"/* ]]; then
+        ok "python3 is under Homebrew prefix"
+    else
+        fail "python3 is not from Homebrew prefix ($python_path; expected under $brew_prefix)" || failed=1
+    fi
+
+    if fw_path=$(python_framework_check 2>&1); then
+        ok "Python framework dylib: $fw_path"
+    else
+        fail "$fw_path" || failed=1
+    fi
+
+    check_pybind11_cmake || failed=1
+    python_module_check numpy "brew install numpy" || failed=1
+    python_module_check PySide6 "brew install pyside" || failed=1
+    python_module_check shiboken6 "brew install pyside" || failed=1
+    python_module_check shiboken6_generator "brew install pyside" || failed=1
+    python_module_check matplotlib "brew install python-matplotlib" || failed=1
+
+    if [[ $failed -ne 0 ]]; then
+        setup_hint
+        exit 1
+    fi
+}
 
 # Active Python's "X.Y" version string.
 bundle_pyver() {
@@ -72,16 +241,16 @@ binary_rpaths() {
     '
 }
 
-# Verify the .app under $1 contains no surviving /opt/homebrew reference with
-# both LC_LOAD_DYLIB-style commands (visible via otool -L) and LC_RPATH search
-# paths. Print offenders. Return 0 if clean and 1 otherwise.
+# Verify the .app under $1 contains no surviving Homebrew prefix reference
+# with both LC_LOAD_DYLIB-style commands (visible via otool -L) and LC_RPATH
+# search paths. Print offenders. Return 0 if clean and 1 otherwise.
 check_self_contained() {
     local total=0 bad=0 f load_refs rpath_refs
     while IFS= read -r -d '' f; do
         total=$((total+1))
         load_refs=$(otool -L "$f" 2>/dev/null | tail -n +2 | awk '{print $1}' \
-            | grep -E '^/opt/homebrew' || true)
-        rpath_refs=$(binary_rpaths "$f" | grep -E '^/opt/homebrew' || true)
+            | grep -E "$HOST_PREFIX_RE" || true)
+        rpath_refs=$(binary_rpaths "$f" | grep -E "$HOST_PREFIX_RE" || true)
         if [[ -n "$load_refs" || -n "$rpath_refs" ]]; then
             bad=$((bad+1))
             echo "    BAD: $f"
@@ -90,25 +259,181 @@ check_self_contained() {
         fi
     done < <(list_macho "$1")
     if [[ $bad -eq 0 ]]; then
-        echo "    OK: $total Mach-O files, none reference /opt/homebrew"
+        echo "    OK: $total Mach-O files, none reference /opt/homebrew or /usr/local"
         return 0
     fi
-    echo "ERROR: $bad of $total Mach-O files still reference /opt/homebrew" >&2
+    echo "ERROR: $bad of $total Mach-O files still reference Homebrew prefixes" >&2
     return 1
 }
+
+verify_app_structure() {
+    local app="$1" bin
+    [[ -d "$app" ]] || fail "app not found: $app"
+    [[ -f "$app/Contents/Info.plist" ]] || fail "Info.plist not found"
+    bin="$app/Contents/MacOS/$(basename "$app" .app)"
+    [[ -x "$bin" ]] || fail "main binary not executable: $bin"
+    [[ -d "$app/Contents/Frameworks" ]] || fail "Contents/Frameworks not found"
+    [[ -d "$app/Contents/Resources" ]] || fail "Contents/Resources not found"
+    file "$bin"
+}
+
+runtime_import_check() {
+    local bin="$1"
+    env -i HOME="${HOME:-/}" USER="${USER:-nobody}" \
+        PATH=/usr/bin:/bin TERM="${TERM:-xterm}" \
+        "$bin" --mode=python -c \
+        "import matplotlib; import modmesh.pilot._base_app"
+}
+
+smoke_launch_verify() {
+    local bin="$1" trace="$2" pid elapsed=0 loaded
+    : > "$trace"
+    env -i HOME="${HOME:-/}" USER="${USER:-nobody}" \
+        PATH=/usr/bin:/bin TERM="${TERM:-xterm}" \
+        DYLD_PRINT_LIBRARIES=1 \
+        "$bin" >/dev/null 2>"$trace" &
+    pid=$!
+    while [[ $elapsed -lt 15 ]]; do
+        sleep 1
+        elapsed=$((elapsed + 1))
+        loaded=$(grep -c '^dyld\[' "$trace" 2>/dev/null || true)
+        [[ ${loaded:-0} -ge $MIN_LOADS ]] && break
+    done
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+
+    loaded=$(grep -c '^dyld\[' "$trace" 2>/dev/null || true)
+    if [[ $loaded -lt $MIN_LOADS ]]; then
+        echo "ERROR: pilot loaded only $loaded libraries; did it crash early?" >&2
+        sed -n '1,80p' "$trace" >&2
+        return 1
+    fi
+    if grep -E '^dyld\[' "$trace" | grep -E '/opt/homebrew|/usr/local' >/dev/null; then
+        echo "ERROR: smoke launch loaded libraries from host package prefixes:" >&2
+        grep -E '^dyld\[' "$trace" | grep -E '/opt/homebrew|/usr/local' | head -20 >&2
+        return 1
+    fi
+    echo "    OK: $loaded libraries loaded, none from host package prefixes"
+}
+
+VERIFY_MNT=""
+VERIFY_TMP=""
+VERIFY_TRACE=""
+VERIFY_MARKER=""
+cleanup_verify() {
+    [[ -n "${VERIFY_MNT:-}" ]] && hdiutil detach -quiet "$VERIFY_MNT" >/dev/null 2>&1 || true
+    [[ -n "${VERIFY_TMP:-}" ]] && rm -rf "$VERIFY_TMP"
+    [[ -n "${VERIFY_TRACE:-}" ]] && rm -f "$VERIFY_TRACE"
+    [[ -n "${VERIFY_MARKER:-}" ]] && rm -f "$VERIFY_MARKER"
+}
+
+verify_dmg() {
+    local dmg="$1" mnt tmp trace marker app bin copied_app
+    require_macos
+    [[ -f "$dmg" ]] || fail "release artifact not found: $dmg"
+
+    note "Release artifact"
+    ls -lh "$dmg"
+    shasum -a 256 "$dmg"
+    hdiutil imageinfo "$dmg" >/dev/null
+
+    VERIFY_MNT=$(mktemp -d -t modmesh-release-dmg)
+    VERIFY_TMP=$(mktemp -d -t modmesh-release-app)
+    VERIFY_TRACE=$(mktemp -t modmesh-release-dyld)
+    VERIFY_MARKER=$(mktemp -t modmesh-release-marker)
+    mnt="$VERIFY_MNT"
+    tmp="$VERIFY_TMP"
+    trace="$VERIFY_TRACE"
+    marker="$VERIFY_MARKER"
+    trap cleanup_verify EXIT
+
+    note "Mounting DMG"
+    hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "$dmg" >/dev/null
+    app=$(find "$mnt" -maxdepth 2 -name '*.app' -type d -print -quit)
+    [[ -n "$app" ]] || fail "no .app found in $dmg"
+    bin="$app/Contents/MacOS/$(basename "$app" .app)"
+
+    note "Checking mounted app structure"
+    verify_app_structure "$app"
+
+    note "Checking code signature before launch"
+    codesign --verify --deep --strict "$app"
+    spctl --assess --type execute --verbose=4 "$app" 2>&1 || \
+        echo "    warning: spctl rejected this app (expected for ad-hoc signed prototype builds)"
+
+    note "Static scan for host package paths"
+    check_self_contained "$app"
+
+    note "Runtime import check from a writable app copy"
+    cp -R "$app" "$tmp/"
+    copied_app="$tmp/$(basename "$app")"
+    codesign --verify --deep --strict "$copied_app"
+    touch "$marker"
+    runtime_import_check "$copied_app/Contents/MacOS/$(basename "$copied_app" .app)"
+    if find "$copied_app" -name '*.pyc' -newer "$marker" -print -quit | grep -q .; then
+        echo "ERROR: runtime import wrote Python bytecode into the signed app bundle:" >&2
+        find "$copied_app" -name '*.pyc' -newer "$marker" -print | sed -n '1,20p' >&2
+        return 1
+    fi
+    codesign --verify --deep --strict "$copied_app"
+
+    note "Smoke launch from mounted DMG"
+    smoke_launch_verify "$bin" "$trace"
+
+    note "Release artifact verification passed"
+}
+
+COMMAND=bundle
+if [[ $# -gt 0 ]]; then
+    case "$1" in
+        check|bundle|verify|all)
+            COMMAND="$1"
+            shift
+            ;;
+        -h|--help|help)
+            usage
+            exit 0
+            ;;
+    esac
+fi
+
+VERIFY_ARTIFACT=""
+case "$COMMAND" in
+    check)
+        [[ $# -eq 0 ]] || { usage >&2; exit 2; }
+        ;;
+    verify)
+        [[ $# -eq 1 ]] || { usage >&2; exit 2; }
+        VERIFY_ARTIFACT="$1"
+        shift
+        ;;
+esac
 
 SKIP_BUILD=0
 SKIP_CHECK=0
 OUTPUT_DIR="$BUNDLE_REPO_ROOT/build"
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --skip-build) SKIP_BUILD=1    ; shift ;;
-        --skip-check) SKIP_CHECK=1    ; shift ;;
-        --output)     OUTPUT_DIR="$2" ; shift 2 ;;
-        *) echo "Unknown option: $1" >&2 ; exit 1 ;;
-    esac
-done
+if [[ "$COMMAND" == "bundle" || "$COMMAND" == "all" ]]; then
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --skip-build) SKIP_BUILD=1    ; shift ;;
+            --skip-check) SKIP_CHECK=1    ; shift ;;
+            --output)
+                [[ $# -ge 2 ]] || { echo "Missing argument for --output" >&2; usage >&2; exit 2; }
+                OUTPUT_DIR="$2"
+                shift 2
+                ;;
+            *) echo "Unknown option: $1" >&2 ; usage >&2 ; exit 1 ;;
+        esac
+    done
+elif [[ $# -gt 0 ]]; then
+    usage >&2
+    exit 2
+fi
+
+if [[ "$COMMAND" == "all" ]]; then
+    check_deps
+fi
 
 # Record the starting time of the script and the first step. SECONDS is bash's
 # built-in elapsed-second counter.
@@ -133,6 +458,17 @@ cleanup() {
     fi
 }
 trap cleanup EXIT
+
+case "$COMMAND" in
+    check)
+        check_deps
+        exit 0
+        ;;
+    verify)
+        verify_dmg "$VERIFY_ARTIFACT"
+        exit 0
+        ;;
+esac
 
 # ---------------------------------------------------------------------------
 # Derive paths
@@ -569,7 +905,7 @@ echo "DMG complete: $DMG ($SIZE)"
 #
 # Two complementary checks per artifact:
 #   - Static scan of every Mach-O load command and LC_RPATH for any
-#     surviving /opt/homebrew reference.
+#     surviving Homebrew prefix reference.
 #   - Smoke launch under env -i with DYLD_PRINT_LIBRARIES=1 to catch
 #     anything that resolves at runtime via PATH or dyld fallbacks.
 # Repeated for both the .app and the .app inside the mounted DMG.
@@ -579,8 +915,6 @@ echo "DMG complete: $DMG ($SIZE)"
 # a lot, and why this script is still a prototype). Anything under this floor
 # suggests the process was killed before dyld finished its initial pass and the
 # trace tells us nothing.
-MIN_LOADS=50
-
 # env -i drops every variable; we set only the minimum to let Cocoa initialise.
 # pilot is a GUI app and never exits on its own, so we poll the trace at 1 Hz
 # and SIGTERM as soon as dyld has emitted >= MIN_LOADS lines. Polling absorbs
@@ -605,14 +939,14 @@ launch_and_trace() {
 }
 
 # Run a sandboxed launch and verify the dyld trace: enough loads happened, none
-# from /opt/homebrew.
+# from host Homebrew prefixes.
 smoke_check() {
     local bin="$1" label="${2:-}" total brew_count
     [[ -n "$label" ]] && label=" ($label)"
     echo "==> Smoke launch${label} under sandboxed env (DYLD_PRINT_LIBRARIES=1)"
     launch_and_trace "$bin"
     total=$(grep -c '^dyld\[' "$TRACE" || true)
-    brew_count=$(grep -E '^dyld\[' "$TRACE" | grep -c '/opt/homebrew' || true)
+    brew_count=$(grep -E '^dyld\[' "$TRACE" | grep -E -c '/opt/homebrew|/usr/local' || true)
     if [[ $total -lt $MIN_LOADS ]]; then
         echo "ERROR: pilot loaded only $total libraries (expected >= $MIN_LOADS);" \
              "did it crash early?" >&2
@@ -620,12 +954,12 @@ smoke_check() {
         exit 1
     fi
     if [[ $brew_count -gt 0 ]]; then
-        echo "ERROR: $brew_count of $total dyld loads came from /opt/homebrew:" >&2
-        grep -E '^dyld\[' "$TRACE" | grep '/opt/homebrew' | head -10 \
+        echo "ERROR: $brew_count of $total dyld loads came from host package prefixes:" >&2
+        grep -E '^dyld\[' "$TRACE" | grep -E '/opt/homebrew|/usr/local' | head -10 \
             | sed 's/^/    /' >&2
         exit 1
     fi
-    echo "    OK: $total libraries loaded, none from /opt/homebrew"
+    echo "    OK: $total libraries loaded, none from host package prefixes"
 }
 
 # Run Step 9 against both the .app and the .app inside the mounted DMG. TRACE
@@ -637,7 +971,7 @@ if [[ $SKIP_CHECK -eq 0 ]]; then
 
     echo ""
     echo "==> Checking $APP"
-    echo "==> Static scan for /opt/homebrew references"
+    echo "==> Static scan for host package path references"
     check_self_contained "$APP"
     smoke_check "$BINARY"
     echo ""
@@ -652,7 +986,7 @@ if [[ $SKIP_CHECK -eq 0 ]]; then
     DMG_APP=$(find "$DMG_MOUNT" -maxdepth 2 -name '*.app' -type d -print -quit)
     [[ -n "$DMG_APP" ]] || { echo "ERROR: no .app found in $DMG" >&2; exit 1; }
     echo "==> Found app: $DMG_APP"
-    echo "==> Static scan (DMG) for /opt/homebrew references"
+    echo "==> Static scan (DMG) for host package path references"
     check_self_contained "$DMG_APP"
     DMG_BINARY="$DMG_APP/Contents/MacOS/$(basename "$DMG_APP" .app)"
     smoke_check "$DMG_BINARY" "DMG"
