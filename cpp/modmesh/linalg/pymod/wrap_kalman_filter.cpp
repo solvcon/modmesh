@@ -111,6 +111,44 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapKalmanFilter
                 py::arg("process_noise"),
                 py::arg("measurement_noise"),
                 py::arg("jitter") = static_cast<real_type>(1e-9))
+            .def(
+                py::init(
+                    [](array_type const & x,
+                       array_type const & f,
+                       py::object const & b,
+                       array_type const & h,
+                       array_type const & process_noise_covariance,
+                       array_type const & measurement_noise_covariance,
+                       array_type const & covariance,
+                       real_type jitter)
+                    {
+                        array_type b_array;
+                        if (b.is_none())
+                        {
+                            b_array = array_type(small_vector<size_t>{x.shape(0), 0});
+                        }
+                        else
+                        {
+                            b_array = b.cast<array_type>();
+                        }
+                        return wrapped_type(
+                            x,
+                            f,
+                            b_array,
+                            h,
+                            process_noise_covariance,
+                            measurement_noise_covariance,
+                            covariance,
+                            jitter);
+                    }),
+                py::arg("x"),
+                py::arg("f"),
+                py::arg("b") = py::none(),
+                py::arg("h"),
+                py::arg("q"),
+                py::arg("r"),
+                py::arg("p"),
+                py::arg("jitter") = static_cast<real_type>(1e-9))
             .def_property_readonly(
                 "state",
                 &wrapped_type::state)

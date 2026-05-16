@@ -406,6 +406,61 @@ def sa_from_np(arr: np.ndarray, cls):
     raise ValueError("sa_from_np supports only 1D or 2D arrays")
 
 
+class KalmanFilterRadarExampleTC(unittest.TestCase):
+
+    def test_kalmanfilter_net_radar_example(self):
+        # Reference: https://kalmanfilter.net/
+        dt = 5.0
+        x0 = np.array([10000.0, 200.0])
+        f = np.array([[1.0, dt],
+                      [0.0, 1.0]])
+        h = np.eye(2)
+        p0 = np.array([[16.0, 0.0],
+                       [0.0, 0.25]])
+        q = np.array([[6.25, 2.5],
+                      [2.5, 1.0]])
+        r = np.array([[36.0, 0.0],
+                      [0.0, 2.25]])
+        z1 = np.array([11020.0, 202.0])
+
+        kf = mm.KalmanFilterFp64(
+            x=sa_from_np(x0, mm.SimpleArrayFloat64),
+            f=sa_from_np(f, mm.SimpleArrayFloat64),
+            h=sa_from_np(h, mm.SimpleArrayFloat64),
+            q=sa_from_np(q, mm.SimpleArrayFloat64),
+            r=sa_from_np(r, mm.SimpleArrayFloat64),
+            p=sa_from_np(p0, mm.SimpleArrayFloat64),
+            jitter=0.0,
+        )
+
+        kf.predict()
+
+        x_pred_expected = np.array([11000.0, 200.0])
+        p_pred_expected = np.array([[28.5, 3.75],
+                                    [3.75, 1.25]])
+
+        np.testing.assert_allclose(
+            kf.state.ndarray, x_pred_expected, atol=1e-12, rtol=0.0)
+        np.testing.assert_allclose(
+            kf.covariance.ndarray, p_pred_expected, atol=1e-12, rtol=0.0)
+
+        kf.update(sa_from_np(z1, mm.SimpleArrayFloat64))
+
+        x_update_expected = np.array([
+            11009.371124889283,
+            201.42604074402126,
+        ])
+        p_update_expected = np.array([
+            [14.572187776793623, 1.4348981399468559],
+            [1.4348981399468559, 0.7074844995571303],
+        ])
+
+        np.testing.assert_allclose(
+            kf.state.ndarray, x_update_expected, atol=1e-12, rtol=0.0)
+        np.testing.assert_allclose(
+            kf.covariance.ndarray, p_update_expected, atol=1e-12, rtol=0.0)
+
+
 class TestKnownIssues603(unittest.TestCase):
 
     @unittest.expectedFailure

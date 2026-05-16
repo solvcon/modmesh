@@ -155,6 +155,49 @@ public:
         check_dimensions();
     }
 
+    /**
+     * @brief Construct a Kalman filter with explicit covariance matrices.
+     *
+     * @details
+     * Creates a Kalman filter with the specified system matrices and covariance
+     * matrices. This overload is useful for examples or physical models whose
+     * process noise, measurement noise, or initial state uncertainty are not
+     * scaled identity matrices.
+     *
+     * @param x Initial state vector.
+     * @param f State transition matrix F.
+     * @param b Control matrix B (empty to disable control input u).
+     * @param h Measurement matrix H.
+     * @param q Process noise covariance Q.
+     * @param r Measurement noise covariance R.
+     * @param p Initial state covariance P.
+     * @param jitter Numerical stability jitter.
+     */
+    KalmanFilter(
+        array_type const & x, // FIXME: NOLINT(modernize-pass-by-value)
+        array_type const & f, // FIXME: NOLINT(modernize-pass-by-value)
+        array_type const & b, // FIXME: NOLINT(modernize-pass-by-value)
+        array_type const & h, // FIXME: NOLINT(modernize-pass-by-value)
+        array_type const & q, // FIXME: NOLINT(modernize-pass-by-value)
+        array_type const & r, // FIXME: NOLINT(modernize-pass-by-value)
+        array_type const & p, // FIXME: NOLINT(modernize-pass-by-value)
+        real_type jitter)
+        : m_state_size(x.shape(0))
+        , m_measurement_size(h.shape(0))
+        , m_control_size((b.ndim() == 2) ? b.shape(1) : 0)
+        , m_f(f)
+        , m_q(q)
+        , m_h(h)
+        , m_r(r)
+        , m_p(p)
+        , m_b(b)
+        , m_x(x)
+        , m_i(array_type::eye(m_state_size))
+        , m_jitter(jitter)
+    {
+        check_dimensions();
+    }
+
     array_type const & state() const { return m_x; }
     array_type const & covariance() const { return m_p; }
 
