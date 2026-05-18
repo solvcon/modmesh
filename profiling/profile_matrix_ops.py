@@ -54,8 +54,14 @@ def profile_matmul_np(lhs, rhs):
 
 
 @profile_function
-def profile_matmul_sa(lhs, rhs):
+def profile_matmul_naive_sa(lhs, rhs):
     return lhs.matmul(rhs)
+
+
+def profile_matmul_fast_sa(lhs, rhs, tile_x, tile_y, tile_z):
+    name = f"profile_matmul_fast_sa_{tile_x}_{tile_y}_{tile_z}"
+    _ = modmesh.CallProfilerProbe(name)
+    return lhs.fast_matmul(rhs, tile_x=tile_x, tile_y=tile_y, tile_z=tile_z)
 
 
 def make_data(dtype, shape):
@@ -63,6 +69,11 @@ def make_data(dtype, shape):
 
 
 def profile_matmul_operation(dtype, shapes, it=10):
+    tile_configs = (
+        (16, 16, 16),
+        (32, 32, 32),
+        (64, 64, 64),
+    )
     for m in shapes:
         lhs = make_data(dtype, (m, m))
         rhs = make_data(dtype, (m, m))
@@ -71,7 +82,9 @@ def profile_matmul_operation(dtype, shapes, it=10):
         modmesh.call_profiler.reset()
         for _ in range(it):
             profile_matmul_np(lhs, rhs)
-            profile_matmul_sa(lhs_sa, rhs_sa)
+            profile_matmul_naive_sa(lhs_sa, rhs_sa)
+            for tile_x, tile_y, tile_z in tile_configs:
+                profile_matmul_fast_sa(lhs_sa, rhs_sa, tile_x, tile_y, tile_z)
 
         res = modmesh.call_profiler.result()["children"]
         out = {}
@@ -79,16 +92,23 @@ def profile_matmul_operation(dtype, shapes, it=10):
             name = r["name"].replace("profile_matmul_", "")
             out[name] = r["total_time"] / r["count"]
 
-        print(f"## 2D x 2D shape: ({m}, {m}) x ({m}, {m}) dtype:"
-              f"`{np.dtype(dtype)}`\n")
+        print(
+            f"## 2D x 2D shape: ({m}, {m}) x ({m}, {m}) dtype:"
+            f"`{np.dtype(dtype)}`\n"
+        )
 
         def print_row(*cols):
-            print(str.format("| {:10s} | {:15s} | {:15s} |", *(cols[0:3])))
+            print(str.format("| {:20s} | {:15s} | {:15s} |", *(cols[0:3])))
 
         print_row("func", "per call (ms)", "cmp to np")
-        print_row("-" * 10, "-" * 15, "-" * 15)
+        print_row("-" * 20, "-" * 15, "-" * 15)
         npbase = out["np"]
-        for key in ("np", "sa"):
+        keys = ["np", "naive_sa"]
+        keys += [
+            f"fast_sa_{tile_x}_{tile_y}_{tile_z}"
+            for tile_x, tile_y, tile_z in tile_configs
+        ]
+        for key in keys:
             value = out[key]
             print_row(f"{key:8s}", f"{value:.3E}", f"{value / npbase:.3f}")
         print()

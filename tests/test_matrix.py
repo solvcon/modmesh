@@ -97,9 +97,14 @@ class MatmulTestBase(mm.testing.TestBase):
 
         # Test matrix multiplication
         result = a.matmul(b)
+        fast_result = a.fast_matmul(b)
 
         self.assertEqual(list(result.shape), [2, 2])
         np.testing.assert_array_almost_equal(result.ndarray, expected)
+        self.assertEqual(list(fast_result.shape), [2, 2])
+        np.testing.assert_array_almost_equal(fast_result.ndarray, expected)
+        np.testing.assert_array_almost_equal(fast_result.ndarray,
+                                             result.ndarray)
 
     def test_rectangular(self):
         """Test rectangular matrix multiplication"""
@@ -117,9 +122,14 @@ class MatmulTestBase(mm.testing.TestBase):
                             dtype=self.dtype)
 
         result = a.matmul(b)
+        fast_result = a.fast_matmul(b)
 
         self.assertEqual(list(result.shape), [2, 2])
         np.testing.assert_array_almost_equal(result.ndarray, expected)
+        self.assertEqual(list(fast_result.shape), [2, 2])
+        np.testing.assert_array_almost_equal(fast_result.ndarray, expected)
+        np.testing.assert_array_almost_equal(fast_result.ndarray,
+                                             result.ndarray)
 
     def test_identity(self):
         """Test multiplication with identity matrix"""
@@ -131,9 +141,14 @@ class MatmulTestBase(mm.testing.TestBase):
         identity = self.SimpleArray.eye(3)
 
         result = a.matmul(identity)
+        fast_result = a.fast_matmul(identity)
 
         self.assertEqual(list(result.shape), [3, 3])
         np.testing.assert_array_almost_equal(result.ndarray, a_data)
+        self.assertEqual(list(fast_result.shape), [3, 3])
+        np.testing.assert_array_almost_equal(fast_result.ndarray, a_data)
+        np.testing.assert_array_almost_equal(fast_result.ndarray,
+                                             result.ndarray)
 
     def test_zero(self):
         """Test multiplication with zero matrix"""
@@ -144,9 +159,14 @@ class MatmulTestBase(mm.testing.TestBase):
         zero = self.SimpleArray(array=zero_data)
 
         result = a.matmul(zero)
+        fast_result = a.fast_matmul(zero)
 
         self.assertEqual(list(result.shape), [2, 2])
         np.testing.assert_array_almost_equal(result.ndarray, zero_data)
+        self.assertEqual(list(fast_result.shape), [2, 2])
+        np.testing.assert_array_almost_equal(fast_result.ndarray, zero_data)
+        np.testing.assert_array_almost_equal(fast_result.ndarray,
+                                             result.ndarray)
 
     def test_dimension_mismatch_error(self):
         """Test error handling for incompatible dimensions"""
@@ -167,6 +187,12 @@ class MatmulTestBase(mm.testing.TestBase):
             r"\(3,3\)"
         ):
             a.matmul(b)
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::matmul\(\): shape mismatch: this=\(2,2\) other="
+            r"\(3,3\)"
+        ):
+            a.fast_matmul(b)
 
     def test_compare_with_numpy(self):
         """Compare results with NumPy using fixed test data"""
@@ -268,6 +294,7 @@ class MatmulTestBase(mm.testing.TestBase):
 
                 # Compute with our implementation
                 result = a.matmul(b)
+                fast_result = a.fast_matmul(b)
 
                 # Verify with NumPy
                 np_result = np.matmul(a_data, b_data)
@@ -275,12 +302,20 @@ class MatmulTestBase(mm.testing.TestBase):
 
                 # Compare our result with expected
                 self.assertEqual(list(result.shape), list(expected.shape))
+                self.assertEqual(list(fast_result.shape),
+                                 list(expected.shape))
+                np.testing.assert_array_almost_equal(fast_result.ndarray,
+                                                     result.ndarray)
                 if self.dtype == np.float32:
                     np.testing.assert_array_almost_equal(
                         result.ndarray, expected, decimal=4)
+                    np.testing.assert_array_almost_equal(
+                        fast_result.ndarray, expected, decimal=4)
                 else:
                     np.testing.assert_array_almost_equal(
                         result.ndarray, expected, decimal=10)
+                    np.testing.assert_array_almost_equal(
+                        fast_result.ndarray, expected, decimal=10)
 
     def test_wrong_shape_error(self):
         """Test error handling for wrong shapes"""
@@ -298,6 +333,12 @@ class MatmulTestBase(mm.testing.TestBase):
             r"this=\(2,2,2\) other=\(2,2,2\)\. SimpleArray must be 1D or 2D."
         ):
             a_3d.matmul(b_3d)
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::matmul\(\): unsupported dimensions: "
+            r"this=\(2,2,2\) other=\(2,2,2\)\. SimpleArray must be 1D or 2D."
+        ):
+            a_3d.fast_matmul(b_3d)
 
         a = np.zeros((3, 3), dtype=self.dtype)
         b = np.zeros((2, 3), dtype=self.dtype)
@@ -309,6 +350,12 @@ class MatmulTestBase(mm.testing.TestBase):
             r"this=\(3,3\) other=\(2,3\)"
         ):
             a.matmul(b)
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::matmul\(\): shape mismatch: "
+            r"this=\(3,3\) other=\(2,3\)"
+        ):
+            a.fast_matmul(b)
 
         a = np.zeros((3, 3), dtype=self.dtype)
         b = np.zeros((2), dtype=self.dtype)
@@ -320,6 +367,12 @@ class MatmulTestBase(mm.testing.TestBase):
             r"this=\(3,3\) other=\(2\)"
         ):
             a.matmul(b)
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::matmul\(\): shape mismatch: "
+            r"this=\(3,3\) other=\(2\)"
+        ):
+            a.fast_matmul(b)
 
         a = np.zeros((2), dtype=self.dtype)
         b = np.zeros((3, 3), dtype=self.dtype)
@@ -331,6 +384,12 @@ class MatmulTestBase(mm.testing.TestBase):
             r"this=\(2\) other=\(3,3\)"
         ):
             a.matmul(b)
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::matmul\(\): shape mismatch: "
+            r"this=\(2\) other=\(3,3\)"
+        ):
+            a.fast_matmul(b)
 
         a = np.zeros((2), dtype=self.dtype)
         b = np.zeros((3), dtype=self.dtype)
@@ -342,6 +401,12 @@ class MatmulTestBase(mm.testing.TestBase):
             r"this=\(2\) other=\(3\)"
         ):
             a.matmul(b)
+        with self.assertRaisesRegex(
+            IndexError,
+            r"SimpleArray::matmul\(\): shape mismatch: "
+            r"this=\(2\) other=\(3\)"
+        ):
+            a.fast_matmul(b)
 
     def test_matmul_operator(self):
         """Test @ operator for matrix multiplication"""
