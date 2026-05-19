@@ -75,7 +75,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '30') }}
+    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '45') }}
 
     env:
       QT_DEBUG_PLUGINS: 1
@@ -216,7 +216,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '30') }}
+    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '45') }}
 
     env:
       QT_DEBUG_PLUGINS: 1
