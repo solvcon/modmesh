@@ -203,21 +203,42 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 { return self.reshape(make_shape(shape)); })
             .def(
                 "transpose",
-                [](wrapped_type & self, py::object const & axis, bool const & inplace)
+                [](wrapped_type & self, py::object const & axis, bool inplace, bool copy)
                 {
                     wrapped_type * ret = inplace ? &self : new wrapped_type(self);
                     if (axis.is_none())
                     {
-                        ret->transpose();
+                        ret->transpose(copy);
                     }
                     else
                     {
-                        ret->transpose(make_shape(axis));
+                        ret->transpose(make_shape(axis), copy);
                     }
                     return *ret;
                 },
                 py::arg("axis") = py::none(),
-                py::arg("inplace") = true)
+                py::arg("inplace") = true,
+                py::arg("copy") = false)
+            .def(
+                "transpose_copy",
+                [](wrapped_type const & self)
+                { return self.transpose_copy(); })
+            .def(
+                "to_row_major",
+                [](wrapped_type const & self)
+                { return self.to_row_major(); })
+            .def(
+                "to_column_major",
+                [](wrapped_type const & self)
+                { return self.to_column_major(); })
+            .def_property_readonly(
+                "is_c_contiguous",
+                [](wrapped_type const & self)
+                { return self.is_c_contiguous(); })
+            .def_property_readonly(
+                "is_f_contiguous",
+                [](wrapped_type const & self)
+                { return self.is_f_contiguous(); })
             .def_property_readonly(
                 "T",
                 [](wrapped_type & self)

@@ -2176,36 +2176,15 @@ public:
         }
     }
 
-    void transpose()
-    {
-        std::reverse(m_shape.begin(), m_shape.end());
-        std::reverse(m_stride.begin(), m_stride.end());
-    }
+    void transpose(bool copy = false);
 
-    void transpose(shape_type const & axis)
-    {
-        if (axis.size() != m_shape.size())
-        {
-            throw std::runtime_error("SimpleArray: axis size mismatch");
-        }
-        shape_type new_shape(m_shape.size(), -1);
-        shape_type new_stride(m_stride.size());
-        for (size_t it = 0; it < m_shape.size(); ++it)
-        {
-            if (axis[it] >= m_shape.size() || axis[it] < 0)
-            {
-                throw std::runtime_error("SimpleArray: axis out of range");
-            }
-            if (new_shape[it] != -1)
-            {
-                throw std::runtime_error("SimpleArray: axis already set");
-            }
-            new_shape[it] = m_shape[axis[it]];
-            new_stride[it] = m_stride[axis[it]];
-        }
-        m_shape = new_shape;
-        m_stride = new_stride;
-    }
+    void transpose(shape_type const & axis, bool copy = false);
+
+    SimpleArray transpose_copy() const;
+
+    SimpleArray to_row_major() const;
+
+    SimpleArray to_column_major() const;
 
     template <typename... Args>
     value_type const & operator()(Args... args) const { return *vptr(args...); }
@@ -2284,6 +2263,8 @@ public:
     bool is_f_contiguous() const { return is_f_contiguous(m_shape, m_stride); }
 
 private:
+    void copy_logical_into(SimpleArray & out) const;
+
     static bool is_c_contiguous(small_vector<size_t> const & shape,
                                 small_vector<size_t> const & stride)
     {
@@ -2449,6 +2430,219 @@ private:
     size_t m_nghost = 0;
     value_type * m_body = nullptr;
 }; /* end class SimpleArray */
+
+/**
+ * @brief Transpose by reversing all axes in place.
+ *
+ * @param copy
+ *      When false (default), perform a view-only flip.  When true, replace the
+ *      buffer with a freshly allocated C-contiguous one holding the physically
+ *      transposed contents.
+ */
+template <typename T>
+void SimpleArray<T>::transpose(bool copy)
+{
+    if (!copy)
+    {
+        std::reverse(m_shape.begin(), m_shape.end());
+        std::reverse(m_stride.begin(), m_stride.end());
+        return;
+    }
+    SimpleArray tc = transpose_copy();
+    swap(tc);
+}
+
+/**
+ * @brief Transpose with axes permuted by the given index vector in place.
+ *
+ * @param axis
+ *      Permutation: the i-th new axis is sourced from the `axis[i]`-th old
+ *      axis.  Must be a valid permutation of `[0, ndim)`.
+ * @param copy
+ *      When false (default), perform a view-only permutation of the metadata.
+ *      When true, physically permute contents into a freshly allocated
+ *      C-contiguous buffer.
+ */
+template <typename T>
+void SimpleArray<T>::transpose(shape_type const & axis, bool copy)
+{
+    // Build the permuted shape and stride by gathering each axis from the
+    // source.  It is needed by both view-only and with-copy transpose.
+    if (axis.size() != m_shape.size())
+    {
+        throw std::runtime_error("SimpleArray::transpose: axis size mismatch");
+    }
+    shape_type new_shape(m_shape.size(), -1);
+    shape_type new_stride(m_stride.size());
+    for (size_t it = 0; it < m_shape.size(); ++it)
+    {
+        if (axis[it] >= m_shape.size() || axis[it] < 0)
+        {
+            throw std::runtime_error("SimpleArray::transpose: axis out of range");
+        }
+        if (new_shape[it] != -1)
+        {
+            throw std::runtime_error("SimpleArray::transpose: axis already set");
+        }
+        new_shape[it] = m_shape[axis[it]];
+        new_stride[it] = m_stride[axis[it]];
+    }
+    if (!copy)
+    {
+        // View-only flip: install the permuted metadata in place.
+        m_shape = new_shape;
+        m_stride = new_stride;
+        return;
+    }
+    // Deep-copy path: 1. stage a strided view with the permuted shape/stride.
+    SimpleArray const view(new_shape, new_stride, m_buffer);
+    SimpleArray out(new_shape);
+    // 2. Use the same helper to keep the iteration logic the same as the other
+    // deep-copy variants.
+    view.copy_logical_into(out);
+    swap(out);
+}
+
+/**
+ * @brief Transpose with a fresh C-contiguous array returned.
+ *
+ * @details
+ *      The column-major byte layout against the original shape is structurally
+ *      identical to the C-contiguous byte layout of a transposed array.
+ *
+ * @return Freshly allocated C-contiguous SimpleArray with reversed axes.
+ */
+template <typename T>
+SimpleArray<T> SimpleArray<T>::transpose_copy() const
+{
+    // 0-D and 1-D arrays have no axes to reverse; a plain clone suffices.
+    if (m_shape.size() <= 1)
+    {
+        return SimpleArray(*this);
+    }
+    // Use to_column_major() to copy the array and then flip the shape and
+    // stride back.
+    SimpleArray out = to_column_major();
+    std::reverse(out.m_shape.begin(), out.m_shape.end());
+    std::reverse(out.m_stride.begin(), out.m_stride.end());
+    return out;
+}
+
+/**
+ * @brief
+ *      Return a fresh C-contiguous (row-major) array with the same logical
+ *      shape and values as `*this`.
+ *
+ * @details
+ *      Clones the buffer when the source is already C-contiguous; otherwise
+ *      allocates a fresh buffer and copies element-wise.
+ *
+ * @return Freshly allocated C-contiguous SimpleArray.
+ */
+template <typename T>
+SimpleArray<T> SimpleArray<T>::to_row_major() const
+{
+    if (is_c_contiguous())
+    {
+        return SimpleArray(*this);
+    }
+    SimpleArray out(m_shape);
+    copy_logical_into(out);
+    return out;
+}
+
+/**
+ * @brief
+ *      Return a fresh F-contiguous (column-major) array with the same logical
+ *      shape and values as `*this`.
+ *
+ * @details
+ *      Clones the buffer when the source is already F-contiguous; otherwise
+ *      allocates a fresh buffer with F-contiguous strides and copies
+ *      element-wise.
+ *
+ * @return Freshly allocated F-contiguous SimpleArray.
+ */
+template <typename T>
+SimpleArray<T> SimpleArray<T>::to_column_major() const
+{
+    // Empty shape or already-F-contiguous source: a buffer clone is enough.
+    if (m_shape.empty())
+    {
+        return SimpleArray(*this);
+    }
+    if (is_f_contiguous())
+    {
+        return SimpleArray(*this);
+    }
+    // Compute column-major strides: the fastest-varying axis is the leading
+    // one (stride[0] == 1).
+    shape_type fstride(m_shape.size());
+    fstride[0] = 1;
+    for (size_t i = 1; i < m_shape.size(); ++i)
+    {
+        fstride[i] = fstride[i - 1] * m_shape[i - 1];
+    }
+    // Calculate buffer size.
+    size_t nelem = 1;
+    for (size_t const s : m_shape)
+    {
+        nelem *= s;
+    }
+    // Create a fresh array, copy, and return.
+    auto buf = buffer_type::construct(nelem * ITEMSIZE, 0);
+    SimpleArray out(m_shape, fstride, buf);
+    copy_logical_into(out);
+    return out;
+}
+
+/**
+ * @brief Copy `*this` into `out` element-wise.
+ *
+ * @details
+ *      Heavy-lifting helper to copy data. `out` must share the same shape but
+ *      may carry a different stride.
+ *
+ * @param out Destination array; its shape must match the receiver's.
+ */
+template <typename T>
+void SimpleArray<T>::copy_logical_into(SimpleArray & out) const
+{
+    if (m_shape.empty())
+    {
+        return;
+    }
+    size_t total = 1;
+    for (size_t const s : m_shape)
+    {
+        total *= s;
+    }
+    if (total == 0)
+    {
+        return;
+    }
+    // Walk a multi-dimensional index in row-major order.  out's stride is only
+    // used to compute the destination offset to bridge row-major,
+    // column-major, and arbitrary strided layouts.
+    size_t const ndim = m_shape.size();
+    shape_type idx(ndim, 0);
+    for (size_t step = 0; step < total; ++step)
+    {
+        out.m_body[buffer_offset(out.m_stride, idx)] = m_body[buffer_offset(m_stride, idx)];
+        // Carry-propagating increment: bump the trailing axis; on overflow,
+        // wrap to 0 and carry into the next-most-significant axis.
+        for (size_t i = ndim; i-- > 0;)
+        {
+            if (++idx[i] < m_shape[i])
+            {
+                break;
+            }
+            // After the last element the carry rolls every axis back to 0, but
+            // the outer loop terminates before idx is used again.
+            idx[i] = 0;
+        }
+    }
+}
 
 template <typename A, typename T>
 SimpleArray<uint64_t> detail::SimpleArrayMixinSort<A, T>::argsort()

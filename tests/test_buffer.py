@@ -371,6 +371,100 @@ class SimpleArrayBasicTC(unittest.TestCase):
         check_equal(sarr2, ndarrT)
         self.assertNotEqual(memoryview(sarr), memoryview(sarr2))
 
+    def test_SimpleArray_transpose_copy(self):
+        # Issue #792: physical (deep-copy) transpose variants.  Cover 1D, 2D,
+        # 3D, 4D; square / non-square; C-contiguous / F-contiguous input.
+
+        def make_sarr(ndarr):
+            return modmesh.SimpleArrayFloat64(array=ndarr.copy())
+
+        def values_equal(sarr, ref):
+            np.testing.assert_array_equal(np.array(sarr, copy=False), ref)
+
+        shapes = [
+            (7,),
+            (3, 5),
+            (4, 4),
+            (2, 3, 4),
+            (2, 3, 4, 5),
+        ]
+
+        for shape in shapes:
+            ndarr = np.arange(
+                int(np.prod(shape)), dtype="float64").reshape(shape)
+
+            # transpose_copy(): equivalent to numpy a.T then a fresh C-contig.
+            sarr = make_sarr(ndarr)
+            self.assertTrue(sarr.is_c_contiguous)
+            tc = sarr.transpose_copy()
+            self.assertEqual(tc.shape, ndarr.T.shape)
+            self.assertTrue(tc.is_c_contiguous)
+            values_equal(tc, np.ascontiguousarray(ndarr.T))
+            # Source unchanged.
+            values_equal(sarr, ndarr)
+
+            # to_row_major(): same shape and values, C-contiguous.
+            rm = sarr.to_row_major()
+            self.assertEqual(rm.shape, ndarr.shape)
+            self.assertTrue(rm.is_c_contiguous)
+            values_equal(rm, ndarr)
+
+            # to_column_major(): same shape and values, F-contiguous.
+            cm = sarr.to_column_major()
+            self.assertEqual(cm.shape, ndarr.shape)
+            self.assertTrue(cm.is_f_contiguous)
+            values_equal(cm, ndarr)
+
+            # transpose(copy=True): in-place physical transpose.
+            mutated = make_sarr(ndarr)
+            mutated.transpose(copy=True)
+            self.assertEqual(mutated.shape, ndarr.T.shape)
+            self.assertTrue(mutated.is_c_contiguous)
+            values_equal(mutated, np.ascontiguousarray(ndarr.T))
+
+            # Round trip: transpose_copy twice gives the original.
+            roundtrip = sarr.transpose_copy().transpose_copy()
+            self.assertEqual(roundtrip.shape, ndarr.shape)
+            values_equal(roundtrip, ndarr)
+
+            # Mutating the source after the copy does not affect the copy.
+            tc_before = np.array(tc, copy=True)
+            np.array(sarr, copy=False).flat[0] = -42.0
+            values_equal(tc, tc_before)
+
+        # F-contiguous source: take a transpose view to get non-C-contig
+        # storage, then verify the copy variants still produce correct output.
+        for shape in [(3, 5), (2, 3, 4), (2, 3, 4, 5)]:
+            ndarr = np.arange(
+                int(np.prod(shape)), dtype="float64").reshape(shape)
+
+            sarr = make_sarr(ndarr)
+            # transpose(inplace=False) returns a view that swaps shape/stride;
+            # the resulting array is F-contiguous w.r.t. its new shape.
+            fview = sarr.transpose(inplace=False)
+            self.assertEqual(fview.shape, ndarr.T.shape)
+            self.assertTrue(fview.is_f_contiguous)
+            self.assertFalse(fview.is_c_contiguous)
+
+            # transpose_copy on an F-contig array should yield a C-contig
+            # buffer whose contents are the (further) transpose, i.e. ndarr.
+            tc = fview.transpose_copy()
+            self.assertEqual(tc.shape, ndarr.shape)
+            self.assertTrue(tc.is_c_contiguous)
+            values_equal(tc, ndarr)
+
+            # to_row_major on an F-contig array reorders bytes.
+            rm = fview.to_row_major()
+            self.assertEqual(rm.shape, ndarr.T.shape)
+            self.assertTrue(rm.is_c_contiguous)
+            values_equal(rm, ndarr.T)
+
+            # to_column_major on an F-contig array is essentially a clone.
+            cm = fview.to_column_major()
+            self.assertEqual(cm.shape, ndarr.T.shape)
+            self.assertTrue(cm.is_f_contiguous)
+            values_equal(cm, ndarr.T)
+
     def test_SimpleArray_ghost_1d(self):
 
         sarr = modmesh.SimpleArrayFloat64(4 * 3 * 2)
