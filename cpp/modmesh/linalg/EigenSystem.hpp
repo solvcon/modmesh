@@ -108,7 +108,8 @@ private:
 
 inline EigenSystem::EigenSystem(array_type const & matrix)
     : m_matrix(matrix)
-    , m_colmajor(matrix.shape())
+    // Stage matrix into a column-major workspace for LAPACK.
+    , m_colmajor(matrix.to_column_major())
     , m_wr(matrix.shape(0))
     , m_wi(matrix.shape(0))
     , m_vl(matrix.shape())
@@ -121,20 +122,6 @@ inline EigenSystem::EigenSystem(array_type const & matrix)
             format_shape(matrix)));
     }
 
-    // TODO: Enhance SimpleArray::transpose() to copy the contents when
-    // transposing.  The current SimpleArray::transpose() is a *view-only*
-    // operation: it reverses the shape and stride vectors but the underlying
-    // buffer is untouched.  So we have to manually copy element-wisely in the
-    // nested loops below.
-    m_colmajor.transpose();
-    ssize_t const n = matrix.shape(0);
-    for (ssize_t i = 0; i < n; ++i)
-    {
-        for (ssize_t j = 0; j < n; ++j)
-        {
-            m_colmajor(i, j) = matrix(i, j);
-        }
-    }
     m_vl.transpose();
     m_vr.transpose();
 }
