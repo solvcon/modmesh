@@ -1422,4 +1422,111 @@ class TestLinalgEigenSystemTC(unittest.TestCase):
         del A
         np.testing.assert_array_equal(solver.matrix.ndarray, A_np)
 
+    def test_default_constructor_flags_both_true(self):
+        # Guard against an accidental default-flag flip.
+        A = mm.SimpleArrayFloat64(array=np.diag([1.0, 2.0]))
+        solver = mm.EigenSystem(A)
+        self.assertTrue(solver.do_vl)
+        self.assertTrue(solver.do_vr)
+
+    def test_skip_vr_does_not_compute_right_eigenvectors(self):
+        # do_vr=False must keep wr/wi/vl intact and reject both vr accessors.
+        A_np = np.array([[2.0, 0.0], [0.0, 3.0]], dtype="float64")
+        A = mm.SimpleArrayFloat64(array=A_np)
+        solver = mm.EigenSystem(A, do_vr=False)
+        solver.run()
+        self.assertTrue(solver.done)
+        self.assertTrue(solver.do_vl)
+        self.assertFalse(solver.do_vr)
+        np.testing.assert_allclose(np.sort(np.array(solver.wr)),
+                                   [2.0, 3.0], atol=1e-14)
+        self.assertEqual(np.array(solver.vl).shape, (2, 2))
+        self.assertEqual(np.array(solver.get_vl()).shape, (2, 2))
+        with self.assertRaisesRegex(
+                RuntimeError, r"right eigenvectors were not computed"):
+            solver.vr  # noqa: B018
+        with self.assertRaisesRegex(
+                RuntimeError, r"right eigenvectors were not computed"):
+            solver.get_vr()
+
+    def test_skip_vl_does_not_compute_left_eigenvectors(self):
+        # Mirror of test_skip_vr_*; checks A v = lambda v stays exact.
+        A_np = np.array([[2.0, 1.0], [0.0, 3.0]], dtype="float64")
+        A = mm.SimpleArrayFloat64(array=A_np)
+        solver = mm.EigenSystem(A, do_vl=False)
+        solver.run()
+        self.assertTrue(solver.done)
+        self.assertFalse(solver.do_vl)
+        self.assertTrue(solver.do_vr)
+        wr = np.array(solver.wr)
+        vr = np.array(solver.vr)
+        for j in range(2):
+            np.testing.assert_allclose(A_np @ vr[:, j], wr[j] * vr[:, j],
+                                       rtol=1e-12, atol=1e-12)
+        with self.assertRaisesRegex(
+                RuntimeError, r"left eigenvectors were not computed"):
+            solver.vl  # noqa: B018
+        with self.assertRaisesRegex(
+                RuntimeError, r"left eigenvectors were not computed"):
+            solver.get_vl()
+
+    def test_skip_both_computes_only_eigenvalues(self):
+        # Exercises the 3*n workspace path (both jobvl=jobvr='N').
+        A_np = np.diag([1.0, 5.0, 9.0])
+        A = mm.SimpleArrayFloat64(array=A_np)
+        solver = mm.EigenSystem(A, do_vl=False, do_vr=False)
+        solver.run()
+        np.testing.assert_allclose(np.sort(np.array(solver.wr)),
+                                   [1.0, 5.0, 9.0], atol=1e-14)
+        with self.assertRaises(RuntimeError):
+            solver.vl  # noqa: B018
+        with self.assertRaises(RuntimeError):
+            solver.vr  # noqa: B018
+        with self.assertRaises(RuntimeError):
+            solver.get_vl()
+        with self.assertRaises(RuntimeError):
+            solver.get_vr()
+
+    def test_get_methods_match_property_when_computed(self):
+        # Property and get_v* must alias the same matrix; suppress flag
+        # is a no-op when the matrix exists.
+        A_np = np.diag([2.0, 4.0])
+        A = mm.SimpleArrayFloat64(array=A_np)
+        solver = mm.EigenSystem(A)
+        solver.run()
+        np.testing.assert_array_equal(np.array(solver.vl),
+                                      np.array(solver.get_vl()))
+        np.testing.assert_array_equal(np.array(solver.vr),
+                                      np.array(solver.get_vr()))
+        np.testing.assert_array_equal(
+            np.array(solver.vl),
+            np.array(solver.get_vl(suppress_exception=True)))
+        np.testing.assert_array_equal(
+            np.array(solver.vr),
+            np.array(solver.get_vr(suppress_exception=True)))
+
+    def test_get_methods_default_argument_raises(self):
+        # Only suppress_exception=True silences the exception.
+        A = mm.SimpleArrayFloat64(array=np.diag([1.0, 2.0]))
+        solver = mm.EigenSystem(A, do_vl=False, do_vr=False)
+        solver.run()
+        with self.assertRaises(RuntimeError):
+            solver.get_vl()
+        with self.assertRaises(RuntimeError):
+            solver.get_vr()
+        with self.assertRaises(RuntimeError):
+            solver.get_vl(suppress_exception=False)
+        with self.assertRaises(RuntimeError):
+            solver.get_vr(suppress_exception=False)
+
+    def test_suppress_exception_returns_empty_when_not_computed(self):
+        # suppress_exception=True returns an empty placeholder, not data.
+        A = mm.SimpleArrayFloat64(array=np.diag([1.0, 2.0]))
+        solver = mm.EigenSystem(A, do_vl=False, do_vr=False)
+        solver.run()
+        empty_vl = np.array(solver.get_vl(suppress_exception=True))
+        empty_vr = np.array(solver.get_vr(suppress_exception=True))
+        self.assertEqual(empty_vl.size, 0)
+        self.assertEqual(empty_vr.size, 0)
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
