@@ -372,8 +372,8 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertNotEqual(memoryview(sarr), memoryview(sarr2))
 
     def test_SimpleArray_transpose_copy(self):
-        # Issue #792: physical (deep-copy) transpose variants.  Cover 1D, 2D,
-        # 3D, 4D; square / non-square; C-contiguous / F-contiguous input.
+        # Physical (deep-copy) transpose variants.  Cover 1D, 2D, 3D, 4D;
+        # square / non-square; C-contiguous / F-contiguous input.
 
         def make_sarr(ndarr):
             return modmesh.SimpleArrayFloat64(array=ndarr.copy())
