@@ -173,13 +173,30 @@ standalone_buffer:
 
 CLANG_FORMAT ?= clang-format
 FLAKE8 ?= flake8
-BLACK ?= black
+AUTOPEP8 ?= autopep8
 # Pinned to the clang-format major version used by CI; see
 # .github/workflows/lint.yml. A different major version may produce a different
 # formatting output and cause CI disagreement with local runs.
 CLANG_FORMAT_CI_VERSION ?= 20
-# Mirror flake8's ignored paths so formatting and linting stay in sync.
-BLACK_OPTS ?= --extend-exclude 'thirdparty|tmp|_deps'
+# Keep autopep8 a no-op against the current code base: only fix codes that
+# flake8 also reports here, leave the rest alone. Specifically ignore:
+#   E121,E123,E126        continuation indent variants (flake8 default-ignored)
+#   E201,E202,E203,E241   whitespace inside brackets / around commas; preserve
+#                         deliberate `# noqa` numeric alignment such as in
+#                         `tests/test_mesh.py`
+#   E226                  whitespace around arithmetic operator
+#                         (flake8 default-ignored)
+#   E301,E303             blank-line rules that pycodestyle does not flag in
+#                         their current uses (docstring-followed methods and
+#                         nested defs inside `if HAS_SPHINX:`); autopep8 would
+#                         add or remove blank lines that flake8 never reports
+#   E501                  line too long; autopep8's wraps are often ugly, so
+#                         leave long-line decisions to humans
+#   W503,W504             line-break style around binary operators
+#                         (flake8 default-ignored)
+AUTOPEP8_OPTS ?= --recursive --max-line-length=79 \
+                 --ignore=E121,E123,E126,E201,E202,E203,E226,E241,E301,E303,E501,W503,W504 \
+                 --exclude=thirdparty,tmp,_deps
 
 CFFILES = $(shell find cpp gtests -type f -name '*.[ch]pp' | sort)
 ifeq ($(FORCE_CLANG_FORMAT),inplace)
@@ -234,19 +251,15 @@ checktws:
 .PHONY: lint
 lint: cformat cinclude flake8 checkascii checktws
 
-# FIXME: Do not run pyformat. It is not yet configured to conform to the style
-# of the Python code in the code base. It is still work in progress.
 .PHONY: pyformat
 pyformat:
-	@command -v $(BLACK) >/dev/null 2>&1 || { \
-		echo "Error: '$(BLACK)' not found in PATH."; \
-		echo "  Install: pip install black"; \
+	@command -v $(AUTOPEP8) >/dev/null 2>&1 || { \
+		echo "Error: '$(AUTOPEP8)' not found in PATH."; \
+		echo "  Install: pip install autopep8"; \
 		exit 1; \
 	}
-	$(BLACK) $(BLACK_OPTS) .
+	$(AUTOPEP8) $(AUTOPEP8_OPTS) --in-place .
 
-# FIXME: Do not run format, which depends on pyformat, which is still work in
-# progress.
 .PHONY: format
 format: pyformat
 	@$(MAKE) FORCE_CLANG_FORMAT=inplace cformat
