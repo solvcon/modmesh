@@ -73,7 +73,7 @@ public:
     using value_type = double;
     using array_type = SimpleArray<double>;
 
-    explicit EigenSystem(array_type const & matrix);
+    explicit EigenSystem(array_type const & matrix, bool do_vl = true, bool do_vr = true);
 
     EigenSystem() = delete;
     EigenSystem(EigenSystem const &) = delete;
@@ -82,14 +82,15 @@ public:
     EigenSystem & operator=(EigenSystem &&) = delete;
     ~EigenSystem() = default;
 
-    /// Run DGEEV on the prepared workspace.
     void run();
 
     array_type const & matrix() const { return m_matrix; }
     array_type const & wr() const { return m_wr; }
     array_type const & wi() const { return m_wi; }
-    array_type const & vl() const { return m_vl; }
-    array_type const & vr() const { return m_vr; }
+    array_type const & vl(bool suppress_exception = false) const;
+    array_type const & vr(bool suppress_exception = false) const;
+    bool do_vl() const { return m_do_vl; }
+    bool do_vr() const { return m_do_vr; }
     bool done() const { return m_done; }
 
 private:
@@ -102,18 +103,22 @@ private:
     SimpleArray<value_type> m_wi;
     SimpleArray<value_type> m_vl;
     SimpleArray<value_type> m_vr;
+    bool const m_do_vl;
+    bool const m_do_vr;
     bool m_done = false;
 
 }; /* end class EigenSystem */
 
-inline EigenSystem::EigenSystem(array_type const & matrix)
+inline EigenSystem::EigenSystem(array_type const & matrix, bool do_vl, bool do_vr)
     : m_matrix(matrix)
     // Stage matrix into a column-major workspace for LAPACK.
     , m_colmajor(matrix.to_column_major())
     , m_wr(matrix.shape(0))
     , m_wi(matrix.shape(0))
-    , m_vl(matrix.shape())
-    , m_vr(matrix.shape())
+    , m_vl(do_vl ? array_type(matrix.shape()) : array_type())
+    , m_vr(do_vr ? array_type(matrix.shape()) : array_type())
+    , m_do_vl(do_vl)
+    , m_do_vr(do_vr)
 {
     if (matrix.ndim() != 2 || matrix.shape(0) != matrix.shape(1))
     {
@@ -122,10 +127,19 @@ inline EigenSystem::EigenSystem(array_type const & matrix)
             format_shape(matrix)));
     }
 
-    m_vl.transpose();
-    m_vr.transpose();
+    if (m_do_vl)
+    {
+        m_vl.transpose();
+    }
+    if (m_do_vr)
+    {
+        m_vr.transpose();
+    }
 }
 
+/**
+ * @brief Run DGEEV on the prepared workspace.
+ */
 inline void EigenSystem::run()
 {
     auto const n = static_cast<__LAPACK_int>(m_matrix.shape(0));
@@ -142,12 +156,19 @@ inline void EigenSystem::run()
      *   https://www.netlib.org/lapack/explore-html/d4/d68/group__geev_ga7d8afe93d23c5862e238626905ee145e.html
      *   https://www.netlib.org/lapack/explore-html/d9/d28/dgeev_8f_source.html
      */
-    char const jobvl = 'V';
-    char const jobvr = 'V';
+    char const jobvl = m_do_vl ? 'V' : 'N';
+    char const jobvr = m_do_vr ? 'V' : 'N';
     __LAPACK_int const lda = n;
-    __LAPACK_int const ldvl = n;
-    __LAPACK_int const ldvr = n;
+    // DGEEV requires LDVL/LDVR >= 1 and a valid (non-null) pointer even
+    // when the matrix is unreferenced; route the unused side to a stack
+    // scratch slot.
+    __LAPACK_int const ldvl = m_do_vl ? n : 1;
+    __LAPACK_int const ldvr = m_do_vr ? n : 1;
     __LAPACK_int info = 0;
+    double vl_dummy = 0.0;
+    double vr_dummy = 0.0;
+    double * const vl_ptr = m_do_vl ? m_vl.data() : &vl_dummy;
+    double * const vr_ptr = m_do_vr ? m_vr.data() : &vr_dummy;
 
     // Phase 1: workspace query.  lwork == -1 tells DGEEV to write the
     // optimal workspace size into work[0] without performing any work.
@@ -161,9 +182,9 @@ inline void EigenSystem::run()
         &lda,
         m_wr.data(),
         m_wi.data(),
-        m_vl.data(),
+        vl_ptr,
         &ldvl,
-        m_vr.data(),
+        vr_ptr,
         &ldvr,
         &work_query,
         &lwork,
@@ -175,9 +196,9 @@ inline void EigenSystem::run()
             static_cast<int64_t>(info)));
     }
 
-    // Phase 2: allocate workspace and run.  Floor at 4*n per the LAPACK
-    // reference minimum when both eigenvector matrices are requested.
-    lwork = std::max<__LAPACK_int>(static_cast<__LAPACK_int>(work_query), 4 * n);
+    // Phase 2: 4*n minimum when any eigenvectors requested, else 3*n.
+    __LAPACK_int const lwork_min = (m_do_vl || m_do_vr) ? 4 * n : 3 * n;
+    lwork = std::max<__LAPACK_int>(static_cast<__LAPACK_int>(work_query), lwork_min);
     array_type work(static_cast<size_t>(lwork));
     dgeev_(
         &jobvl,
@@ -187,9 +208,9 @@ inline void EigenSystem::run()
         &lda,
         m_wr.data(),
         m_wi.data(),
-        m_vl.data(),
+        vl_ptr,
         &ldvl,
-        m_vr.data(),
+        vr_ptr,
         &ldvr,
         work.data(),
         &lwork,
@@ -207,6 +228,50 @@ inline void EigenSystem::run()
             static_cast<int>(info)));
     }
     m_done = true;
+}
+
+/**
+ * @brief Left eigenvectors computed by DGEEV.
+ *
+ * @param suppress_exception
+ *      Return the empty placeholder instead of throwing when the matrix was
+ *      not computed.
+ * @return
+ *      Column-major n-by-n matrix; empty when do_vl=false and
+ *      suppress_exception=true.
+ * @throws std::runtime_error When do_vl=false and suppress_exception=false.
+ */
+inline EigenSystem::array_type const & EigenSystem::vl(bool suppress_exception) const
+{
+    if (!m_do_vl && !suppress_exception)
+    {
+        throw std::runtime_error(
+            "EigenSystem::vl: left eigenvectors were not computed "
+            "(do_vl=false)");
+    }
+    return m_vl;
+}
+
+/**
+ * @brief Right eigenvectors computed by DGEEV.
+ *
+ * @param suppress_exception
+ *      Return the empty placeholder instead of throwing when the matrix was
+ *      not computed.
+ * @return
+ *      Column-major n-by-n matrix; empty when do_vr=false and
+ *      suppress_exception=true.
+ * @throws std::runtime_error When do_vr=false and suppress_exception=false.
+ */
+inline EigenSystem::array_type const & EigenSystem::vr(bool suppress_exception) const
+{
+    if (!m_do_vr && !suppress_exception)
+    {
+        throw std::runtime_error(
+            "EigenSystem::vr: right eigenvectors were not computed "
+            "(do_vr=false)");
+    }
+    return m_vr;
 }
 
 inline std::string EigenSystem::format_shape(array_type const & arr)

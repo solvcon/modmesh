@@ -60,11 +60,13 @@ WrapEigenSystem::WrapEigenSystem(pybind11::module & mod, char const * pyname, ch
     (*this)
         .def(
             py::init(
-                [](array_type const & a)
+                [](array_type const & a, bool do_vl, bool do_vr)
                 {
-                    return std::make_unique<wrapped_type>(a);
+                    return std::make_unique<wrapped_type>(a, do_vl, do_vr);
                 }),
             py::arg("a"),
+            py::arg("do_vl") = true,
+            py::arg("do_vr") = true,
             // Keep the input array's Python wrapper alive while the
             // EigenSystem lives, so m_matrix's C++ reference stays
             // valid for the lifetime of this instance.
@@ -78,8 +80,32 @@ WrapEigenSystem::WrapEigenSystem(pybind11::module & mod, char const * pyname, ch
             pybind11::return_value_policy::reference_internal)
         .def_property_readonly("wr", &wrapped_type::wr)
         .def_property_readonly("wi", &wrapped_type::wi)
-        .def_property_readonly("vl", &wrapped_type::vl)
-        .def_property_readonly("vr", &wrapped_type::vr)
+        .def_property_readonly(
+            "vl",
+            [](wrapped_type const & self) -> array_type const &
+            {
+                return self.vl();
+            })
+        .def_property_readonly(
+            "vr",
+            [](wrapped_type const & self) -> array_type const &
+            {
+                return self.vr();
+            })
+        .def(
+            "get_vl",
+            &wrapped_type::vl,
+            py::arg("suppress_exception") = false,
+            "Left eigenvectors; suppress_exception=True returns empty "
+            "instead of raising when do_vl=False.")
+        .def(
+            "get_vr",
+            &wrapped_type::vr,
+            py::arg("suppress_exception") = false,
+            "Right eigenvectors; suppress_exception=True returns empty "
+            "instead of raising when do_vr=False.")
+        .def_property_readonly("do_vl", &wrapped_type::do_vl)
+        .def_property_readonly("do_vr", &wrapped_type::do_vr)
         .def_property_readonly("done", &wrapped_type::done);
 }
 
