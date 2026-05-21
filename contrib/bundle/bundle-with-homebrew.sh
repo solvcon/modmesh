@@ -188,6 +188,41 @@ for d in site.getsitepackages():
 print('\n'.join(out))
 ")
 
+# Resolve the closure of Python packages pilot actually imports, so Step 4
+# copies only those, not the developer's full site-packages (which can
+# contain unrelated packages: vtkmodules, openvino, PyQt6, ...). Override
+# seeds via BUNDLE_SEED_MODULES; force-add via BUNDLE_EXTRA_PACKAGES (for
+# lazy / runtime imports the probe cannot observe, e.g. matplotlib backends
+# loaded on first render). Failed seed imports go to stderr so a partial
+# closure is visible instead of silently shipping a broken bundle.
+WANTED_PATHS=()
+while IFS= read -r line; do
+    [[ -n "$line" ]] && WANTED_PATHS+=("$line")
+done < <(python3 -c "
+import importlib, os, sys
+seeds = os.environ.get('BUNDLE_SEED_MODULES',
+    'PySide6.QtCore,PySide6.QtWidgets,PySide6.QtGui,numpy,matplotlib').split(',')
+extras = os.environ.get('BUNDLE_EXTRA_PACKAGES', '').split(',')
+for m in seeds + extras:
+    m = m.strip()
+    if not m: continue
+    try: importlib.import_module(m)
+    except Exception as e:
+        sys.stderr.write('    WARN: seed import %s failed: %s\n' % (m, e))
+out = set()
+for name, mod in list(sys.modules.items()):
+    if mod is None or '.' in name: continue
+    p = getattr(mod, '__path__', None)
+    f = getattr(mod, '__file__', None) or ''
+    if p:
+        for d in p:
+            if 'site-packages' in d:
+                out.add(os.path.realpath(d)); break
+    elif 'site-packages' in f:
+        out.add(os.path.realpath(f))
+print('\n'.join(sorted(out)))
+")
+
 echo "==> Build path : $BUILD_PATH"
 echo "==> App bundle : $APP"
 echo "==> Python fw  : $PY_FW"
@@ -258,14 +293,26 @@ echo "    [Step 3 (Bundle Python framework): $((SECONDS - T_STEP))s]"
 
 T_STEP=$SECONDS
 echo "==> Copying Python packages into bundled site-packages"
-# rsync every site-packages dir into the bundle. -L dereferences Cellar
-# symlinks; .pth files are skipped because they encode absolute Cellar paths,
-# and the directories they point at are themselves enumerated as SITE_DIRS
-# above.
-for SITE in "${SITE_DIRS[@]}"; do
-    rsync -aL --exclude '__pycache__' --exclude '*.pth' \
-        "$SITE/" "$BUNDLED_SITE/"
-done
+# Copy the closure resolved above (dir => rsync tree, file => cp).
+# -L dereferences symlinks. Falls back to every SITE_DIR if the probe
+# failed, so the script still runs when import discovery breaks.
+if [[ ${#WANTED_PATHS[@]} -gt 0 ]]; then
+    echo "    closure: ${#WANTED_PATHS[@]} entries (override via BUNDLE_SEED_MODULES / BUNDLE_EXTRA_PACKAGES)"
+    for path in "${WANTED_PATHS[@]}"; do
+        if [[ -d "$path" ]]; then
+            rsync -aL --exclude '__pycache__' --exclude '*.pth' \
+                "$path" "$BUNDLED_SITE/"
+        elif [[ -f "$path" ]]; then
+            cp -L "$path" "$BUNDLED_SITE/"
+        fi
+    done
+else
+    echo "    WARNING: import-closure discovery failed; copying full SITE_DIRS"
+    for SITE in "${SITE_DIRS[@]}"; do
+        rsync -aL --exclude '__pycache__' --exclude '*.pth' \
+            "$SITE/" "$BUNDLED_SITE/"
+    done
+fi
 echo "    [Step 4 (Bundle site-packages): $((SECONDS - T_STEP))s]"
 
 # ---------------------------------------------------------------------------
@@ -302,7 +349,8 @@ vendor_homebrew_deps() {
     SEEN_BIN="$CLOSURE_TMP/seen_bin"
     SEEN_DYLIB="$CLOSURE_TMP/seen_dylib"
     SEEN_FW="$CLOSURE_TMP/seen_fw"
-    touch "$QUEUE" "$SEEN_BIN" "$SEEN_DYLIB" "$SEEN_FW"
+    SEEN_MISSING="$CLOSURE_TMP/seen_missing"
+    touch "$QUEUE" "$SEEN_BIN" "$SEEN_DYLIB" "$SEEN_FW" "$SEEN_MISSING"
 
     # Skip what's already in Contents/Frameworks/.
     local f
@@ -327,7 +375,15 @@ vendor_homebrew_deps() {
                 fw=${OLD##*/}
                 grep -qxF "$fw" "$SEEN_FW" && continue
                 SRC=${OLD%%/Versions/*}
-                [[ -d "$SRC" ]] || continue
+                if [[ ! -d "$SRC" ]]; then
+                    # Same handling as the dylib branch: warn once and let
+                    # prune_unfixable_machos drop the dependant.
+                    if ! grep -qxF "$OLD" "$SEEN_MISSING"; then
+                        echo "$OLD" >> "$SEEN_MISSING"
+                        echo "    WARN: missing source $OLD" >&2
+                    fi
+                    continue
+                fi
                 # Preserve internal symlinks but materialise Cellar- bound ones
                 # (the binary itself), keeping the framework's on-disk shape
                 # intact.
@@ -343,7 +399,15 @@ vendor_homebrew_deps() {
             /opt/homebrew/*)
                 base=${OLD##*/}
                 grep -qxF "$base" "$SEEN_DYLIB" && continue
-                [[ -f "$OLD" ]] || continue
+                if [[ ! -f "$OLD" ]]; then
+                    # Source not on this host; prune_unfixable_machos drops
+                    # the dependant later. Warn once per unique path.
+                    if ! grep -qxF "$OLD" "$SEEN_MISSING"; then
+                        echo "$OLD" >> "$SEEN_MISSING"
+                        echo "    WARN: missing source $OLD" >&2
+                    fi
+                    continue
+                fi
                 if cp -L "$OLD" "$FW_DIR/$base" 2>/dev/null; then
                     chmod u+w "$FW_DIR/$base"
                     echo "$base" >> "$SEEN_DYLIB"
@@ -364,7 +428,13 @@ vendor_homebrew_deps() {
                 do
                     [[ -f "$cand" ]] && { SRC="$cand"; break; }
                 done
-                [[ -n "$SRC" ]] || continue
+                if [[ -z "$SRC" ]]; then
+                    if ! grep -qxF "$OLD" "$SEEN_MISSING"; then
+                        echo "$OLD" >> "$SEEN_MISSING"
+                        echo "    WARN: could not resolve $OLD under /opt/homebrew" >&2
+                    fi
+                    continue
+                fi
                 if cp -L "$SRC" "$FW_DIR/$base" 2>/dev/null; then
                     chmod u+w "$FW_DIR/$base"
                     echo "$base" >> "$SEEN_DYLIB"
@@ -475,6 +545,99 @@ strip_homebrew_rpaths() {
     done < <(list_macho "$APP")
 }
 
+# Drop any Mach-O still referencing /opt/homebrew after vendor + rewrite have
+# run -- typically Qt plugins (e.g. PySide6's sqldrivers) pre-linked against
+# Homebrew kegs not installed on this host. dyld would fail to load them
+# anyway. Skips framework MAIN binaries since removing those breaks the
+# framework structure; that case is better surfaced by the static check.
+prune_unfixable_machos() {
+    local count=0 BIN load_refs rpath_refs fname fwdir
+    while IFS= read -r -d '' BIN; do
+        # Skip path <NAME>.framework/Versions/<V>/<NAME>. Plugins and Python
+        # C extensions nested deeper than that are not main binaries.
+        case "$BIN" in
+        *.framework/Versions/*)
+            fname="${BIN##*/}"
+            fwdir="${BIN%/Versions/*}"
+            if [[ "${fwdir##*/}" == "${fname}.framework" ]]; then
+                continue
+            fi
+            ;;
+        esac
+        load_refs=$(otool -L "$BIN" 2>/dev/null | tail -n +2 | awk '{print $1}' \
+            | grep -E '^/opt/homebrew' || true)
+        rpath_refs=$(binary_rpaths "$BIN" | grep -E '^/opt/homebrew' || true)
+        if [[ -n "$load_refs" || -n "$rpath_refs" ]]; then
+            rm -f "$BIN"
+            echo "    WARN: pruned ${BIN#"$APP/"}" >&2
+            count=$((count+1))
+        fi
+    done < <(list_macho "$APP")
+    if [[ $count -gt 0 ]]; then
+        # Stderr + WARN prefix: each pruned file is a feature pilot loses on
+        # this host, even if startup smoke-launch still passes. User can
+        # install the missing keg and rerun to keep it.
+        echo "    WARN: pruned $count Mach-O file(s) with unresolvable /opt/homebrew deps" >&2
+    fi
+}
+
+# PySide6 wheels ship a private copy of Qt under PySide6/Qt/lib. Its .abi3.so
+# modules load that copy via @rpath; pilot's C++ binary loads Qt from
+# Contents/Frameworks/. Two Qt instances in one process => duplicate Obj-C
+# classes, separate global state, "QWidget: Must construct a QApplication"
+# abort. Replace each duplicated nested framework with a relative symlink to
+# the main bundle copy. Frameworks unique to PySide6 (QtCharts, ...) are left
+# in place; their @rpath/QtCore... refs resolve through these symlinks too.
+dedupe_pyside_qt() {
+    local pyqt_lib count=0 nested name main rel
+    pyqt_lib="$DEST_FW/Versions/$PY_VER/lib/python${PY_VER}/site-packages/PySide6/Qt/lib"
+    [[ -d "$pyqt_lib" ]] || return 0
+    # 9 levels: PySide6/Qt/lib up to Contents/Frameworks/.
+    rel='../../../../../../../../..'
+    for nested in "$pyqt_lib"/Qt*.framework; do
+        [[ -d "$nested" && ! -L "$nested" ]] || continue
+        name=$(basename "$nested" .framework)
+        main="$FW_DIR/${name}.framework"
+        [[ -d "$main" && ! -L "$main" ]] || continue
+        rm -rf "$nested"
+        ln -s "$rel/${name}.framework" "$nested"
+        count=$((count+1))
+    done
+    if [[ $count -gt 0 ]]; then
+        echo "    deduped $count PySide6/Qt/lib framework(s) into main Qt"
+    fi
+}
+
+# Set PYTHONNOUSERSITE=1 in LSEnvironment so a Finder/open launch of pilot
+# never adds ~/Library/Python/<X.Y>/lib/python/site-packages to sys.path,
+# which on dev machines may carry a second PySide6 (and its Qt). Same
+# dual-instance crash as dedupe_pyside_qt fixes for the in-bundle case.
+inject_pythonnousersite() {
+    local plist="$APP/Contents/Info.plist"
+    [[ -f "$plist" ]] || { echo "    SKIP: no Info.plist at $plist" >&2; return 0; }
+    # macdeployqt's Step 2 codesign locks Info.plist read-only; Step 7
+    # re-locks it.
+    chmod u+w "$plist"
+    if /usr/libexec/PlistBuddy -c "Print :LSEnvironment:PYTHONNOUSERSITE" \
+            "$plist" >/dev/null 2>&1; then
+        /usr/libexec/PlistBuddy -c \
+            "Set :LSEnvironment:PYTHONNOUSERSITE 1" "$plist" || {
+            echo "    ERROR: failed to set LSEnvironment.PYTHONNOUSERSITE" >&2
+            return 1
+        }
+    else
+        # Dict may already exist; tolerate either way.
+        /usr/libexec/PlistBuddy -c "Add :LSEnvironment dict" "$plist" \
+            2>/dev/null || true
+        /usr/libexec/PlistBuddy -c \
+            "Add :LSEnvironment:PYTHONNOUSERSITE string 1" "$plist" || {
+            echo "    ERROR: failed to add LSEnvironment.PYTHONNOUSERSITE" >&2
+            return 1
+        }
+    fi
+    echo "    Info.plist LSEnvironment.PYTHONNOUSERSITE = 1"
+}
+
 T_STEP=$SECONDS
 echo "==> Vendoring Homebrew dependencies"
 vendor_homebrew_deps
@@ -482,6 +645,12 @@ echo "==> Redirecting Homebrew load commands to bundled copies"
 rewrite_load_commands
 echo "==> Stripping /opt/homebrew rpaths"
 strip_homebrew_rpaths
+echo "==> Pruning Mach-O files with unresolvable /opt/homebrew deps"
+prune_unfixable_machos
+echo "==> Deduplicating PySide6's bundled Qt against the main bundle Qt"
+dedupe_pyside_qt
+echo "==> Setting PYTHONNOUSERSITE=1 in Info.plist"
+inject_pythonnousersite
 echo "    [Step 6 (Vendor Homebrew deps): $((SECONDS - T_STEP))s]"
 
 # ---------------------------------------------------------------------------
