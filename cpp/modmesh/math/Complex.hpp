@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (c) 2025, Chun-Hsu Lai <as2266317@gmail.com>
  *
@@ -259,6 +261,26 @@ ComplexImpl<T> operator/(T lhs, const ComplexImpl<T> & rhs)
 
 template <typename T>
 using Complex = detail::ComplexImpl<T>;
+
+template <typename T>
+inline constexpr bool is_std_complex_layout_compatible_v = std::is_standard_layout_v<Complex<T>> &&
+                                                           sizeof(Complex<T>) == sizeof(std::complex<T>) &&
+                                                           alignof(Complex<T>) == alignof(std::complex<T>);
+
+static_assert(is_std_complex_layout_compatible_v<float>);
+static_assert(is_std_complex_layout_compatible_v<double>);
+
+template <typename T>
+std::complex<T> const * as_std_complex_pointer(Complex<T> const * ptr)
+{
+    return reinterpret_cast<std::complex<T> const *>(ptr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+}
+
+template <typename T>
+std::complex<T> * as_std_complex_pointer(Complex<T> * ptr)
+{
+    return reinterpret_cast<std::complex<T> *>(ptr); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+}
 
 // clang-format off
 template <typename T>

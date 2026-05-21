@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import functools
+import platform
 
 import numpy as np
 import modmesh
@@ -58,10 +59,26 @@ def profile_matmul_naive_sa(lhs, rhs):
     return lhs.matmul(rhs)
 
 
+@profile_function
+def profile_matmul_veclib_sa(lhs, rhs):
+    return lhs.matmul_veclib(rhs)
+
+
 def profile_matmul_fast_sa(lhs, rhs, tile_x, tile_y, tile_z):
     name = f"profile_matmul_fast_sa_{tile_x}_{tile_y}_{tile_z}"
     _ = modmesh.CallProfilerProbe(name)
-    return lhs.fast_matmul(rhs, tile_x=tile_x, tile_y=tile_y, tile_z=tile_z)
+    return lhs.matmul_fast(rhs, tile_x=tile_x, tile_y=tile_y, tile_z=tile_z)
+
+
+def supports_matmul_veclib(dtype):
+    return (
+        platform.system() == "Darwin"
+        and platform.machine() == "arm64"
+        and np.dtype(dtype) in (
+            np.dtype(np.float32),
+            np.dtype(np.float64),
+        )
+    )
 
 
 def make_data(dtype, shape):
@@ -79,10 +96,13 @@ def profile_matmul_operation(dtype, shapes, it=10):
         rhs = make_data(dtype, (m, m))
         lhs_sa = make_container(lhs)
         rhs_sa = make_container(rhs)
+        use_veclib = supports_matmul_veclib(dtype)
         modmesh.call_profiler.reset()
         for _ in range(it):
             profile_matmul_np(lhs, rhs)
             profile_matmul_naive_sa(lhs_sa, rhs_sa)
+            if use_veclib:
+                profile_matmul_veclib_sa(lhs_sa, rhs_sa)
             for tile_x, tile_y, tile_z in tile_configs:
                 profile_matmul_fast_sa(lhs_sa, rhs_sa, tile_x, tile_y, tile_z)
 
@@ -104,6 +124,8 @@ def profile_matmul_operation(dtype, shapes, it=10):
         print_row("-" * 20, "-" * 15, "-" * 15)
         npbase = out["np"]
         keys = ["np", "naive_sa"]
+        if use_veclib:
+            keys += ["veclib_sa"]
         keys += [
             f"fast_sa_{tile_x}_{tile_y}_{tile_z}"
             for tile_x, tile_y, tile_z in tile_configs
