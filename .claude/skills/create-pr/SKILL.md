@@ -12,9 +12,11 @@ if those extend them, follow them and flag the drift.
 ## Protocol the PR must satisfy
 
 1. **Subject** -- concise and informative.
-2. **Description** -- clear global description. State *what* changed and
-   *why* in prose; use bullets for enumerated changes; include benchmark
-   tables or verification notes when relevant.
+2. **Description** -- clear, short, human-readable global description.
+   Write it as prose paragraphs that a person would actually want to
+   read. Avoid bullet lists; only fall back to a short bulleted list or
+   a table when prose would genuinely be unreadable (e.g. a benchmark
+   matrix with many rows). State *what* changed and *why*.
 3. **Issue reference** -- end with "Related to #xxx" or "For issue #xxx".
    **Never** use "close #xxx", "closes #xxx", "fixes #xxx", or any closing
    keyword. We do not let PR/commit text drive issue management.
@@ -52,19 +54,18 @@ if those extend them, follow them and flag the drift.
    If the branch is not pushed, push with `-u` after confirming with the
    user. Do not force-push.
 
-3. **Draft the subject and body.** Inspect the diff and the user's gist,
-   then propose a subject and a body. The body should follow the shape of
-   recent merged PRs:
-   - Short opening paragraph stating the change and motivation.
-   - Bulleted list of notable file/area changes when more than one.
-   - Verification notes (tests run, benchmarks, manual checks) when
-     non-trivial.
-   - Closing line: `Related to #xxx.` or `For issue #xxx.`.
+3. **Draft the subject and body.** Inspect the diff and the user's
+   gist, then propose a subject and a body. The body should be **short
+   prose** -- a person reading it should understand what changed and
+   why without scanning a checklist. Prefer one to three paragraphs.
+   Reserve bullets for cases where prose would genuinely be unreadable
+   (long enumerations, benchmark matrices). End with the closing line
+   `Related to #xxx.` or `For issue #xxx.`.
 
-   Present the draft to the user (subject and body) and wait for edits or
-   approval before opening the PR. Do not post Claude-Code attribution
-   trailers in the PR body -- this project treats PR text as
-   human-authored.
+   Present the draft to the user (subject and body) and wait for edits
+   or approval before opening the PR. Do not post Claude-Code
+   attribution trailers in the PR body -- this project treats PR text
+   as human-authored.
 
 4. **Open the PR.** Load the approved title and body into shell
    variables using **quoted heredocs** -- the single-quoted delimiter
