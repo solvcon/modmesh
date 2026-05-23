@@ -114,15 +114,13 @@ if those extend them, follow them and flag the drift.
    to something unique (e.g. `BODY_EOF_811`).
 
 5. **After creation.** Report the PR URL back to the user. Then:
-   - If the PR is draft, remind the user that "ready for review"
-     requires a global comment, not just the button.
-   - If the PR is ready, the global review-request comment is
-     **required** by the protocol -- not optional. Draft a one-line
-     review-request comment, present it for approval, and only after
-     the user approves post it via
-     `gh pr comment <num> --body-file <file>`. The comment must be
-     authored by the user; if the user declines to post, output
-     `blocked: review-request comment not posted` and stop.
+   - Remind the user that the global review-request comment is the
+     author's responsibility -- the skill does **not** post it. When
+     the PR is ready (now, or later after leaving draft), the author
+     must open a global PR comment that explicitly asks the
+     maintainer to review. Point the user at the PR URL and let them
+     write and post the comment themselves; do not draft text for it
+     and do not call `gh pr comment`.
    - Remind the user to add inline annotations on the diff (the skill
      does not write them). Recommend the user focus on the points
      that help the reviewer most:
