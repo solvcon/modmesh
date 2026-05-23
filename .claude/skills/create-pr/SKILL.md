@@ -5,9 +5,9 @@ description: Open a modmesh pull request that follows the project PR protocol (c
 
 # Create Pull Request (modmesh)
 
-Authoritative reference is issue solvcon/modmesh#811 and the "Pull Request
-Guidelines" section of `CLAUDE.md`. The rules below are a working summary;
-if those extend them, follow them and flag the drift.
+This file is the authoritative reference for the modmesh PR protocol.
+The "Pull Request Guidelines" section of `CLAUDE.md` is the project-wide
+cross-reference; flag any drift between the two.
 
 ## Protocol the PR must satisfy
 
