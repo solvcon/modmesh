@@ -17,6 +17,11 @@ cross-reference; flag any drift between the two.
    read. Avoid bullet lists; only fall back to a short bulleted list or
    a table when prose would genuinely be unreadable (e.g. a benchmark
    matrix with many rows). State *what* changed and *why*.
+   **Do not hard-wrap paragraphs.** Each paragraph is a single
+   unbroken line; separate paragraphs with one blank line. GitHub
+   reflows the text to the viewer's width, and mid-sentence line
+   breaks at 79/80 columns render as ragged prose in the PR view.
+   The 79-char source-code limit does not apply to PR descriptions.
 3. **Issue reference** -- end with "Related to #xxx" or "For issue #xxx".
    **Never** use "close #xxx", "closes #xxx", "fixes #xxx", or any closing
    keyword. We do not let PR/commit text drive issue management.
@@ -74,6 +79,13 @@ cross-reference; flag any drift between the two.
    Reserve bullets for cases where prose would genuinely be unreadable
    (long enumerations, benchmark matrices). End with the closing line
    `Related to #xxx.` or `For issue #xxx.`.
+
+   **Write each paragraph as one continuous line.** Do not insert
+   hard line breaks inside a paragraph -- not at 79 columns, not at
+   any column. Paragraphs are separated by exactly one blank line.
+   GitHub wraps to the viewer's width; pre-wrapped prose looks
+   ragged in the rendered PR. This applies to the draft you show
+   the user and to the text written into `$body_file` in step 4.
 
    Present the draft to the user (subject and body) and wait for edits
    or approval before opening the PR. Do not post Claude-Code
