@@ -36,7 +36,7 @@ namespace modmesh
 namespace python
 {
 
-#ifdef __APPLE__
+#ifdef MM_HAS_VENDOR_LAPACK
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapEigenSystem
     : public WrapBase<WrapEigenSystem, EigenSystem>
@@ -109,15 +109,15 @@ WrapEigenSystem::WrapEigenSystem(pybind11::module & mod, char const * pyname, ch
         .def_property_readonly("done", &wrapped_type::done);
 }
 
-#endif /* __APPLE__ */
+#endif /* MM_HAS_VENDOR_LAPACK */
 
 void wrap_EigenSystem(pybind11::module & mod)
 {
-#ifdef __APPLE__
+#ifdef MM_HAS_VENDOR_LAPACK
     WrapEigenSystem::commit(mod, "EigenSystem", "Eigen problem solver");
-#else // __APPLE__
+#else // MM_HAS_VENDOR_LAPACK
     mod.attr("EigenSystem") = pybind11::none();
-#endif // __APPLE__
+#endif // MM_HAS_VENDOR_LAPACK
 }
 
 } /* end namespace python */

@@ -1,4 +1,3 @@
-import sys
 import unittest
 
 import numpy as np
@@ -1261,8 +1260,8 @@ class TestLuErrorHandling(unittest.TestCase):
             mm.lu_inv(A)
 
 
-@unittest.skipUnless(sys.platform == "darwin",
-                     "mm.EigenSystem requires Apple vecLib")
+@unittest.skipIf(mm.EigenSystem is None,
+                 "mm.EigenSystem is not built (no vendor LAPACK)")
 class TestLinalgEigenSystemTC(unittest.TestCase):
     """Verify EigenSystem against DGEEV reference outputs.
 

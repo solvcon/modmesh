@@ -30,13 +30,14 @@
 
 /**
  * Eigenvalue and eigenvector computation for general (non-symmetric) real
- * matrices using LAPACK DGEEV from Apple's vecLib (Accelerate framework).
+ * matrices using LAPACK DGEEV.
  *
- * This header is only available on Apple platforms.
+ * The LAPACK backend is selected by the build system via MM_HAS_VENDOR_LAPACK:
+ * Apple's vecLib (Accelerate framework) on macOS and OpenBLAS on Linux.
  */
 
-#ifndef __APPLE__
-#error "modmesh/linalg/EigenSystem.hpp is only available on Apple platforms (Accelerate/vecLib)."
+#ifndef MM_HAS_VENDOR_LAPACK
+#error "modmesh/linalg/EigenSystem.hpp requires a vendor LAPACK (MM_HAS_VENDOR_LAPACK)."
 #endif
 
 #include <algorithm>
@@ -46,14 +47,7 @@
 #include <string>
 
 #include <modmesh/buffer/buffer.hpp>
-
-// Opt in to the modern (non-deprecated) LAPACK signatures provided by
-// Accelerate.  Must be defined before including the Accelerate header.
-#ifndef ACCELERATE_NEW_LAPACK
-#define ACCELERATE_NEW_LAPACK
-#endif
-// NOLINTNEXTLINE(misc-header-include-cycle)
-#include <Accelerate/Accelerate.h>
+#include <modmesh/linalg/lapack_compat.hpp>
 
 namespace modmesh
 {
@@ -142,7 +136,7 @@ inline EigenSystem::EigenSystem(array_type const & matrix, bool do_vl, bool do_v
  */
 inline void EigenSystem::run()
 {
-    auto const n = static_cast<__LAPACK_int>(m_matrix.shape(0));
+    auto const n = static_cast<lapack_int_t>(m_matrix.shape(0));
     if (n == 0)
     {
         m_done = true;
@@ -158,13 +152,13 @@ inline void EigenSystem::run()
      */
     char const jobvl = m_do_vl ? 'V' : 'N';
     char const jobvr = m_do_vr ? 'V' : 'N';
-    __LAPACK_int const lda = n;
+    lapack_int_t const lda = n;
     // DGEEV requires LDVL/LDVR >= 1 and a valid (non-null) pointer even
     // when the matrix is unreferenced; route the unused side to a stack
     // scratch slot.
-    __LAPACK_int const ldvl = m_do_vl ? n : 1;
-    __LAPACK_int const ldvr = m_do_vr ? n : 1;
-    __LAPACK_int info = 0;
+    lapack_int_t const ldvl = m_do_vl ? n : 1;
+    lapack_int_t const ldvr = m_do_vr ? n : 1;
+    lapack_int_t info = 0;
     double vl_dummy = 0.0;
     double vr_dummy = 0.0;
     double * const vl_ptr = m_do_vl ? m_vl.data() : &vl_dummy;
@@ -173,7 +167,7 @@ inline void EigenSystem::run()
     // Phase 1: workspace query.  lwork == -1 tells DGEEV to write the
     // optimal workspace size into work[0] without performing any work.
     double work_query = 0.0;
-    __LAPACK_int lwork = -1;
+    lapack_int_t lwork = -1;
     dgeev_(
         &jobvl,
         &jobvr,
@@ -197,8 +191,8 @@ inline void EigenSystem::run()
     }
 
     // Phase 2: 4*n minimum when any eigenvectors requested, else 3*n.
-    __LAPACK_int const lwork_min = (m_do_vl || m_do_vr) ? 4 * n : 3 * n;
-    lwork = std::max<__LAPACK_int>(static_cast<__LAPACK_int>(work_query), lwork_min);
+    lapack_int_t const lwork_min = (m_do_vl || m_do_vr) ? 4 * n : 3 * n;
+    lwork = std::max<lapack_int_t>(static_cast<lapack_int_t>(work_query), lwork_min);
     array_type work(static_cast<size_t>(lwork));
     dgeev_(
         &jobvl,
