@@ -163,7 +163,23 @@ if (APPLE)
         ${APPLE_FWK_QUARTZ_CORE}
         ${APPLE_FWK_METAL}
     )
+    # Accelerate/vecLib provides BLAS + LAPACK.
+    target_compile_definitions(modmesh_primary PUBLIC MM_HAS_VENDOR_LAPACK)
 endif () # APPLE
+
+if (UNIX AND NOT APPLE)
+    # OpenBLAS ships both BLAS and LAPACK symbols; treat it as the vendor
+    # LAPACK on Linux.  When it is not present, leave MM_HAS_VENDOR_LAPACK
+    # undefined so the dependent is not built.
+    find_library(OPENBLAS_LIB openblas)
+    if (OPENBLAS_LIB)
+        message(STATUS "Found OpenBLAS: ${OPENBLAS_LIB}")
+        target_link_libraries(modmesh_primary PUBLIC ${OPENBLAS_LIB})
+        target_compile_definitions(modmesh_primary PUBLIC MM_HAS_VENDOR_LAPACK)
+    else ()
+        message(STATUS "OpenBLAS not found; EigenSystem will not be built.")
+    endif ()
+endif () # UNIX AND NOT APPLE
 
 if (MSVC)
     target_compile_options(
