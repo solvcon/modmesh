@@ -48,6 +48,11 @@ list_of_r3dwidget = [
     'R3DWidget',
 ]
 
+# R2DWidget.hpp/.cpp
+list_of_r2dwidget = [
+    'R2DWidget',
+]
+
 # RAxisMark.hpp/.cpp
 list_of_raxismark = [
     'RLine',
@@ -71,6 +76,7 @@ list_of_rcameracontroller = [
 
 _from_impl = (  # noqa: F822
     list_of_r3dwidget +
+    list_of_r2dwidget +
     list_of_raxismark +
     list_of_rmanager +
     list_of_rpythonconsole +
@@ -92,6 +98,7 @@ def _load(symbol_list):
 
 
 _load(list_of_r3dwidget)
+_load(list_of_r2dwidget)
 _load(list_of_raxismark)
 _load(list_of_rmanager)
 _load(list_of_rpythonconsole)

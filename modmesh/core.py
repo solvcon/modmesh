@@ -174,6 +174,7 @@ list_of_universe = [
     'TrapezoidPadFp64',
     'TrapezoidalDecomposerFp32',
     'TrapezoidalDecomposerFp64',
+    'ViewTransform2dFp64',
 ]
 
 # OASIS directory symbols

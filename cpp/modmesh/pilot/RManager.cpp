@@ -115,6 +115,20 @@ R3DWidget * RManager::add3DWidget()
     return viewer;
 }
 
+R2DWidget * RManager::add2DWidget()
+{
+    R2DWidget * viewer = nullptr;
+    if (m_mdiArea)
+    {
+        viewer = new R2DWidget(/*parent*/ m_mdiArea);
+        viewer->setWindowTitle("2D canvas");
+        viewer->show();
+        auto * subwin = this->addSubWindow(viewer);
+        subwin->resize(400, 300);
+    }
+    return viewer;
+}
+
 void RManager::toggleConsole()
 {
     if (m_pycon)

@@ -32,6 +32,7 @@
 #include <modmesh/universe/bezier.hpp>
 #include <modmesh/universe/coord.hpp>
 #include <modmesh/universe/polygon.hpp>
+#include <modmesh/universe/ViewTransform2d.hpp>
 #include <modmesh/universe/World.hpp>
 
 namespace modmesh
