@@ -2432,6 +2432,58 @@ private:
 }; /* end class SimpleArray */
 
 /**
+ * @brief Type-erased element-copy kernels over a pair of ConcreteBuffers.
+ *
+ * @details
+ *      Non-template helper bundling the family of physical copy kernels that
+ *      SimpleArray::copy_logical_into routes to.  Construction binds source
+ *      and destination ConcreteBuffers together with the layout metadata
+ *      (shape, element-unit strides, itemsize); each member function selects a
+ *      specific kernel.  Picking the kernel that suits the stride and
+ *      contiguity is the caller's job.
+ */
+class SimpleArrayCopier
+{
+
+public:
+
+    using shape_type = small_vector<size_t>;
+    using buffer_type = ConcreteBuffer;
+
+    SimpleArrayCopier(
+        buffer_type const & src_buffer,
+        size_t src_body_offset,
+        shape_type const & src_stride,
+        buffer_type & dst_buffer,
+        size_t dst_body_offset,
+        shape_type const & dst_stride,
+        shape_type const & shape,
+        size_t itemsize);
+
+    SimpleArrayCopier() = delete;
+    SimpleArrayCopier(SimpleArrayCopier const &) = delete;
+    SimpleArrayCopier(SimpleArrayCopier &&) = delete;
+    SimpleArrayCopier & operator=(SimpleArrayCopier const &) = delete;
+    SimpleArrayCopier & operator=(SimpleArrayCopier &&) = delete;
+    ~SimpleArrayCopier() = default;
+
+    void memcpy() const;
+    void tiled_2d() const;
+    void tiled_nd() const;
+    void naive() const;
+
+private:
+
+    int8_t const * m_src;
+    int8_t * m_dst;
+    shape_type const & m_shape;
+    shape_type const & m_src_stride;
+    shape_type const & m_dst_stride;
+    size_t m_itemsize;
+
+}; /* end class SimpleArrayCopier */
+
+/**
  * @brief Transpose by reversing all axes in place.
  *
  * @param copy
@@ -2601,7 +2653,8 @@ SimpleArray<T> SimpleArray<T>::to_column_major() const
  *
  * @details
  *      Heavy-lifting helper to copy data. `out` must share the same shape but
- *      may carry a different stride.
+ *      may carry a different stride.  Dispatches the work to one of the
+ *      SimpleArrayCopier kernels based on the source/destination layout.
  *
  * @param out Destination array; its shape must match the receiver's.
  */
@@ -2621,27 +2674,33 @@ void SimpleArray<T>::copy_logical_into(SimpleArray & out) const
     {
         return;
     }
-    // Walk a multi-dimensional index in row-major order.  out's stride is only
-    // used to compute the destination offset to bridge row-major,
-    // column-major, and arbitrary strided layouts.
-    size_t const ndim = m_shape.size();
-    shape_type idx(ndim, 0);
-    for (size_t step = 0; step < total; ++step)
+    // Subtract on T* so no reinterpret_cast is needed; ITEMSIZE then maps
+    // the element offset to the byte offset the helper expects.
+    auto const src_body_offset = static_cast<size_t>(m_body - m_buffer->template data<value_type>()) * ITEMSIZE;
+    auto const dst_body_offset = static_cast<size_t>(out.m_body - out.m_buffer->template data<value_type>()) * ITEMSIZE;
+    SimpleArrayCopier const copier(
+        *m_buffer,
+        src_body_offset,
+        m_stride,
+        *out.m_buffer,
+        dst_body_offset,
+        out.m_stride,
+        m_shape,
+        ITEMSIZE);
+    // Matching-stride fast-path: when source and destination share the same
+    // stride vector and the layout is contiguous, both buffers hold the same
+    // byte pattern and a single memcpy moves every element.
+    if (m_stride == out.m_stride && (is_c_contiguous() || is_f_contiguous()))
     {
-        out.m_body[buffer_offset(out.m_stride, idx)] = m_body[buffer_offset(m_stride, idx)];
-        // Carry-propagating increment: bump the trailing axis; on overflow,
-        // wrap to 0 and carry into the next-most-significant axis.
-        for (size_t i = ndim; i-- > 0;)
-        {
-            if (++idx[i] < m_shape[i])
-            {
-                break;
-            }
-            // After the last element the carry rolls every axis back to 0, but
-            // the outer loop terminates before idx is used again.
-            idx[i] = 0;
-        }
+        copier.memcpy();
+        return;
     }
+    if (m_shape.size() == 2)
+    {
+        copier.tiled_2d();
+        return;
+    }
+    copier.tiled_nd();
 }
 
 template <typename A, typename T>

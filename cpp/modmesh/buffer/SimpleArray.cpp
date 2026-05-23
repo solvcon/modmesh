@@ -29,10 +29,320 @@
 #include <modmesh/buffer/SimpleArray.hpp>
 #include <modmesh/math/math.hpp>
 
+#include <algorithm>
+#include <cstring>
 #include <unordered_map>
 
 namespace modmesh
 {
+
+/**
+ * Typed element-copy helper used by the per-itemsize specializations of the
+ * SimpleArrayCopier kernels.
+ */
+template <size_t N>
+static inline void copy_one(int8_t * dst, int8_t const * src)
+{
+    // Reduces every element move in the inner loops to a std::memcpy with a
+    // compile-time-constant size, which the compiler inlines into a single
+    // load/store on common dtypes.
+    std::memcpy(dst, src, N);
+}
+
+template <size_t N>
+static void tiled_2d_impl(
+    int8_t * const dst_body, int8_t const * const src_body, size_t const n0, size_t const n1, size_t const ss0, size_t const ss1, size_t const os0, size_t const os1)
+{
+    constexpr size_t BLOCK = 32;
+    for (size_t i0 = 0; i0 < n0; i0 += BLOCK)
+    {
+        size_t const i_end = std::min(i0 + BLOCK, n0);
+        for (size_t j0 = 0; j0 < n1; j0 += BLOCK)
+        {
+            size_t const j_end = std::min(j0 + BLOCK, n1);
+            for (size_t i = i0; i < i_end; ++i)
+            {
+                int8_t const * src_row = src_body + i * ss0;
+                int8_t * dst_row = dst_body + i * os0;
+                for (size_t j = j0; j < j_end; ++j)
+                {
+                    copy_one<N>(dst_row + j * os1, src_row + j * ss1);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Generic per-itemsize 2-D kernel that falls back to memcpy.  Used only for
+ * itemsizes that are not in the specialized {1, 2, 4, 8, 16} set.
+ */
+static inline void tiled_2d_generic(
+    int8_t * const dst_body, int8_t const * const src_body, size_t const n0, size_t const n1, size_t const ss0, size_t const ss1, size_t const os0, size_t const os1, size_t const itemsize)
+{
+    constexpr size_t BLOCK = 32;
+    for (size_t i0 = 0; i0 < n0; i0 += BLOCK)
+    {
+        size_t const i_end = std::min(i0 + BLOCK, n0);
+        for (size_t j0 = 0; j0 < n1; j0 += BLOCK)
+        {
+            size_t const j_end = std::min(j0 + BLOCK, n1);
+            for (size_t i = i0; i < i_end; ++i)
+            {
+                int8_t const * src_row = src_body + i * ss0;
+                int8_t * dst_row = dst_body + i * os0;
+                for (size_t j = j0; j < j_end; ++j)
+                {
+                    std::memcpy(dst_row + j * os1, src_row + j * ss1, itemsize);
+                }
+            }
+        }
+    }
+}
+
+template <size_t N>
+static void tiled_nd_inner(
+    int8_t * const dst_body, int8_t const * const src_body, size_t const n_a, size_t const n_b, size_t const ss_a, size_t const ss_b, size_t const os_a, size_t const os_b)
+{
+    constexpr size_t BLOCK = 32;
+    for (size_t a0 = 0; a0 < n_a; a0 += BLOCK)
+    {
+        size_t const a_end = std::min(a0 + BLOCK, n_a);
+        for (size_t b0 = 0; b0 < n_b; b0 += BLOCK)
+        {
+            size_t const b_end = std::min(b0 + BLOCK, n_b);
+            for (size_t i = a0; i < a_end; ++i)
+            {
+                int8_t const * src_row = src_body + i * ss_a;
+                int8_t * dst_row = dst_body + i * os_a;
+                for (size_t j = b0; j < b_end; ++j)
+                {
+                    copy_one<N>(dst_row + j * os_b, src_row + j * ss_b);
+                }
+            }
+        }
+    }
+}
+
+static inline void tiled_nd_inner_generic(
+    int8_t * const dst_body, int8_t const * const src_body, size_t const n_a, size_t const n_b, size_t const ss_a, size_t const ss_b, size_t const os_a, size_t const os_b, size_t const itemsize)
+{
+    constexpr size_t BLOCK = 32;
+    for (size_t a0 = 0; a0 < n_a; a0 += BLOCK)
+    {
+        size_t const a_end = std::min(a0 + BLOCK, n_a);
+        for (size_t b0 = 0; b0 < n_b; b0 += BLOCK)
+        {
+            size_t const b_end = std::min(b0 + BLOCK, n_b);
+            for (size_t i = a0; i < a_end; ++i)
+            {
+                int8_t const * src_row = src_body + i * ss_a;
+                int8_t * dst_row = dst_body + i * os_a;
+                for (size_t j = b0; j < b_end; ++j)
+                {
+                    std::memcpy(dst_row + j * os_b, src_row + j * ss_b, itemsize);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Dispatch the inner tile by itemsize.  Specialized kernels run for the common
+ * dtypes; everything else falls through to the memcpy version.
+ */
+static inline void dispatch_tile_inner(
+    int8_t * const dst_body, int8_t const * const src_body, size_t const n_a, size_t const n_b, size_t const ss_a, size_t const ss_b, size_t const os_a, size_t const os_b, size_t const itemsize)
+{
+    switch (itemsize)
+    {
+    case 1: tiled_nd_inner<1>(dst_body, src_body, n_a, n_b, ss_a, ss_b, os_a, os_b); break;
+    case 2: tiled_nd_inner<2>(dst_body, src_body, n_a, n_b, ss_a, ss_b, os_a, os_b); break;
+    case 4: tiled_nd_inner<4>(dst_body, src_body, n_a, n_b, ss_a, ss_b, os_a, os_b); break;
+    case 8: tiled_nd_inner<8>(dst_body, src_body, n_a, n_b, ss_a, ss_b, os_a, os_b); break;
+    case 16: tiled_nd_inner<16>(dst_body, src_body, n_a, n_b, ss_a, ss_b, os_a, os_b); break;
+    default: tiled_nd_inner_generic(dst_body, src_body, n_a, n_b, ss_a, ss_b, os_a, os_b, itemsize); break;
+    }
+}
+
+/**
+ * @param src_buffer Source buffer.
+ * @param src_body_offset
+ *      Byte offset from the source buffer start to the first logical
+ *      element ("body").
+ * @param src_stride Source strides in element units.
+ * @param dst_buffer Destination buffer.
+ * @param dst_body_offset
+ *      Byte offset from the destination buffer start to its body.
+ * @param dst_stride Destination strides in element units.
+ * @param shape Logical shape shared by source and destination.
+ * @param itemsize Element size in bytes.
+ */
+SimpleArrayCopier::SimpleArrayCopier(
+    buffer_type const & src_buffer,
+    size_t const src_body_offset,
+    shape_type const & src_stride,
+    buffer_type & dst_buffer,
+    size_t const dst_body_offset,
+    shape_type const & dst_stride,
+    shape_type const & shape,
+    size_t const itemsize)
+    : m_src(src_buffer.data<int8_t>() + src_body_offset)
+    , m_dst(dst_buffer.data<int8_t>() + dst_body_offset)
+    , m_shape(shape)
+    , m_src_stride(src_stride)
+    , m_dst_stride(dst_stride)
+    , m_itemsize(itemsize)
+{
+}
+
+/**
+ * Single-buffer memcpy fast-path.  Valid only when source and destination
+ * share strides and the layout is contiguous.
+ */
+void SimpleArrayCopier::memcpy() const
+{
+    size_t total = 1;
+    for (size_t const s : m_shape)
+    {
+        total *= s;
+    }
+    std::memcpy(m_dst, m_src, total * m_itemsize);
+}
+
+/**
+ * 2-D 32x32 tile kernel.  Valid only for ndim == 2.
+ */
+void SimpleArrayCopier::tiled_2d() const
+{
+    size_t const n0 = m_shape[0];
+    size_t const n1 = m_shape[1];
+    // Element strides scaled to byte strides once; the inner loop uses byte
+    // arithmetic throughout.
+    size_t const ss0 = m_src_stride[0] * m_itemsize;
+    size_t const ss1 = m_src_stride[1] * m_itemsize;
+    size_t const os0 = m_dst_stride[0] * m_itemsize;
+    size_t const os1 = m_dst_stride[1] * m_itemsize;
+    switch (m_itemsize)
+    {
+    case 1: tiled_2d_impl<1>(m_dst, m_src, n0, n1, ss0, ss1, os0, os1); break;
+    case 2: tiled_2d_impl<2>(m_dst, m_src, n0, n1, ss0, ss1, os0, os1); break;
+    case 4: tiled_2d_impl<4>(m_dst, m_src, n0, n1, ss0, ss1, os0, os1); break;
+    case 8: tiled_2d_impl<8>(m_dst, m_src, n0, n1, ss0, ss1, os0, os1); break;
+    case 16: tiled_2d_impl<16>(m_dst, m_src, n0, n1, ss0, ss1, os0, os1); break;
+    default: tiled_2d_generic(m_dst, m_src, n0, n1, ss0, ss1, os0, os1, m_itemsize); break;
+    }
+}
+
+/**
+ * N-D kernel: 32x32 tile on the two innermost axes, carry-walk on the outer
+ * axes.  Handles ndim >= 1.
+ */
+void SimpleArrayCopier::tiled_nd() const
+{
+    size_t const ndim = m_shape.size();
+    size_t const itemsize = m_itemsize;
+    if (ndim == 1)
+    {
+        size_t const n = m_shape[0];
+        size_t const ss = m_src_stride[0] * itemsize;
+        size_t const os = m_dst_stride[0] * itemsize;
+        for (size_t i = 0; i < n; ++i)
+        {
+            std::memcpy(m_dst + i * os, m_src + i * ss, itemsize);
+        }
+        return;
+    }
+    // ndim >= 2: tile the two innermost axes, carry-walk the outer axes.
+    // See tiled_2d for the rationale behind the block size.
+    size_t const ia = ndim - 2;
+    size_t const ib = ndim - 1;
+    size_t const n_a = m_shape[ia];
+    size_t const n_b = m_shape[ib];
+    size_t const ss_a = m_src_stride[ia] * itemsize;
+    size_t const ss_b = m_src_stride[ib] * itemsize;
+    size_t const os_a = m_dst_stride[ia] * itemsize;
+    size_t const os_b = m_dst_stride[ib] * itemsize;
+
+    size_t outer_total = 1;
+    for (size_t k = 0; k < ia; ++k)
+    {
+        outer_total *= m_shape[k];
+    }
+
+    shape_type outer_idx(ia, 0);
+    for (size_t step = 0; step < outer_total; ++step)
+    {
+        // Resolve outer-axis base offsets (in bytes) for this slab.
+        size_t src_base = 0;
+        size_t dst_base = 0;
+        for (size_t k = 0; k < ia; ++k)
+        {
+            src_base += m_src_stride[k] * outer_idx[k] * itemsize;
+            dst_base += m_dst_stride[k] * outer_idx[k] * itemsize;
+        }
+        dispatch_tile_inner(
+            m_dst + dst_base, m_src + src_base, n_a, n_b, ss_a, ss_b, os_a, os_b, itemsize);
+        // Carry-propagating increment of the outer index.
+        for (size_t i = ia; i-- > 0;)
+        {
+            if (++outer_idx[i] < m_shape[i])
+            {
+                break;
+            }
+            // After the last slab the carry rolls every outer axis back to 0,
+            // but the outer loop terminates before outer_idx is used again.
+            outer_idx[i] = 0;
+        }
+    }
+}
+
+/**
+ * Naive single-element walker, kept as a reference implementation.  Not called
+ * by the dispatcher.
+ */
+void SimpleArrayCopier::naive() const
+{
+    if (m_shape.empty())
+    {
+        return;
+    }
+    size_t total = 1;
+    for (size_t const s : m_shape)
+    {
+        total *= s;
+    }
+    if (total == 0)
+    {
+        return;
+    }
+    size_t const ndim = m_shape.size();
+    size_t const itemsize = m_itemsize;
+    shape_type idx(ndim, 0);
+    for (size_t step = 0; step < total; ++step)
+    {
+        size_t src_off = 0;
+        size_t dst_off = 0;
+        for (size_t k = 0; k < ndim; ++k)
+        {
+            src_off += m_src_stride[k] * idx[k];
+            dst_off += m_dst_stride[k] * idx[k];
+        }
+        std::memcpy(m_dst + dst_off * itemsize, m_src + src_off * itemsize, itemsize);
+        // Carry-propagating increment: bump the trailing axis; on overflow,
+        // wrap to 0 and carry into the next-most-significant axis.
+        for (size_t i = ndim; i-- > 0;)
+        {
+            if (++idx[i] < m_shape[i])
+            {
+                break;
+            }
+            // After the last element the carry rolls every axis back to 0, but
+            // the outer loop terminates before idx is used again.
+            idx[i] = 0;
+        }
+    }
+}
 
 namespace detail
 {
