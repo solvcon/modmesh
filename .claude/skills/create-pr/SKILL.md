@@ -42,17 +42,30 @@ if those extend them, follow them and flag the drift.
    - Is this ready for review, or should it be opened as draft?
    - One-line gist of the change.
 
-2. **Verify branch state.** modmesh's main branch is `master`. Run in parallel:
-   - `git status` -- working tree must be clean (or surface uncommitted
-     work and ask before continuing).
+2. **Verify branch state.** modmesh's main branch is `master`. Run in
+   parallel:
+   - `git status --porcelain` -- check for staged or unstaged changes
+     and untracked files.
    - `git log --oneline origin/master..HEAD` -- list the commits the PR
      will carry.
    - `git diff --stat origin/master...HEAD` -- summarize the diff
      (three-dot uses the merge base).
    - `git rev-parse --abbrev-ref --symbolic-full-name @{u}` -- check if
      the branch tracks a remote.
-   If the branch is not pushed, push with `-u` after confirming with the
-   user. Do not force-push.
+
+   If `git status --porcelain` shows any output, the working tree is
+   not clean. Show the user the list (staged, unstaged, and untracked
+   separately) and ask explicitly how to proceed: stage and commit
+   selected files, stash, or abort. Never run `git add -A` or
+   `git add .` without confirmation -- pick specific paths so that
+   stray files (local settings, generated artifacts) are not pulled
+   into the PR.
+
+   If the branch has no commits ahead of `origin/master`, abort -- the
+   PR would be empty.
+
+   If the branch is not pushed (or is behind its remote), push after
+   confirming with the user.
 
 3. **Draft the subject and body.** Inspect the diff and the user's
    gist, then propose a subject and a body. The body should be **short
@@ -101,16 +114,28 @@ if those extend them, follow them and flag the drift.
    to something unique (e.g. `BODY_EOF_811`).
 
 5. **After creation.** Report the PR URL back to the user. Then:
-   - If the PR is draft, remind the user that "ready for review" requires
-     a global comment, not just the button.
-   - If the PR is ready, the global review-request comment is **required**
-     by the protocol -- not optional. Draft a one-line review-request
-     comment, present it for approval, and only after the user approves
-     post it via `gh pr comment <num> --body-file <file>`. The comment
-     must be authored by the user; if the user declines to post, output
+   - If the PR is draft, remind the user that "ready for review"
+     requires a global comment, not just the button.
+   - If the PR is ready, the global review-request comment is
+     **required** by the protocol -- not optional. Draft a one-line
+     review-request comment, present it for approval, and only after
+     the user approves post it via
+     `gh pr comment <num> --body-file <file>`. The comment must be
+     authored by the user; if the user declines to post, output
      `blocked: review-request comment not posted` and stop.
-   - If the diff is more than one-liner-ish, remind the user to add inline
-     annotations to guide review. The skill does not write them.
+   - Remind the user to add inline annotations on the diff (the skill
+     does not write them). Recommend the user focus on the points
+     that help the reviewer most:
+     - non-obvious design choices and the alternatives considered;
+     - subtle logic, invariants, or ordering constraints a reader
+       might overlook;
+     - changes that look like dead code or accidental edits but are
+       intentional, so the reviewer does not "fix" them;
+     - known limitations, follow-up work, and test-coverage gaps;
+     - tricky diffs (large reformatting next to substantive edits,
+       cross-file renames) where the reviewer needs guidance on what
+       to inspect carefully versus what is mechanical.
+     Skip the reminder when the diff is genuinely one-liner-ish.
 
 ## Guardrails
 
@@ -127,9 +152,9 @@ if those extend them, follow them and flag the drift.
   closed/fix/fixes/fixed/resolve/resolves/resolved followed by `#nnn`).
   Rewrite the offending line to "Related to #xxx" or "For issue #xxx"
   and re-confirm with the user before retrying.
-- **Branch protection.** Never force-push, never push to `master`/`main`
-  directly, never `--no-verify`. If `gh pr create` fails, surface the
-  error and stop -- do not work around it.
+- **Branch protection.** Never push directly to `master`/`main`, never
+  `--no-verify`. If `gh pr create` fails, surface the error and stop --
+  do not work around it.
 - **No fabricated context.** Do not invent benchmark numbers, test
   results, or verification claims. Only include what the user has stated
   or what is visible in the diff/commits.
