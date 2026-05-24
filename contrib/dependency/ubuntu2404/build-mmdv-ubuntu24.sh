@@ -73,6 +73,16 @@ set -e
 # so a failed build step would otherwise be silently ignored.
 set -o pipefail
 
+MMDV_ARCH="$(uname -m)"
+case "${MMDV_ARCH}" in
+    x86_64|amd64)
+        ;;
+    *)
+        echo "Unsupported architecture: ${MMDV_ARCH}. This script currently supports x86-64 only." >&2
+        exit 1
+        ;;
+esac
+
 MMDV_WRITE_ACTIVATE_ONLY=0
 MMDV_PRINT_PREFIX_ONLY=0
 MMDV_NO_CONFIRM=0
