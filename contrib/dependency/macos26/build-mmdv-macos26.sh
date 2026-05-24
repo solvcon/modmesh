@@ -1,0 +1,1104 @@
+#!/bin/bash
+#
+# Build modmesh's runtime dependencies from source on Ubuntu 24.04, with no
+# dependency on the devenv tool.
+#
+# 4 sections (BASE, PYTHON, NUMPY, QT) are guarded by the corresponding
+# MMDVBUILD_* environment variables.
+#
+# Before running this script, install the (Home)brew prerequisites.  The helper
+# function below prints the exact command; copy and run it yourself (the script
+# never invokes brew).
+#
+# shiboken (the PySide6 binding generator) needs libclang, which Apple's
+# Command Line Tools clang does not ship.  Rather than depend on a Homebrew
+# llvm, the QT section downloads Qt's own prebuilt libclang into the mmdv tree
+# (user-space, no system install) -- see fetch_libclang.  The version is pinned
+# to 21.x (LIBCLANG_VERSION): libclang 22 mis-resolves the unqualified `Flag`
+# enum in PySide 6.9.2's typesystem (it picks QCommandLineOption::Flag for
+# QStringConverterBase::Flag, so the QtCore wrappers fail to compile with "no
+# type named 'Default'"), while libclang <=18 is too old to parse the macOS 26
+# SDK's libc++ headers (__countr_zero in <bitset>).  Qt itself is still built
+# with Apple clang. Set LLVM_INSTALL_DIR to use an existing libclang (e.g. a
+# brew llvm) instead of fetching.
+#
+# Apple Silicon (arm64) is the assumed default.  The script also runs on Intel
+# Macs, but modmesh does not plan to support Intel Macs.
+#
+# Python is built --enable-shared (matching the Ubuntu script) into
+# ${MMDV_USRDIR}, rather than --enable-framework.  Python.framework support
+# will be added in the future for bundling
+# (contrib/bundle/bundle-with-homebrew.sh).
+#
+# libreadline is intentionally not listed: Python is built with
+# --with-readline=editline, which uses macOS's built-in libedit.  libmpdec is
+# not packaged via brew by default; Python is built with
+# --with-system-libmpdec=no to use its bundled copy.  tk-dev / gdbm are not
+# included in the brew prereqs: tkinter and dbm.gnu are not load-bearing for
+# modmesh, and including them would force every user to install tcl-tk and gdbm
+# even when they will never import them.  xcb / X11 prereqs do not apply: Qt on
+# macOS uses the cocoa platform plugin, not xcb.
+#
+# Usage:
+#   ./build-mmdv-macos26.sh
+#       Builds everything (BASE + PYTHON + NUMPY + QT).  The default is "build
+#       all" when no MMDVBUILD_* env var is set.  To limit to a single section,
+#       set one of MMDVBUILD_BASE/PYTHON/NUMPY/QT=1 and leave the others unset.
+#       In addition, MMDVBUILD_ALL=1 works the same as the default invocation.
+#       Before any package is built the user is prompted with "Press Enter to
+#       start the build, Ctrl-C to abort"; pass --no-confirm to skip.
+#   ./build-mmdv-macos26.sh --write-activate-only
+#       Write only ${MMDV_BASE}/activate and exit.  Useful for refreshing the
+#       activation script for an already-built mmdv without triggering any
+#       build section.
+#   ./build-mmdv-macos26.sh --skip PKG [--skip PKG ...]
+#       Skip a package within whatever sections are otherwise selected.  PKG
+#       can be one of: zlib openssl sqlite python pybind11 cython numpy scipy
+#       qt pyside6.  The flag accepts a single name, a comma-separated list
+#       ("--skip openssl,sqlite"), and may be repeated. The --skip=PKG form
+#       also works.
+#   ./build-mmdv-macos26.sh --no-confirm
+#       Skip the "Press Enter to start the build" prompt that fires after the
+#       startup echo block.  Use in non-interactive runs (CI, scripts).
+#   ./build-mmdv-macos26.sh --print-prefix
+#       Print MMDV_PREFIX (the path prefix that MMDV_BASE is derived from) to
+#       stdout and exit.  Nothing else is printed and no directories are
+#       created, so this is safe to capture: PREFIX=$(./script --print-prefix).
+#
+# Overridable variables (search in the script for their defaults and
+# descriptions; not repeating here):
+#   Package versions:
+#     PYTHON_VERSION: CPython release tag.
+#     QT_MAJOR_VER: Qt major.minor version.
+#     QT_SUB_VER: Qt patch version.
+#     PYSIDE_VERSION: pyside-setup git tag.
+#
+#   Build settings:
+#     MMDV_NP: Parallel build jobs.
+#     MMDV_PREFIX: Path prefix to MMDV_BASE.
+#     MMDV_BASE: Base directory holding the install prefix, including Python
+#       and Qt version.
+#     MMDV_DLDIR: Directory for downloaded tarballs (real dir or symlink,
+#       depending on MMDV_SHARED_DLDIR).
+#     MMDV_SHARED_DLDIR: Shared cache for downloaded tarballs across modmesh
+#       development environments (mmdvs).
+#     BREW_PREFIX: Homebrew install prefix (auto-detected from `brew
+#       --prefix`; falls back to /opt/homebrew then /usr/local).
+
+set -e
+# Without pipefail, exit codes are lost through the `tee` pipe in with_log,
+# so a failed build step would otherwise be silently ignored.
+set -o pipefail
+
+MMDV_WRITE_ACTIVATE_ONLY=0
+MMDV_PRINT_PREFIX_ONLY=0
+MMDV_NO_CONFIRM=0
+MMDV_SKIP_LIST=""
+MMDV_KNOWN_PKGS="zlib openssl sqlite python pybind11 cython numpy scipy qt pyside6"
+
+mmdv_add_skip() {
+  # Accept "pkg" or "pkg1,pkg2,..."; warn on unknown names but accept.
+  local raw=$1 name
+  for name in $(echo "${raw}" | tr ',' ' ') ; do
+    [ -z "${name}" ] && continue
+    case " ${MMDV_KNOWN_PKGS} " in
+      *" ${name} "*) ;;
+      *) echo "warning: --skip '${name}' is not a known package (known: ${MMDV_KNOWN_PKGS})" >&2 ;;
+    esac
+    MMDV_SKIP_LIST="${MMDV_SKIP_LIST} ${name}"
+  done
+}
+
+mmdv_skip_p() {
+  case " ${MMDV_SKIP_LIST} " in
+    *" $1 "*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+while [ $# -gt 0 ] ; do
+  case "$1" in
+    --write-activate-only)
+      MMDV_WRITE_ACTIVATE_ONLY=1
+      ;;
+    --print-prefix)
+      MMDV_PRINT_PREFIX_ONLY=1
+      ;;
+    --no-confirm)
+      MMDV_NO_CONFIRM=1
+      ;;
+    --skip)
+      shift
+      if [ $# -eq 0 ] ; then
+        echo "--skip requires a package name" >&2
+        exit 2
+      fi
+      mmdv_add_skip "$1"
+      ;;
+    --skip=*)
+      mmdv_add_skip "${1#--skip=}"
+      ;;
+    -h|--help)
+      sed -n '2,/^$/p' "$0" | sed 's/^#//' >&2
+      exit 0
+      ;;
+    *)
+      echo "unknown argument: $1" >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
+
+# CPython release tag.
+PYTHON_VERSION=${PYTHON_VERSION:-3.14.0}
+# Qt major.minor version.
+QT_MAJOR_VER=${QT_MAJOR_VER:-6.9}
+# Qt patch version.
+QT_SUB_VER=${QT_SUB_VER:-2}
+# pyside-setup git tag.
+PYSIDE_VERSION=${PYSIDE_VERSION:-v${QT_MAJOR_VER}.${QT_SUB_VER}}
+# Qt prebuilt libclang version for shiboken (see fetch_libclang). 21.x is the
+# sweet spot on macOS 26: libclang 22 mis-resolves PySide's Flag enum, while
+# <=18 is too old to parse the macOS 26 SDK's libc++ headers.
+LIBCLANG_VERSION=${LIBCLANG_VERSION:-21.1.2}
+
+# Detect the Homebrew prefix once so later sections can reuse it. brew is
+# keg-only for several packages we depend on (openblas, llvm, gcc), so we build
+# the absolute keg paths from BREW_PREFIX rather than relying on PATH.
+if command -v brew >/dev/null 2>&1 ; then
+  BREW_PREFIX=$(brew --prefix 2>/dev/null || true)
+fi
+if [ -z "${BREW_PREFIX:-}" ] ; then
+  if [ -d /opt/homebrew ] ; then
+    BREW_PREFIX=/opt/homebrew
+  elif [ -d /usr/local/Homebrew ] || [ -x /usr/local/bin/brew ] ; then
+    BREW_PREFIX=/usr/local
+  else
+    BREW_PREFIX=
+  fi
+fi
+export BREW_PREFIX
+
+# Default to a full BASE+PYTHON+NUMPY+QT build when the caller has not selected
+# a specific section. Setting any one of MMDVBUILD_* to "1" disables this
+# default and runs only the explicitly selected sections.
+if [ -z "${MMDVBUILD_ALL:-}${MMDVBUILD_BASE:-}${MMDVBUILD_PYTHON:-}${MMDVBUILD_NUMPY:-}${MMDVBUILD_QT:-}" ] ; then
+  MMDVBUILD_ALL=1
+fi
+
+# Parallel build jobs.
+MMDV_NP=${MMDV_NP:-$(sysctl -n hw.ncpu)}
+# Path prefix to MMDV_BASE.
+MMDV_PREFIX=${MMDV_PREFIX:-${HOME}/var/mmdv/macos26}
+
+# --print-prefix is honored as soon as MMDV_PREFIX is resolved so the caller
+# can capture the value without triggering any side effects (mkdir,
+# activate-write, build).
+if [ "${MMDV_PRINT_PREFIX_ONLY}" = "1" ] ; then
+  echo "MMDV_PREFIX=${MMDV_PREFIX}"
+  exit 0
+fi
+
+# Base directory holding the install prefix, including Python and Qt version.
+MMDV_BASE=${MMDV_BASE:-${MMDV_PREFIX}-py${PYTHON_VERSION}-qt${QT_MAJOR_VER}.${QT_SUB_VER}}
+# Directory for downloaded tarballs.
+MMDV_DLDIR=${MMDV_DLDIR:-${MMDV_BASE}/downloaded}
+# Shared cache for downloaded tarballs across modmesh development environments
+# (mmdvs).  When non-empty, ${MMDV_DLDIR} is created as a symlink that points
+# here.  The "-" (not ":-") form lets the caller explicitly set
+# MMDV_SHARED_DLDIR= to opt out and keep a per-mmdv directory instead.
+MMDV_SHARED_DLDIR=${MMDV_SHARED_DLDIR-${HOME}/var/mmdv/downloaded}
+
+# Directory for building from source.
+MMDV_SRCDIR=${MMDV_BASE}/src
+# Install root (user-space).
+MMDV_USRDIR=${MMDV_BASE}/usr
+
+# Directories under ${MMDV_BASE} and the activation script are created below,
+# after the confirmation prompt (or immediately for the --write-activate-only
+# path). We deliberately do not touch the filesystem here so that aborting the
+# prompt leaves no trace.
+
+PY=${MMDV_USRDIR}/bin/python3
+# Put our prefix on PATH so console scripts (cython, etc.) installed into
+# ${MMDV_USRDIR}/bin are found by downstream builders such as meson.
+export PATH="${MMDV_USRDIR}/bin:${PATH}"
+
+mmdv_brew_base_cmd() {
+  # Print the brew command for the BASE/PYTHON/NUMPY sections.  The script
+  # never runs brew itself; copy the output, review it, and run it.  gcc is
+  # included for gfortran (scipy's Fortran sources); openblas is included as an
+  # optional fallback BLAS even though numpy/scipy default to Apple's
+  # Accelerate framework on macOS.  xz is included for Python's lzma module
+  # (Apple's Command Line Tools do not ship liblzma).
+  cat <<'EOF'
+brew install \
+  cmake ninja pkg-config xz gcc openblas
+EOF
+}
+
+# Note: the QT section needs no brew packages beyond the base set above. Qt is
+# built with Apple clang, and shiboken's libclang is fetched from Qt's prebuilt
+# packages (see fetch_libclang), not Homebrew. patchelf is not used on macOS
+# (install_name_tool / otool replace it); Qt's platform-plugin dependencies are
+# part of the system (cocoa, CoreText, Metal), so no xcb/X11 stack is required.
+
+mmdv_write_activate() {
+  # Write ${MMDV_BASE}/activate. The activation script is self-locating (reads
+  # its own path at source time) so the mmdv directory can be moved without
+  # rewriting the file. Sourcing it prepends our bin to PATH and our lib to
+  # DYLD_LIBRARY_PATH, strips any leaked Homebrew Qt entries from both, and
+  # defines mmdv_deactivate to restore the original environment.
+  local target=${MMDV_BASE}/activate
+  cat > "${target}" <<'ACTIVATE_EOF'
+# shellcheck shell=bash
+# Activate this MMDV: source this file (do not execute).
+#
+#   $ source <path-to-this-file>/activate
+#   $ mmdv_deactivate   # to restore the original environment
+#
+# Compatible with bash and zsh.
+
+if [ -n "${MMDV_BASE:-}" ] ; then
+  echo "MMDV '${MMDV_BASE##*/}' is already active." \
+       "Run mmdv_deactivate first." >&2
+  return 1 2>/dev/null || exit 1
+fi
+
+# Resolve the directory this file lives in MMDV_BASE.
+if [ -n "${BASH_VERSION:-}" ] ; then
+  _mmdv_self=${BASH_SOURCE[0]}
+elif [ -n "${ZSH_VERSION:-}" ] ; then
+  _mmdv_self=${(%):-%x}
+else
+  _mmdv_self=$0
+fi
+MMDV_BASE=$(cd "$(dirname "${_mmdv_self}")" && pwd)
+unset _mmdv_self
+export MMDV_BASE
+export MMDV_USRDIR=${MMDV_BASE}/usr
+
+# Snapshot the current environment so mmdv_deactivate can restore it.
+# These leading-underscore vars are private to the activation script.
+export _MMDV_OLD_PATH=${PATH}
+export _MMDV_OLD_DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH-}
+export _MMDV_OLD_DYLD_FRAMEWORK_PATH=${DYLD_FRAMEWORK_PATH-}
+export _MMDV_OLD_CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH-}
+export _MMDV_OLD_PS1=${PS1-}
+export _MMDV_HAD_DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH+1}
+export _MMDV_HAD_DYLD_FRAMEWORK_PATH=${DYLD_FRAMEWORK_PATH+1}
+export _MMDV_HAD_CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH+1}
+
+# A pre-existing Homebrew Qt (kegs under /opt/homebrew/Cellar/qt or
+# /opt/homebrew/opt/qt, or the Intel-Mac equivalents under /usr/local) can
+# leak through PATH, DYLD_LIBRARY_PATH, or CMAKE_PREFIX_PATH and load ahead
+# of this mmdv's freshly built Qt. Strip those.
+PATH=$(printf '%s' "${PATH}" | tr ':' '\n' \
+  | grep -vE '/(Cellar|opt)/qt(@|/|$)' | paste -sd: -)
+export PATH=${MMDV_USRDIR}/bin:${PATH}
+
+DYLD_LIBRARY_PATH=$(printf '%s' "${DYLD_LIBRARY_PATH-}" \
+  | tr ':' '\n' | grep -vE '/(Cellar|opt)/qt(@|/|$)' | paste -sd: -)
+if [ -n "${DYLD_LIBRARY_PATH}" ] ; then
+  export DYLD_LIBRARY_PATH=${MMDV_USRDIR}/lib:${DYLD_LIBRARY_PATH}
+else
+  export DYLD_LIBRARY_PATH=${MMDV_USRDIR}/lib
+fi
+
+# DYLD_FRAMEWORK_PATH covers any Qt/Python pieces that resolve as macOS
+# frameworks rather than plain dylibs (Qt itself uses framework layout when
+# built with the macOS generator, regardless of how we configured Python).
+DYLD_FRAMEWORK_PATH=$(printf '%s' "${DYLD_FRAMEWORK_PATH-}" \
+  | tr ':' '\n' | grep -vE '/(Cellar|opt)/qt(@|/|$)' | paste -sd: -)
+if [ -n "${DYLD_FRAMEWORK_PATH}" ] ; then
+  export DYLD_FRAMEWORK_PATH=${MMDV_USRDIR}/lib:${DYLD_FRAMEWORK_PATH}
+else
+  export DYLD_FRAMEWORK_PATH=${MMDV_USRDIR}/lib
+fi
+
+if [ -n "${CMAKE_PREFIX_PATH-}" ] ; then
+  export CMAKE_PREFIX_PATH=${MMDV_USRDIR}:${CMAKE_PREFIX_PATH}
+else
+  export CMAKE_PREFIX_PATH=${MMDV_USRDIR}
+fi
+
+# Note on macOS and DYLD_*: SIP strips DYLD_* when a shell spawns a system
+# binary (anything under /usr/bin, /bin, /sbin). The mmdv binaries we build
+# embed an rpath to ${MMDV_USRDIR}/lib at link time, so they keep loading
+# our dylibs even when DYLD_LIBRARY_PATH is dropped. The exports here are
+# belt-and-suspenders for direct-invoke from this shell.
+
+# Mark the prompt so the active mmdv is visible.
+if [ -n "${BASH_VERSION:-}" ] || [ -n "${ZSH_VERSION:-}" ] ; then
+  PS1="(${MMDV_BASE##*/}) ${PS1-}"
+  export PS1
+fi
+
+mmdv_deactivate() {
+  if [ -z "${MMDV_BASE:-}" ] ; then
+    echo "No active MMDV." >&2
+    return 1
+  fi
+  export PATH=${_MMDV_OLD_PATH}
+  if [ -n "${_MMDV_HAD_DYLD_LIBRARY_PATH:-}" ] ; then
+    export DYLD_LIBRARY_PATH=${_MMDV_OLD_DYLD_LIBRARY_PATH}
+  else
+    unset DYLD_LIBRARY_PATH
+  fi
+  if [ -n "${_MMDV_HAD_DYLD_FRAMEWORK_PATH:-}" ] ; then
+    export DYLD_FRAMEWORK_PATH=${_MMDV_OLD_DYLD_FRAMEWORK_PATH}
+  else
+    unset DYLD_FRAMEWORK_PATH
+  fi
+  if [ -n "${_MMDV_HAD_CMAKE_PREFIX_PATH:-}" ] ; then
+    export CMAKE_PREFIX_PATH=${_MMDV_OLD_CMAKE_PREFIX_PATH}
+  else
+    unset CMAKE_PREFIX_PATH
+  fi
+  PS1=${_MMDV_OLD_PS1}
+  export PS1
+  unset _MMDV_OLD_PATH _MMDV_OLD_DYLD_LIBRARY_PATH \
+        _MMDV_OLD_DYLD_FRAMEWORK_PATH \
+        _MMDV_OLD_CMAKE_PREFIX_PATH _MMDV_OLD_PS1 \
+        _MMDV_HAD_DYLD_LIBRARY_PATH _MMDV_HAD_DYLD_FRAMEWORK_PATH \
+        _MMDV_HAD_CMAKE_PREFIX_PATH
+  unset MMDV_BASE MMDV_USRDIR
+  unset -f mmdv_deactivate
+}
+ACTIVATE_EOF
+  # Do not set the execution bit of "${target}"; it should be sourced.
+  echo "wrote activation script: ${target}"
+}
+
+echo "MMDV_NP=${MMDV_NP}"
+echo "MMDV_PREFIX=${MMDV_PREFIX}"
+echo "MMDV_BASE=${MMDV_BASE}"
+echo "MMDV_DLDIR=${MMDV_DLDIR}"
+echo "MMDV_SHARED_DLDIR=${MMDV_SHARED_DLDIR}"
+echo "MMDV_SRCDIR=${MMDV_SRCDIR}"
+echo "MMDV_USRDIR=${MMDV_USRDIR}"
+echo "BREW_PREFIX=${BREW_PREFIX:-(none)}"
+echo "PYTHON_VERSION=${PYTHON_VERSION}"
+if [ -n "${MMDV_SKIP_LIST# }" ] ; then
+  echo "MMDV_SKIP_LIST=${MMDV_SKIP_LIST# }"
+fi
+echo "ready to build"
+
+# --write-activate-only is its own explicit confirmation: create the mmdv
+# directory just enough to drop the activate file in, then exit.
+if [ "${MMDV_WRITE_ACTIVATE_ONLY}" = "1" ] ; then
+  mkdir -p "${MMDV_BASE}"
+  mmdv_write_activate
+  exit 0
+fi
+
+# If MMDV_SHARED_DLDIR is configured, it must exist already.  The script never
+# auto-creates it.  Check before any filesystem change (mkdir, symlink, prompt)
+# so a typo or unmounted cache fails immediately instead of half-creating the
+# per-mmdv tree.
+if [ -n "${MMDV_SHARED_DLDIR}" ] && [ ! -d "${MMDV_SHARED_DLDIR}" ] ; then
+  echo "MMDV_SHARED_DLDIR=${MMDV_SHARED_DLDIR} does not exist;" \
+       "create it (e.g. \`mkdir -p ${MMDV_SHARED_DLDIR}\`)" \
+       "or unset MMDV_SHARED_DLDIR." >&2
+  exit 1
+fi
+
+# Final confirmation before any package is built. Skip with --no-confirm in
+# non-interactive contexts (CI, automated runs). No directory or activation
+# file is created until the user has confirmed, so aborting at the prompt
+# leaves the filesystem untouched.
+if [ "${MMDV_NO_CONFIRM}" != "1" ] ; then
+  # `test -r /dev/tty` returns true even with no controlling terminal, so try
+  # to actually open it; that fails with ENXIO when there is no controlling tty
+  # (e.g. under setsid or `< /dev/null` in CI).
+  if ! { : </dev/tty ; } 2>/dev/null ; then
+    echo "no controlling tty for confirmation prompt; rerun with --no-confirm" >&2
+    exit 2
+  fi
+  read -r -p "Press Enter to start the build, Ctrl-C to abort: " _ </dev/tty
+fi
+
+mkdir -p "${MMDV_USRDIR}" "${MMDV_SRCDIR}"
+if [ -n "${MMDV_SHARED_DLDIR}" ] ; then
+  # MMDV_SHARED_DLDIR is set: make MMDV_DLDIR a symlink into the shared cache.
+  # The shared directory's existence was verified above; we do not auto-create
+  # it.  Refuse to clobber a non-symlink directory at MMDV_DLDIR to avoid
+  # losing data; the caller has to move it (or unset MMDV_SHARED_DLDIR) first.
+  if [ -L "${MMDV_DLDIR}" ] ; then
+    if [ "$(readlink "${MMDV_DLDIR}")" != "${MMDV_SHARED_DLDIR}" ] ; then
+      rm "${MMDV_DLDIR}"
+      ln -s "${MMDV_SHARED_DLDIR}" "${MMDV_DLDIR}"
+    fi
+  elif [ -d "${MMDV_DLDIR}" ] ; then
+    echo "MMDV_DLDIR=${MMDV_DLDIR} exists as a real directory but" \
+         "MMDV_SHARED_DLDIR is set; move its contents to" \
+         "${MMDV_SHARED_DLDIR} and remove the directory," \
+         "or unset MMDV_SHARED_DLDIR." >&2
+    exit 1
+  else
+    ln -s "${MMDV_SHARED_DLDIR}" "${MMDV_DLDIR}"
+  fi
+else
+  # No shared cache: MMDV_DLDIR is a real per-mmdv directory.
+  mkdir -p "${MMDV_DLDIR}"
+fi
+mmdv_write_activate
+
+####
+# Helpers (translated from devenv/scripts/func.d/build_utils)
+####
+
+# macOS md5(1) prints just the hash with -q, so unlike Linux md5sum we do not
+# need to cut the filename off the second column.
+download_md5() {
+  local fn=$1 url=$2 md5hash=${3:-}
+  local loc=${MMDV_DLDIR}/${fn}
+  local calc=""
+  [ -e "${loc}" ] && calc=$(md5 -q "${loc}")
+  if [ ! -e "${loc}" ] || { [ -n "${md5hash}" ] && [ "${md5hash}" != "${calc}" ]; } ; then
+    echo "Downloading ${url}"
+    curl -fsSL -o "${loc}" "${url}"
+    calc=$(md5 -q "${loc}")
+  fi
+  if [ -n "${md5hash}" ] && [ "${md5hash}" != "${calc}" ] ; then
+    echo "${fn} md5 mismatch: expected ${md5hash} got ${calc} (continuing)"
+  fi
+}
+
+with_log() {
+  local log=$1 ; shift
+  echo "run: $*" | tee "${log}"
+  { time "$@" ; } 2>&1 | tee -a "${log}"
+}
+
+unpack() {
+  local fn=$1 destdir=$2
+  pushd "${MMDV_SRCDIR}" > /dev/null
+  rm -rf "${destdir}"
+  tar xf "${MMDV_DLDIR}/${fn}"
+  popd > /dev/null
+}
+
+####
+# Timing: record wall-clock time spent in each build_<pkg> call and print a
+# summary table on EXIT. If a build_* aborts the script mid-way (set -e), the
+# trap still records that package as FAIL with the partial elapsed time.
+####
+
+MMDV_OVERALL_START=$(date +%s)
+MMDV_TIMINGS=""
+MMDV_CURRENT_PKG=""
+MMDV_CURRENT_START=0
+
+mmdv_time() {
+  local fn=$1 label=$2 end elapsed status
+  MMDV_CURRENT_PKG=${label}
+  MMDV_CURRENT_START=$(date +%s)
+  "${fn}"
+  end=$(date +%s)
+  elapsed=$((end - MMDV_CURRENT_START))
+  if mmdv_skip_p "${label}" ; then
+    status="skipped"
+  else
+    status="ok"
+  fi
+  MMDV_TIMINGS+="${label}|${status}|${elapsed}"$'\n'
+  MMDV_CURRENT_PKG=""
+}
+
+mmdv_fmt_time() {
+  local s=$1
+  if [ "${s}" -ge 3600 ] ; then
+    printf '%dh%02dm%02ds' $((s/3600)) $(((s%3600)/60)) $((s%60))
+  elif [ "${s}" -ge 60 ] ; then
+    printf '%dm%02ds' $((s/60)) $((s%60))
+  else
+    printf '%ds' "${s}"
+  fi
+}
+
+mmdv_print_timings() {
+  local exit_code=$?
+  set +e
+  local end_ts overall part label sec status pkg
+  end_ts=$(date +%s)
+  if [ -n "${MMDV_CURRENT_PKG}" ] ; then
+    part=$((end_ts - MMDV_CURRENT_START))
+    if [ "${exit_code}" -eq 0 ] ; then
+      label="RUNNING"
+    else
+      label="FAIL"
+    fi
+    MMDV_TIMINGS+="${MMDV_CURRENT_PKG}|${label}|${part}"$'\n'
+  fi
+  overall=$((end_ts - MMDV_OVERALL_START))
+  # Print only if at least one package was timed or the script ran a
+  # non-trivial time (avoids noise on --help / --write-activate-only).
+  if [ -z "${MMDV_TIMINGS}" ] && [ "${overall}" -lt 2 ] ; then
+    return 0
+  fi
+  printf '\n=== build timings ===\n'
+  printf '%-10s %-8s %10s\n' "package" "status" "time"
+  printf '%-10s %-8s %10s\n' "----------" "--------" "----------"
+  printf '%s' "${MMDV_TIMINGS}" | while IFS='|' read -r pkg status sec ; do
+    [ -z "${pkg}" ] && continue
+    printf '%-10s %-8s %10s\n' "${pkg}" "${status}" "$(mmdv_fmt_time "${sec}")"
+  done
+  printf '%-10s %-8s %10s\n' "----------" "--------" "----------"
+  printf '%-10s %-8s %10s (exit %d)\n' \
+    "TOTAL" "-" "$(mmdv_fmt_time "${overall}")" "${exit_code}"
+}
+trap mmdv_print_timings EXIT
+
+####
+# Build functions (translated from devenv/scripts/build.d/<pkg>)
+####
+
+build_zlib() {
+  mmdv_skip_p zlib && { echo "skip: zlib" ; return 0 ; }
+  local ver=1.3.1 full fn
+  full=zlib-${ver} ; fn=${full}.tar.gz
+  download_md5 "${fn}" \
+    "https://github.com/madler/zlib/archive/refs/tags/v${ver}.tar.gz" \
+    ddb17dbbf2178807384e57ba0d81e6a1
+  unpack "${fn}" "${full}"
+  pushd "${MMDV_SRCDIR}/${full}" > /dev/null
+    with_log configure.log ./configure --prefix="${MMDV_USRDIR}"
+    with_log make.log make -j "${MMDV_NP}"
+    with_log install.log make install
+  popd > /dev/null
+}
+
+build_openssl() {
+  mmdv_skip_p openssl && { echo "skip: openssl" ; return 0 ; }
+  local ver=1.1.1m full fn
+  full=openssl-${ver} ; fn=${full}.tar.gz
+  download_md5 "${fn}" \
+    "https://www.openssl.org/source/${fn}" \
+    8ec70f665c145c3103f6e330f538a9db
+  unpack "${fn}" "${full}"
+  pushd "${MMDV_SRCDIR}/${full}" > /dev/null
+    with_log configure.log ./config \
+      --prefix="${MMDV_USRDIR}" \
+      --openssldir="${MMDV_USRDIR}/share/ssl"
+    with_log make.log make -j "${MMDV_NP}"
+    with_log install.log make -j "${MMDV_NP}" install
+  popd > /dev/null
+}
+
+build_sqlite() {
+  mmdv_skip_p sqlite && { echo "skip: sqlite" ; return 0 ; }
+  local ver=3360000 full fn
+  full=sqlite-autoconf-${ver} ; fn=${full}.tar.gz
+  download_md5 "${fn}" \
+    "https://www.sqlite.org/2021/${fn}" \
+    f5752052fc5b8e1b539af86a3671eac7
+  unpack "${fn}" "${full}"
+  pushd "${MMDV_SRCDIR}/${full}" > /dev/null
+    with_log configure.log ./configure --prefix="${MMDV_USRDIR}"
+    with_log make.log make
+    with_log install.log make install
+  popd > /dev/null
+}
+
+build_python() {
+  mmdv_skip_p python && { echo "skip: python" ; return 0 ; }
+  local ver=${PYTHON_VERSION} full fn
+  full=Python-${ver} ; fn=${full}.tar.xz
+  # MD5 left empty; checksum varies per release and we don't pin it here.
+  download_md5 "${fn}" \
+    "https://www.python.org/ftp/python/${ver}/${fn}" \
+    ""
+  unpack "${fn}" "${full}"
+  pushd "${MMDV_SRCDIR}/${full}" > /dev/null
+    # Pick up our own zlib/openssl/sqlite headers; pull in xz from brew so the
+    # lzma extension builds (Apple CLT has no liblzma).
+    local cppflags="-I${MMDV_USRDIR}/include"
+    if [ -n "${BREW_PREFIX}" ] && [ -d "${BREW_PREFIX}/opt/xz/include" ] ; then
+      cppflags="${cppflags} -I${BREW_PREFIX}/opt/xz/include"
+    fi
+    export CPPFLAGS="${cppflags} ${CPPFLAGS:-}"
+    # macOS ld64 / Apple linker: drop GNU-only --no-as-needed; use
+    # -headerpad_max_install_names so install_name_tool has room to rewrite
+    # paths later (a no-op when we don't, harmless when we do).
+    local ldflags="-Wl,-headerpad_max_install_names"
+    ldflags="${ldflags} -Wl,-rpath,${MMDV_USRDIR}/lib"
+    ldflags="${ldflags} -L${MMDV_USRDIR}/lib"
+    if [ -n "${BREW_PREFIX}" ] && [ -d "${BREW_PREFIX}/opt/xz/lib" ] ; then
+      ldflags="${ldflags} -L${BREW_PREFIX}/opt/xz/lib"
+    fi
+    export LDFLAGS="${ldflags} ${LDFLAGS:-}"
+    with_log configure.log ./configure \
+      --prefix="${MMDV_USRDIR}" \
+      --enable-shared \
+      --enable-ipv6 \
+      --enable-optimizations \
+      --without-ensurepip \
+      --with-system-expat \
+      --with-system-libmpdec=no \
+      --with-readline=editline \
+      --with-lto \
+      --with-openssl="${MMDV_USRDIR}" \
+      --with-system-ffi \
+      --enable-loadable-sqlite-extensions
+    with_log profile-opt.log make profile-opt -j "${MMDV_NP}"
+    with_log install.log make install -j "${MMDV_NP}"
+  popd > /dev/null
+
+  # Bootstrap pip (Python was configured --without-ensurepip). get-pip only
+  # installs pip; install setuptools+wheel so subsequent pip installs that
+  # disable build isolation (or use setup.py) can find them.
+  curl -fsSL https://bootstrap.pypa.io/get-pip.py | "${PY}"
+  rm -f "${MMDV_USRDIR}/bin/pip"
+  "${PY}" -m pip install -U setuptools wheel
+  # Update pip.
+  "${PY}" -m pip install -U pip
+}
+
+build_pybind11() {
+  mmdv_skip_p pybind11 && { echo "skip: pybind11" ; return 0 ; }
+  local ver=2.13.6 full fn
+  full=pybind11-${ver} ; fn=${full}.tar.gz
+  download_md5 "${fn}" \
+    "https://github.com/pybind/pybind11/archive/refs/tags/v${ver}.tar.gz" \
+    a04dead9c83edae6d84e2e343da7feeb
+  unpack "${fn}" "${full}"
+  mkdir -p "${MMDV_SRCDIR}/${full}/build"
+  pushd "${MMDV_SRCDIR}/${full}/build" > /dev/null
+    with_log cmake.log cmake \
+      -DPYTHON_EXECUTABLE:FILEPATH="${PY}" \
+      -DCMAKE_INSTALL_PREFIX="${MMDV_USRDIR}" \
+      -DPYBIND11_TEST=OFF \
+      -DCMAKE_BUILD_TYPE=Release \
+      ..
+    with_log make.log make -j "${MMDV_NP}"
+    with_log install.log make install
+  popd > /dev/null
+  pushd "${MMDV_SRCDIR}/${full}" > /dev/null
+    with_log setup.log "${PY}" -m pip install .
+  popd > /dev/null
+}
+
+build_cython() {
+  mmdv_skip_p cython && { echo "skip: cython" ; return 0 ; }
+  local ver=3.0.12 full fn
+  full=cython-${ver} ; fn=${full}.tar.gz
+  download_md5 "${fn}" \
+    "https://github.com/cython/cython/archive/refs/tags/${ver}.tar.gz" \
+    194658f8ae1ae8804f864d4e147fddf6
+  unpack "${fn}" "${full}"
+  pushd "${MMDV_SRCDIR}/${full}" > /dev/null
+    with_log install.log "${PY}" -m pip install .
+  popd > /dev/null
+}
+
+build_numpy() {
+  mmdv_skip_p numpy && { echo "skip: numpy" ; return 0 ; }
+  local ver=2.2.4 full fn
+  full=numpy-${ver} ; fn=${full}.tar.gz
+  download_md5 "${fn}" \
+    "https://github.com/numpy/numpy/releases/download/v${ver}/${fn}" \
+    56232f4a69b03dd7a87a55fffc5f2ebc
+  unpack "${fn}" "${full}"
+  pushd "${MMDV_SRCDIR}/${full}" > /dev/null
+    rm -f site.cfg
+    # Prefer macOS's built-in Accelerate framework over openblas; meson's
+    # blas-order/lapack-order accept a comma-separated fallback list, so the
+    # build still succeeds on Macs without Accelerate (very rare) by falling
+    # back to brew openblas. The AVX2 cpu-dispatch cap that the Ubuntu script
+    # needs is GCC-16-specific; Apple clang on macOS handles the default
+    # cpu-dispatch=MAX fine.
+    with_log dependency.log "${PY}" -m pip install -r requirements/build_requirements.txt
+    with_log install.log "${PY}" -m pip install . --no-build-isolation \
+      --config-settings="setup-args=-Dblas-order=accelerate,openblas" \
+      --config-settings="setup-args=-Dlapack-order=accelerate,openblas"
+  popd > /dev/null
+  "${PY}" -c "import numpy as np ; np.show_config()"
+}
+
+build_scipy() {
+  mmdv_skip_p scipy && { echo "skip: scipy" ; return 0 ; }
+  local ver=1.15.2 full fn
+  full=scipy-${ver} ; fn=${full}.tar.gz
+  download_md5 "${fn}" \
+    "https://github.com/scipy/scipy/releases/download/v${ver}/${fn}" \
+    515fc1544d7617b38fe5a9328538047b
+  unpack "${fn}" "${full}"
+  pushd "${MMDV_SRCDIR}/${full}" > /dev/null
+    # dev.py 1.15.2 breaks on click/rich-click >=8.2 with "Sentinel object is
+    # not subscriptable" when loading doit tasks, so bypass dev.py and let pip
+    # drive the meson build directly.
+    with_log dependency.log "${PY}" -m pip install -r requirements/build.txt
+    # No -isystem CXXFLAGS workaround here: the Ubuntu version needs it to
+    # outrank apt's stale pybind11-dev at /usr/include, but macOS does not ship
+    # a system pybind11, so our header at ${MMDV_USRDIR}/include wins
+    # automatically. scipy autodetects Accelerate via meson on macOS, same as
+    # numpy above.
+    with_log install.log "${PY}" -m pip install . --no-build-isolation \
+      --config-settings="setup-args=-Dblas=accelerate" \
+      --config-settings="setup-args=-Dlapack=accelerate"
+  popd > /dev/null
+}
+
+fetch_libclang() {
+  # Download Qt's prebuilt libclang and lay out a minimal LLVM_INSTALL_DIR for
+  # shiboken under ${MMDV_SRCDIR}/libclang. The full archive is ~4 GB because
+  # it bundles the entire LLVM/clang command-line toolset under bin/ (clangd,
+  # llc, clang-tidy, ...) that shiboken never invokes; it loads libclang.dylib
+  # directly. So extract only lib/ (the dylib, the LLVM/Clang CMake package
+  # config, static libs, and clang resource headers) and include/ -- ~1 GB.
+  # macOS bsdtar (libarchive + liblzma) reads 7-Zip natively, so no 7z/brew
+  # tool is needed.
+  #
+  # LLVMExports.cmake / ClangTargets.cmake assert that every exported target's
+  # file exists, including the bin/ tools we skipped, so find_package(Clang)
+  # would FATAL_ERROR. Drop empty placeholders for exactly those referenced
+  # paths; shiboken never executes them, it only needs the existence check to
+  # pass and the real libclang.dylib in lib/.
+  local fn=libclang-release_${LIBCLANG_VERSION}-based-macos-universal.7z
+  download_md5 "${fn}" \
+    "https://download.qt.io/development_releases/prebuilt/libclang/${fn}" \
+    2a332ef2f3e6f87a68a19d3d2698e7ae
+  local dest=${MMDV_SRCDIR}/libclang
+  rm -rf "${dest}"
+  pushd "${MMDV_SRCDIR}" > /dev/null
+    tar xf "${MMDV_DLDIR}/${fn}" libclang/lib libclang/include
+  popd > /dev/null
+  pushd "${dest}" > /dev/null
+    grep -rhoE '[$][{]_IMPORT_PREFIX[}]/[A-Za-z0-9._/-]+' lib/cmake 2>/dev/null \
+      | sed 's#[$][{]_IMPORT_PREFIX[}]/##' | sort -u | while read -r rel ; do
+        [ -e "${rel}" ] && continue
+        mkdir -p "$(dirname "${rel}")"
+        : > "${rel}"
+        chmod +x "${rel}"
+      done
+  popd > /dev/null
+  if [ ! -f "${dest}/lib/libclang.dylib" ] ; then
+    echo "fetch_libclang: ${dest}/lib/libclang.dylib missing after extract" >&2
+    exit 1
+  fi
+}
+
+mmdv_ensure_xcodebuild_shim() {
+  # Qt 6.9's CMake auto-detect (qt_auto_detect_apple in
+  # qtbase/cmake/QtAutoDetectHelpers.cmake) runs `xcrun xcodebuild -version`
+  # unconditionally and aborts with FATAL_ERROR if it cannot find xcodebuild.
+  # xcodebuild ships only with the full Xcode.app, not with the Apple Command
+  # Line Tools, so a CLT-only machine (the common modmesh dev setup) cannot
+  # even configure Qt -- and there is no CMake flag to skip that single call.
+  # When no real xcodebuild is reachable, drop a tiny stub on PATH that reports
+  # a synthetic version satisfying Qt's minimum-Xcode check
+  # (QT_SUPPORTED_MIN_MACOS_XCODE_VERSION is 15 for 6.9.2). xcrun searches
+  # DEVELOPER_DIR before PATH, so the stub is bypassed the moment a real Xcode
+  # is installed. Everything else Qt needs from xcrun (the macOS SDK path and
+  # version) resolves under CLT alone, so only xcodebuild needs shimming.
+  if xcrun --find xcodebuild >/dev/null 2>&1 ; then
+    return 0
+  fi
+  local shimdir=${MMDV_SRCDIR}/xcodebuild-shim
+  mkdir -p "${shimdir}"
+  cat > "${shimdir}/xcodebuild" <<'XCB'
+#!/bin/sh
+# Synthetic xcodebuild for CLT-only macOS: answers only `-version`, with a
+# version high enough to pass Qt's minimum-Xcode check. There is no real Xcode
+# here; Qt only needs the version string, not an actual xcodebuild. Generated
+# by contrib/dependency/macos26/build-mmdv-macos26.sh.
+case "$1" in
+  -version)
+    echo "Xcode 16.0"
+    echo "Build version 16A242d"
+    ;;
+  *)
+    echo "xcodebuild: version-only stub (no Xcode installed)" >&2
+    exit 64
+    ;;
+esac
+XCB
+  chmod +x "${shimdir}/xcodebuild"
+  export PATH="${shimdir}:${PATH}"
+  echo "no full Xcode found; using synthetic xcodebuild stub at ${shimdir}"
+}
+
+mmdv_patch_qt_sources() {
+  # Qt 6.9.2 predates Apple clang 21 (the compiler in the macOS 26 / Xcode 16
+  # toolchain). qYieldCpu() in qtbase/src/corelib/thread/qyieldcpu.h calls the
+  # ACLE intrinsic __yield() whenever __has_builtin(__yield) is true, but on
+  # clang 21 that is a *library* builtin whose declaration lives in
+  # <arm_acle.h> -- which the header never includes. The call then fails with
+  # "implicitly declaring library function '__yield'", an error (not a warning)
+  # on this clang, breaking the very first qtbase translation units.  Inject
+  # the include exactly where the compiler's own diagnostic recommends.
+  # Idempotent: an already-patched tree is detected and left alone.
+  local srcname=$1
+  local yieldhdr=${MMDV_SRCDIR}/${srcname}/qtbase/src/corelib/thread/qyieldcpu.h
+  if [ ! -f "${yieldhdr}" ] ; then
+    echo "warning: ${yieldhdr} not found; skipping __yield patch" >&2
+    return 0
+  fi
+  if grep -q 'arm_acle.h' "${yieldhdr}" ; then
+    echo "qyieldcpu.h already patched for <arm_acle.h>"
+    return 0
+  fi
+  awk '
+    { print }
+    /^#include <QtCore\/qtconfigmacros.h>$/ && !done {
+      print ""
+      print "// modmesh mmdv: declare the __yield() ACLE intrinsic for Apple"
+      print "// clang 21 (macOS 26 toolchain); see build-mmdv-macos26.sh."
+      print "#if __has_builtin(__yield) && __has_include(<arm_acle.h>)"
+      print "#  include <arm_acle.h>"
+      print "#endif"
+      done = 1
+    }
+  ' "${yieldhdr}" > "${yieldhdr}.mmdv" && mv "${yieldhdr}.mmdv" "${yieldhdr}"
+  echo "patched ${yieldhdr} to include <arm_acle.h> for __yield()"
+}
+
+build_qt() {
+  mmdv_skip_p qt && { echo "skip: qt" ; return 0 ; }
+  local major=${QT_MAJOR_VER}
+  local sub=${QT_SUB_VER}
+  local ver=${major}.${sub}
+  local full=qt-${ver}
+  local pkgfolder=qt-everywhere-src-${ver}
+  local fn=${full}.tar.xz
+  local url="https://download.qt.io/official_releases/qt/${major}"
+  url="${url}/${ver}/single/qt-everywhere-src-${ver}.tar.xz"
+  download_md5 "${fn}" "${url}" 78fe69ae8049f6b0139ceaa28e643f53
+  # A pre-existing brew Qt may leak through DYLD_LIBRARY_PATH /
+  # DYLD_FRAMEWORK_PATH / CMAKE_PREFIX_PATH and cause the freshly built Qt
+  # tools (rcc/moc/...) to load the older libQt6Core at runtime.  Strip them
+  # out, plus any /opt/homebrew/Cellar/qt or /opt/homebrew/opt/qt entries on
+  # PATH.
+  unset DYLD_LIBRARY_PATH DYLD_FRAMEWORK_PATH CMAKE_PREFIX_PATH QT_ROOT QT_VER
+  PATH=$(printf '%s' "${PATH}" | tr ':' '\n' \
+    | grep -vE '/(Cellar|opt)/qt(@|/|$)' | paste -sd: -)
+  if [ -d "${MMDV_SRCDIR}/${full}" ] ; then
+    echo "Qt source already at ${MMDV_SRCDIR}/${full}; skipping extract"
+  else
+    pushd "${MMDV_SRCDIR}" > /dev/null
+      echo "Extracting Qt source (large; takes a few minutes) ..."
+      tar xf "${MMDV_DLDIR}/${fn}"
+      mv "${pkgfolder}" "${full}"
+    popd > /dev/null
+  fi
+
+  # Patch Qt sources for the macOS 26 / clang 21 toolchain before configuring.
+  mmdv_patch_qt_sources "${full}"
+
+  # Clean previous build dir by default; MMDV_QTNOCLEAN=1 to reuse it.
+  if [ "${MMDV_QTNOCLEAN:-}" != "1" ] ; then
+    rm -rf "${MMDV_SRCDIR}/${full}/build"
+  fi
+  mkdir -p "${MMDV_SRCDIR}/${full}/build"
+  pushd "${MMDV_SRCDIR}/${full}/build" > /dev/null
+    local cfgcmd=(cmake)
+    cfgcmd+=("-DCMAKE_INSTALL_PREFIX=${MMDV_USRDIR}")
+    cfgcmd+=("-DCMAKE_BUILD_TYPE=Release")
+    # Disable Qt modules we do not need (mirrors devenv defaults).
+    local m
+    for m in qtquicktimeline qtquick3d qtgraphs qt5compat qtactiveqt \
+             qtcharts qtcoap qtconnectivity qtdatavis3d qtwebsockets \
+             qthttpserver qttools qtdoc qtlottie qtmqtt qtnetworkauth \
+             qtopcua qtserialport qtlocation qtpositioning \
+             qtquick3dphysics qtremoteobjects qtscxml qtsensors \
+             qtserialbus qtspeech qttranslations qtvirtualkeyboard \
+             qtwayland qtwebchannel qtwebengine qtwebview \
+             qtquickeffectmaker qtgrpc qtmultimedia ; do
+      cfgcmd+=("-DBUILD_${m}=OFF")
+    done
+    cfgcmd+=("-DQT_ALLOW_SYMLINK_IN_PATHS=ON")
+    cfgcmd+=("-DCMAKE_PREFIX_PATH=${MMDV_USRDIR}")
+    # macOS 26 ships an SDK (26.x) far newer than the one Qt 6.9.2 was tested
+    # against (QT_SUPPORTED_MAX_MACOS_SDK_VERSION is 15), which otherwise
+    # prints a noisy "unsupported configuration" warning at configure time.
+    # It is only a warning, but silence it so real diagnostics stand out.
+    cfgcmd+=("-DQT_NO_APPLE_SDK_MAX_VERSION_CHECK=ON")
+    cfgcmd+=("-G" "Ninja")
+    cfgcmd+=("..")
+
+    if [ "${DVQT_NOCONFIG:-}" != "1" ] ; then
+      with_log configure.log "${cfgcmd[@]}"
+    fi
+    if [ "${DVQT_NOBUILD:-}" != "1" ] ; then
+      with_log build.log cmake --build . --parallel
+    fi
+    if [ "${DVQT_NOINSTALL:-}" != "1" ] ; then
+      with_log install.log cmake --install .
+    fi
+  popd > /dev/null
+}
+
+build_pyside6() {
+  mmdv_skip_p pyside6 && { echo "skip: pyside6" ; return 0 ; }
+  local ver=${PYSIDE_VERSION}
+  local full=pyside-setup
+  local dest=${MMDV_SRCDIR}/${full}
+  if [ ! -d "${dest}" ] ; then
+    git clone -b "${ver}" https://code.qt.io/pyside/pyside-setup.git "${dest}"
+  else
+    pushd "${dest}" > /dev/null
+      git fetch
+      git checkout "${ver}"
+      git pull origin "${ver}" || true
+    popd > /dev/null
+  fi
+  # CMake 3.27+ auto-adds the Homebrew prefix to its system search path on
+  # macOS.  With brew's `qt` and `pyside` formulae installed (the modmesh macOS
+  # VM setup does `brew install ... qt pyside`), pyside-setup's find_package
+  # calls resolve Qt6 / Shiboken6 / PySide6 to brew's copies instead of the
+  # ones this mmdv just built.  That mixes incompatible Qt versions (brew's
+  # Qt6UiTools pulls brew Qt6CoreTools, whose newer machinery aborts with
+  # Unknown CMake command "_qt_internal_should_include_targets") and trips over
+  # brew's broken ${BREW_PREFIX}/typesystems.  The clean global fix is
+  # -DCMAKE_IGNORE_PREFIX_PATH=${BREW_PREFIX}; mmdv provides Qt, shiboken, and
+  # Python directly and libclang via LLVM_INSTALL_DIR, so nothing the pyside6
+  # build needs lives under the ignored brew prefix.  setup.py exposes no way
+  # to forward extra cmake -D args (and its --cmake-toolchain-file flag forces
+  # cross-compile mode), so point it at a wrapper cmake via --cmake= that
+  # injects the flag on configure invocations only -- build/install and
+  # cache-inspection (-L/-N) calls are passed through untouched.  Skipped
+  # entirely when no Homebrew is present (nothing to hide).
+  local cmake_opt=()
+  if [ -n "${BREW_PREFIX}" ] ; then
+    local realcmake cmwrap
+    realcmake=$(command -v cmake)
+    cmwrap=${MMDV_SRCDIR}/cmake-no-brew
+    mkdir -p "${cmwrap}"
+    cat > "${cmwrap}/cmake" <<WRAP
+#!/bin/sh
+# Wrapper that hides the Homebrew prefix from CMake package discovery during
+# the pyside6 configure, so brew's Qt/PySide do not shadow this mmdv's. Only
+# configure runs get the flag; --build / --install / -L / -N pass through.
+# Generated by build-mmdv-macos26.sh.
+for a in "\$@" ; do
+  case "\$a" in
+    --build|--install|--open|-E|-P|-N|-L|--version|--find-package)
+      exec "${realcmake}" "\$@" ;;
+  esac
+done
+exec "${realcmake}" -DCMAKE_IGNORE_PREFIX_PATH="${BREW_PREFIX}" "\$@"
+WRAP
+    chmod +x "${cmwrap}/cmake"
+    cmake_opt=("--cmake=${cmwrap}/cmake")
+  fi
+  pushd "${dest}" > /dev/null
+    # pyside-setup 6.9.2 has a regression in _get_make: the "make" branch
+    # returns a str while others return Path, so a later .is_absolute() call
+    # crashes. Use ninja, which returns a Path.  --disable-pyi: PySide 6.9.2's
+    # stub generator overrides inspect.Formatter.formatannotation, but Python
+    # 3.14 added a quote_annotation_strings kwarg that the override doesn't
+    # accept.
+    with_log install.log "${PY}" setup.py install \
+      "${cmake_opt[@]}" \
+      --qtpaths="${QTPATHS}" \
+      --verbose-build \
+      --ignore-git \
+      --no-qt-tools \
+      --enable-numpy-support \
+      --disable-pyi \
+      --parallel="${MMDV_NP}" \
+      --make-spec=ninja
+  popd > /dev/null
+}
+
+####
+# Base section
+####
+if [[ "${MMDVBUILD_ALL:-}" == "1" || "${MMDVBUILD_BASE:-}" == "1" ]] ; then
+
+mmdv_time build_zlib zlib
+mmdv_time build_openssl openssl
+mmdv_time build_sqlite sqlite
+
+else
+
+echo "Set \${MMDVBUILD_ALL} or \${MMDVBUILD_BASE} to build BASE section"
+
+fi
+
+####
+# Python section
+####
+if [[ "${MMDVBUILD_ALL:-}" == "1" || "${MMDVBUILD_PYTHON:-}" == "1" ]] ; then
+
+echo "Python build uses PGO; expect ~20 min"
+mmdv_time build_python python
+"${PY}" -m pip install -U flake8 autopep8 black pytest jsonschema certifi
+"${PY}" -m pip install -U nose boto paramiko
+mmdv_time build_pybind11 pybind11
+
+else
+
+echo "Set \${MMDVBUILD_ALL} or \${MMDVBUILD_PYTHON} to build PYTHON section"
+
+fi
+
+####
+# Numpy section
+####
+if [[ "${MMDVBUILD_ALL:-}" == "1" || "${MMDVBUILD_NUMPY:-}" == "1" ]] ; then
+
+mmdv_time build_cython cython
+# Surface brew's gfortran (installed by `brew install gcc`) so meson picks it
+# up for scipy's Fortran sources. On Apple Silicon the binary is
+# /opt/homebrew/opt/gcc/bin/gfortran; on Intel /usr/local/opt/gcc/bin.
+if [ -n "${BREW_PREFIX}" ] && [ -d "${BREW_PREFIX}/opt/gcc/bin" ] ; then
+  export PATH="${BREW_PREFIX}/opt/gcc/bin:${PATH}"
+fi
+mmdv_time build_numpy numpy
+mmdv_time build_scipy scipy
+
+CERT_PATH=$("${PY}" -m certifi)
+export SSL_CERT_FILE=${CERT_PATH}
+export REQUESTS_CA_BUNDLE=${CERT_PATH}
+"${PY}" -m pip install -U matplotlib
+
+else
+
+echo "Set \${MMDVBUILD_ALL} or \${MMDVBUILD_NUMPY} to build NUMPY section"
+
+fi
+
+####
+# Qt section
+####
+if [[ "${MMDVBUILD_ALL:-}" == "1" || "${MMDVBUILD_QT:-}" == "1" ]] ; then
+
+# libclang for shiboken. By default fetch Qt's prebuilt libclang into the mmdv
+# tree (user-space, no Homebrew) -- see fetch_libclang and the header comment
+# for the version rationale. Set LLVM_INSTALL_DIR to point at an existing
+# libclang (e.g. a brew llvm) to skip the download.
+if [ -z "${LLVM_INSTALL_DIR:-}" ] ; then
+  mmdv_time fetch_libclang libclang
+  LLVM_INSTALL_DIR=${MMDV_SRCDIR}/libclang
+fi
+if [ ! -d "${LLVM_INSTALL_DIR}" ] ; then
+  echo "LLVM_INSTALL_DIR='${LLVM_INSTALL_DIR}' does not exist;" \
+       "unset it to fetch Qt's prebuilt libclang, or point it at a libclang" \
+       "install." >&2
+  exit 1
+fi
+
+# Provide a synthetic xcodebuild on CLT-only machines before configuring Qt
+# (and, transitively, pyside6, whose CMake reuses Qt's Apple auto-detect).
+# No-op when a full Xcode is installed.
+mmdv_ensure_xcodebuild_shim
+
+mmdv_time build_qt qt
+
+QTPATHS=${QTPATHS:-${MMDV_USRDIR}/bin/qtpaths6}
+if [ ! -x "${QTPATHS}" ] ; then
+  echo "qtpaths6 not found at ${QTPATHS}; check the Qt build"
+  exit 1
+fi
+export LLVM_INSTALL_DIR QTPATHS PYSIDE_BUILD=1
+
+mmdv_time build_pyside6 pyside6
+
+else
+
+echo "Set \${MMDVBUILD_ALL} or \${MMDVBUILD_QT} to build QT section"
+
+fi
