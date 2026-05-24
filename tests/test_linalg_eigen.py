@@ -273,4 +273,83 @@ class TestEigenSystemTC(unittest.TestCase):
         self.assertEqual(empty_vl.size, 0)
         self.assertEqual(empty_vr.size, 0)
 
+
+@unittest.skipIf(mm.EigenSystem is None,
+                 "mm.EigenSystem is not built (no vendor LAPACK)")
+class TestEigenSystemPlexTC(unittest.TestCase):
+    """Verify EigenSystem construction from a type-erased SimpleArray
+
+    The type-erased SimpleArray is SimpleArrayPlex in C++.
+    """
+
+    def test_plex_float64_matches_typed_construction(self):
+        # A float64 plex must construct EigenSystem and yield results identical
+        # to the typed SimpleArrayFloat64 path: same data, same DGEEV call.
+        A_np = np.array([
+            [2.0, 1.0, 0.5],
+            [0.0, 3.0, -1.0],
+            [0.0, 0.0, 5.0],
+        ], dtype="float64")
+        plex = mm.SimpleArray(A_np)
+        solver = mm.EigenSystem(plex)
+        self.assertFalse(solver.done)
+        solver.run()
+        self.assertTrue(solver.done)
+        # Identical to the typed SimpleArrayFloat64 construction.
+        typed = mm.EigenSystem(mm.SimpleArrayFloat64(array=A_np))
+        typed.run()
+        for name in ("wr", "wi", "vl", "vr"):
+            np.testing.assert_array_equal(
+                np.array(getattr(solver, name)),
+                np.array(getattr(typed, name)))
+        # Sanity: the eigenvalues are the diagonal entries.
+        np.testing.assert_allclose(np.sort(np.array(solver.wr)),
+                                   [2.0, 3.0, 5.0], rtol=1e-12, atol=1e-12)
+
+    def test_plex_rejects_non_float64_dtype(self):
+        # The plex overload only accepts float64.  float32 and integer element
+        # types must raise ValueError (std::invalid_argument).
+        for dtype in ("float32", "int32"):
+            A_np = np.array([[2.0, 0.0], [0.0, 3.0]], dtype=dtype)
+            A = mm.SimpleArray(A_np)
+            with self.assertRaisesRegex(
+                    ValueError, r"data type must be float64"):
+                mm.EigenSystem(A)
+
+    def test_plex_non_square_rejected(self):
+        # The float64 dtype check passes, so a non-square plex must still hit
+        # the square-2D guard in the EigenSystem constructor.
+        A_np = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype="float64")
+        A = mm.SimpleArray(A_np)
+        with self.assertRaisesRegex(
+                ValueError, r"must be a square 2D SimpleArray"):
+            mm.EigenSystem(A)
+
+    def test_plex_forwards_do_vl_do_vr_flags(self):
+        # do_vl/do_vr must pass through the plex overload unchanged: the
+        # default keeps both true, and do_vr=False suppresses vr.
+        A_np = np.array([[2.0, 0.0], [0.0, 3.0]], dtype="float64")
+        solver = mm.EigenSystem(mm.SimpleArray(A_np))
+        self.assertTrue(solver.do_vl)
+        self.assertTrue(solver.do_vr)
+
+        solver = mm.EigenSystem(mm.SimpleArray(A_np), do_vr=False)
+        solver.run()
+        self.assertTrue(solver.do_vl)
+        self.assertFalse(solver.do_vr)
+        with self.assertRaisesRegex(
+                RuntimeError, r"right eigenvectors were not computed"):
+            solver.vr  # noqa: B018
+
+    def test_plex_matrix_property_survives_input_gc(self):
+        # Mirror of test_matrix_property_survives_input_gc for the plex
+        # overload: m_matrix references the array owned inside the plex, so
+        # py::keep_alive<1, 2>() must stop it from dangling once the
+        # Python-side plex reference is dropped.
+        A_np = np.array([[3.0, 1.0], [0.0, 2.0]], dtype="float64")
+        plex = mm.SimpleArray(A_np)
+        solver = mm.EigenSystem(plex)
+        del plex
+        np.testing.assert_array_equal(solver.matrix.ndarray, A_np)
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
