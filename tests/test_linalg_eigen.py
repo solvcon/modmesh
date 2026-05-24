@@ -352,4 +352,97 @@ class TestEigenSystemPlexTC(unittest.TestCase):
         del plex
         np.testing.assert_array_equal(solver.matrix.ndarray, A_np)
 
+
+@unittest.skipIf(mm.EigenSystem is None,
+                 "mm.EigenSystem is not built (no vendor LAPACK)")
+class TestEigenCytnxCompatTC(unittest.TestCase):
+    """Testing code for eigen problem solver compat layer to Cytnx
+
+    Cytnx (https://github.com/Cytnx-dev/Cytnx) is a tensor-network library
+    which also uses an eigen problem solver.
+    """
+
+    @staticmethod
+    def _eig_general(mat):
+        """Helper to diagonalize a real square matrix like cytnx.linalg.Eig.
+
+        Takes a type-erased SimpleArray (SimpleArrayPlex) and returns (w,
+        vecs): eigenvalues and matching column eigenvectors.
+        """
+        mat = np.ascontiguousarray(mat, dtype=np.float64)
+        a = mm.SimpleArray(array=mat)
+        solver = mm.EigenSystem(a, do_vl=False, do_vr=True)
+        solver.run()
+        wr = np.array(solver.wr)
+        wi = np.array(solver.wi)
+        vr = np.array(solver.vr)
+        n = wr.shape[0]
+        w = wr + 1j * wi
+        vecs = np.zeros((n, n), dtype=np.complex128)
+        j = 0
+        while j < n:
+            if abs(wi[j]) < 1e-13:
+                vecs[:, j] = vr[:, j]
+                j += 1
+            else:
+                vecs[:, j] = vr[:, j] + 1j * vr[:, j + 1]
+                vecs[:, j + 1] = vr[:, j] - 1j * vr[:, j + 1]
+                j += 2
+        return w, vecs
+
+    @staticmethod
+    def _build_tfim_hamiltonian(length, coupling, field):
+        """Dense periodic transverse-field Ising Hamiltonian.
+
+        H = J sum_i sz_i sz_{i+1} - hx sum_i sx_i in the sz basis: bit i of the
+        state index is spin i, sz sz is +1 when neighbors agree and -1
+        otherwise, and sx flips a spin.  This is the operator Cytnx's
+        example/ED/ed_ising.py applies matrix-free via a LinOp.
+        """
+        dim = 1 << length
+        ham = np.zeros((dim, dim), dtype=np.float64)
+        for state in range(dim):
+            for i in range(length):
+                j = (i + 1) % length
+                spin_i = (state >> i) & 1
+                spin_j = (state >> j) & 1
+                ham[state, state] += coupling * (1.0 - 2.0 *
+                                                 (spin_i ^ spin_j))
+            for i in range(length):
+                flipped = state ^ (1 << i)
+                ham[flipped, state] += -field
+        return ham
+
+    def test_tfim_ground_state(self):
+        """Lowest eigenpair of the transverse-field Ising chain.
+
+        Mirrors Cytnx's exact-diagonalization ground-state example:
+        https://github.com/Cytnx-dev/Cytnx/blob/master/example/ED/ed_ising.py
+        """
+        # L=4, J=1, transverse field 0.3: a 16x16 real symmetric matrix.
+        length, coupling, field = 4, 1.0, 0.3
+        ham = self._build_tfim_hamiltonian(length, coupling, field)
+
+        w, vecs = self._eig_general(ham)
+        # A Hermitian Hamiltonian has real eigenvalues.
+        self.assertLess(np.max(np.abs(w.imag)), 1e-10)
+
+        # eigvalsh is the independent reference spectrum.
+        reference = np.linalg.eigvalsh(ham)
+        np.testing.assert_allclose(np.sort(w.real), reference,
+                                   rtol=1e-10, atol=1e-10)
+
+        # Ground state: lowest eigenvalue and its eigenvector, what
+        # Lanczos("Gnd") returns in the Cytnx example.
+        gnd = int(np.argmin(w.real))
+        energy = w[gnd].real
+        np.testing.assert_allclose(energy, reference[0],
+                                   rtol=1e-10, atol=1e-10)
+
+        psi = vecs[:, gnd].real
+        psi = psi / np.linalg.norm(psi)
+        # The defining eigen-equation H |psi> = E0 |psi>.
+        np.testing.assert_allclose(ham @ psi, energy * psi,
+                                   rtol=1e-9, atol=1e-9)
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
