@@ -166,17 +166,17 @@ run_pilot_pytest: pilot
 	env $(RUNENV) PYTEST_OPTS="$(PYTEST_OPTS)" \
 		cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE)
 
-.PHONY: release-check
-release-check:
+.PHONY: bundle-precheck
+bundle-precheck:
 	$(MODMESH_ROOT)/contrib/bundle/bundle-with-homebrew.sh check
 
-.PHONY: release
-release:
+.PHONY: bundle
+bundle:
 	$(MODMESH_ROOT)/contrib/bundle/bundle-with-homebrew.sh all \
 		--output "$(RELEASE_OUTPUT)" $(RELEASE_ARGS)
 
-.PHONY: release-test
-release-test:
+.PHONY: bundle-test
+bundle-test:
 	$(MODMESH_ROOT)/contrib/bundle/bundle-with-homebrew.sh verify \
 		"$(RELEASE_ARTIFACT)"
 
