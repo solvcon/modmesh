@@ -3,6 +3,7 @@ name: devbuild
 on:
   push:
   pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled]
   schedule:
     - cron: '34 17 * * *'
 
@@ -12,14 +13,24 @@ concurrency:
 
 jobs:
 
+  check_skip:
+    uses: ./.github/workflows/check_skip_ci.yml
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+
   standalone_buffer:
 
+    needs: [check_skip]
+
     if: |
+      needs.check_skip.outputs.skip != 'true' && (
       github.event_name == 'pull_request' ||
       (github.event_name == 'push' &&
        (vars.MMGH_PUSH_RUN_BRANCH == '*' ||
         contains(vars.MMGH_PUSH_RUN_BRANCH, github.ref_name))) ||
-      (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable')
+      (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable'))
 
     name: standalone_buffer_${{ matrix.os }}
 
@@ -63,13 +74,16 @@ jobs:
 
   build:
 
+    needs: [check_skip]
+
     if: |
+      needs.check_skip.outputs.skip != 'true' && (
       github.event_name == 'pull_request' ||
       (github.event_name == 'push' &&
        (vars.MMGH_PUSH_RUN_BRANCH == '*' ||
         contains(vars.MMGH_PUSH_RUN_BRANCH, github.ref_name))) ||
       (github.event_name == 'schedule' &&
-      vars.MMGH_NIGHTLY == 'enable')
+      vars.MMGH_NIGHTLY == 'enable'))
 
     name: build_${{ matrix.os }}_${{ matrix.cmake_build_type }}
 
@@ -204,13 +218,16 @@ jobs:
 
   build_windows:
 
+    needs: [check_skip]
+
     if: |
+      needs.check_skip.outputs.skip != 'true' && (
       github.event_name == 'pull_request' ||
       (github.event_name == 'push' &&
        (vars.MMGH_PUSH_RUN_BRANCH == '*' ||
         contains(vars.MMGH_PUSH_RUN_BRANCH, github.ref_name))) ||
       (github.event_name == 'schedule' &&
-      vars.MMGH_NIGHTLY == 'enable')
+      vars.MMGH_NIGHTLY == 'enable'))
 
     name: build_${{ matrix.os }}_${{ matrix.cmake_build_type }}
 

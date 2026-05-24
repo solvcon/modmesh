@@ -1,0 +1,104 @@
+name: check_skip_ci
+
+# Reusable workflow that decides whether the heavy CI jobs should be skipped
+# for a pull request.  See issue solvcon/modmesh#814.
+#
+# A pull request skips CI when either of the following is true:
+#
+#   1. It carries the "skip-ci" label (only repository members can set
+#      labels, so this is the trusted, primary mechanism).  Apply it to pull
+#      requests that change documentation or AI prompts only.
+#   2. Its description or one of its comments has the control string
+#      "[skip-ci]" alone on a line by itself; the control string is ignored
+#      when it appears inline within other prose.  Only the description/
+#      comments written by a repository owner, member, or collaborator are
+#      honored, so an external contributor cannot bypass CI by commenting.
+#
+# Adding or removing the label (or pushing a new commit) re-evaluates the
+# decision, because the callers listen to the "labeled"/"unlabeled" pull
+# request activity types in addition to the defaults.
+#
+# The "skip" output is "true" only for pull_request events; it is empty for
+# push and schedule events, which keeps their existing gating untouched.
+
+on:
+  workflow_call:
+    outputs:
+      skip:
+        description: >-
+          "true" when CI should be skipped for the triggering pull request,
+          "false" or empty otherwise.
+        value: ${{ jobs.check.outputs.skip }}
+
+permissions: {}
+
+jobs:
+
+  check:
+
+    name: check_skip_ci
+
+    runs-on: ubuntu-24.04
+
+    timeout-minutes: 5
+
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+
+    outputs:
+      skip: ${{ steps.check.outputs.skip }}
+
+    steps:
+
+      - name: scan label, description, and comments
+        id: check
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const trusted = ['OWNER', 'MEMBER', 'COLLABORATOR'];
+            // The control string is honored only when it is alone on a line
+            // by itself, so that prose mentioning it does not accidentally
+            // skip CI.
+            const control = /^\[skip-ci\]$/i;
+            const hasControlLine = text =>
+              (text || '').split(/\r?\n/)
+                .some(line => control.test(line.trim()));
+            const pr = context.payload.pull_request;
+
+            // 1. The skip-ci label, set by a repository member.
+            if (pr.labels.some(label => label.name === 'skip-ci')) {
+              core.notice('CI skipped: the "skip-ci" label is present.');
+              core.setOutput('skip', 'true');
+              return;
+            }
+
+            // 2. The control string in the pull request description.
+            if (trusted.includes(pr.author_association) &&
+                hasControlLine(pr.body)) {
+              core.notice('CI skipped: control string in the description.');
+              core.setOutput('skip', 'true');
+              return;
+            }
+
+            // 3. The control string in a comment from a member.
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                per_page: 100,
+              });
+            const hit = comments.find(
+              comment => trusted.includes(comment.author_association) &&
+                         hasControlLine(comment.body));
+            if (hit) {
+              core.notice('CI skipped: control string in a comment.');
+              core.setOutput('skip', 'true');
+              return;
+            }
+
+            core.setOutput('skip', 'false');
