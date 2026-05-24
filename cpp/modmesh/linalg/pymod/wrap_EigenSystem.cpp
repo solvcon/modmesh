@@ -70,6 +70,24 @@ WrapEigenSystem::WrapEigenSystem(pybind11::module & mod, char const * pyname, ch
             // Keep the input array's Python wrapper alive while the
             // EigenSystem lives, so m_matrix's C++ reference stays
             // valid for the lifetime of this instance.
+            py::keep_alive<1, 2>())
+        .def(
+            py::init(
+                [](SimpleArrayPlex const & a, bool do_vl, bool do_vr)
+                {
+                    if (a.data_type() != DataType::Float64)
+                    {
+                        throw std::invalid_argument("EigenSystem: SimpleArray data type must be float64");
+                    }
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+                    auto const * typed = reinterpret_cast<array_type const *>(a.instance_ptr());
+                    return std::make_unique<wrapped_type>(*typed, do_vl, do_vr);
+                }),
+            py::arg("a"),
+            py::arg("do_vl") = true,
+            py::arg("do_vr") = true,
+            // Keep the plex's Python wrapper alive while the EigenSystem
+            // lives; m_matrix references the array owned inside the plex.
             py::keep_alive<1, 2>());
 
     (*this)
