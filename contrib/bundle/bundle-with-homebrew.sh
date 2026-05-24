@@ -50,7 +50,7 @@ Subcommands:
   check    Check macOS bundle release dependencies. Does not build or install.
   bundle   Build/package pilot.app and pilot.dmg with Homebrew dependencies.
   verify   Verify a generated release DMG artifact.
-  all      Run check, then bundle.
+  all      Run check and then bundle. (No verify.)
 EOF
 }
 
