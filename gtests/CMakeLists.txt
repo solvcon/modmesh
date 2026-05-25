@@ -17,6 +17,10 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
+if (APPLE)
+    find_library(APPLE_FWK_ACCELERATE Accelerate REQUIRED)
+endif () # APPLE
+
 # The `test_nopython` target is only for testing the C++ interface of the non-Python part of the library.
 add_executable(
     test_nopython
@@ -41,6 +45,7 @@ target_link_libraries(
     test_nopython
     GTest::gtest_main
     GTest::gmock_main
+    ${APPLE_FWK_ACCELERATE}
 )
 
 include(GoogleTest)

@@ -29,6 +29,7 @@
  */
 
 #include <modmesh/buffer/ConcreteBuffer.hpp>
+#include <modmesh/buffer/matmul.hpp>
 #include <modmesh/math/math.hpp>
 #include <modmesh/simd/simd.hpp>
 
@@ -133,363 +134,6 @@ struct SimpleArrayInternalTypes
     using sshape_type = detail::sshape_type;
     using buffer_type = ConcreteBuffer;
 }; /* end class SimpleArrayInternalType */
-
-template <typename A, typename T>
-class SimpleArrayMatmulHelper
-{
-
-private:
-
-    using internal_types = detail::SimpleArrayInternalTypes<T>;
-
-public:
-
-    using value_type = typename internal_types::value_type;
-    using shape_type = typename internal_types::shape_type;
-
-    SimpleArrayMatmulHelper() = delete;
-    SimpleArrayMatmulHelper(A const & lhs, A const & rhs);
-    SimpleArrayMatmulHelper(A const & lhs,
-                            A const & rhs,
-                            size_t tile_x,
-                            size_t tile_y,
-                            size_t tile_z);
-    ~SimpleArrayMatmulHelper() = default;
-
-    SimpleArrayMatmulHelper(SimpleArrayMatmulHelper const &) = delete;
-    SimpleArrayMatmulHelper(SimpleArrayMatmulHelper &&) = delete;
-    SimpleArrayMatmulHelper & operator=(SimpleArrayMatmulHelper const &) = delete;
-    SimpleArrayMatmulHelper & operator=(SimpleArrayMatmulHelper &&) = delete;
-
-    A matmul();
-    A matmul_fast();
-
-private:
-
-    static std::string shape_str(A const & arr);
-    void check_dims() const;
-    void check_inner(size_t lhs_idx, size_t rhs_idx) const;
-    void check_tiles() const;
-    A matmul_vec_vec();
-    A matmul_vec_mat();
-    A matmul_mat_vec();
-    A matmul_mat_mat();
-    A pack_rhs(size_t n, size_t k);
-    void accumulate_tile(A const & packed_rhs,
-                         size_t row_begin,
-                         size_t row_end,
-                         size_t col_begin,
-                         size_t col_end,
-                         size_t inner_begin,
-                         size_t inner_end);
-    A matmul_mat_mat_tiled();
-
-    A const & m_lhs;
-    A const & m_rhs;
-    A m_result;
-    size_t m_tile_x;
-    size_t m_tile_y;
-    size_t m_tile_z;
-
-}; /* end class SimpleArrayMatmulHelper */
-
-template <typename A, typename T>
-SimpleArrayMatmulHelper<A, T>::SimpleArrayMatmulHelper(A const & lhs, A const & rhs)
-    : SimpleArrayMatmulHelper(lhs, rhs, 0, 0, 0)
-{
-}
-
-template <typename A, typename T>
-SimpleArrayMatmulHelper<A, T>::SimpleArrayMatmulHelper(A const & lhs,
-                                                       A const & rhs,
-                                                       size_t tile_x,
-                                                       size_t tile_y,
-                                                       size_t tile_z)
-    : m_lhs(lhs)
-    , m_rhs(rhs)
-    , m_tile_x(tile_x)
-    , m_tile_y(tile_y)
-    , m_tile_z(tile_z)
-{
-    check_dims();
-
-    size_t const lhs_ndim = m_lhs.ndim();
-    size_t const rhs_ndim = m_rhs.ndim();
-
-    if (lhs_ndim == 1 && rhs_ndim == 1)
-    {
-        check_inner(0, 0);
-        m_result = A(1);
-        return;
-    }
-
-    if (lhs_ndim == 1)
-    {
-        check_inner(0, 0);
-        m_result = A(m_rhs.shape(1));
-        return;
-    }
-
-    if (rhs_ndim == 1)
-    {
-        check_inner(1, 0);
-        m_result = A(m_lhs.shape(0));
-        return;
-    }
-
-    check_inner(1, 0);
-    shape_type const result_shape{m_lhs.shape(0), m_rhs.shape(1)};
-    m_result = A(result_shape);
-}
-
-template <typename A, typename T>
-A SimpleArrayMatmulHelper<A, T>::matmul()
-{
-    if (m_lhs.ndim() == 1 && m_rhs.ndim() == 1)
-    {
-        return matmul_vec_vec();
-    }
-    if (m_lhs.ndim() == 1)
-    {
-        return matmul_vec_mat();
-    }
-    if (m_rhs.ndim() == 1)
-    {
-        return matmul_mat_vec();
-    }
-
-    return matmul_mat_mat();
-}
-
-/**
- * Perform fast matrix multiplication for SimpleArrays.
- * This implementation currently uses tiling for 2D x 2D matrix multiplication.
- * Future optimizations may add other techniques such as SIMD kernels.
- */
-template <typename A, typename T>
-A SimpleArrayMatmulHelper<A, T>::matmul_fast()
-{
-    check_tiles();
-
-    if (m_lhs.ndim() == 1 && m_rhs.ndim() == 1)
-    {
-        return matmul_vec_vec();
-    }
-    if (m_lhs.ndim() == 1)
-    {
-        return matmul_vec_mat();
-    }
-    if (m_rhs.ndim() == 1)
-    {
-        return matmul_mat_vec();
-    }
-
-    return matmul_mat_mat_tiled();
-}
-
-/**
- * Format shape for matrix multiplication diagnostics.
- */
-template <typename A, typename T>
-std::string SimpleArrayMatmulHelper<A, T>::shape_str(A const & arr)
-{
-    if (arr.ndim() == 0)
-    {
-        return "()";
-    }
-
-    std::string result = "(";
-    for (size_t i = 0; i < arr.ndim(); ++i)
-    {
-        if (i > 0)
-        {
-            result += ",";
-        }
-        result += std::to_string(arr.shape(i));
-    }
-    result += ")";
-    return result;
-}
-
-template <typename A, typename T>
-void SimpleArrayMatmulHelper<A, T>::check_dims() const
-{
-    bool const lhs_is_supported = m_lhs.ndim() == 1 || m_lhs.ndim() == 2;
-    bool const rhs_is_supported = m_rhs.ndim() == 1 || m_rhs.ndim() == 2;
-    if (lhs_is_supported && rhs_is_supported)
-    {
-        return;
-    }
-
-    std::string const err = std::format("SimpleArray::matmul(): unsupported dimensions: "
-                                        "this={} other={}. SimpleArray must be 1D or 2D.",
-                                        shape_str(m_lhs),
-                                        shape_str(m_rhs));
-    throw std::out_of_range(err);
-}
-
-template <typename A, typename T>
-void SimpleArrayMatmulHelper<A, T>::check_inner(size_t lhs_idx, size_t rhs_idx) const
-{
-    if (m_lhs.shape(lhs_idx) == m_rhs.shape(rhs_idx))
-    {
-        return;
-    }
-
-    throw std::out_of_range(
-        std::format("SimpleArray::matmul(): shape mismatch: this={} other={}",
-                    shape_str(m_lhs),
-                    shape_str(m_rhs)));
-}
-
-template <typename A, typename T>
-void SimpleArrayMatmulHelper<A, T>::check_tiles() const
-{
-    if (m_tile_x != 0 && m_tile_y != 0 && m_tile_z != 0)
-    {
-        return;
-    }
-
-    throw std::out_of_range(
-        std::format("SimpleArray::fast_matmul(): tile sizes must be positive: "
-                    "tile_x={} tile_y={} tile_z={}",
-                    m_tile_x,
-                    m_tile_y,
-                    m_tile_z));
-}
-
-template <typename A, typename T>
-A SimpleArrayMatmulHelper<A, T>::matmul_vec_vec()
-{
-    size_t const k = m_lhs.shape(0);
-    value_type v = 0;
-    for (size_t i = 0; i < k; ++i)
-    {
-        v += m_lhs(i) * m_rhs.data(i);
-    }
-    m_result.data(0) = v;
-    return std::move(m_result);
-}
-
-template <typename A, typename T>
-A SimpleArrayMatmulHelper<A, T>::matmul_vec_mat()
-{
-    size_t const n = m_result.size();
-    size_t const k = m_lhs.shape(0);
-    for (size_t j = 0; j < n; ++j)
-    {
-        value_type v = 0;
-        for (size_t l = 0; l < k; ++l)
-        {
-            v += m_lhs(l) * m_rhs(l, j);
-        }
-        m_result.data(j) = v;
-    }
-    return std::move(m_result);
-}
-
-template <typename A, typename T>
-A SimpleArrayMatmulHelper<A, T>::matmul_mat_vec()
-{
-    size_t const m = m_result.size();
-    size_t const k = m_lhs.shape(1);
-    for (size_t i = 0; i < m; ++i)
-    {
-        value_type v = 0;
-        for (size_t l = 0; l < k; ++l)
-        {
-            v += m_lhs(i, l) * m_rhs(l);
-        }
-        m_result.data(i) = v;
-    }
-    return std::move(m_result);
-}
-
-template <typename A, typename T>
-A SimpleArrayMatmulHelper<A, T>::matmul_mat_mat()
-{
-    size_t const m = m_result.shape(0);
-    size_t const n = m_result.shape(1);
-    size_t const k = m_lhs.shape(1);
-    for (size_t i = 0; i < m; ++i)
-    {
-        for (size_t j = 0; j < n; ++j)
-        {
-            value_type v = 0;
-            for (size_t l = 0; l < k; ++l)
-            {
-                v += m_lhs(i, l) * m_rhs(l, j);
-            }
-            m_result(i, j) = v;
-        }
-    }
-    return std::move(m_result);
-}
-
-template <typename A, typename T>
-A SimpleArrayMatmulHelper<A, T>::pack_rhs(size_t n, size_t k)
-{
-    shape_type const packing_shape{n, k};
-    A packing(packing_shape);
-    for (size_t i = 0; i < n; ++i)
-    {
-        for (size_t j = 0; j < k; ++j)
-        {
-            packing(i, j) = m_rhs(j, i);
-        }
-    }
-    return packing;
-}
-
-template <typename A, typename T>
-void SimpleArrayMatmulHelper<A, T>::accumulate_tile(A const & packed_rhs,
-                                                    size_t row_begin,
-                                                    size_t row_end,
-                                                    size_t col_begin,
-                                                    size_t col_end,
-                                                    size_t inner_begin,
-                                                    size_t inner_end)
-{
-    for (size_t i = row_begin; i < row_end; ++i)
-    {
-        for (size_t j = col_begin; j < col_end; ++j)
-        {
-            value_type v = m_result(i, j);
-            for (size_t l = inner_begin; l < inner_end; ++l)
-            {
-                v += m_lhs(i, l) * packed_rhs(j, l);
-            }
-            m_result(i, j) = v;
-        }
-    }
-}
-
-template <typename A, typename T>
-A SimpleArrayMatmulHelper<A, T>::matmul_mat_mat_tiled()
-{
-    size_t const m = m_result.shape(0);
-    size_t const n = m_result.shape(1);
-    size_t const k = m_lhs.shape(1);
-    A packed_rhs = pack_rhs(n, k);
-    for (size_t i = 0; i < m_result.size(); ++i)
-    {
-        m_result.data(i) = value_type{0};
-    }
-    for (size_t row = 0; row < m; row += m_tile_x)
-    {
-        size_t const row_end = std::min(row + m_tile_x, m);
-        for (size_t col = 0; col < n; col += m_tile_y)
-        {
-            size_t const col_end = std::min(col + m_tile_y, n);
-            for (size_t inner = 0; inner < k; inner += m_tile_z)
-            {
-                size_t const inner_end = std::min(inner + m_tile_z, k);
-                accumulate_tile(packed_rhs, row, row_end, col, col_end, inner, inner_end);
-            }
-        }
-    }
-    return std::move(m_result);
-}
 
 template <typename A, typename T>
 class SimpleArrayMixinModifiers
@@ -1309,11 +953,13 @@ public:
 
     A matmul(A const & other) const;
     A & imatmul(A const & other);
-    A fast_matmul(A const & other,
+    A matmul_veclib(A const & other) const;
+    A & imatmul_veclib(A const & other);
+    A matmul_fast(A const & other,
                   size_t tile_x,
                   size_t tile_y,
                   size_t tile_z) const;
-    A & fast_imatmul(A const & other,
+    A & imatmul_fast(A const & other,
                      size_t tile_x,
                      size_t tile_y,
                      size_t tile_z);
@@ -1438,11 +1084,36 @@ A & SimpleArrayMixinCalculators<A, T>::imatmul(A const & other)
 }
 
 /**
+ * Perform matrix multiplication using Accelerate/CBLAS when available.
+ */
+template <typename A, typename T>
+A SimpleArrayMixinCalculators<A, T>::matmul_veclib(A const & other) const
+{
+    auto const * athis = static_cast<A const *>(this);
+    SimpleArrayMatmulHelper<A, T> helper(*athis, other);
+    return helper.matmul_veclib();
+}
+
+/**
+ * Perform in-place matrix multiplication using Accelerate/CBLAS when available.
+ * The result replaces the content of the current array.
+ */
+template <typename A, typename T>
+A & SimpleArrayMixinCalculators<A, T>::imatmul_veclib(A const & other)
+{
+    auto athis = static_cast<A *>(this);
+    A result = athis->matmul_veclib(other);
+    *athis = std::move(result);
+
+    return *athis;
+}
+
+/**
  * Perform fast matrix multiplication for SimpleArrays.
  * This implementation supports 1D x 1D, 1D x 2D, 2D x 1D, and 2D x 2D matrix multiplication.
  */
 template <typename A, typename T>
-A SimpleArrayMixinCalculators<A, T>::fast_matmul(A const & other,
+A SimpleArrayMixinCalculators<A, T>::matmul_fast(A const & other,
                                                  size_t tile_x,
                                                  size_t tile_y,
                                                  size_t tile_z) const
@@ -1458,13 +1129,13 @@ A SimpleArrayMixinCalculators<A, T>::fast_matmul(A const & other,
  * The result replaces the content of the current array.
  */
 template <typename A, typename T>
-A & SimpleArrayMixinCalculators<A, T>::fast_imatmul(A const & other,
+A & SimpleArrayMixinCalculators<A, T>::imatmul_fast(A const & other,
                                                     size_t tile_x,
                                                     size_t tile_y,
                                                     size_t tile_z)
 {
     auto athis = static_cast<A *>(this);
-    A result = athis->fast_matmul(other, tile_x, tile_y, tile_z);
+    A result = athis->matmul_fast(other, tile_x, tile_y, tile_z);
     *athis = std::move(result);
 
     return *athis;

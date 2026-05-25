@@ -379,19 +379,20 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 [](wrapped_type const & self, value_type scalar)
                 { return self.div(scalar); })
             .def("matmul", &wrapped_type::matmul)
-            .def("__matmul__", &wrapped_type::matmul)
+            .def("matmul_veclib", &wrapped_type::matmul_veclib)
             .def(
-                "fast_matmul",
+                "matmul_fast",
                 [](wrapped_type const & self,
                    wrapped_type const & other,
                    size_t tile_x,
                    size_t tile_y,
                    size_t tile_z)
-                { return self.fast_matmul(other, tile_x, tile_y, tile_z); },
+                { return self.matmul_fast(other, tile_x, tile_y, tile_z); },
                 py::arg("other"),
                 py::arg("tile_x") = 16,
                 py::arg("tile_y") = 16,
                 py::arg("tile_z") = 16)
+            .def("__matmul__", &wrapped_type::matmul)
             // TODO: In-place operation should return reference to self to support function chaining
             /*
              * Regular in-place methods (iadd, imul, etc.) are procedural calls and do
@@ -433,6 +434,20 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 { self.idiv(scalar); })
             .def("imatmul", [](wrapped_type & self, wrapped_type const & other)
                  { self.imatmul(other); })
+            .def("imatmul_veclib", [](wrapped_type & self, wrapped_type const & other)
+                 { self.imatmul_veclib(other); })
+            .def(
+                "imatmul_fast",
+                [](wrapped_type & self,
+                   wrapped_type const & other,
+                   size_t tile_x,
+                   size_t tile_y,
+                   size_t tile_z)
+                { self.imatmul_fast(other, tile_x, tile_y, tile_z); },
+                py::arg("other"),
+                py::arg("tile_x") = 16,
+                py::arg("tile_y") = 16,
+                py::arg("tile_z") = 16)
             .def("__imatmul__", [](wrapped_type & self, wrapped_type const & other)
                  {
                      self.imatmul(other);
