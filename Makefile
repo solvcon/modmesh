@@ -73,6 +73,7 @@ ifneq ($(VERBOSE),)
 else
 	PYTEST_OPTS ?=
 endif
+GPROF ?= gprof
 
 .PHONY: default
 default: buildext
@@ -143,6 +144,25 @@ pyprof: buildext $(PROFFILES)
 			$(WHICH_PYTHON) $${fn} > $${outfn} || exit 1; \
 	done
 
+.PHONY: cprof
+cprof: cmake
+	@test "$$(uname -s)" = "Linux" || { \
+		echo "Error: make cprof is only supported on Linux."; \
+		exit 1; \
+	}
+	@command -v $(GPROF) >/dev/null 2>&1 || { \
+		echo "Error: '$(GPROF)' not found in PATH."; \
+		exit 1; \
+	}
+	cmake --build $(BUILD_PATH) --target callprofiler_gprof VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)
+	mkdir -p profiling/results
+	rm -f profiling/results/profile_profiler.output
+	env $(RUNENV) $(WHICH_PYTHON) $(MODMESH_ROOT)/profiling/cprof/run.py \
+		--executable $(MODMESH_ROOT)/$(BUILD_PATH)/profiling/cprof/callprofiler_gprof \
+		--gprof $(GPROF) \
+		--result-dir $(MODMESH_ROOT)/profiling/results \
+		--working-dir $(MODMESH_ROOT)/$(BUILD_PATH)/profiling/cprof
+
 .PHONY: pilot
 pilot: cmake
 	cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)
@@ -198,7 +218,7 @@ AUTOPEP8_OPTS ?= --recursive --max-line-length=79 \
                  --ignore=E121,E123,E126,E201,E202,E203,E226,E241,E301,E303,E501,W503,W504 \
                  --exclude=thirdparty,tmp,_deps
 
-CFFILES = $(shell find cpp gtests -type f -name '*.[ch]pp' | sort)
+CFFILES = $(shell find cpp gtests profiling -type f -name '*.[ch]pp' | sort)
 ifeq ($(FORCE_CLANG_FORMAT),inplace)
 	CFCMD ?= $(CLANG_FORMAT) -i
 else
@@ -226,7 +246,7 @@ cformat: $(CFFILES)
 
 .PHONY: cinclude
 cinclude: $(CFFILES)
-	@if grep -rnE '^[[:space:]]*#[[:space:]]*include[[:space:]]*"' cpp/ gtests/ 2>/dev/null; then \
+	@if grep -nE '^[[:space:]]*#[[:space:]]*include[[:space:]]*"' $(CFFILES) 2>/dev/null; then \
 		echo "Error: use angle brackets for #include, not quotes (see lines above)."; \
 		exit 1; \
 	fi
