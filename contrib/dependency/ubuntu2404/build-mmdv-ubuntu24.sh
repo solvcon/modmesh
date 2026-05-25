@@ -10,19 +10,17 @@
 #
 # Before running this script, install the apt prerequisites. The two helper
 # functions below print the exact commands; copy and run them yourself (the
-# script never invokes apt). LLVM_INSTALL_DIR defaults to /usr/lib/llvm-20 (the
-# apt llvm-20-dev path); override if needed.
+# script never invokes apt). LLVM_INSTALL_DIR defaults to /usr/lib/llvm-22 (the
+# apt llvm-22-dev path); override if needed.
 #
-# LLVM 20 is the sweet spot for PySide 6.9.2 on Ubuntu 24.04 with GCC 16
-# headers: older clang-18 chokes on libstdc++-16, but libclang-22 makes
-# shiboken mis-resolve unqualified Flag enum names (e.g. it picks
-# QCommandLineOption::Flag for QStringConverter::Flag) in 6.9.2's typesystem
-# and the generated wrappers fail to compile.  The patchelf apt package is the
-# same binary the patchelf PyPI wheel ships; either works, the script installs
-# the wheel anyway as a safety net.  libreadline is intentionally not listed:
-# Python is built with --with-readline=editline, which uses libedit
-# (libedit-dev).  libmpdec is not packaged on Ubuntu 24.04; Python is built
-# with --with-system-libmpdec=no to use its bundled copy.
+# LLVM 22 is the libclang shiboken parses Qt headers with on Ubuntu 24.04 with
+# GCC 16: clang-18 is too old (its parser chokes on libstdc++-16).  Override
+# LLVM_INSTALL_DIR for another.  The patchelf apt package is the same binary
+# the patchelf PyPI wheel ships; either works, the script installs the wheel
+# anyway as a safety net.  libreadline is intentionally not listed: Python is
+# built with --with-readline=editline, which uses libedit (libedit-dev).
+# libmpdec is not packaged on Ubuntu 24.04; Python is built with
+# --with-system-libmpdec=no to use its bundled copy.
 #
 # Usage:
 #   ./build-mmdv-ubuntu24.sh
@@ -56,7 +54,7 @@
 #     PYTHON_VERSION: CPython release tag.
 #     QT_MAJOR_VER: Qt major.minor version.
 #     QT_SUB_VER: Qt patch version.
-#     PYSIDE_VERSION: pyside-setup git tag.
+#     PYSIDE_VERSION: Qt for Python (pyside-setup) source release version.
 #
 #   Build settings:
 #     MMDV_NP: Parallel build jobs.
@@ -134,13 +132,13 @@ while [ $# -gt 0 ] ; do
 done
 
 # CPython release tag.
-PYTHON_VERSION=${PYTHON_VERSION:-3.14.0}
+PYTHON_VERSION=${PYTHON_VERSION:-3.14.5}
 # Qt major.minor version.
-QT_MAJOR_VER=${QT_MAJOR_VER:-6.9}
+QT_MAJOR_VER=${QT_MAJOR_VER:-6.11}
 # Qt patch version.
-QT_SUB_VER=${QT_SUB_VER:-2}
-# pyside-setup git tag.
-PYSIDE_VERSION=${PYSIDE_VERSION:-v${QT_MAJOR_VER}.${QT_SUB_VER}}
+QT_SUB_VER=${QT_SUB_VER:-1}
+# Qt for Python (pyside-setup) source release version.
+PYSIDE_VERSION=${PYSIDE_VERSION:-${QT_MAJOR_VER}.${QT_SUB_VER}}
 
 # Default to a full BASE+PYTHON+NUMPY+QT build when the caller has not selected
 # a specific section. Setting any one of MMDVBUILD_* to "1" disables this
@@ -203,7 +201,7 @@ mmdv_apt_qt_cmd() {
   # Print the apt command for the QT section (Qt + pyside6 build deps).
   cat <<'EOF'
 sudo apt install -y \
-  llvm-20-dev clang-20 libclang-20-dev patchelf \
+  llvm-22-dev clang-22 libclang-22-dev patchelf \
   libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev \
   libfreetype-dev libdbus-1-dev libgl1-mesa-dev libglu1-mesa-dev \
   libxcb-cursor-dev libxcb-icccm4-dev libxcb-image0-dev \
@@ -706,11 +704,11 @@ build_qt() {
   local fn=${full}.tar.xz
   local url="https://download.qt.io/official_releases/qt/${major}"
   url="${url}/${ver}/single/qt-everywhere-src-${ver}.tar.xz"
-  download_md5 "${fn}" "${url}" 78fe69ae8049f6b0139ceaa28e643f53
+  download_md5 "${fn}" "${url}" 25d4d1dd74c92b978f164e8f20805985
   # A pre-existing Qt install may leak through LD_LIBRARY_PATH or
-  # CMAKE_PREFIX_PATH and cause the freshly built Qt 6.9.2 tools (rcc/moc/...)
-  # to load the older libQt6Core at runtime and fail with "version `Qt_6.9' not
-  # found".  Strip them out.
+  # CMAKE_PREFIX_PATH and cause the freshly built Qt 6.11.1 tools (rcc/moc/...)
+  # to load the older libQt6Core at runtime and fail with "version `Qt_6.11'
+  # not found".  Strip them out.
   unset LD_LIBRARY_PATH CMAKE_PREFIX_PATH QT_ROOT QT_VER
   PATH=$(printf '%s' "${PATH}" | tr ':' '\n' | grep -v '/var/Qt/' | paste -sd:)
   if [ -d "${MMDV_SRCDIR}/${full}" ] ; then
@@ -763,32 +761,25 @@ build_qt() {
 
 build_pyside6() {
   mmdv_skip_p pyside6 && { echo "skip: pyside6" ; return 0 ; }
-  local ver=${PYSIDE_VERSION}
-  local full=pyside-setup
-  local dest=${MMDV_SRCDIR}/${full}
-  if [ ! -d "${dest}" ] ; then
-    git clone -b "${ver}" https://code.qt.io/pyside/pyside-setup.git "${dest}"
-  else
-    pushd "${dest}" > /dev/null
-      git fetch
-      git checkout "${ver}"
-      git pull origin "${ver}" || true
-    popd > /dev/null
-  fi
-  pushd "${dest}" > /dev/null
+  local ver=${PYSIDE_VERSION} full fn url
+  full=pyside-setup-everywhere-src-${ver} ; fn=${full}.tar.xz
+  # Official Qt for Python source release, verified against the published
+  # .md5 sidecar (download.qt.io also serves a matching .sha256:
+  # 6ffd9835bb0dd2c56f061d62f1616bb1707cfc0202b80e3165d6be087f3965e2).
+  url="https://download.qt.io/official_releases/QtForPython/pyside6"
+  url="${url}/PySide6-${ver}-src/${fn}"
+  download_md5 "${fn}" "${url}" a6fe3db5855d3cd09a381d0aca7d7f5e
+  unpack "${fn}" "${full}"
+  pushd "${MMDV_SRCDIR}/${full}" > /dev/null
     # pyside-setup 6.9.2 has a regression in _get_make: the "make" branch
     # returns a str while others return Path, so a later .is_absolute() call
-    # crashes. Use ninja, which returns a Path.  --disable-pyi: PySide 6.9.2's
-    # stub generator overrides inspect.Formatter.formatannotation, but Python
-    # 3.14 added a quote_annotation_strings kwarg that the override doesn't
-    # accept.
+    # crashes.  Use ninja, which returns a Path.
     with_log install.log "${PY}" setup.py install \
       --qtpaths="${QTPATHS}" \
       --verbose-build \
       --ignore-git \
       --no-qt-tools \
       --enable-numpy-support \
-      --disable-pyi \
       --parallel="${MMDV_NP}" \
       --make-spec=ninja
   popd > /dev/null
@@ -854,13 +845,13 @@ fi
 if [[ "${MMDVBUILD_ALL:-}" == "1" || "${MMDVBUILD_QT:-}" == "1" ]] ; then
 
 # LLVM_INSTALL_DIR points at the libclang shiboken should use.  Defaults to the
-# apt path for llvm-20, which is the sweet spot for PySide 6.9.2 on Ubuntu
-# 24.04 (see the header comment); override if your llvm-20-dev install lives
-# elsewhere.
-LLVM_INSTALL_DIR=${LLVM_INSTALL_DIR:-/usr/lib/llvm-20}
+# apt path for llvm-22, the newest stable and supported by PySide 6.11.1 on
+# Ubuntu 24.04 (see the header comment); override if your llvm-22-dev install
+# lives elsewhere.
+LLVM_INSTALL_DIR=${LLVM_INSTALL_DIR:-/usr/lib/llvm-22}
 if [ ! -d "${LLVM_INSTALL_DIR}" ] ; then
   echo "LLVM_INSTALL_DIR='${LLVM_INSTALL_DIR}' does not exist;" \
-       "install llvm-20-dev or set LLVM_INSTALL_DIR explicitly" >&2
+       "install llvm-22-dev or set LLVM_INSTALL_DIR explicitly" >&2
   exit 1
 fi
 
