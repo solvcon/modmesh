@@ -13,14 +13,11 @@
 # shiboken (the PySide6 binding generator) needs libclang, which Apple's
 # Command Line Tools clang does not ship.  Rather than depend on a Homebrew
 # llvm, the QT section downloads Qt's own prebuilt libclang into the mmdv tree
-# (user-space, no system install) -- see fetch_libclang.  The version is pinned
-# to 21.x (LIBCLANG_VERSION): libclang 22 mis-resolves the unqualified `Flag`
-# enum in PySide 6.9.2's typesystem (it picks QCommandLineOption::Flag for
-# QStringConverterBase::Flag, so the QtCore wrappers fail to compile with "no
-# type named 'Default'"), while libclang <=18 is too old to parse the macOS 26
-# SDK's libc++ headers (__countr_zero in <bitset>).  Qt itself is still built
-# with Apple clang. Set LLVM_INSTALL_DIR to use an existing libclang (e.g. a
-# brew llvm) instead of fetching.
+# (user-space, no system install) -- see fetch_libclang.  LIBCLANG_VERSION is
+# pinned to 21.x: unlike the Ubuntu mmdv (which uses LLVM 22 against glibc's
+# headers), Qt's prebuilt libclang 22.x segfaults shiboken while parsing the Qt
+# headers on macOS, so 21.x stays the macOS sweet spot.  Set LLVM_INSTALL_DIR
+# to use an existing libclang (e.g. a brew llvm) instead of fetching.
 #
 # Apple Silicon (arm64) is the assumed default.  The script also runs on Intel
 # Macs, but modmesh does not plan to support Intel Macs.
@@ -71,7 +68,7 @@
 #     PYTHON_VERSION: CPython release tag.
 #     QT_MAJOR_VER: Qt major.minor version.
 #     QT_SUB_VER: Qt patch version.
-#     PYSIDE_VERSION: pyside-setup git tag.
+#     PYSIDE_VERSION: Qt for Python (pyside-setup) source release version.
 #
 #   Build settings:
 #     MMDV_NP: Parallel build jobs.
@@ -151,19 +148,20 @@ while [ $# -gt 0 ] ; do
 done
 
 # CPython release tag.
-PYTHON_VERSION=${PYTHON_VERSION:-3.14.0}
+PYTHON_VERSION=${PYTHON_VERSION:-3.14.5}
 # Qt major.minor version.
-QT_MAJOR_VER=${QT_MAJOR_VER:-6.9}
+QT_MAJOR_VER=${QT_MAJOR_VER:-6.11}
 # Qt patch version.
-QT_SUB_VER=${QT_SUB_VER:-2}
-# pyside-setup git tag.
-PYSIDE_VERSION=${PYSIDE_VERSION:-v${QT_MAJOR_VER}.${QT_SUB_VER}}
-# Qt prebuilt libclang version for shiboken (see fetch_libclang). 21.x is the
-# sweet spot on macOS 26: libclang 22 mis-resolves PySide's Flag enum, while
-# <=18 is too old to parse the macOS 26 SDK's libc++ headers.
+QT_SUB_VER=${QT_SUB_VER:-1}
+# Qt for Python (pyside-setup) source release version.
+PYSIDE_VERSION=${PYSIDE_VERSION:-${QT_MAJOR_VER}.${QT_SUB_VER}}
+# Qt prebuilt libclang version for shiboken (see fetch_libclang).  Pinned to
+# 21.x on macOS: Qt's prebuilt libclang 22.1.2 segfaults shiboken while parsing
+# the Qt headers, while libclang <=18 is too old for the macOS 26 SDK's libc++
+# headers.
 LIBCLANG_VERSION=${LIBCLANG_VERSION:-21.1.2}
 
-# Detect the Homebrew prefix once so later sections can reuse it. brew is
+# Detect the Homebrew prefix once so later sections can reuse it.  brew is
 # keg-only for several packages we depend on (openblas, llvm, gcc), so we build
 # the absolute keg paths from BREW_PREFIX rather than relying on PATH.
 if command -v brew >/dev/null 2>&1 ; then
@@ -238,9 +236,9 @@ brew install \
 EOF
 }
 
-# Note: the QT section needs no brew packages beyond the base set above. Qt is
+# Note: the QT section needs no brew packages beyond the base set above.  Qt is
 # built with Apple clang, and shiboken's libclang is fetched from Qt's prebuilt
-# packages (see fetch_libclang), not Homebrew. patchelf is not used on macOS
+# packages (see fetch_libclang), not Homebrew.  patchelf is not used on macOS
 # (install_name_tool / otool replace it); Qt's platform-plugin dependencies are
 # part of the system (cocoa, CoreText, Metal), so no xcb/X11 stack is required.
 
@@ -324,9 +322,9 @@ else
 fi
 
 # Note on macOS and DYLD_*: SIP strips DYLD_* when a shell spawns a system
-# binary (anything under /usr/bin, /bin, /sbin). The mmdv binaries we build
-# embed an rpath to ${MMDV_USRDIR}/lib at link time, so they keep loading
-# our dylibs even when DYLD_LIBRARY_PATH is dropped. The exports here are
+# binary (anything under /usr/bin, /bin, /sbin).  The mmdv binaries we build
+# embed an rpath to ${MMDV_USRDIR}/lib at link time, so they keep loading our
+# dylibs even when DYLD_LIBRARY_PATH is dropped.  The exports here are
 # belt-and-suspenders for direct-invoke from this shell.
 
 # Mark the prompt so the active mmdv is visible.
@@ -706,7 +704,7 @@ build_numpy() {
     # Prefer macOS's built-in Accelerate framework over openblas; meson's
     # blas-order/lapack-order accept a comma-separated fallback list, so the
     # build still succeeds on Macs without Accelerate (very rare) by falling
-    # back to brew openblas. The AVX2 cpu-dispatch cap that the Ubuntu script
+    # back to brew openblas.  The AVX2 cpu-dispatch cap that the Ubuntu script
     # needs is GCC-16-specific; Apple clang on macOS handles the default
     # cpu-dispatch=MAX fine.
     with_log dependency.log "${PY}" -m pip install -r requirements/build_requirements.txt
@@ -743,17 +741,17 @@ build_scipy() {
 
 fetch_libclang() {
   # Download Qt's prebuilt libclang and lay out a minimal LLVM_INSTALL_DIR for
-  # shiboken under ${MMDV_SRCDIR}/libclang. The full archive is ~4 GB because
+  # shiboken under ${MMDV_SRCDIR}/libclang.  The full archive is ~4 GB because
   # it bundles the entire LLVM/clang command-line toolset under bin/ (clangd,
   # llc, clang-tidy, ...) that shiboken never invokes; it loads libclang.dylib
-  # directly. So extract only lib/ (the dylib, the LLVM/Clang CMake package
+  # directly.  So extract only lib/ (the dylib, the LLVM/Clang CMake package
   # config, static libs, and clang resource headers) and include/ -- ~1 GB.
   # macOS bsdtar (libarchive + liblzma) reads 7-Zip natively, so no 7z/brew
   # tool is needed.
   #
   # LLVMExports.cmake / ClangTargets.cmake assert that every exported target's
   # file exists, including the bin/ tools we skipped, so find_package(Clang)
-  # would FATAL_ERROR. Drop empty placeholders for exactly those referenced
+  # would FATAL_ERROR.  Drop empty placeholders for exactly those referenced
   # paths; shiboken never executes them, it only needs the existence check to
   # pass and the real libclang.dylib in lib/.
   local fn=libclang-release_${LIBCLANG_VERSION}-based-macos-universal.7z
@@ -780,81 +778,6 @@ fetch_libclang() {
   fi
 }
 
-mmdv_ensure_xcodebuild_shim() {
-  # Qt 6.9's CMake auto-detect (qt_auto_detect_apple in
-  # qtbase/cmake/QtAutoDetectHelpers.cmake) runs `xcrun xcodebuild -version`
-  # unconditionally and aborts with FATAL_ERROR if it cannot find xcodebuild.
-  # xcodebuild ships only with the full Xcode.app, not with the Apple Command
-  # Line Tools, so a CLT-only machine (the common modmesh dev setup) cannot
-  # even configure Qt -- and there is no CMake flag to skip that single call.
-  # When no real xcodebuild is reachable, drop a tiny stub on PATH that reports
-  # a synthetic version satisfying Qt's minimum-Xcode check
-  # (QT_SUPPORTED_MIN_MACOS_XCODE_VERSION is 15 for 6.9.2). xcrun searches
-  # DEVELOPER_DIR before PATH, so the stub is bypassed the moment a real Xcode
-  # is installed. Everything else Qt needs from xcrun (the macOS SDK path and
-  # version) resolves under CLT alone, so only xcodebuild needs shimming.
-  if xcrun --find xcodebuild >/dev/null 2>&1 ; then
-    return 0
-  fi
-  local shimdir=${MMDV_SRCDIR}/xcodebuild-shim
-  mkdir -p "${shimdir}"
-  cat > "${shimdir}/xcodebuild" <<'XCB'
-#!/bin/sh
-# Synthetic xcodebuild for CLT-only macOS: answers only `-version`, with a
-# version high enough to pass Qt's minimum-Xcode check. There is no real Xcode
-# here; Qt only needs the version string, not an actual xcodebuild. Generated
-# by contrib/dependency/macos26/build-mmdv-macos26.sh.
-case "$1" in
-  -version)
-    echo "Xcode 16.0"
-    echo "Build version 16A242d"
-    ;;
-  *)
-    echo "xcodebuild: version-only stub (no Xcode installed)" >&2
-    exit 64
-    ;;
-esac
-XCB
-  chmod +x "${shimdir}/xcodebuild"
-  export PATH="${shimdir}:${PATH}"
-  echo "no full Xcode found; using synthetic xcodebuild stub at ${shimdir}"
-}
-
-mmdv_patch_qt_sources() {
-  # Qt 6.9.2 predates Apple clang 21 (the compiler in the macOS 26 / Xcode 16
-  # toolchain). qYieldCpu() in qtbase/src/corelib/thread/qyieldcpu.h calls the
-  # ACLE intrinsic __yield() whenever __has_builtin(__yield) is true, but on
-  # clang 21 that is a *library* builtin whose declaration lives in
-  # <arm_acle.h> -- which the header never includes. The call then fails with
-  # "implicitly declaring library function '__yield'", an error (not a warning)
-  # on this clang, breaking the very first qtbase translation units.  Inject
-  # the include exactly where the compiler's own diagnostic recommends.
-  # Idempotent: an already-patched tree is detected and left alone.
-  local srcname=$1
-  local yieldhdr=${MMDV_SRCDIR}/${srcname}/qtbase/src/corelib/thread/qyieldcpu.h
-  if [ ! -f "${yieldhdr}" ] ; then
-    echo "warning: ${yieldhdr} not found; skipping __yield patch" >&2
-    return 0
-  fi
-  if grep -q 'arm_acle.h' "${yieldhdr}" ; then
-    echo "qyieldcpu.h already patched for <arm_acle.h>"
-    return 0
-  fi
-  awk '
-    { print }
-    /^#include <QtCore\/qtconfigmacros.h>$/ && !done {
-      print ""
-      print "// modmesh mmdv: declare the __yield() ACLE intrinsic for Apple"
-      print "// clang 21 (macOS 26 toolchain); see build-mmdv-macos26.sh."
-      print "#if __has_builtin(__yield) && __has_include(<arm_acle.h>)"
-      print "#  include <arm_acle.h>"
-      print "#endif"
-      done = 1
-    }
-  ' "${yieldhdr}" > "${yieldhdr}.mmdv" && mv "${yieldhdr}.mmdv" "${yieldhdr}"
-  echo "patched ${yieldhdr} to include <arm_acle.h> for __yield()"
-}
-
 build_qt() {
   mmdv_skip_p qt && { echo "skip: qt" ; return 0 ; }
   local major=${QT_MAJOR_VER}
@@ -865,7 +788,7 @@ build_qt() {
   local fn=${full}.tar.xz
   local url="https://download.qt.io/official_releases/qt/${major}"
   url="${url}/${ver}/single/qt-everywhere-src-${ver}.tar.xz"
-  download_md5 "${fn}" "${url}" 78fe69ae8049f6b0139ceaa28e643f53
+  download_md5 "${fn}" "${url}" 25d4d1dd74c92b978f164e8f20805985
   # A pre-existing brew Qt may leak through DYLD_LIBRARY_PATH /
   # DYLD_FRAMEWORK_PATH / CMAKE_PREFIX_PATH and cause the freshly built Qt
   # tools (rcc/moc/...) to load the older libQt6Core at runtime.  Strip them
@@ -883,9 +806,6 @@ build_qt() {
       mv "${pkgfolder}" "${full}"
     popd > /dev/null
   fi
-
-  # Patch Qt sources for the macOS 26 / clang 21 toolchain before configuring.
-  mmdv_patch_qt_sources "${full}"
 
   # Clean previous build dir by default; MMDV_QTNOCLEAN=1 to reuse it.
   if [ "${MMDV_QTNOCLEAN:-}" != "1" ] ; then
@@ -910,11 +830,15 @@ build_qt() {
     done
     cfgcmd+=("-DQT_ALLOW_SYMLINK_IN_PATHS=ON")
     cfgcmd+=("-DCMAKE_PREFIX_PATH=${MMDV_USRDIR}")
-    # macOS 26 ships an SDK (26.x) far newer than the one Qt 6.9.2 was tested
-    # against (QT_SUPPORTED_MAX_MACOS_SDK_VERSION is 15), which otherwise
-    # prints a noisy "unsupported configuration" warning at configure time.
-    # It is only a warning, but silence it so real diagnostics stand out.
-    cfgcmd+=("-DQT_NO_APPLE_SDK_MAX_VERSION_CHECK=ON")
+    # Skip Qt's build-time Xcode-version check: it runs `xcrun xcodebuild
+    # -version` and aborts ("Can't determine Xcode version.  Is Xcode
+    # installed?") on a CLT-only machine -- the common modmesh dev setup --
+    # where xcodebuild (shipped only with the full Xcode.app) is absent.  Qt
+    # builds fine with Apple clang from the Command Line Tools; only the
+    # version probe needs disabling.  Qt 6.11 also supports the macOS 26 SDK
+    # (QT_SUPPORTED_MAX_MACOS_SDK_VERSION=26), so no SDK-max-version override
+    # is needed any more either.
+    cfgcmd+=("-DQT_NO_XCODE_MIN_VERSION_CHECK=ON")
     cfgcmd+=("-G" "Ninja")
     cfgcmd+=("..")
 
@@ -932,18 +856,15 @@ build_qt() {
 
 build_pyside6() {
   mmdv_skip_p pyside6 && { echo "skip: pyside6" ; return 0 ; }
-  local ver=${PYSIDE_VERSION}
-  local full=pyside-setup
-  local dest=${MMDV_SRCDIR}/${full}
-  if [ ! -d "${dest}" ] ; then
-    git clone -b "${ver}" https://code.qt.io/pyside/pyside-setup.git "${dest}"
-  else
-    pushd "${dest}" > /dev/null
-      git fetch
-      git checkout "${ver}"
-      git pull origin "${ver}" || true
-    popd > /dev/null
-  fi
+  local ver=${PYSIDE_VERSION} full fn url
+  full=pyside-setup-everywhere-src-${ver} ; fn=${full}.tar.xz
+  # Official Qt for Python source release, verified against the published
+  # .md5 sidecar (download.qt.io also serves a matching .sha256:
+  # 6ffd9835bb0dd2c56f061d62f1616bb1707cfc0202b80e3165d6be087f3965e2).
+  url="https://download.qt.io/official_releases/QtForPython/pyside6"
+  url="${url}/PySide6-${ver}-src/${fn}"
+  download_md5 "${fn}" "${url}" a6fe3db5855d3cd09a381d0aca7d7f5e
+  unpack "${fn}" "${full}"
   # CMake 3.27+ auto-adds the Homebrew prefix to its system search path on
   # macOS.  With brew's `qt` and `pyside` formulae installed (the modmesh macOS
   # VM setup does `brew install ... qt pyside`), pyside-setup's find_package
@@ -983,13 +904,10 @@ WRAP
     chmod +x "${cmwrap}/cmake"
     cmake_opt=("--cmake=${cmwrap}/cmake")
   fi
-  pushd "${dest}" > /dev/null
-    # pyside-setup 6.9.2 has a regression in _get_make: the "make" branch
+  pushd "${MMDV_SRCDIR}/${full}" > /dev/null
+    # pyside-setup 6.11.1 has a regression in _get_make: the "make" branch
     # returns a str while others return Path, so a later .is_absolute() call
-    # crashes. Use ninja, which returns a Path.  --disable-pyi: PySide 6.9.2's
-    # stub generator overrides inspect.Formatter.formatannotation, but Python
-    # 3.14 added a quote_annotation_strings kwarg that the override doesn't
-    # accept.
+    # crashes.  Use ninja, which returns a Path.
     with_log install.log "${PY}" setup.py install \
       "${cmake_opt[@]}" \
       --qtpaths="${QTPATHS}" \
@@ -997,7 +915,6 @@ WRAP
       --ignore-git \
       --no-qt-tools \
       --enable-numpy-support \
-      --disable-pyi \
       --parallel="${MMDV_NP}" \
       --make-spec=ninja
   popd > /dev/null
@@ -1042,7 +959,7 @@ if [[ "${MMDVBUILD_ALL:-}" == "1" || "${MMDVBUILD_NUMPY:-}" == "1" ]] ; then
 
 mmdv_time build_cython cython
 # Surface brew's gfortran (installed by `brew install gcc`) so meson picks it
-# up for scipy's Fortran sources. On Apple Silicon the binary is
+# up for scipy's Fortran sources.  On Apple Silicon the binary is
 # /opt/homebrew/opt/gcc/bin/gfortran; on Intel /usr/local/opt/gcc/bin.
 if [ -n "${BREW_PREFIX}" ] && [ -d "${BREW_PREFIX}/opt/gcc/bin" ] ; then
   export PATH="${BREW_PREFIX}/opt/gcc/bin:${PATH}"
@@ -1066,9 +983,9 @@ fi
 ####
 if [[ "${MMDVBUILD_ALL:-}" == "1" || "${MMDVBUILD_QT:-}" == "1" ]] ; then
 
-# libclang for shiboken. By default fetch Qt's prebuilt libclang into the mmdv
+# libclang for shiboken.  By default fetch Qt's prebuilt libclang into the mmdv
 # tree (user-space, no Homebrew) -- see fetch_libclang and the header comment
-# for the version rationale. Set LLVM_INSTALL_DIR to point at an existing
+# for the version rationale.  Set LLVM_INSTALL_DIR to point at an existing
 # libclang (e.g. a brew llvm) to skip the download.
 if [ -z "${LLVM_INSTALL_DIR:-}" ] ; then
   mmdv_time fetch_libclang libclang
@@ -1080,11 +997,6 @@ if [ ! -d "${LLVM_INSTALL_DIR}" ] ; then
        "install." >&2
   exit 1
 fi
-
-# Provide a synthetic xcodebuild on CLT-only machines before configuring Qt
-# (and, transitively, pyside6, whose CMake reuses Qt's Apple auto-detect).
-# No-op when a full Xcode is installed.
-mmdv_ensure_xcodebuild_shim
 
 mmdv_time build_qt qt
 
