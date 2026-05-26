@@ -953,8 +953,8 @@ public:
 
     A matmul(A const & other) const;
     A & imatmul(A const & other);
-    A matmul_veclib(A const & other) const;
-    A & imatmul_veclib(A const & other);
+    A matmul_blas(A const & other) const;
+    A & imatmul_blas(A const & other);
     A matmul_fast(A const & other,
                   size_t tile_x,
                   size_t tile_y,
@@ -1084,25 +1084,25 @@ A & SimpleArrayMixinCalculators<A, T>::imatmul(A const & other)
 }
 
 /**
- * Perform matrix multiplication using Accelerate/CBLAS when available.
+ * Perform matrix multiplication using vendor BLAS when available.
  */
 template <typename A, typename T>
-A SimpleArrayMixinCalculators<A, T>::matmul_veclib(A const & other) const
+A SimpleArrayMixinCalculators<A, T>::matmul_blas(A const & other) const
 {
     auto const * athis = static_cast<A const *>(this);
     SimpleArrayMatmulHelper<A, T> helper(*athis, other);
-    return helper.matmul_veclib();
+    return helper.matmul_blas();
 }
 
 /**
- * Perform in-place matrix multiplication using Accelerate/CBLAS when available.
+ * Perform in-place matrix multiplication using vendor BLAS when available.
  * The result replaces the content of the current array.
  */
 template <typename A, typename T>
-A & SimpleArrayMixinCalculators<A, T>::imatmul_veclib(A const & other)
+A & SimpleArrayMixinCalculators<A, T>::imatmul_blas(A const & other)
 {
     auto athis = static_cast<A *>(this);
-    A result = athis->matmul_veclib(other);
+    A result = athis->matmul_blas(other);
     *athis = std::move(result);
 
     return *athis;

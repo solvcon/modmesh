@@ -165,21 +165,55 @@ if (APPLE)
     )
     # Accelerate/vecLib provides BLAS + LAPACK.
     target_compile_definitions(modmesh_primary PUBLIC MM_HAS_VENDOR_LAPACK)
+    if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+        target_compile_definitions(modmesh_primary PUBLIC MM_HAS_CBLAS)
+    endif ()
 endif () # APPLE
 
-if (UNIX AND NOT APPLE)
-    # OpenBLAS ships both BLAS and LAPACK symbols; treat it as the vendor
-    # LAPACK on Linux.  When it is not present, leave MM_HAS_VENDOR_LAPACK
-    # undefined so the dependent is not built.
-    find_library(OPENBLAS_LIB openblas)
-    if (OPENBLAS_LIB)
-        message(STATUS "Found OpenBLAS: ${OPENBLAS_LIB}")
-        target_link_libraries(modmesh_primary PUBLIC ${OPENBLAS_LIB})
-        target_compile_definitions(modmesh_primary PUBLIC MM_HAS_VENDOR_LAPACK)
-    else ()
-        message(STATUS "OpenBLAS not found; EigenSystem will not be built.")
+if (NOT APPLE)
+    # The CBLAS header is needed for SimpleArray::matmul_blas() to use
+    # the vendor BLAS backend.
+    # Linux OpenBLAS packages also ship LAPACK symbols for EigenSystem.
+    set(OPENBLAS_PATH_SUFFIXES
+        openblas
+        openblas-pthread
+        openblas-openmp
+        openblas-serial)
+    if (CMAKE_LIBRARY_ARCHITECTURE)
+        list(APPEND OPENBLAS_PATH_SUFFIXES
+            ${CMAKE_LIBRARY_ARCHITECTURE}/openblas
+            ${CMAKE_LIBRARY_ARCHITECTURE}/openblas-pthread
+            ${CMAKE_LIBRARY_ARCHITECTURE}/openblas-openmp
+            ${CMAKE_LIBRARY_ARCHITECTURE}/openblas-serial)
     endif ()
-endif () # UNIX AND NOT APPLE
+    find_library(OPENBLAS_LIB
+        NAMES openblas libopenblas
+        PATH_SUFFIXES ${OPENBLAS_PATH_SUFFIXES})
+    find_path(OPENBLAS_INCLUDE_DIR
+        NAMES cblas.h
+        PATH_SUFFIXES ${OPENBLAS_PATH_SUFFIXES} OpenBLAS)
+    if (OPENBLAS_LIB AND OPENBLAS_INCLUDE_DIR)
+        message(STATUS "Found OpenBLAS: ${OPENBLAS_LIB}")
+        target_include_directories(modmesh_primary PUBLIC ${OPENBLAS_INCLUDE_DIR})
+        target_link_libraries(modmesh_primary PUBLIC ${OPENBLAS_LIB})
+        target_compile_definitions(modmesh_primary PUBLIC MM_HAS_CBLAS)
+    else ()
+        message(STATUS "OpenBLAS/CBLAS not found; CBLAS matmul will not be built.")
+    endif ()
+
+    if (WIN32)
+        find_package(LAPACK QUIET)
+        if (LAPACK_FOUND)
+            message(STATUS "Found LAPACK: ${LAPACK_LIBRARIES}")
+            target_link_libraries(modmesh_primary PUBLIC LAPACK::LAPACK)
+            target_compile_definitions(modmesh_primary PUBLIC MM_HAS_VENDOR_LAPACK)
+        else ()
+            message(STATUS "LAPACK not found; EigenSystem will not be built.")
+        endif ()
+    elseif (OPENBLAS_LIB)
+        target_compile_definitions(modmesh_primary PUBLIC MM_HAS_VENDOR_LAPACK)
+    endif ()
+endif () # NOT APPLE
 
 if (MSVC)
     target_compile_options(

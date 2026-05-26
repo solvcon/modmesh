@@ -82,26 +82,28 @@ class MatrixFloat64TC(MatrixTestBase, unittest.TestCase):
 
 class MatmulTestBase(mm.testing.TestBase):
     """Tests for matrix-matrix multiplication"""
+    def assert_matmul(self, lhs, rhs, expected):
+        result = lhs.matmul(rhs)
 
-    def assert_matmul_veclib(self, lhs, rhs, expected, matmul_result):
-        veclib_unavailable = (
-            "SimpleArray::matmul_veclib(): "
-            "Accelerate/CBLAS matmul is only "
-            "available on Apple Silicon"
-        )
+        self.assertEqual(list(result.shape), list(expected.shape))
+        np.testing.assert_array_almost_equal(result.ndarray, expected)
+        return result
 
-        try:
-            veclib_result = lhs.matmul_veclib(rhs)
-        except RuntimeError as exc:
-            # FIXME: Split veclib backend coverage into dedicated tests and
-            # mark unsupported platforms as expected failures once a follow-up
-            # issue is filed.
-            self.assertEqual(str(exc), veclib_unavailable)
-            return
+    def assert_matmul_fast(self, lhs, rhs, expected, matmul_result):
+        fast_result = lhs.matmul_fast(rhs)
 
-        self.assertEqual(list(veclib_result.shape), list(expected.shape))
-        np.testing.assert_array_almost_equal(veclib_result.ndarray, expected)
-        np.testing.assert_array_almost_equal(veclib_result.ndarray,
+        self.assertEqual(list(fast_result.shape), list(expected.shape))
+        np.testing.assert_array_almost_equal(fast_result.ndarray, expected)
+        np.testing.assert_array_almost_equal(fast_result.ndarray,
+                                             matmul_result.ndarray)
+        return fast_result
+
+    def assert_matmul_blas(self, lhs, rhs, expected, matmul_result):
+        blas_result = lhs.matmul_blas(rhs)
+
+        self.assertEqual(list(blas_result.shape), list(expected.shape))
+        np.testing.assert_array_almost_equal(blas_result.ndarray, expected)
+        np.testing.assert_array_almost_equal(blas_result.ndarray,
                                              matmul_result.ndarray)
 
     def test_square(self):
@@ -117,16 +119,9 @@ class MatmulTestBase(mm.testing.TestBase):
         expected = np.array([[19.0, 22.0], [43.0, 50.0]], dtype=self.dtype)
 
         # Test matrix multiplication
-        result = a.matmul(b)
-        fast_result = a.matmul_fast(b)
-
-        self.assertEqual(list(result.shape), [2, 2])
-        np.testing.assert_array_almost_equal(result.ndarray, expected)
-        self.assertEqual(list(fast_result.shape), [2, 2])
-        np.testing.assert_array_almost_equal(fast_result.ndarray, expected)
-        np.testing.assert_array_almost_equal(fast_result.ndarray,
-                                             result.ndarray)
-        self.assert_matmul_veclib(a, b, expected, result)
+        result = self.assert_matmul(a, b, expected)
+        self.assert_matmul_fast(a, b, expected, result)
+        self.assert_matmul_blas(a, b, expected, result)
 
     def test_rectangular(self):
         """Test rectangular matrix multiplication"""
@@ -143,16 +138,9 @@ class MatmulTestBase(mm.testing.TestBase):
         expected = np.array([[58.0, 64.0], [139.0, 154.0]],
                             dtype=self.dtype)
 
-        result = a.matmul(b)
-        fast_result = a.matmul_fast(b)
-
-        self.assertEqual(list(result.shape), [2, 2])
-        np.testing.assert_array_almost_equal(result.ndarray, expected)
-        self.assertEqual(list(fast_result.shape), [2, 2])
-        np.testing.assert_array_almost_equal(fast_result.ndarray, expected)
-        np.testing.assert_array_almost_equal(fast_result.ndarray,
-                                             result.ndarray)
-        self.assert_matmul_veclib(a, b, expected, result)
+        result = self.assert_matmul(a, b, expected)
+        self.assert_matmul_fast(a, b, expected, result)
+        self.assert_matmul_blas(a, b, expected, result)
 
     def test_identity(self):
         """Test multiplication with identity matrix"""
@@ -163,16 +151,9 @@ class MatmulTestBase(mm.testing.TestBase):
         a = self.SimpleArray(array=a_data)
         identity = self.SimpleArray.eye(3)
 
-        result = a.matmul(identity)
-        fast_result = a.matmul_fast(identity)
-
-        self.assertEqual(list(result.shape), [3, 3])
-        np.testing.assert_array_almost_equal(result.ndarray, a_data)
-        self.assertEqual(list(fast_result.shape), [3, 3])
-        np.testing.assert_array_almost_equal(fast_result.ndarray, a_data)
-        np.testing.assert_array_almost_equal(fast_result.ndarray,
-                                             result.ndarray)
-        self.assert_matmul_veclib(a, identity, a_data, result)
+        result = self.assert_matmul(a, identity, a_data)
+        self.assert_matmul_fast(a, identity, a_data, result)
+        self.assert_matmul_blas(a, identity, a_data, result)
 
     def test_zero(self):
         """Test multiplication with zero matrix"""
@@ -182,16 +163,9 @@ class MatmulTestBase(mm.testing.TestBase):
         a = self.SimpleArray(array=a_data)
         zero = self.SimpleArray(array=zero_data)
 
-        result = a.matmul(zero)
-        fast_result = a.matmul_fast(zero)
-
-        self.assertEqual(list(result.shape), [2, 2])
-        np.testing.assert_array_almost_equal(result.ndarray, zero_data)
-        self.assertEqual(list(fast_result.shape), [2, 2])
-        np.testing.assert_array_almost_equal(fast_result.ndarray, zero_data)
-        np.testing.assert_array_almost_equal(fast_result.ndarray,
-                                             result.ndarray)
-        self.assert_matmul_veclib(a, zero, zero_data, result)
+        result = self.assert_matmul(a, zero, zero_data)
+        self.assert_matmul_fast(a, zero, zero_data, result)
+        self.assert_matmul_blas(a, zero, zero_data, result)
 
     def test_dimension_mismatch_error(self):
         """Test error handling for incompatible dimensions"""
@@ -223,7 +197,7 @@ class MatmulTestBase(mm.testing.TestBase):
             r"SimpleArray::matmul\(\): shape mismatch: this=\(2,2\) other="
             r"\(3,3\)"
         ):
-            a.matmul_veclib(b)
+            a.matmul_blas(b)
 
     def test_compare_with_numpy(self):
         """Compare results with NumPy using fixed test data"""
@@ -323,31 +297,14 @@ class MatmulTestBase(mm.testing.TestBase):
                 a = self.SimpleArray(array=a_data)
                 b = self.SimpleArray(array=b_data)
 
-                # Compute with our implementation
-                result = a.matmul(b)
-                fast_result = a.matmul_fast(b)
-
                 # Verify with NumPy
                 np_result = np.matmul(a_data, b_data)
                 np.testing.assert_array_almost_equal(expected, np_result)
 
                 # Compare our result with expected
-                self.assertEqual(list(result.shape), list(expected.shape))
-                self.assertEqual(list(fast_result.shape),
-                                 list(expected.shape))
-                np.testing.assert_array_almost_equal(fast_result.ndarray,
-                                                     result.ndarray)
-                self.assert_matmul_veclib(a, b, expected, result)
-                if self.dtype == np.float32:
-                    np.testing.assert_array_almost_equal(
-                        result.ndarray, expected, decimal=4)
-                    np.testing.assert_array_almost_equal(
-                        fast_result.ndarray, expected, decimal=4)
-                else:
-                    np.testing.assert_array_almost_equal(
-                        result.ndarray, expected, decimal=10)
-                    np.testing.assert_array_almost_equal(
-                        fast_result.ndarray, expected, decimal=10)
+                result = self.assert_matmul(a, b, expected)
+                self.assert_matmul_fast(a, b, expected, result)
+                self.assert_matmul_blas(a, b, expected, result)
 
     def test_wrong_shape_error(self):
         """Test error handling for wrong shapes"""
@@ -376,7 +333,7 @@ class MatmulTestBase(mm.testing.TestBase):
             r"SimpleArray::matmul\(\): unsupported dimensions: "
             r"this=\(2,2,2\) other=\(2,2,2\)\. SimpleArray must be 1D or 2D."
         ):
-            a_3d.matmul_veclib(b_3d)
+            a_3d.matmul_blas(b_3d)
 
         a = np.zeros((3, 3), dtype=self.dtype)
         b = np.zeros((2, 3), dtype=self.dtype)
@@ -399,7 +356,7 @@ class MatmulTestBase(mm.testing.TestBase):
             r"SimpleArray::matmul\(\): shape mismatch: "
             r"this=\(3,3\) other=\(2,3\)"
         ):
-            a.matmul_veclib(b)
+            a.matmul_blas(b)
 
         a = np.zeros((3, 3), dtype=self.dtype)
         b = np.zeros((2), dtype=self.dtype)
@@ -422,7 +379,7 @@ class MatmulTestBase(mm.testing.TestBase):
             r"SimpleArray::matmul\(\): shape mismatch: "
             r"this=\(3,3\) other=\(2\)"
         ):
-            a.matmul_veclib(b)
+            a.matmul_blas(b)
 
         a = np.zeros((2), dtype=self.dtype)
         b = np.zeros((3, 3), dtype=self.dtype)
@@ -445,7 +402,7 @@ class MatmulTestBase(mm.testing.TestBase):
             r"SimpleArray::matmul\(\): shape mismatch: "
             r"this=\(2\) other=\(3,3\)"
         ):
-            a.matmul_veclib(b)
+            a.matmul_blas(b)
 
         a = np.zeros((2), dtype=self.dtype)
         b = np.zeros((3), dtype=self.dtype)
@@ -468,7 +425,7 @@ class MatmulTestBase(mm.testing.TestBase):
             r"SimpleArray::matmul\(\): shape mismatch: "
             r"this=\(2\) other=\(3\)"
         ):
-            a.matmul_veclib(b)
+            a.matmul_blas(b)
 
     def test_matmul_operator(self):
         """Test @ operator for matrix multiplication"""
@@ -496,7 +453,7 @@ class MatmulTestBase(mm.testing.TestBase):
 
         a = self.SimpleArray(array=a_data)
         a_fast = self.SimpleArray(array=a_data)
-        a_veclib = self.SimpleArray(array=a_data)
+        a_blas = self.SimpleArray(array=a_data)
         b = self.SimpleArray(array=b_data)
 
         # Expected result: [[19, 22], [43, 50]]
@@ -504,19 +461,19 @@ class MatmulTestBase(mm.testing.TestBase):
 
         # Test imatmul() method
         a.imatmul(b)
-        # Test imatmul_veclib() method
-        a_veclib.imatmul_veclib(b)
+        # Test imatmul_blas() method
+        a_blas.imatmul_blas(b)
         # Test imatmul_fast() method
         a_fast.imatmul_fast(b)
 
         # Verify the result
         self.assertEqual(list(a.shape), [2, 2])
         np.testing.assert_array_almost_equal(a.ndarray, expected)
-        self.assertEqual(list(a_veclib.shape), [2, 2])
-        np.testing.assert_array_almost_equal(a_veclib.ndarray, expected)
+        self.assertEqual(list(a_blas.shape), [2, 2])
+        np.testing.assert_array_almost_equal(a_blas.ndarray, expected)
         self.assertEqual(list(a_fast.shape), [2, 2])
         np.testing.assert_array_almost_equal(a_fast.ndarray, expected)
-        np.testing.assert_array_almost_equal(a_veclib.ndarray, a.ndarray)
+        np.testing.assert_array_almost_equal(a_blas.ndarray, a.ndarray)
         np.testing.assert_array_almost_equal(a_fast.ndarray, a.ndarray)
 
     def test_imatmul_operator(self):

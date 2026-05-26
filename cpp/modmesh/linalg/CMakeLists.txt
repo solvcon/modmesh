@@ -8,7 +8,6 @@ set(MODMESH_LINALG_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/factorization.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/lu_factorization.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kalman_filter.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/lapack_compat.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/EigenSystem.hpp
     CACHE FILEPATH "" FORCE)
 

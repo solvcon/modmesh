@@ -29,7 +29,7 @@
  */
 
 #include <modmesh/buffer/small_vector.hpp>
-#include <modmesh/math/Complex.hpp>
+#include <modmesh/math/math.hpp>
 
 #include <algorithm>
 #include <cstddef>
@@ -45,54 +45,11 @@ namespace modmesh
 namespace detail
 {
 
-#if defined(__APPLE__) && defined(__arm64__)
 template <typename T>
-inline constexpr bool can_matmul_veclib_v = std::is_same_v<T, float> ||
-                                            std::is_same_v<T, double> ||
-                                            std::is_same_v<T, Complex<float>> ||
-                                            std::is_same_v<T, Complex<double>>;
-#else
-template <typename T>
-inline constexpr bool can_matmul_veclib_v = false;
-#endif /* defined(__APPLE__) && defined(__arm64__) */
-
-inline void throw_matmul_veclib_unavailable()
-{
-    throw std::runtime_error(
-        "SimpleArray::matmul_veclib(): Accelerate/CBLAS matmul is only "
-        "available on Apple Silicon");
-}
-
-void matmul_veclib_backend(size_t m,
-                           size_t n,
-                           size_t k,
-                           float const * lhs,
-                           float const * rhs,
-                           float * result);
-void matmul_veclib_backend(size_t m,
-                           size_t n,
-                           size_t k,
-                           double const * lhs,
-                           double const * rhs,
-                           double * result);
-void matmul_veclib_backend(size_t m,
-                           size_t n,
-                           size_t k,
-                           Complex<float> const * lhs,
-                           Complex<float> const * rhs,
-                           Complex<float> * result);
-void matmul_veclib_backend(size_t m,
-                           size_t n,
-                           size_t k,
-                           Complex<double> const * lhs,
-                           Complex<double> const * rhs,
-                           Complex<double> * result);
-
-template <typename T>
-void matmul_veclib_backend(size_t, size_t, size_t, T const *, T const *, T *)
-{
-    throw_matmul_veclib_unavailable();
-}
+inline constexpr bool can_matmul_blas_v = std::is_same_v<T, float> ||
+                                          std::is_same_v<T, double> ||
+                                          std::is_same_v<T, Complex<float>> ||
+                                          std::is_same_v<T, Complex<double>>;
 
 template <typename A, typename T>
 class SimpleArrayMatmulHelper
@@ -119,7 +76,7 @@ public:
 
     A matmul();
     A matmul_fast();
-    A matmul_veclib();
+    A matmul_blas();
 
 private:
 
@@ -128,10 +85,13 @@ private:
     void check_inner(size_t lhs_idx, size_t rhs_idx) const;
     void check_tiles() const;
     A matmul_vec_vec();
+    A matmul_vec_vec_blas();
     A matmul_vec_mat();
+    A matmul_vec_mat_blas();
     A matmul_mat_vec();
+    A matmul_mat_vec_blas();
     A matmul_mat_mat();
-    A matmul_mat_mat_veclib();
+    A matmul_mat_mat_blas();
     A pack_rhs(size_t n, size_t k);
     void accumulate_tile(A const & packed_rhs,
                          size_t row_begin,
@@ -246,25 +206,25 @@ A SimpleArrayMatmulHelper<A, T>::matmul_fast()
 }
 
 /**
- * Perform matrix multiplication using Accelerate/CBLAS when available.
+ * Perform matrix multiplication using vendor BLAS when available.
  */
 template <typename A, typename T>
-A SimpleArrayMatmulHelper<A, T>::matmul_veclib()
+A SimpleArrayMatmulHelper<A, T>::matmul_blas()
 {
     if (m_lhs.ndim() == 1 && m_rhs.ndim() == 1)
     {
-        return matmul_vec_vec();
+        return matmul_vec_vec_blas();
     }
     if (m_lhs.ndim() == 1)
     {
-        return matmul_vec_mat();
+        return matmul_vec_mat_blas();
     }
     if (m_rhs.ndim() == 1)
     {
-        return matmul_mat_vec();
+        return matmul_mat_vec_blas();
     }
 
-    return matmul_mat_mat_veclib();
+    return matmul_mat_mat_blas();
 }
 
 /**
@@ -352,6 +312,26 @@ A SimpleArrayMatmulHelper<A, T>::matmul_vec_vec()
 }
 
 template <typename A, typename T>
+A SimpleArrayMatmulHelper<A, T>::matmul_vec_vec_blas()
+{
+    if (!m_lhs.is_c_contiguous() || !m_rhs.is_c_contiguous())
+    {
+        return matmul_vec_vec();
+    }
+
+    if constexpr (can_matmul_blas_v<value_type>)
+    {
+        size_t const k = m_lhs.shape(0);
+        m_result.data(0) = dot_blas(k, m_lhs.data(), m_rhs.data());
+        return std::move(m_result);
+    }
+    else
+    {
+        return matmul_vec_vec();
+    }
+}
+
+template <typename A, typename T>
 A SimpleArrayMatmulHelper<A, T>::matmul_vec_mat()
 {
     size_t const n = m_result.size();
@@ -369,6 +349,33 @@ A SimpleArrayMatmulHelper<A, T>::matmul_vec_mat()
 }
 
 template <typename A, typename T>
+A SimpleArrayMatmulHelper<A, T>::matmul_vec_mat_blas()
+{
+    if (!m_lhs.is_c_contiguous() || !m_rhs.is_c_contiguous())
+    {
+        return matmul_vec_mat();
+    }
+
+    if constexpr (can_matmul_blas_v<value_type>)
+    {
+        size_t const k = m_rhs.shape(0);
+        size_t const n = m_rhs.shape(1);
+        bool const transpose_matrix = true;
+        gemv_blas(k,
+                  n,
+                  m_rhs.data(),
+                  m_lhs.data(),
+                  m_result.data(),
+                  transpose_matrix);
+        return std::move(m_result);
+    }
+    else
+    {
+        return matmul_vec_mat();
+    }
+}
+
+template <typename A, typename T>
 A SimpleArrayMatmulHelper<A, T>::matmul_mat_vec()
 {
     size_t const m = m_result.size();
@@ -383,6 +390,33 @@ A SimpleArrayMatmulHelper<A, T>::matmul_mat_vec()
         m_result.data(i) = v;
     }
     return std::move(m_result);
+}
+
+template <typename A, typename T>
+A SimpleArrayMatmulHelper<A, T>::matmul_mat_vec_blas()
+{
+    if (!m_lhs.is_c_contiguous() || !m_rhs.is_c_contiguous())
+    {
+        return matmul_mat_vec();
+    }
+
+    if constexpr (can_matmul_blas_v<value_type>)
+    {
+        size_t const m = m_lhs.shape(0);
+        size_t const k = m_lhs.shape(1);
+        bool const transpose_matrix = false;
+        gemv_blas(m,
+                  k,
+                  m_lhs.data(),
+                  m_rhs.data(),
+                  m_result.data(),
+                  transpose_matrix);
+        return std::move(m_result);
+    }
+    else
+    {
+        return matmul_mat_vec();
+    }
 }
 
 template <typename A, typename T>
@@ -407,18 +441,25 @@ A SimpleArrayMatmulHelper<A, T>::matmul_mat_mat()
 }
 
 template <typename A, typename T>
-A SimpleArrayMatmulHelper<A, T>::matmul_mat_mat_veclib()
+A SimpleArrayMatmulHelper<A, T>::matmul_mat_mat_blas()
 {
-    if (can_matmul_veclib_v<value_type> && m_lhs.is_c_contiguous() && m_rhs.is_c_contiguous())
+    if (!m_lhs.is_c_contiguous() || !m_rhs.is_c_contiguous())
+    {
+        return matmul_mat_mat();
+    }
+
+    if constexpr (can_matmul_blas_v<value_type>)
     {
         size_t const m = m_result.shape(0);
         size_t const n = m_result.shape(1);
         size_t const k = m_lhs.shape(1);
-        matmul_veclib_backend(m, n, k, m_lhs.data(), m_rhs.data(), m_result.data());
+        gemm_blas(m, n, k, m_lhs.data(), m_rhs.data(), m_result.data());
         return std::move(m_result);
     }
-
-    return matmul_mat_mat();
+    else
+    {
+        return matmul_mat_mat();
+    }
 }
 
 template <typename A, typename T>
