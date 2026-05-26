@@ -273,9 +273,14 @@ public:
     >;
     // clang-format on
 
-    static wrapper_type & commit(pybind11::module & mod, char const * pyname, char const * pydoc)
+    template <class... Extra>
+    static wrapper_type & commit(pybind11::module & mod, char const * pyname, char const * pydoc, Extra &&... extra)
     {
-        static wrapper_type derived(mod, pyname, pydoc);
+        // The static local is constructed exactly once, on the first call, so
+        // only the first call's pyname/pydoc/extra take effect; later calls
+        // return the already-registered singleton. Existing three-argument call
+        // sites deduce an empty Extra pack and keep working unchanged.
+        static wrapper_type derived(mod, pyname, pydoc, std::forward<Extra>(extra)...);
         return derived;
     }
 
@@ -332,22 +337,26 @@ public:
     }
 
     template <typename Func>
-    // FIXME: NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
     wrapper_type & expose_SimpleArray(char const * name, Func && f)
     {
         namespace py = pybind11;
 
-        using array_reference = typename std::invoke_result_t<Func, wrapped_type &>;
+        using array_reference = typename std::invoke_result_t<Func &, wrapped_type &>;
         static_assert(std::is_reference_v<array_reference>, "this_array_reference is not a reference");
         static_assert(!std::is_const_v<array_reference>, "this_array_reference cannot be const");
         using array_type = typename std::remove_reference_t<array_reference>;
 
+        // Capture the accessor by value so the stored property callbacks do not
+        // dangle once this function returns. Build the getter first (a copy),
+        // then let the setter take ownership of f, so neither reads a moved-from
+        // value regardless of argument evaluation order.
+        auto getter = [f](wrapped_type & self) -> array_reference
+        { return f(self); };
         (*this)
             .def_property(
                 name,
-                [&f](wrapped_type & self) -> array_reference
-                { return f(self); },
-                [&f](wrapped_type & self, py::array_t<typename array_type::value_type> & ndarr)
+                std::move(getter),
+                [f = std::forward<Func>(f)](wrapped_type & self, py::array_t<typename array_type::value_type> & ndarr)
                 {
                     array_reference this_array = f(self);
                     if (this_array.nbytes() != static_cast<size_t>(ndarr.nbytes()))
@@ -366,22 +375,26 @@ public:
     }
 
     template <typename Func>
-    // FIXME: NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
     wrapper_type & expose_SimpleArrayAsNdarray(char const * name, Func && f)
     {
         namespace py = pybind11;
 
-        using array_reference = typename std::invoke_result_t<Func, wrapped_type &>;
+        using array_reference = typename std::invoke_result_t<Func &, wrapped_type &>;
         static_assert(std::is_reference_v<array_reference>, "this_array_reference is not a reference");
         static_assert(!std::is_const_v<array_reference>, "this_array_reference cannot be const");
         using array_type = typename std::remove_reference_t<array_reference>;
 
+        // Capture the accessor by value so the stored property callbacks do not
+        // dangle once this function returns. Build the getter first (a copy),
+        // then let the setter take ownership of f, so neither reads a moved-from
+        // value regardless of argument evaluation order.
+        auto getter = [f](wrapped_type & self)
+        { return to_ndarray(f(self)); };
         (*this)
             .def_property(
                 name,
-                [&f](wrapped_type & self)
-                { return to_ndarray(f(self)); },
-                [&f](wrapped_type & self, py::array_t<typename array_type::value_type> & ndarr)
+                std::move(getter),
+                [f = std::forward<Func>(f)](wrapped_type & self, py::array_t<typename array_type::value_type> & ndarr)
                 {
                     array_reference this_array = f(self);
                     if (this_array.nbytes() != static_cast<size_t>(ndarr.nbytes()))
