@@ -50,6 +50,9 @@ $(SETUPROOT)/BufferExpander.o: $(SETUPROOT)/modmesh/buffer/BufferExpander.cpp Ma
 $(SETUPROOT)/SimpleArray.o: $(SETUPROOT)/modmesh/buffer/SimpleArray.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
+$(SETUPROOT)/blas_compat.o: $(SETUPROOT)/modmesh/math/blas_compat.cpp Makefile
+	c++ $(CFLAGS) -c $< -o $@
+
 $(SETUPROOT)/simd_support.o: $(SETUPROOT)/modmesh/simd/simd_support.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
@@ -62,6 +65,7 @@ $(SETUPROOT)/radix_tree.o: $(SETUPROOT)/modmesh/toggle/RadixTree.cpp Makefile
 OBJS = \
 	$(SETUPROOT)/BufferExpander.o \
 	$(SETUPROOT)/SimpleArray.o \
+	$(SETUPROOT)/blas_compat.o \
 	$(SETUPROOT)/wrap_ConcreteBuffer.o \
 	$(SETUPROOT)/wrap_SimpleArray.o \
 	$(SETUPROOT)/wrap_SimpleArrayPlex.o \

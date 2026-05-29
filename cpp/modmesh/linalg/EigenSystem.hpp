@@ -50,7 +50,7 @@
 #include <variant>
 
 #include <modmesh/buffer/buffer.hpp>
-#include <modmesh/linalg/lapack_compat.hpp>
+#include <modmesh/math/lapack_compat.hpp>
 
 namespace modmesh
 {

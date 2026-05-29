@@ -32,9 +32,9 @@
  * Compatibility shim for the vendor LAPACK backend.
  *
  * On Apple, pull in Accelerate/vecLib with the modern (non-deprecated) LAPACK
- * signatures.  On other platforms (Linux + OpenBLAS), declare the Fortran ABI
- * symbols directly; this avoids pulling in lapacke.h, which Linux
- * distributions package inconsistently.
+ * signatures.  On other platforms with OpenBLAS, declare the Fortran ABI
+ * symbols directly; this avoids pulling in lapacke.h, which distributions
+ * package inconsistently.
  *
  * Consumers should include this header and use `lapack_int_t` plus the
  * Fortran-named entry points (e.g. `dgeev_`) without conditional compilation.
@@ -43,7 +43,7 @@
  */
 
 #ifndef MM_HAS_VENDOR_LAPACK
-#error "modmesh/linalg/lapack_compat.hpp requires a vendor LAPACK (MM_HAS_VENDOR_LAPACK)."
+#error "modmesh/math/lapack_compat.hpp requires a vendor LAPACK (MM_HAS_VENDOR_LAPACK)."
 #endif
 
 #include <modmesh/math/Complex.hpp>

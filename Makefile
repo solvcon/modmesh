@@ -42,6 +42,15 @@ VERBOSE ?=
 FORCE_CLANG_FORMAT ?=
 QT3D_USE_RHI ?= OFF
 
+# Let CMake find vcpkg-provided OpenBLAS/LAPACK headers, import libraries, and
+# package metadata during configure and link on Windows.
+ifeq ($(OS),Windows_NT)
+VCPKG_INSTALLATION_ROOT ?= C:/vcpkg
+CMAKE_TOOLCHAIN_FILE ?= $(VCPKG_INSTALLATION_ROOT)/scripts/buildsystems/vcpkg.cmake
+CMAKE_ARGS += -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_TOOLCHAIN_FILE)
+CMAKE_ARGS += -DVCPKG_TARGET_TRIPLET=x64-windows
+endif
+
 # !!! NOTE: USING ANY VENV IS STRONGLY DISCOURAGED IN DEVELOPING MODMESH !!!
 # This treatment is a "smarter" way to find python3-config executable.
 # In case Python is not system Python. For example. Python virtual environment

@@ -6,6 +6,10 @@
  */
 
 #include <modmesh/math/Complex.hpp>
+#include <modmesh/math/blas_compat.hpp>
+#ifdef MM_HAS_VENDOR_LAPACK
+#include <modmesh/math/lapack_compat.hpp>
+#endif
 
 #include <type_traits>
 #include <cmath>
