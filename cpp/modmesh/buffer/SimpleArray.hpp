@@ -48,6 +48,7 @@
 #include <numeric>
 #include <span>
 #include <stdexcept>
+#include <string>
 
 #ifdef _MSC_VER
 #include <BaseTsd.h>
@@ -125,6 +126,8 @@ namespace detail
 using shape_type = small_vector<size_t>;
 using sshape_type = small_vector<ssize_t>;
 using slice_type = small_vector<ssize_t>;
+
+std::string format_shape(shape_type const & shape);
 
 template <typename T>
 struct SimpleArrayInternalTypes
@@ -655,6 +658,9 @@ public:
     {
         return A(*static_cast<A const *>(this)).idiv(scalar);
     }
+
+    SimpleArray<bool> eq(A const & other) const;
+    SimpleArray<bool> eq(value_type scalar) const;
 
     A & iadd(A const & other)
     {
@@ -2101,6 +2107,49 @@ private:
     size_t m_nghost = 0;
     value_type * m_body = nullptr;
 }; /* end class SimpleArray */
+
+template <typename A, typename T>
+SimpleArray<bool> detail::SimpleArrayMixinCalculators<A, T>::eq(A const & other) const
+{
+    auto const * athis = static_cast<A const *>(this);
+    if (athis->shape() != other.shape())
+    {
+        throw std::invalid_argument(
+            std::format("SimpleArray::eq(): shape mismatch: this={} other={}",
+                        format_shape(athis->shape()),
+                        format_shape(other.shape())));
+    }
+    SimpleArray<bool> ret(athis->shape());
+    const value_type * ptr = athis->begin();
+    const value_type * const end = athis->end();
+    const value_type * other_ptr = other.begin();
+    bool * ret_ptr = ret.begin();
+    while (ptr < end)
+    {
+        *ret_ptr = (*ptr == *other_ptr);
+        ++ptr;
+        ++other_ptr;
+        ++ret_ptr;
+    }
+    return ret;
+}
+
+template <typename A, typename T>
+SimpleArray<bool> detail::SimpleArrayMixinCalculators<A, T>::eq(value_type scalar) const
+{
+    auto const * athis = static_cast<A const *>(this);
+    SimpleArray<bool> ret(athis->shape());
+    const value_type * ptr = athis->begin();
+    const value_type * const end = athis->end();
+    bool * ret_ptr = ret.begin();
+    while (ptr < end)
+    {
+        *ret_ptr = (*ptr == scalar);
+        ++ptr;
+        ++ret_ptr;
+    }
+    return ret;
+}
 
 /**
  * @brief Type-erased element-copy kernels over a pair of ConcreteBuffers.

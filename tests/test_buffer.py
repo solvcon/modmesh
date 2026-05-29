@@ -3304,6 +3304,199 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         _check_div_scalar_3d_type('float32')
         _check_div_scalar_3d_type('float64')
 
+    def test_eq_1d(self):
+        """Test 1D array element-wise equality"""
+        def _check_eq_1d_type(type):
+            arr1 = [1, 2, 3, 4, 5, 6, 7, 8]
+            arr2 = [1, 0, 3, 0, 5, 0, 7, 0]
+            res = [True, False, True, False, True, False, True, False]
+            narr1 = np.array(arr1, dtype=type)
+            narr2 = np.array(arr2, dtype=type)
+            sarr1 = self.type_convertor(type)(array=narr1)
+            sarr2 = self.type_convertor(type)(array=narr2)
+            nres = np.equal(narr1, narr2)
+            sres = sarr1.eq(sarr2)
+            self.assertEqual(sres.ndarray.dtype, np.bool_)
+            for i in range(len(res)):
+                self.assertEqual(sres[i], res[i])
+                self.assertEqual(sres[i], nres[i])
+
+        _check_eq_1d_type('int8')
+        _check_eq_1d_type('int16')
+        _check_eq_1d_type('int32')
+        _check_eq_1d_type('int64')
+        _check_eq_1d_type('uint8')
+        _check_eq_1d_type('uint16')
+        _check_eq_1d_type('uint32')
+        _check_eq_1d_type('uint64')
+        _check_eq_1d_type('float32')
+        _check_eq_1d_type('float64')
+
+        with self.assertRaisesRegex(
+            ValueError,
+            r"SimpleArray::eq\(\): shape mismatch: "
+            r"this=\(8\) other=\(3\)"
+        ):
+            sarr1 = modmesh.SimpleArrayInt32(array=np.arange(8, dtype='int32'))
+            sarr2 = modmesh.SimpleArrayInt32(array=np.arange(3, dtype='int32'))
+            sarr1.eq(sarr2)
+
+    def test_eq_2d(self):
+        """Test 2D array element-wise equality"""
+        def _check_eq_2d_type(type):
+            narr1 = np.array([[1, 2, 3, 4],
+                              [5, 6, 7, 8],
+                              [9, 10, 11, 12]], dtype=type)
+            narr2 = np.array([[1, 0, 3, 0],
+                              [5, 0, 7, 0],
+                              [9, 0, 11, 0]], dtype=type)
+            res = [[True, False, True, False],
+                   [True, False, True, False],
+                   [True, False, True, False]]
+            sarr1 = self.type_convertor(type)(array=narr1)
+            sarr2 = self.type_convertor(type)(array=narr2)
+            nres = np.equal(narr1, narr2)
+            sres = sarr1.eq(sarr2)
+            self.assertEqual(sres.ndarray.dtype, np.bool_)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    self.assertEqual(sres[i, j], res[i][j])
+                    self.assertEqual(sres[i, j], nres[i, j])
+
+        _check_eq_2d_type('int8')
+        _check_eq_2d_type('int16')
+        _check_eq_2d_type('int32')
+        _check_eq_2d_type('int64')
+        _check_eq_2d_type('uint8')
+        _check_eq_2d_type('uint16')
+        _check_eq_2d_type('uint32')
+        _check_eq_2d_type('uint64')
+        _check_eq_2d_type('float32')
+        _check_eq_2d_type('float64')
+
+    def test_eq_scalar_1d(self):
+        """Test 1D array element-wise equality against a scalar"""
+        def _check_eq_scalar_1d_type(type):
+            narr1 = np.array([1, 2, 3, 4, 5, 3, 7, 3], dtype=type)
+            scalar = 3
+            res = [False, False, True, False, False, True, False, True]
+            sarr1 = self.type_convertor(type)(array=narr1)
+            nres = np.equal(narr1, scalar)
+            sres = sarr1.eq(scalar)
+            self.assertEqual(sres.ndarray.dtype, np.bool_)
+            for i in range(len(res)):
+                self.assertEqual(sres[i], res[i])
+                self.assertEqual(sres[i], nres[i])
+
+        _check_eq_scalar_1d_type('int8')
+        _check_eq_scalar_1d_type('int16')
+        _check_eq_scalar_1d_type('int32')
+        _check_eq_scalar_1d_type('int64')
+        _check_eq_scalar_1d_type('uint8')
+        _check_eq_scalar_1d_type('uint16')
+        _check_eq_scalar_1d_type('uint32')
+        _check_eq_scalar_1d_type('uint64')
+        _check_eq_scalar_1d_type('float32')
+        _check_eq_scalar_1d_type('float64')
+
+    def test_eq_scalar_2d(self):
+        """Test 2D array element-wise equality against a scalar"""
+        def _check_eq_scalar_2d_type(type):
+            narr1 = np.array([[1, 5, 3, 5],
+                              [5, 6, 7, 5],
+                              [9, 5, 11, 12]], dtype=type)
+            scalar = 5
+            res = [[False, True, False, True],
+                   [True, False, False, True],
+                   [False, True, False, False]]
+            sarr1 = self.type_convertor(type)(array=narr1)
+            nres = np.equal(narr1, scalar)
+            sres = sarr1.eq(scalar)
+            self.assertEqual(sres.ndarray.dtype, np.bool_)
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    self.assertEqual(sres[i, j], res[i][j])
+                    self.assertEqual(sres[i, j], nres[i, j])
+
+        _check_eq_scalar_2d_type('int8')
+        _check_eq_scalar_2d_type('int16')
+        _check_eq_scalar_2d_type('int32')
+        _check_eq_scalar_2d_type('int64')
+        _check_eq_scalar_2d_type('uint8')
+        _check_eq_scalar_2d_type('uint16')
+        _check_eq_scalar_2d_type('uint32')
+        _check_eq_scalar_2d_type('uint64')
+        _check_eq_scalar_2d_type('float32')
+        _check_eq_scalar_2d_type('float64')
+
+    def test_eq_3d(self):
+        """Test 3D array element-wise equality preserves shape"""
+        def _check_eq_3d_type(type):
+            narr1 = np.arange(24, dtype=type).reshape(2, 3, 4)
+            narr2 = narr1.copy()
+            narr2[0, 1, 2] = 0
+            narr2[1, 2, 3] = 0
+            res = [[[True, True, True, True],
+                    [True, True, False, True],
+                    [True, True, True, True]],
+                   [[True, True, True, True],
+                    [True, True, True, True],
+                    [True, True, True, False]]]
+            sarr1 = self.type_convertor(type)(array=narr1)
+            sarr2 = self.type_convertor(type)(array=narr2)
+            nres = np.equal(narr1, narr2)
+            sres = sarr1.eq(sarr2)
+            self.assertEqual(sres.ndarray.dtype, np.bool_)
+            self.assertEqual(list(sres.ndarray.shape), [2, 3, 4])
+            for i in range(narr1.shape[0]):
+                for j in range(narr1.shape[1]):
+                    for k in range(narr1.shape[2]):
+                        self.assertEqual(sres[i, j, k], res[i][j][k])
+                        self.assertEqual(sres[i, j, k], nres[i, j, k])
+
+        _check_eq_3d_type('int32')
+        _check_eq_3d_type('uint8')
+        _check_eq_3d_type('float64')
+
+    def test_eq_bool(self):
+        """eq() on boolean source arrays still yields a boolean array"""
+        narr1 = np.array([True, True, False, False], dtype='bool')
+        narr2 = np.array([True, False, True, False], dtype='bool')
+        res = [True, False, False, True]
+        sarr1 = modmesh.SimpleArrayBool(array=narr1)
+        sarr2 = modmesh.SimpleArrayBool(array=narr2)
+
+        nres = np.equal(narr1, narr2)
+        sres = sarr1.eq(sarr2)
+        self.assertEqual(sres.ndarray.dtype, np.bool_)
+        for i in range(len(res)):
+            self.assertEqual(sres[i], res[i])
+            self.assertEqual(sres[i], nres[i])
+
+        res_scalar = [True, True, False, False]
+        nres_scalar = np.equal(narr1, True)
+        sres_scalar = sarr1.eq(True)
+        self.assertEqual(sres_scalar.ndarray.dtype, np.bool_)
+        for i in range(len(res_scalar)):
+            self.assertEqual(sres_scalar[i], res_scalar[i])
+            self.assertEqual(sres_scalar[i], nres_scalar[i])
+
+    def test_eq_does_not_bind_operator(self):
+        """__eq__ is intentionally left unbound (issue #810).
+
+        Python's == must therefore keep its default object-identity
+        behavior; element-wise comparison is reachable only through eq().
+        """
+        narr = np.arange(4, dtype='int32')
+        sarr1 = modmesh.SimpleArrayInt32(array=narr)
+        sarr2 = modmesh.SimpleArrayInt32(array=narr.copy())
+        # Identity comparison returns a plain bool, not a SimpleArray.
+        self.assertIsInstance(sarr1 == sarr2, bool)
+        self.assertFalse(sarr1 == sarr2)
+        self.assertTrue(sarr1 == sarr1)
+        # The element-wise path is eq(), which returns a boolean array.
+        self.assertEqual(sarr1.eq(sarr2).ndarray.dtype, np.bool_)
+
     def test_eye(self):
         """Test eye() static method for creating identity matrices"""
         eye2 = modmesh.SimpleArrayFloat64.eye(10)
