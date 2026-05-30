@@ -1364,6 +1364,8 @@ public:
         return result;
     }
 
+    A pow(ssize_t n) const;
+
 private:
 
     static void validate_positive(const char * operation_name, ssize_t n)
@@ -1406,6 +1408,51 @@ private:
     }
 
 }; /* end class SimpleArrayMixinMatrix */
+
+/**
+ * Compute the matrix power A^n for a square SimpleArray and a non-negative
+ * integer exponent. The exponentiation-by-squaring algorithm keeps the
+ * number of matrix multiplications at O(log n). A^0 is the identity matrix.
+ * Negative exponents are not supported because they require matrix
+ * inversion.
+ */
+template <typename A, typename T>
+A SimpleArrayMixinMatrix<A, T>::pow(ssize_t n) const
+{
+    auto const * athis = static_cast<A const *>(this);
+    validate_square("pow");
+    if (n < 0)
+    {
+        throw std::invalid_argument(
+            std::format("SimpleArray::pow(): exponent must be non-negative, "
+                        "but got {}",
+                        n));
+    }
+
+    auto const dim = static_cast<ssize_t>(athis->shape(0));
+    A result = eye(dim);
+    if (n == 0)
+    {
+        return result;
+    }
+
+    // Exponentiation by squaring.  n is non-negative here, so scanning its
+    // bits is well-defined.
+    A base = *athis;
+    while (n > 0)
+    {
+        if ((n & 1) != 0)
+        {
+            result.imatmul(base);
+        }
+        n >>= 1;
+        if (n > 0)
+        {
+            base.imatmul(base);
+        }
+    }
+    return result;
+}
 
 } /* end namespace detail */
 

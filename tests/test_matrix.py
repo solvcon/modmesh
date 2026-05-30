@@ -495,6 +495,126 @@ class MatmulTestBase(mm.testing.TestBase):
         np.testing.assert_array_almost_equal(a.ndarray, expected)
 
 
+class MatrixPowerTestBase(mm.testing.TestBase):
+    """Tests for matrix power A^n with non-negative integer n"""
+
+    def assert_pow(self, mat, mat_data, n):
+        result = mat.pow(n)
+        expected = np.linalg.matrix_power(mat_data, n)
+
+        self.assertEqual(list(result.shape), list(expected.shape))
+        np.testing.assert_array_almost_equal(result.ndarray, expected)
+        return result
+
+    def test_zero_exponent(self):
+        """A^0 is the identity matrix"""
+        mat_data = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=self.dtype)
+        mat = self.SimpleArray(array=mat_data)
+
+        result = self.assert_pow(mat, mat_data, 0)
+        np.testing.assert_array_almost_equal(
+            result.ndarray, np.eye(2, dtype=self.dtype))
+
+    def test_one_exponent(self):
+        """A^1 reproduces the original matrix"""
+        mat_data = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=self.dtype)
+        mat = self.SimpleArray(array=mat_data)
+
+        result = self.assert_pow(mat, mat_data, 1)
+        np.testing.assert_array_almost_equal(result.ndarray, mat_data)
+
+    def test_small_exponents(self):
+        """A^n matches numpy.linalg.matrix_power for small n"""
+        mat_data = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=self.dtype)
+        mat = self.SimpleArray(array=mat_data)
+
+        for n in range(0, 8):
+            with self.subTest(n=n):
+                self.assert_pow(mat, mat_data, n)
+
+    def test_identity_power(self):
+        """The identity matrix is invariant under any power"""
+        identity = self.SimpleArray.eye(4)
+        identity_data = np.eye(4, dtype=self.dtype)
+
+        for n in (0, 1, 5, 10):
+            with self.subTest(n=n):
+                self.assert_pow(identity, identity_data, n)
+
+    def test_matrix_dim_to_5(self):
+        """A^n matches numpy across several square matrices and exponents"""
+        fixtures = [
+            [[-3]],
+            [[2, 1], [0, 0]],
+            [[3, -3, 1], [-2, -3, 0], [3, 2, 2]],
+            [[2, 2, 0, -3, 2],
+             [0, 0, -1, -2, 3],
+             [2, 1, -1, 2, 0],
+             [0, 0, -2, -3, 0],
+             [3, -3, 3, 2, -2]],
+        ]
+        exponents = [0, 1, 2, 3, 6]
+
+        for fixture in fixtures:
+            mat_data = np.array(fixture, dtype=self.dtype)
+            mat = self.SimpleArray(array=mat_data)
+            for n in exponents:
+                with self.subTest(size=mat_data.shape[0], n=n):
+                    self.assert_pow(mat, mat_data, n)
+
+    def test_negative_exponent_error(self):
+        """A negative exponent is rejected"""
+        mat_data = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=self.dtype)
+        mat = self.SimpleArray(array=mat_data)
+
+        with self.assertRaisesRegex(
+                ValueError,
+                r"SimpleArray::pow\(\): exponent must be non-negative, "
+                r"but got -1"):
+            mat.pow(-1)
+
+    def test_non_square_error(self):
+        """A non-square matrix cannot be raised to a power"""
+        mat_data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+                            dtype=self.dtype)
+        mat = self.SimpleArray(array=mat_data)
+
+        with self.assertRaisesRegex(
+                RuntimeError,
+                r"SimpleArray::pow\(\): operation requires square "
+                r"SimpleArray, but got 2x3 shape"):
+            mat.pow(2)
+
+    def test_non_2d_error(self):
+        """A non-2D SimpleArray cannot be raised to a power"""
+        # 1D, 3D, and 4D arrays must all be rejected, and the error must
+        # report the offending dimensionality.
+        shapes = [(3,), (2, 2, 2), (2, 2, 2, 2)]
+
+        for shape in shapes:
+            ndim = len(shape)
+            with self.subTest(ndim=ndim):
+                mat = self.SimpleArray(
+                    array=np.ones(shape, dtype=self.dtype))
+                with self.assertRaisesRegex(
+                        RuntimeError,
+                        r"SimpleArray::pow\(\): operation requires 2D "
+                        r"SimpleArray, but got %dD SimpleArray" % ndim):
+                    mat.pow(2)
+
+
+class MatrixPowerFloat32TC(MatrixPowerTestBase, unittest.TestCase):
+    def setUp(self):
+        self.dtype = np.float32
+        self.SimpleArray = mm.SimpleArrayFloat32
+
+
+class MatrixPowerFloat64TC(MatrixPowerTestBase, unittest.TestCase):
+    def setUp(self):
+        self.dtype = np.float64
+        self.SimpleArray = mm.SimpleArrayFloat64
+
+
 class MatmulFloat32TC(MatmulTestBase, unittest.TestCase):
     def setUp(self):
         self.dtype = np.float32

@@ -499,6 +499,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
 
         (*this)
             .def_static("eye", &wrapped_type::eye, py::arg("n"), "Create an identity matrix of size n x n")
+            .def("pow", &wrapped_type::pow, py::arg("n"), "Compute the matrix power A^n for a non-negative integer n")
             .def_static("scaled_eye", &wrapped_type::scaled_eye, py::arg("n"), py::arg("scale"), "Create a scaled identity matrix of size n x n")
             .def("hermitian", &wrapped_type::hermitian, "Create hermitian (conjugate transpose) of the matrix")
             .def("symmetrize", &wrapped_type::symmetrize, "Create symmetric matrix by averaging with its transpose")
