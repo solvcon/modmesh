@@ -378,6 +378,14 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 "div",
                 [](wrapped_type const & self, value_type scalar)
                 { return self.div(scalar); })
+            .def(
+                "eq",
+                [](wrapped_type const & self, wrapped_type const & other)
+                { return self.eq(other); })
+            .def(
+                "eq",
+                [](wrapped_type const & self, value_type scalar)
+                { return self.eq(scalar); })
             .def("matmul", &wrapped_type::matmul)
             .def("matmul_blas", &wrapped_type::matmul_blas)
             .def(

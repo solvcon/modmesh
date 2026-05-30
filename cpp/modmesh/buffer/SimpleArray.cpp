@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <string>
 #include <unordered_map>
 
 namespace modmesh
@@ -953,6 +954,27 @@ SimpleArrayPlex::~SimpleArrayPlex()
     m_instance_ptr = nullptr;
     m_has_instance_ownership = false;
 }
+
+namespace detail
+{
+
+// Format a shape such as (3, 4) for diagnostic messages.
+std::string format_shape(shape_type const & shape)
+{
+    std::string ret = "(";
+    for (size_t it = 0; it < shape.size(); ++it)
+    {
+        if (it != 0)
+        {
+            ret += ", ";
+        }
+        ret += std::to_string(shape[it]);
+    }
+    ret += ")";
+    return ret;
+}
+
+} /* end namespace detail */
 
 } /* end namespace modmesh */
 
