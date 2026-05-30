@@ -3595,6 +3595,42 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         ):
             non_square.symmetrize()
 
+    def test_trace(self):
+        """Test trace() method for summing the diagonal of a matrix"""
+        ndarr = np.array([[1.0, 2.0, 3.0],
+                          [4.0, 5.0, 6.0],
+                          [7.0, 8.0, 9.0]], dtype='float64')
+        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        self.assertEqual(sarr.trace(), 15.0)
+
+        ndarr_int = np.array([[2, 0, 1],
+                              [0, 3, 0],
+                              [4, 0, 5]], dtype='int32')
+        sarr_int = modmesh.SimpleArrayInt32(array=ndarr_int)
+        self.assertEqual(sarr_int.trace(), 10)
+
+        ndarr_cplx = np.array([[1.0 + 2.0j, 3.0 + 4.0j],
+                               [5.0 + 6.0j, 7.0 + 8.0j]],
+                              dtype='complex128')
+        sarr_cplx = modmesh.SimpleArrayComplex128(array=ndarr_cplx)
+        self.assertEqual(complex(sarr_cplx.trace()), 8.0 + 10.0j)
+
+        vector = modmesh.SimpleArrayFloat64(5)
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"SimpleArray::trace\(\): operation requires 2D SimpleArray, "
+            r"but got 1D SimpleArray"
+        ):
+            vector.trace()
+
+        non_square = modmesh.SimpleArrayFloat64((3, 4))
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"SimpleArray::trace\(\): operation requires square "
+            r"SimpleArray, but got 3x4 shape"
+        ):
+            non_square.trace()
+
 
 class SimpleArraySearchTC(unittest.TestCase):
 
