@@ -1346,6 +1346,18 @@ public:
         return result;
     }
 
+    value_type trace() const
+    {
+        auto athis = static_cast<A const *>(this);
+        validate_square("trace");
+        auto result = static_cast<value_type>(0);
+        for (ssize_t i = 0; i < athis->shape(0); ++i)
+        {
+            result += (*athis)(i, i);
+        }
+        return result;
+    }
+
 private:
 
     static void validate_positive(const char * operation_name, ssize_t n)

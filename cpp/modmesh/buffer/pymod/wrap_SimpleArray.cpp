@@ -494,6 +494,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
             .def_static("scaled_eye", &wrapped_type::scaled_eye, py::arg("n"), py::arg("scale"), "Create a scaled identity matrix of size n x n")
             .def("hermitian", &wrapped_type::hermitian, "Create hermitian (conjugate transpose) of the matrix")
             .def("symmetrize", &wrapped_type::symmetrize, "Create symmetric matrix by averaging with its transpose")
+            .def("trace", &wrapped_type::trace, "Compute the trace (sum of the diagonal) of a square matrix")
             //
             ;
 
