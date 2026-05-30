@@ -40,9 +40,7 @@ jobs:
 
       - name: event name
         run: |
-          echo "::group::event name"
           echo "Event name: ${{ github.event_name }}"
-          echo "::endgroup::"
 
       - name: setup dependencies for Linux
         if: runner.os == 'Linux'

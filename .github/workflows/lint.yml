@@ -64,9 +64,7 @@ jobs:
 
     - name: event name
       run: |
-        echo "::group::event name"
         echo "github.event_name: ${{ github.event_name }}"
-        echo "::endgroup::"
 
     - name: setup dependencies for Linux
       if: runner.os == 'Linux'
@@ -88,19 +86,34 @@ jobs:
         create-symlink: true
 
     - name: make cformat (clang-format check)
-      run: make cformat
+      run: |
+        echo "::group::make cformat"
+        make cformat
+        echo "::endgroup::"
 
     - name: make cinclude (check_include)
-      run: make cinclude
+      run: |
+        echo "::group::make cinclude"
+        make cinclude
+        echo "::endgroup::"
 
     - name: make checkascii (check ASCII-only characters)
-      run: make checkascii
+      run: |
+        echo "::group::make checkascii"
+        make checkascii
+        echo "::endgroup::"
 
     - name: make checktws (check trailing whitespace)
-      run: make checktws
+      run: |
+        echo "::group::make checktws"
+        make checktws
+        echo "::endgroup::"
 
     - name: make flake8
-      run: make flake8
+      run: |
+        echo "::group::make flake8"
+        make flake8
+        echo "::endgroup::"
 
     - name: make pilot
       run: |

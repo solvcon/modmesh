@@ -53,9 +53,7 @@ jobs:
 
       - name: event name
         run: |
-          echo "::group::event name"
           echo "github.event_name: ${{ github.event_name }}"
-          echo "::endgroup::"
 
       - name: setup dependencies
         uses: ./.github/actions/setup_linux
@@ -118,9 +116,7 @@ jobs:
 
     - name: event name
       run: |
-        echo "::group::event name"
         echo "github.event_name: ${{ github.event_name }}"
-        echo "::endgroup::"
 
     - name: setup dependencies for Linux
       if: runner.os == 'Linux'
@@ -279,9 +275,7 @@ jobs:
 
       - name: event name
         run: |
-          echo "::group::event name"
           echo "github.event_name: ${{ github.event_name }}"
-          echo "::endgroup::"
 
       - uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
