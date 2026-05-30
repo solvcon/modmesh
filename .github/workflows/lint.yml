@@ -64,7 +64,9 @@ jobs:
 
     - name: event name
       run: |
+        echo "::group::event name"
         echo "github.event_name: ${{ github.event_name }}"
+        echo "::endgroup::"
 
     - name: setup dependencies for Linux
       if: runner.os == 'Linux'
@@ -102,18 +104,22 @@ jobs:
 
     - name: make pilot
       run: |
+        echo "::group::make pilot"
         make pilot \
           ${JOB_MAKE_ARGS} \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+        echo "::endgroup::"
 
     - name: make run_pilot_pytest
       run: |
+        echo "::group::make run_pilot_pytest"
         export LD_LIBRARY_PATH=$(python3 -c "import sys, os, shiboken6; sys.stdout.write(os.path.dirname(shiboken6.__file__))")
         make run_pilot_pytest \
           ${JOB_MAKE_ARGS} \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+        echo "::endgroup::"
 
   send_email_on_failure:
     needs: [lint]

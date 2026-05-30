@@ -40,7 +40,9 @@ jobs:
 
       - name: event name
         run: |
+          echo "::group::event name"
           echo "Event name: ${{ github.event_name }}"
+          echo "::endgroup::"
 
       - name: setup dependencies for Linux
         if: runner.os == 'Linux'
@@ -64,15 +66,19 @@ jobs:
 
       - name: make buildext BUILD_QT=ON
         run: |
+          echo "::group::make buildext BUILD_QT=ON"
           make cmake \
             VERBOSE=1 USE_CLANG_TIDY=OFF \
             BUILD_QT=ON \
             CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
           make buildext VERBOSE=1
+          echo "::endgroup::"
 
       - name: make pyprof
         run: |
+          echo "::group::make pyprof"
           make pyprof
+          echo "::endgroup::"
 
   send_email_on_failure:
     needs: [profile]
