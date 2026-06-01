@@ -105,6 +105,66 @@ std::string trim_string(const std::string & str)
         column += 1;                     \
     }
 
+// Scan a balanced {...} or [...] starting at json[index], which must be the
+// opening character. Appends the whole balanced expression to out and leaves
+// index on the matching closing character. Characters inside quoted strings
+// (with backslash escapes) are ignored when matching, so brackets or braces
+// embedded in string values do not unbalance the scan. Throws when the
+// container is not closed.
+inline void scan_balanced_expression(const std::string & json, size_t & index, char open_char, char close_char, int & line, int & column, std::string & out)
+{
+    int depth = 0;
+    bool in_string = false;
+    bool escape = false;
+
+    while (index < json.size())
+    {
+        const char c_curr = json[index];
+        out.push_back(c_curr);
+
+        if (escape)
+        {
+            escape = false;
+        }
+        else if (in_string)
+        {
+            if (c_curr == '\\')
+            {
+                escape = true;
+            }
+            else if (c_curr == '"')
+            {
+                in_string = false;
+            }
+        }
+        else if (c_curr == '"')
+        {
+            in_string = true;
+        }
+        else if (c_curr == open_char)
+        {
+            depth += 1;
+        }
+        else if (c_curr == close_char)
+        {
+            depth -= 1;
+        }
+
+        if (!in_string && depth == 0)
+        {
+            break;
+        }
+
+        MM_DECL_CACULATE_LINE_COLUMN(json[index])
+        index += 1;
+    }
+
+    if (depth != 0)
+    {
+        throw_serialization_error("Invalid JSON format: missing closing bracket.", line, column);
+    }
+}
+
 // NOLINTBEGIN(readability-function-cognitive-complexity)
 // NOLINTNEXTLINE(misc-no-recursion)
 JsonArray JsonNode::parse_array(const std::string & json)
@@ -112,8 +172,7 @@ JsonArray JsonNode::parse_array(const std::string & json)
     JsonArray json_array;
     JsonState state = JsonState::Start;
     std::string value_expression;
-
-    int depth = 0;
+    bool after_comma = false;
 
     int line = 1;
     int column = 1;
@@ -146,35 +205,24 @@ JsonArray JsonNode::parse_array(const std::string & json)
         case JsonState::ObjectValue:
             value_expression.clear();
 
+            if (c == ']')
+            {
+                if (after_comma)
+                {
+                    throw_serialization_error("Invalid JSON format: trailing comma before closing bracket.", line, column);
+                }
+                // Empty array.
+                state = JsonState::End;
+                break;
+            }
+
+            after_comma = false;
+
             if (c == '{')
             {
-                // go to the end of the object
-                while (index < json.size())
-                {
-                    value_expression.push_back(json[index]);
-
-                    if (json[index] == '{')
-                    {
-                        depth += 1;
-                    }
-                    else if (json[index] == '}')
-                    {
-                        depth -= 1;
-                    }
-
-                    if (depth == 0)
-                    {
-                        break;
-                    }
-
-                    MM_DECL_CACULATE_LINE_COLUMN(json[index])
-                    index += 1;
-                }
-
-                if (depth != 0)
-                {
-                    throw_serialization_error("Invalid JSON format: missing closing bracket.", line, column);
-                }
+                // go to the end of the object (string-aware so braces inside
+                // string values do not unbalance the scan)
+                scan_balanced_expression(json, index, '{', '}', line, column, value_expression);
 
                 // NOLINTNEXTLINE(misc-no-recursion)
                 json_array.emplace_back(std::make_unique<JsonNode>(JsonType::Object, value_expression));
@@ -196,12 +244,36 @@ JsonArray JsonNode::parse_array(const std::string & json)
 
                 // we assume the value is a string, number, boolean, or null, and the expression is correct
                 // if the expression is not correct, the exception will be thrown when parsing the value later
+                // Track quoted-string state so that ',' or ']' inside a
+                // string value does not terminate the scan early.
+                bool in_string = false;
+                bool escape = false;
                 while (index < json.size() - 1)
                 {
-                    value_expression.push_back(json[index]);
+                    const char c_curr = json[index];
+                    value_expression.push_back(c_curr);
+                    if (escape)
+                    {
+                        escape = false;
+                    }
+                    else if (in_string)
+                    {
+                        if (c_curr == '\\')
+                        {
+                            escape = true;
+                        }
+                        else if (c_curr == '"')
+                        {
+                            in_string = false;
+                        }
+                    }
+                    else if (c_curr == '"')
+                    {
+                        in_string = true;
+                    }
 
                     const char c_next = json[index + 1];
-                    if (c_next == ',' || c_next == ']')
+                    if (!in_string && (c_next == ',' || c_next == ']'))
                     {
                         break;
                     }
@@ -259,6 +331,7 @@ JsonArray JsonNode::parse_array(const std::string & json)
             if (c == ',')
             {
                 state = JsonState::ObjectValue;
+                after_comma = true;
             }
             else if (c == ']')
             {
@@ -297,8 +370,8 @@ JsonMap JsonNode::parse_object(const std::string & json)
     JsonState state = JsonState::Start;
     std::string key;
     std::string value_expression;
+    bool after_comma = false;
 
-    int depth = 0;
     int line = 1;
     int column = 1;
 
@@ -328,6 +401,19 @@ JsonMap JsonNode::parse_object(const std::string & json)
             state = JsonState::ObjectKey;
             break; /* end case JsonState::Start */
         case JsonState::ObjectKey:
+            if (c == '}')
+            {
+                if (after_comma)
+                {
+                    throw_serialization_error("Invalid JSON format: trailing comma before closing bracket.", line, column);
+                }
+                // Empty object.
+                state = JsonState::End;
+                break;
+            }
+
+            after_comma = false;
+
             if (c == '"')
             {
                 key.clear();
@@ -369,66 +455,18 @@ JsonMap JsonNode::parse_object(const std::string & json)
 
             if (c == '{')
             {
-                // go to the end of the object
-                while (index < json.size())
-                {
-                    value_expression.push_back(json[index]);
-
-                    if (json[index] == '{')
-                    {
-                        depth += 1;
-                    }
-                    else if (json[index] == '}')
-                    {
-                        depth -= 1;
-                    }
-
-                    if (depth == 0)
-                    {
-                        break;
-                    }
-
-                    MM_DECL_CACULATE_LINE_COLUMN(json[index])
-                    index += 1;
-                }
-
-                if (depth != 0)
-                {
-                    throw_serialization_error("Invalid JSON format: missing closing bracket.", line, column);
-                }
+                // go to the end of the object (string-aware so braces inside
+                // string values do not unbalance the scan)
+                scan_balanced_expression(json, index, '{', '}', line, column, value_expression);
 
                 // NOLINTNEXTLINE(misc-no-recursion)
                 json_map.emplace(key, std::make_unique<JsonNode>(JsonType::Object, value_expression));
             }
             else if (c == '[')
             {
-                // go to the end of the array
-                while (index < json.size())
-                {
-                    value_expression.push_back(json[index]);
-
-                    if (json[index] == '[')
-                    {
-                        depth += 1;
-                    }
-                    else if (json[index] == ']')
-                    {
-                        depth -= 1;
-                    }
-
-                    if (depth == 0)
-                    {
-                        break;
-                    }
-
-                    MM_DECL_CACULATE_LINE_COLUMN(json[index])
-                    index += 1;
-                }
-
-                if (depth != 0)
-                {
-                    throw_serialization_error("Invalid JSON format: missing closing bracket.", line, column);
-                }
+                // go to the end of the array (string-aware so brackets inside
+                // string values do not unbalance the scan)
+                scan_balanced_expression(json, index, '[', ']', line, column, value_expression);
 
                 // NOLINTNEXTLINE(misc-no-recursion)
                 json_map.emplace(key, std::make_unique<JsonNode>(JsonType::Array, value_expression));
@@ -445,12 +483,36 @@ JsonMap JsonNode::parse_object(const std::string & json)
 
                 // we assume the value is a string, number, boolean, or null, and the expression is correct
                 // if the expression is not correct, the exception will be thrown when parsing the value later
+                // Track quoted-string state so that ',' or '}' inside a
+                // string value does not terminate the scan early.
+                bool in_string = false;
+                bool escape = false;
                 while (index < json.size() - 1)
                 {
-                    value_expression.push_back(json[index]);
+                    const char c_curr = json[index];
+                    value_expression.push_back(c_curr);
+                    if (escape)
+                    {
+                        escape = false;
+                    }
+                    else if (in_string)
+                    {
+                        if (c_curr == '\\')
+                        {
+                            escape = true;
+                        }
+                        else if (c_curr == '"')
+                        {
+                            in_string = false;
+                        }
+                    }
+                    else if (c_curr == '"')
+                    {
+                        in_string = true;
+                    }
 
                     const char c_next = json[index + 1];
-                    if (c_next == ',' || c_next == '}')
+                    if (!in_string && (c_next == ',' || c_next == '}'))
                     {
                         break;
                     }
@@ -508,6 +570,7 @@ JsonMap JsonNode::parse_object(const std::string & json)
             if (c == ',')
             {
                 state = JsonState::ObjectKey;
+                after_comma = true;
             }
             else if (c == '}')
             {

@@ -322,6 +322,225 @@ TEST(Json, deserialize_with_unordered_map)
     EXPECT_EQ(item.pet_map["cat"].is_cat, true);
 }
 
+// The tests below cover empty containers, lenient trailing commas, and
+// string values that embed JSON delimiters (',', ']', '}') or escape
+// sequences. They exercise the parser directly through detail::JsonNode so
+// that the produced structure can be inspected precisely.
+
+TEST(Json, parse_empty_array)
+{
+    detail::JsonNode node(detail::JsonType::Array, "[]");
+    auto & arr = std::get<detail::JsonArray>(node.value);
+    EXPECT_EQ(arr.size(), 0);
+}
+
+TEST(Json, parse_empty_object)
+{
+    detail::JsonNode node(detail::JsonType::Object, "{}");
+    auto & map = std::get<detail::JsonMap>(node.value);
+    EXPECT_EQ(map.size(), 0);
+}
+
+TEST(Json, parse_empty_array_and_object_with_whitespace)
+{
+    detail::JsonNode array_node(detail::JsonType::Array, "[   ]");
+    EXPECT_EQ(std::get<detail::JsonArray>(array_node.value).size(), 0);
+
+    detail::JsonNode object_node(detail::JsonType::Object, "{ \n\t }");
+    EXPECT_EQ(std::get<detail::JsonMap>(object_node.value).size(), 0);
+}
+
+TEST(Json, parse_nested_empty_array_and_object)
+{
+    detail::JsonNode node(detail::JsonType::Object, "{\"arr\":[],\"obj\":{}}");
+    auto & map = std::get<detail::JsonMap>(node.value);
+    ASSERT_EQ(map.size(), 2);
+    EXPECT_EQ(map.at("arr")->type, detail::JsonType::Array);
+    EXPECT_EQ(std::get<detail::JsonArray>(map.at("arr")->value).size(), 0);
+    EXPECT_EQ(map.at("obj")->type, detail::JsonType::Object);
+    EXPECT_EQ(std::get<detail::JsonMap>(map.at("obj")->value).size(), 0);
+}
+
+TEST(Json, parse_array_string_values_with_delimiters)
+{
+    detail::JsonNode node(detail::JsonType::Array, "[\"a,b\",\"c]d\",\"e{f}g\"]");
+    auto & arr = std::get<detail::JsonArray>(node.value);
+    ASSERT_EQ(arr.size(), 3);
+    EXPECT_EQ(arr[0]->type, detail::JsonType::String);
+    EXPECT_EQ(std::get<std::string>(arr[0]->value), "\"a,b\"");
+    EXPECT_EQ(std::get<std::string>(arr[1]->value), "\"c]d\"");
+    EXPECT_EQ(std::get<std::string>(arr[2]->value), "\"e{f}g\"");
+}
+
+TEST(Json, parse_object_string_value_with_delimiters)
+{
+    detail::JsonNode node(detail::JsonType::Object, "{\"key\":\"a,b}c]d\"}");
+    auto & map = std::get<detail::JsonMap>(node.value);
+    ASSERT_EQ(map.size(), 1);
+    EXPECT_EQ(map.at("key")->type, detail::JsonType::String);
+    EXPECT_EQ(std::get<std::string>(map.at("key")->value), "\"a,b}c]d\"");
+}
+
+TEST(Json, parse_string_with_escaped_quote)
+{
+    // The escaped quote stays inside the string, so the following comma
+    // must not terminate the value scan early.
+    detail::JsonNode node(detail::JsonType::Array, "[\"a\\\",b\",\"c\"]");
+    auto & arr = std::get<detail::JsonArray>(node.value);
+    ASSERT_EQ(arr.size(), 2);
+    EXPECT_EQ(arr[0]->type, detail::JsonType::String);
+    EXPECT_EQ(std::get<std::string>(arr[0]->value), "\"a\\\",b\"");
+    EXPECT_EQ(std::get<std::string>(arr[1]->value), "\"c\"");
+}
+
+TEST(Json, parse_string_with_escaped_backslash)
+{
+    // A trailing escaped backslash must leave the closing quote able to
+    // terminate the string.
+    detail::JsonNode node(detail::JsonType::Array, "[\"a\\\\\",\"b\"]");
+    auto & arr = std::get<detail::JsonArray>(node.value);
+    ASSERT_EQ(arr.size(), 2);
+    EXPECT_EQ(std::get<std::string>(arr[0]->value), "\"a\\\\\"");
+    EXPECT_EQ(std::get<std::string>(arr[1]->value), "\"b\"");
+}
+
+TEST(Json, parse_array_trailing_comma_rejected)
+{
+    // A trailing comma before the closing bracket is invalid JSON and is
+    // rejected, while an empty array remains valid.
+    EXPECT_THROW(detail::JsonNode(detail::JsonType::Array, "[1,2,]"), std::runtime_error);
+    EXPECT_NO_THROW(detail::JsonNode(detail::JsonType::Array, "[]"));
+}
+
+TEST(Json, parse_object_trailing_comma_rejected)
+{
+    EXPECT_THROW(detail::JsonNode(detail::JsonType::Object, "{\"a\":1,}"), std::runtime_error);
+    EXPECT_NO_THROW(detail::JsonNode(detail::JsonType::Object, "{}"));
+}
+
+TEST(Json, parse_nested_array_string_with_bracket)
+{
+    // A ']' or '[' embedded in a string inside a nested array must not end
+    // the array extraction early.
+    detail::JsonNode node(detail::JsonType::Object, "{\"k\":[\"a]b\",\"c[d\"]}");
+    auto & map = std::get<detail::JsonMap>(node.value);
+    ASSERT_EQ(map.size(), 1);
+    EXPECT_EQ(map.at("k")->type, detail::JsonType::Array);
+    auto & arr = std::get<detail::JsonArray>(map.at("k")->value);
+    ASSERT_EQ(arr.size(), 2);
+    EXPECT_EQ(std::get<std::string>(arr[0]->value), "\"a]b\"");
+    EXPECT_EQ(std::get<std::string>(arr[1]->value), "\"c[d\"");
+}
+
+TEST(Json, parse_nested_object_string_with_brace)
+{
+    // A '}' or '{' embedded in a string inside a nested object must not end
+    // the object extraction early.
+    detail::JsonNode node(detail::JsonType::Object, "{\"k\":{\"x\":\"a}b{c\"}}");
+    auto & map = std::get<detail::JsonMap>(node.value);
+    ASSERT_EQ(map.size(), 1);
+    EXPECT_EQ(map.at("k")->type, detail::JsonType::Object);
+    auto & inner = std::get<detail::JsonMap>(map.at("k")->value);
+    ASSERT_EQ(inner.size(), 1);
+    EXPECT_EQ(std::get<std::string>(inner.at("x")->value), "\"a}b{c\"");
+}
+
+TEST(Json, parse_nested_container_string_with_escape)
+{
+    // The container scanner must honour escapes: the escaped quote keeps the
+    // ']' inside the string, so the nested array is not closed early.
+    detail::JsonNode node(detail::JsonType::Object, "{\"k\":[\"a\\\"]b\"]}");
+    auto & map = std::get<detail::JsonMap>(node.value);
+    ASSERT_EQ(map.size(), 1);
+    EXPECT_EQ(map.at("k")->type, detail::JsonType::Array);
+    auto & arr = std::get<detail::JsonArray>(map.at("k")->value);
+    ASSERT_EQ(arr.size(), 1);
+    EXPECT_EQ(std::get<std::string>(arr[0]->value), "\"a\\\"]b\"");
+}
+
+TEST(Json, parse_invalid_comma_sequences_rejected)
+{
+    EXPECT_THROW(detail::JsonNode(detail::JsonType::Array, "[1, ]"), std::runtime_error);
+    EXPECT_THROW(detail::JsonNode(detail::JsonType::Array, "[1,,2]"), std::runtime_error);
+    EXPECT_THROW(detail::JsonNode(detail::JsonType::Array, "[,]"), std::runtime_error);
+    EXPECT_THROW(detail::JsonNode(detail::JsonType::Object, "{\"k\":[1,2,]}"), std::runtime_error);
+    EXPECT_NO_THROW(detail::JsonNode(detail::JsonType::Array, "[1, 2]"));
+}
+
+TEST(Json, parse_unterminated_nested_container_rejected)
+{
+    // The container scanner must throw when a nested container or a string
+    // inside it is never closed.
+    EXPECT_THROW(detail::JsonNode(detail::JsonType::Object, "{\"k\":[1,2"), std::runtime_error);
+    EXPECT_THROW(detail::JsonNode(detail::JsonType::Object, "{\"k\":{\"x\":1"), std::runtime_error);
+    EXPECT_THROW(detail::JsonNode(detail::JsonType::Object, "{\"k\":[\"a"), std::runtime_error);
+}
+
+TEST(Json, deserialize_empty_vector)
+{
+    std::string json = "{\"country\":\"USA\",\"city\":\"New York\",\"phone_numbers\":[],\"zip_codes\":[]}";
+    detail::Address address;
+    address.from_json(json);
+    EXPECT_EQ(address.country, "USA");
+    EXPECT_EQ(address.city, "New York");
+    EXPECT_EQ(address.phone_numbers.size(), 0);
+    EXPECT_EQ(address.zip_codes.size(), 0);
+}
+
+TEST(Json, deserialize_empty_unordered_map)
+{
+    std::string json = "{\"numer_map\":{},\"pet_map\":{}}";
+    detail::TestUnorderedMapItem item;
+    item.from_json(json);
+    EXPECT_EQ(item.numer_map.size(), 0);
+    EXPECT_EQ(item.pet_map.size(), 0);
+}
+
+TEST(Json, deserialize_string_with_delimiters)
+{
+    std::string json = "{\"country\":\"a]b\",\"city\":\"New York, NY\",\"phone_numbers\":[\"1,2\",\"3}4\"],\"zip_codes\":[]}";
+    detail::Address address;
+    address.from_json(json);
+    EXPECT_EQ(address.country, "a]b");
+    EXPECT_EQ(address.city, "New York, NY");
+    ASSERT_EQ(address.phone_numbers.size(), 2);
+    EXPECT_EQ(address.phone_numbers[0], "1,2");
+    EXPECT_EQ(address.phone_numbers[1], "3}4");
+    EXPECT_EQ(address.zip_codes.size(), 0);
+}
+
+TEST(Json, deserialize_nested_string_with_bracket)
+{
+    // A ']' inside a string element of a nested array must survive the
+    // object-level container extraction (string-aware depth scan).
+    std::string json = "{\"country\":\"USA\",\"city\":\"NYC\",\"phone_numbers\":[\"1]2\",\"3\"],\"zip_codes\":[]}";
+    detail::Address address;
+    address.from_json(json);
+    EXPECT_EQ(address.country, "USA");
+    ASSERT_EQ(address.phone_numbers.size(), 2);
+    EXPECT_EQ(address.phone_numbers[0], "1]2");
+    EXPECT_EQ(address.phone_numbers[1], "3");
+    EXPECT_EQ(address.zip_codes.size(), 0);
+}
+
+TEST(Json, round_trip_string_with_comma)
+{
+    detail::Address address;
+    address.country = "USA";
+    address.city = "New York, NY";
+    address.phone_numbers = {"1,2", "3"};
+    address.zip_codes = {};
+
+    detail::Address restored;
+    restored.from_json(address.to_json());
+    EXPECT_EQ(restored.country, address.country);
+    EXPECT_EQ(restored.city, address.city);
+    ASSERT_EQ(restored.phone_numbers.size(), 2);
+    EXPECT_EQ(restored.phone_numbers[0], "1,2");
+    EXPECT_EQ(restored.phone_numbers[1], "3");
+    EXPECT_EQ(restored.zip_codes.size(), 0);
+}
+
 } // namespace modmesh
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
