@@ -72,6 +72,7 @@ jobs:
 
       - name: setup.py install build_ext
         run: |
+          echo "::group::setup.py install build_ext"
           SUDO_CMD=""
           if [ ${{ matrix.os }} == "ubuntu-24.04" ] ; then
             SUDO_CMD="sudo"
@@ -79,9 +80,11 @@ jobs:
           $SUDO_CMD python3 setup.py install build_ext \
             --cmake-args="${JOB_CMAKE_ARGS} -DPYTHON_EXECUTABLE=$(which python3)" \
             --make-args="VERBOSE=1"
+          echo "::endgroup::"
 
       - name: pytest
         run: |
+          echo "::group::pytest"
           rm -rf tmp/
           mkdir -p tmp/
           cp -a tests tmp/
@@ -95,6 +98,7 @@ jobs:
           # The alternative command to solve the issue is ```pytest --rootdir=. -v```.
           pytest --rootdir=. -v
           cd ..
+          echo "::endgroup::"
 
   send_email_on_failure:
     needs: [nouse_install]

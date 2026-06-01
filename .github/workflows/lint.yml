@@ -86,34 +86,53 @@ jobs:
         create-symlink: true
 
     - name: make cformat (clang-format check)
-      run: make cformat
+      run: |
+        echo "::group::make cformat"
+        make cformat
+        echo "::endgroup::"
 
     - name: make cinclude (check_include)
-      run: make cinclude
+      run: |
+        echo "::group::make cinclude"
+        make cinclude
+        echo "::endgroup::"
 
     - name: make checkascii (check ASCII-only characters)
-      run: make checkascii
+      run: |
+        echo "::group::make checkascii"
+        make checkascii
+        echo "::endgroup::"
 
     - name: make checktws (check trailing whitespace)
-      run: make checktws
+      run: |
+        echo "::group::make checktws"
+        make checktws
+        echo "::endgroup::"
 
     - name: make flake8
-      run: make flake8
+      run: |
+        echo "::group::make flake8"
+        make flake8
+        echo "::endgroup::"
 
     - name: make pilot
       run: |
+        echo "::group::make pilot"
         make pilot \
           ${JOB_MAKE_ARGS} \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+        echo "::endgroup::"
 
     - name: make run_pilot_pytest
       run: |
+        echo "::group::make run_pilot_pytest"
         export LD_LIBRARY_PATH=$(python3 -c "import sys, os, shiboken6; sys.stdout.write(os.path.dirname(shiboken6.__file__))")
         make run_pilot_pytest \
           ${JOB_MAKE_ARGS} \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+        echo "::endgroup::"
 
   send_email_on_failure:
     needs: [lint]

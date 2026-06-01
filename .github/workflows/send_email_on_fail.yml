@@ -20,7 +20,9 @@ jobs:
     steps:
       - name: Get current date and set to env
         run: |
+          echo "::group::Get current date and set to env"
           echo "DATE=$(date +%m/%d)" >> $GITHUB_ENV
+          echo "::endgroup::"
 
       - name: Send mail to mailing list
         uses: dawidd6/action-send-mail@v6

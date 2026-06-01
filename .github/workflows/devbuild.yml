@@ -69,8 +69,10 @@ jobs:
 
       - name: make standalone_buffer
         run: |
+          echo "::group::make standalone_buffer"
           make standalone_buffer_setup
           make standalone_buffer
+          echo "::endgroup::"
 
   build:
 
@@ -137,12 +139,15 @@ jobs:
 
     - name: make gtest BUILD_QT=OFF
       run: |
+        echo "::group::make gtest BUILD_QT=OFF"
         make gtest \
           VERBOSE=1 USE_CLANG_TIDY=OFF \
           BUILD_QT=OFF
+        echo "::endgroup::"
 
     - name: make buildext BUILD_QT=OFF
       run: |
+        echo "::group::make buildext BUILD_QT=OFF"
         rm -f build/*/Makefile
         make cmake \
           VERBOSE=1 USE_CLANG_TIDY=OFF \
@@ -150,18 +155,22 @@ jobs:
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
         make buildext VERBOSE=1
+        echo "::endgroup::"
 
     - name: make pytest BUILD_QT=OFF
       run: |
+        echo "::group::make pytest BUILD_QT=OFF"
         python3 -c "import modmesh; assert modmesh.HAS_PILOT == False"
         JOB_MAKE_ARGS="${JOB_MAKE_ARGS} VERBOSE=1"
         if [ "${{ matrix.os }}" == "macos-26" ] ; then \
           JOB_MAKE_ARGS="${JOB_MAKE_ARGS} BUILD_METAL=ON" ; \
         fi
         make pytest ${JOB_MAKE_ARGS}
+        echo "::endgroup::"
 
     - name: make buildext BUILD_QT=ON
       run: |
+        echo "::group::make buildext BUILD_QT=ON"
         rm -f build/*/Makefile
         make cmake \
           VERBOSE=1 USE_CLANG_TIDY=OFF \
@@ -169,9 +178,11 @@ jobs:
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
         make buildext VERBOSE=1
+        echo "::endgroup::"
 
     - name: make pytest BUILD_QT=ON
       run: |
+        echo "::group::make pytest BUILD_QT=ON"
         python3 -c "import modmesh; assert modmesh.HAS_PILOT == True"
         JOB_MAKE_ARGS="${JOB_MAKE_ARGS} VERBOSE=1"
         if [ "${{ matrix.os }}" == "macos-26" ] ; then \
@@ -188,24 +199,30 @@ jobs:
           JOB_MAKE_ARGS="${JOB_MAKE_ARGS} BUILD_METAL=ON" ; \
         fi
         make pytest ${JOB_MAKE_ARGS}
+        echo "::endgroup::"
 
     - name: make pilot
       run: |
+        echo "::group::make pilot"
         rm -f build/*/Makefile
         make pilot \
           VERBOSE=1 USE_CLANG_TIDY=OFF \
           BUILD_QT=ON \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+        echo "::endgroup::"
 
     - name: make run_pilot_pytest
       run: |
+        echo "::group::make run_pilot_pytest"
         export LD_LIBRARY_PATH=$(python3 -c "import sys, os, shiboken6; sys.stdout.write(os.path.dirname(shiboken6.__file__))")
         make run_pilot_pytest VERBOSE=1
+        echo "::endgroup::"
 
     # FIXME: turn off until all issues resolved
     - name: make cmake USE_SANITIZER=ON & make pytest
       run: |
+        echo "::group::make cmake USE_SANITIZER=ON & make pytest"
         export ASAN_OPTIONS=verify_asan_link_order=0
         rm -f build/*/Makefile
         make cmake \
@@ -215,6 +232,7 @@ jobs:
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_SANITIZER=OFF"
         make buildext VERBOSE=1
         make pytest VERBOSE=1
+        echo "::endgroup::"
 
   build_windows:
 
@@ -284,15 +302,18 @@ jobs:
 
       - name: install BLAS and LAPACK
         run: |
+          echo "::group::install BLAS and LAPACK"
           vcpkg install openblas:x64-windows lapack:x64-windows
           $vcpkg_bin_path = @(
             "C:\vcpkg\installed\x64-windows\bin",
             "C:\vcpkg\installed\x64-windows\debug\bin"
           ) -join ";"
           echo "$vcpkg_bin_path" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "::endgroup::"
 
       - name: dependency by pip
         run: |
+          echo "::group::dependency by pip"
           pip3 install -U numpy matplotlib pytest jsonschema flake8 pybind11 pyside6==$(qmake -query QT_VERSION)
           # Add PySide6 and Shiboken6 path into system path, that allow exe file can find
           # dll during runtime
@@ -304,9 +325,11 @@ jobs:
           $pyside6_path = $(python3 -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))")
           $shiboken6_path = $(python3 -c "import sys, os, shiboken6; sys.stdout.write(os.path.dirname(shiboken6.__file__))")
           echo "$pyside6_path;$shiboken6_path" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "::endgroup::"
 
       - name: show dependency
         run: |
+          echo "::group::show dependency"
           Get-Command cl
           Get-Command cmake
           Get-Command python3
@@ -317,9 +340,11 @@ jobs:
           Get-Command pytest
           Get-Command clang-tidy
           Get-Command flake8
+          echo "::endgroup::"
 
       - name: cmake ALL_BUILD
         run: |
+          echo "::group::cmake ALL_BUILD"
           cmake `
             -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
@@ -330,22 +355,28 @@ jobs:
           cmake --build ${{ github.workspace }}/build `
             --config ${{ matrix.cmake_build_type }} `
             --target ALL_BUILD
+          echo "::endgroup::"
 
       - name: cmake run_gtest
         run: |
+          echo "::group::cmake run_gtest"
           cmake --build ${{ github.workspace }}/build `
             --config ${{ matrix.cmake_build_type }} `
             --target run_gtest
+          echo "::endgroup::"
 
       - name: cmake run_pilot_pytest
         run: |
+          echo "::group::cmake run_pilot_pytest"
           cmake --build ${{ github.workspace }}/build `
             --config ${{ matrix.cmake_build_type }} `
             --target run_pilot_pytest
+          echo "::endgroup::"
 
       - name: generate portable
         if: ${{ matrix.cmake_build_type == 'Release' }}
         run: |
+          echo "::group::generate portable"
           # Get the Python version installed and extract the major+minor version components
           $py_ver=$(python3 -V | awk '{print $2}')
           $py_main_ver=$(echo $py_ver | awk -F. '{print $1$2}')
@@ -393,6 +424,7 @@ jobs:
           Copy-Item -Path ".\modmesh" -Destination $destination -Recurse
           # Also include potential thirdparty
           Copy-Item -Path ".\thirdparty" -Destination $destination -Recurse
+          echo "::endgroup::"
 
       - name: archive portable artifacts
         if: ${{ matrix.cmake_build_type == 'Release' }}
