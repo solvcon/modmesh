@@ -1,22 +1,7 @@
-# modmesh documentation (prototype)
+# modmesh documentation
 
-modmesh is a *hybrid C++/Python* numerical library.  This is a minimal, working
-prototype of a documentation system for modmesh, built on **Sphinx**.
-
-## Layout
-
-```
-doc/
-  Makefile            html / doxygen / clean targets
-  Doxyfile            Doxygen config (XML only, consumed by breathe)
-  requirements.txt    Python build dependencies
-  source/
-    conf.py           Sphinx configuration (annotated)
-    index.md          landing page
-    refs.bib          bibliography
-    api/python.md     autodoc of modmesh.onedim
-    api/cpp.md         breathe of modmesh::ConcreteBuffer
-```
+modmesh is a *hybrid C++/Python* numerical library.  This directory contains
+the Sphinx-based documentation.
 
 ## Build
 
