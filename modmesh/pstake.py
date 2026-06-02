@@ -579,7 +579,7 @@ if __name__ == '__main__':
 
 # Start Sphinx code.
 if HAS_SPHINX:
-    class pstake(nodes.image):
+    class pstake(nodes.General, nodes.Element):
         pass
 
 
@@ -735,13 +735,21 @@ if HAS_SPHINX:
                          dest=os.path.join(self.builder.outdir, pngoutpath),
                          source_not_path=source_not_path)
 
-        # Convert file.
+        # Convert file only when the source is newer than the destination.
         if not os.path.exists(fnobj.destdirabs):
             os.makedirs(fnobj.destdirabs)
-        cmdout = open(node['cmdout'], 'a+') if node['cmdout'] else None
-        Pstricks()(fnobj, cmdout=cmdout)
-        if cmdout:
-            cmdout.close()
+        needs_build = True
+        if fnobj.sourcepath and os.path.exists(fnobj.destpath):
+            src_mtime = os.path.getmtime(fnobj.sourcepath)
+            dst_mtime = os.path.getmtime(fnobj.destpath)
+            if dst_mtime >= src_mtime:
+                needs_build = False
+        if needs_build:
+            cmdout = (open(node['cmdout'], 'a+')
+                      if node['cmdout'] else None)
+            Pstricks()(fnobj, cmdout=cmdout)
+            if cmdout:
+                cmdout.close()
 
         # Determine alignment.
         align = node.get('align', None)

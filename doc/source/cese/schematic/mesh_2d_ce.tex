@@ -1,0 +1,182 @@
+\psset{unit=1.2cm}
+\begin{pspicture}(-2.8,-2)(4.5,6)
+
+%\begin{pspicture}(-5,-5)(5,5) % for debug
+%\psgrid[subgriddiv=1,griddots=5](-4,-4)(4,4) % for debug
+%\psset{Alpha=180,Beta=90} % rotate to x-y plane.
+
+%\pstThreeDCoor[nameZ=$t$] % for debug
+
+% Helpers
+
+\def\unpackTuple(#1,#2,#3)#4#5#6{\def#4{#1}\def#5{#2}\def#6{#3}}
+
+\def\elevatePoint#1#2[#3]{%
+  \expandafter\unpackTuple#1{\pax}{\pay}{\paz}%
+  \edef#2{(\pax,\pay,#3)}%
+}
+
+\def\centerLine#1#2{%
+  \expandafter\unpackTuple#1{\pax}{\pay}{\paz}%
+  \expandafter\unpackTuple#2{\pbx}{\pby}{\pbz}%
+  \psset{linewidth=0.5pt,linecolor=black,linestyle=solid}%
+  \pstThreeDLine(\pax,\pay,\paz)(\pbx,\pby,\pbz)%
+}
+
+\def\meshLine#1#2{%
+  \expandafter\unpackTuple#1{\pax}{\pay}{\paz}%
+  \expandafter\unpackTuple#2{\pbx}{\pby}{\pbz}%
+  \psset{linewidth=0.5pt,linecolor=black,linestyle=dashed}%
+  \pstThreeDLine(\pax,\pay,\paz)(\pbx,\pby,\pbz)%
+}
+
+\def\meshTriangle#1#2#3{%
+  \meshLine{#1}{#2}%
+  \meshLine{#2}{#3}%
+  \meshLine{#3}{#1}%
+}
+
+\def\markSize{10pt}
+
+\def\meshVertex[#1]#2#3{{%
+  \psset{linewidth=0.1pt,linecolor=red,dotsize=2pt,dotstyle=square*}%
+  \expandafter\pstThreeDDot#2%
+  \expandafter\pstThreeDNode#2{temp@pstNode}%
+  \uput{3 pt}[#1](temp@pstNode){\fontsize{\markSize}{\markSize}\selectfont#3}%
+}\ignorespaces}
+
+\def\meshCenter[#1]#2#3[#4]{{%
+  \psset{linewidth=0.1pt,linecolor=black,dotsize=3pt,#4}%
+  \expandafter\pstThreeDDot#2%
+  \expandafter\pstThreeDNode#2{temp@pstNode}%
+  \uput{3 pt}[#1](temp@pstNode){\fontsize{\markSize}{\markSize}\selectfont#3}%
+}\ignorespaces}
+
+% Coordinates
+
+\def\vI{(-3.1, 1  ,0)}
+\def\vB{(-1.6,-0.4,0)}
+\def\vK{( 0.2,-2.7,0)}
+\def\vD{( 0.8,-1.1,0)}
+\def\vL{( 2.3, 1.1,0)}
+\def\vF{(-0.4, 1.5,0)}
+\def\vM{(-2.2, 3.2,0)}
+\def\vN{(-3.7,-0.6,0)}
+
+\def\cG{(-0.4,-0.4,0)}
+\def\cA{(-1.7, 0.7,0)}
+\def\cC{(-0.2,-1.4,0)}
+\def\cE{( 0.9, 0.5,0)}
+\def\cH{(-1.9, 1.9,0)}
+\def\cJ{(-2.8, 0  ,0)}
+
+\def\elevation{2.5}
+\elevatePoint{\cG}{\cGp}[\elevation]
+\elevatePoint{\cA}{\cAp}[\elevation]
+\elevatePoint{\vB}{\vBp}[\elevation]
+\elevatePoint{\cC}{\cCp}[\elevation]
+\elevatePoint{\vD}{\vDp}[\elevation]
+\elevatePoint{\cE}{\cEp}[\elevation]
+\elevatePoint{\vF}{\vFp}[\elevation]
+
+\elevatePoint{\cH}{\cHp}[\elevation]
+\elevatePoint{\vI}{\vIp}[\elevation]
+\elevatePoint{\cJ}{\cJp}[\elevation]
+
+\def\elevation{5}
+\elevatePoint{\cA}{\cApp}[\elevation]
+\elevatePoint{\vB}{\vBpp}[\elevation]
+\elevatePoint{\cG}{\cGpp}[\elevation]
+\elevatePoint{\vF}{\vFpp}[\elevation]
+\elevatePoint{\cH}{\cHpp}[\elevation]
+\elevatePoint{\vI}{\vIpp}[\elevation]
+\elevatePoint{\cJ}{\cJpp}[\elevation]
+
+% Mesh grid lines
+
+\meshTriangle{\vI}{\vB}{\vF}
+\meshTriangle{\vB}{\vK}{\vD}
+\meshTriangle{\vD}{\vL}{\vF}
+\meshLine{\vF}{\vM}
+\meshLine{\vM}{\vI}
+\meshLine{\vI}{\vN}
+\meshLine{\vN}{\vB}
+
+% Conservation element boundary lines
+
+\centerLine{\cG}{\vB} \centerLine{\cG}{\vD} \centerLine{\cG}{\vF}
+\centerLine{\vF}{\cA} \centerLine{\cA}{\vB}
+\centerLine{\vB}{\cC} \centerLine{\cC}{\vD}
+\centerLine{\vD}{\cE} \centerLine{\cE}{\vF}
+
+\centerLine{\cG}{\cGp}
+\centerLine{\cA}{\cAp}
+\centerLine{\vB}{\vBp}
+\centerLine{\cC}{\cCp}
+\centerLine{\vD}{\vDp}
+\centerLine{\cE}{\cEp}
+\centerLine{\vF}{\vFp}
+
+\centerLine{\cAp}{\cApp}
+\centerLine{\vBp}{\vBpp}
+\centerLine{\cGp}{\cGpp}
+\centerLine{\vFp}{\vFpp}
+\centerLine{\cHp}{\cHpp}
+\centerLine{\vIp}{\vIpp}
+\centerLine{\cJp}{\cJpp}
+
+\centerLine{\cGp}{\vBp} \centerLine{\cGp}{\vDp} \centerLine{\cGp}{\vFp}
+\centerLine{\vFp}{\cAp} \centerLine{\cAp}{\vBp}
+\centerLine{\vBp}{\cCp} \centerLine{\cCp}{\vDp}
+\centerLine{\vDp}{\cEp} \centerLine{\cEp}{\vFp}
+
+\centerLine{\cAp}{\vIp}
+\centerLine{\vFp}{\cHp} \centerLine{\cHp}{\vIp}
+\centerLine{\vIp}{\cJp} \centerLine{\cJp}{\vBp}
+
+\centerLine{\cApp}{\vBpp} \centerLine{\cApp}{\vFpp} \centerLine{\cApp}{\vIpp}
+\centerLine{\vBpp}{\cGpp} \centerLine{\cGpp}{\vFpp}
+\centerLine{\vFpp}{\cHpp} \centerLine{\cHpp}{\vIpp}
+\centerLine{\vIpp}{\cJpp} \centerLine{\cJpp}{\vBpp}
+
+% Point marks.
+
+\meshVertex[30]{\vI}{I}
+\meshVertex[135]{\vB}{B}
+\meshVertex[180]{\vK}{K}
+\meshVertex[200]{\vD}{D}
+\meshVertex[270]{\vL}{L}
+\meshVertex[300]{\vF}{F}
+\meshVertex[270]{\vM}{M}
+\meshVertex[30]{\vN}{N}
+
+\meshCenter[270]{\cG}{G}[dotstyle=x]
+\meshCenter[315]{\cA}{A}[dotstyle=o]
+\meshCenter[150]{\cC}{C}[dotstyle=o]
+\meshCenter[210]{\cE}{E}[dotstyle=o]
+\meshCenter[0]{\cH}{H}[dotstyle=x]
+\meshCenter[45]{\cJ}{J}[dotstyle=x]
+
+\meshCenter[225]{\cGp}{$\mathrm{G'}$}[dotstyle=*]
+\meshCenter[330]{\cAp}{$\mathrm{A'}$}[dotstyle=x]
+\meshVertex[135]{\vBp}{$\mathrm{B'}$}
+\meshCenter[120]{\cCp}{$\mathrm{C'}$}[dotstyle=x]
+\meshVertex[180]{\vDp}{$\mathrm{D'}$}
+\meshCenter[210]{\cEp}{$\mathrm{E'}$}[dotstyle=x]
+\meshVertex[225]{\vFp}{$\mathrm{F'}$}
+
+\meshVertex[0]{\vIp}{$\mathrm{I'}$}
+\meshCenter[330]{\cHp}{$\mathrm{H'}$}[dotstyle=*]
+\meshCenter[45]{\cJp}{$\mathrm{J'}$}[dotstyle=*]
+
+\meshCenter[210]{\cApp}{$\mathrm{A''}$}[dotstyle=o]
+\meshVertex[120]{\vBpp}{$\mathrm{B''}$}
+\meshCenter[180]{\cGpp}{$\mathrm{G''}$}[dotstyle=x]
+\meshVertex[225]{\vFpp}{$\mathrm{F''}$}
+\meshCenter[150]{\cHpp}{$\mathrm{H''}$}[dotstyle=x]
+\meshVertex[0]{\vIpp}{$\mathrm{I''}$}
+\meshCenter[90]{\cJpp}{$\mathrm{J''}$}[dotstyle=x]
+
+\end{pspicture}
+
+% vim: set fenc=utf8 ff=unix nobomb et sw=2 ts=2 tw=79:
