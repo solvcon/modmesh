@@ -32,6 +32,7 @@
 
 #include <modmesh/pilot/RPythonConsoleDockWidget.hpp>
 #include <modmesh/pilot/R3DWidget.hpp>
+#include <modmesh/pilot/R2DWidget.hpp>
 #include <modmesh/pilot/RAction.hpp>
 
 #include <QMainWindow>
@@ -59,6 +60,7 @@ public:
     QCoreApplication * core() { return m_core.get(); }
 
     R3DWidget * add3DWidget();
+    R2DWidget * add2DWidget();
 
     RPythonConsoleDockWidget * pycon() { return m_pycon; }
 

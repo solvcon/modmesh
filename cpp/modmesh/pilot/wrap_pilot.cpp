@@ -199,6 +199,29 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
 
 }; /* end class WrapR3DWidget */
 
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR2DWidget
+    : public WrapBase<WrapR2DWidget, R2DWidget, QPointer<R2DWidget>>
+{
+
+    friend root_base_type;
+
+    WrapR2DWidget(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : root_base_type(mod, pyname, pydoc)
+    {
+        namespace py = pybind11;
+
+        (*this)
+            .def_property_readonly(
+                "viewTransform",
+                &wrapped_type::viewTransform,
+                py::return_value_policy::copy)
+            .def("setViewTransform", &wrapped_type::setViewTransform, py::arg("v"))
+            .def("resetView", &wrapped_type::resetView)
+            .def("requestRepaint", &wrapped_type::requestRepaint);
+    }
+
+}; /* end class WrapR2DWidget */
+
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRLine
     : public WrapBase<WrapRLine, RLine>
 {
@@ -321,6 +344,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
                 [](wrapped_type & self)
                 {
                     return self.add3DWidget();
+                })
+            .def(
+                "add2DWidget",
+                [](wrapped_type & self)
+                {
+                    return self.add2DWidget();
                 })
             .def(
                 "toggleConsole",
@@ -551,6 +580,7 @@ void wrap_pilot(pybind11::module & mod)
     namespace py = pybind11;
 
     WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
+    WrapR2DWidget::commit(mod, "R2DWidget", "R2DWidget");
     WrapRLine::commit(mod, "RLine", "RLine");
     WrapRPythonConsoleDockWidget::commit(mod, "RPythonConsoleDockWidget", "RPythonConsoleDockWidget");
     WrapRCameraController::commit(mod, "RCameraController", "RCameraController");

@@ -9,6 +9,7 @@ set(MODMESH_UNIVERSE_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/coord.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/polygon.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/polygon_boolean.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ViewTransform2d.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/World.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/rtree.hpp
     CACHE FILEPATH "" FORCE)
@@ -28,6 +29,7 @@ set(MODMESH_UNIVERSE_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_shape1d.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_shape2d.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_shape3d.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_view_transform2d.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_World.cpp
     CACHE FILEPATH "" FORCE)
 

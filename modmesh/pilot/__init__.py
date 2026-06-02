@@ -37,6 +37,7 @@ from ._pilot_core import (  # noqa: F401
     enable,
     mgr,
     R3DWidget,
+    R2DWidget,
     RLine,
     RPythonConsoleDockWidget,
     RManager,
