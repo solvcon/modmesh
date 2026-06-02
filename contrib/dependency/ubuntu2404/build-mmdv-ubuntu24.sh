@@ -187,13 +187,15 @@ export PATH="${MMDV_USRDIR}/bin:${PATH}"
 
 mmdv_apt_base_cmd() {
   # Print the apt command for the BASE/PYTHON/NUMPY sections. The script
-  # never runs apt itself; copy the output, review it, and run it.
+  # never runs apt itself; copy the output, review it, and run it. doxygen
+  # is the system half of the documentation C++ API path (see doc/README.md).
   cat <<'EOF'
 sudo apt install -y \
   build-essential gcc g++ make cmake ninja-build pkg-config \
   git curl xz-utils gfortran libopenblas-dev \
   libffi-dev libbz2-dev liblzma-dev libgdbm-dev \
-  libncurses-dev uuid-dev tk-dev libedit-dev libexpat1-dev
+  libncurses-dev uuid-dev tk-dev libedit-dev libexpat1-dev \
+  doxygen
 EOF
 }
 
@@ -809,6 +811,10 @@ echo "Python build uses PGO; expect ~20 min"
 mmdv_time build_python python
 "${PY}" -m pip install -U flake8 autopep8 black pytest jsonschema certifi
 "${PY}" -m pip install -U nose boto paramiko
+# Documentation toolchain (Sphinx-based; see doc/README.md). doxygen, the
+# system half of the C++ API path, is in mmdv_apt_base_cmd above.
+"${PY}" -m pip install -U sphinx myst-parser pydata-sphinx-theme \
+  breathe sphinxcontrib-bibtex
 mmdv_time build_pybind11 pybind11
 
 else

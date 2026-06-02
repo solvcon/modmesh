@@ -1,0 +1,23 @@
+# Minimal Doxygen config for the modmesh C++ API.
+#
+# Emits XML only -- breathe consumes the XML and Sphinx renders it.  HTML
+# and LaTeX output are disabled so Sphinx remains the single front end.
+
+PROJECT_NAME      = modmesh
+OUTPUT_DIRECTORY  = build/doxygen
+INPUT             = ../cpp/modmesh
+FILE_PATTERNS     = *.hpp *.cpp
+RECURSIVE         = YES
+
+GENERATE_HTML     = NO
+GENERATE_LATEX    = NO
+GENERATE_XML      = YES
+XML_OUTPUT        = xml
+
+# Document declarations even where an explicit comment is missing, and read
+# the first comment sentence as the brief description.
+EXTRACT_ALL       = YES
+JAVADOC_AUTOBRIEF = YES
+QUIET             = YES
+
+# vim: set ft=conf ff=unix fenc=utf8 et sw=2 ts=2 sts=2 tw=79:

@@ -229,10 +229,11 @@ mmdv_brew_base_cmd() {
   # included for gfortran (scipy's Fortran sources); openblas is included as an
   # optional fallback BLAS even though numpy/scipy default to Apple's
   # Accelerate framework on macOS.  xz is included for Python's lzma module
-  # (Apple's Command Line Tools do not ship liblzma).
+  # (Apple's Command Line Tools do not ship liblzma).  doxygen is the system
+  # half of the documentation C++ API path (see doc/README.md).
   cat <<'EOF'
 brew install \
-  cmake ninja pkg-config xz gcc openblas
+  cmake ninja pkg-config xz gcc openblas doxygen
 EOF
 }
 
@@ -944,6 +945,10 @@ echo "Python build uses PGO; expect ~20 min"
 mmdv_time build_python python
 "${PY}" -m pip install -U flake8 autopep8 black pytest jsonschema certifi
 "${PY}" -m pip install -U nose boto paramiko
+# Documentation toolchain (Sphinx-based; see doc/README.md). doxygen, the
+# system half of the C++ API path, is in mmdv_brew_base_cmd above.
+"${PY}" -m pip install -U sphinx myst-parser pydata-sphinx-theme \
+  breathe sphinxcontrib-bibtex
 mmdv_time build_pybind11 pybind11
 
 else
