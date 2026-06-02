@@ -19,6 +19,7 @@ import sys
 # Make the in-tree ``modmesh`` package importable for autodoc.  The repo
 # root is two levels up from this file (doc/source/conf.py).
 sys.path.insert(0, os.path.abspath("../.."))
+sys.path.insert(0, os.path.abspath("../ext"))
 
 # -- Project information ----------------------------------------------------
 
@@ -38,6 +39,7 @@ extensions = [
     "sphinx.ext.mathjax",     # render LaTeX math
     "breathe",                # C++ via Doxygen XML
     "sphinxcontrib.bibtex",   # citations
+    "pstake",                 # PSTricks .tex -> PNG at build time
 ]
 
 # MyST Markdown extensions: $...$ and $$...$$ math, amsmath
@@ -69,7 +71,7 @@ breathe_default_project = "modmesh"
 
 # -- sphinxcontrib.bibtex ---------------------------------------------------
 
-bibtex_bibfiles = ["refs.bib"]
+bibtex_bibfiles = ["reference.bib"]
 
 # -- HTML output ------------------------------------------------------------
 
@@ -79,5 +81,19 @@ bibtex_bibfiles = ["refs.bib"]
 html_theme = "pydata_sphinx_theme"
 html_title = "modmesh"
 html_static_path = ["_static"]
+
+# -- MathJax configuration --------------------------------------------------
+
+mathjax3_config = {
+    "tex": {
+        "macros": {
+            "defeq": r"\overset{\text{def}}{=}",
+            "dif": r"\mathrm{d}",
+        },
+        "packages": {"[+]": ["cancel"]},
+    }
+}
+
+numfig = True
 
 # vim: set ft=python ff=unix fenc=utf8 et sw=4 ts=4 sts=4 tw=79:

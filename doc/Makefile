@@ -6,11 +6,12 @@
 #   make html                         # site -> build/html/index.html
 
 SPHINXBUILD ?= sphinx-build
-PYTHON      ?= python3
-SOURCEDIR    = source
-BUILDDIR     = build
-PORT        ?= 8000
-BIND        ?= 127.0.0.1
+PYTHON ?= python3
+SOURCEDIR = source
+BUILDDIR = build
+PORT ?= 8000
+BIND ?= 127.0.0.1
+FORCE_BUILD ?=
 
 .PHONY: help html doxygen serve clean
 
@@ -19,12 +20,18 @@ help:
 	@echo "make html      build the HTML site into $(BUILDDIR)/html"
 	@echo "make serve     build, then serve at http://localhost:$(PORT)/"
 	@echo "make clean     remove built docs and Doxygen output"
+	@echo ""
+	@echo "Set FORCE_BUILD=1 to force a full rebuild:"
+	@echo "  make FORCE_BUILD=1 html"
 
 doxygen:
 	mkdir -p "$(BUILDDIR)/doxygen"
 	doxygen Doxyfile
 
 html:
+ifdef FORCE_BUILD
+	rm -rf "$(BUILDDIR)/html"
+endif
 	$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/html"
 
 serve: html

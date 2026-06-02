@@ -1,0 +1,25 @@
+\begin{pspicture}(-5,-1.3)(5,1.2)
+
+% X coordinate mark.
+\psline[linewidth=0.5pt,linestyle=solid,arrowsize=4pt 2]{|->}(0,1)(1,1)
+\rput[l](1.1,1){$x$}
+
+% Top and bottom boundary.
+\psline[linewidth=1pt,linestyle=solid]{}(-5,0.7)(5,0.7)
+\psline[linewidth=1pt,linestyle=solid]{}(-5,-0.7)(5,-0.7)
+
+% Diaphragm.
+\psline[linewidth=2pt,linestyle=solid]{}(0,-0.7)(0,0.7)
+\pscurve[linewidth=0.5pt,linestyle=solid,arrowsize=4pt 2]{->}%
+(1,-1)(0.2,-0.9)(0,-0.72)
+\rput[l](1.1,-1){diaphragm}
+
+% Flow properties.
+\rput[l](-4.9,0.2){$p_1, \rho_1$}
+\rput[l](-4.9,-0.2){$v_1 = 0$}
+\rput[r](4.9,0.2){$p_5, \rho_5$}
+\rput[r](4.9,-0.2){$v_5 = 0$}
+
+\end{pspicture}
+
+% vim: set fenc=utf8 ff=unix nobomb et sw=2 ts=2 tw=79:

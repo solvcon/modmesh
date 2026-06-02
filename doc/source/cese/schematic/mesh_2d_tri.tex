@@ -1,0 +1,118 @@
+\psset{unit=1.2cm}
+\begin{pspicture}(-2.7,-1.8)(4.4,2.1)
+
+%\begin{pspicture}(-5,-5)(5,5) % for debug
+%\psgrid[subgriddiv=1,griddots=5](-4,-4)(4,4) % for debug
+%\psset{Alpha=180,Beta=90} % rotate to x-y plane.
+
+%\pstThreeDCoor[nameZ=$t$] % for debug
+
+% Helpers
+
+\def\unpackTuple(#1,#2,#3)#4#5#6{\def#4{#1}\def#5{#2}\def#6{#3}}
+
+\def\elevatePoint#1#2[#3]{%
+  \expandafter\unpackTuple#1{\pax}{\pay}{\paz}%
+  \edef#2{(\pax,\pay,#3)}%
+}
+
+\def\centerLine#1#2{%
+  \expandafter\unpackTuple#1{\pax}{\pay}{\paz}%
+  \expandafter\unpackTuple#2{\pbx}{\pby}{\pbz}%
+  \psset{linewidth=0.5pt,linecolor=black,linestyle=solid}%
+  \pstThreeDLine(\pax,\pay,\paz)(\pbx,\pby,\pbz)%
+}
+
+\def\meshLine#1#2{%
+  \expandafter\unpackTuple#1{\pax}{\pay}{\paz}%
+  \expandafter\unpackTuple#2{\pbx}{\pby}{\pbz}%
+  \psset{linewidth=0.5pt,linecolor=black,linestyle=solid}%
+  \pstThreeDLine(\pax,\pay,\paz)(\pbx,\pby,\pbz)%
+}
+
+\def\meshTriangle#1#2#3{%
+  \meshLine{#1}{#2}%
+  \meshLine{#2}{#3}%
+  \meshLine{#3}{#1}%
+}
+
+\def\markSize{10pt}
+
+\def\meshVertex[#1]#2#3{{%
+  \psset{linewidth=0.1pt,linecolor=red,dotsize=2pt,dotstyle=square*}%
+  \expandafter\pstThreeDDot#2%
+  \expandafter\pstThreeDNode#2{temp@pstNode}%
+  \uput{3 pt}[#1](temp@pstNode){\fontsize{\markSize}{\markSize}\selectfont#3}%
+}\ignorespaces}
+
+\def\meshCenter[#1]#2#3[#4]{{%
+  \psset{linewidth=0.1pt,linecolor=black,dotsize=3pt,#4}%
+  \expandafter\pstThreeDDot#2%
+  \expandafter\pstThreeDNode#2{temp@pstNode}%
+  \uput{3 pt}[#1](temp@pstNode){\fontsize{\markSize}{\markSize}\selectfont#3}%
+}\ignorespaces}
+
+% Coordinates
+
+\def\vI{(-3.1, 1  ,0)}
+\def\vB{(-1.6,-0.4,0)}
+\def\vK{( 0.2,-2.7,0)}
+\def\vD{( 0.8,-1.1,0)}
+\def\vL{( 2.3, 1.1,0)}
+\def\vF{(-0.4, 1.5,0)}
+\def\vM{(-2.2, 3.2,0)}
+\def\vN{(-3.7,-0.6,0)}
+
+\def\cG{(-0.4,-0.4,0)}
+\def\cA{(-1.7, 0.7,0)}
+\def\cC{(-0.2,-1.4,0)}
+\def\cE{( 0.9, 0.5,0)}
+\def\cH{(-1.9, 1.9,0)}
+\def\cJ{(-2.8, 0  ,0)}
+
+\def\elevation{2.5}
+\elevatePoint{\cG}{\cGp}[\elevation]
+\elevatePoint{\cA}{\cAp}[\elevation]
+\elevatePoint{\vB}{\vBp}[\elevation]
+\elevatePoint{\cC}{\cCp}[\elevation]
+\elevatePoint{\vD}{\vDp}[\elevation]
+\elevatePoint{\cE}{\cEp}[\elevation]
+\elevatePoint{\vF}{\vFp}[\elevation]
+
+\elevatePoint{\cH}{\cHp}[\elevation]
+\elevatePoint{\vI}{\vIp}[\elevation]
+\elevatePoint{\cJ}{\cJp}[\elevation]
+
+\def\elevation{5}
+\elevatePoint{\cA}{\cApp}[\elevation]
+\elevatePoint{\vB}{\vBpp}[\elevation]
+\elevatePoint{\cG}{\cGpp}[\elevation]
+\elevatePoint{\vF}{\vFpp}[\elevation]
+\elevatePoint{\cH}{\cHpp}[\elevation]
+\elevatePoint{\vI}{\vIpp}[\elevation]
+\elevatePoint{\cJ}{\cJpp}[\elevation]
+
+% Mesh grid lines
+
+\meshTriangle{\vI}{\vB}{\vF}
+\meshTriangle{\vB}{\vK}{\vD}
+\meshTriangle{\vD}{\vL}{\vF}
+\meshLine{\vF}{\vM}
+\meshLine{\vM}{\vI}
+\meshLine{\vI}{\vN}
+\meshLine{\vN}{\vB}
+
+% Point marks.
+
+\meshVertex[30]{\vI}{I}
+\meshVertex[135]{\vB}{B}
+\meshVertex[180]{\vK}{K}
+\meshVertex[200]{\vD}{D}
+\meshVertex[270]{\vL}{L}
+\meshVertex[300]{\vF}{F}
+\meshVertex[270]{\vM}{M}
+\meshVertex[30]{\vN}{N}
+
+\end{pspicture}
+
+% vim: set fenc=utf8 ff=unix nobomb et sw=2 ts=2 tw=79:

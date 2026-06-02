@@ -1,0 +1,36 @@
+\psset{unit=5cm}
+\begin{pspicture}(-0.833333,-0.333333)(2.78333,0.916667)
+
+\psset{linewidth=1pt}
+\psset{linecolor=black}
+\psline[linewidth=0.5pt,linecolor=red](0,0)(0,0.5)
+\psline[linewidth=0.5pt,linecolor=red](0,0)(1,0)
+\psdots[dotstyle=o](0,0)
+\uput{0.05}[dl](0,0){$x_{j-\frac{1}{2}}$}
+\psdots[dotstyle=triangle](0.25,0)
+\uput{0.05}[u](0.25,0){$x^s_{j-\frac{1}{2}}$}
+\psline[linewidth=0.5pt,linecolor=blue](2,0)(2,0.5)
+\psline[linewidth=0.5pt,linecolor=blue](1,0)(2,0)
+\psdots[dotstyle=o](2,0)
+\uput{0.05}[dr](2,0){$x_{j+\frac{1}{2}}$}
+\psdots[dotstyle=triangle](1.875,0)
+\uput{0.05}[u](1.875,0){$x^s_{j+\frac{1}{2}}$}
+\psdots[dotstyle=square](1,0)
+\uput{0.05}[u](1,0){$x^+_{j-\frac{1}{2}} = x^-_{j+\frac{1}{2}}$}
+\psline[linewidth=0.5pt,linecolor=orange](0,0.5)(1,0.5)
+\psline[linewidth=0.5pt,linecolor=orange](1,0.5)(2,0.5)
+\psdots[dotstyle=o](1,0.5)
+\psdots[dotstyle=triangle](1,0.5)
+\uput{0.05}[d](1,0.5){$x_j=x^s_j$}
+\psline[arrows=->,linecolor=red](0.5,0)(0.5,-0.0833333)
+\uput{0}[d](0.5,-0.0833333){{\color{red}$(\mathbf{h}^*)^n_{j-\frac{1}{2},+}\cdot(0, -\Delta x^+_{j-\frac{1}{2}})$}}
+\psline[arrows=->,linecolor=blue](1.5,0)(1.5,-0.0833333)
+\uput{0}[d](1.5,-0.0833333){{\color{blue}$(\mathbf{h}^*)^n_{j+\frac{1}{2},-}\cdot(0, -\Delta x^-_{j+\frac{1}{2}})$}}
+\psline[arrows=->,linecolor=orange](1,0.515)(1,0.666667)
+\uput{0}[u](1,0.666667){{\color{orange}$\mathbf{h}^{n+\frac{1}{2}}_{j}\cdot(0, \Delta x_j)$}}
+\psline[arrows=->,linecolor=red](0,0.25)(-0.0833333,0.25)
+\uput{0}[ul](-0.0833333,0.25){{\color{red}$(\mathbf{h}^*)^{n,+}_{j-\frac{1}{2}}\cdot(-\frac{\Delta t}{2}, 0)$}}
+\psline[arrows=->,linecolor=blue](2,0.25)(2.08333,0.25)
+\uput{0}[ur](2.08333,0.25){{\color{blue}$(\mathbf{h}^*)^{n,+}_{j+\frac{1}{2}}\cdot(\frac{\Delta t}{2}, 0)$}}
+
+\end{pspicture}
