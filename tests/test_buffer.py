@@ -846,6 +846,16 @@ class SimpleArrayBasicTC(unittest.TestCase):
                     v += 1
 
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        ndarr = np.arange(2 * 3 * 4, dtype='uint8').reshape((2, 3, 4))
+        sarr[...] = ndarr[...]
+        v = 0
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(v, sarr[i, j, k])
+                    v += 1
+
+        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
         ndarr = np.arange(2 * 3 * 4, dtype='float32').reshape((2, 3, 4))
         sarr[...] = ndarr[...]
         v = 0
