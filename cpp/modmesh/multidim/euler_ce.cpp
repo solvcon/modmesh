@@ -83,11 +83,11 @@ void EulerCore::prepare_ce()
 {
     if (2 == m_ndim)
     {
-        prepare_ce_2d<2>();
+        prepare_ce_2d();
     }
     else if (3 == m_ndim)
     {
-        prepare_ce_3d<3>();
+        prepare_ce_3d();
     }
     else
     {
@@ -95,10 +95,9 @@ void EulerCore::prepare_ce()
     }
 }
 
-template <size_t NDIM>
 void EulerCore::prepare_ce_2d()
 {
-    static_assert(2 == NDIM);
+    constexpr size_t ndim = 2;
 
     auto const & msh = *m_mesh;
     auto const ncell = m_ncell;
@@ -152,7 +151,7 @@ void EulerCore::prepare_ce_2d()
             real_type const volb = voli + vole;
             m_cevol(icl, ifl) = volb;
 
-            size_t const cecnd_col = static_cast<size_t>(ifl) * NDIM;
+            size_t const cecnd_col = static_cast<size_t>(ifl) * ndim;
             m_cecnd(icl, cecnd_col + 0) =
                 (cndi0 * voli + cnde0 * vole) / volb;
             m_cecnd(icl, cecnd_col + 1) =
@@ -197,10 +196,9 @@ void EulerCore::prepare_ce_2d()
     }
 }
 
-template <size_t NDIM>
 void EulerCore::prepare_ce_3d()
 {
-    static_assert(3 == NDIM);
+    constexpr size_t ndim = 3;
 
     auto const & msh = *m_mesh;
     auto const ncell = m_ncell;
@@ -349,7 +347,7 @@ void EulerCore::prepare_ce_3d()
 
             // Store BCE.
             m_cevol(icl, ifl) = volb;
-            size_t const cecnd_col = static_cast<size_t>(ifl) * NDIM;
+            size_t const cecnd_col = static_cast<size_t>(ifl) * ndim;
             m_cecnd(icl, cecnd_col + 0) = bcecnd0 / volb;
             m_cecnd(icl, cecnd_col + 1) = bcecnd1 / volb;
             m_cecnd(icl, cecnd_col + 2) = bcecnd2 / volb;
@@ -368,10 +366,6 @@ void EulerCore::prepare_ce_3d()
         m_cecnd(icl, 2) = cecnd2 / volc;
     }
 }
-
-// Explicit template instantiations.
-template void EulerCore::prepare_ce_2d<2>();
-template void EulerCore::prepare_ce_3d<3>();
 
 } /* end namespace modmesh */
 

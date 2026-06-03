@@ -87,9 +87,7 @@ private:
 
     void initialize_arrays();
 
-    template <size_t NDIM>
     void prepare_ce_2d();
-    template <size_t NDIM>
     void prepare_ce_3d();
 
     std::shared_ptr<StaticMesh> m_mesh;
