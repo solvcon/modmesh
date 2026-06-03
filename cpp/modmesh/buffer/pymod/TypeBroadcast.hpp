@@ -38,11 +38,50 @@ namespace modmesh
 namespace python
 {
 
+namespace detail
+{
+
+inline modmesh::detail::shape_type shape_from_slices(
+    std::vector<modmesh::detail::slice_type> const & slices)
+{
+    modmesh::detail::shape_type shape(slices.size());
+    for (size_t i = 0; i < slices.size(); ++i)
+    {
+        shape[i] = static_cast<size_t>(slices[i][3]);
+    }
+    return shape;
+}
+
+} /* end namespace detail */
+
 template <typename T /* original type */, typename D /* for destination type */>
 struct TypeBroadcastImpl
 {
     using slice_type = modmesh::detail::slice_type;
     using shape_type = modmesh::detail::shape_type;
+
+    static ssize_t input_offset(pybind11::array_t<D> const & arr_in, shape_type const & sidx)
+    {
+        ssize_t offset = 0;
+        for (pybind11::ssize_t i = 0; i < arr_in.ndim(); ++i)
+        {
+            auto const index = static_cast<ssize_t>(sidx[i]);
+            offset += arr_in.strides(i) / arr_in.itemsize() * index;
+        }
+        return offset;
+    }
+
+    static ssize_t offset_from_slices(SimpleArray<T> const & arr, std::vector<slice_type> const & slices, shape_type const & sidx)
+    {
+        ssize_t offset = 0;
+        for (size_t i = 0; i < arr.ndim(); ++i)
+        {
+            auto const slice_index = static_cast<ssize_t>(sidx[i]);
+            ssize_t const index = slices[i][0] + slice_index * slices[i][2];
+            offset += modmesh::detail::stride_to_signed(arr.stride(i)) * index;
+        }
+        return offset;
+    }
 
     // NOLINTNEXTLINE(misc-no-recursion)
     static void copy_idx(SimpleArray<T> & arr_out, std::vector<slice_type> const & slices, pybind11::array_t<D> const * arr_in, shape_type left_shape, shape_type sidx, int dim)
@@ -51,40 +90,26 @@ struct TypeBroadcastImpl
 
         if (dim < 0)
         {
-            return;
-        }
-
-        for (size_t i = 0; i < left_shape[dim]; ++i)
-        {
-            sidx[dim] = i;
-
-            size_t offset_in = 0;
-            for (pybind11::ssize_t it = 0; it < arr_in->ndim(); ++it)
-            {
-                offset_in += arr_in->strides(it) / arr_in->itemsize() * sidx[it];
-            }
-            const D * ptr_in = arr_in->data() + offset_in;
-
-            size_t offset_out = 0;
-            for (size_t it = 0; it < arr_out.ndim(); ++it)
-            {
-                auto step = slices[it][2];
-                offset_out += arr_out.stride(it) * sidx[it] * step;
-            }
+            D const * ptr_in = arr_in->data() + input_offset(*arr_in, sidx);
+            ssize_t const offset_out = offset_from_slices(arr_out, slices, sidx);
 
             constexpr bool valid_conversion = (!is_complex_v<T> && !is_complex_v<D>) || (is_complex_v<T> && is_complex_v<D> && std::is_same_v<T, D>);
 
             if constexpr (valid_conversion)
             {
                 // FIXME: NOLINTNEXTLINE(bugprone-signed-char-misuse,cert-str34-c)
-                arr_out.at(offset_out) = static_cast<out_type>(*ptr_in);
+                arr_out.data()[offset_out] = static_cast<out_type>(*ptr_in);
             }
             else
             {
                 throw std::runtime_error("Cannot convert between complex and non-complex types");
             }
+            return;
+        }
 
-            // recursion here
+        for (size_t i = 0; i < left_shape[dim]; ++i)
+        {
+            sidx[dim] = i;
             copy_idx(arr_out, slices, arr_in, left_shape, sidx, dim - 1);
         }
     }
@@ -94,27 +119,8 @@ struct TypeBroadcastImpl
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         auto * arr_new = reinterpret_cast<pybind11::array_t<D> const *>(&arr_in);
 
-        shape_type left_shape(arr_out.ndim());
-        for (size_t i = 0; i < arr_out.ndim(); i++)
-        {
-            slice_type const & slice = slices[i];
-            if ((slice[1] - slice[0]) % slice[2] == 0)
-            {
-                left_shape[i] = (slice[1] - slice[0]) / slice[2];
-            }
-            else
-            {
-                left_shape[i] = (slice[1] - slice[0]) / slice[2] + 1;
-            }
-        }
-
-        shape_type sidx_init(arr_out.ndim());
-
-        for (size_t i = 0; i < arr_out.ndim(); ++i)
-        {
-            sidx_init[i] = 0;
-        }
-
+        shape_type const left_shape = modmesh::python::detail::shape_from_slices(slices);
+        shape_type const sidx_init(arr_out.ndim());
         copy_idx(arr_out, slices, arr_new, left_shape, sidx_init, static_cast<int>(arr_out.ndim()) - 1);
     }
 }; /* end struct TypeBroadcastImpl */
@@ -133,20 +139,7 @@ struct TypeBroadcast
             right_shape[i] = arr_in.shape(i);
         }
 
-        shape_type left_shape(arr_out.ndim());
-        // TODO: range check
-        for (size_t i = 0; i < arr_out.ndim(); i++)
-        {
-            const slice_type & slice = slices[i];
-            if ((slice[1] - slice[0]) % slice[2] == 0)
-            {
-                left_shape[i] = (slice[1] - slice[0]) / slice[2];
-            }
-            else
-            {
-                left_shape[i] = (slice[1] - slice[0]) / slice[2] + 1;
-            }
-        }
+        shape_type left_shape = modmesh::python::detail::shape_from_slices(slices);
 
         if (arr_out.ndim() != static_cast<size_t>(arr_in.ndim()))
         {

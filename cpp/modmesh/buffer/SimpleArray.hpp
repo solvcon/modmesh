@@ -86,6 +86,22 @@ concept InputIterator = requires(It it) {
 namespace detail
 {
 
+/*
+ * FIXME: SimpleArray currently stores strides as small_vector<size_t>. Negative
+ * NumPy strides are temporarily preserved by wrapping them into size_t on
+ * input and converting them back here. Clean this up by making the internal
+ * stride storage small_vector<ssize_t>.
+ */
+inline ssize_t stride_to_signed(size_t stride) noexcept
+{
+    if (stride <= static_cast<size_t>(std::numeric_limits<ssize_t>::max()))
+    {
+        return static_cast<ssize_t>(stride);
+    }
+
+    return -static_cast<ssize_t>(~stride + 1);
+}
+
 template <size_t D, typename S>
 size_t buffer_offset_impl(S const &)
 {
