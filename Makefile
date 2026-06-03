@@ -156,6 +156,15 @@ pyprof: buildext $(PROFFILES)
 pilot: cmake
 	cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)
 
+.PHONY: pilot_clang_tidy_diff
+pilot_clang_tidy_diff: cmake
+	@test -n "$(MODMESH_DIFF_BASE)" || { \
+		echo "Error: MODMESH_DIFF_BASE is required."; \
+		exit 1; \
+	}
+	env MODMESH_DIFF_BASE="$(MODMESH_DIFF_BASE)" \
+		cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE)
+
 .PHONY: gtest
 gtest: cmake
 	cmake --build $(BUILD_PATH) --target run_gtest VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)

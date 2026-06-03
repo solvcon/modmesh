@@ -110,6 +110,39 @@ endif()
 
 add_custom_target(run_pilot_pytest $<TARGET_FILE:pilot> --mode=pytest)
 
+set(CLANG_TIDY_DIFF_EXE clang-tidy-diff.py)
+if(CLANG_TIDY_EXE)
+    file(REAL_PATH "${CLANG_TIDY_EXE}" CLANG_TIDY_REALPATH)
+    get_filename_component(
+        CLANG_TIDY_BINDIR
+        "${CLANG_TIDY_REALPATH}"
+        DIRECTORY
+    )
+    find_program(
+        CLANG_TIDY_DIFF_FOUND
+        NAMES clang-tidy-diff.py
+        HINTS
+            "${CLANG_TIDY_BINDIR}"
+            "${CLANG_TIDY_BINDIR}/../share/clang"
+        NO_DEFAULT_PATH
+        NO_CACHE
+    )
+    if(CLANG_TIDY_DIFF_FOUND)
+        set(CLANG_TIDY_DIFF_EXE "${CLANG_TIDY_DIFF_FOUND}")
+    endif()
+endif()
+
+add_custom_target(
+    pilot_clang_tidy_diff
+    COMMAND
+        bash
+        -e
+        -o pipefail
+        -c "test -n \"$MODMESH_DIFF_BASE\"; git diff --no-color -U0 \"$MODMESH_DIFF_BASE\" HEAD -- $<JOIN:${MODMESH_PILOT_FILES}, > | \"${CLANG_TIDY_DIFF_EXE}\" -p1 -path \"${CMAKE_BINARY_DIR}\" -config-file \"${PROJECT_ROOT_DIR}/.clang-tidy\""
+    WORKING_DIRECTORY ${PROJECT_ROOT_DIR}
+    VERBATIM
+)
+
 install(TARGETS pilot
     RUNTIME DESTINATION "${INSTALL_PILOTDIR}"
     BUNDLE DESTINATION "${INSTALL_PILOTDIR}"

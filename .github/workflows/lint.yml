@@ -60,7 +60,7 @@ jobs:
 
     - uses: actions/checkout@v6
       with:
-        fetch-depth: 1
+        fetch-depth: ${{ github.event_name == 'pull_request' && 100 || 1 }}
 
     - name: event name
       run: |
@@ -101,6 +101,7 @@ jobs:
       run: make flake8
 
     - name: make pilot
+      if: github.event_name != 'pull_request'
       run: |
         make pilot \
           ${JOB_MAKE_ARGS} \
@@ -108,12 +109,32 @@ jobs:
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
 
     - name: make run_pilot_pytest
+      if: github.event_name != 'pull_request'
       run: |
         export LD_LIBRARY_PATH=$(python3 -c "import sys, os, shiboken6; sys.stdout.write(os.path.dirname(shiboken6.__file__))")
         make run_pilot_pytest \
           ${JOB_MAKE_ARGS} \
           CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3)"
+
+    - name: make pilot_clang_tidy_diff
+      if: github.event_name == 'pull_request'
+      run: |
+        make pilot_clang_tidy_diff \
+          ${JOB_MAKE_ARGS} \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON" \
+          MODMESH_DIFF_BASE=${{ github.event.pull_request.base.sha }}
+
+    - name: make pilot_clang_tidy_diff with Python library path
+      if: github.event_name == 'pull_request'
+      run: |
+        export LD_LIBRARY_PATH=$(python3 -c "import sys, os, shiboken6; sys.stdout.write(os.path.dirname(shiboken6.__file__))")
+        make pilot_clang_tidy_diff \
+          ${JOB_MAKE_ARGS} \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON" \
+          MODMESH_DIFF_BASE=${{ github.event.pull_request.base.sha }}
 
   send_email_on_failure:
     needs: [lint]
