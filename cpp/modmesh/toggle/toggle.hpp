@@ -125,6 +125,8 @@ private:
 
 }; /* end class HierarchicalToggleAccess */
 
+// All data members are class types with their own default constructors.
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 class DynamicToggleTable
 {
 
@@ -155,6 +157,8 @@ public:
     }
     void add_subkey(std::string const & key);
 
+    // Reads the m_key2index member, so it cannot be made static.
+    // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
     DynamicToggleIndex get_index(std::string const & key) const
     {
         auto it = m_key2index.find(key);
@@ -316,6 +320,8 @@ private:
 
 class ProcessInfo;
 
+// The std::vector data members are default-constructed.
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 class CommandLineInfo
 {
 
@@ -332,6 +338,8 @@ public:
     std::string const & executable_basename() const { return m_executable_basename; }
     std::vector<std::string> const & populated_argv() const { return m_populated_argv; }
     std::vector<std::string> const & python_argv() const { return m_python_argv; }
+    // Assigns to the m_python_argv member, so it cannot be made const.
+    // NOLINTNEXTLINE(readability-make-member-function-const)
     void set_python_argv(std::vector<std::string> const & argv)
     {
         if (!m_frozen)

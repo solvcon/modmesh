@@ -95,6 +95,9 @@ inline constexpr size_t get_recommended_alignment()
 
 #ifdef __aarch64__
 // SFINAE helpers for vectorized operations.
+// The trailing decltype return types are required for the SFINAE used by
+// transform_binary below, so fuchsia-trailing-return does not apply here.
+// NOLINTBEGIN(fuchsia-trailing-return)
 struct vec_add
 {
     template <typename V>
@@ -115,6 +118,7 @@ struct vec_div
     template <typename V>
     static auto operator()(V a, V b) -> decltype(vdivq(a, b)) { return vdivq(a, b); }
 };
+// NOLINTEND(fuchsia-trailing-return)
 
 template <typename T, std::invocable<T, T> ScalarOp, typename VecOp>
 void transform_binary(T * dest, T const * dest_end, T const * src1, T const * src2, ScalarOp scalar_op, VecOp vec_op)
@@ -299,3 +303,5 @@ void div(T * dest, T const * dest_end, T const * src1, T const * src2)
 } /* namespace simd */
 
 } /* namespace modmesh */
+
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
