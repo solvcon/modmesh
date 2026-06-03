@@ -184,9 +184,9 @@ struct TypeBroadcast
         {
             TypeBroadcastImpl<T, int64_t>::broadcast(arr_out, slices, arr_in);
         }
-        else if (dtype_is_type<uint32_t>(arr_in))
+        else if (dtype_is_type<uint8_t>(arr_in))
         {
-            TypeBroadcastImpl<T, uint32_t>::broadcast(arr_out, slices, arr_in);
+            TypeBroadcastImpl<T, uint8_t>::broadcast(arr_out, slices, arr_in);
         }
         else if (dtype_is_type<uint16_t>(arr_in))
         {
