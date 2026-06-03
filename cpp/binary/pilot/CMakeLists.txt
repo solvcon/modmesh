@@ -75,6 +75,19 @@ target_compile_options(
     ${COMMON_COMPILER_OPTIONS}
 )
 
+if(APPLE)
+    # pilot.cpp pulls in apple's accelerate/veclib headers, whose CF_ENUM
+    # macros trip clang-diagnostic-elaborated-enum-base, and the lint job
+    # runs clang-tidy with -warnings-as-errors=*. modmesh_primary already
+    # suppresses this; the pilot target needs it too. The library's other
+    # -Wno flags are not needed here: pilot.cpp lints clean on Linux
+    # without them, so this stays apple-only.
+    target_compile_options(
+        pilot PRIVATE
+        -Wno-elaborated-enum-base # for apple accelerate/veclib
+    )
+endif()
+
 if(CLANG_TIDY_EXE AND USE_CLANG_TIDY)
     set_target_properties(
         pilot PROPERTIES

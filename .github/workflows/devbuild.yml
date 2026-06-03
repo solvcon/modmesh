@@ -94,6 +94,12 @@ jobs:
     timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '45') }}
 
     env:
+      # Cap build parallelism. The github-hosted runners have only 3 (macOS)
+      # / 4 (ubuntu) virtual cores shared with co-tenant VMs, so the default
+      # unbounded `make -j` oversubscribes memory and CPU; on the 7 GB arm64
+      # macOS runner that swaps until the job hits its timeout. -j2 is the
+      # safe bet on both.
+      MAKE_PARALLEL: -j2
       QT_DEBUG_PLUGINS: 1
       QT_QPA_PLATFORM: offscreen # for Ubuntu runner
       PIP_BREAK_SYSTEM_PACKAGES: 1 # disabling PEP668 (for MacOS runner)

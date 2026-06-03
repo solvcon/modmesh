@@ -106,6 +106,8 @@ public:
     using value_type = double;
     using array_type = SimpleArray<value_type>;
 
+    // Constructs m_coord from nullptr, so it cannot use '= default'.
+    // NOLINTNEXTLINE(modernize-use-equals-default)
     StaticGrid1d()
         : m_coord(nullptr)
     {
@@ -161,6 +163,8 @@ public:
     real_type at(size_t it) const { return m_coord.at(it); }
     real_type & at(size_t it) { return m_coord.at(it); }
 
+    // Mutates the m_coord member, so it cannot be made static.
+    // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
     void fill(real_type val)
     {
         MODMESH_PROFILE_SCOPE("StaticGrid1d::fill");

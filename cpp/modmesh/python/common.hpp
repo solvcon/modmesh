@@ -311,6 +311,9 @@ public:
     DECL_MM_PYBIND_CLASS_METHOD_UNTIMED(METHOD) \
     DECL_MM_PYBIND_CLASS_METHOD_TIMED(METHOD)
 
+    // The args pack is forwarded inside the macro-generated bodies above;
+    // clang-tidy misattributes the forwarding through the macro expansion.
+    // NOLINTBEGIN(cppcoreguidelines-missing-std-forward)
     DECL_MM_PYBIND_CLASS_METHOD(def)
     DECL_MM_PYBIND_CLASS_METHOD(def_static)
 
@@ -325,6 +328,7 @@ public:
     DECL_MM_PYBIND_CLASS_METHOD(def_property_readonly_static)
 
     DECL_MM_PYBIND_CLASS_METHOD_UNTIMED(def_buffer)
+    // NOLINTEND(cppcoreguidelines-missing-std-forward)
 
 #undef DECL_MM_PYBIND_CLASS_METHOD_UNTIMED
 #undef DECL_MM_PYBIND_CLASS_METHOD_TIMED
@@ -417,6 +421,8 @@ public:
 protected:
 
     template <typename... Extra>
+    // m_cls is initialized in the member initializer list below.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
     WrapBase(pybind11::module & mod, char const * pyname, char const * pydoc, const Extra &... extra)
         : m_cls(mod, pyname, pydoc, extra...)
     {

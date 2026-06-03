@@ -502,6 +502,9 @@ public:
         }
         value_type const mu = mean_op(sv);
         real_type acc = 0;
+        // The complex and real branches differ; clang-tidy cannot tell the
+        // type-dependent expressions apart in the uninstantiated template.
+        // NOLINTBEGIN(bugprone-branch-clone)
         if constexpr (is_complex_v<value_type>)
         {
             for (const auto & v : sv)
@@ -516,6 +519,7 @@ public:
                 acc += (v - mu) * (v - mu);
             }
         }
+        // NOLINTEND(bugprone-branch-clone)
         return acc / static_cast<real_type>(n - ddof);
     }
 
@@ -1028,6 +1032,9 @@ detail::SimpleArrayMixinCalculators<A, T>::median_freq(small_vector<value_type> 
 
     uint32_t freq[256] = {}; // NOLINT(cppcoreguidelines-avoid-c-arrays,modernize-avoid-c-arrays)
 
+    // Each branch indexes freq differently per element type; clang-tidy
+    // cannot tell the type-dependent bodies apart in the template.
+    // NOLINTBEGIN(bugprone-branch-clone)
     if constexpr (std::is_same_v<value_type, uint8_t>)
     {
         for (uint8_t const v : sv) { ++freq[v]; }
@@ -1040,6 +1047,7 @@ detail::SimpleArrayMixinCalculators<A, T>::median_freq(small_vector<value_type> 
     {
         for (bool const v : sv) { ++freq[v ? 1 : 0]; }
     }
+    // NOLINTEND(bugprone-branch-clone)
 
     int b1, b2;
     find_two_bins(freq, n, b1, b2);

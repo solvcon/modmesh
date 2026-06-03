@@ -40,6 +40,11 @@ jobs:
 
     env:
       JOB_MAKE_ARGS: VERBOSE=1 BUILD_QT=ON USE_CLANG_TIDY=ON LINT_AS_ERRORS=ON
+      # Cap build parallelism. The github-hosted runners have only 3 (macOS)
+      # / 4 (ubuntu) virtual cores shared with co-tenant VMs, so the default
+      # unbounded `make -j` oversubscribes memory and CPU; on the 7 GB arm64
+      # macOS runner clang-tidy then OOMs. -j2 is the safe bet on both.
+      MAKE_PARALLEL: -j2
       QT_DEBUG_PLUGINS: 1
       QT_QPA_PLATFORM: offscreen # for Ubuntu runner
       PIP_BREAK_SYSTEM_PACKAGES: 1 # disabling PEP668 (for MacOS runner)
@@ -50,8 +55,9 @@ jobs:
     strategy:
       matrix:
         # https://github.com/actions/runner-images/blob/main/images/macos/macos-26-Readme.md
-        # use macos-26-intel to have bigger 14 GB RAM; otherwise, macos-26-arm64 only has 7GB RAM
-        os: [ubuntu-24.04, macos-26-intel]
+        # macos-26 is arm64 with 7 GB RAM; build parallelism is capped via
+        # MAKE_PARALLEL in the env block above so clang-tidy does not OOM.
+        os: [ubuntu-24.04, macos-26]
         cmake_build_type: [Debug]
 
       fail-fast: false

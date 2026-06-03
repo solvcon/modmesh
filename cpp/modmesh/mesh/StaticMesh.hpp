@@ -264,7 +264,7 @@ public:
         return std::make_shared<StaticMesh>(std::forward<Args>(args)..., ctor_passkey());
     }
 
-    /* NOLINTNEXTLINE(bugprone-easily-swappable-parameters) */
+    /* NOLINTNEXTLINE(bugprone-easily-swappable-parameters,cppcoreguidelines-pro-type-member-init) */
     StaticMesh(uint8_t ndim, uint_type nnode, uint_type nface, uint_type ncell, ctor_passkey const &)
         : m_ndim(ndim)
         , m_nnode(nnode)

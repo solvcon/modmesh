@@ -54,6 +54,9 @@ public:
         return instance;
     }
 
+    // m_start and m_stop are initialized below; the body is not a trivial
+    // default, so it cannot use '= default'.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init,modernize-use-equals-default)
     StopWatch()
         : m_start(clock_type::now())
         , m_stop(m_start)
