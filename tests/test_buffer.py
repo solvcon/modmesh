@@ -928,6 +928,21 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ndarr[::2, ::3, ::, :, ::1] = ndarr_input[...]
         check(sarr, ndarr)
 
+    def test_SimpleArray_broadcast_slice_complex_ndarray(self):
+        ndarr = np.zeros((2, 3), dtype='complex128')
+        sarr = modmesh.SimpleArrayComplex128(array=ndarr)
+
+        sarr[0, 1] = 1 + 2j
+        ndarr[0, 1] = 1 + 2j
+        sarr[1, 2] = modmesh.complex128(3, 4)
+        ndarr[1, 2] = 3 + 4j
+        np.testing.assert_array_equal(ndarr, sarr.ndarray)
+
+        rhs = np.arange(2 * 3, dtype='float64').reshape((2, 3))
+        rhs = (rhs + 3j).astype('complex128')
+        sarr[:, :] = rhs
+        np.testing.assert_array_equal(rhs, sarr.ndarray)
+
     def test_SimpleArray_broadcast_slice_shape(self):
         ndarr = np.arange(2 * 3 * 4, dtype='float64').reshape((2, 3, 4))
 

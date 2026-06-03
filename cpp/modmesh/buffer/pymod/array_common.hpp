@@ -177,21 +177,6 @@ inline modmesh::detail::shape_type make_shape(pybind11::object const & shape_in)
     return shape;
 }
 
-template <typename T>
-struct convert_to_std
-{
-    using type = T;
-};
-
-template <typename T>
-struct convert_to_std<Complex<T>>
-{
-    using type = std::complex<T>;
-};
-
-template <typename T>
-using convert_to_std_t = typename convert_to_std<T>::type;
-
 /// Helper class for array property in Python.
 template <typename T>
 class ArrayPropertyHelper
@@ -230,46 +215,27 @@ public:
             const py::object & py_key = args[0];
             const py::object & py_value = args[1];
 
-            // Determine if py_value is a numpy complexx
-            // Reference: https://stackoverflow.com/a/79673025
-            py::object builtins = py::module_::import("builtins"); // NOLINT(misc-const-correctness)
-            py::object complex_class = builtins.attr("complex"); // NOLINT(misc-const-correctness)
-            const bool is_number = py::isinstance<py::bool_>(py_value) || py::isinstance<py::int_>(py_value) || py::isinstance<py::float_>(py_value) || is_complex_v<T> || py::isinstance(py_value, complex_class);
+            const bool is_sequence_value = is_sequence(py_value);
+            const bool is_scalar_value = is_scalar(py_value);
 
             // sarr[K] = V
-            if (py::isinstance<py::int_>(py_key) && is_number)
+            if (py::isinstance<py::int_>(py_key) && is_scalar_value)
             {
                 const auto key = py_key.cast<ssize_t>();
-                if (is_complex_v<T> && py::isinstance(py_value, complex_class))
-                {
-                    arr_out.at(key) = py_value.cast<convert_to_std_t<T>>();
-                }
-                else
-                {
-                    arr_out.at(key) = py_value.cast<T>();
-                }
+                arr_out.at(key) = cast_scalar(py_value);
                 return;
             }
             // sarr[K1, K2, K3] = V
-            if (py::isinstance<py::tuple>(py_key) && is_number)
+            if (py::isinstance<py::tuple>(py_key) && is_scalar_value)
             {
                 const auto key = py_key.cast<std::vector<ssize_t>>();
-                if (is_complex_v<T> && py::isinstance(py_value, complex_class))
-                {
-                    arr_out.at(key) = py_value.cast<convert_to_std_t<T>>();
-                }
-                else
-                {
-                    arr_out.at(key) = py_value.cast<T>();
-                }
+                arr_out.at(key) = cast_scalar(py_value);
                 return;
             }
 
-            const bool is_sequence = py::isinstance<py::list>(py_value) || py::isinstance<py::array>(py_value) || py::isinstance<py::tuple>(py_value);
-
             // multi-dimension with slice and ellipsis
             // sarr[slice, slice, ellipsis] = ndarr
-            if (py::isinstance<py::tuple>(py_key) && is_sequence)
+            if (py::isinstance<py::tuple>(py_key) && is_sequence_value)
             {
                 const py::tuple tuple_in = py_key;
                 const py::array arr_in = py_value;
@@ -282,7 +248,7 @@ public:
             }
             // one-dimension with slice
             // sarr[slice] = ndarr
-            if (py::isinstance<py::slice>(py_key) && is_sequence)
+            if (py::isinstance<py::slice>(py_key) && is_sequence_value)
             {
                 const auto slice_in = py_key.cast<py::slice>();
                 const auto arr_in = py_value.cast<py::array>();
@@ -294,7 +260,7 @@ public:
                 return;
             }
             // sarr[ellipsis] = ndarr
-            if (py::isinstance<py::ellipsis>(py_key) && is_sequence)
+            if (py::isinstance<py::ellipsis>(py_key) && is_sequence_value)
             {
                 const auto arr_in = py_value.cast<py::array>();
 
@@ -342,6 +308,57 @@ public:
     }
 
 private:
+
+    static bool is_sequence(pybind11::object const & py_value)
+    {
+        return pybind11::isinstance<pybind11::list>(py_value) ||
+               pybind11::isinstance<pybind11::array>(py_value) ||
+               pybind11::isinstance<pybind11::tuple>(py_value);
+    }
+
+    static bool is_scalar(pybind11::object const & py_value)
+    {
+        if (is_sequence(py_value))
+        {
+            return false;
+        }
+
+        bool const is_number = PyNumber_Check(py_value.ptr());
+
+        if constexpr (std::is_same_v<T, Complex<float>> || std::is_same_v<T, Complex<double>>)
+        {
+            return is_number || pybind11::isinstance<T>(py_value);
+        }
+        else
+        {
+            return is_number;
+        }
+    }
+
+    template <typename U>
+    static Complex<U> cast_complex_scalar(
+        pybind11::object const & py_value)
+    {
+        pybind11::object const complex_class =
+            pybind11::module_::import("builtins").attr("complex");
+        return complex_class(py_value).cast<std::complex<U>>();
+    }
+
+    static T cast_scalar(pybind11::object const & py_value)
+    {
+        if constexpr (std::is_same_v<T, Complex<float>>)
+        {
+            return cast_complex_scalar<float>(py_value);
+        }
+        else if constexpr (std::is_same_v<T, Complex<double>>)
+        {
+            return cast_complex_scalar<double>(py_value);
+        }
+        else
+        {
+            return py_value.cast<T>();
+        }
+    }
 
     static std::vector<slice_type> make_default_slices(SimpleArray<T> const & arr)
     {
