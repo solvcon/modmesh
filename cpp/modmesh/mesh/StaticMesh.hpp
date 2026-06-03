@@ -327,6 +327,14 @@ public:
      */
     int_type fcjcl(int_type ifc) const { return m_fccls(ifc, 1); }
 
+    /**
+     * Get the neighbor cell of @a icl across face @a ifc.
+     */
+    int_type fcrcl(int_type ifc, int_type icl) const
+    {
+        return m_fccls(ifc, 0) + m_fccls(ifc, 1) - icl;
+    }
+
     // Helpers for interior data.
 public:
 

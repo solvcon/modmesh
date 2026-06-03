@@ -61,23 +61,47 @@ public:
         return std::make_shared<EulerCore>(std::forward<Args>(args)..., ctor_passkey());
     }
 
-    EulerCore(std::shared_ptr<StaticMesh> const & mesh, real_type time_increment, ctor_passkey const &)
-        : m_mesh(mesh)
-        , m_time_increment(time_increment)
-    {
-    }
+    EulerCore(std::shared_ptr<StaticMesh> const & mesh, real_type time_increment, ctor_passkey const &);
 
     EulerCore() = delete;
     EulerCore(EulerCore const &) = delete;
     EulerCore(EulerCore &&) = delete;
-    EulerCore operator=(EulerCore const &) = delete;
-    EulerCore operator=(EulerCore &&) = delete;
+    EulerCore & operator=(EulerCore const &) = delete;
+    EulerCore & operator=(EulerCore &&) = delete;
     ~EulerCore() = default;
+
+    std::shared_ptr<StaticMesh> const & mesh() const { return m_mesh; }
+    uint8_t ndim() const { return m_ndim; }
+    int_type ncell() const { return m_ncell; }
+    int_type ngstcell() const { return m_ngstcell; }
+    real_type time_increment() const { return m_time_increment; }
+
+    SimpleArray<real_type> & cevol() { return m_cevol; }
+    SimpleArray<real_type> & cecnd() { return m_cecnd; }
+    SimpleArray<real_type> & sfcnd() { return m_sfcnd; }
+    SimpleArray<real_type> & sfnml() { return m_sfnml; }
+
+    void prepare_ce();
 
 private:
 
+    void initialize_arrays();
+
+    void prepare_ce_2d();
+    void prepare_ce_3d();
+
     std::shared_ptr<StaticMesh> m_mesh;
     real_type m_time_increment = 0.0;
+
+    uint8_t m_ndim = 0;
+    int_type m_ncell = 0;
+    int_type m_ngstcell = 0;
+
+    // CE geometry arrays.
+    SimpleArray<real_type> m_cevol; // [ncell, CLMFC+1]
+    SimpleArray<real_type> m_cecnd; // [ncell, (CLMFC+1)*ndim]
+    SimpleArray<real_type> m_sfcnd; // [ncell, CLMFC*FCMND, ndim]
+    SimpleArray<real_type> m_sfnml; // [ncell, CLMFC*FCMND, ndim]
 
 }; /* end class EulerCore */
 
