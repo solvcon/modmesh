@@ -448,6 +448,7 @@ jobs:
       job_results: |
         - standalone_buffer: ${{ needs.standalone_buffer.result }}
         - build: ${{ needs.build.result }}
+        - build_windows: ${{ needs.build_windows.result }}
     secrets:
       EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
       EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
