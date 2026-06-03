@@ -52,38 +52,34 @@ class EulerCoreCETriangleTC(unittest.TestCase):
             self.ec.sfnml.shape)
 
     def test_cce_volume_positive(self):
-        ngc = self.ec.ngstcell
         for icl in range(self.ec.ncell):
             self.assertGreater(
-                self.ec.cevol[ngc + icl, 0], 0.0,
+                self.ec.cevol[icl, 0], 0.0,
                 f"CCE volume for cell {icl} should be positive")
 
     def test_bce_volumes_sum_to_cce(self):
-        ngc = self.ec.ngstcell
         mh = self.mesh
         for icl in range(self.ec.ncell):
             nfc = mh.clfcs[icl, 0]
             bce_sum = sum(
-                self.ec.cevol[ngc + icl, ifl]
+                self.ec.cevol[icl, ifl]
                 for ifl in range(1, nfc + 1))
             assert_almost_equal(
-                bce_sum, self.ec.cevol[ngc + icl, 0],
+                bce_sum, self.ec.cevol[icl, 0],
                 decimal=12,
                 err_msg=f"BCE sum != CCE for cell {icl}")
 
     def test_bce_volume_manual_cell0(self):
-        ngc = self.ec.ngstcell
-        assert_almost_equal(self.ec.cevol[ngc, 1], 0.5, decimal=10)
-        assert_almost_equal(self.ec.cevol[ngc, 2], 2.0 / 3.0, decimal=10)
-        assert_almost_equal(self.ec.cevol[ngc, 3], 0.5, decimal=10)
+        assert_almost_equal(self.ec.cevol[0, 1], 0.5, decimal=10)
+        assert_almost_equal(self.ec.cevol[0, 2], 2.0 / 3.0, decimal=10)
+        assert_almost_equal(self.ec.cevol[0, 3], 0.5, decimal=10)
         assert_almost_equal(
-            self.ec.cevol[ngc, 0], 0.5 + 2.0 / 3.0 + 0.5, decimal=10)
+            self.ec.cevol[0, 0], 0.5 + 2.0 / 3.0 + 0.5, decimal=10)
 
     def test_prepare_ce_rerun(self):
-        ngc = self.ec.ngstcell
-        vol_before = self.ec.cevol[ngc, 0]
+        vol_before = self.ec.cevol[0, 0]
         self.ec.prepare_ce()
-        assert_almost_equal(self.ec.cevol[ngc, 0], vol_before, decimal=12)
+        assert_almost_equal(self.ec.cevol[0, 0], vol_before, decimal=12)
 
 
 @unittest.skip("3D ghost cell geometry has NaN due to fill_ghost bug")
@@ -108,17 +104,15 @@ class EulerCoreCETetrahedronTC(unittest.TestCase):
         self.assertEqual(1, self.ec.ncell)
 
     def test_cce_volume_positive(self):
-        ngc = self.ec.ngstcell
-        self.assertGreater(self.ec.cevol[ngc, 0], 0.0)
+        self.assertGreater(self.ec.cevol[0, 0], 0.0)
 
     def test_bce_volumes_sum_to_cce(self):
-        ngc = self.ec.ngstcell
         mh = self.mesh
         nfc = mh.clfcs[0, 0]
         bce_sum = sum(
-            self.ec.cevol[ngc, ifl] for ifl in range(1, nfc + 1))
+            self.ec.cevol[0, ifl] for ifl in range(1, nfc + 1))
         assert_almost_equal(
-            bce_sum, self.ec.cevol[ngc, 0], decimal=12)
+            bce_sum, self.ec.cevol[0, 0], decimal=12)
 
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

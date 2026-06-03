@@ -69,22 +69,14 @@ protected:
             .def_property_readonly("ncell", &wrapped_type::ncell)
             .def_property_readonly("ngstcell", &wrapped_type::ngstcell)
             .def_property_readonly("time_increment", &wrapped_type::time_increment)
-            .def_property_readonly(
-                "cevol",
-                [](wrapped_type & self)
-                { return to_ndarray(self.cevol()); })
-            .def_property_readonly(
-                "cecnd",
-                [](wrapped_type & self)
-                { return to_ndarray(self.cecnd()); })
-            .def_property_readonly(
-                "sfcnd",
-                [](wrapped_type & self)
-                { return to_ndarray(self.sfcnd()); })
-            .def_property_readonly(
-                "sfnml",
-                [](wrapped_type & self)
-                { return to_ndarray(self.sfnml()); })
+            .expose_SimpleArray("cevol", [](wrapped_type & self) -> decltype(auto)
+                                { return self.cevol(); })
+            .expose_SimpleArray("cecnd", [](wrapped_type & self) -> decltype(auto)
+                                { return self.cecnd(); })
+            .expose_SimpleArray("sfcnd", [](wrapped_type & self) -> decltype(auto)
+                                { return self.sfcnd(); })
+            .expose_SimpleArray("sfnml", [](wrapped_type & self) -> decltype(auto)
+                                { return self.sfnml(); })
             .def_timed("prepare_ce", &wrapped_type::prepare_ce);
     }
 
