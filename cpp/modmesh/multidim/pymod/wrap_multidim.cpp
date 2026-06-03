@@ -64,7 +64,28 @@ protected:
                         return wrapped_type::construct(mesh, time_increment);
                     }),
                 py::arg("mesh"),
-                py::arg("time_increment"));
+                py::arg("time_increment"))
+            .def_property_readonly("ndim", &wrapped_type::ndim)
+            .def_property_readonly("ncell", &wrapped_type::ncell)
+            .def_property_readonly("ngstcell", &wrapped_type::ngstcell)
+            .def_property_readonly("time_increment", &wrapped_type::time_increment)
+            .def_property_readonly(
+                "cevol",
+                [](wrapped_type & self)
+                { return to_ndarray(self.cevol()); })
+            .def_property_readonly(
+                "cecnd",
+                [](wrapped_type & self)
+                { return to_ndarray(self.cecnd()); })
+            .def_property_readonly(
+                "sfcnd",
+                [](wrapped_type & self)
+                { return to_ndarray(self.sfcnd()); })
+            .def_property_readonly(
+                "sfnml",
+                [](wrapped_type & self)
+                { return to_ndarray(self.sfnml()); })
+            .def_timed("prepare_ce", &wrapped_type::prepare_ce);
     }
 
 }; /* end class WrapEulerCore */
