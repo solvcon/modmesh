@@ -92,12 +92,12 @@ class StaticMeshTC(unittest.TestCase):
         self._check_metric_trivial(mh)
 
         # Test build interior data.
-        mh.build_interior(_do_metric=False, _build_edge=False)
+        mh.build_interior(do_metric=False, build_edge=False)
         self._check_shape(mh, ndim=2, nnode=4, nface=6, ncell=3,
                           nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
                           nedge=0)
         self._check_metric_trivial(mh)
-        mh.build_interior()  # _do_metric=True, _build_edge=True
+        mh.build_interior()  # do_metric=True, build_edge=True
         self._check_shape(mh, ndim=2, nnode=4, nface=6, ncell=3,
                           nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
                           nedge=6)
@@ -149,12 +149,12 @@ class StaticMeshTC(unittest.TestCase):
                           nedge=0)
         self._check_metric_trivial(mh)
 
-        mh.build_interior(_do_metric=False, _build_edge=False)
+        mh.build_interior(do_metric=False, build_edge=False)
         self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,
                           nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
                           nedge=0)
         self._check_metric_trivial(mh)
-        mh.build_interior()  # _do_metric=True, _build_edge=True
+        mh.build_interior()  # do_metric=True, build_edge=True
         self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,
                           nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
                           nedge=6)
@@ -212,18 +212,18 @@ class StaticMeshTC(unittest.TestCase):
                           nedge=0)
         self._check_metric_trivial(mh)
 
-        mh.build_interior(_do_metric=False, _build_edge=False)
+        mh.build_interior(do_metric=False, build_edge=False)
         self._check_shape(mh, ndim=1, nnode=2, nface=2, ncell=1,
                           nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
                           nedge=0)
         self._check_metric_trivial(mh)
 
-        mh.build_interior()  # _do_metric=True, _build_edge=True
+        mh.build_interior()  # do_metric=True, build_edge=True
         self._check_shape(mh, ndim=1, nnode=2, nface=2, ncell=1,
                           nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
                           nedge=2)
 
-        # _do_metric do nothing due to dim == 1
+        # do_metric do nothing due to dim == 1
         self._check_metric_trivial(mh)
         # TODO: Need to add build_boundary and build_ghost to make sure
         #       Line type behavior.

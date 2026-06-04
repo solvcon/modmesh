@@ -99,7 +99,7 @@ WrapStaticMesh::WrapStaticMesh(pybind11::module & mod, char const * pyname, char
         .def_property_readonly("nbcs", &wrapped_type::nbcs);
 
     (*this)
-        .def_timed("build_interior", &wrapped_type::build_interior, py::arg("_do_metric") = true, py::arg("_build_edge") = true)
+        .def_timed("build_interior", &wrapped_type::build_interior, py::arg("do_metric") = true, py::arg("build_edge") = true)
         .def_timed("build_boundary", &wrapped_type::build_boundary)
         .def_timed("build_ghost", &wrapped_type::build_ghost)
         .def_timed("build_edge", &wrapped_type::build_edge);
