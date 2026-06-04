@@ -48,23 +48,19 @@ class GmshTriangleTC(GmshTB):
 
         # Check nodes information
         self.assertEqual(blk.nnode, 4)
-
-        # Due to ghost cell and ghost node had been created, the real body
-        # had been shifted and start with index 3 (number of ghost)
-        ngst = blk.ngstcell
-        self.assertEqual(ngst, 3)
-        np.testing.assert_almost_equal(blk.ndcrd.ndarray[ngst:, :].tolist(),
-                                       [[0.0, 0.0],
-                                        [-1.0, -1.0],
-                                        [1.0, -1.0],
-                                        [0.0, 1.0]])
+        self.assertEqual(blk.ngstnode, 3)
+        np.testing.assert_almost_equal(
+            [[blk.ndcrd[i, d] for d in range(blk.ndim)]
+             for i in range(blk.nnode)],
+            [[0.0, 0.0], [-1.0, -1.0],
+             [1.0, -1.0], [0.0, 1.0]])
         # Check cells information
         self.assertEqual(blk.ncell, 3)
-        self.assertEqual(blk.cltpn.ndarray[ngst:].tolist(), [4, 4, 4])
-        self.assertEqual(blk.clnds.ndarray[ngst:, :4].tolist(),
-                         [[3, 0, 1, 2],
-                          [3, 0, 2, 3],
-                          [3, 0, 3, 1]])
+        self.assertEqual(list(blk.cltpn), [4, 4, 4])
+        self.assertEqual(
+            [[blk.clnds[i, j] for j in range(4)]
+             for i in range(blk.ncell)],
+            [[3, 0, 1, 2], [3, 0, 2, 3], [3, 0, 3, 1]])
 
 
 class GmshRectangularTC(GmshTB):
