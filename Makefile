@@ -41,6 +41,9 @@ CMAKE_ARGS ?=
 VERBOSE ?=
 FORCE_CLANG_FORMAT ?=
 QT3D_USE_RHI ?= OFF
+RELEASE_OUTPUT ?= $(MODMESH_ROOT)/build
+RELEASE_ARTIFACT ?= $(RELEASE_OUTPUT)/pilot.dmg
+RELEASE_ARGS ?=
 
 # Let CMake find vcpkg-provided OpenBLAS/LAPACK headers, import libraries, and
 # package metadata during configure and link on Windows.
@@ -63,7 +66,8 @@ WHICH_PYTHON := $(shell which python3)
 REALPATH_PYTHON := $(realpath $(WHICH_PYTHON))
 export DIRNAME_PYTHON := $(dir $(REALPATH_PYTHON))
 
-pyextsuffix := $(shell $(DIRNAME_PYTHON)/python3-config --extension-suffix)
+pyextsuffix := $(shell if [ -x "$(DIRNAME_PYTHON)/python3-config" ]; then \
+	$(DIRNAME_PYTHON)/python3-config --extension-suffix; fi)
 pyvminor := $(shell python3 -c 'import sys; print("%d%d" % sys.version_info[0:2])')
 
 ifeq ($(CMAKE_BUILD_TYPE), Debug)
@@ -170,6 +174,20 @@ gtest: cmake
 run_pilot_pytest: pilot
 	env $(RUNENV) PYTEST_OPTS="$(PYTEST_OPTS)" \
 		cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE)
+
+.PHONY: bundle-precheck
+bundle-precheck:
+	$(MODMESH_ROOT)/contrib/bundle/bundle-with-homebrew.sh check
+
+.PHONY: bundle
+bundle:
+	$(MODMESH_ROOT)/contrib/bundle/bundle-with-homebrew.sh all \
+		--output "$(RELEASE_OUTPUT)" $(RELEASE_ARGS)
+
+.PHONY: bundle-test
+bundle-test:
+	$(MODMESH_ROOT)/contrib/bundle/bundle-with-homebrew.sh verify \
+		"$(RELEASE_ARTIFACT)"
 
 .PHONY: standalone_buffer_setup
 standalone_buffer_setup:
