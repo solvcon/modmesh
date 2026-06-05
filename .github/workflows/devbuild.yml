@@ -306,6 +306,17 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Cache vcpkg (install artifacts)
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\vcpkg\installed
+            C:\vcpkg\downloads
+            C:\vcpkg\buildtrees
+            C:\vcpkg\packages
+          key: vcpkg-${{ runner.os }}-openblas-lapack
+          restore-keys: vcpkg-${{ runner.os }}-
+
       - name: install BLAS and LAPACK
         run: |
           echo "::group::install BLAS and LAPACK"
