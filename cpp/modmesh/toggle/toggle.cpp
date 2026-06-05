@@ -200,11 +200,6 @@ ProcessInfo & ProcessInfo::set_environment_variables()
     setenv("QT3D_RENDERER", "opengl", 1);
 #endif // QT3D_USE_RHI
 
-    // Keep the embedded interpreter from writing .pyc files. The release app
-    // bundle is code-signed and ships no precompiled bytecode, so any write
-    // would mutate the signed bundle and break its signature.
-    setenv("PYTHONDONTWRITEBYTECODE", "1", 1);
-
     return *this;
 }
 

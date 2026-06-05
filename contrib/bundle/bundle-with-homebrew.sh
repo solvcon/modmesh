@@ -618,6 +618,44 @@ echo "    modmesh -> $BUNDLED_SITE/modmesh"
 echo "    [Step 5 (Bundle modmesh): $((SECONDS - T_STEP))s]"
 
 # ---------------------------------------------------------------------------
+# Step 5.5: Pre-compile bundled bytecode
+#
+# Ship .pyc alongside .py so the embedded interpreter finds a valid cache on
+# import and never writes back into the signed bundle (a runtime write would
+# mutate the sealed contents and break the code signature). Use the bundled
+# python so the .pyc magic matches the interpreter that will actually read
+# them. unchecked-hash makes the cache trusted unconditionally, sidestepping
+# mtime drift from rsync/DMG creation that would otherwise let the default
+# timestamp mode falsely invalidate the cache at runtime.
+#
+# Target the whole lib/python<ver> tree so both the stdlib (which Step 3
+# copied in via `cp -R`, including Homebrew's timestamp-mode .pyc) and the
+# rsynced site-packages get a uniform unchecked-hash cache. The `-f` flag
+# forces rewrite over the inherited stdlib .pyc.
+#
+# Drop lib/python<ver>/test first: CPython's own test suite is not used at
+# runtime, accounts for ~100 MB, and ships intentionally-bad-syntax fixtures
+# that would make compileall exit nonzero. Use `|| true` so any stray
+# uncompilable file in a package's own tests/ does not kill the build --
+# those files are not imported at runtime, so missing .pyc is harmless. The
+# trailing sanity check fails loudly if compileall produced nothing at all,
+# which would silently revert us to the writes-into-bundle problem.
+# ---------------------------------------------------------------------------
+
+T_STEP=$SECONDS
+echo "==> Pre-compiling bundled Python modules"
+PY_LIB="$DEST_FW/Versions/$PY_VER/lib/python$PY_VER"
+rm -rf "$PY_LIB/test"
+"$DEST_FW/Versions/$PY_VER/bin/python$PY_VER" -m compileall -f \
+    --invalidation-mode unchecked-hash -q \
+    "$PY_LIB" || true
+PYC_COUNT=$(find "$PY_LIB" -name '*.pyc' | wc -l | tr -d ' ')
+[[ $PYC_COUNT -gt 0 ]] || \
+    { echo "ERROR: compileall produced no .pyc files under $PY_LIB" >&2; exit 1; }
+echo "    compiled $PYC_COUNT .pyc files"
+echo "    [Step 5.5 (Pre-compile bytecode): $((SECONDS - T_STEP))s]"
+
+# ---------------------------------------------------------------------------
 # Step 6: Vendor Homebrew deps
 #
 # macdeployqt only follows Qt's load commands, so other dependencies (Python's
