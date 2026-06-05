@@ -47,8 +47,9 @@ owned by hooks, not skills.
 - `permissions.allow` whitelists the safe `make` targets, `cmake`, `pytest`,
   lint/format tools, and read-only git/gh. `make clean` and `make cmakeclean`
   deliberately prompt.
-- `permissions.deny` blocks force-push, `git reset --hard`, `git clean -fd`,
-  `sudo`, and `rm -rf` of root/home.
+- `permissions.deny` hard-blocks only `sudo` and `rm -rf` of root/home.
+  Destructive git operations (force-push, `git reset --hard`, `git clean -fd`)
+  are discouraged but not blocked -- use them deliberately and only when asked.
 - `hooks` wires the script above.
 - `statusLine` runs `.claude/statusline.sh` -- shows model, project, branch
   (with `*` if dirty), and context-window usage.
