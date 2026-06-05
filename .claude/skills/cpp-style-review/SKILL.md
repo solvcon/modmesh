@@ -50,6 +50,15 @@ it briefly but don't re-implement the check here.
 - Keep short accessors inline.
 - Trivial bodies (single `return`, single assignment) as one-liners.
 
+**Line economy**
+- Prefer fewer lines per STYLE.md. Flag unnecessary blank lines inside
+  short blocks and needlessly spread-out code. Do not flag structural
+  blank lines (between functions, logical sections, access specifiers).
+- Enforce STYLE.md's two hard rules: never trade line-width conformance
+  for fewer lines, and never put two consecutive executable statements
+  (separated by `;`) on one line. A single-statement inline accessor body
+  is one statement, not two, and stays the preferred form.
+
 **pybind11**
 - Split constructors from other bindings (methods, properties) into two
   distinct `(*this)` sections.

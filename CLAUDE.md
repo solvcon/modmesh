@@ -47,8 +47,9 @@ owned by hooks, not skills.
 - `permissions.allow` whitelists the safe `make` targets, `cmake`, `pytest`,
   lint/format tools, and read-only git/gh. `make clean` and `make cmakeclean`
   deliberately prompt.
-- `permissions.deny` blocks force-push, `git reset --hard`, `git clean -fd`,
-  `sudo`, and `rm -rf` of root/home.
+- `permissions.deny` hard-blocks only `sudo` and `rm -rf` of root/home.
+  Destructive git operations (force-push, `git reset --hard`, `git clean -fd`)
+  are discouraged but not blocked -- use them deliberately and only when asked.
 - `hooks` wires the script above.
 - `statusLine` runs `.claude/statusline.sh` -- shows model, project, branch
   (with `*` if dirty), and context-window usage.
@@ -173,6 +174,10 @@ See "Build, Test, Lint, Format" above for the `make` invocations.
 
 `STYLE.md` is the canonical source. At a glance:
 
+- **Line economy**: Prefer fewer lines for better human readability. Dense
+  code within the line-width limits is easier to scan. Do not add unnecessary
+  blank lines or spread simple logic across many lines. Always respect the
+  linting line-width limits -- never sacrifice them to shorten line count.
 - **C++**: 4-space indent, `m_` prefix on member vars, angle-bracket includes,
   C++23, prefer `SimpleCollector` / `small_vector` over STL for fundamentals.
 - **Python**: PEP-8, 79-char hard limit, flake8.

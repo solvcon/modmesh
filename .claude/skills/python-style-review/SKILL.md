@@ -32,6 +32,14 @@ limit, flake8) are handled by `.claude/hooks/check-source.sh`
 - Tests live in `tests/` and are named `test_*.py`.
 - Profiling scripts live in `profiling/` and are named `profile_*.py`.
 
+**Line economy**
+- Prefer fewer lines per STYLE.md. Flag unnecessary blank lines inside
+  short blocks and needlessly spread-out code. Do not flag structural
+  blank lines (between functions, logical sections).
+- Enforce STYLE.md's hard rule: never put two consecutive executable
+  statements (separated by `;`) on one line. (Line width is owned by the
+  hooks; don't re-flag it here.)
+
 **Intent (Rule 9)**
 - Tests should encode why behavior matters, not just what. If a new test
   would still pass under an obvious bug in the code it exercises,

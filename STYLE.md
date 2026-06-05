@@ -22,6 +22,33 @@ style when adding new code and changing existing code. The rules of thumb are:
    file and follow it. Familiar with the code in the module(s) if time permits.
 3. Use the style guide.
 
+## Line Economy
+
+Prefer fewer lines for better human readability. Dense code that fits within
+the line-width limits is easier to scan than code spread across many lines.
+This applies to both C++ and Python.
+
+- Group related short declarations on one line when natural, e.g.
+  `double x, y;`.
+- Don't add blank lines inside short blocks (a 3-line function body does not
+  need internal blank lines).
+- Prefer compact forms over spread-out forms when both are equally clear.
+- Respect the linting line-width limits (below) -- never sacrifice them to
+  shorten the line count.
+- Never put two consecutive executable statements (separated by `;`) on one
+  line -- debuggers and stack traces need line granularity. A single-statement
+  inline body like `void set_flag(bool v) { m_flag = v; }` is one statement,
+  not two, and remains the preferred accessor form.
+
+Exceptions where vertical space helps:
+- Blank lines between functions and methods (required).
+- Blank lines between logical sections within a function (sparingly).
+- Blank lines around access specifiers in C++ classes.
+- Multi-line forms for genuinely complex expressions.
+
+This is a readability guideline, not a mandate to compress everything. When
+compactness hurts clarity, choose clarity.
+
 ## Indentation and file format
 
 Use 4 white spaces for indentation. Do not use a tab.
