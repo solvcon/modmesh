@@ -91,6 +91,7 @@ list_of_mesh = [
 # multidim directory symbols
 list_of_multidim = [
     'EulerCore',
+    'GradientElement',
 ]
 
 # python directory symbols

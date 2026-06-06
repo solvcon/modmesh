@@ -36,6 +36,100 @@ namespace modmesh
 namespace python
 {
 
+class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapGradientElement
+    : public WrapBase<WrapGradientElement, GradientElement>
+{
+
+public:
+
+    using base_type = WrapBase<WrapGradientElement, GradientElement>;
+    using wrapper_type = typename base_type::wrapper_type;
+    using wrapped_type = typename base_type::wrapped_type;
+
+    friend base_type;
+
+protected:
+
+    WrapGradientElement(pybind11::module & mod, const char * pyname, const char * clsdoc);
+
+    static void check_ifl(wrapped_type const & self, wrapped_type::int_type ifl);
+    static void check_d(wrapped_type const & self, wrapped_type::int_type d);
+
+}; /* end class WrapGradientElement */
+
+void WrapGradientElement::check_ifl(wrapped_type const & self, wrapped_type::int_type ifl)
+{
+    if (ifl < 0 || ifl >= self.clnfc())
+    {
+        throw std::out_of_range(std::format(
+            "GradientElement: ifl {} out of range [0, {})", ifl, self.clnfc()));
+    }
+}
+
+void WrapGradientElement::check_d(wrapped_type const & self, wrapped_type::int_type d)
+{
+    if (d < 0 || d >= self.ndim())
+    {
+        throw std::out_of_range(std::format(
+            "GradientElement: d {} out of range [0, {})", d, self.ndim()));
+    }
+}
+
+WrapGradientElement::WrapGradientElement(pybind11::module & mod, const char * pyname, const char * clsdoc)
+    : base_type(mod, pyname, clsdoc)
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def(
+            py::init(
+                [](std::shared_ptr<StaticMesh> const & mesh,
+                   SimpleArray<wrapped_type::real_type> const & cecnd,
+                   wrapped_type::int_type icl,
+                   wrapped_type::real_type tau)
+                {
+                    return wrapped_type(*mesh, cecnd, icl, tau);
+                }),
+            py::arg("mesh"),
+            py::arg("cecnd"),
+            py::arg("icl"),
+            py::arg("tau"),
+            py::keep_alive<1, 2>())
+        .def_property_readonly("icl", &wrapped_type::icl)
+        .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def_property_readonly("clnfc", &wrapped_type::clnfc)
+        .def(
+            "rcl",
+            [](wrapped_type const & self, wrapped_type::int_type ifl)
+            {
+                check_ifl(self, ifl);
+                return self.rcl(ifl);
+            },
+            py::arg("ifl"))
+        .def(
+            "idis",
+            [](wrapped_type const & self, wrapped_type::int_type ifl, wrapped_type::int_type d)
+            {
+                check_ifl(self, ifl);
+                check_d(self, d);
+                return self.idis(ifl, d);
+            },
+            py::arg("ifl"),
+            py::arg("d"))
+        .def(
+            "jdis",
+            [](wrapped_type const & self, wrapped_type::int_type ifl, wrapped_type::int_type d)
+            {
+                check_ifl(self, ifl);
+                check_d(self, d);
+                return self.jdis(ifl, d);
+            },
+            py::arg("ifl"),
+            py::arg("d"))
+        //
+        ;
+}
+
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapEulerCore
     : public WrapBase<WrapEulerCore, EulerCore, std::shared_ptr<EulerCore>>
 {
@@ -124,6 +218,7 @@ WrapEulerCore & WrapEulerCore::wrap_array()
 
 void wrap_multidim(pybind11::module & mod)
 {
+    WrapGradientElement::commit(mod, "GradientElement", "Gradient element for a single cell");
     WrapEulerCore::commit(mod, "EulerCore", "Solve the Euler equation");
 }
 
