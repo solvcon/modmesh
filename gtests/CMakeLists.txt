@@ -34,11 +34,14 @@ add_executable(
     test_nopython_rtree.cpp
     test_nopython_formatter.cpp
     test_nopython_mdspan.cpp
+    test_nopython_multidim.cpp
     ${MODMESH_TOGGLE_SOURCES}
     ${MODMESH_BUFFER_SOURCES}
     ${MODMESH_SERIALIZATION_SOURCES}
     ${MODMESH_TRANSFORM_SOURCES}
     ${MODMESH_SIMD_SOURCES}
+    ${MODMESH_MESH_SOURCES}
+    ${MODMESH_MULTIDIM_SOURCES}
 )
 
 target_link_libraries(
@@ -54,3 +57,5 @@ gtest_discover_tests(test_nopython)
 add_custom_target(run_gtest
     COMMAND $<TARGET_FILE:test_nopython>
     DEPENDS test_nopython)
+
+# vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

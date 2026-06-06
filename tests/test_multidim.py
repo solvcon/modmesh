@@ -139,7 +139,7 @@ class _PyramidMeshBase(unittest.TestCase):
 
 
 class _GradientElementBoundsBase:
-    """Checks that hold even when CE geometry is NaN (no value reads)."""
+    """Structural checks that do not read CE geometry values."""
 
     def _ge(self, icl, tau=1.0):
         mh, cecnd = self.mesh, self.ec.cecnd
@@ -177,23 +177,37 @@ class _GradientElementBoundsBase:
             with self.assertRaises(IndexError):
                 ge.jdis(0, d)
 
+    def test_fge_table(self):
+        # Sub-element (FGE) table is geometry-free; it holds even when the
+        # CE geometry is NaN.
+        ge = self._ge(0)
+        nfge = ge.nfge
+        self.assertGreater(nfge, 0)
+        assert_almost_equal(ge.nfge_inverse, 1.0 / nfge, decimal=12)
+        for ifge in range(nfge):
+            faces = ge.faces(ifge)
+            self.assertEqual(self.mesh.ndim, len(faces))
+            for ifl in faces:
+                # 1-based face index into the per-cell face list.
+                self.assertGreaterEqual(ifl, 1)
+                self.assertLessEqual(ifl, ge.clnfc)
+
+    def test_ifge_bounds(self):
+        ge = self._ge(0)
+        nd = self.mesh.ndim
+        for ifge in (-1, ge.nfge):
+            with self.assertRaises(IndexError):
+                ge.faces(ifge)
+            with self.assertRaises(IndexError):
+                ge.displacement_matrix(ifge)
+            with self.assertRaises(IndexError):
+                ge.solve_gradient(ifge, [0.0] * nd)
+
 
 class _GradientElementBase(_GradientElementBoundsBase):
-    """Adds geometry tests that need non-NaN CE data over all cells."""
-
-    # A single 3D cell has only boundary faces, so its ghost-neighbor CE
-    # geometry (and thus its own CE centroid) is NaN until the fill_ghost
-    # bug is fixed.  Such fixtures set this False to skip the value tests;
-    # construction, basic-property and index-bound tests still run.
-    run_geometry = True
-
-    def _require_geometry(self):
-        if not self.run_geometry:
-            self.skipTest(
-                "3D single-cell ghost CE geometry is NaN (fill_ghost bug)")
+    """Adds geometry tests that read CE data over all cells."""
 
     def test_displacement_matrix_nonsingular(self):
-        self._require_geometry()
         nd = self.mesh.ndim
         for icl in range(self.mesh.ncell):
             ge = self._ge(icl)
@@ -207,7 +221,6 @@ class _GradientElementBase(_GradientElementBoundsBase):
                              f"cell {icl}: idis does not span {nd}D")
 
     def test_idis_jdis_consistency(self):
-        self._require_geometry()
         mh, cecnd, nd = self.mesh, self.ec.cecnd, self.mesh.ndim
         for icl in range(mh.ncell):
             ge = self._ge(icl)
@@ -219,7 +232,6 @@ class _GradientElementBase(_GradientElementBoundsBase):
                     assert_almost_equal(lhs, ge.jdis(ifl, d) + jce, decimal=12)
 
     def test_tau_zero(self):
-        self._require_geometry()
         mh, cecnd, nd = self.mesh, self.ec.cecnd, self.mesh.ndim
         for icl in range(mh.ncell):
             ge = self._ge(icl, tau=0.0)
@@ -230,6 +242,37 @@ class _GradientElementBase(_GradientElementBoundsBase):
                     pos = ge.idis(ifl, d) + cecnd[icl, d]
                     bce = cecnd[icl, (ifl + 1) * nd + d]
                     assert_almost_equal(pos, bce + shift[d], decimal=12)
+
+    def test_displacement_matrix_per_fge_nonsingular(self):
+        nd = self.mesh.ndim
+        for icl in range(self.mesh.ncell):
+            ge = self._ge(icl)
+            for ifge in range(ge.nfge):
+                mat = np.array(ge.displacement_matrix(ifge))
+                self.assertEqual((nd, nd), mat.shape)
+                self.assertGreater(
+                    abs(np.linalg.det(mat)), 1e-10,
+                    f"cell {icl} ifge {ifge}: singular FGE matrix")
+
+    def test_solve_gradient_linear_field(self):
+        # For a linear field u(x) = c + g . x the solution delta at each
+        # gradient evaluation point is exactly g . idis, so the per-FGE
+        # solve must recover g exactly (up to round-off).
+        nd = self.mesh.ndim
+        grad = np.array([1.5, -2.7, 0.9][:nd])
+        for icl in range(self.mesh.ncell):
+            ge = self._ge(icl)
+            for ifge in range(ge.nfge):
+                dst = np.array(ge.displacement_matrix(ifge))
+                faces = ge.faces(ifge)
+                # Matrix rows are the per-face idis vectors.
+                for ivx, ifl in enumerate(faces):
+                    for d in range(nd):
+                        assert_almost_equal(
+                            dst[ivx, d], ge.idis(ifl - 1, d), decimal=12)
+                udf = dst @ grad
+                got = np.array(ge.solve_gradient(ifge, udf.tolist()))
+                assert_almost_equal(got, grad, decimal=9)
 
 
 class GradientElementTriangleTC(_GradientElementBase, _TriangleMeshBase):
@@ -244,29 +287,20 @@ class GradientElementMixedTC(_GradientElementBase, _MixedMeshBase):
     """Per-cell GradientElement on a 2D mixed mesh."""
 
 
-# 3D single-cell meshes: every face is a boundary face, so the ghost
-# neighbor CE geometry (hence the cell's own CE centroid) is NaN until the
-# fill_ghost bug is fixed.  Construction, basic properties and index bounds
-# still hold; the geometry-value tests skip via run_geometry.
-
 class GradientElementTetrahedronTC(_GradientElementBase, _TetrahedronMeshBase):
     """Per-cell GradientElement on a single tetrahedron (4 faces)."""
-    run_geometry = False
 
 
 class GradientElementHexahedronTC(_GradientElementBase, _HexahedronMeshBase):
     """Per-cell GradientElement on a single hexahedron (6 faces)."""
-    run_geometry = False
 
 
 class GradientElementPrismTC(_GradientElementBase, _PrismMeshBase):
     """Per-cell GradientElement on a single prism (5 faces)."""
-    run_geometry = False
 
 
 class GradientElementPyramidTC(_GradientElementBase, _PyramidMeshBase):
     """Per-cell GradientElement on a single pyramid (5 faces)."""
-    run_geometry = False
 
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
