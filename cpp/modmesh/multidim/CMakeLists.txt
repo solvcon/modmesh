@@ -5,10 +5,12 @@ cmake_minimum_required(VERSION 4.0.1)
 
 set(MODMESH_MULTIDIM_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/multidim.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/GradientElement.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/euler.hpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_MULTIDIM_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/GradientElement.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/euler_ce.cpp
     CACHE FILEPATH "" FORCE)
 
