@@ -50,37 +50,77 @@ public:
 
 protected:
 
-    WrapEulerCore(pybind11::module & mod, const char * pyname, const char * clsdoc)
-        : base_type(mod, pyname, clsdoc)
-    {
+    WrapEulerCore(pybind11::module & mod, const char * pyname, const char * clsdoc);
 
-        namespace py = pybind11;
-
-        (*this)
-            .def(
-                py::init(
-                    [](std::shared_ptr<StaticMesh> const & mesh, wrapped_type::real_type time_increment)
-                    {
-                        return wrapped_type::construct(mesh, time_increment);
-                    }),
-                py::arg("mesh"),
-                py::arg("time_increment"))
-            .def_property_readonly("ndim", &wrapped_type::ndim)
-            .def_property_readonly("ncell", &wrapped_type::ncell)
-            .def_property_readonly("ngstcell", &wrapped_type::ngstcell)
-            .def_property_readonly("time_increment", &wrapped_type::time_increment)
-            .expose_SimpleArray("cevol", [](wrapped_type & self) -> decltype(auto)
-                                { return self.cevol(); })
-            .expose_SimpleArray("cecnd", [](wrapped_type & self) -> decltype(auto)
-                                { return self.cecnd(); })
-            .expose_SimpleArray("sfcnd", [](wrapped_type & self) -> decltype(auto)
-                                { return self.sfcnd(); })
-            .expose_SimpleArray("sfnml", [](wrapped_type & self) -> decltype(auto)
-                                { return self.sfnml(); })
-            .def_timed("prepare_ce", &wrapped_type::prepare_ce);
-    }
+    WrapEulerCore & wrap_management();
+    WrapEulerCore & wrap_preparation();
+    WrapEulerCore & wrap_array();
 
 }; /* end class WrapEulerCore */
+
+WrapEulerCore::WrapEulerCore(pybind11::module & mod, const char * pyname, const char * clsdoc)
+    : base_type(mod, pyname, clsdoc)
+{
+    (*this)
+        .wrap_management()
+        .wrap_preparation()
+        .wrap_array()
+        //
+        ;
+}
+
+WrapEulerCore & WrapEulerCore::wrap_management()
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def(
+            py::init(
+                [](std::shared_ptr<StaticMesh> const & mesh, wrapped_type::real_type time_increment)
+                {
+                    return wrapped_type::construct(mesh, time_increment);
+                }),
+            py::arg("mesh"),
+            py::arg("time_increment"))
+        .def_property_readonly("ndim", &wrapped_type::ndim)
+        .def_property_readonly("ncell", &wrapped_type::ncell)
+        .def_property_readonly("ngstcell", &wrapped_type::ngstcell)
+        .def_property_readonly("time_increment", &wrapped_type::time_increment)
+        //
+        ;
+
+    return *this;
+}
+
+WrapEulerCore & WrapEulerCore::wrap_preparation()
+{
+    (*this)
+        .def_timed("prepare_ce", &wrapped_type::prepare_ce)
+        //
+        ;
+
+    return *this;
+}
+
+WrapEulerCore & WrapEulerCore::wrap_array()
+{
+#define MM_DECL_ARRAY(NAME) \
+    .expose_SimpleArray(#NAME, [](wrapped_type & self) -> decltype(auto) { return self.NAME(); })
+
+    // clang-format off
+    (*this)
+        MM_DECL_ARRAY(cevol)
+        MM_DECL_ARRAY(cecnd)
+        MM_DECL_ARRAY(sfcnd)
+        MM_DECL_ARRAY(sfnml)
+        //
+        ;
+    // clang-format on
+
+#undef MM_DECL_ARRAY
+
+    return *this;
+}
 
 void wrap_multidim(pybind11::module & mod)
 {
