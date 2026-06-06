@@ -27,6 +27,7 @@
  */
 
 #include <modmesh/python/common.hpp> // Must be the first include.
+#include <pybind11/stl.h>
 
 #include <modmesh/multidim/multidim.hpp>
 
@@ -52,8 +53,12 @@ protected:
 
     WrapGradientElement(pybind11::module & mod, const char * pyname, const char * clsdoc);
 
+    WrapGradientElement & wrap_management();
+    WrapGradientElement & wrap_gradient();
+
     static void check_ifl(wrapped_type const & self, wrapped_type::int_type ifl);
     static void check_d(wrapped_type const & self, wrapped_type::int_type d);
+    static void check_ifge(wrapped_type const & self, wrapped_type::int_type ifge);
 
 }; /* end class WrapGradientElement */
 
@@ -75,8 +80,26 @@ void WrapGradientElement::check_d(wrapped_type const & self, wrapped_type::int_t
     }
 }
 
+void WrapGradientElement::check_ifge(wrapped_type const & self, wrapped_type::int_type ifge)
+{
+    if (ifge < 0 || ifge >= self.nfge())
+    {
+        throw std::out_of_range(std::format(
+            "GradientElement: ifge {} out of range [0, {})", ifge, self.nfge()));
+    }
+}
+
 WrapGradientElement::WrapGradientElement(pybind11::module & mod, const char * pyname, const char * clsdoc)
     : base_type(mod, pyname, clsdoc)
+{
+    (*this)
+        .wrap_management()
+        .wrap_gradient()
+        //
+        ;
+}
+
+WrapGradientElement & WrapGradientElement::wrap_management()
 {
     namespace py = pybind11;
 
@@ -98,6 +121,19 @@ WrapGradientElement::WrapGradientElement(pybind11::module & mod, const char * py
         .def_property_readonly("icl", &wrapped_type::icl)
         .def_property_readonly("ndim", &wrapped_type::ndim)
         .def_property_readonly("clnfc", &wrapped_type::clnfc)
+        .def_property_readonly("nfge", &wrapped_type::nfge)
+        .def_property_readonly("nfge_inverse", &wrapped_type::nfge_inverse)
+        //
+        ;
+
+    return *this;
+}
+
+WrapGradientElement & WrapGradientElement::wrap_gradient()
+{
+    namespace py = pybind11;
+
+    (*this)
         .def(
             "rcl",
             [](wrapped_type const & self, wrapped_type::int_type ifl)
@@ -126,8 +162,72 @@ WrapGradientElement::WrapGradientElement(pybind11::module & mod, const char * py
             },
             py::arg("ifl"),
             py::arg("d"))
+        .def(
+            "faces",
+            [](wrapped_type const & self, wrapped_type::int_type ifge)
+            {
+                check_ifge(self, ifge);
+                auto const & tface = self.faces(ifge);
+                std::vector<wrapped_type::int_type> out(self.ndim());
+                for (uint8_t ivx = 0; ivx < self.ndim(); ++ivx)
+                {
+                    out[ivx] = tface[ivx];
+                }
+                return out;
+            },
+            py::arg("ifge"))
+        .def(
+            "displacement_matrix",
+            [](wrapped_type const & self, wrapped_type::int_type ifge)
+            {
+                check_ifge(self, ifge);
+                auto const dst = self.displacement_matrix(ifge);
+                size_t const nd = self.ndim();
+                std::vector<std::vector<wrapped_type::real_type>> out(
+                    nd, std::vector<wrapped_type::real_type>(nd));
+                for (size_t i = 0; i < nd; ++i)
+                {
+                    for (size_t j = 0; j < nd; ++j)
+                    {
+                        out[i][j] = dst[i][j];
+                    }
+                }
+                return out;
+            },
+            py::arg("ifge"))
+        .def(
+            "solve_gradient",
+            [](wrapped_type const & self,
+               wrapped_type::int_type ifge,
+               std::vector<wrapped_type::real_type> const & udf)
+            {
+                check_ifge(self, ifge);
+                if (udf.size() != self.ndim())
+                {
+                    throw std::invalid_argument(std::format(
+                        "GradientElement: udf size {} must equal ndim {}",
+                        udf.size(),
+                        self.ndim()));
+                }
+                wrapped_type::ge_vector_type u = {0, 0, 0};
+                for (size_t d = 0; d < self.ndim(); ++d)
+                {
+                    u[d] = udf[d];
+                }
+                wrapped_type::ge_vector_type const g = self.solve_gradient(ifge, u);
+                std::vector<wrapped_type::real_type> out(self.ndim());
+                for (size_t d = 0; d < self.ndim(); ++d)
+                {
+                    out[d] = g[d];
+                }
+                return out;
+            },
+            py::arg("ifge"),
+            py::arg("udf"))
         //
         ;
+
+    return *this;
 }
 
 class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapEulerCore

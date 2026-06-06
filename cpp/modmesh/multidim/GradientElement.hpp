@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2026, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2018, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -50,6 +50,8 @@ struct GradientElementType
 
     int32_t clnfc = -1;
     int32_t nfge = -1;
+    // Reciprocal of nfge, used as the uniform gradient-weighting baseline.
+    double nfge_inverse = 0.0;
     // 1-based indices into the per-cell gradient-eval-point array.
     std::array<face_list_type, NFGE_MAX> faces = {};
 
@@ -93,6 +95,11 @@ public:
 
     using int_type = int32_t;
     using real_type = double;
+    // Fixed 3-capacity row-major matrix/vector for the leading ndim x ndim
+    // (ndim is 2 or 3) systems of the gradient reconstruction.  Distinct from
+    // the dynamic modmesh::small_vector container.
+    using ge_vector_type = std::array<real_type, 3>;
+    using ge_matrix_type = std::array<ge_vector_type, 3>;
 
     GradientElement(
         StaticMesh const & mesh,
@@ -107,8 +114,37 @@ public:
     real_type idis(int_type ifl, int_type d) const { return m_idis[ifl][d]; }
     real_type jdis(int_type ifl, int_type d) const { return m_jdis[ifl][d]; }
 
+    // Number of fundamental gradient elements (sub-simplices) of this cell.
+    int_type nfge() const { return m_getype->nfge; }
+    real_type nfge_inverse() const { return m_getype->nfge_inverse; }
+    // 1-based face indices forming the ifge-th fundamental gradient element.
+    // Only the leading ndim entries are valid; the rest are -1 sentinels.
+    GradientElementType::face_list_type const & faces(int_type ifge) const
+    {
+        return m_getype->faces[ifge];
+    }
+    // Displacement matrix of the ifge-th fundamental gradient element: row ivx
+    // is idis of the face faces(ifge)[ivx].  Only the leading ndim x ndim block
+    // is meaningful.
+    ge_matrix_type displacement_matrix(int_type ifge) const;
+    // Reconstruct the ndim-vector gradient of one fundamental gradient element
+    // from the supplied solution deltas udf by solving (displacement matrix) *
+    // grad = udf, i.e. grad = adjugate(dst) * udf / determinant(dst).
+    ge_vector_type solve_gradient(int_type ifge, ge_vector_type const & udf) const;
+
+    // Small dense linear algebra on the leading ndim x ndim block (ndim is 2 or
+    // 3); modmesh/linalg only wraps the dynamic BLAS/LAPACK routines, too heavy
+    // for these per-cell solves.  Static, as they depend solely on their
+    // arguments, which keeps them directly testable.
+    static real_type determinant(ge_matrix_type const & a, size_t ndim);
+    static ge_matrix_type adjugate(ge_matrix_type const & a, size_t ndim);
+    static ge_vector_type multiply(ge_matrix_type const & a, ge_vector_type const & x, size_t ndim);
+
 private:
 
+    // Geometry type table (sub-element face lists) for this cell's type.  Points
+    // into a process-wide singleton, so it outlives every GradientElement.
+    GradientElementType const * m_getype = nullptr;
     // Index of the self cell that owns this gradient element.
     int_type m_icl;
     // Number of spatial dimensions (2 or 3).
