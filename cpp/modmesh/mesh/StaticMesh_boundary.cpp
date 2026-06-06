@@ -426,15 +426,15 @@ inline void StaticMesh::fill_ghost()
                 m_fcnml(ifc, 2) += radvec[ind - 1][0] * radvec[ind][1] - radvec[ind - 1][1] * radvec[ind][0];
             }
             // compute face area.
-            m_fcara(ifc, 0) = std::sqrt(
+            m_fcara(ifc) = std::sqrt(
                 m_fcnml(ifc, 0) * m_fcnml(ifc, 0) + m_fcnml(ifc, 1) * m_fcnml(ifc, 1) + m_fcnml(ifc, 2) * m_fcnml(ifc, 2));
             // NOLINTEND(readability-math-missing-parentheses)
             // normalize normal vector.
-            m_fcnml(ifc, 0) /= m_fcnml(ifc);
-            m_fcnml(ifc, 1) /= m_fcnml(ifc);
-            m_fcnml(ifc, 2) /= m_fcnml(ifc);
+            m_fcnml(ifc, 0) /= m_fcara(ifc);
+            m_fcnml(ifc, 1) /= m_fcara(ifc);
+            m_fcnml(ifc, 2) /= m_fcara(ifc);
             // get real face area.
-            m_fcnml(ifc) /= 2.0;
+            m_fcara(ifc) /= 2.0;
         }
     }
 
