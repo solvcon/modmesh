@@ -411,14 +411,43 @@ TEST(SimpleArray, mdspan_non_contiguous)
     mm::small_vector<size_t> stride{8, 1};
     auto buffer = mm::ConcreteBuffer::construct(3 * 8 * sizeof(double));
     mm::SimpleArray<double> arr(shape, stride, buffer);
+    for (size_t i = 0; i < 24; ++i) { arr.data(i) = static_cast<double>(i); }
+
     EXPECT_FALSE(arr.is_c_contiguous());
 
-    EXPECT_THROW(arr.as_span(), std::runtime_error);
-    EXPECT_THROW(arr.as_mdspan<2>(), std::runtime_error);
+    auto ms = arr.as_mdspan<2>();
+    EXPECT_EQ(ms.extent(0), 3u);
+    EXPECT_EQ(ms.extent(1), 4u);
+    EXPECT_EQ(ms.mapping().stride(0), 8u);
+    EXPECT_EQ(ms.mapping().stride(1), 1u);
+    for (size_t i = 0; i < 3; ++i)
+    {
+        for (size_t j = 0; j < 4; ++j)
+        {
+            EXPECT_EQ((ms[i, j]), arr.data(i * 8 + j));
+        }
+    }
+
+    auto sp = arr.as_span();
+    EXPECT_EQ(sp.size(), 24u);
+    for (size_t i = 0; i < sp.size(); ++i) { EXPECT_EQ(sp[i], arr.data(i)); }
+
+    ms[2, 3] = 99.0;
+    EXPECT_EQ(arr(2, 3), 99.0);
+    EXPECT_EQ(sp[2 * 8 + 3], 99.0);
+
+    sp[8] = 42.0;
+    EXPECT_EQ((ms[1, 0]), 42.0);
 
     const auto & carr = arr;
-    EXPECT_THROW(carr.as_span(), std::runtime_error);
-    EXPECT_THROW(carr.as_mdspan<2>(), std::runtime_error);
+    auto cms = carr.as_mdspan<2>();
+    static_assert(std::is_same_v<decltype(cms)::element_type, const double>);
+    EXPECT_EQ((cms[1, 0]), 42.0);
+
+    auto csp = carr.as_span();
+    static_assert(std::is_same_v<decltype(csp)::element_type, const double>);
+    EXPECT_EQ(csp.size(), 24u);
+    EXPECT_EQ(csp[2 * 8 + 3], 99.0);
 }
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

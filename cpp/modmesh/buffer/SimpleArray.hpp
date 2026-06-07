@@ -49,6 +49,7 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #ifdef _MSC_VER
 #include <BaseTsd.h>
@@ -1942,53 +1943,35 @@ public:
 
     std::span<value_type> as_span()
     {
-        if (!is_c_contiguous())
-        {
-            throw std::runtime_error("SimpleArray::as_span: array is not C-contiguous");
-        }
-        return std::span<value_type>(data(), size());
+        return std::span<value_type>(data(), buffer().nbytes() / ITEMSIZE);
     }
     std::span<value_type const> as_span() const
     {
-        if (!is_c_contiguous())
-        {
-            throw std::runtime_error("SimpleArray::as_span: array is not C-contiguous");
-        }
-        return std::span<value_type const>(data(), size());
+        return std::span<value_type const>(data(), buffer().nbytes() / ITEMSIZE);
     }
 
     template <size_t N>
-    std::mdspan<value_type, std::dextents<size_t, N>> as_mdspan()
+    std::mdspan<value_type, std::dextents<size_t, N>, std::layout_stride> as_mdspan()
     {
         if (ndim() != N)
         {
             throw std::out_of_range(
                 std::format("SimpleArray::as_mdspan: rank {} does not match ndim() {}", N, ndim()));
         }
-        if (!is_c_contiguous())
-        {
-            throw std::runtime_error("SimpleArray::as_mdspan: array is not C-contiguous");
-        }
-        std::array<size_t, N> exts;
-        for (size_t i = 0; i < N; ++i) { exts[i] = shape(i); }
-        return std::mdspan<value_type, std::dextents<size_t, N>>(data(), exts);
+        return std::mdspan<value_type, std::dextents<size_t, N>, std::layout_stride>(
+            data(), make_mdspan_mapping<N>());
     }
 
     template <size_t N>
-    std::mdspan<value_type const, std::dextents<size_t, N>> as_mdspan() const
+    std::mdspan<value_type const, std::dextents<size_t, N>, std::layout_stride> as_mdspan() const
     {
         if (ndim() != N)
         {
             throw std::out_of_range(
                 std::format("SimpleArray::as_mdspan: rank {} does not match ndim() {}", N, ndim()));
         }
-        if (!is_c_contiguous())
-        {
-            throw std::runtime_error("SimpleArray::as_mdspan: array is not C-contiguous");
-        }
-        std::array<size_t, N> exts;
-        for (size_t i = 0; i < N; ++i) { exts[i] = shape(i); }
-        return std::mdspan<value_type const, std::dextents<size_t, N>>(data(), exts);
+        return std::mdspan<value_type const, std::dextents<size_t, N>, std::layout_stride>(
+            data(), make_mdspan_mapping<N>());
     }
 
     /* Backdoor */
@@ -2008,6 +1991,21 @@ public:
 
 private:
     void copy_logical_into(SimpleArray & out) const;
+
+    template <size_t N, size_t... I>
+    std::layout_stride::mapping<std::dextents<size_t, N>> make_mdspan_mapping_impl(std::index_sequence<I...>) const
+    {
+        std::array<size_t, N> strides;
+        for (size_t i = 0; i < N; ++i) { strides[i] = stride(i); }
+        return std::layout_stride::mapping<std::dextents<size_t, N>>(
+            std::dextents<size_t, N>(shape(I)...), strides);
+    }
+
+    template <size_t N>
+    std::layout_stride::mapping<std::dextents<size_t, N>> make_mdspan_mapping() const
+    {
+        return make_mdspan_mapping_impl<N>(std::make_index_sequence<N>{});
+    }
 
     static bool is_c_contiguous(small_vector<size_t> const & shape,
                                 small_vector<size_t> const & stride)
