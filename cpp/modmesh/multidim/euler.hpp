@@ -34,6 +34,8 @@
 
 #include <modmesh/mesh/mesh.hpp>
 
+#include <array>
+
 namespace modmesh
 {
 
@@ -74,6 +76,8 @@ public:
     uint8_t ndim() const { return m_ndim; }
     int_type ncell() const { return m_ncell; }
     int_type ngstcell() const { return m_ngstcell; }
+    // Number of conserved equations: density + ndim momentum + total energy.
+    int_type neq() const { return m_neq; }
     real_type time_increment() const { return m_time_increment; }
 
     SimpleArray<real_type> & cevol() { return m_cevol; }
@@ -81,11 +85,30 @@ public:
     SimpleArray<real_type> & sfcnd() { return m_sfcnd; }
     SimpleArray<real_type> & sfnml() { return m_sfnml; }
 
+    SimpleArray<real_type> & so0c() { return m_so0c; }
+    SimpleArray<real_type> & so0n() { return m_so0n; }
+    SimpleArray<real_type> & so0t() { return m_so0t; }
+    SimpleArray<real_type> & so1c() { return m_so1c; }
+    SimpleArray<real_type> & so1n() { return m_so1n; }
+    SimpleArray<real_type> & stm() { return m_stm; }
+    SimpleArray<real_type> & cflo() { return m_cflo; }
+    SimpleArray<real_type> & cflc() { return m_cflc; }
+    SimpleArray<real_type> & gamma() { return m_gamma; }
+
     void prepare_ce();
+
+    void init_solution(real_type gamma, real_type rho, std::array<real_type, 3> const & velocity, real_type p);
+    void calc_cfl();
+    void update()
+    {
+        m_so0c.swap(m_so0n);
+        m_so1c.swap(m_so1n);
+    }
 
 private:
 
     void initialize_arrays();
+    void initialize_solution();
 
     void prepare_ce_2d();
     void prepare_ce_3d();
@@ -96,12 +119,25 @@ private:
     uint8_t m_ndim = 0;
     int_type m_ncell = 0;
     int_type m_ngstcell = 0;
+    int_type m_neq = 0;
 
     // CE geometry arrays.
     SimpleArray<real_type> m_cevol; // [ncell, CLMFC+1]
     SimpleArray<real_type> m_cecnd; // [ncell, (CLMFC+1)*ndim]
     SimpleArray<real_type> m_sfcnd; // [ncell, CLMFC*FCMND, ndim]
     SimpleArray<real_type> m_sfnml; // [ncell, CLMFC*FCMND, ndim]
+
+    // Solution arrays.  The first axis spans ghost + body cells (set_nghost),
+    // so every table carries ghost rows; neq = ndim + 2.
+    SimpleArray<real_type> m_so0c; // [total, neq] order-0, current step
+    SimpleArray<real_type> m_so0n; // [total, neq] order-0, new step
+    SimpleArray<real_type> m_so0t; // [total, neq] order-0, temporal
+    SimpleArray<real_type> m_so1c; // [total, neq, ndim] order-1, current step
+    SimpleArray<real_type> m_so1n; // [total, neq, ndim] order-1, new step
+    SimpleArray<real_type> m_stm; // [total, neq] solution time-marching scratch
+    SimpleArray<real_type> m_cflo; // [total] original CFL number
+    SimpleArray<real_type> m_cflc; // [total] clamped CFL number
+    SimpleArray<real_type> m_gamma; // [total] ratio of specific heat
 
 }; /* end class EulerCore */
 

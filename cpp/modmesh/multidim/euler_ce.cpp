@@ -44,8 +44,10 @@ EulerCore::EulerCore(
     , m_ndim(mesh->ndim())
     , m_ncell(static_cast<int_type>(mesh->ncell()))
     , m_ngstcell(static_cast<int_type>(mesh->ngstcell()))
+    , m_neq(mesh->ndim() + 2)
 {
     initialize_arrays();
+    initialize_solution();
     prepare_ce();
 }
 
