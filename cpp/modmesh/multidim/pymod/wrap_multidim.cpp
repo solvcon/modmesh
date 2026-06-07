@@ -249,6 +249,7 @@ protected:
     WrapEulerCore & wrap_management();
     WrapEulerCore & wrap_preparation();
     WrapEulerCore & wrap_march();
+    WrapEulerCore & wrap_boundary();
     WrapEulerCore & wrap_array();
 
 }; /* end class WrapEulerCore */
@@ -260,6 +261,7 @@ WrapEulerCore::WrapEulerCore(pybind11::module & mod, const char * pyname, const 
         .wrap_management()
         .wrap_preparation()
         .wrap_march()
+        .wrap_boundary()
         .wrap_array()
         //
         ;
@@ -342,6 +344,57 @@ WrapEulerCore & WrapEulerCore::wrap_march()
         .def_timed("calc_solt", &wrapped_type::calc_solt)
         .def_timed("calc_soln", &wrapped_type::calc_soln)
         .def_timed("calc_dsoln", &wrapped_type::calc_dsoln)
+        //
+        ;
+
+    return *this;
+}
+
+WrapEulerCore & WrapEulerCore::wrap_boundary()
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def(
+            "add_nonrefl",
+            [](wrapped_type & self, std::vector<wrapped_type::int_type> const & faces)
+            {
+                self.add_bc(EulerBC::NonReflective, faces, {});
+            },
+            py::arg("faces"))
+        .def(
+            "add_slipwall",
+            [](wrapped_type & self, std::vector<wrapped_type::int_type> const & faces)
+            {
+                self.add_bc(EulerBC::SlipWall, faces, {});
+            },
+            py::arg("faces"))
+        .def(
+            "add_inlet",
+            [](wrapped_type & self,
+               std::vector<wrapped_type::int_type> const & faces,
+               std::vector<wrapped_type::real_type> const & value)
+            {
+                self.add_bc(EulerBC::Inlet, faces, value);
+            },
+            py::arg("faces"),
+            py::arg("value"))
+        .def("clear_bc", &wrapped_type::clear_bc)
+        .def(
+            "get_normal_matrix",
+            [](wrapped_type const & self, wrapped_type::int_type ifc)
+            {
+                auto const nface = static_cast<wrapped_type::int_type>(self.mesh()->nface());
+                if (ifc < 0 || ifc >= nface)
+                {
+                    throw std::out_of_range(std::format(
+                        "EulerCore: face {} out of range [0, {})", ifc, nface));
+                }
+                return self.get_normal_matrix(ifc);
+            },
+            py::arg("ifc"))
+        .def_timed("bc_soln", &wrapped_type::bc_soln)
+        .def_timed("bc_dsoln", &wrapped_type::bc_dsoln)
         //
         ;
 

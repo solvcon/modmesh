@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2016, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -365,10 +365,10 @@ void EulerCore::march_substep()
     update();
     calc_solt();
     calc_soln();
-    // bc_soln();  // boundary conditions land in issue #66 phase 5.
+    bc_soln();
     calc_cfl();
     calc_dsoln();
-    // bc_dsoln();  // boundary conditions land in issue #66 phase 5.
+    bc_dsoln();
 }
 
 void EulerCore::march(int_type steps)

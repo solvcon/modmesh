@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2024, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2016, Yung-Yu Chen <yyc@solvcon.net>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -35,9 +35,30 @@
 #include <modmesh/mesh/mesh.hpp>
 
 #include <array>
+#include <cstdint>
+#include <vector>
 
 namespace modmesh
 {
+
+// Boundary-condition kind for the ghost-cell trim passes.  NonReflective also
+// realizes outflow; there is no separate outlet handler.
+enum class EulerBC : uint8_t
+{
+    NonReflective = 0,
+    SlipWall = 1,
+    Inlet = 2,
+}; /* end enum class EulerBC */
+
+// One registered boundary condition: a handler kind over a set of boundary
+// faces (global face indices).  value carries the Inlet free stream as
+// [rho, v(ndim), p, gamma] and is unused by the other kinds.
+struct EulerBoundary
+{
+    EulerBC kind = EulerBC::NonReflective;
+    SimpleCollector<int32_t> faces;
+    SimpleCollector<double> value;
+}; /* end struct EulerBoundary */
 
 class EulerCore
     : public NumberBase<int32_t, double>
@@ -129,6 +150,24 @@ public:
     void march_substep();
     void march(int_type steps);
 
+    // Boundary conditions: ghost-cell trimming.
+
+    // Register a boundary condition of the given kind over the listed global
+    // boundary face indices.  For Inlet, value is the free stream
+    // [rho, v(ndim), p, gamma]; it is ignored (and may be empty) otherwise.
+    void add_bc(EulerBC kind, std::vector<int_type> const & faces, std::vector<real_type> const & value);
+    void clear_bc() { m_boundaries.clear(); }
+    std::vector<EulerBoundary> const & boundaries() const { return m_boundaries; }
+
+    // Orthonormal frame for face ifc with the outward unit normal as the first
+    // row: a 2D rotation, or in 3D the normal plus a stable tangent pair.
+    std::vector<std::vector<real_type>> get_normal_matrix(int_type ifc) const;
+
+    // bc_soln is the order-0 ghost update (trim_do0); bc_dsoln is the order-1
+    // ghost update (trim_do1).  Both run over every registered boundary.
+    void bc_soln();
+    void bc_dsoln();
+
     // Number of CESE substeps per full marching step.
     static constexpr int_type SUBSTEP_RUN = 2;
 
@@ -172,6 +211,9 @@ private:
     SimpleArray<real_type> m_cflo; // [total] original CFL number
     SimpleArray<real_type> m_cflc; // [total] clamped CFL number
     SimpleArray<real_type> m_gamma; // [total] ratio of specific heat
+
+    // Registered boundary conditions applied by bc_soln / bc_dsoln.
+    std::vector<EulerBoundary> m_boundaries;
 
 }; /* end class EulerCore */
 
