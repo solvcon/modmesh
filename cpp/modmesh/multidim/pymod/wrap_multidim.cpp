@@ -248,6 +248,7 @@ protected:
 
     WrapEulerCore & wrap_management();
     WrapEulerCore & wrap_preparation();
+    WrapEulerCore & wrap_march();
     WrapEulerCore & wrap_array();
 
 }; /* end class WrapEulerCore */
@@ -258,6 +259,7 @@ WrapEulerCore::WrapEulerCore(pybind11::module & mod, const char * pyname, const 
     (*this)
         .wrap_management()
         .wrap_preparation()
+        .wrap_march()
         .wrap_array()
         //
         ;
@@ -280,7 +282,6 @@ WrapEulerCore & WrapEulerCore::wrap_management()
         .def_property_readonly("ncell", &wrapped_type::ncell)
         .def_property_readonly("ngstcell", &wrapped_type::ngstcell)
         .def_property_readonly("neq", &wrapped_type::neq)
-        .def_property_readonly("time_increment", &wrapped_type::time_increment)
         //
         ;
 
@@ -319,8 +320,28 @@ WrapEulerCore & WrapEulerCore::wrap_preparation()
             py::arg("rho"),
             py::arg("v"),
             py::arg("p"))
-        .def_timed("calc_cfl", &wrapped_type::calc_cfl)
+        //
+        ;
+
+    return *this;
+}
+
+WrapEulerCore & WrapEulerCore::wrap_march()
+{
+    namespace py = pybind11;
+
+    (*this)
+        .def_property_readonly("time_increment", &wrapped_type::time_increment)
+        .def_property("sigma0", &wrapped_type::sigma0, &wrapped_type::set_sigma0)
+        .def_property("taumin", &wrapped_type::taumin, &wrapped_type::set_taumin)
+        .def_property("tauscale", &wrapped_type::tauscale, &wrapped_type::set_tauscale)
+        .def_timed("march", &wrapped_type::march, py::arg("steps"))
+        .def_timed("march_substep", &wrapped_type::march_substep)
         .def_timed("update", &wrapped_type::update)
+        .def_timed("calc_cfl", &wrapped_type::calc_cfl)
+        .def_timed("calc_solt", &wrapped_type::calc_solt)
+        .def_timed("calc_soln", &wrapped_type::calc_soln)
+        .def_timed("calc_dsoln", &wrapped_type::calc_dsoln)
         //
         ;
 
