@@ -132,13 +132,23 @@ if(CLANG_TIDY_EXE)
     endif()
 endif()
 
+string(
+    CONCAT
+    PILOT_CLANG_TIDY_DIFF_COMMAND
+    "test -n \"$MODMESH_DIFF_BASE\""
+    " && "
+    "git diff --no-color -U0 \"$MODMESH_DIFF_BASE\" HEAD"
+    " -- $<JOIN:${MODMESH_PILOT_FILES}, >"
+    " | "
+    "\"${CLANG_TIDY_DIFF_EXE}\" -p1"
+    " -path \"${CMAKE_BINARY_DIR}\""
+    " -config-file \"${PROJECT_ROOT_DIR}/.clang-tidy\""
+)
+
 add_custom_target(
     pilot_clang_tidy_diff
     COMMAND
-        bash
-        -e
-        -o pipefail
-        -c "test -n \"$MODMESH_DIFF_BASE\"; git diff --no-color -U0 \"$MODMESH_DIFF_BASE\" HEAD -- $<JOIN:${MODMESH_PILOT_FILES}, > | \"${CLANG_TIDY_DIFF_EXE}\" -p1 -path \"${CMAKE_BINARY_DIR}\" -config-file \"${PROJECT_ROOT_DIR}/.clang-tidy\""
+        bash -e -o pipefail -c "${PILOT_CLANG_TIDY_DIFF_COMMAND}"
     WORKING_DIRECTORY ${PROJECT_ROOT_DIR}
     VERBATIM
 )
