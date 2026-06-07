@@ -13,6 +13,8 @@ set(MODMESH_MULTIDIM_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/GradientElement.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/euler_ce.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/euler_solution.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/euler_march.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/euler_gradient.cpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_MULTIDIM_PYMODHEADERS

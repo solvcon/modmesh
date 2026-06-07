@@ -80,6 +80,13 @@ public:
     int_type neq() const { return m_neq; }
     real_type time_increment() const { return m_time_increment; }
 
+    real_type sigma0() const { return m_sigma0; }
+    real_type taumin() const { return m_taumin; }
+    real_type tauscale() const { return m_tauscale; }
+    void set_sigma0(real_type v) { m_sigma0 = v; }
+    void set_taumin(real_type v) { m_taumin = v; }
+    void set_tauscale(real_type v) { m_tauscale = v; }
+
     SimpleArray<real_type> & cevol() { return m_cevol; }
     SimpleArray<real_type> & cecnd() { return m_cecnd; }
     SimpleArray<real_type> & sfcnd() { return m_sfcnd; }
@@ -105,6 +112,26 @@ public:
         m_so1c.swap(m_so1n);
     }
 
+    // Solution marching: calc_solt, calc_soln, calc_dsoln.
+
+    // calc_solt fills the order-0 temporal derivative so0t from the Jacobian
+    // and so1c.
+    void calc_solt();
+    // calc_soln advances the order-0 solution so0n with the CESE flux integral
+    // over the BCEs.
+    void calc_soln();
+    // calc_dsoln reconstructs the order-1 derivative so1n from a per-cell
+    // GradientElement plus the gradient weighting
+    void calc_dsoln();
+
+    // march_substep runs one CESE substep and march runs the requested number
+    // of full steps (SUBSTEP_RUN substeps per step).
+    void march_substep();
+    void march(int_type steps);
+
+    // Number of CESE substeps per full marching step.
+    static constexpr int_type SUBSTEP_RUN = 2;
+
 private:
 
     void initialize_arrays();
@@ -120,6 +147,13 @@ private:
     int_type m_ncell = 0;
     int_type m_ngstcell = 0;
     int_type m_neq = 0;
+
+    // sigma0 caps the gradient weighting
+    real_type m_sigma0 = 3.0;
+    // tau (taumin + |cfl| * tauscale) sets the per-cell gradient-element
+    // spread.
+    real_type m_taumin = 0.0;
+    real_type m_tauscale = 1.0;
 
     // CE geometry arrays.
     SimpleArray<real_type> m_cevol; // [ncell, CLMFC+1]

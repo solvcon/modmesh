@@ -6,6 +6,149 @@ from numpy.testing import assert_almost_equal
 import modmesh
 
 
+def _euler_flux(u, gamma):
+    """Analytic Euler conserved-variable flux f[ieq][d] for a state row u.
+
+    Used as an independent reference for the C++ flux/Jacobian under test.
+    """
+    nd = u.size - 2
+    rho = u[0]
+    mom = u[1:1 + nd]
+    energy = u[nd + 1]
+    vel = mom / rho
+    p = (gamma - 1.0) * (energy - 0.5 * rho * (vel @ vel))
+    f = np.zeros((u.size, nd), dtype="float64")
+    for d in range(nd):
+        f[0, d] = mom[d]
+        for k in range(nd):
+            f[1 + k, d] = mom[k] * vel[d] + (p if k == d else 0.0)
+        f[nd + 1, d] = (energy + p) * vel[d]
+    return f
+
+
+def _euler_jac_fd(u, gamma, h=1e-6):
+    """Euler flux Jacobian J[ieq][jeq][d] by central-differencing the analytic
+    flux.  Independent of the C++ analytic Jacobian, so it catches a wrong
+    Jacobian entry or sign in the marcher."""
+    neq = u.size
+    nd = neq - 2
+    jac = np.zeros((neq, neq, nd), dtype="float64")
+    for j in range(neq):
+        up = u.copy()
+        um = u.copy()
+        up[j] += h
+        um[j] -= h
+        fp = _euler_flux(up, gamma)
+        fm = _euler_flux(um, gamma)
+        jac[:, j, :] = (fp - fm) / (2 * h)
+    return jac
+
+
+def _fcmnd(mh, ec):
+    clmfc = mh.clfcs.ndarray.shape[1] - 1
+    return ec.sfcnd.ndarray.shape[1] // clmfc
+
+
+def _calc_soln_reference(mh, ec, gamma):
+    """Independent re-implementation of the CESE order-0 flux integral, using
+    a finite-difference Euler Jacobian.  Reads the same so0c/so0t/so1c that
+    calc_soln consumes and returns the expected so0n over the real cells."""
+    nd = mh.ndim
+    neq = nd + 2
+    dt = ec.time_increment
+    qdt, hdt = dt * 0.25, dt * 0.5
+    fcmnd = _fcmnd(mh, ec)
+    out = np.zeros((ec.ncell, neq), dtype="float64")
+    for icl in range(ec.ncell):
+        acc = np.zeros(neq, dtype="float64")
+        for ifl in range(1, mh.clfcs[icl, 0] + 1):
+            ifc = mh.clfcs[icl, ifl]
+            jcl = mh.fccls[ifc, 0] + mh.fccls[ifc, 1] - icl
+            jce = np.array([ec.cecnd[jcl, d] if jcl >= 0 else mh.clcnd[jcl, d]
+                            for d in range(nd)], dtype="float64")
+            bcnd = np.array([ec.cecnd[icl, ifl * nd + d]
+                             for d in range(nd)], dtype="float64")
+            js = np.array([ec.so0c[jcl, ieq] for ieq in range(neq)],
+                          dtype="float64")
+            jt = np.array([ec.so0t[jcl, ieq] for ieq in range(neq)],
+                          dtype="float64")
+            j1 = np.array([[ec.so1c[jcl, ieq, d] for d in range(nd)]
+                           for ieq in range(neq)], dtype="float64")
+            bvol = ec.cevol[icl, ifl]
+            for ieq in range(neq):
+                acc[ieq] += (js[ieq] + (bcnd - jce) @ j1[ieq]) * bvol
+            fcn = _euler_flux(js, gamma)
+            jac = _euler_jac_fd(js, gamma)
+            for inf in range(mh.fcnds[ifc, 0]):
+                sfi = (ifl - 1) * fcmnd + inf
+                sc = np.array([ec.sfcnd[icl, sfi, d]
+                               for d in range(nd)], dtype="float64")
+                sn = np.array([ec.sfnml[icl, sfi, d]
+                               for d in range(nd)], dtype="float64")
+                usfc = qdt * jt + np.array(
+                    [(sc - jce) @ j1[ieq] for ieq in range(neq)],
+                    dtype="float64")
+                for ieq in range(neq):
+                    acc[ieq] -= hdt * ((fcn[ieq] + jac[ieq].T @ usfc) @ sn)
+        out[icl] = acc / ec.cevol[icl, 0]
+    return out
+
+
+def _calc_dsoln_reference(mh, ec):
+    """Independent re-implementation of the order-1 gradient weighting/limiter,
+    reusing the verified GradientElement.solve_gradient primitive.  Returns the
+    expected so1n and whether the W-3/4 limiter is actually active."""
+    nd = mh.ndim
+    neq = nd + 2
+    hdt = ec.time_increment * 0.5
+    az = 1e-200
+    out = np.zeros((ec.ncell, neq, nd), dtype="float64")
+    active = False
+    for icl in range(ec.ncell):
+        acfl = abs(ec.cflc[icl])
+        sgm0 = ec.sigma0 / acfl
+        tau = ec.taumin + acfl * ec.tauscale
+        ge = modmesh.GradientElement(mesh=mh, cecnd=ec.cecnd, icl=icl, tau=tau)
+        nfge, ofg1 = ge.nfge, ge.nfge_inverse
+        grad = np.zeros((nfge, neq, nd), dtype="float64")
+        widv = np.zeros((nfge, neq), dtype="float64")
+        wacc = np.zeros(neq, dtype="float64")
+        for ifge in range(nfge):
+            faces = ge.faces(ifge)
+            for ieq in range(neq):
+                udf = np.zeros(nd, dtype="float64")
+                for ivx in range(nd):
+                    ifl = faces[ivx] - 1
+                    jcl = ge.rcl(ifl)
+                    val = ec.so0c[jcl, ieq] + hdt * ec.so0t[jcl, ieq] \
+                        - ec.so0n[icl, ieq]
+                    for d in range(nd):
+                        val += ge.jdis(ifl, d) * ec.so1c[jcl, ieq, d]
+                    udf[ivx] = val
+                g = np.array(ge.solve_gradient(ifge, udf.tolist()),
+                             dtype="float64")
+                grad[ifge, ieq] = g
+                wgt = 1.0 / np.sqrt(g @ g + az)
+                wacc[ieq] += wgt
+                widv[ifge, ieq] = wgt
+        wpa = np.zeros((neq, 2), dtype="float64")
+        for ifge in range(nfge):
+            for ieq in range(neq):
+                w = widv[ifge, ieq] / wacc[ieq] - ofg1
+                widv[ifge, ieq] = w
+                wpa[ieq, 0] = max(wpa[ieq, 0], w)
+                wpa[ieq, 1] = min(wpa[ieq, 1], w)
+        for ieq in range(neq):
+            sm = min((1.0 - ofg1) / (wpa[ieq, 0] + az),
+                     -ofg1 / (wpa[ieq, 1] - az), sgm0)
+            if np.abs(widv[:, ieq]).max() > 1e-9:
+                active = True
+            for ifge in range(nfge):
+                w = ofg1 + sm * widv[ifge, ieq]
+                out[icl, ieq] += w * grad[ifge, ieq]
+    return out, active
+
+
 class _TriangleMeshBase(unittest.TestCase):
     """3 triangles around the origin."""
 
@@ -212,7 +355,7 @@ class _GradientElementBase(_GradientElementBoundsBase):
         for icl in range(self.mesh.ncell):
             ge = self._ge(icl)
             mat = np.array([[ge.idis(ifl, d) for d in range(nd)]
-                            for ifl in range(ge.clnfc)])
+                            for ifl in range(ge.clnfc)], dtype="float64")
             # The face-displacement vectors must span R^ndim for the
             # gradient reconstruction to be well posed.  A per-simplex
             # determinant would wrongly fail for the hexahedron, whose
@@ -248,7 +391,7 @@ class _GradientElementBase(_GradientElementBoundsBase):
         for icl in range(self.mesh.ncell):
             ge = self._ge(icl)
             for ifge in range(ge.nfge):
-                mat = np.array(ge.displacement_matrix(ifge))
+                mat = np.array(ge.displacement_matrix(ifge), dtype="float64")
                 self.assertEqual((nd, nd), mat.shape)
                 self.assertGreater(
                     abs(np.linalg.det(mat)), 1e-10,
@@ -259,11 +402,11 @@ class _GradientElementBase(_GradientElementBoundsBase):
         # gradient evaluation point is exactly g . idis, so the per-FGE
         # solve must recover g exactly (up to round-off).
         nd = self.mesh.ndim
-        grad = np.array([1.5, -2.7, 0.9][:nd])
+        grad = np.array([1.5, -2.7, 0.9][:nd], dtype="float64")
         for icl in range(self.mesh.ncell):
             ge = self._ge(icl)
             for ifge in range(ge.nfge):
-                dst = np.array(ge.displacement_matrix(ifge))
+                dst = np.array(ge.displacement_matrix(ifge), dtype="float64")
                 faces = ge.faces(ifge)
                 # Matrix rows are the per-face idis vectors.
                 for ivx, ifl in enumerate(faces):
@@ -271,7 +414,8 @@ class _GradientElementBase(_GradientElementBoundsBase):
                         assert_almost_equal(
                             dst[ivx, d], ge.idis(ifl - 1, d), decimal=12)
                 udf = dst @ grad
-                got = np.array(ge.solve_gradient(ifge, udf.tolist()))
+                got = np.array(ge.solve_gradient(ifge, udf.tolist()),
+                               dtype="float64")
                 assert_almost_equal(got, grad, decimal=9)
 
 
@@ -351,7 +495,8 @@ class _EulerSolutionBase:
             assert_almost_equal(p_rec, self.PRES)
         # gamma is filled across every row, ghost cells included.
         total = ec.ngstcell + ec.ncell
-        assert_almost_equal(ec.gamma.ndarray, np.full(total, self.GAMMA))
+        assert_almost_equal(ec.gamma.ndarray,
+                            np.full(total, self.GAMMA, dtype="float64"))
         # init_solution leaves the conserved table's ghost rows untouched
         # (zero); ghost states are populated by boundary conditions later.
         for icl in range(-ec.ngstcell, 0):
@@ -419,7 +564,8 @@ class _EulerSolutionBase:
                          v=self._vel(nd), p=self.PRES)
         # Seed the new-step order-1 buffer with a recognizable pattern.
         so1n_view = ec.so1n.ndarray
-        so1n_view[...] = np.arange(so1n_view.size).reshape(so1n_view.shape)
+        so1n_view[...] = np.arange(
+            so1n_view.size, dtype="float64").reshape(so1n_view.shape)
         so0n_before = ec.so0n.ndarray.copy()
         so0c_before = ec.so0c.ndarray.copy()
         so1n_before = ec.so1n.ndarray.copy()
@@ -449,6 +595,216 @@ class EulerSolutionTetrahedronTC(_EulerSolutionBase, _TetrahedronMeshBase):
 
 class EulerSolutionHexahedronTC(_EulerSolutionBase, _HexahedronMeshBase):
     """EulerCore solution storage on a single hexahedron."""
+
+
+class _EulerMarchBase:
+    """EulerCore phase 4 solution marching."""
+
+    GAMMA = 1.4
+    RHO = 1.2
+    PRES = 0.9
+    VEL = (0.3, -0.15, 0.05)
+
+    def _ec(self):
+        # A fresh core per test keeps the shared class mesh read-only.
+        return modmesh.EulerCore(mesh=self.mesh, time_increment=0.01)
+
+    def _vel(self, nd):
+        return list(self.VEL[:nd])
+
+    def _uniform_row(self, nd):
+        v = self._vel(nd)
+        vsq = sum(c * c for c in v)
+        energy = self.PRES / (self.GAMMA - 1.0) + 0.5 * self.RHO * vsq
+        return [self.RHO] + [self.RHO * v[d] for d in range(nd)] + [energy]
+
+    def test_march_param_defaults(self):
+        ec = self._ec()
+        assert_almost_equal(ec.sigma0, 3.0)
+        assert_almost_equal(ec.taumin, 0.0)
+        assert_almost_equal(ec.tauscale, 1.0)
+        # The marching parameters are writable.
+        ec.sigma0, ec.taumin, ec.tauscale = 2.5, 0.1, 0.7
+        assert_almost_equal(ec.sigma0, 2.5)
+        assert_almost_equal(ec.taumin, 0.1)
+        assert_almost_equal(ec.tauscale, 0.7)
+
+    def test_calc_solt_euler_flux(self):
+        # calc_solt sets so0t = -(Jacobian . so1c).  Seeding so1c[:, d] with a
+        # scalar multiple coef[d] of the conserved state turns the Jacobian
+        # product in each direction into the analytic Euler flux there (the
+        # flux is homogeneous of degree one in the conserved variables), so
+        # so0t == -sum_d coef[d] * flux_d.  Distinct coef[d] exercises every
+        # Jacobian direction column, not just one.
+        ec = self._ec()
+        nd, neq = self.mesh.ndim, self.mesh.ndim + 2
+        row = np.array(self._uniform_row(nd), dtype="float64")
+        coef = [0.7, -1.3, 0.4][:nd]
+        for icl in range(ec.ncell):
+            ec.gamma[icl] = self.GAMMA
+            for ieq in range(neq):
+                ec.so0c[icl, ieq] = row[ieq]
+                for d in range(nd):
+                    ec.so1c[icl, ieq, d] = coef[d] * row[ieq]
+        ec.calc_solt()
+        flux = _euler_flux(row, self.GAMMA)  # flux[ieq][d]
+        expect = [-sum(coef[d] * flux[ieq][d] for d in range(nd))
+                  for ieq in range(neq)]
+        for icl in range(ec.ncell):
+            for ieq in range(neq):
+                assert_almost_equal(ec.so0t[icl, ieq], expect[ieq], decimal=10)
+
+    def test_calc_soln_freestream(self):
+        # A uniform conserved state with zero gradient is preserved exactly by
+        # the CESE flux integral: so0n == so0c.  Ghost rows are set to the same
+        # uniform state to stand in for the (phase 5) boundary conditions.
+        ec = self._ec()
+        nd, neq = self.mesh.ndim, self.mesh.ndim + 2
+        row = self._uniform_row(nd)
+        for cell in range(-ec.ngstcell, ec.ncell):
+            ec.gamma[cell] = self.GAMMA
+            for ieq in range(neq):
+                ec.so0c[cell, ieq] = row[ieq]
+                ec.so0t[cell, ieq] = 0.0
+                for d in range(nd):
+                    ec.so1c[cell, ieq, d] = 0.0
+        ec.calc_solt()
+        ec.calc_soln()
+        for icl in range(ec.ncell):
+            for ieq in range(neq):
+                assert_almost_equal(ec.so0n[icl, ieq], row[ieq], decimal=10)
+
+    def test_calc_dsoln_linear_field(self):
+        # For a global linear field u(x) = c + g . x sampled at every CE
+        # solution point, calc_dsoln recovers the gradient g exactly: each
+        # fundamental gradient element yields g, so the weighting/limiter
+        # reduces to g regardless of the per-cell tau and sigma0.
+        ec = self._ec()
+        mh = self.mesh
+        nd, neq = mh.ndim, mh.ndim + 2
+        g = [[0.1 * (ieq + 1) + 0.01 * (d + 1) for d in range(nd)]
+             for ieq in range(neq)]
+        c = [0.5 + 0.3 * ieq for ieq in range(neq)]
+
+        def point(cell):
+            return [ec.cecnd[cell, d] if cell >= 0 else mh.clcnd[cell, d]
+                    for d in range(nd)]
+
+        for cell in range(-ec.ngstcell, ec.ncell):
+            x = point(cell)
+            for ieq in range(neq):
+                val = c[ieq] + sum(g[ieq][d] * x[d] for d in range(nd))
+                ec.so0c[cell, ieq] = val
+                ec.so0n[cell, ieq] = val
+                ec.so0t[cell, ieq] = 0.0
+                for d in range(nd):
+                    ec.so1c[cell, ieq, d] = g[ieq][d]
+            ec.cflc[cell] = 0.5
+        ec.calc_dsoln()
+        for icl in range(ec.ncell):
+            for ieq in range(neq):
+                for d in range(nd):
+                    assert_almost_equal(ec.so1n[icl, ieq, d], g[ieq][d],
+                                        decimal=9)
+
+    def test_calc_soln_against_reference(self):
+        # Drive calc_soln with a non-uniform state (nonzero so1c and so0t and
+        # distinct ghost states) so the temporal flux and the order-1 spatial
+        # reconstruction are both active, then compare against an independent
+        # finite-difference-Jacobian reimplementation.  Unlike the free-stream
+        # case this constrains the hdt/qdt coefficients, the temporal sign, and
+        # the Jacobian -- none of which a uniform state can detect.
+        ec = self._ec()
+        nd, neq = self.mesh.ndim, self.mesh.ndim + 2
+        mh = self.mesh
+        base = [1.2, 0.3, -0.15, 0.2, 2.5]
+        for cell in range(-ec.ngstcell, ec.ncell):
+            x = [ec.cecnd[cell, d] if cell >= 0 else mh.clcnd[cell, d]
+                 for d in range(nd)]
+            ec.gamma[cell] = self.GAMMA
+            for ieq in range(neq):
+                s = 1.0 + 0.1 * x[0] + 0.03 * ieq
+                for d in range(1, nd):
+                    s += 0.07 * x[d]
+                ec.so0c[cell, ieq] = base[ieq] * s
+                ec.so0t[cell, ieq] = 0.01 * (ieq + 1)
+                for d in range(nd):
+                    ec.so1c[cell, ieq, d] = 0.02 * (ieq + 1) * (d + 1)
+        ec.calc_soln()
+        ref = _calc_soln_reference(mh, ec, self.GAMMA)
+        for icl in range(ec.ncell):
+            for ieq in range(neq):
+                assert_almost_equal(ec.so0n[icl, ieq], ref[icl, ieq],
+                                    decimal=10)
+
+    def test_calc_dsoln_against_reference(self):
+        # Drive calc_dsoln with a non-linear field so the per-FGE gradients
+        # differ and the W-1/2 / W-3/4 limiter is actually exercised (the
+        # linear-field test leaves it dead, since identical gradients zero the
+        # limiter delta).  Compare against an independent reimplementation of
+        # the weighting that reuses the verified solve_gradient primitive.
+        ec = self._ec()
+        nd, neq = self.mesh.ndim, self.mesh.ndim + 2
+        mh = self.mesh
+        for cell in range(-ec.ngstcell, ec.ncell):
+            x = [ec.cecnd[cell, d] if cell >= 0 else mh.clcnd[cell, d]
+                 for d in range(nd)]
+            for ieq in range(neq):
+                val = 1.0 + 0.5 * x[0] + 0.4 * x[0] * x[0] + 0.2 * ieq
+                for d in range(1, nd):
+                    val += 0.3 * x[d]
+                ec.so0c[cell, ieq] = val
+                ec.so0n[cell, ieq] = val
+                ec.so0t[cell, ieq] = 0.0
+                for d in range(nd):
+                    g = 0.1 * (ieq + 1) + 0.05 * x[0] * (d + 1)
+                    ec.so1c[cell, ieq, d] = g
+            ec.cflc[cell] = 0.5
+        ec.calc_dsoln()
+        ref, active = _calc_dsoln_reference(mh, ec)
+        self.assertTrue(active, "limiter delta stayed zero; field too smooth")
+        for icl in range(ec.ncell):
+            for ieq in range(neq):
+                for d in range(nd):
+                    assert_almost_equal(ec.so1n[icl, ieq, d],
+                                        ref[icl, ieq, d], decimal=10)
+
+    def test_march_bounded(self):
+        # Without boundary conditions (phase 5) marching is only well posed on
+        # meshes with interior faces; single-cell meshes are all-boundary.
+        if self.mesh.ncell < 2:
+            self.skipTest("march needs interior faces; BCs land in phase 5")
+        ec = self._ec()
+        nd = self.mesh.ndim
+        ec.init_solution(gamma=self.GAMMA, rho=self.RHO,
+                         v=self._vel(nd), p=self.PRES)
+        ec.march(steps=3)
+        so0n = ec.so0n.ndarray
+        self.assertTrue(np.all(np.isfinite(so0n)))
+        # Density stays positive and the state stays bounded.
+        for icl in range(ec.ncell):
+            self.assertGreater(ec.so0n[icl, 0], 0.0)
+        self.assertLess(np.abs(so0n).max(), 1e6)
+
+
+class EulerMarchTriangleTC(_EulerMarchBase, _TriangleMeshBase):
+    """EulerCore marching on 3 triangles."""
+
+
+class EulerMarchQuadTC(_EulerMarchBase, _QuadMeshBase):
+    """EulerCore marching on a unit-square quad."""
+
+
+class EulerMarchMixedTC(_EulerMarchBase, _MixedMeshBase):
+    """EulerCore marching on a 2D mixed mesh."""
+
+
+class EulerMarchTetrahedronTC(_EulerMarchBase, _TetrahedronMeshBase):
+    """EulerCore marching on a single tetrahedron."""
+
+
+class EulerMarchHexahedronTC(_EulerMarchBase, _HexahedronMeshBase):
+    """EulerCore marching on a single hexahedron."""
 
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
