@@ -163,9 +163,16 @@ Python interface in `modmesh/`:
 
 ### Testing Structure
 
-- **Python tests** (`tests/`): pytest-based, files named `test_*.py`.
+Python tests are the default. Prefer writing tests in Python (`tests/`); reach
+for C++ gtest only when the code cannot or should not be exercised from Python
+-- for example, internals with no Python binding, or behavior that must be
+verified at the C++ level.
+
+- **Python tests** (`tests/`): pytest-based, files named `test_*.py`. The
+  preferred place for tests.
 - **C++ tests** (`gtests/`): googletest-based, files named
-  `test_nopython_*.cpp`.
+  `test_nopython_*.cpp`. Use only when Python cannot or should not reach the
+  code under test.
 - **Profiling benchmarks** (`profiling/`): files named `profile_*.py`.
 
 See "Build, Test, Lint, Format" above for the `make` invocations.
@@ -269,7 +276,8 @@ The pilot application (`cpp/binary/pilot/`) is a standalone Qt6-based viewer:
 2. Add header files with proper include guards.
 3. Update `cpp/modmesh/CMakeLists.txt` to include new sources.
 4. Add pybind11 bindings if Python access is needed.
-5. Write tests in both `gtests/` and `tests/`.
+5. Write tests. Prefer Python tests in `tests/`; add a `gtests/` test only
+   when the behavior cannot or should not be exercised from Python.
 
 ### Adding Python-Only Functionality
 

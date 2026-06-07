@@ -349,6 +349,42 @@ Never do implicit relative import:
 import onedim
 ```
 
+## NumPy Array Creation
+
+Always specify the `dtype` when creating a NumPy `ndarray`, and spell the
+dtype as a string. The default floating-point and integer types depend on the
+platform and the NumPy version, so an explicit dtype keeps the array layout
+deterministic and mirrors the fixed-width integer rule below.
+
+```python
+# GOOD: explicit dtype given as a string.
+a = np.empty(10, dtype='float64')
+b = np.zeros((3, 4), dtype='int32')
+c = np.array([1, 2, 3], dtype='uint8')
+
+# BAD: no dtype; the type is implicit and platform-dependent.
+a = np.empty(10)
+b = np.zeros((3, 4))
+
+# BAD: dtype given as a type object instead of a string.
+a = np.empty(10, dtype=np.float64)
+```
+
+This applies to every array-creating call (`np.empty`, `np.zeros`, `np.ones`,
+`np.full`, `np.array`, `np.arange`, etc.).
+
+## Testing
+
+Python tests are the default. Write tests in Python (`tests/`, pytest, files
+named `test_*.py`) whenever the code can be exercised through the Python
+bindings. Use C++ gtest (`gtests/`, files named `test_nopython_*.cpp`) only
+when the code cannot or should not be tested from Python -- for example,
+internals with no Python binding, or behavior that must be verified at the C++
+level. Do not duplicate the same test in both layers without a reason.
+
+A test should encode why a behavior matters, not merely what it does. A test
+that cannot fail when the logic it covers changes is not pulling its weight.
+
 ## Integer Type
 
 Use fixed-width integers (`int32_t`, `uint8_t`, etc.) Do not use the basic
