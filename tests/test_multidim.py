@@ -807,4 +807,281 @@ class EulerMarchHexahedronTC(_EulerMarchBase, _HexahedronMeshBase):
     """EulerCore marching on a single hexahedron."""
 
 
+def _build_quad_channel(nx, ny, lx, ly):
+    """A structured nx-by-ny quadrilateral grid over [0, lx] x [0, ly]."""
+    mh = modmesh.StaticMesh(ndim=2, nnode=(nx + 1) * (ny + 1), nface=0,
+                            ncell=nx * ny)
+    mh.ndcrd[:, :] = [(i * lx / nx, j * ly / ny)
+                      for j in range(ny + 1) for i in range(nx + 1)]
+    mh.cltpn.fill(modmesh.StaticMesh.QUADRILATERAL)
+
+    def nid(i, j):
+        return j * (nx + 1) + i
+
+    mh.clnds[:, :5] = [
+        (4, nid(i, j), nid(i + 1, j), nid(i + 1, j + 1), nid(i, j + 1))
+        for j in range(ny) for i in range(nx)]
+    mh.build_interior(do_metric=True)
+    mh.build_boundary()
+    mh.build_ghost()
+    return mh
+
+
+class _EulerBCBase:
+    """EulerCore phase 5 boundary conditions (the ghost-cell trim passes)."""
+
+    GAMMA = 1.4
+
+    def _ec(self):
+        # A fresh core per test keeps the shared class mesh read-only.
+        return modmesh.EulerCore(mesh=self.mesh, time_increment=0.01)
+
+    def _faces(self):
+        return [int(f) for f in self.mesh.bndfcs.ndarray[:, 0]]
+
+    def _bnd(self):
+        # (ifc, interior cell, ghost cell) for every boundary face.
+        return [(ifc, self.mesh.fccls[ifc, 0], self.mesh.fccls[ifc, 1])
+                for ifc in self._faces()]
+
+    def _normal(self, ifc):
+        nd = self.mesh.ndim
+        return np.array([self.mesh.fcnml[ifc, d] for d in range(nd)],
+                        dtype="float64")
+
+    def _inlet_value(self, nd):
+        # [rho, v(ndim), p, gamma]
+        return [1.3] + [2.0, 0.3, -0.1][:nd] + [0.8, self.GAMMA]
+
+    def test_normal_matrix_orthonormal(self):
+        # The frame is an orthonormal rotation whose first row is the outward
+        # unit normal, so the handlers can rotate in and out by the transpose.
+        ec = self._ec()
+        nd = self.mesh.ndim
+        eye = np.eye(nd)
+        for ifc in self._faces():
+            mat = np.array(ec.get_normal_matrix(ifc), dtype="float64")
+            self.assertEqual((nd, nd), mat.shape)
+            assert_almost_equal(mat @ mat.T, eye, decimal=12)
+            assert_almost_equal(mat[0], self._normal(ifc), decimal=12)
+            assert_almost_equal(np.linalg.det(mat), 1.0, decimal=12)
+
+    def test_nonrefl_do0(self):
+        # Non-reflective do0 copies the whole interior state to the ghost.
+        ec = self._ec()
+        neq = self.mesh.ndim + 2
+        for icl in range(ec.ncell):
+            for ieq in range(neq):
+                ec.so0n[icl, ieq] = 1.0 + 0.1 * icl + 0.37 * ieq
+        ec.add_nonrefl(self._faces())
+        ec.bc_soln()
+        for ifc, icl, jcl in self._bnd():
+            for ieq in range(neq):
+                assert_almost_equal(ec.so0n[jcl, ieq], ec.so0n[icl, ieq])
+
+    def test_nonrefl_do1(self):
+        # Non-reflective do1 zeroes the wall-normal derivative and keeps the
+        # tangential part: the ghost gradient is the tangential projection.
+        ec = self._ec()
+        nd, neq = self.mesh.ndim, self.mesh.ndim + 2
+        for icl in range(ec.ncell):
+            for ieq in range(neq):
+                for d in range(nd):
+                    ec.so1c[icl, ieq, d] = \
+                        0.2 + 0.1 * ieq - 0.05 * d + 0.03 * icl
+        ec.add_nonrefl(self._faces())
+        ec.bc_dsoln()
+        for ifc, icl, jcl in self._bnd():
+            n = self._normal(ifc)
+            for ieq in range(neq):
+                gi = np.array([ec.so1c[icl, ieq, d] for d in range(nd)],
+                              dtype="float64")
+                gg = np.array([ec.so1n[jcl, ieq, d] for d in range(nd)],
+                              dtype="float64")
+                assert_almost_equal(gg, gi - (gi @ n) * n, decimal=12)
+                assert_almost_equal(gg @ n, 0.0, decimal=12)
+
+    def test_slipwall_do0(self):
+        # Slip-wall do0 copies density and energy and reflects the momentum,
+        # so the wall-normal mass flux at the face vanishes.
+        ec = self._ec()
+        nd, neq = self.mesh.ndim, self.mesh.ndim + 2
+        for icl in range(ec.ncell):
+            ec.so0n[icl, 0] = 1.1 + 0.1 * icl
+            for d in range(nd):
+                ec.so0n[icl, 1 + d] = 0.3 + 0.2 * d + 0.05 * icl
+            ec.so0n[icl, neq - 1] = 5.0 + 0.1 * icl
+        ec.add_slipwall(self._faces())
+        ec.bc_soln()
+        for ifc, icl, jcl in self._bnd():
+            n = self._normal(ifc)
+            assert_almost_equal(ec.so0n[jcl, 0], ec.so0n[icl, 0])
+            assert_almost_equal(ec.so0n[jcl, neq - 1], ec.so0n[icl, neq - 1])
+            momi = np.array([ec.so0n[icl, 1 + d] for d in range(nd)],
+                            dtype="float64")
+            momg = np.array([ec.so0n[jcl, 1 + d] for d in range(nd)],
+                            dtype="float64")
+            assert_almost_equal(momg, momi - 2.0 * (momi @ n) * n, decimal=12)
+            assert_almost_equal((momi + momg) @ n, 0.0, decimal=12)
+
+    def test_slipwall_do1(self):
+        # Slip-wall do1 mirrors the derivatives across the wall: the scalar
+        # gradients reflect their normal component and the momentum-gradient
+        # tensor is reflected on both indices (R G R, R = I - 2 n n^T).
+        ec = self._ec()
+        nd, neq = self.mesh.ndim, self.mesh.ndim + 2
+        for icl in range(ec.ncell):
+            for ieq in range(neq):
+                for d in range(nd):
+                    ec.so1c[icl, ieq, d] = \
+                        0.1 + 0.2 * ieq + 0.13 * d + 0.07 * icl
+        ec.add_slipwall(self._faces())
+        ec.bc_dsoln()
+        eye = np.eye(nd)
+        for ifc, icl, jcl in self._bnd():
+            n = self._normal(ifc)
+            refl = eye - 2.0 * np.outer(n, n)
+            for ieq in (0, neq - 1):
+                gi = np.array([ec.so1c[icl, ieq, d] for d in range(nd)],
+                              dtype="float64")
+                gg = np.array([ec.so1n[jcl, ieq, d] for d in range(nd)],
+                              dtype="float64")
+                assert_almost_equal(gg, refl @ gi, decimal=12)
+            gmi = np.array([[ec.so1c[icl, 1 + a, b] for b in range(nd)]
+                            for a in range(nd)], dtype="float64")
+            gmg = np.array([[ec.so1n[jcl, 1 + a, b] for b in range(nd)]
+                            for a in range(nd)], dtype="float64")
+            assert_almost_equal(gmg, refl @ gmi @ refl, decimal=12)
+
+    def test_inlet_do0(self):
+        # Inlet do0 sets the ghost to the prescribed conserved free stream.
+        ec = self._ec()
+        nd, neq = self.mesh.ndim, self.mesh.ndim + 2
+        val = self._inlet_value(nd)
+        ec.add_inlet(self._faces(), value=val)
+        ec.bc_soln()
+        rho, v = val[0], val[1:1 + nd]
+        p, ga = val[1 + nd], val[2 + nd]
+        energy = p / (ga - 1.0) + 0.5 * rho * sum(c * c for c in v)
+        for ifc, icl, jcl in self._bnd():
+            assert_almost_equal(ec.so0n[jcl, 0], rho)
+            for d in range(nd):
+                assert_almost_equal(ec.so0n[jcl, 1 + d], rho * v[d])
+            assert_almost_equal(ec.so0n[jcl, neq - 1], energy)
+
+    def test_inlet_do1(self):
+        # Inlet do1 zeroes the ghost gradient.
+        ec = self._ec()
+        nd, neq = self.mesh.ndim, self.mesh.ndim + 2
+        # Pre-seed both interior and ghost so the zeroing is observable.
+        for icl in range(ec.ncell):
+            for ieq in range(neq):
+                for d in range(nd):
+                    ec.so1c[icl, ieq, d] = 1.0 + ieq + d
+        for ifc, icl, jcl in self._bnd():
+            for ieq in range(neq):
+                for d in range(nd):
+                    ec.so1n[jcl, ieq, d] = 9.0
+        ec.add_inlet(self._faces(), value=self._inlet_value(nd))
+        ec.bc_dsoln()
+        for ifc, icl, jcl in self._bnd():
+            for ieq in range(neq):
+                for d in range(nd):
+                    assert_almost_equal(ec.so1n[jcl, ieq, d], 0.0)
+
+    def test_add_bc_validation(self):
+        ec = self._ec()
+        nd = self.mesh.ndim
+        faces = self._faces()
+        # The inlet value must be [rho, v(ndim), p, gamma].
+        with self.assertRaises(ValueError):
+            ec.add_inlet(faces, value=[1.0] * (nd + 2))
+        for bad in ([0.0] + [0.0] * nd + [1.0, 1.4],   # rho <= 0
+                    [1.0] + [0.0] * nd + [-1.0, 1.4],  # p < 0
+                    [1.0] + [0.0] * nd + [1.0, 1.0]):  # gamma <= 1
+            with self.assertRaises(ValueError):
+                ec.add_inlet(faces, value=bad)
+        # A face index that is not a boundary face is rejected.
+        with self.assertRaises(ValueError):
+            ec.add_nonrefl([10 ** 7])
+
+
+class EulerBCTriangleTC(_EulerBCBase, _TriangleMeshBase):
+    """EulerCore boundary conditions on 3 triangles."""
+
+
+class EulerBCQuadTC(_EulerBCBase, _QuadMeshBase):
+    """EulerCore boundary conditions on a unit-square quad."""
+
+
+class EulerBCMixedTC(_EulerBCBase, _MixedMeshBase):
+    """EulerCore boundary conditions on a 2D mixed mesh."""
+
+
+class EulerBCTetrahedronTC(_EulerBCBase, _TetrahedronMeshBase):
+    """EulerCore boundary conditions on a single tetrahedron."""
+
+
+class EulerBCHexahedronTC(_EulerBCBase, _HexahedronMeshBase):
+    """EulerCore boundary conditions on a single hexahedron."""
+
+
+class EulerChannelMarchTC(unittest.TestCase):
+    """A walled 2D channel: supersonic inlet, slip walls, and a
+    non-reflective outflow -- the first march driven with boundary
+    conditions, replacing the all-boundary skip of test_march_bounded."""
+
+    GAMMA = 1.4
+    RHO = 1.0
+    PRES = 1.0
+    VX = 2.0  # supersonic: |v| / sqrt(gamma p / rho) ~ 1.69
+
+    def _classify(self, mh, lx):
+        left, right, walls = [], [], []
+        for ifc in mh.bndfcs.ndarray[:, 0]:
+            ifc = int(ifc)
+            cx = mh.fccnd[ifc, 0]
+            if abs(cx) < 1e-9:
+                left.append(ifc)
+            elif abs(cx - lx) < 1e-9:
+                right.append(ifc)
+            else:
+                walls.append(ifc)
+        return left, right, walls
+
+    def test_march_channel_bounded(self):
+        lx, ly = 4.0, 2.0
+        mh = _build_quad_channel(4, 2, lx, ly)
+        left, right, walls = self._classify(mh, lx)
+        # All three boundary kinds are present.
+        self.assertTrue(left)
+        self.assertTrue(right)
+        self.assertTrue(walls)
+        ec = modmesh.EulerCore(mesh=mh, time_increment=0.04)
+        ec.init_solution(gamma=self.GAMMA, rho=self.RHO,
+                         v=[self.VX, 0.0], p=self.PRES)
+        ec.add_inlet(left,
+                     value=[self.RHO, self.VX, 0.0, self.PRES, self.GAMMA])
+        ec.add_nonrefl(right)
+        ec.add_slipwall(walls)
+        # Initialize the ghost rows from the initial interior state so the
+        # first substep does not read zero-filled ghosts.
+        ec.bc_soln()
+        ec.bc_dsoln()
+        ec.march(steps=5)
+        so0n = ec.so0n.ndarray
+        self.assertTrue(np.all(np.isfinite(so0n)))
+        self.assertLess(np.abs(so0n).max(), 1e6)
+        # A uniform stream aligned with the channel is the steady state, so
+        # density stays positive and close to the inflow value.
+        for icl in range(ec.ncell):
+            self.assertGreater(ec.so0n[icl, 0], 0.0)
+            assert_almost_equal(ec.so0n[icl, 0], self.RHO, decimal=6)
+        # bc_soln runs every substep, so the inlet ghost holds the prescribed
+        # free-stream density after marching (fails if the trim pass is not
+        # wired into march_substep).
+        for ifc in left:
+            assert_almost_equal(ec.so0n[mh.fccls[ifc, 1], 0], self.RHO)
+
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
