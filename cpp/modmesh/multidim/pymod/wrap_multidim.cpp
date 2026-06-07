@@ -279,6 +279,7 @@ WrapEulerCore & WrapEulerCore::wrap_management()
         .def_property_readonly("ndim", &wrapped_type::ndim)
         .def_property_readonly("ncell", &wrapped_type::ncell)
         .def_property_readonly("ngstcell", &wrapped_type::ngstcell)
+        .def_property_readonly("neq", &wrapped_type::neq)
         .def_property_readonly("time_increment", &wrapped_type::time_increment)
         //
         ;
@@ -288,8 +289,38 @@ WrapEulerCore & WrapEulerCore::wrap_management()
 
 WrapEulerCore & WrapEulerCore::wrap_preparation()
 {
+    namespace py = pybind11;
+
     (*this)
         .def_timed("prepare_ce", &wrapped_type::prepare_ce)
+        .def_timed(
+            "init_solution",
+            [](wrapped_type & self,
+               wrapped_type::real_type gamma,
+               wrapped_type::real_type rho,
+               std::vector<wrapped_type::real_type> const & v,
+               wrapped_type::real_type p)
+            {
+                if (v.size() != self.ndim())
+                {
+                    throw std::invalid_argument(std::format(
+                        "EulerCore::init_solution: velocity size {} must equal ndim {}",
+                        v.size(),
+                        self.ndim()));
+                }
+                std::array<wrapped_type::real_type, 3> velocity = {0, 0, 0};
+                for (size_t d = 0; d < self.ndim(); ++d)
+                {
+                    velocity[d] = v[d];
+                }
+                self.init_solution(gamma, rho, velocity, p);
+            },
+            py::arg("gamma"),
+            py::arg("rho"),
+            py::arg("v"),
+            py::arg("p"))
+        .def_timed("calc_cfl", &wrapped_type::calc_cfl)
+        .def_timed("update", &wrapped_type::update)
         //
         ;
 
@@ -307,6 +338,15 @@ WrapEulerCore & WrapEulerCore::wrap_array()
         MM_DECL_ARRAY(cecnd)
         MM_DECL_ARRAY(sfcnd)
         MM_DECL_ARRAY(sfnml)
+        MM_DECL_ARRAY(so0c)
+        MM_DECL_ARRAY(so0n)
+        MM_DECL_ARRAY(so0t)
+        MM_DECL_ARRAY(so1c)
+        MM_DECL_ARRAY(so1n)
+        MM_DECL_ARRAY(stm)
+        MM_DECL_ARRAY(cflo)
+        MM_DECL_ARRAY(cflc)
+        MM_DECL_ARRAY(gamma)
         //
         ;
     // clang-format on

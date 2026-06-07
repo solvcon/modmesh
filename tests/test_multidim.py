@@ -303,4 +303,152 @@ class GradientElementPyramidTC(_GradientElementBase, _PyramidMeshBase):
     """Per-cell GradientElement on a single pyramid (5 faces)."""
 
 
+class _EulerSolutionBase:
+    """EulerCore Phase 3 solution storage and initialization."""
+
+    GAMMA = 1.4
+    RHO = 1.2
+    PRES = 0.9
+    VEL = (0.3, -0.15, 0.05)
+
+    def _ec(self):
+        # A fresh core per test keeps the shared class mesh read-only.
+        return modmesh.EulerCore(mesh=self.mesh, time_increment=0.01)
+
+    def _vel(self, nd):
+        return list(self.VEL[:nd])
+
+    def test_solution_array_shapes(self):
+        ec = self._ec()
+        nd = self.mesh.ndim
+        neq = nd + 2
+        total = ec.ngstcell + ec.ncell
+        self.assertEqual(neq, ec.neq)
+        for name in ("so0c", "so0n", "so0t", "stm"):
+            self.assertEqual((total, neq), getattr(ec, name).shape)
+        for name in ("so1c", "so1n"):
+            self.assertEqual((total, neq, nd), getattr(ec, name).shape)
+        for name in ("cflo", "cflc", "gamma"):
+            self.assertEqual((total,), getattr(ec, name).shape)
+
+    def test_init_solution_columns(self):
+        ec = self._ec()
+        nd = self.mesh.ndim
+        v = self._vel(nd)
+        ec.init_solution(gamma=self.GAMMA, rho=self.RHO, v=v, p=self.PRES)
+        vsq = sum(c * c for c in v)
+        energy = self.PRES / (self.GAMMA - 1.0) + 0.5 * self.RHO * vsq
+        so0n = ec.so0n
+        for icl in range(ec.ncell):
+            assert_almost_equal(so0n[icl, 0], self.RHO)
+            for d in range(nd):
+                assert_almost_equal(so0n[icl, 1 + d], self.RHO * v[d])
+            assert_almost_equal(so0n[icl, nd + 1], energy)
+            # The pressure must be recoverable from the conserved state.
+            momsq = sum(so0n[icl, 1 + d] ** 2 for d in range(nd))
+            ke = momsq / (2.0 * self.RHO)
+            p_rec = (self.GAMMA - 1.0) * (so0n[icl, nd + 1] - ke)
+            assert_almost_equal(p_rec, self.PRES)
+        # gamma is filled across every row, ghost cells included.
+        total = ec.ngstcell + ec.ncell
+        assert_almost_equal(ec.gamma.ndarray, np.full(total, self.GAMMA))
+        # init_solution leaves the conserved table's ghost rows untouched
+        # (zero); ghost states are populated by boundary conditions later.
+        for icl in range(-ec.ngstcell, 0):
+            for ieq in range(ec.neq):
+                assert_almost_equal(so0n[icl, ieq], 0.0)
+
+    def test_init_solution_validation(self):
+        ec = self._ec()
+        nd = self.mesh.ndim
+        good = dict(gamma=self.GAMMA, rho=self.RHO,
+                    v=self._vel(nd), p=self.PRES)
+        for bad in (dict(v=[0.1] * (nd - 1)),  # too-short velocity
+                    dict(gamma=1.0),           # gamma must be > 1
+                    dict(rho=0.0),             # rho must be > 0
+                    dict(p=-1.0)):             # pressure must be >= 0
+            with self.assertRaises(ValueError):
+                ec.init_solution(**dict(good, **bad))
+
+    def test_calc_cfl_uniform_field(self):
+        ec = self._ec()
+        nd = self.mesh.ndim
+        v = self._vel(nd)
+        ec.init_solution(gamma=self.GAMMA, rho=self.RHO, v=v, p=self.PRES)
+        ec.calc_cfl()
+        hdt = ec.time_increment / 2.0
+        vsq = sum(c * c for c in v)
+        wspd = np.sqrt(self.GAMMA * self.PRES / self.RHO) + np.sqrt(vsq)
+        # For a positive-pressure field the energy correction is a no-op up
+        # to the TINY offset, so the stored energy stays at its init value.
+        energy0 = self.PRES / (self.GAMMA - 1.0) + 0.5 * self.RHO * vsq
+        cecnd = ec.cecnd
+        for icl in range(ec.ncell):
+            clnfc = self.mesh.clfcs[icl, 0]
+            dist = min(
+                np.sqrt(sum((cecnd[icl, ifl * nd + d] - cecnd[icl, d]) ** 2
+                            for d in range(nd)))
+                for ifl in range(1, clnfc + 1))
+            assert_almost_equal(ec.cflo[icl], hdt * wspd / dist)
+            # Pressure is positive, so the clamped CFL equals the original.
+            assert_almost_equal(ec.cflc[icl], ec.cflo[icl])
+            assert_almost_equal(ec.so0n[icl, nd + 1], energy0)
+
+    def test_calc_cfl_negative_pressure(self):
+        ec = self._ec()
+        nd = self.mesh.ndim
+        v = self._vel(nd)
+        ec.init_solution(gamma=self.GAMMA, rho=self.RHO, v=v, p=self.PRES)
+        # Zero the stored energy so the recovered pressure goes negative
+        # while the momentum (kinetic energy) stays finite.
+        for icl in range(ec.ncell):
+            ec.so0n[icl, nd + 1] = 0.0
+        ec.calc_cfl()
+        momsq = sum((self.RHO * v[d]) ** 2 for d in range(nd))
+        ke = momsq / (2.0 * self.RHO)
+        for icl in range(ec.ncell):
+            # The pressure is clamped to zero, so the clamped CFL is forced
+            # to 1 and the energy is rebuilt from the kinetic part alone.
+            assert_almost_equal(ec.cflc[icl], 1.0)
+            assert_almost_equal(ec.so0n[icl, nd + 1], ke)
+
+    def test_update_swaps_buffers(self):
+        ec = self._ec()
+        nd = self.mesh.ndim
+        ec.init_solution(gamma=self.GAMMA, rho=self.RHO,
+                         v=self._vel(nd), p=self.PRES)
+        # Seed the new-step order-1 buffer with a recognizable pattern.
+        so1n_view = ec.so1n.ndarray
+        so1n_view[...] = np.arange(so1n_view.size).reshape(so1n_view.shape)
+        so0n_before = ec.so0n.ndarray.copy()
+        so0c_before = ec.so0c.ndarray.copy()
+        so1n_before = ec.so1n.ndarray.copy()
+        so1c_before = ec.so1c.ndarray.copy()
+        ec.update()
+        assert_almost_equal(ec.so0c.ndarray, so0n_before)
+        assert_almost_equal(ec.so0n.ndarray, so0c_before)
+        assert_almost_equal(ec.so1c.ndarray, so1n_before)
+        assert_almost_equal(ec.so1n.ndarray, so1c_before)
+
+
+class EulerSolutionTriangleTC(_EulerSolutionBase, _TriangleMeshBase):
+    """EulerCore solution storage on 3 triangles."""
+
+
+class EulerSolutionQuadTC(_EulerSolutionBase, _QuadMeshBase):
+    """EulerCore solution storage on a unit-square quad."""
+
+
+class EulerSolutionMixedTC(_EulerSolutionBase, _MixedMeshBase):
+    """EulerCore solution storage on a 2D mixed mesh."""
+
+
+class EulerSolutionTetrahedronTC(_EulerSolutionBase, _TetrahedronMeshBase):
+    """EulerCore solution storage on a single tetrahedron."""
+
+
+class EulerSolutionHexahedronTC(_EulerSolutionBase, _HexahedronMeshBase):
+    """EulerCore solution storage on a single hexahedron."""
+
+
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
