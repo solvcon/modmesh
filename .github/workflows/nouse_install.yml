@@ -70,6 +70,13 @@ jobs:
         with:
           workflow: 'nouse_install'
 
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.23
+        with:
+          key: ${{ runner.os }}-Release
+          restore-keys: ${{ runner.os }}-Release
+          create-symlink: true
+
       - name: setup.py install build_ext
         run: |
           echo "::group::setup.py install build_ext"
