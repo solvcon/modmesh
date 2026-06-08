@@ -304,6 +304,28 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual((12, 2), sarr.reshape((12, 2)).shape)
         self.assertEqual((2, 2, 2, 3), sarr.reshape((2, 2, 2, 3)).shape)
 
+    def test_SimpleArray_from_numpy_negative_stride(self):
+        ndarr = np.arange(2 * 3, dtype='float64').reshape((2, 3))
+        view = ndarr[::-1, ::-1]
+        sarr = modmesh.SimpleArrayFloat64(array=view)
+
+        self.assertEqual((2, 3), sarr.shape)
+        self.assertEqual((-3, -1), sarr.stride)
+        np.testing.assert_array_equal(view, sarr.ndarray)
+        self.assertEqual(np.sum(view), sarr.sum())
+
+        rhs = np.arange(2 * 3, dtype='float64').reshape((2, 3)) + 100
+        sarr[:, :] = rhs
+        np.testing.assert_array_equal(rhs, view)
+        np.testing.assert_array_equal(rhs, sarr.ndarray)
+
+        row_major = sarr.to_row_major()
+        self.assertTrue(row_major.is_c_contiguous)
+        np.testing.assert_array_equal(rhs, row_major.ndarray)
+
+        sarr.ndarray[0, 0] = 100
+        self.assertEqual(100, ndarr[1, 2])
+
     def test_SimpleArray_clone(self):
         sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
         sarr.fill(2.0)
@@ -586,7 +608,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 IndexError,
-                r"SimpleArray::validate_shape\(\): empty index"
+                r"SimpleArray::normalize_index\(\): empty index"
         ):
             invalid_empty_idx = ()
             sarr[invalid_empty_idx]
@@ -619,7 +641,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 IndexError,
-                r"SimpleArray::validate_shape\(\): empty index"
+                r"SimpleArray::normalize_index\(\): empty index"
         ):
             invalid_empty_idx = ()
             sarr[invalid_empty_idx] = 1

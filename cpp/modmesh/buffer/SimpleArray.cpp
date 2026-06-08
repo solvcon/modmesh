@@ -52,20 +52,20 @@ static inline void copy_one(int8_t * dst, int8_t const * src)
 
 template <size_t N>
 static void tiled_2d_impl(
-    int8_t * const dst_body, int8_t const * const src_body, size_t const n0, size_t const n1, size_t const ss0, size_t const ss1, size_t const os0, size_t const os1)
+    int8_t * const dst_body, int8_t const * const src_body, ssize_t const n0, ssize_t const n1, ssize_t const ss0, ssize_t const ss1, ssize_t const os0, ssize_t const os1)
 {
-    constexpr size_t BLOCK = 32;
-    for (size_t i0 = 0; i0 < n0; i0 += BLOCK)
+    constexpr ssize_t BLOCK = 32;
+    for (ssize_t i0 = 0; i0 < n0; i0 += BLOCK)
     {
-        size_t const i_end = std::min(i0 + BLOCK, n0);
-        for (size_t j0 = 0; j0 < n1; j0 += BLOCK)
+        ssize_t const i_end = std::min(i0 + BLOCK, n0);
+        for (ssize_t j0 = 0; j0 < n1; j0 += BLOCK)
         {
-            size_t const j_end = std::min(j0 + BLOCK, n1);
-            for (size_t i = i0; i < i_end; ++i)
+            ssize_t const j_end = std::min(j0 + BLOCK, n1);
+            for (ssize_t i = i0; i < i_end; ++i)
             {
                 int8_t const * src_row = src_body + i * ss0;
                 int8_t * dst_row = dst_body + i * os0;
-                for (size_t j = j0; j < j_end; ++j)
+                for (ssize_t j = j0; j < j_end; ++j)
                 {
                     copy_one<N>(dst_row + j * os1, src_row + j * ss1);
                 }
@@ -79,20 +79,20 @@ static void tiled_2d_impl(
  * itemsizes that are not in the specialized {1, 2, 4, 8, 16} set.
  */
 static inline void tiled_2d_generic(
-    int8_t * const dst_body, int8_t const * const src_body, size_t const n0, size_t const n1, size_t const ss0, size_t const ss1, size_t const os0, size_t const os1, size_t const itemsize)
+    int8_t * const dst_body, int8_t const * const src_body, ssize_t const n0, ssize_t const n1, ssize_t const ss0, ssize_t const ss1, ssize_t const os0, ssize_t const os1, size_t const itemsize)
 {
-    constexpr size_t BLOCK = 32;
-    for (size_t i0 = 0; i0 < n0; i0 += BLOCK)
+    constexpr ssize_t BLOCK = 32;
+    for (ssize_t i0 = 0; i0 < n0; i0 += BLOCK)
     {
-        size_t const i_end = std::min(i0 + BLOCK, n0);
-        for (size_t j0 = 0; j0 < n1; j0 += BLOCK)
+        ssize_t const i_end = std::min(i0 + BLOCK, n0);
+        for (ssize_t j0 = 0; j0 < n1; j0 += BLOCK)
         {
-            size_t const j_end = std::min(j0 + BLOCK, n1);
-            for (size_t i = i0; i < i_end; ++i)
+            ssize_t const j_end = std::min(j0 + BLOCK, n1);
+            for (ssize_t i = i0; i < i_end; ++i)
             {
                 int8_t const * src_row = src_body + i * ss0;
                 int8_t * dst_row = dst_body + i * os0;
-                for (size_t j = j0; j < j_end; ++j)
+                for (ssize_t j = j0; j < j_end; ++j)
                 {
                     std::memcpy(dst_row + j * os1, src_row + j * ss1, itemsize);
                 }
@@ -103,20 +103,20 @@ static inline void tiled_2d_generic(
 
 template <size_t N>
 static void tiled_nd_inner(
-    int8_t * const dst_body, int8_t const * const src_body, size_t const n_a, size_t const n_b, size_t const ss_a, size_t const ss_b, size_t const os_a, size_t const os_b)
+    int8_t * const dst_body, int8_t const * const src_body, ssize_t const n_a, ssize_t const n_b, ssize_t const ss_a, ssize_t const ss_b, ssize_t const os_a, ssize_t const os_b)
 {
-    constexpr size_t BLOCK = 32;
-    for (size_t a0 = 0; a0 < n_a; a0 += BLOCK)
+    constexpr ssize_t BLOCK = 32;
+    for (ssize_t a0 = 0; a0 < n_a; a0 += BLOCK)
     {
-        size_t const a_end = std::min(a0 + BLOCK, n_a);
-        for (size_t b0 = 0; b0 < n_b; b0 += BLOCK)
+        ssize_t const a_end = std::min(a0 + BLOCK, n_a);
+        for (ssize_t b0 = 0; b0 < n_b; b0 += BLOCK)
         {
-            size_t const b_end = std::min(b0 + BLOCK, n_b);
-            for (size_t i = a0; i < a_end; ++i)
+            ssize_t const b_end = std::min(b0 + BLOCK, n_b);
+            for (ssize_t i = a0; i < a_end; ++i)
             {
                 int8_t const * src_row = src_body + i * ss_a;
                 int8_t * dst_row = dst_body + i * os_a;
-                for (size_t j = b0; j < b_end; ++j)
+                for (ssize_t j = b0; j < b_end; ++j)
                 {
                     copy_one<N>(dst_row + j * os_b, src_row + j * ss_b);
                 }
@@ -126,20 +126,20 @@ static void tiled_nd_inner(
 }
 
 static inline void tiled_nd_inner_generic(
-    int8_t * const dst_body, int8_t const * const src_body, size_t const n_a, size_t const n_b, size_t const ss_a, size_t const ss_b, size_t const os_a, size_t const os_b, size_t const itemsize)
+    int8_t * const dst_body, int8_t const * const src_body, ssize_t const n_a, ssize_t const n_b, ssize_t const ss_a, ssize_t const ss_b, ssize_t const os_a, ssize_t const os_b, size_t const itemsize)
 {
-    constexpr size_t BLOCK = 32;
-    for (size_t a0 = 0; a0 < n_a; a0 += BLOCK)
+    constexpr ssize_t BLOCK = 32;
+    for (ssize_t a0 = 0; a0 < n_a; a0 += BLOCK)
     {
-        size_t const a_end = std::min(a0 + BLOCK, n_a);
-        for (size_t b0 = 0; b0 < n_b; b0 += BLOCK)
+        ssize_t const a_end = std::min(a0 + BLOCK, n_a);
+        for (ssize_t b0 = 0; b0 < n_b; b0 += BLOCK)
         {
-            size_t const b_end = std::min(b0 + BLOCK, n_b);
-            for (size_t i = a0; i < a_end; ++i)
+            ssize_t const b_end = std::min(b0 + BLOCK, n_b);
+            for (ssize_t i = a0; i < a_end; ++i)
             {
                 int8_t const * src_row = src_body + i * ss_a;
                 int8_t * dst_row = dst_body + i * os_a;
-                for (size_t j = b0; j < b_end; ++j)
+                for (ssize_t j = b0; j < b_end; ++j)
                 {
                     std::memcpy(dst_row + j * os_b, src_row + j * ss_b, itemsize);
                 }
@@ -153,7 +153,7 @@ static inline void tiled_nd_inner_generic(
  * dtypes; everything else falls through to the memcpy version.
  */
 static inline void dispatch_tile_inner(
-    int8_t * const dst_body, int8_t const * const src_body, size_t const n_a, size_t const n_b, size_t const ss_a, size_t const ss_b, size_t const os_a, size_t const os_b, size_t const itemsize)
+    int8_t * const dst_body, int8_t const * const src_body, ssize_t const n_a, ssize_t const n_b, ssize_t const ss_a, ssize_t const ss_b, ssize_t const os_a, ssize_t const os_b, size_t const itemsize)
 {
     switch (itemsize)
     {
@@ -181,11 +181,11 @@ static inline void dispatch_tile_inner(
  */
 SimpleArrayCopier::SimpleArrayCopier(
     buffer_type const & src_buffer,
-    size_t const src_body_offset,
-    shape_type const & src_stride,
+    ssize_t const src_body_offset,
+    sshape_type const & src_stride,
     buffer_type & dst_buffer,
-    size_t const dst_body_offset,
-    shape_type const & dst_stride,
+    ssize_t const dst_body_offset,
+    sshape_type const & dst_stride,
     shape_type const & shape,
     size_t const itemsize)
     : m_src(src_buffer.data<int8_t>() + src_body_offset)
@@ -216,14 +216,15 @@ void SimpleArrayCopier::memcpy() const
  */
 void SimpleArrayCopier::tiled_2d() const
 {
-    size_t const n0 = m_shape[0];
-    size_t const n1 = m_shape[1];
+    auto const n0 = static_cast<ssize_t>(m_shape[0]);
+    auto const n1 = static_cast<ssize_t>(m_shape[1]);
     // Element strides scaled to byte strides once; the inner loop uses byte
     // arithmetic throughout.
-    size_t const ss0 = m_src_stride[0] * m_itemsize;
-    size_t const ss1 = m_src_stride[1] * m_itemsize;
-    size_t const os0 = m_dst_stride[0] * m_itemsize;
-    size_t const os1 = m_dst_stride[1] * m_itemsize;
+    auto const itemsize = static_cast<ssize_t>(m_itemsize);
+    ssize_t const ss0 = m_src_stride[0] * itemsize;
+    ssize_t const ss1 = m_src_stride[1] * itemsize;
+    ssize_t const os0 = m_dst_stride[0] * itemsize;
+    ssize_t const os1 = m_dst_stride[1] * itemsize;
     switch (m_itemsize)
     {
     case 1: tiled_2d_impl<1>(m_dst, m_src, n0, n1, ss0, ss1, os0, os1); break;
@@ -242,15 +243,15 @@ void SimpleArrayCopier::tiled_2d() const
 void SimpleArrayCopier::tiled_nd() const
 {
     size_t const ndim = m_shape.size();
-    size_t const itemsize = m_itemsize;
+    auto const itemsize = static_cast<ssize_t>(m_itemsize);
     if (ndim == 1)
     {
-        size_t const n = m_shape[0];
-        size_t const ss = m_src_stride[0] * itemsize;
-        size_t const os = m_dst_stride[0] * itemsize;
-        for (size_t i = 0; i < n; ++i)
+        auto const n = static_cast<ssize_t>(m_shape[0]);
+        ssize_t const ss = m_src_stride[0] * itemsize;
+        ssize_t const os = m_dst_stride[0] * itemsize;
+        for (ssize_t i = 0; i < n; ++i)
         {
-            std::memcpy(m_dst + i * os, m_src + i * ss, itemsize);
+            std::memcpy(m_dst + i * os, m_src + i * ss, m_itemsize);
         }
         return;
     }
@@ -258,12 +259,12 @@ void SimpleArrayCopier::tiled_nd() const
     // See tiled_2d for the rationale behind the block size.
     size_t const ia = ndim - 2;
     size_t const ib = ndim - 1;
-    size_t const n_a = m_shape[ia];
-    size_t const n_b = m_shape[ib];
-    size_t const ss_a = m_src_stride[ia] * itemsize;
-    size_t const ss_b = m_src_stride[ib] * itemsize;
-    size_t const os_a = m_dst_stride[ia] * itemsize;
-    size_t const os_b = m_dst_stride[ib] * itemsize;
+    auto const n_a = static_cast<ssize_t>(m_shape[ia]);
+    auto const n_b = static_cast<ssize_t>(m_shape[ib]);
+    ssize_t const ss_a = m_src_stride[ia] * itemsize;
+    ssize_t const ss_b = m_src_stride[ib] * itemsize;
+    ssize_t const os_a = m_dst_stride[ia] * itemsize;
+    ssize_t const os_b = m_dst_stride[ib] * itemsize;
 
     size_t outer_total = 1;
     for (size_t k = 0; k < ia; ++k)
@@ -271,23 +272,23 @@ void SimpleArrayCopier::tiled_nd() const
         outer_total *= m_shape[k];
     }
 
-    shape_type outer_idx(ia, 0);
+    detail::sshape_type outer_idx(ia, 0);
     for (size_t step = 0; step < outer_total; ++step)
     {
         // Resolve outer-axis base offsets (in bytes) for this slab.
-        size_t src_base = 0;
-        size_t dst_base = 0;
+        ssize_t src_base = 0;
+        ssize_t dst_base = 0;
         for (size_t k = 0; k < ia; ++k)
         {
             src_base += m_src_stride[k] * outer_idx[k] * itemsize;
             dst_base += m_dst_stride[k] * outer_idx[k] * itemsize;
         }
         dispatch_tile_inner(
-            m_dst + dst_base, m_src + src_base, n_a, n_b, ss_a, ss_b, os_a, os_b, itemsize);
+            m_dst + dst_base, m_src + src_base, n_a, n_b, ss_a, ss_b, os_a, os_b, m_itemsize);
         // Carry-propagating increment of the outer index.
         for (size_t i = ia; i-- > 0;)
         {
-            if (++outer_idx[i] < m_shape[i])
+            if (++outer_idx[i] < static_cast<ssize_t>(m_shape[i]))
             {
                 break;
             }
@@ -319,22 +320,26 @@ void SimpleArrayCopier::naive() const
     }
     size_t const ndim = m_shape.size();
     size_t const itemsize = m_itemsize;
-    shape_type idx(ndim, 0);
+    auto const signed_itemsize = static_cast<ssize_t>(itemsize);
+    detail::sshape_type idx(ndim, 0);
     for (size_t step = 0; step < total; ++step)
     {
-        size_t src_off = 0;
-        size_t dst_off = 0;
+        ssize_t src_off = 0;
+        ssize_t dst_off = 0;
         for (size_t k = 0; k < ndim; ++k)
         {
             src_off += m_src_stride[k] * idx[k];
             dst_off += m_dst_stride[k] * idx[k];
         }
-        std::memcpy(m_dst + dst_off * itemsize, m_src + src_off * itemsize, itemsize);
+        std::memcpy(
+            m_dst + dst_off * signed_itemsize,
+            m_src + src_off * signed_itemsize,
+            itemsize);
         // Carry-propagating increment: bump the trailing axis; on overflow,
         // wrap to 0 and carry into the next-most-significant axis.
         for (size_t i = ndim; i-- > 0;)
         {
-            if (++idx[i] < m_shape[i])
+            if (++idx[i] < static_cast<ssize_t>(m_shape[i]))
             {
                 break;
             }
@@ -971,6 +976,33 @@ std::string format_shape(shape_type const & shape)
         ret += std::to_string(shape[it]);
     }
     ret += ")";
+    return ret;
+}
+
+std::string format_flat_index(shape_type const & shape, size_t offset)
+{
+    if (shape.empty())
+    {
+        return "[]";
+    }
+
+    shape_type row_major_stride(shape.size(), 1);
+    for (size_t it = shape.size() - 1; it > 0; --it)
+    {
+        row_major_stride[it - 1] = row_major_stride[it] * shape[it];
+    }
+
+    std::string ret = "[";
+    for (size_t it = 0; it < shape.size(); ++it)
+    {
+        if (it != 0)
+        {
+            ret += ", ";
+        }
+        ret += std::to_string(offset / row_major_stride[it]);
+        offset %= row_major_stride[it];
+    }
+    ret += "]";
     return ret;
 }
 
