@@ -254,7 +254,7 @@ public:
                 const auto arr_in = py_value.cast<py::array>();
 
                 auto slices = make_default_slices(arr_out);
-                copy_slice(slices[0], slice_in);
+                copy_slice(slices[0], slice_in, arr_out.shape(0));
 
                 broadcast_array_using_slice(arr_out, slices, arr_in);
                 return;
@@ -366,24 +366,37 @@ private:
         slices.reserve(arr.ndim());
         for (size_t i = 0; i < arr.ndim(); ++i)
         {
-            slice_type default_slice(3);
+            auto const dim = static_cast<ssize_t>(arr.shape(i));
+            slice_type default_slice(4);
             default_slice[0] = 0; // start
-            default_slice[1] = static_cast<int>(arr.shape(i)); // stop
+            default_slice[1] = dim; // stop
             default_slice[2] = 1; // step
+            default_slice[3] = dim; // length
             slices.push_back(std::move(default_slice));
         }
         return slices;
     }
 
-    static void copy_slice(slice_type & slice_out, pybind11::slice const & slice_in)
+    static void copy_slice(slice_type & slice_out, pybind11::slice const & slice_in, size_t length)
     {
-        auto start = std::string(pybind11::str(slice_in.attr("start")));
-        auto stop = std::string(pybind11::str(slice_in.attr("stop")));
-        auto step = std::string(pybind11::str(slice_in.attr("step")));
+        pybind11::ssize_t start = 0;
+        pybind11::ssize_t stop = 0;
+        pybind11::ssize_t step = 0;
+        pybind11::ssize_t slicelength = 0;
+        auto const signed_length = static_cast<pybind11::ssize_t>(length);
+        if (!slice_in.compute(signed_length,
+                              &start,
+                              &stop,
+                              &step,
+                              &slicelength))
+        {
+            throw pybind11::error_already_set();
+        }
 
-        slice_out[0] = start == "None" ? slice_out[0] : std::stoi(start);
-        slice_out[1] = stop == "None" ? slice_out[1] : std::stoi(stop);
-        slice_out[2] = step == "None" ? slice_out[2] : std::stoi(step);
+        slice_out[0] = start;
+        slice_out[1] = stop;
+        slice_out[2] = step;
+        slice_out[3] = slicelength;
     }
 
     static void slice_syntax_check(pybind11::tuple const & tuple, size_t ndim)
@@ -409,7 +422,7 @@ private:
             }
         }
 
-        if (ellipsis_cnt + slice_cnt > ndim)
+        if (slice_cnt > ndim)
         {
             throw std::runtime_error("syntax error. dimensions mismatches");
         }
@@ -426,6 +439,8 @@ private:
     {
         namespace py = pybind11;
 
+        slice_syntax_check(tuple, ndim);
+
         // copy slices from the front until an ellipsis
         bool ellipsis_flag = false;
         for (auto it = tuple.begin(); it != tuple.end(); it++)
@@ -440,7 +455,7 @@ private:
             auto & slice_out = slices[it - tuple.begin()];
             const auto slice_in = (*it).cast<py::slice>();
 
-            copy_slice(slice_out, slice_in);
+            copy_slice(slice_out, slice_in, slices[it - tuple.begin()][3]);
         }
 
         // copy slices from the back until an ellipsis
@@ -457,7 +472,7 @@ private:
                 auto & slice_out = slices[ndim - size - 1];
                 const auto slice_in = (*it).cast<py::slice>();
 
-                copy_slice(slice_out, slice_in);
+                copy_slice(slice_out, slice_in, slices[ndim - size - 1][3]);
             }
         }
     }
