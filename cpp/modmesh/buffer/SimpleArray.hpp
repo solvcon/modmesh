@@ -1788,6 +1788,9 @@ public:
     value_type const & operator[](size_t it) const noexcept { return data(it); }
     value_type & operator[](size_t it) noexcept { return data(it); }
 
+    // FIXME: This overload treats it as a raw non-negative offset, unlike
+    // at(ssize_t), which applies Python/ghost logical indexing. Remove this
+    // overload in a future cleanup PR after raw-offset users are explicit.
     value_type const & at(size_t it) const
     {
         validate_range(it);
@@ -1801,15 +1804,13 @@ public:
 
     value_type const & at(ssize_t it) const
     {
-        validate_range(it);
-        it += m_nghost;
-        return data(it);
+        shape_type const idx{normalize_index(it)};
+        return data(buffer_offset(m_stride, idx));
     }
     value_type & at(ssize_t it)
     {
-        validate_range(it);
-        it += m_nghost;
-        return data(it);
+        shape_type const idx{normalize_index(it)};
+        return data(buffer_offset(m_stride, idx));
     }
 
     value_type const & at(std::vector<size_t> const & idx) const { return at(shape_type(idx)); }
@@ -1831,19 +1832,15 @@ public:
     value_type const & at(std::vector<ssize_t> const & idx) const { return at(sshape_type(idx)); }
     value_type & at(std::vector<ssize_t> const & idx) { return at(sshape_type(idx)); }
 
-    value_type const & at(sshape_type sidx) const
+    value_type const & at(sshape_type const & sidx) const
     {
-        validate_shape(sidx);
-        sidx[0] += m_nghost;
-        shape_type const idx(sidx.begin(), sidx.end());
+        shape_type const idx = normalize_index(sidx);
         const size_t offset = buffer_offset(m_stride, idx);
         return data(offset);
     }
-    value_type & at(sshape_type sidx)
+    value_type & at(sshape_type const & sidx)
     {
-        validate_shape(sidx);
-        sidx[0] += m_nghost;
-        shape_type const idx(sidx.begin(), sidx.end());
+        shape_type const idx = normalize_index(sidx);
         const size_t offset = buffer_offset(m_stride, idx);
         return data(offset);
     }
@@ -2059,7 +2056,14 @@ private:
         }
     }
 
-    void validate_range(ssize_t it) const
+    /**
+     * Validate a raw, non-negative buffer offset.
+     *
+     * This helper is currently used by unsigned-index paths. Signed logical
+     * indices, including ghost indices, are normalized by normalize_index().
+     * FIXME: Remove this function after raw-offset users are made explicit.
+     */
+    void validate_range(size_t it) const
     {
         if (m_nghost != 0 && ndim() != 1)
         {
@@ -2069,25 +2073,57 @@ private:
                             ndim(),
                             m_nghost));
         }
-        if (it < -static_cast<ssize_t>(m_nghost))
-        {
-            throw std::out_of_range(
-                std::format("SimpleArray: index {} < -nghost: {}",
-                            it,
-                            -static_cast<ssize_t>(m_nghost)));
-        }
-        if (it >= static_cast<ssize_t>((buffer().nbytes() / ITEMSIZE) - m_nghost))
+        size_t const last = (buffer().nbytes() / ITEMSIZE) - m_nghost;
+        if (it >= last)
         {
             throw std::out_of_range(
                 std::format("SimpleArray: index {} >= {} (buffer size: {} - nghost: {})",
                             it,
-                            (buffer().nbytes() / ITEMSIZE) - m_nghost,
-                            (buffer().nbytes() / ITEMSIZE),
+                            last,
+                            buffer().nbytes() / ITEMSIZE,
                             m_nghost));
         }
     }
 
-    void validate_shape(small_vector<ssize_t> const & idx) const
+    size_t normalize_index(ssize_t it) const
+    {
+        if (ndim() != 1)
+        {
+            throw std::out_of_range(
+                std::format("SimpleArray::normalize_index(): "
+                            "cannot use scalar index for {}-dimensional array",
+                            ndim()));
+        }
+        ssize_t const dim_length = static_cast<ssize_t>(shape(0));
+        ssize_t const ghost_offset = static_cast<ssize_t>(m_nghost);
+        ssize_t const shifted_index = it + ghost_offset;
+
+        // This overload handles scalar indexing, not slicing. Python sequence
+        // indexing substitutes "len(s) + i" for a negative i and raises
+        // "IndexError" when i is outside the sequence range. Therefore the
+        // normalized index must satisfy 0 <= len(s) + i < len(s), so the valid
+        // scalar interval is [-len(s), len(s)).
+        // https://docs.python.org/3/library/stdtypes.html#common-sequence-operations
+        if (shifted_index < -dim_length)
+        {
+            throw std::out_of_range(
+                std::format("SimpleArray: index {} < -nghost - shape[0]: {}",
+                            it,
+                            -dim_length - ghost_offset));
+        }
+        if (shifted_index >= dim_length)
+        {
+            throw std::out_of_range(
+                std::format("SimpleArray: index {} >= {} (shape[0]: {} - nghost: {})",
+                            it,
+                            dim_length - ghost_offset,
+                            shape(0),
+                            m_nghost));
+        }
+        return to_nonnegative_index(shifted_index, dim_length);
+    }
+
+    shape_type normalize_index(small_vector<ssize_t> const & idx) const
     {
         auto index2string = [&idx]() -> std::string
         {
@@ -2121,43 +2157,59 @@ private:
                             m_shape.size()));
         }
 
-        // Test the first dimension.
-        if (idx[0] < -static_cast<ssize_t>(m_nghost))
+        shape_type normalized(idx.size());
+        for (size_t dim = 0; dim < m_shape.size(); ++dim)
         {
-            throw std::out_of_range(
-                std::format("SimpleArray: dim 0 in {} < -nghost: {}",
-                            index2string(),
-                            -static_cast<ssize_t>(m_nghost)));
-        }
-        if (idx[0] >= static_cast<ssize_t>(nbody()))
-        {
-            throw std::out_of_range(
-                std::format("SimpleArray: dim 0 in {} >= nbody: {} (shape[0]: {} - nghost: {})",
-                            index2string(),
-                            nbody(),
-                            m_shape[0],
-                            nghost()));
-        }
-
-        // Test the rest of the dimensions.
-        for (size_t it = 1; it < m_shape.size(); ++it)
-        {
-            if (idx[it] < 0)
+            ssize_t const dim_length = static_cast<ssize_t>(m_shape[dim]);
+            ssize_t ghost_offset = 0;
+            if (dim == 0)
             {
+                ghost_offset = static_cast<ssize_t>(m_nghost);
+            }
+            ssize_t const shifted_index = idx[dim] + ghost_offset;
+            if (shifted_index < -dim_length)
+            {
+                if (dim == 0)
+                {
+                    throw std::out_of_range(
+                        std::format("SimpleArray: dim 0 in {} < -nghost - shape[0]: {}",
+                                    index2string(),
+                                    -dim_length - ghost_offset));
+                }
                 throw std::out_of_range(std::format("SimpleArray: dim {} in {} < 0",
-                                                    it,
+                                                    dim,
                                                     index2string()));
             }
-            if (idx[it] >= static_cast<ssize_t>(m_shape[it]))
+            if (shifted_index >= dim_length)
             {
+                if (dim == 0)
+                {
+                    throw std::out_of_range(
+                        std::format("SimpleArray: dim 0 in {} >= nbody: {} (shape[0]: {} - nghost: {})",
+                                    index2string(),
+                                    dim_length - ghost_offset,
+                                    m_shape[0],
+                                    nghost()));
+                }
                 throw std::out_of_range(
                     std::format("SimpleArray: dim {} in {} >= shape[{}]: {}",
-                                it,
+                                dim,
                                 index2string(),
-                                it,
-                                m_shape[it]));
+                                dim,
+                                m_shape[dim]));
             }
+            normalized[dim] = to_nonnegative_index(shifted_index, dim_length);
         }
+        return normalized;
+    }
+
+    static size_t to_nonnegative_index(ssize_t index, ssize_t length)
+    {
+        if (index < 0)
+        {
+            index += length;
+        }
+        return static_cast<size_t>(index);
     }
 
     /// Contiguous data buffer for the array.

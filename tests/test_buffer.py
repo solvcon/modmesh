@@ -268,10 +268,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         np.ravel(ndarr)[:] = np.arange(24)  # initialize contents
 
-        # Flat indexing interface.
         self.assertEqual(24, len(sarr))  # number of elements
-        self.assertEqual(list(range(24)), [sarr[i] for i in range(24)])
-        self.assertEqual(list(range(24)), list(sarr))
         # Multi-dimensional interface.
         v = 0
         for i in range(2):
@@ -319,9 +316,9 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertFalse(sarr_clone is sarr)
         np.testing.assert_equal(sarr_clone.ndarray[...], sarr.ndarray[...])
 
-        sarr[3] = 3.0
-        self.assertEqual(sarr_ref[3], 3.0)
-        self.assertEqual(sarr_clone[3], 2.0)  # should be the original value
+        sarr[0, 0, 3] = 3.0
+        self.assertEqual(sarr_ref[0, 0, 3], 3.0)
+        self.assertEqual(sarr_clone[0, 0, 3], 2.0)
 
     def test_SimpleArray_transpose(self):
         def check_equal(sarr, ndarr):
@@ -471,31 +468,6 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ndarr = np.array(sarr, copy=False)
         ndarr[:] = np.arange(24)  # initialize contents
 
-        self.assertFalse(sarr.has_ghost)
-        self.assertEqual(0, sarr.nghost)
-        self.assertEqual(24, sarr.nbody)
-
-        v = 0
-        for i in range(24):
-            self.assertEqual(v, sarr[i])
-            v += 1
-
-        # Test out-of-bound ghost setting.
-        with self.assertRaisesRegex(
-                IndexError,
-                r"SimpleArray: cannot set nghost 11 > shape\(0\) 10"
-        ):
-            out_of_bound_ghost_sarr = modmesh.SimpleArrayInt8(10)
-            out_of_bound_ghost_sarr.nghost = 11
-
-        # Test empty array ghost setting.
-        with self.assertRaisesRegex(
-                IndexError,
-                r"SimpleArray: cannot set nghost 1 > 0 to an empty array"
-        ):
-            empty_sarr = modmesh.SimpleArrayInt8(())
-            empty_sarr.nghost = 1
-
         sarr.nghost = 10
 
         self.assertTrue(sarr.has_ghost)
@@ -507,46 +479,84 @@ class SimpleArrayBasicTC(unittest.TestCase):
             self.assertEqual(v, sarr[i])
             v += 1
 
-        # Test out-of-bound index for getitem.
-        with self.assertRaisesRegex(
-                IndexError, r"SimpleArray: index -11 < -nghost: -10"
-        ):
-            sarr[-11]
+        self.assertEqual(23, sarr[-11])
+        self.assertEqual(10, sarr[-24])
+        self.assertEqual(0, sarr[-34])
+
+    def test_SimpleArray_ghost_1d_out_of_range(self):
+        sarr = modmesh.SimpleArrayFloat64(4 * 3 * 2)
+        sarr.nghost = 10
 
         with self.assertRaisesRegex(
                 IndexError,
-                r"SimpleArray: index 14 >= 14 \(buffer size: 24 - nghost: 10\)"
+                r"SimpleArray: index -35 < -nghost - shape\[0\]: -34"
+        ):
+            sarr[-35]
+
+        with self.assertRaisesRegex(
+                IndexError,
+                r"SimpleArray: index 14 >= 14 \(shape\[0\]: 24 - nghost: 10\)"
         ):
             sarr[14]
 
-        # Test out-of-bound index for setitem.
         with self.assertRaisesRegex(
-                IndexError, r"SimpleArray: index -11 < -nghost: -10"
+                IndexError,
+                r"SimpleArray: index -35 < -nghost - shape\[0\]: -34"
         ):
-            sarr[-11] = 1
+            sarr[-35] = 1
 
         with self.assertRaisesRegex(
                 IndexError,
-                r"SimpleArray: index 14 >= 14 \(buffer size: 24 - nghost: 10\)"
+                r"SimpleArray: index 14 >= 14 \(shape\[0\]: 24 - nghost: 10\)"
         ):
             sarr[14] = 1
+
+    def test_SimpleArray_ghost_1d_shifted_negative_index(self):
+        sarr = modmesh.SimpleArrayInt8(8)
+        sarr.ndarray[:] = np.arange(8, dtype='int8')
+        sarr.nghost = 3
+
+        self.assertEqual(5, sarr.nbody)
+        self.assertEqual(7, sarr[-4])
+        self.assertEqual(0, sarr[-3])
+        self.assertEqual(0, sarr[-11])
+        sarr[-4] = 70
+        sarr[-3] = 30
+        self.assertEqual(70, sarr.ndarray[7])
+        self.assertEqual(30, sarr.ndarray[0])
+
+    def test_SimpleArray_ghost_1d_strided(self):
+        base = np.arange(12, dtype='float64')
+        strided = base[::2]
+        sarr = modmesh.SimpleArrayFloat64(array=strided)
+        sarr.nghost = 2
+
+        self.assertEqual(2, sarr.stride[0])
+        self.assertEqual(0, sarr[-2])
+        self.assertEqual(10, sarr[-3])
+        sarr[-3] = 200
+        self.assertEqual(200, base[10])
+
+    def test_SimpleArray_ghost_invalid_setting(self):
+        with self.assertRaisesRegex(
+                IndexError,
+                r"SimpleArray: cannot set nghost 11 > shape\(0\) 10"
+        ):
+            sarr = modmesh.SimpleArrayInt8(10)
+            sarr.nghost = 11
+
+        with self.assertRaisesRegex(
+                IndexError,
+                r"SimpleArray: cannot set nghost 1 > 0 to an empty array"
+        ):
+            sarr = modmesh.SimpleArrayInt8(())
+            sarr.nghost = 1
 
     def test_SimpleArray_ghost_md(self):
 
         sarr = modmesh.SimpleArrayFloat64((4, 3, 2))
         ndarr = np.array(sarr, copy=False)
         np.ravel(ndarr)[:] = np.arange(24)  # initialize contents
-
-        self.assertFalse(sarr.has_ghost)
-        self.assertEqual(0, sarr.nghost)
-        self.assertEqual(4, sarr.nbody)
-
-        v = 0
-        for i in range(4):
-            for j in range(3):
-                for k in range(2):
-                    self.assertEqual(v, sarr[i, j, k])
-                    v += 1
 
         sarr.nghost = 1
 
@@ -561,14 +571,19 @@ class SimpleArrayBasicTC(unittest.TestCase):
                     self.assertEqual(v, sarr[i, j, k])
                     v += 1
 
-        with self.assertRaisesRegex(
-                IndexError,
-                r"SimpleArray::validate_range\(\): cannot handle "
-                r"3-dimensional \(more than 1\) array with non-zero nghost: 1"
-        ):
-            sarr[-1]
+        self.assertEqual(18, sarr[-2, 0, 0])
+        self.assertEqual(0, sarr[-5, 0, 0])
+        self.assertEqual(10, sarr[0, -1, 0])
+        self.assertEqual(11, sarr[0, -1, -1])
+        sarr[-2, 0, 0] = 180
+        sarr[0, -1, -1] = 110
+        self.assertEqual(180, ndarr[3, 0, 0])
+        self.assertEqual(110, ndarr[1, 2, 1])
 
-        # Test out-of-bound index for getitem.
+    def test_SimpleArray_ghost_md_out_of_range(self):
+        sarr = modmesh.SimpleArrayFloat64((4, 3, 2))
+        sarr.nghost = 1
+
         with self.assertRaisesRegex(
                 IndexError,
                 r"SimpleArray::validate_shape\(\): empty index"
@@ -578,9 +593,10 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 IndexError,
-                r"SimpleArray: dim 0 in \[-2, 0, 0\] < -nghost: -1"
+                r"SimpleArray: dim 0 in \[-6, 0, 0\] "
+                r"< -nghost - shape\[0\]: -5"
         ):
-            sarr[-2, 0, 0]
+            sarr[-6, 0, 0]
 
         with self.assertRaisesRegex(
                 IndexError,
@@ -591,9 +607,9 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 IndexError,
-                r"SimpleArray: dim 1 in \[0, -1, 0\] < 0"
+                r"SimpleArray: dim 1 in \[0, -4, 0\] < 0"
         ):
-            sarr[0, -1, 0]
+            sarr[0, -4, 0]
 
         with self.assertRaisesRegex(
                 IndexError,
@@ -601,7 +617,6 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ):
             sarr[0, 2, 2]
 
-        # Test out-of-bound index for setitem.
         with self.assertRaisesRegex(
                 IndexError,
                 r"SimpleArray::validate_shape\(\): empty index"
@@ -611,9 +626,10 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 IndexError,
-                r"SimpleArray: dim 0 in \[-2, 0, 0\] < -nghost: -1"
+                r"SimpleArray: dim 0 in \[-6, 0, 0\] "
+                r"< -nghost - shape\[0\]: -5"
         ):
-            sarr[-2, 0, 0] = 1
+            sarr[-6, 0, 0] = 1
 
         with self.assertRaisesRegex(
                 IndexError,
@@ -624,15 +640,67 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         with self.assertRaisesRegex(
                 IndexError,
-                r"SimpleArray: dim 1 in \[0, -1, 0\] < 0"
+                r"SimpleArray: dim 1 in \[0, -4, 0\] < 0"
         ):
-            sarr[0, -1, 0] = 1
+            sarr[0, -4, 0] = 1
 
         with self.assertRaisesRegex(
                 IndexError,
                 r"SimpleArray: dim 2 in \[0, 2, 2\] >= shape\[2\]: 2"
         ):
             sarr[0, 2, 2] = 1
+
+    def test_SimpleArray_negative_index_1d(self):
+        sarr = modmesh.SimpleArrayFloat64(4 * 3 * 2)
+        ndarr = np.array(sarr, copy=False)
+        ndarr[:] = np.arange(24)  # initialize contents
+
+        self.assertFalse(sarr.has_ghost)
+        self.assertEqual(0, sarr.nghost)
+        self.assertEqual(24, sarr.nbody)
+
+        v = 0
+        for i in range(24):
+            self.assertEqual(v, sarr[i])
+            v += 1
+
+        self.assertEqual(23, sarr[-1])
+        self.assertEqual(0, sarr[-24])
+
+    def test_SimpleArray_negative_index_1d_strided(self):
+        base = np.arange(12, dtype='float64')
+        strided = base[::2]
+        sarr = modmesh.SimpleArrayFloat64(array=strided)
+
+        self.assertEqual(2, sarr.stride[0])
+        self.assertEqual(4, sarr[2])
+        self.assertEqual(10, sarr[-1])
+        sarr[1] = 100
+        self.assertEqual(100, base[2])
+
+    def test_SimpleArray_negative_index_md(self):
+        sarr = modmesh.SimpleArrayFloat64((4, 3, 2))
+        ndarr = np.array(sarr, copy=False)
+        np.ravel(ndarr)[:] = np.arange(24)  # initialize contents
+
+        self.assertFalse(sarr.has_ghost)
+        self.assertEqual(0, sarr.nghost)
+        self.assertEqual(4, sarr.nbody)
+
+        self.assertEqual(23, sarr[-1, -1, -1])
+        self.assertEqual(0, sarr[-4, -3, -2])
+        sarr[-1, -1, -1] = 230
+        self.assertEqual(230, ndarr[3, 2, 1])
+
+    def test_SimpleArray_scalar_index_rejects_md(self):
+        sarr = modmesh.SimpleArrayFloat64((4, 3, 2))
+
+        with self.assertRaisesRegex(
+                IndexError,
+                r"SimpleArray::normalize_index\(\): cannot use scalar index "
+                r"for 3-dimensional array"
+        ):
+            sarr[-1]
 
     def test_SimpleArray_types(self):
 
@@ -3747,9 +3815,9 @@ class SimpleArrayPlexTC(unittest.TestCase):
         ndarr = sarr.typed.ndarray[...]
         np.testing.assert_equal(clone_ndarr, ndarr)
 
-        sarr[3] = 3.0
-        self.assertEqual(sarr_ref[3], 3.0)
-        self.assertEqual(sarr_clone[3], 2.0)  # should be the original value
+        sarr[0, 0, 3] = 3.0
+        self.assertEqual(sarr_ref[0, 0, 3], 3.0)
+        self.assertEqual(sarr_clone[0, 0, 3], 2.0)
 
     def test_SimpleArrayPlex_buffer(self):
         magic_number = 3.1415
@@ -3764,7 +3832,6 @@ class SimpleArrayPlexTC(unittest.TestCase):
         sarr = modmesh.SimpleArray(
             (2, 3, 4), value=magic_number, dtype='float64')
         self.assertEqual(sarr[1, 2, 3], magic_number)
-        self.assertEqual(sarr[2], magic_number)
 
     def test_SimpleArrayPlex_properties(self):
         magic_number = 3.1415
@@ -3932,7 +3999,7 @@ class SimpleArrayPlexTC(unittest.TestCase):
                 # write through typed, read back from plex2
                 ndarr = np.array(plex, copy=False)
                 ndarr.flat[0] = 1
-                self.assertEqual(plex2[0], typed[0])
+                self.assertEqual(plex2[0, 0, 0], typed[0, 0, 0])
 
     def test_SimpleArrayPlex_typed_preserves_data(self):
         # Test non-complex dtypes using value= constructor
