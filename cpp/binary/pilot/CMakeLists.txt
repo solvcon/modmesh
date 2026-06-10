@@ -123,6 +123,12 @@ endif()
 
 add_custom_target(run_pilot_pytest $<TARGET_FILE:pilot> --mode=pytest)
 
+get_target_property(
+    MODMESH_PRIMARY_FILES
+    modmesh_primary
+    SOURCES
+)
+
 set(CLANG_TIDY_DIFF_EXE clang-tidy-diff.py)
 if(CLANG_TIDY_EXE)
     file(REAL_PATH "${CLANG_TIDY_EXE}" CLANG_TIDY_REALPATH)
@@ -151,7 +157,7 @@ string(
     "test -n \"$MODMESH_DIFF_BASE\""
     " && "
     "git diff --no-color -U0 \"$MODMESH_DIFF_BASE\" HEAD"
-    " -- $<JOIN:${MODMESH_PILOT_FILES}, >"
+    " -- $<JOIN:${MODMESH_PRIMARY_FILES};${CMAKE_CURRENT_SOURCE_DIR}, >"
     " | "
     "\"${CLANG_TIDY_DIFF_EXE}\" -p1"
     " -path \"${CMAKE_BINARY_DIR}\""
