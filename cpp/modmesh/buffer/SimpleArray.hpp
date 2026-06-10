@@ -2094,8 +2094,8 @@ private:
                             "cannot use scalar index for {}-dimensional array",
                             ndim()));
         }
-        ssize_t const dim_length = static_cast<ssize_t>(shape(0));
-        ssize_t const ghost_offset = static_cast<ssize_t>(m_nghost);
+        auto const dim_length = static_cast<ssize_t>(shape(0));
+        auto const ghost_offset = static_cast<ssize_t>(m_nghost);
         ssize_t const shifted_index = it + ghost_offset;
 
         // This overload handles scalar indexing, not slicing. Python sequence
@@ -2160,7 +2160,7 @@ private:
         shape_type normalized(idx.size());
         for (size_t dim = 0; dim < m_shape.size(); ++dim)
         {
-            ssize_t const dim_length = static_cast<ssize_t>(m_shape[dim]);
+            auto const dim_length = static_cast<ssize_t>(m_shape[dim]);
             ssize_t ghost_offset = 0;
             if (dim == 0)
             {
