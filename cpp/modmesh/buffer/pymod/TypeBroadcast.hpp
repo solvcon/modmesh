@@ -30,6 +30,7 @@
 
 #include <modmesh/buffer/SimpleArray.hpp>
 #include <modmesh/math/math.hpp>
+#include <modmesh/python/common.hpp>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h> // Must be the first include.
 
@@ -77,7 +78,7 @@ struct TypeBroadcastImpl
             if constexpr (valid_conversion)
             {
                 // FIXME: NOLINTNEXTLINE(bugprone-signed-char-misuse,cert-str34-c)
-                arr_out.at(offset_out) = static_cast<out_type>(*ptr_in);
+                arr_out.data(offset_out) = static_cast<out_type>(*ptr_in);
             }
             else
             {
