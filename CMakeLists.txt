@@ -60,6 +60,23 @@ find_program(
     NAMES "clang-tidy"
     DOC "Path to clang-tidy executable"
 )
+if(CLANG_TIDY_EXE)
+    file(REAL_PATH "${CLANG_TIDY_EXE}" CLANG_TIDY_REALPATH)
+    get_filename_component(
+        CLANG_TIDY_BINDIR
+        "${CLANG_TIDY_REALPATH}"
+        DIRECTORY
+    )
+    find_program(
+        CLANG_TIDY_DIFF_EXE
+        NAMES "clang-tidy-diff.py"
+        HINTS
+            "${CLANG_TIDY_BINDIR}"
+            "${CLANG_TIDY_BINDIR}/../share/clang"
+        DOC "Path to clang-tidy-diff.py executable"
+    )
+endif()
+
 if(USE_CLANG_TIDY)
     if(CLANG_TIDY_EXE)
         set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}"
@@ -77,6 +94,22 @@ if(USE_CLANG_TIDY)
         message(STATUS "use clang-tidy with DO_CLANG_TIDY: ${DO_CLANG_TIDY}")
     else()
         message(FATAL_ERROR "USE_CLANG_TIDY is on but clang-tidy is not found")
+    endif()
+
+    if(CLANG_TIDY_DIFF_EXE)
+        set(DO_CLANG_TIDY_DIFF "${CLANG_TIDY_DIFF_EXE}"
+            "-p1"
+            "-extra-arg=-std=c++23"
+            "-allow-no-checks")
+        if(LINT_AS_ERRORS)
+            set(DO_CLANG_TIDY_DIFF
+                "${DO_CLANG_TIDY_DIFF}"
+                "-warnings-as-errors=*")
+        endif()
+        message(
+            STATUS
+            "use clang-tidy-diff.py with DO_CLANG_TIDY_DIFF: ${DO_CLANG_TIDY_DIFF}"
+        )
     endif()
 else()
     message(STATUS "not use clang-tidy")
