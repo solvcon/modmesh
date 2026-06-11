@@ -223,6 +223,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR2DWidget
                 py::return_value_policy::copy)
             .def("setViewTransform", &wrapped_type::setViewTransform, py::arg("v"))
             .def("resetView", &wrapped_type::resetView)
+            .def("updateWorld", &wrapped_type::updateWorld, py::arg("world"))
             .def("requestRepaint", &wrapped_type::requestRepaint);
     }
 

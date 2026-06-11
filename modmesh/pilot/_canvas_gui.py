@@ -47,6 +47,7 @@ class Canvas(_gui_common.PilotFeature):
         super(Canvas, self).__init__(*args, **kw)
         self._world = core.WorldFp64()
         self._widget = None
+        self._widget_2d = None
 
     def populate_menu(self):
         self._add_menu_item(
@@ -96,6 +97,15 @@ class Canvas(_gui_common.PilotFeature):
             func=self._hyperbola,
         )
 
+        self._mgr.canvasMenu.addSeparator()
+        self._add_menu_item(
+            menu=self._mgr.canvasMenu,
+            text="View: Open canvas in 2D",
+            tip="Show the current canvas world in a strictly-2D QPainter "
+                "widget; the same world also drives the 3D view",
+            func=self._open_2d,
+        )
+
     @staticmethod
     def _draw_layer(world, layer):
         point_type = core.Point3dFp64
@@ -132,6 +142,22 @@ class Canvas(_gui_common.PilotFeature):
             self._widget = self._mgr.add3DWidget()
         self._widget.updateWorld(self._world)
         self._widget.showMark()
+        # Keep the 2D view in sync once it has been opened. The same world
+        # drives both widgets; only the backend (Qt3D vs QPainter) differs.
+        if self._widget_2d is not None:
+            self._widget_2d.updateWorld(self._world)
+
+    def _open_2d(self):
+        """
+        Show the current canvas world in a strictly-2D QPainter widget. The
+        world is the same object the 3D view renders; the 2D widget simply
+        drops the z coordinate. Subsequent samples refresh both views via
+        ``_update_widget``.
+        """
+        if self._widget_2d is None:
+            self._widget_2d = self._mgr.add2DWidget()
+        self._widget_2d.updateWorld(self._world)
+        self._widget_2d.resetView()
 
     def _bezier_s_curve(self):
         bezier_sample = curve.BezierSample.s_curve()
