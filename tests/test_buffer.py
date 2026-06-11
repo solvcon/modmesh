@@ -1740,6 +1740,11 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         savg = sarr.median()
         self.assertEqual(npavg, savg)
 
+        nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr.nghost = 1
+        self.assertEqual(np.median(nparr), sarr.median())
+
     def test_median_with_axis(self):
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
         sarr = modmesh.SimpleArrayFloat64(array=nparr)
@@ -1780,6 +1785,22 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         sarr = modmesh.SimpleArrayFloat64(array=nparr)
         npmed = np.median(nparr, axis=(0, 2))
         smed = sarr.median(axis=[0, 2])
+        smed = smed.ndarray
+        self.assertTrue(np.array_equal(npmed, smed))
+
+        nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr.nghost = 1
+        npmed = np.median(nparr, axis=1)
+        smed = sarr.median(axis=1)
+        smed = smed.ndarray
+        self.assertTrue(np.array_equal(npmed, smed))
+
+        nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr.nghost = 1
+        npmed = np.median(nparr, axis=0)
+        smed = sarr.median(axis=0)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
@@ -1945,6 +1966,21 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         savg = savg.ndarray
         self.assertTrue(np.allclose(npavg, savg))
 
+        nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr.nghost = 1
+        npavg = np.average(nparr)
+        savg = sarr.average()
+        self.assertEqual(npavg, savg)
+
+        weights = np.arange(1, 4 * 3 * 2 + 1, dtype='float64')
+        weights = weights.reshape((4, 3, 2))
+        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        sweights.nghost = 1
+        npavg = np.average(nparr, weights=weights)
+        savg = sarr.average(weight=sweights)
+        self.assertEqual(npavg, savg)
+
     def test_average_with_axis(self):
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
         sarr = modmesh.SimpleArrayFloat64(array=nparr)
@@ -2037,6 +2073,21 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         smed = smed.ndarray
         self.assertTrue(np.allclose(npmed, smed))
 
+        nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr.nghost = 1
+        npavg = np.average(nparr, axis=0)
+        savg = sarr.average(axis=0)
+        savg = savg.ndarray
+        self.assertTrue(np.array_equal(npavg, savg))
+
+        weights = np.array([0.5, 0.3, 0.2], dtype='float64')
+        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        npavg = np.average(nparr, weights=weights, axis=1)
+        savg = sarr.average(axis=1, weight=sweights)
+        savg = savg.ndarray
+        self.assertTrue(np.allclose(npavg, savg))
+
     def test_mean(self):
         nparr = np.arange(24, dtype='float64')
         np.random.shuffle(nparr)
@@ -2065,6 +2116,11 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         npmean = np.mean(nparr)
         smean = sarr.mean()
         self.assertEqual(npmean, smean)
+
+        nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr.nghost = 1
+        self.assertEqual(np.mean(nparr), sarr.mean())
 
     def test_mean_with_axis(self):
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
@@ -2109,6 +2165,14 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
+        nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr.nghost = 1
+        npmean = np.mean(nparr, axis=0)
+        smean = sarr.mean(axis=0)
+        smean = smean.ndarray
+        self.assertTrue(np.array_equal(npmean, smean))
+
     def test_var(self):
         nparr = np.arange(24, dtype='float64')
         np.random.shuffle(nparr)
@@ -2140,6 +2204,11 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         npvar = np.var(nparr)
         svar = sarr.var()
         self.assertEqual(npvar, svar)
+
+        nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr.nghost = 1
+        self.assertEqual(np.var(nparr), sarr.var())
 
     def test_var_with_axis(self):
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
@@ -2184,6 +2253,22 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
+        nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr.nghost = 1
+        npvar = np.var(nparr, axis=1)
+        svar = sarr.var(axis=1)
+        svar = svar.ndarray
+        self.assertTrue(np.allclose(npvar, svar))
+
+        nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr.nghost = 1
+        npvar = np.var(nparr, axis=0)
+        svar = sarr.var(axis=0)
+        svar = svar.ndarray
+        self.assertTrue(np.allclose(npvar, svar))
+
     def test_std(self):
         nparr = np.arange(24, dtype='float64')
         np.random.shuffle(nparr)
@@ -2215,6 +2300,11 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         npstd = np.std(nparr)
         sstd = sarr.std()
         self.assertEqual(npstd, sstd)
+
+        nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr.nghost = 1
+        self.assertEqual(np.std(nparr), sarr.std())
 
     def test_std_with_axis(self):
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
@@ -2258,6 +2348,14 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         smed = sarr.std(axis=[0, 2])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
+
+        nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
+        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr.nghost = 1
+        npstd = np.std(nparr, axis=0)
+        sstd = sarr.std(axis=0)
+        sstd = sstd.ndarray
+        self.assertTrue(np.allclose(npstd, sstd))
 
     def type_convertor(self, dtype):
         return {

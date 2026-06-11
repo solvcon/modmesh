@@ -128,6 +128,91 @@ using shape_type = small_vector<size_t>;
 using sshape_type = small_vector<ssize_t>;
 using slice_type = small_vector<ssize_t>;
 
+/**
+ * \brief Enumerate SimpleArray indices with nghost included.
+ *
+ * The first dimension starts at -nghost, while the other dimensions start
+ * at 0. For example, an array with shape [4, 3, 2] and nghost = 1 is
+ * enumerated from [-1, 0, 0] to [2, 2, 1].
+ */
+class IndexRange
+{
+public:
+
+    IndexRange(IndexRange const &) = default;
+    IndexRange(IndexRange &&) noexcept = default;
+    IndexRange & operator=(IndexRange const &) = default;
+    IndexRange & operator=(IndexRange &&) noexcept = default;
+    ~IndexRange() = default;
+
+    template <typename Array>
+    explicit IndexRange(Array const & array)
+        : m_lower(array.ndim(), 0)
+        , m_upper(array.ndim(), 0)
+    {
+        for (size_t dim = 0; dim < array.ndim(); ++dim)
+        {
+            m_lower[dim] = lower_bound(array, dim);
+            m_upper[dim] = upper_bound(array, dim);
+        }
+    }
+
+    template <typename Array>
+    IndexRange(Array const & array, small_vector<size_t> const & axes)
+        : m_lower(axes.size(), 0)
+        , m_upper(axes.size(), 0)
+    {
+        for (size_t k = 0; k < axes.size(); ++k)
+        {
+            size_t const dim = axes[k];
+            m_lower[k] = lower_bound(array, dim);
+            m_upper[k] = upper_bound(array, dim);
+        }
+    }
+
+    sshape_type first() const { return m_lower; }
+
+    bool next(sshape_type & idx) const
+    {
+        for (size_t i = idx.size(); i > 0; --i)
+        {
+            if (++idx[i - 1] < m_upper[i - 1])
+            {
+                return true;
+            }
+            idx[i - 1] = m_lower[i - 1];
+        }
+        return false;
+    }
+
+    template <typename Array>
+    static ssize_t index_from_offset(Array const & array, size_t dim, ssize_t offset)
+    {
+        return lower_bound(array, dim) + offset;
+    }
+
+private:
+
+    sshape_type m_lower;
+    sshape_type m_upper;
+
+    template <typename Array>
+    static ssize_t lower_bound(Array const & array, size_t dim)
+    {
+        if (dim == 0)
+        {
+            return -static_cast<ssize_t>(array.nghost());
+        }
+        return 0;
+    }
+
+    template <typename Array>
+    static ssize_t upper_bound(Array const & array, size_t dim)
+    {
+        return lower_bound(array, dim) + static_cast<ssize_t>(array.shape(dim));
+    }
+};
+
 std::string format_shape(shape_type const & shape);
 
 template <typename T>
@@ -337,31 +422,32 @@ public:
         }
         ret_type result(out_shape);
 
-        small_vector<size_t> red_axes(red_count), red_shape(red_count);
+        small_vector<size_t> red_axes(red_count);
         for (size_t i = 0, l = 0; i < ndim; ++i)
         {
             if (reduce_mask[i])
             {
-                red_axes[l] = i;
-                red_shape[l++] = athis->shape(i);
+                red_axes[l++] = i;
             }
         }
+        auto const red_range = IndexRange(*athis, red_axes);
 
-        small_vector<size_t> full_idx(ndim, 0);
-        auto out_idx = result.first_sidx();
+        sshape_type full_idx(ndim, 0);
+        auto const out_range = IndexRange(result);
+        sshape_type out_idx = out_range.first();
 
         do
         {
-            for (size_t i = 0, l = 0; i < ndim; ++i)
+            for (size_t i = 0, out_dim = 0; i < ndim; ++i)
             {
                 if (!reduce_mask[i])
                 {
-                    full_idx[i] = out_idx[l++];
+                    full_idx[i] = IndexRange::index_from_offset(*athis, i, out_idx[out_dim++]);
                 }
             }
 
             small_vector<value_type> slice;
-            small_vector<size_t> red_idx(red_axes.size(), 0);
+            sshape_type red_idx = red_range.first();
 
             do
             {
@@ -371,12 +457,12 @@ public:
                 }
                 slice.push_back(athis->at(full_idx));
 
-            } while (red_idx.next_cartesian_product(red_shape));
+            } while (red_range.next(red_idx));
 
             // FIXME: NOLINTNEXTLINE(bugprone-use-after-move)
             element_type const mv = std::invoke(red_fn, this, slice, std::forward<RedArgs>(red_args)...);
             result.at(out_idx) = mv;
-        } while (result.next_sidx(out_idx));
+        } while (out_range.next(out_idx));
 
         return result;
     }
@@ -396,13 +482,14 @@ public:
         auto athis = static_cast<A const *>(this);
         const size_t n = athis->size();
         small_vector<T> acopy(n);
-        auto sidx = athis->first_sidx();
+        auto const range = IndexRange(*athis);
+        sshape_type sidx = range.first();
         size_t i = 0;
         do
         {
             acopy[i] = athis->at(sidx);
             ++i;
-        } while (athis->next_sidx(sidx));
+        } while (range.next(sidx));
         return median_op(acopy);
     }
 
@@ -430,13 +517,14 @@ public:
     A average(const small_vector<size_t> & axis, A const & weight) const
     {
         small_vector<value_type> weight_sv(weight.size());
-        auto sidx = weight.first_sidx();
+        auto const range = IndexRange(weight);
+        sshape_type sidx = range.first();
         size_t i = 0;
         do
         {
             weight_sv[i] = weight.at(sidx);
             ++i;
-        } while (weight.next_sidx(sidx));
+        } while (range.next(sidx));
         return reduce(axis, &SimpleArrayMixinCalculators::average_op, weight_sv);
     }
 
@@ -454,12 +542,13 @@ public:
         }
         value_type sum = 0;
         value_type total_weight = 0;
-        auto sidx = athis->first_sidx();
+        auto const range = IndexRange(*athis);
+        sshape_type sidx = range.first();
         do
         {
             sum += athis->at(sidx) * weight.at(sidx);
             total_weight += weight.at(sidx);
-        } while (athis->next_sidx(sidx));
+        } while (range.next(sidx));
         if (total_weight == static_cast<value_type>(0))
         {
             throw std::runtime_error("SimpleArray::average(): total weight is zero");
@@ -538,7 +627,8 @@ public:
             throw std::runtime_error("SimpleArray::var(): ddof must be less than the number of elements");
         }
 
-        auto sidx = athis->first_sidx();
+        auto const range = IndexRange(*athis);
+        sshape_type sidx = range.first();
         value_type const mu = athis->mean();
         real_type acc = 0;
         if constexpr (is_complex_v<value_type>)
@@ -546,14 +636,15 @@ public:
             do
             {
                 acc += athis->at(sidx).norm();
-            } while (athis->next_sidx(sidx));
+            } while (range.next(sidx));
         }
         else
         {
             do
             {
-                acc += athis->at(sidx) * athis->at(sidx);
-            } while (athis->next_sidx(sidx));
+                value_type const value = athis->at(sidx);
+                acc += value * value;
+            } while (range.next(sidx));
         }
         if constexpr (is_complex_v<value_type>)
         {
@@ -1788,20 +1879,6 @@ public:
     value_type const & operator[](size_t it) const noexcept { return data(it); }
     value_type & operator[](size_t it) noexcept { return data(it); }
 
-    // FIXME: This overload treats it as a raw non-negative offset, unlike
-    // at(ssize_t), which applies Python/ghost logical indexing. Remove this
-    // overload in a future cleanup PR after raw-offset users are explicit.
-    value_type const & at(size_t it) const
-    {
-        validate_range(it);
-        return data(it);
-    }
-    value_type & at(size_t it)
-    {
-        validate_range(it);
-        return data(it);
-    }
-
     value_type const & at(ssize_t it) const
     {
         shape_type const idx{normalize_index(it)};
@@ -1811,22 +1888,6 @@ public:
     {
         shape_type const idx{normalize_index(it)};
         return data(buffer_offset(m_stride, idx));
-    }
-
-    value_type const & at(std::vector<size_t> const & idx) const { return at(shape_type(idx)); }
-    value_type & at(std::vector<size_t> const & idx) { return at(shape_type(idx)); }
-
-    value_type const & at(shape_type const & idx) const
-    {
-        const size_t offset = buffer_offset(m_stride, idx);
-        validate_range(offset);
-        return data(offset);
-    }
-    value_type & at(shape_type const & idx)
-    {
-        const size_t offset = buffer_offset(m_stride, idx);
-        validate_range(offset);
-        return data(offset);
     }
 
     value_type const & at(std::vector<ssize_t> const & idx) const { return at(sshape_type(idx)); }
@@ -1843,16 +1904,6 @@ public:
         shape_type const idx = normalize_index(sidx);
         const size_t offset = buffer_offset(m_stride, idx);
         return data(offset);
-    }
-
-    shape_type first_sidx() const noexcept
-    {
-        return shape_type(shape().size(), 0);
-    }
-
-    bool next_sidx(shape_type & sidx) const noexcept
-    {
-        return sidx.next_cartesian_product(shape());
     }
 
     size_t ndim() const noexcept { return m_shape.size(); }
@@ -2053,35 +2104,6 @@ private:
         if (!is_f_contiguous(shape, stride))
         {
             throw std::runtime_error("SimpleArray: F contiguous stride must match shape and start with 1");
-        }
-    }
-
-    /**
-     * Validate a raw, non-negative buffer offset.
-     *
-     * This helper is currently used by unsigned-index paths. Signed logical
-     * indices, including ghost indices, are normalized by normalize_index().
-     * FIXME: Remove this function after raw-offset users are made explicit.
-     */
-    void validate_range(size_t it) const
-    {
-        if (m_nghost != 0 && ndim() != 1)
-        {
-            throw std::out_of_range(
-                std::format("SimpleArray::validate_range(): "
-                            "cannot handle {}-dimensional (more than 1) array with non-zero nghost: {}",
-                            ndim(),
-                            m_nghost));
-        }
-        size_t const last = (buffer().nbytes() / ITEMSIZE) - m_nghost;
-        if (it >= last)
-        {
-            throw std::out_of_range(
-                std::format("SimpleArray: index {} >= {} (buffer size: {} - nghost: {})",
-                            it,
-                            last,
-                            buffer().nbytes() / ITEMSIZE,
-                            m_nghost));
         }
     }
 

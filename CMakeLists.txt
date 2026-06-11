@@ -78,6 +78,23 @@ if(CLANG_TIDY_EXE)
 endif()
 
 if(USE_CLANG_TIDY)
+    # On macOS, SDK-provided headers and frameworks are resolved through an
+    # SDK sysroot. Homebrew clang-tidy may not inherit Xcode's selected SDK
+    # when replaying compile_commands.json, so ask xcrun for the macOS SDK
+    # path and pass it to Clang as -isysroot.
+    # References:
+    #   xcrun --show-sdk-path: https://keith.github.io/xcode-man-pages/xcrun.1.html
+    #   Clang -isysroot: https://clang.llvm.org/docs/ClangCommandLineReference.html
+    #   clang-tidy --extra-arg: https://clang.llvm.org/extra/clang-tidy/
+    if(APPLE)
+        execute_process(
+            COMMAND xcrun --sdk macosx --show-sdk-path
+            OUTPUT_VARIABLE CLANG_TIDY_APPLE_SYSROOT
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET
+        )
+    endif()
+
     if(CLANG_TIDY_EXE)
         set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}"
             "-header-filter=/cpp/.\*"
@@ -88,6 +105,11 @@ if(USE_CLANG_TIDY)
             # Related information (but not what we see in modmesh):
             # https://github.com/llvm/llvm-project/issues/192713
             "--allow-no-checks")
+        if(APPLE AND CLANG_TIDY_APPLE_SYSROOT)
+            list(APPEND DO_CLANG_TIDY
+                "--extra-arg=-isysroot"
+                "--extra-arg=${CLANG_TIDY_APPLE_SYSROOT}")
+        endif()
         if(LINT_AS_ERRORS)
             set(DO_CLANG_TIDY "${DO_CLANG_TIDY}" "-warnings-as-errors=*")
         endif()
@@ -101,6 +123,11 @@ if(USE_CLANG_TIDY)
             "-p1"
             "-extra-arg=-std=c++23"
             "-allow-no-checks")
+        if(APPLE AND CLANG_TIDY_APPLE_SYSROOT)
+            list(APPEND DO_CLANG_TIDY_DIFF
+                "-extra-arg=-isysroot"
+                "-extra-arg=${CLANG_TIDY_APPLE_SYSROOT}")
+        endif()
         if(LINT_AS_ERRORS)
             set(DO_CLANG_TIDY_DIFF
                 "${DO_CLANG_TIDY_DIFF}"
