@@ -31,6 +31,10 @@ limit, flake8) are handled by `.claude/hooks/check-source.sh`
 - No venv/conda code paths (modmesh targets system Python).
 - Tests live in `tests/` and are named `test_*.py`.
 - Profiling scripts live in `profiling/` and are named `profile_*.py`.
+- NumPy arrays: always create with an explicit `dtype` spelled as a string,
+  e.g. `np.empty(10, dtype='float64')`. Flag array-creating calls (`np.empty`,
+  `np.zeros`, `np.ones`, `np.full`, `np.array`, `np.arange`, etc.) that omit
+  `dtype` or pass a type object (`dtype=np.float64`) instead of a string.
 
 **Line economy**
 - Prefer fewer lines per STYLE.md. Flag unnecessary blank lines inside
