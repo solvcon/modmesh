@@ -41,6 +41,7 @@ from . import airfoil
 if _pcore.enable:
     from PySide6.QtGui import QAction
     from . import _mesh
+    from . import _oblique
     from . import _euler1d
     from . import _burgers1d
     from . import _svg_gui
@@ -75,6 +76,7 @@ class _Controller(metaclass=_Singleton):
         self.gmsh_dialog = None
         self.svg_dialog = None
         self.sample_mesh = None
+        self.oblique_shock = None
         self.recdom = None
         self.naca4airfoil = None
         self.eulerone = None
@@ -95,6 +97,7 @@ class _Controller(metaclass=_Singleton):
         self.gmsh_dialog = _mesh.GmshFileDialog(mgr=self._rmgr)
         self.svg_dialog = _svg_gui.SVGFileDialog(mgr=self._rmgr)
         self.sample_mesh = _mesh.SampleMesh(mgr=self._rmgr)
+        self.oblique_shock = _oblique.ObliqueShockMesh(mgr=self._rmgr)
         self.recdom = _mesh.RectangularDomain(mgr=self._rmgr)
         self.naca4airfoil = airfoil.Naca4Airfoil(mgr=self._rmgr)
         self.eulerone = _euler1d.Euler1DApp(mgr=self._rmgr)
@@ -128,6 +131,7 @@ class _Controller(metaclass=_Singleton):
         self.gmsh_dialog.populate_menu()
         self.svg_dialog.populate_menu()
         self.sample_mesh.populate_menu()
+        self.oblique_shock.populate_menu()
         self.naca4airfoil.populate_menu()
         self.recdom.populate_menu()
         self.eulerone.populate_menu()
