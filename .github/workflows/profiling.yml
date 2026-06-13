@@ -78,6 +78,11 @@ jobs:
           make pyprof
           echo "::endgroup::"
 
+      - name: make cprof
+        if: runner.os == 'Linux'
+        run: |
+          make cprof
+
   send_email_on_failure:
     needs: [profile]
     if: ${{ always() && contains(needs.*.result, 'failure') && github.ref_name == 'master' && github.event.repository.fork == false }}
