@@ -87,6 +87,27 @@ private:
 
 }; /* end class RLines */
 
+class RColorField
+    : public Qt3DCore::QEntity
+{
+    Q_OBJECT
+
+public:
+
+    RColorField(
+        SimpleArray<float> const & vertices,
+        SimpleArray<float> const & colors,
+        SimpleArray<uint32_t> const & indices,
+        Qt3DCore::QNode * parent = nullptr);
+
+private:
+
+    Qt3DCore::QGeometry * m_geometry = nullptr;
+    Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
+    Qt3DRender::QMaterial * m_material = nullptr;
+
+}; /* end class RColorField */
+
 } /* end namespace modmesh */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

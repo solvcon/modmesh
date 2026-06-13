@@ -124,10 +124,16 @@ public:
     void showMark();
     void updateMesh(std::shared_ptr<StaticMesh> const & mesh);
     void updateWorld(std::shared_ptr<WorldFp64> const & world);
+    void updateColorField(
+        SimpleArray<float> const & vertices,
+        SimpleArray<float> const & colors,
+        SimpleArray<uint32_t> const & indices);
 
     std::shared_ptr<StaticMesh> mesh() const { return m_mesh; }
 
 private:
+
+    void fitCameraToScene();
 
     Qt3DExtras::Qt3DWindow * m_view = nullptr;
     RScene * m_scene = nullptr;

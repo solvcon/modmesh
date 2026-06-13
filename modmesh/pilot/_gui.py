@@ -77,6 +77,7 @@ class _Controller(metaclass=_Singleton):
         self.svg_dialog = None
         self.sample_mesh = None
         self.oblique_shock = None
+        self.oblique_solver = None
         self.recdom = None
         self.naca4airfoil = None
         self.eulerone = None
@@ -98,6 +99,7 @@ class _Controller(metaclass=_Singleton):
         self.svg_dialog = _svg_gui.SVGFileDialog(mgr=self._rmgr)
         self.sample_mesh = _mesh.SampleMesh(mgr=self._rmgr)
         self.oblique_shock = _oblique.ObliqueShockMesh(mgr=self._rmgr)
+        self.oblique_solver = _oblique.ObliqueShockSolver(mgr=self._rmgr)
         self.recdom = _mesh.RectangularDomain(mgr=self._rmgr)
         self.naca4airfoil = airfoil.Naca4Airfoil(mgr=self._rmgr)
         self.eulerone = _euler1d.Euler1DApp(mgr=self._rmgr)
@@ -132,6 +134,7 @@ class _Controller(metaclass=_Singleton):
         self.svg_dialog.populate_menu()
         self.sample_mesh.populate_menu()
         self.oblique_shock.populate_menu()
+        self.oblique_solver.populate_menu()
         self.naca4airfoil.populate_menu()
         self.recdom.populate_menu()
         self.eulerone.populate_menu()
