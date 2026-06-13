@@ -30,6 +30,10 @@
 
 #include <QTechnique>
 #include <QPointSize>
+#include <Qt3DExtras/QPerVertexColorMaterial>
+
+#include <limits>
+#include <stdexcept>
 
 #include <modmesh/pilot/common_detail.hpp>
 
@@ -256,6 +260,146 @@ RLines::RLines(std::shared_ptr<WorldFp64> const & world, Qt3DCore::QNode * paren
 
         addComponent(m_material);
     }
+}
+
+RColorField::RColorField(
+    SimpleArray<float> const & vertices,
+    SimpleArray<float> const & colors,
+    SimpleArray<uint32_t> const & indices,
+    Qt3DCore::QNode * parent)
+    : Qt3DCore::QEntity(parent)
+    , m_geometry(new Qt3DCore::QGeometry(this))
+    , m_renderer(new Qt3DRender::QGeometryRenderer())
+    , m_material(new Qt3DExtras::QPerVertexColorMaterial())
+{
+    // Require (nvert, 3) vertices, a matching (nvert, 3) color table, and
+    // (ntri, 3) triangle indices; mismatches would feed Qt malformed buffers.
+    if (vertices.ndim() != 2 || vertices.shape(1) != 3)
+    {
+        throw std::invalid_argument("RColorField: vertices must have shape (nvert, 3)");
+    }
+    if (colors.ndim() != 2 || colors.shape(0) != vertices.shape(0) || colors.shape(1) != 3)
+    {
+        throw std::invalid_argument("RColorField: colors must have shape (nvert, 3) matching vertices");
+    }
+    if (indices.ndim() != 2 || indices.shape(1) != 3)
+    {
+        throw std::invalid_argument("RColorField: indices must have shape (ntri, 3)");
+    }
+
+    size_t const nvert = vertices.shape(0);
+    size_t const ntri = indices.shape(0);
+
+    /*
+     * Fence the geometry building to skip empty input, mirroring RLines: Qt
+     * throws "QByteArray size disagrees with the requested shape" on a
+     * zero-sized buffer.
+     */
+    if (nvert == 0 || ntri == 0)
+    {
+        return;
+    }
+
+    {
+        // Vertex coordinate buffer; also accumulate the bounding box.
+        auto * attr = new Qt3DCore::QAttribute(m_geometry);
+        attr->setName(Qt3DCore::QAttribute::defaultPositionAttributeName());
+        attr->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
+        attr->setVertexBaseType(Qt3DCore::QAttribute::Float);
+        attr->setVertexSize(3);
+
+        QVector3D min_pt(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+        QVector3D max_pt(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
+
+        auto * buf = new Qt3DCore::QBuffer(m_geometry);
+        {
+            QByteArray barray;
+            barray.resize(nvert * 3 * sizeof(float));
+            SimpleArray<float> sarr = makeSimpleArray<float>(barray, small_vector<size_t>{nvert, 3}, /*view*/ true);
+            for (size_t i = 0; i < nvert; ++i)
+            {
+                for (size_t d = 0; d < 3; ++d)
+                {
+                    sarr(i, d) = vertices(i, d);
+                }
+                min_pt.setX(std::min(min_pt.x(), sarr(i, 0)));
+                min_pt.setY(std::min(min_pt.y(), sarr(i, 1)));
+                min_pt.setZ(std::min(min_pt.z(), sarr(i, 2)));
+                max_pt.setX(std::max(max_pt.x(), sarr(i, 0)));
+                max_pt.setY(std::max(max_pt.y(), sarr(i, 1)));
+                max_pt.setZ(std::max(max_pt.z(), sarr(i, 2)));
+            }
+            buf->setData(barray);
+        }
+        attr->setBuffer(buf);
+        attr->setByteStride(3 * sizeof(float));
+        attr->setCount(nvert);
+        m_geometry->addAttribute(attr);
+
+        RScene * scene = qobject_cast<RScene *>(parent);
+        if (scene)
+        {
+            scene->updateBoundingBox(min_pt, max_pt);
+        }
+    }
+
+    {
+        // Per-vertex color buffer, read by the per-vertex-color material.
+        auto * attr = new Qt3DCore::QAttribute(m_geometry);
+        attr->setName(Qt3DCore::QAttribute::defaultColorAttributeName());
+        attr->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
+        attr->setVertexBaseType(Qt3DCore::QAttribute::Float);
+        attr->setVertexSize(3);
+
+        auto * buf = new Qt3DCore::QBuffer(m_geometry);
+        {
+            QByteArray barray;
+            barray.resize(nvert * 3 * sizeof(float));
+            SimpleArray<float> sarr = makeSimpleArray<float>(barray, small_vector<size_t>{nvert, 3}, /*view*/ true);
+            for (size_t i = 0; i < nvert; ++i)
+            {
+                for (size_t d = 0; d < 3; ++d)
+                {
+                    sarr(i, d) = colors(i, d);
+                }
+            }
+            buf->setData(barray);
+        }
+        attr->setBuffer(buf);
+        attr->setByteStride(3 * sizeof(float));
+        attr->setCount(nvert);
+        m_geometry->addAttribute(attr);
+    }
+
+    {
+        // Triangle index buffer.
+        auto * attr = new Qt3DCore::QAttribute(m_geometry);
+        attr->setVertexBaseType(Qt3DCore::QAttribute::UnsignedInt);
+        attr->setAttributeType(Qt3DCore::QAttribute::IndexAttribute);
+
+        auto * buf = new Qt3DCore::QBuffer(m_geometry);
+        {
+            QByteArray barray;
+            barray.resize(ntri * 3 * sizeof(uint32_t));
+            SimpleArray<uint32_t> sarr = makeSimpleArray<uint32_t>(barray, small_vector<size_t>{ntri, 3}, /*view*/ true);
+            for (size_t i = 0; i < ntri; ++i)
+            {
+                for (size_t d = 0; d < 3; ++d)
+                {
+                    sarr(i, d) = indices(i, d);
+                }
+            }
+            buf->setData(barray);
+        }
+        attr->setBuffer(buf);
+        attr->setCount(ntri * 3);
+        m_geometry->addAttribute(attr);
+    }
+
+    m_renderer->setGeometry(m_geometry);
+    m_renderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Triangles);
+    addComponent(m_renderer);
+    addComponent(m_material);
 }
 
 } /* end namespace modmesh */

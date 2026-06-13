@@ -25,9 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-"""Phase 1 of porting the 2/3D Euler solver: the oblique-shock
-reflection mesh and its boundary tagging, implemented in
-``modmesh.multidim.euler.oblique`` and shared with the pilot GUI.
+"""The oblique-shock reflection test.
 
 A uniform supersonic stream enters from the left over a slip wall whose bottom
 turns into a wedge inclined by a fixed angle.  The wedge deflects the flow, an
@@ -42,7 +40,7 @@ import unittest
 from numpy.testing import assert_almost_equal
 
 import modmesh
-from modmesh.multidim.euler.oblique import ObliqueShockMesher
+from modmesh.multidim.euler.oblique import ObliqueShock, ObliqueShockMesher
 
 
 class _ObliqueMeshBase:
@@ -282,6 +280,54 @@ class ObliqueShockMesherTC(unittest.TestCase):
         with self.assertRaises(ValueError):
             ObliqueShockMesher(nx=2, ny=2, ll=(0.0, 0.0), ur=(3.0, 1.0),
                                x_ramp=0.5, wedge_angle=30.0)
+
+
+class _ObliqueShockDriverBase:
+    """Base class to test for solver over each mesh flavor and marches a few
+    steps; subclasses select the flavor.
+    """
+
+    CELL_TYPE = None
+    # A coarse mesh keeps the driver tests fast.
+    MESHER_KW = dict(nx=24, ny=8, x_ramp=1.0)
+
+    def test_build_and_march(self):
+        shock = ObliqueShock()
+        shock.build_constant()
+        shock.build_numerical(cell_type=self.CELL_TYPE, **self.MESHER_KW)
+        # The core is built over the mesh with the right shape.
+        self.assertEqual(shock.mesh.ncell, shock.svr.ncell)
+        self.assertEqual(2, shock.svr.ndim)
+        # The solution is not yet validated. Only make sure the solver runs
+        # through.
+        shock.march(10)
+
+
+class ObliqueShockDriverQuadTC(_ObliqueShockDriverBase, unittest.TestCase):
+    """The driver over the structured quadrilateral mesh."""
+
+    CELL_TYPE = 'quad'
+
+
+class ObliqueShockDriverTriangleTC(_ObliqueShockDriverBase,
+                                   unittest.TestCase):
+    """The driver over the structured triangular mesh."""
+
+    CELL_TYPE = 'triangle'
+
+
+class ObliqueShockDriverUnstructuredTC(_ObliqueShockDriverBase,
+                                       unittest.TestCase):
+    """The driver over the unstructured (Delaunay) triangular mesh."""
+
+    CELL_TYPE = 'unstructured'
+
+
+class ObliqueShockDriverTC(unittest.TestCase):
+
+    def test_numerical_requires_constants(self):
+        with self.assertRaises(ValueError):
+            ObliqueShock().build_numerical()
 
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

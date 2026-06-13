@@ -157,6 +157,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
             .def_property_readonly("mesh", &wrapped_type::mesh)
             .def("updateMesh", &wrapped_type::updateMesh, py::arg("mesh"))
             .def("updateWorld", &wrapped_type::updateWorld, py::arg("world"))
+            .def(
+                "updateColorField",
+                &wrapped_type::updateColorField,
+                py::arg("vertices"),
+                py::arg("colors"),
+                py::arg("indices"))
             .def("showMark", &wrapped_type::showMark)
             .def(
                 "clipImage",

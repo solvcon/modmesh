@@ -26,15 +26,16 @@
 
 
 """
-Mesh and boundary tagging for the oblique-shock reflection.
+Mesh, boundary tagging, and solver driver for the oblique-shock reflection.
 
 A uniform supersonic stream enters from the left over a slip wall whose
 bottom turns into a wedge inclined by a fixed angle.  The wedge deflects the
 flow, an oblique shock forms at the wedge tip and reflects off the flat top
 slip wall, and the flow leaves through the non-reflective outflow on the
-right.  This module owns the programmatic mesh builder and the geometric
-boundary classifier shared by the unit tests, the pilot GUI, and the
-forthcoming Euler-solver driver.
+right.  This module owns the programmatic mesh builder, the geometric
+boundary classifier, and the :class:`ObliqueShock` driver that marches the
+CESE Euler solver over the mesh; all three are shared by the unit tests and
+the pilot GUI.
 """
 
 import math
@@ -42,6 +43,7 @@ import math
 from ... import core
 
 __all__ = [
+    'ObliqueShock',
     'ObliqueShockMesher',
 ]
 
@@ -306,5 +308,67 @@ class ObliqueShockMesher(object):
             else:
                 walls.append(ifc)
         return sorted(inlet), sorted(walls), sorted(outflow)
+
+
+class ObliqueShock(object):
+    """Drive the CESE Euler solver over the oblique-shock reflection.
+    """
+
+    def __init__(self):
+        self.gamma = None
+        self.density = None
+        self.pressure = None
+        self.mach = None
+        self.speedofsound = None
+        self.velocity = None
+        self.mesher = None
+        self.mesh = None
+        # Numerical solver core (EulerCore).
+        self.svr = None
+
+    def build_constant(self, gamma=1.4, density=1.0, pressure=1.0, mach=2.0):
+        """Fix the supersonic free stream entering at the inlet.
+
+        The stream is horizontal; the bottom wedge of the phase-1 mesh
+        deflects it to form the oblique shock.  The flow speed follows from
+        the Mach number and the speed of sound of the given state.
+        """
+        self.gamma = gamma
+        self.density = density
+        self.pressure = pressure
+        self.mach = mach
+        self.speedofsound = math.sqrt(gamma * pressure / density)
+        self.velocity = mach * self.speedofsound
+
+    def build_numerical(self, cell_type='quad', time_increment=2.e-3,
+                        sigma0=3.0, taumin=0.0, tauscale=1.0, **mesher_kw):
+        """After :meth:`build_constant` is done, build the numerical solver
+        :attr:`svr` over the selected mesh flavor.
+        """
+        if None is self.gamma:
+            raise ValueError("constants are not set; call build_constant()")
+        self.mesher = ObliqueShockMesher(**mesher_kw)
+        self.mesh = self.mesher.make_mesh(cell_type=cell_type)
+        # The core prepares the CE geometry (prepare_ce) on construction.
+        svr = core.EulerCore(mesh=self.mesh, time_increment=time_increment)
+        svr.sigma0 = sigma0
+        svr.taumin = taumin
+        svr.tauscale = tauscale
+        svr.init_solution(gamma=self.gamma, rho=self.density,
+                          v=[0.0, 0.0], p=self.pressure)
+        inlet, walls, outflow = self.mesher.classify_boundary(self.mesh)
+        svr.add_inlet(inlet, value=[self.density, self.velocity, 0.0,
+                                    self.pressure, self.gamma])
+        svr.add_slipwall(walls)
+        svr.add_nonrefl(outflow)
+        # Prime the ghost rows from the initial interior state so the first
+        # substep does not read zero-filled ghosts.
+        svr.bc_soln()
+        svr.bc_dsoln()
+        self.svr = svr
+
+    def march(self, steps):
+        """March the solver the requested number of full CESE steps."""
+        self.svr.march(steps=steps)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

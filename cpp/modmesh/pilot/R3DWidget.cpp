@@ -87,6 +87,28 @@ void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
     new RVertices(world, m_scene);
     new RLines(world, m_scene);
 
+    fitCameraToScene();
+}
+
+void R3DWidget::updateColorField(
+    SimpleArray<float> const & vertices,
+    SimpleArray<float> const & colors,
+    SimpleArray<uint32_t> const & indices)
+{
+    for (Qt3DCore::QNode * child : m_scene->childNodes())
+    {
+        if (typeid(*child) == typeid(RColorField))
+        {
+            child->deleteLater();
+        }
+    }
+    new RColorField(vertices, colors, indices, m_scene);
+
+    fitCameraToScene();
+}
+
+void R3DWidget::fitCameraToScene()
+{
     QVector3D box_min_pt = m_scene->minPoint(); // get the bottom-left corner of bounding box
     QVector3D box_max_pt = m_scene->maxPoint(); // get the top-right corner of bounding box
     QVector3D box_center = (box_min_pt + box_max_pt) * 0.5f; // center point of the bounding box
