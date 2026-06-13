@@ -89,12 +89,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                         }
 
                         modmesh::detail::shape_type shape;
-                        modmesh::detail::shape_type stride;
-                        constexpr size_t itemsize = wrapped_type::itemsize();
+                        modmesh::detail::sshape_type stride;
+                        constexpr auto itemsize = static_cast<ssize_t>(wrapped_type::itemsize());
                         constexpr size_t span = 0;
                         for (ssize_t i = 0; i < arr_in.ndim(); ++i)
                         {
-                            shape.push_back(arr_in.shape(i));
+                            shape.push_back(static_cast<size_t>(arr_in.shape(i)));
                             stride.push_back(arr_in.strides(i) / itemsize);
                         }
 
