@@ -54,7 +54,6 @@ jobs:
 
       - name: scan label, description, and comments
         id: check
-        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
@@ -66,38 +65,76 @@ jobs:
             const hasControlLine = text =>
               (text || '').split(/\r?\n/)
                 .some(line => control.test(line.trim()));
-            const pr = context.payload.pull_request;
 
-            // 1. The skip-ci label, set by a repository member.
-            if (pr.labels.some(label => label.name === 'skip-ci')) {
-              core.notice('CI skipped: the "skip-ci" label is present.');
-              core.setOutput('skip', 'true');
-              return;
-            }
-
-            // 2. The control string in the pull request description.
-            if (trusted.includes(pr.author_association) &&
-                hasControlLine(pr.body)) {
-              core.notice('CI skipped: control string in the description.');
-              core.setOutput('skip', 'true');
-              return;
-            }
-
-            // 3. The control string in a comment from a member.
-            const comments = await github.paginate(
-              github.rest.issues.listComments,
-              {
+            async function checkPrNumber(prNumber) {
+              const { data: pr } = await github.rest.pulls.get({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: pr.number,
-                per_page: 100,
+                pull_number: prNumber,
               });
-            const hit = comments.find(
-              comment => trusted.includes(comment.author_association) &&
-                         hasControlLine(comment.body));
-            if (hit) {
-              core.notice('CI skipped: control string in a comment.');
-              core.setOutput('skip', 'true');
+
+              if (pr.labels && pr.labels.some(label => label.name === 'skip-ci')) {
+                core.notice(`CI skipped: the "skip-ci" label is present on PR #${pr.number}.`);
+                return true;
+              }
+
+              if (trusted.includes(pr.author_association) && hasControlLine(pr.body)) {
+                core.notice(`CI skipped: control string in the description of PR #${pr.number}.`);
+                return true;
+              }
+
+              const comments = await github.paginate(
+                github.rest.issues.listComments,
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  per_page: 100,
+                });
+              const hit = comments.find(
+                comment => trusted.includes(comment.author_association) && hasControlLine(comment.body));
+              if (hit) {
+                core.notice(`CI skipped: control string in a comment on PR #${pr.number}.`);
+                return true;
+              }
+
+              return false;
+            }
+
+            if (github.event_name === 'pull_request') {
+              const pr = context.payload.pull_request;
+              if (!pr) {
+                core.setOutput('skip', 'false');
+                return;
+              }
+              const shouldSkip = await checkPrNumber(pr.number);
+              core.setOutput('skip', shouldSkip ? 'true' : 'false');
+              return;
+            }
+
+            else if (github.event_name === 'push') {
+              const sha = context.sha || context.payload.after;
+              if (!sha) {
+                core.setOutput('skip', 'false');
+                return;
+              }
+
+              const assoc = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: sha,
+              });
+
+              const prs = assoc.data || [];
+              for (const p of prs) {
+                const num = p.number;
+                if (await checkPrNumber(num)) {
+                  core.setOutput('skip', 'true');
+                  return;
+                }
+              }
+
+              core.setOutput('skip', 'false');
               return;
             }
 
