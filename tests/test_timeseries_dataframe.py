@@ -27,6 +27,7 @@
 import io
 import os
 import pathlib
+import re
 import tempfile
 import unittest
 
@@ -198,7 +199,10 @@ class TimeSeriesDataFrameTC(unittest.TestCase):
     def test_read_from_text_file_missing_raises_filenotfound(self):
         tsdf = dataframe.DataFrame()
         missing = pathlib.Path(tempfile.gettempdir()) / 'no_such_file.csv'
-        expected_msg = "Text file '{}' does not exist".format(missing)
-        with self.assertRaises(FileNotFoundError) as ctx:
+        expected_pattern = (
+            r"^Text file '" + re.escape(str(missing)) + r"' does not exist$"
+        )
+        with self.assertRaisesRegex(FileNotFoundError, expected_pattern):
             tsdf.read_from_text_file(missing)
-        self.assertEqual(str(ctx.exception), expected_msg)
+
+# vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4 tw=79:
