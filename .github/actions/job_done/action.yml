@@ -1,0 +1,15 @@
+name: Job done
+description: Mark the current job as successfully completed.
+
+runs:
+  using: composite
+  steps:
+    - name: Mark Unix successful completion
+      if: runner.os != 'Windows'
+      shell: bash
+      run: touch "${RUNNER_TEMP}/modmesh_job_completed"
+
+    - name: Mark Windows successful completion
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: New-Item -ItemType File -Path "$env:RUNNER_TEMP\modmesh_job_completed" -Force | Out-Null

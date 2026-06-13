@@ -68,6 +68,8 @@ jobs:
       with:
         fetch-depth: ${{ github.event_name == 'pull_request' && 100 || 1 }}
 
+    - uses: ./.github/actions/job_guard
+
     - name: event name
       run: |
         echo "github.event_name: ${{ github.event_name }}"
@@ -161,9 +163,11 @@ jobs:
           CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DCMAKE_EXPORT_COMPILE_COMMANDS=ON" \
           MODMESH_DIFF_BASE=${{ github.event.pull_request.base.sha }}
 
+    - uses: ./.github/actions/job_done
+
   send_email_on_failure:
     needs: [lint]
-    # Run if any of the dependencies failed in master branch
+    # Run if any of the dependencies failed or timed out in master branch
     if: ${{ always() && contains(needs.*.result, 'failure') && github.ref_name == 'master' && github.event.repository.fork == false }}
     uses: ./.github/workflows/send_email_on_fail.yml
     with:

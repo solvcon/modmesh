@@ -1,0 +1,22 @@
+name: Job guard
+description: Fail the job when it does not reach the completion marker.
+
+runs:
+  using: composite
+  steps:
+    - name: Register Unix post-run completion check
+      if: runner.os != 'Windows'
+      uses: gacts/run-and-post-run@v1
+      with:
+        post: >-
+          test -f "${RUNNER_TEMP}/modmesh_job_completed" ||
+          { echo "::error::CI job timed out, was cancelled, or stopped before completion."; exit 2; }
+
+    - name: Register Windows post-run completion check
+      if: runner.os == 'Windows'
+      uses: gacts/run-and-post-run@v1
+      with:
+        post-shell: pwsh
+        post: >-
+          if (-not (Test-Path -LiteralPath "$env:RUNNER_TEMP\modmesh_job_completed"))
+          { Write-Host "::error::CI job timed out, was cancelled, or stopped before completion."; exit 2 }

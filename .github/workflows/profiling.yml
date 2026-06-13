@@ -38,6 +38,8 @@ jobs:
         with:
           fetch-depth: 1
 
+      - uses: ./.github/actions/job_guard
+
       - name: event name
         run: |
           echo "Event name: ${{ github.event_name }}"
@@ -77,6 +79,8 @@ jobs:
           echo "::group::make pyprof"
           make pyprof
           echo "::endgroup::"
+
+      - uses: ./.github/actions/job_done
 
   send_email_on_failure:
     needs: [profile]
