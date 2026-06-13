@@ -25,6 +25,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import io
+import os
+import pathlib
+import re
+import tempfile
 import unittest
 
 import numpy as np
@@ -163,3 +167,42 @@ class TimeSeriesDataFrameTC(unittest.TestCase):
         col_data = reordered_tsdf['DELTA_VEL[1]']
         nd_arr = np.genfromtxt(io.StringIO(self.dlc_data), delimiter=',')[1:]
         self.assertEqual(list(col_data), list(nd_arr[:, 1]))
+
+    def test_read_from_text_file_accepts_str_path(self):
+        tsdf = dataframe.DataFrame()
+        with tempfile.NamedTemporaryFile(
+            mode='w', suffix='.csv', delete=False,
+        ) as fh:
+            fh.write(self.dlc_data)
+            path = fh.name
+        try:
+            tsdf.read_from_text_file(path)
+            self.assertEqual(tsdf._columns, self.col_sol)
+            self.assertEqual(tsdf._index_name, 'EPOCH')
+        finally:
+            os.unlink(path)
+
+    def test_read_from_text_file_accepts_pathlib_path(self):
+        tsdf = dataframe.DataFrame()
+        with tempfile.NamedTemporaryFile(
+            mode='w', suffix='.csv', delete=False,
+        ) as fh:
+            fh.write(self.dlc_data)
+            path = pathlib.Path(fh.name)
+        try:
+            tsdf.read_from_text_file(path)
+            self.assertEqual(tsdf._columns, self.col_sol)
+            self.assertEqual(tsdf._index_name, 'EPOCH')
+        finally:
+            path.unlink()
+
+    def test_read_from_text_file_missing_raises_filenotfound(self):
+        tsdf = dataframe.DataFrame()
+        missing = pathlib.Path(tempfile.gettempdir()) / 'no_such_file.csv'
+        expected_pattern = (
+            r"^Text file '" + re.escape(str(missing)) + r"' does not exist$"
+        )
+        with self.assertRaisesRegex(FileNotFoundError, expected_pattern):
+            tsdf.read_from_text_file(missing)
+
+# vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4 tw=79:

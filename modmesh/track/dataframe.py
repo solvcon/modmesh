@@ -67,9 +67,11 @@ class DataFrame(object):
         :return: None
         """
 
-        if isinstance(fname, str):
+        if isinstance(fname, (str, os.PathLike)):
             if not os.path.exists(fname):
-                raise Exception("Text file '{}' does not exist".format(fname))
+                raise FileNotFoundError(
+                    "Text file '{}' does not exist".format(fname)
+                )
             fid = open(fname, 'rt')
             fid_ctx = contextlib.closing(fid)
         else:
