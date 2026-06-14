@@ -34,6 +34,7 @@
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPen>
 #include <QResizeEvent>
 #include <QWheelEvent>
@@ -44,9 +45,7 @@ namespace modmesh
 namespace
 {
 
-// Mouse wheels report angleDelta in 1/8-degree units. With factor =
-// exp(degrees * (1/360) * ln 2), one wheel revolution (360 degrees)
-// doubles the zoom; a typical 15-degree notch is ~2^(1/24) ~= 1.0293x.
+// One wheel revolution (360 degrees) doubles the zoom.
 constexpr double ZOOM_STEP_PER_DEGREE = 1.0 / 360.0;
 
 constexpr double MIN_ZOOM = 1.0e-6;
@@ -60,6 +59,11 @@ QColor const BACKGROUND(32, 32, 36);
 QColor const MINOR_GRID(64, 64, 70);
 QColor const AXIS(200, 200, 80);
 QColor const ORIGIN(220, 80, 80);
+QColor const GEOMETRY(120, 180, 240);
+
+// Cosmetic (zoom-independent) screen widths for world geometry.
+constexpr double GEOMETRY_LINE_WIDTH_PX = 1.5;
+constexpr int GEOMETRY_POINT_WIDTH_PX = 5;
 
 double clamp_zoom(double zoom)
 {
@@ -90,8 +94,7 @@ R2DWidget::R2DWidget(QWidget * parent, Qt::WindowFlags f)
 {
     setFocusPolicy(Qt::StrongFocus);
     setAttribute(Qt::WA_OpaquePaintEvent, true);
-    // Centering is deferred until the first resizeEvent so the widget has
-    // its real geometry; an MDI subwindow resizes us after construction.
+    // Defer centering to the first resizeEvent, when geometry is real.
 }
 
 void R2DWidget::setViewTransform(ViewTransform2dFp64 const & v)
@@ -102,8 +105,7 @@ void R2DWidget::setViewTransform(ViewTransform2dFp64 const & v)
     }
     m_view = v;
     m_view.set_zoom(clamp_zoom(m_view.zoom()));
-    // An explicit view supersedes the deferred initial centering so a later
-    // first-positive-size resize will not overwrite caller-provided pan.
+    // An explicit view disables the deferred auto-centering.
     m_view_modified = true;
     update();
 }
@@ -112,9 +114,14 @@ void R2DWidget::resetView()
 {
     m_view.reset();
     centerViewOnOrigin();
-    // Reset returns to the auto-centering state so a subsequent window
-    // resize re-pins the origin to the new widget center.
+    // Re-enable auto-centering on later resizes.
     m_view_modified = false;
+    update();
+}
+
+void R2DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
+{
+    m_world = world;
     update();
 }
 
@@ -122,6 +129,67 @@ void R2DWidget::centerViewOnOrigin()
 {
     m_view.set_pan_x(static_cast<double>(width()) * 0.5);
     m_view.set_pan_y(static_cast<double>(height()) * 0.5);
+}
+
+void R2DWidget::paintWorld(QPainter & painter) const
+{
+    if (!m_world)
+    {
+        return;
+    }
+
+    // Map math-convention world (x, y) to Qt screen pixels; z is dropped.
+    auto map = [this](double world_x, double world_y)
+    {
+        double screen_x = 0.0;
+        double screen_y = 0.0;
+        m_view.screen_from_world(world_x, world_y, screen_x, screen_y);
+        return QPointF(screen_x, screen_y);
+    };
+
+    // Segments and flattened curves share one cosmetic stroke pen.
+    QPen geom_pen(GEOMETRY);
+    geom_pen.setCosmetic(true);
+    geom_pen.setWidthF(GEOMETRY_LINE_WIDTH_PX);
+    painter.setPen(geom_pen);
+
+    // 1D straight segments
+    std::shared_ptr<SegmentPadFp64> segments = m_world->collect_live_segments();
+    for (size_t i = 0; i < segments->size(); ++i)
+    {
+        painter.drawLine(map(segments->x0(i), segments->y0(i)),
+                         map(segments->x1(i), segments->y1(i)));
+    }
+
+    // Cubic Beziers; QPainterPath flattens them adaptively, so no sampling.
+    std::shared_ptr<CurvePadFp64> curves = m_world->collect_live_curves();
+    if (curves->size() > 0)
+    {
+        QPainterPath path;
+        for (size_t i = 0; i < curves->size(); ++i)
+        {
+            Bezier3dFp64 const c = curves->get(i);
+            path.moveTo(map(c.x0(), c.y0()));
+            path.cubicTo(map(c.x1(), c.y1()), map(c.x2(), c.y2()), map(c.x3(), c.y3()));
+        }
+        painter.setBrush(Qt::NoBrush); // stroke the outline only, never fill
+        painter.drawPath(path);
+    }
+
+    // 0D standalone points as dots with a fixed pixel size at any zoom.
+    std::shared_ptr<PointPadFp64> const & points = m_world->points();
+    if (points->size() > 0)
+    {
+        QPen point_pen(GEOMETRY);
+        point_pen.setCosmetic(true);
+        point_pen.setWidth(GEOMETRY_POINT_WIDTH_PX);
+        point_pen.setCapStyle(Qt::RoundCap);
+        painter.setPen(point_pen);
+        for (size_t i = 0; i < points->size(); ++i)
+        {
+            painter.drawPoint(map(points->x(i), points->y(i)));
+        }
+    }
 }
 
 void R2DWidget::paintEvent(QPaintEvent * /*event*/)
@@ -133,10 +201,7 @@ void R2DWidget::paintEvent(QPaintEvent * /*event*/)
     double const widget_w = static_cast<double>(width());
     double const widget_h = static_cast<double>(height());
 
-    // Choose a grid spacing that keeps screen-space spacing in a comfortable
-    // band by snapping the world spacing to the nearest power of ten times
-    // {1, 2, 5}. The spacing is reported in world units; conversion to
-    // screen pixels is `m_view.zoom() * spacing_world`.
+    // Snap grid spacing to a power of ten times {1, 2, 5} for a readable band.
     double const target_world = BASE_GRID_SPACING_PX / m_view.zoom();
     double const exponent = std::floor(std::log10(target_world));
     double const base = std::pow(10.0, exponent);
@@ -192,6 +257,9 @@ void R2DWidget::paintEvent(QPaintEvent * /*event*/)
     {
         painter.drawLine(QPointF(m_view.pan_x(), 0.0), QPointF(m_view.pan_x(), widget_h));
     }
+
+    // World geometry on top of the grid, under the origin marker.
+    paintWorld(painter);
 
     // Origin dot (cosmetic, fixed pixel size regardless of zoom).
     QPen origin_pen(ORIGIN);
@@ -263,12 +331,7 @@ void R2DWidget::mouseReleaseEvent(QMouseEvent * event)
 void R2DWidget::resizeEvent(QResizeEvent * event)
 {
     QWidget::resizeEvent(event);
-    // Auto-center the world origin on every resize until the caller or a
-    // mouse gesture sets the view explicitly; this survives the transient
-    // Qt-default-size resize that arrives before the MDI subwindow has been
-    // resized to its real geometry. Later resizes keep
-    // the user's pan/zoom; the origin may then move off-screen, which is
-    // expected behavior for a free-pan canvas.
+    // Auto-center the origin until the view is set explicitly.
     if (!m_view_modified && width() > 0 && height() > 0)
     {
         centerViewOnOrigin();

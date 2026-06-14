@@ -31,11 +31,15 @@
 #include <modmesh/pilot/common_detail.hpp> // Must be the first include.
 
 #include <modmesh/universe/ViewTransform2d.hpp>
+#include <modmesh/universe/World.hpp>
+
+#include <memory>
 
 #include <QPointF>
 #include <QWidget>
 
 class QMouseEvent;
+class QPainter;
 class QPaintEvent;
 class QResizeEvent;
 class QWheelEvent;
@@ -44,12 +48,9 @@ namespace modmesh
 {
 
 /**
- * Strictly-2D drawing widget.
- *
- * Stage 1 of issue #754: a `QWidget` that provides cursor-anchored zoom and
- * mouse-drag pan over a placeholder grid. World rendering is wired up in a
- * later stage; this stage exists to nail down the view-transform and input
- * handling under a simple visual backdrop.
+ * Strictly-2D drawing widget for the pilot. Paints the geometry of the
+ * same `World<double>` that R3DWidget renders, but maps it to screen
+ * space through a 2D view transform instead of a Qt3D camera.
  */
 class R2DWidget
     : public QWidget
@@ -73,6 +74,12 @@ public:
     /// Re-center the view so the world origin sits at the widget center.
     void resetView();
 
+    /// Update the world being painted by this widget.
+    void updateWorld(std::shared_ptr<WorldFp64> const & world);
+
+    /// Get the world currently being painted.
+    std::shared_ptr<WorldFp64> const & world() const { return m_world; }
+
     /// Hook for subsequent stages; current implementation triggers a repaint.
     void requestRepaint() { update(); }
 
@@ -89,7 +96,11 @@ private:
 
     void centerViewOnOrigin();
 
+    /// Paint the world's live points, segments, and curves in screen space.
+    void paintWorld(QPainter & painter) const;
+
     ViewTransform2dFp64 m_view;
+    std::shared_ptr<WorldFp64> m_world;
     bool m_panning = false;
     bool m_view_modified = false;
     QPointF m_last_mouse_pos;
