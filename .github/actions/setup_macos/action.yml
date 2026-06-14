@@ -17,6 +17,17 @@ runs:
         sudo mkdir -p /usr/local/include
         echo "::endgroup::"
 
+    - name: Use the offscreen Qt platform
+      if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
+      shell: bash
+      run: |
+        echo "::group::Use the offscreen Qt platform"
+        # macOS runners are headless and ship no xcb plugin, so keep the
+        # offscreen QPA plugin. The job-level env no longer pins
+        # QT_QPA_PLATFORM; set it here for the rest of the job.
+        echo "QT_QPA_PLATFORM=offscreen" >> "${GITHUB_ENV}"
+        echo "::endgroup::"
+
     - name: dependency by homebrew
       if: "${{ inputs.workflow == 'lint' || inputs.workflow == 'build' }}"
       shell: bash
