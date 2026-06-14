@@ -30,7 +30,11 @@ BUILD_METAL ?= OFF
 BUILD_QT ?= ON
 USE_CLANG_TIDY ?= OFF
 CMAKE_BUILD_TYPE ?= Release
-MAKE_PARALLEL ?= -j
+# Number of online processors. Drives both build parallelism (MAKE_PARALLEL
+# below) and the lint targets. getconf works on both Linux and macOS; fall
+# back to 1 if unavailable. Override to cap parallelism, e.g. NPROC=2.
+NPROC ?= $(shell getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
+MAKE_PARALLEL ?= -j $(NPROC)
 MODMESH_ROOT ?= $(shell pwd)
 CMAKE_INSTALL_PREFIX ?= $(MODMESH_ROOT)/build/fakeinstall
 CMAKE_LIBRARY_OUTPUT_DIRECTORY ?= $(MODMESH_ROOT)/modmesh
@@ -253,12 +257,8 @@ cformat: $(CFFILES)
 	if [ -n "$$ver" ] && [ "$$ver" != "$(CLANG_FORMAT_CI_VERSION)" ]; then \
 		echo "Warning: $(CLANG_FORMAT) major version $$ver differs from CI ($(CLANG_FORMAT_CI_VERSION)); formatting output may differ."; \
 	fi
-	@for fn in $(CFFILES) ; \
-	do \
-		echo "$(CFCMD) $${fn}:"; \
-		$(CFCMD) $${fn} ; ret=$$? ; \
-		if [ $${ret} -ne 0 ] ; then exit $${ret} ; fi ; \
-	done
+	@echo "Checking $(words $(CFFILES)) C++ files with clang-format..."
+	@printf '%s\n' $(CFFILES) | xargs -P $(NPROC) -n1 $(CFCMD)
 
 .PHONY: cinclude
 cinclude: $(CFFILES)
@@ -274,7 +274,7 @@ flake8:
 		echo "  Install: pip install flake8"; \
 		exit 1; \
 	}
-	$(FLAKE8) . --exclude thirdparty,tmp,_deps
+	$(FLAKE8) . --jobs $(NPROC) --exclude thirdparty,tmp,_deps
 
 .PHONY: checkascii
 checkascii:
@@ -284,8 +284,14 @@ checkascii:
 checktws:
 	$(WHICH_PYTHON) contrib/lint/check_ascii.py --check-tws
 
+# Run the lint targets concurrently, scaled to the processor count, and keep
+# going on failure so every check reports before make exits non-zero.
 .PHONY: lint
-lint: cformat cinclude flake8 checkascii checktws
+lint:
+	@$(MAKE) --no-print-directory -j $(NPROC) -k lint_targets
+
+.PHONY: lint_targets
+lint_targets: cformat cinclude flake8 checkascii checktws
 
 .PHONY: pyformat
 pyformat:
