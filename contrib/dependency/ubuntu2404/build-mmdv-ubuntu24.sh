@@ -47,6 +47,11 @@
 #       Print MMDV_PREFIX (the path prefix that MMDV_BASE is derived from)
 #       to stdout and exit.  Nothing else is printed and no directories are
 #       created, so this is safe to capture: PREFIX=$(./script --print-prefix).
+#   ./build-mmdv-ubuntu24.sh --print-apt
+#       Print the apt prerequisite commands (the BASE/PYTHON/NUMPY section
+#       and the QT section) to stdout and exit.  Nothing is built and no
+#       directories are created.  The script never runs apt itself; copy the
+#       output, review it, and run it.
 #
 # Overridable variables (search in the script for their defaults and
 # descriptions; not repeating here):
@@ -73,6 +78,7 @@ set -o pipefail
 
 MMDV_WRITE_ACTIVATE_ONLY=0
 MMDV_PRINT_PREFIX_ONLY=0
+MMDV_PRINT_APT_ONLY=0
 MMDV_NO_CONFIRM=0
 MMDV_SKIP_LIST=""
 MMDV_KNOWN_PKGS="zlib openssl sqlite python pybind11 cython numpy scipy qt pyside6"
@@ -104,6 +110,9 @@ while [ $# -gt 0 ] ; do
       ;;
     --print-prefix)
       MMDV_PRINT_PREFIX_ONLY=1
+      ;;
+    --print-apt)
+      MMDV_PRINT_APT_ONLY=1
       ;;
     --no-confirm)
       MMDV_NO_CONFIRM=1
@@ -201,16 +210,37 @@ EOF
 
 mmdv_apt_qt_cmd() {
   # Print the apt command for the QT section (Qt + pyside6 build deps).
+  # The X11/XCB -dev packages are the full set Qt's xcb platform plugin
+  # needs at configure time. Without all of them Qt silently builds without
+  # the xcb QPA plugin, leaving only offscreen/minimal, so a real (or xvfb)
+  # X display cannot be used. build_qt force-enables FEATURE_xcb so a missing
+  # dependency fails the configure loudly instead of dropping the plugin.
+  # CI installs the runtime counterparts of these -dev packages in
+  # .github/actions/setup_linux/action.yml; keep the two sets in sync.
   cat <<'EOF'
 sudo apt install -y \
   llvm-22-dev clang-22 libclang-22-dev patchelf \
   libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev \
   libfreetype-dev libdbus-1-dev libgl1-mesa-dev libglu1-mesa-dev \
-  libxcb-cursor-dev libxcb-icccm4-dev libxcb-image0-dev \
-  libxcb-keysyms1-dev libxcb-randr0-dev libxcb-render-util0-dev \
-  libxcb-shape0-dev libxcb-xinerama0-dev libxcb-xkb-dev
+  libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev \
+  libxrender-dev libxcb1-dev libxcb-glx0-dev libxcb-cursor-dev \
+  libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev \
+  libxcb-randr0-dev libxcb-render0-dev libxcb-render-util0-dev \
+  libxcb-shape0-dev libxcb-shm0-dev libxcb-sync-dev libxcb-util-dev \
+  libxcb-xfixes0-dev libxcb-xinerama0-dev libxcb-xkb-dev
 EOF
 }
+
+# --print-apt prints both apt prerequisite commands and exits, before any
+# filesystem side effect (mkdir, activate-write, build). The apt helper
+# functions must be defined first, so this is honored here rather than
+# alongside --print-prefix above.
+if [ "${MMDV_PRINT_APT_ONLY}" = "1" ] ; then
+  mmdv_apt_base_cmd
+  echo
+  mmdv_apt_qt_cmd
+  exit 0
+fi
 
 mmdv_write_activate() {
   # Write ${MMDV_BASE}/activate. The activation script is self-locating (reads
@@ -744,6 +774,15 @@ build_qt() {
              qtquickeffectmaker qtgrpc qtmultimedia ; do
       cfgcmd+=("-DBUILD_${m}=OFF")
     done
+    # Force the xcb (X11) platform plugin on. Qt otherwise silently drops it
+    # when an XCB dev dependency is missing, leaving only the offscreen and
+    # minimal QPA plugins and making a real (or xvfb) X display unusable.
+    # Force-enabling turns a missing dependency into a configure-time failure
+    # here instead of a runtime "Could not find the Qt platform plugin xcb".
+    # xcb_xlib is the Xlib/XCB interop the plugin relies on. The required
+    # -dev packages are listed in mmdv_apt_qt_cmd above.
+    cfgcmd+=("-DFEATURE_xcb=ON")
+    cfgcmd+=("-DFEATURE_xcb_xlib=ON")
     cfgcmd+=("-DQT_ALLOW_SYMLINK_IN_PATHS=ON")
     cfgcmd+=("-DCMAKE_PREFIX_PATH=${MMDV_USRDIR}")
     cfgcmd+=("-G" "Ninja")
