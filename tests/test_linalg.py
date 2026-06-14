@@ -863,7 +863,7 @@ class TestLuFactorization(unittest.TestCase):
             [1.0, 1.0, 1.0],
             [0.0, 1.0, 2.0],
         ], dtype="float64")
-        # 3x3 complex matrix to exercise Lu<T> instantiated for
+        # 3x3 complex matrix to exercise LuFactorization<T> instantiated for
         # Complex<double>.
         self.A_complex_3x3 = np.array([
             [2.0 + 1.0j, 1.0 + 0.0j, 3.0 - 1.0j],
@@ -1081,9 +1081,84 @@ class TestLuInv(unittest.TestCase):
             rtol=1e-12, atol=1e-12)
 
 
+class TestLuDet(unittest.TestCase):
+    """Verify lu_det() against matrices with known determinants."""
+
+    def test_det_1x1_is_the_single_entry(self):
+        A_np = np.array([[3.5]], dtype="float64")
+        A = mm.SimpleArrayFloat64(array=A_np)
+        self.assertAlmostEqual(mm.lu_det(A), 3.5, places=12)
+
+    def test_det_2x2_matches_known_value(self):
+        # A = [[4, 7], [2, 6]]; det = 4 * 6 - 7 * 2 = 10.
+        A_np = np.array([[4.0, 7.0], [2.0, 6.0]], dtype="float64")
+        A = mm.SimpleArrayFloat64(array=A_np)
+        self.assertAlmostEqual(mm.lu_det(A), 10.0, places=12)
+
+    def test_det_diagonal_is_product_of_diagonal(self):
+        # det = product of the diagonal.
+        A_np = np.diag(np.array([2.0, 4.0, 5.0], dtype="float64"))
+        A = mm.SimpleArrayFloat64(array=A_np)
+        self.assertAlmostEqual(mm.lu_det(A), 40.0, places=12)
+
+    def test_det_of_identity_is_one(self):
+        A = mm.SimpleArrayFloat64(array=np.eye(5))
+        self.assertAlmostEqual(mm.lu_det(A), 1.0, places=12)
+
+    def test_det_sign_tracks_row_swaps(self):
+        # The pivot row swap must flip the determinant sign (negative here).
+        A_np = np.array([
+            [1e-12, 1.0, 0.0],
+            [1.0, 1.0, 1.0],
+            [0.0, 1.0, 2.0],
+        ], dtype="float64")
+        A = mm.SimpleArrayFloat64(array=A_np)
+        np.testing.assert_allclose(
+            mm.lu_det(A), np.linalg.det(A_np), rtol=1e-9, atol=1e-12)
+
+    def test_det_matches_numpy_for_general_matrix(self):
+        # General non-symmetric 4x4 against numpy.
+        A_np = np.array([
+            [2.0, 1.0, 1.0, 3.0],
+            [4.0, -6.0, 0.0, 1.0],
+            [-2.0, 7.0, 2.0, 5.0],
+            [1.0, 0.0, 8.0, -1.0],
+        ], dtype="float64")
+        A = mm.SimpleArrayFloat64(array=A_np)
+        np.testing.assert_allclose(
+            mm.lu_det(A), np.linalg.det(A_np), rtol=1e-12, atol=1e-12)
+
+    def test_det_complex_matches_numpy(self):
+        # Complex determinant against numpy.
+        A_np = np.array([
+            [2.0 + 1.0j, 1.0 - 1.0j, 3.0 + 0.0j],
+            [0.0 + 1.0j, 3.0 + 0.0j, 1.0 + 2.0j],
+            [1.0 + 0.0j, 2.0 - 1.0j, 0.0 + 1.0j],
+        ], dtype="complex128")
+        A = mm.SimpleArrayComplex128(array=A_np)
+        det = mm.lu_det(A)
+        self.assertIsInstance(det, complex)
+        np.testing.assert_allclose(
+            det, np.linalg.det(A_np), rtol=1e-12, atol=1e-12)
+
+    def test_det_complex_class_returns_python_complex(self):
+        # The class .det() complex binding is a separate path from lu_det();
+        # it must also return a Python complex matching numpy.
+        A_np = np.array([
+            [2.0 + 1.0j, 1.0 + 0.0j, 3.0 - 1.0j],
+            [4.0 + 0.0j, -1.0 + 2.0j, 1.0 + 1.0j],
+            [1.0 - 1.0j, 5.0 + 0.0j, 2.0 + 3.0j],
+        ], dtype="complex128")
+        A = mm.SimpleArrayComplex128(array=A_np)
+        det = mm.LuFactorizationComplex128(A).det()
+        self.assertIsInstance(det, complex)
+        np.testing.assert_allclose(
+            det, np.linalg.det(A_np), rtol=1e-12, atol=1e-12)
+
+
 class TestLuSimpleArrayMethods(unittest.TestCase):
-    """Verify .solve()/.inv() work for all floating and complex types and
-    are absent on integer types."""
+    """Verify .solve()/.inv()/.det() work for all floating and complex types
+    and are absent on integer types."""
 
     # (SimpleArray class, numpy dtype, tolerance)
     _FLOAT_CASES = [
@@ -1128,8 +1203,21 @@ class TestLuSimpleArrayMethods(unittest.TestCase):
                     A_np @ inv_method, np.eye(2, dtype=np_dtype),
                     rtol=tol, atol=tol)
 
-    def test_solve_inv_absent_on_integer_types(self):
-        # Integer/bool SimpleArrays must not expose .solve()/.inv().
+    def test_det_method_matches_free_function_for_all_dtypes(self):
+        # A.det() must match mm.lu_det(A) across all float/complex dtypes.
+        for sa_cls, np_dtype, tol in self._FLOAT_CASES:
+            with self.subTest(cls=sa_cls.__name__):
+                A_np, _ = self._build_system(np_dtype)
+                A = sa_cls(array=A_np)
+                det_free = mm.lu_det(A)
+                det_method = A.det()
+                np.testing.assert_allclose(
+                    det_method, det_free, rtol=tol, atol=tol)
+                np.testing.assert_allclose(
+                    det_method, np.linalg.det(A_np), rtol=tol, atol=tol)
+
+    def test_solve_inv_det_absent_on_integer_types(self):
+        # Integer/bool SimpleArrays must not expose .solve()/.inv()/.det().
         int_classes = (
             mm.SimpleArrayBool,
             mm.SimpleArrayInt8, mm.SimpleArrayInt16,
@@ -1142,6 +1230,7 @@ class TestLuSimpleArrayMethods(unittest.TestCase):
                 A = cls([2, 2])
                 self.assertFalse(hasattr(A, 'solve'))
                 self.assertFalse(hasattr(A, 'inv'))
+                self.assertFalse(hasattr(A, 'det'))
 
 
 class TestLuErrorHandling(unittest.TestCase):

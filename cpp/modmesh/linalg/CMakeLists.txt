@@ -24,6 +24,7 @@ set(MODMESH_LINALG_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_factorization.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_kalman_filter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_EigenSystem.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_LuFactorization.cpp
     CACHE FILEPATH "" FORCE)
 
 set(MODMESH_LINALG_FILES
