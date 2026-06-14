@@ -195,7 +195,7 @@ static Qt3DCore::QEntity * drawText(std::string const & text, QVector3D loc, flo
 
 } // end namespace detail
 
-RAxisMark::RAxisMark(Qt3DCore::QNode * parent)
+RAxisMark::RAxisMark(Qt3DCore::QNode * parent, Qt3DRender::QLayer * layer)
     : Qt3DCore::QEntity(parent)
     , m_xmark(new RLine(QVector3D(0.0f, 0.0f, 0.0f), QVector3D(1.0f, 0.0f, 0.0f), Qt::red, this))
     , m_ymark(new RLine(QVector3D(0.0f, 0.0f, 0.0f), QVector3D(0.0f, 1.0f, 0.0f), Qt::green, this))
@@ -207,6 +207,12 @@ RAxisMark::RAxisMark(Qt3DCore::QNode * parent)
     m_xmark->addArrowHead(0.2f, 0.4f);
     m_ymark->addArrowHead(0.2f, 0.4f);
     m_zmark->addArrowHead(0.2f, 0.4f);
+
+    // Tag the mark (recursively) so the gizmo framegraph branch can pick it out.
+    if (nullptr != layer)
+    {
+        addComponent(layer);
+    }
 }
 
 } /* end namespace modmesh */

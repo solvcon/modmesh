@@ -30,6 +30,21 @@
 #include <modmesh/pilot/RAxisMark.hpp>
 #include <modmesh/pilot/RStaticMesh.hpp>
 
+#include <Qt3DRender/QCameraLens>
+#include <Qt3DRender/QClearBuffers>
+#include <Qt3DRender/QCameraSelector>
+#include <Qt3DRender/QDepthTest>
+#include <Qt3DRender/QLayer>
+#include <Qt3DRender/QLayerFilter>
+#include <Qt3DRender/QMultiSampleAntiAliasing>
+#include <Qt3DRender/QRenderStateSet>
+#include <Qt3DRender/QRenderSurfaceSelector>
+#include <Qt3DRender/QViewport>
+
+#include <Qt3DExtras/QForwardRenderer>
+
+#include <QRectF>
+
 namespace modmesh
 {
 
@@ -44,10 +59,113 @@ R3DWidget::R3DWidget(Qt3DExtras::Qt3DWindow * window, RScene * scene, QWidget * 
     cameraController()->setCamera(m_view->camera());
     cameraController()->reset();
 
+    setupAxisGizmo();
+
     if (Toggle::instance().fixed().get_show_axis())
     {
         showMark();
     }
+}
+
+void R3DWidget::setupAxisGizmo()
+{
+    QColor const clear_color = m_view->defaultFrameGraph()->clearColor();
+
+    m_axis_layer = new Qt3DRender::QLayer(m_scene);
+    m_axis_layer->setRecursive(true);
+
+    // A dedicated camera for the gizmo.
+    m_axis_camera = new Qt3DRender::QCamera(m_scene);
+    // Orthographic projection keeps the triad undistorted and constant-size.
+    m_axis_camera->lens()->setOrthographicProjection(
+        -1.8f, 1.8f, -1.8f, 1.8f, 0.1f, 100.0f);
+
+    auto make_state = [](Qt3DRender::QFrameGraphNode * parent)
+    {
+        auto * state = new Qt3DRender::QRenderStateSet(parent);
+        auto * depth = new Qt3DRender::QDepthTest(state);
+        depth->setDepthFunction(Qt3DRender::QDepthTest::Less);
+        state->addRenderState(depth);
+        state->addRenderState(new Qt3DRender::QMultiSampleAntiAliasing(state));
+        return state;
+    };
+
+    auto * surface_selector = new Qt3DRender::QRenderSurfaceSelector();
+    surface_selector->setSurface(m_view);
+
+    // Main branch: full window, everything except the axis layer.
+    auto * main_viewport = new Qt3DRender::QViewport(surface_selector);
+    main_viewport->setNormalizedRect(QRectF(0.0f, 0.0f, 1.0f, 1.0f));
+    auto * main_clear = new Qt3DRender::QClearBuffers(main_viewport);
+    main_clear->setBuffers(Qt3DRender::QClearBuffers::ColorDepthBuffer);
+    main_clear->setClearColor(clear_color);
+    auto * main_camera_selector = new Qt3DRender::QCameraSelector(main_clear);
+    main_camera_selector->setCamera(m_view->camera());
+    auto * main_filter = new Qt3DRender::QLayerFilter(main_camera_selector);
+    main_filter->addLayer(m_axis_layer);
+    main_filter->setFilterMode(Qt3DRender::QLayerFilter::DiscardAnyMatchingLayers);
+    make_state(main_filter);
+
+    // Gizmo branch: floating corner viewport, only the axis layer.
+    m_axis_viewport = new Qt3DRender::QViewport(surface_selector);
+    // Lower-left fallback; updateAxisViewport() refines this to keep the
+    // gizmo square once the actual window size is known.
+    m_axis_viewport->setNormalizedRect(QRectF(0.0f, 0.85f, 0.15f, 0.15f));
+    auto * axis_clear = new Qt3DRender::QClearBuffers(m_axis_viewport);
+    axis_clear->setBuffers(Qt3DRender::QClearBuffers::DepthBuffer);
+    auto * axis_camera_selector = new Qt3DRender::QCameraSelector(axis_clear);
+    axis_camera_selector->setCamera(m_axis_camera);
+    auto * axis_filter = new Qt3DRender::QLayerFilter(axis_camera_selector);
+    axis_filter->addLayer(m_axis_layer);
+    axis_filter->setFilterMode(Qt3DRender::QLayerFilter::AcceptAnyMatchingLayers);
+    make_state(axis_filter);
+
+    m_view->setActiveFrameGraph(surface_selector);
+
+    // The gizmo follows every main-camera move to stay in sync.
+    Qt3DRender::QCamera * const cam = m_view->camera();
+    connect(cam, &Qt3DRender::QCamera::positionChanged, this, [this]
+            { updateAxisCamera(); });
+    connect(cam, &Qt3DRender::QCamera::viewCenterChanged, this, [this]
+            { updateAxisCamera(); });
+    connect(cam, &Qt3DRender::QCamera::upVectorChanged, this, [this]
+            { updateAxisCamera(); });
+
+    updateAxisViewport();
+    updateAxisCamera();
+}
+
+void R3DWidget::updateAxisViewport()
+{
+    if (nullptr == m_axis_viewport)
+    {
+        return;
+    }
+    constexpr float size = 160.0f; // gizmo edge length in pixels
+    constexpr float margin = 12.0f; // gap from the window edges in pixels
+    float const w = static_cast<float>(m_view->width());
+    float const h = static_cast<float>(m_view->height());
+    if (w <= 0.0f || h <= 0.0f)
+    {
+        return;
+    }
+    // Qt3D origin at upper-left with y growing downward, so the lower-left
+    // corner is near (0, 1).
+    m_axis_viewport->setNormalizedRect(QRectF(
+        margin / w, (h - size - margin) / h, size / w, size / h));
+}
+
+void R3DWidget::updateAxisCamera()
+{
+    if (nullptr == m_axis_camera)
+    {
+        return;
+    }
+    constexpr float dist = 10.0f;
+    QVector3D const view_dir = camera()->viewVector().normalized();
+    m_axis_camera->setViewCenter(QVector3D(0.0f, 0.0f, 0.0f));
+    m_axis_camera->setPosition(-view_dir * dist);
+    m_axis_camera->setUpVector(camera()->upVector());
 }
 
 void R3DWidget::showMark()
@@ -59,7 +177,7 @@ void R3DWidget::showMark()
             child->deleteLater();
         }
     }
-    new RAxisMark(m_scene);
+    new RAxisMark(m_scene, m_axis_layer);
 }
 
 void R3DWidget::updateMesh(std::shared_ptr<StaticMesh> const & mesh)
@@ -140,6 +258,7 @@ void R3DWidget::resizeEvent(QResizeEvent * event)
     QWidget::resizeEvent(event);
     m_view->resize(event->size());
     m_container->resize(event->size());
+    updateAxisViewport();
 }
 
 } /* end namespace modmesh */
