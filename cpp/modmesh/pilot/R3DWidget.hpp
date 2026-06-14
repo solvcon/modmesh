@@ -43,6 +43,14 @@
 
 #include <QResizeEvent>
 
+namespace Qt3DRender
+{
+
+class QLayer;
+class QViewport;
+
+} /* end namespace Qt3DRender */
+
 namespace modmesh
 {
 
@@ -135,10 +143,18 @@ private:
 
     void fitCameraToScene();
 
+    void setupAxisGizmo();
+    void updateAxisViewport();
+    void updateAxisCamera();
+
     Qt3DExtras::Qt3DWindow * m_view = nullptr;
     RScene * m_scene = nullptr;
     QWidget * m_container = nullptr;
     std::shared_ptr<StaticMesh> m_mesh;
+
+    Qt3DRender::QLayer * m_axis_layer = nullptr;
+    Qt3DRender::QCamera * m_axis_camera = nullptr;
+    Qt3DRender::QViewport * m_axis_viewport = nullptr;
 
 }; /* end class R3DWidget */
 

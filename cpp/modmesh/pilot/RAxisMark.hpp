@@ -45,6 +45,8 @@
 #include <Qt3DCore/QAttribute>
 #include <Qt3DCore/QTransform>
 
+#include <Qt3DRender/QLayer>
+
 #include <Qt3DExtras/QDiffuseSpecularMaterial>
 
 namespace Qt3DExtras
@@ -109,7 +111,7 @@ class RAxisMark
 
 public:
 
-    RAxisMark(Qt3DCore::QNode * parent = nullptr);
+    RAxisMark(Qt3DCore::QNode * parent = nullptr, Qt3DRender::QLayer * layer = nullptr);
 
 private:
 
