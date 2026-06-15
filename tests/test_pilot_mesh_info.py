@@ -25,6 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+import os
 import unittest
 
 import modmesh
@@ -35,6 +36,8 @@ try:
     from PySide6.QtWidgets import QApplication, QMenu
 except ImportError:
     pilot = None
+
+GITHUB_ACTIONS = os.getenv('GITHUB_ACTIONS', False)
 
 
 def _make_sample_mesh():
@@ -112,7 +115,8 @@ class MakeMeshInfoTC(unittest.TestCase):
         self.assertEqual(info["Bounding box"]["y"], "[0, 1]")
 
 
-@unittest.skipUnless(modmesh.HAS_PILOT, "Qt pilot is not built")
+@unittest.skipIf(GITHUB_ACTIONS or not modmesh.HAS_PILOT,
+                 "GUI is not available in GitHub Actions")
 class MeshInfoTC(unittest.TestCase):
     def setUp(self):
         self.mgr = pilot.RManager.instance.setUp()
