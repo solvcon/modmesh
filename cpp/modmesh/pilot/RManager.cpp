@@ -129,6 +129,22 @@ R2DWidget * RManager::add2DWidget()
     return viewer;
 }
 
+R3DWidget * RManager::currentR3DWidget()
+{
+    if (m_mdiArea == nullptr)
+    {
+        return nullptr;
+    }
+
+    const auto * subwin = m_mdiArea->currentSubWindow();
+    if (subwin == nullptr)
+    {
+        return nullptr;
+    }
+
+    return dynamic_cast<R3DWidget *>(subwin->widget());
+}
+
 void RManager::toggleConsole()
 {
     if (m_pycon)
