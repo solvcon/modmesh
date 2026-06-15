@@ -40,11 +40,13 @@ jobs:
 
     env:
       JOB_MAKE_ARGS: VERBOSE=1 BUILD_QT=ON USE_CLANG_TIDY=ON LINT_AS_ERRORS=ON
-      # Cap build parallelism. The github-hosted runners have only 3 (macOS)
-      # / 4 (ubuntu) virtual cores shared with co-tenant VMs, so the default
-      # unbounded `make -j` oversubscribes memory and CPU; on the 7 GB arm64
-      # macOS runner clang-tidy then OOMs. -j2 is the safe bet on both.
-      MAKE_PARALLEL: -j2
+      # Cap parallelism. The github-hosted runners have only 3 (macOS) / 4
+      # (ubuntu) virtual cores shared with co-tenant VMs, so letting NPROC
+      # auto-detect oversubscribes memory and CPU; on the 7 GB arm64 macOS
+      # runner clang-tidy then OOMs. NPROC drives both MAKE_PARALLEL (build)
+      # and the lint targets (cformat xargs, flake8 --jobs), so capping it
+      # here bounds every parallel step. 2 is the safe bet on both runners.
+      NPROC: 2
       QT_DEBUG_PLUGINS: 1
       # QT_QPA_PLATFORM is set per-OS by the setup actions (xcb on Linux via
       # Xvfb, offscreen on macOS). Do not set it at the job level.
@@ -56,8 +58,8 @@ jobs:
     strategy:
       matrix:
         # https://github.com/actions/runner-images/blob/main/images/macos/macos-26-Readme.md
-        # macos-26 is arm64 with 7 GB RAM; build parallelism is capped via
-        # MAKE_PARALLEL in the env block above so clang-tidy does not OOM.
+        # macos-26 is arm64 with 7 GB RAM; parallelism is capped via NPROC
+        # in the env block above so clang-tidy does not OOM.
         os: [ubuntu-24.04, macos-26]
         cmake_build_type: [Debug]
 
