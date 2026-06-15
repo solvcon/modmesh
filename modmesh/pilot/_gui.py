@@ -40,7 +40,9 @@ from . import airfoil
 
 if _pcore.enable:
     from PySide6.QtGui import QAction
+    from PySide6.QtWidgets import QMenu
     from . import _mesh
+    from . import _mesh_info
     from . import _oblique
     from . import _euler1d
     from . import _burgers1d
@@ -73,8 +75,10 @@ class _Controller(metaclass=_Singleton):
         # Do not construct any Qt member objects before calling launch(), or
         # Windows may "exited with code -1073740791."
         self._rmgr = None
+        self.panels_menu = None
         self.gmsh_dialog = None
         self.svg_dialog = None
+        self.mesh_info = None
         self.sample_mesh = None
         self.oblique_shock = None
         self.oblique_solver = None
@@ -95,9 +99,21 @@ class _Controller(metaclass=_Singleton):
         self._rmgr.setUp()
         self._rmgr.windowTitle = name
         self._rmgr.resize(w=size[0], h=size[1])
+
+        # Add the "Panels" submenu as the first item in the View menu.
+        view = self._rmgr.viewMenu
+        self.panels_menu = QMenu("Panels", self._rmgr.mainWindow)
+        actions = view.actions()
+        if actions:
+            view.insertMenu(actions[0], self.panels_menu)
+        else:
+            view.addMenu(self.panels_menu)
+
         self.gmsh_dialog = _mesh.GmshFileDialog(mgr=self._rmgr)
         self.svg_dialog = _svg_gui.SVGFileDialog(mgr=self._rmgr)
         self.sample_mesh = _mesh.SampleMesh(mgr=self._rmgr)
+        self.mesh_info = _mesh_info.MeshInfo(mgr=self._rmgr,
+                                             menu=self.panels_menu)
         self.oblique_shock = _oblique.ObliqueShockMesh(mgr=self._rmgr)
         self.oblique_solver = _oblique.ObliqueShockSolver(mgr=self._rmgr)
         self.recdom = _mesh.RectangularDomain(mgr=self._rmgr)
@@ -132,6 +148,7 @@ class _Controller(metaclass=_Singleton):
 
         self.gmsh_dialog.populate_menu()
         self.svg_dialog.populate_menu()
+        self.mesh_info.populate_menu()
         self.sample_mesh.populate_menu()
         self.oblique_shock.populate_menu()
         self.oblique_solver.populate_menu()

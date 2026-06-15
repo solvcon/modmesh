@@ -61,6 +61,7 @@ public:
 
     R3DWidget * add3DWidget();
     R2DWidget * add2DWidget();
+    R3DWidget * currentR3DWidget();
 
     RPythonConsoleDockWidget * pycon() { return m_pycon; }
 

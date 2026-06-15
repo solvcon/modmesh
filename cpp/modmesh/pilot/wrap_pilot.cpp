@@ -359,6 +359,12 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapRManager
                     return self.add2DWidget();
                 })
             .def(
+                "currentR3DWidget",
+                [](wrapped_type & self)
+                {
+                    return self.currentR3DWidget();
+                })
+            .def(
                 "toggleConsole",
                 [](wrapped_type & self)
                 {
