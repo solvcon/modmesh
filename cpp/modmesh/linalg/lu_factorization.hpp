@@ -29,26 +29,24 @@
  */
 
 #include <algorithm>
+#include <cstdint>
 #include <format>
 #include <limits>
 #include <numeric>
 #include <stdexcept>
 #include <utility>
-#include <vector>
 
 #include <modmesh/buffer/buffer.hpp>
 
 namespace modmesh
 {
 
-namespace detail
-{
-
 /**
- * LU decomposition with partial pivoting for general (non-symmetric) matrices.
+ * Stateful LU decomposition with partial pivoting for general (non-symmetric)
+ * matrices.
  *
- * Given an n-by-n matrix A, this class computes the factorization PA = LU,
- * where:
+ * Given an n-by-n matrix A, the constructor computes the factorization
+ * PA = LU and stores the result, where:
  *   - P is a permutation matrix (represented as a pivot index vector),
  *   - L is a unit lower triangular matrix (diagonal elements are implicitly 1),
  *   - U is an upper triangular matrix.
@@ -61,99 +59,122 @@ namespace detail
  * during the k-th elimination step.  Swaps are applied sequentially from
  * k = 0 to k = n-1.
  *
+ * The expensively computed lu matrix and pivot vector are cached as members
+ * so that multiple solve()/inv() calls reuse the O(n^3) factorization instead
+ * of redoing it.
+ *
  * Supported element types: float, double, Complex<float>, Complex<double>.
  */
 template <typename T>
-class Lu
+class LuFactorization
 {
 
     static_assert(
         is_real_v<T> || is_complex_v<T>,
-        "Lu<T> requires T to be a real or complex number type");
+        "LuFactorization<T> requires T to be a real or complex number type");
 
-private:
+public:
 
     using value_type = T;
     using real_type = typename detail::select_real_t<value_type>::type;
     using array_type = SimpleArray<value_type>;
-
-    // Helper: format a SimpleArray shape as "(d0, d1, ...)" for error messages.
-    static std::string format_shape(array_type const & arr);
-
-public:
+    using pivot_type = SimpleArray<int64_t>;
 
     /**
-     * Compute the LU factorization with partial pivoting: PA = LU.
+     * Factorize a square matrix into PA = LU.
      *
      * @param a  Square 2D SimpleArray (the matrix to factorize).
-     * @return   A pair of (lu_matrix, pivot_vector):
-     *           - lu_matrix: n-by-n array with L in the strictly lower triangle
-     *             and U in the upper triangle (including diagonal).
-     *           - pivot_vector: length-n vector where piv[k] is the row index
-     *             that was swapped with row k at step k.
      * @throws std::invalid_argument if a is not a square 2D array.
      * @throws std::runtime_error    if the matrix is singular or near-singular.
      */
-    static std::pair<array_type, std::vector<ssize_t>> factorize(array_type const & a);
+    explicit LuFactorization(array_type const & a);
+
+    LuFactorization() = delete;
+    LuFactorization(LuFactorization const &) = default;
+    LuFactorization(LuFactorization &&) = default;
+    LuFactorization & operator=(LuFactorization const &) = default;
+    LuFactorization & operator=(LuFactorization &&) = default;
+    ~LuFactorization() = default;
 
     /**
-     * Solve the linear system Ax = b using LU factorization.
+     * The combined LU matrix: L in the strictly lower triangle and U in the
+     * upper triangle (including the diagonal).
+     */
+    array_type const & lu() const { return m_lu; }
+
+    /**
+     * The pivot vector: piv()[k] is the row index that was swapped with
+     * row k at step k of the factorization.
+     */
+    pivot_type const & piv() const { return m_piv; }
+
+    /** Dimension of the factorized square matrix. */
+    ssize_t n() const { return static_cast<ssize_t>(m_lu.shape(0)); }
+
+    /**
+     * Solve the linear system Ax = b using the cached LU factors.
      *
-     * @param a  Square 2D SimpleArray (the coefficient matrix).
      * @param b  1D or 2D SimpleArray (the right-hand side).
      *           If 1D, it is treated as a single column vector.
      *           If 2D with shape (n, m), each column is a separate RHS.
      * @return   The solution x with the same shape as b.
-     * @throws std::invalid_argument if a is not square, b has wrong rank, or
-     *         dimensions are incompatible.
-     * @throws std::runtime_error    if a is singular.
+     * @throws std::invalid_argument if b has wrong rank or dimensions are
+     *         incompatible with the factorized matrix.
      */
-    static array_type solve(array_type const & a, array_type const & b);
+    array_type solve(array_type const & b) const;
 
     /**
-     * Compute the matrix inverse A^(-1).
+     * Compute the matrix inverse A^(-1) using the cached LU factors.
      *
      * Internally solves AX = I where I is the identity matrix.
-     *
-     * @param a  Square 2D SimpleArray.
-     * @return   The inverse matrix A^(-1) with the same shape as a.
-     * @throws std::invalid_argument if a is not a square 2D array.
-     * @throws std::runtime_error    if a is singular.
      */
-    static array_type inv(array_type const & a);
+    array_type inv() const;
+
+    /**
+     * Compute the determinant det(A) using the cached LU factors.
+     *
+     * From PA = LU we have det(A) = det(P)^(-1) * det(L) * det(U).  L is unit
+     * lower triangular so det(L) = 1; det(U) is the product of its diagonal;
+     * and det(P) = (-1)^s, where s is the number of row swaps recorded in the
+     * pivot vector.  The determinant is therefore (-1)^s times the product of
+     * the diagonal of U, obtained in O(n) from the already-factorized data.
+     *
+     * Note: a singular or near-singular matrix is rejected by the constructor,
+     * so a successfully constructed factorization never has a (near-)zero
+     * determinant.
+     */
+    value_type det() const;
 
 private:
 
+    static std::string format_shape(array_type const & arr);
+
+    // Validate that a is square and 2D; return its shape for member init.
+    static small_vector<size_t> validate_shape(array_type const & a);
+
     /**
-     * Forward substitution: solve Ly = Pb.
+     * Forward substitution: solve Ly = Pb using the cached factors.
      *
-     * Applies the row permutation recorded in piv to b, then solves the
+     * Applies the row permutation recorded in m_piv to b, then solves the
      * unit lower triangular system.  L is stored in the strictly lower
-     * triangle of the combined lu matrix (diagonal of L is implicitly 1).
-     *
-     * @param lu   Combined LU matrix from factorize().
-     * @param piv  Pivot vector from factorize().
-     * @param b    2D RHS matrix (already reshaped if originally 1D).
-     * @return     The intermediate result y.
+     * triangle of m_lu (diagonal of L is implicitly 1).
      */
-    static array_type forward_substitution(array_type const & lu, std::vector<ssize_t> const & piv, array_type const & b);
+    array_type forward_substitution(array_type const & b) const;
 
     /**
-     * Backward substitution: solve Ux = y.
+     * Backward substitution: solve Ux = y using the cached factors.
      *
-     * U is stored in the upper triangle (including diagonal) of the
-     * combined lu matrix.
-     *
-     * @param lu  Combined LU matrix from factorize().
-     * @param y   The result of forward_substitution().
-     * @return    The final solution x.
+     * U is stored in the upper triangle (including diagonal) of m_lu.
      */
-    static array_type backward_substitution(array_type const & lu, array_type const & y);
+    array_type backward_substitution(array_type const & y) const;
 
-}; /* end class Lu */
+    array_type m_lu;
+    pivot_type m_piv;
+
+}; /* end class LuFactorization */
 
 template <typename T>
-std::string Lu<T>::format_shape(array_type const & arr)
+std::string LuFactorization<T>::format_shape(array_type const & arr)
 {
     std::string result = "(";
     for (size_t i = 0; i < arr.ndim(); ++i)
@@ -169,26 +190,31 @@ std::string Lu<T>::format_shape(array_type const & arr)
 }
 
 template <typename T>
-std::pair<typename Lu<T>::array_type, std::vector<ssize_t>> Lu<T>::factorize(array_type const & a)
+small_vector<size_t> LuFactorization<T>::validate_shape(array_type const & a)
 {
     if (a.ndim() != 2 || a.shape(0) != a.shape(1))
     {
         throw std::invalid_argument(std::format(
-            "Lu::factorize: a must be a square 2D SimpleArray, but got shape {}",
+            "LuFactorization: a must be a square 2D SimpleArray, but got shape {}",
             format_shape(a)));
     }
+    return a.shape();
+}
 
+template <typename T>
+LuFactorization<T>::LuFactorization(array_type const & a)
+    : m_lu(validate_shape(a), value_type{0})
+    , m_piv(small_vector<size_t>{a.shape(0)})
+{
     const auto n = static_cast<ssize_t>(a.shape(0));
 
-    // Create a working copy of the input matrix.  The algorithm modifies
-    // this array in-place, overwriting it with the combined L and U factors.
-    auto lu = array_type(a.shape(), value_type{0});
-    std::copy(a.begin(), a.end(), lu.begin());
+    // Working copy of the input matrix.  The algorithm modifies m_lu
+    // in-place, overwriting it with the combined L and U factors.
+    std::copy(a.begin(), a.end(), m_lu.begin());
 
     // piv[k] records which row was swapped with row k at step k.
     // Initialize with std::iota so piv[k] = k (identity permutation).
-    std::vector<ssize_t> piv(n);
-    std::iota(piv.begin(), piv.end(), ssize_t{0});
+    std::iota(m_piv.begin(), m_piv.end(), int64_t{0});
 
     // Main elimination loop.  For each column k, we:
     //   1. Search column k (rows k..n-1) for the largest absolute value
@@ -201,31 +227,31 @@ std::pair<typename Lu<T>::array_type, std::vector<ssize_t>> Lu<T>::factorize(arr
         // Step 1: Find the pivot -- the row in [k, n) with the largest
         // absolute value in column k.  Note: abs() returns real_type even
         // for complex value_type, so all comparison variables must be real.
-        real_type max_val = abs(lu(k, k));
+        real_type max_val = abs(m_lu(k, k));
         ssize_t max_row = k;
         for (ssize_t i = k + 1; i < n; ++i)
         {
-            real_type const val = abs(lu(i, k));
+            real_type const val = abs(m_lu(i, k));
             if (val > max_val)
             {
                 max_val = val;
                 max_row = i;
             }
         }
-        piv[k] = max_row;
+        m_piv[k] = static_cast<int64_t>(max_row);
 
         // Step 2: Swap rows k and max_row in the full working matrix.
         if (max_row != k)
         {
             for (ssize_t j = 0; j < n; ++j)
             {
-                std::swap(lu(k, j), lu(max_row, j));
+                std::swap(m_lu(k, j), m_lu(max_row, j));
             }
         }
 
         // Step 3: Reject both exact singularity (pivot = 0, e.g. duplicate
         // rows) and near-singularity (pivot at noise level).
-        real_type const pivot = abs(lu(k, k));
+        real_type const pivot = abs(m_lu(k, k));
         const auto eps = std::numeric_limits<real_type>::epsilon();
 
         // Absolute threshold (~100 * machine eps); works for well-scaled inputs.
@@ -233,7 +259,7 @@ std::pair<typename Lu<T>::array_type, std::vector<ssize_t>> Lu<T>::factorize(arr
         real_type const singular_tol = real_type(100) * eps;
         if (pivot <= singular_tol)
         {
-            throw std::runtime_error("Lu::factorize: LU decomposition failed: singular or near-singular matrix.");
+            throw std::runtime_error("LuFactorization: LU decomposition failed: singular or near-singular matrix.");
         }
 
         // Step 4: Gaussian elimination.  For each row below the pivot,
@@ -242,34 +268,19 @@ std::pair<typename Lu<T>::array_type, std::vector<ssize_t>> Lu<T>::factorize(arr
         // in the trailing submatrix (columns k+1..n-1).
         for (ssize_t i = k + 1; i < n; ++i)
         {
-            lu(i, k) = lu(i, k) / lu(k, k); // multiplier stored in L
+            m_lu(i, k) = m_lu(i, k) / m_lu(k, k); // multiplier stored in L
             for (ssize_t j = k + 1; j < n; ++j)
             {
-                lu(i, j) = lu(i, j) - lu(i, k) * lu(k, j);
+                m_lu(i, j) = m_lu(i, j) - m_lu(i, k) * m_lu(k, j);
             }
         }
     }
-
-    return {lu, piv};
 }
 
 template <typename T>
-Lu<T>::array_type Lu<T>::forward_substitution(array_type const & lu, std::vector<ssize_t> const & piv, array_type const & b)
+typename LuFactorization<T>::array_type LuFactorization<T>::forward_substitution(array_type const & b) const
 {
-    if (lu.ndim() != 2 || lu.shape(0) != lu.shape(1))
-    {
-        throw std::invalid_argument(std::format(
-            "Lu::forward_substitution: lu must be a square 2D SimpleArray, but got shape {}",
-            format_shape(lu)));
-    }
-    if (b.ndim() != 2 || b.shape(0) != lu.shape(0))
-    {
-        throw std::invalid_argument(std::format(
-            "Lu::forward_substitution: b must be a 2D SimpleArray with first dimension matching lu, but got shape {}",
-            format_shape(b)));
-    }
-
-    const auto m = static_cast<ssize_t>(lu.shape(0));
+    const auto m = n();
     const auto ncols = static_cast<ssize_t>(b.shape(1));
     small_vector<size_t> const y_shape{static_cast<size_t>(m), static_cast<size_t>(ncols)};
 
@@ -281,11 +292,11 @@ Lu<T>::array_type Lu<T>::forward_substitution(array_type const & lu, std::vector
     // same order they were recorded during factorization (k = 0, 1, ...).
     for (ssize_t i = 0; i < m; ++i)
     {
-        if (piv[i] != i)
+        if (m_piv[i] != i)
         {
             for (ssize_t k = 0; k < ncols; ++k)
             {
-                std::swap(y(i, k), y(piv[i], k));
+                std::swap(y(i, k), y(m_piv[i], k));
             }
         }
     }
@@ -300,7 +311,7 @@ Lu<T>::array_type Lu<T>::forward_substitution(array_type const & lu, std::vector
             value_type sum{0};
             for (ssize_t j = 0; j < i; ++j)
             {
-                sum += lu(i, j) * y(j, k);
+                sum += m_lu(i, j) * y(j, k);
             }
             y(i, k) = y(i, k) - sum;
         }
@@ -310,28 +321,15 @@ Lu<T>::array_type Lu<T>::forward_substitution(array_type const & lu, std::vector
 }
 
 template <typename T>
-Lu<T>::array_type Lu<T>::backward_substitution(array_type const & lu, array_type const & y)
+typename LuFactorization<T>::array_type LuFactorization<T>::backward_substitution(array_type const & y) const
 {
-    if (lu.ndim() != 2 || lu.shape(0) != lu.shape(1))
-    {
-        throw std::invalid_argument(std::format(
-            "Lu::backward_substitution: lu must be a square 2D SimpleArray, but got shape {}",
-            format_shape(lu)));
-    }
-    if (y.ndim() != 2 || y.shape(0) != lu.shape(0))
-    {
-        throw std::invalid_argument(std::format(
-            "Lu::backward_substitution: y must be a 2D SimpleArray with first dimension matching lu, but got shape {}",
-            format_shape(y)));
-    }
-
-    const auto m = static_cast<ssize_t>(lu.shape(0));
+    const auto m = n();
     const auto ncols = static_cast<ssize_t>(y.shape(1));
     small_vector<size_t> const x_shape{static_cast<size_t>(m), static_cast<size_t>(ncols)};
     array_type x(x_shape);
 
     // Solve Ux = y by backward substitution.  U occupies the upper triangle
-    // (including diagonal) of the combined lu matrix.  The formula is:
+    // (including diagonal) of m_lu.  The formula is:
     //   x(i, k) = (y(i, k) - sum_{j=i+1}^{m-1} U(i,j) * x(j, k)) / U(i,i)
     for (ssize_t k = 0; k < ncols; ++k)
     {
@@ -340,9 +338,9 @@ Lu<T>::array_type Lu<T>::backward_substitution(array_type const & lu, array_type
             value_type sum{0};
             for (ssize_t j = i + 1; j < m; ++j)
             {
-                sum += lu(i, j) * x(j, k);
+                sum += m_lu(i, j) * x(j, k);
             }
-            x(i, k) = (y(i, k) - sum) / lu(i, i);
+            x(i, k) = (y(i, k) - sum) / m_lu(i, i);
         }
     }
 
@@ -350,32 +348,21 @@ Lu<T>::array_type Lu<T>::backward_substitution(array_type const & lu, array_type
 }
 
 template <typename T>
-Lu<T>::array_type Lu<T>::solve(array_type const & a, array_type const & b)
+typename LuFactorization<T>::array_type LuFactorization<T>::solve(array_type const & b) const
 {
-    if (a.ndim() != 2 || a.shape(0) != a.shape(1))
-    {
-        throw std::invalid_argument(std::format(
-            "Lu::solve: a must be a square 2D SimpleArray, but got shape {}",
-            format_shape(a)));
-    }
     if (b.ndim() != 1 && b.ndim() != 2)
     {
         throw std::invalid_argument(std::format(
-            "Lu::solve: b must be 1D or 2D, but got {}D",
+            "LuFactorization::solve: b must be 1D or 2D, but got {}D",
             b.ndim()));
     }
-    if (a.shape(0) != b.shape(0))
+    if (static_cast<ssize_t>(b.shape(0)) != n())
     {
         throw std::invalid_argument(std::format(
-            "Lu::solve: dimension mismatch: a.shape[0]={}, b.shape[0]={}",
-            a.shape(0),
+            "LuFactorization::solve: dimension mismatch: a.shape[0]={}, b.shape[0]={}",
+            n(),
             b.shape(0)));
     }
-
-    // Factorize A into PA = LU, then solve by:
-    //   1. Forward substitution:  Ly = Pb
-    //   2. Backward substitution: Ux = y
-    auto [lu, piv] = factorize(a);
 
     // If b is 1D, reshape to a column matrix (n, 1), solve, then reshape
     // the result back to 1D so the caller gets the same shape they passed in.
@@ -383,51 +370,63 @@ Lu<T>::array_type Lu<T>::solve(array_type const & a, array_type const & b)
     if (was_1d)
     {
         auto b_2d = b.reshape(small_vector<size_t>{b.shape(0), 1});
-        auto y = forward_substitution(lu, piv, b_2d);
-        auto x = backward_substitution(lu, y);
+        auto y = forward_substitution(b_2d);
+        auto x = backward_substitution(y);
         return x.reshape(small_vector<size_t>{x.shape(0)});
     }
     else
     {
-        auto y = forward_substitution(lu, piv, b);
-        auto x = backward_substitution(lu, y);
+        auto y = forward_substitution(b);
+        auto x = backward_substitution(y);
         return x;
     }
 }
 
 template <typename T>
-Lu<T>::array_type Lu<T>::inv(array_type const & a)
+typename LuFactorization<T>::array_type LuFactorization<T>::inv() const
 {
-    if (a.ndim() != 2 || a.shape(0) != a.shape(1))
-    {
-        throw std::invalid_argument(std::format(
-            "Lu::inv: a must be a square 2D SimpleArray, but got shape {}",
-            format_shape(a)));
-    }
-
     // Matrix inversion is equivalent to solving AX = I for X, where I is the
     // n-by-n identity matrix.  Each column of X is the solution to A * x_j = e_j.
-    const auto n = static_cast<ssize_t>(a.shape(0));
-    auto identity = array_type::eye(n);
-
-    auto [lu, piv] = factorize(a);
-    auto y = forward_substitution(lu, piv, identity);
-    auto x = backward_substitution(lu, y);
+    auto identity = array_type::eye(n());
+    auto y = forward_substitution(identity);
+    auto x = backward_substitution(y);
     return x;
 }
 
-} /* end namespace detail */
+template <typename T>
+typename LuFactorization<T>::value_type LuFactorization<T>::det() const
+{
+    // det(U) is the product of its diagonal; L contributes 1 (unit diagonal).
+    value_type result{1};
+    for (ssize_t i = 0; i < n(); ++i)
+    {
+        result *= m_lu(i, i);
+    }
+
+    // det(P) flips sign once per row swap (a transposition).  m_piv[k] != k
+    // means step k swapped row k with a later row.
+    bool negate = false;
+    for (ssize_t k = 0; k < n(); ++k)
+    {
+        if (m_piv[k] != k)
+        {
+            negate = !negate;
+        }
+    }
+    return negate ? value_type{0} - result : result;
+}
 
 /**
  * Free function wrapper for LU factorization with partial pivoting.
  *
  * @param a  Square 2D SimpleArray.
- * @return   (lu_matrix, pivot_vector) pair.  See detail::Lu<T>::factorize().
+ * @return   (lu_matrix, pivot_vector) pair.  See LuFactorization<T>.
  */
 template <typename T>
-std::pair<SimpleArray<T>, std::vector<ssize_t>> lu_factorization(SimpleArray<T> const & a)
+std::pair<SimpleArray<T>, SimpleArray<int64_t>> lu_factorization(SimpleArray<T> const & a)
 {
-    return detail::Lu<T>::factorize(a);
+    LuFactorization<T> const f(a);
+    return {f.lu(), f.piv()};
 }
 
 /**
@@ -440,7 +439,7 @@ std::pair<SimpleArray<T>, std::vector<ssize_t>> lu_factorization(SimpleArray<T> 
 template <typename T>
 SimpleArray<T> lu_solve(SimpleArray<T> const & a, SimpleArray<T> const & b)
 {
-    return detail::Lu<T>::solve(a, b);
+    return LuFactorization<T>(a).solve(b);
 }
 
 /**
@@ -452,7 +451,19 @@ SimpleArray<T> lu_solve(SimpleArray<T> const & a, SimpleArray<T> const & b)
 template <typename T>
 SimpleArray<T> lu_inv(SimpleArray<T> const & a)
 {
-    return detail::Lu<T>::inv(a);
+    return LuFactorization<T>(a).inv();
+}
+
+/**
+ * Free function wrapper for computing the determinant via LU decomposition.
+ *
+ * @param a  Square 2D SimpleArray.
+ * @return   The determinant det(A).
+ */
+template <typename T>
+T lu_det(SimpleArray<T> const & a)
+{
+    return LuFactorization<T>(a).det();
 }
 
 } /* end namespace modmesh */
