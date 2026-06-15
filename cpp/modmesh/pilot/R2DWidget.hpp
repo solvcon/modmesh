@@ -39,7 +39,6 @@
 #include <QWidget>
 
 class QMouseEvent;
-class QPainter;
 class QPaintEvent;
 class QResizeEvent;
 class QWheelEvent;
@@ -95,9 +94,6 @@ protected:
 private:
 
     void centerViewOnOrigin();
-
-    /// Paint the world's live points, segments, and curves in screen space.
-    void paintWorld(QPainter & painter) const;
 
     ViewTransform2dFp64 m_view;
     std::shared_ptr<WorldFp64> m_world;

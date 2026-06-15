@@ -156,7 +156,7 @@ public:
         check_size(i, m_points->size(), "point");
         return m_points->get(i);
     }
-    std::shared_ptr<point_pad_type> const & points() { return m_points; }
+    std::shared_ptr<point_pad_type> const & points() const { return m_points; }
 
     void add_segment(segment_type const & segment)
     {
