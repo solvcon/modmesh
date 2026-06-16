@@ -97,7 +97,7 @@ class R2DWidgetWorldTC(unittest.TestCase):
 
     def test_update_world_none_clears(self):
         """A null world clears the canvas to its grid backdrop instead of
-        crashing; paintWorld early-returns when no world is set.
+        crashing; RWorldRenderer2d is skipped when no world is set.
         """
         self.widget.updateWorld(_build_world())
         self.widget.updateWorld(None)
@@ -117,7 +117,7 @@ class R2DWidgetWorldTC(unittest.TestCase):
 
     def test_empty_world_paints_without_error(self):
         """A world with no geometry is valid: the loops are simply empty.
-        Catches off-by-one / null-pad assumptions in paintWorld.
+        Catches off-by-one / null-pad assumptions in RWorldRenderer2d.
         """
         self.widget.updateWorld(modmesh.WorldFp64())
         self.widget.requestRepaint()

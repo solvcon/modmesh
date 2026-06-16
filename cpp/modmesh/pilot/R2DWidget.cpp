@@ -28,13 +28,14 @@
 
 #include <modmesh/pilot/R2DWidget.hpp> // Must be the first include.
 
+#include <modmesh/pilot/RWorldRenderer2d.hpp>
+
 #include <cmath>
 
 #include <QColor>
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
-#include <QPainterPath>
 #include <QPen>
 #include <QResizeEvent>
 #include <QWheelEvent>
@@ -59,11 +60,6 @@ QColor const BACKGROUND(32, 32, 36);
 QColor const MINOR_GRID(64, 64, 70);
 QColor const AXIS(200, 200, 80);
 QColor const ORIGIN(220, 80, 80);
-QColor const GEOMETRY(120, 180, 240);
-
-// Cosmetic (zoom-independent) screen widths for world geometry.
-constexpr double GEOMETRY_LINE_WIDTH_PX = 1.5;
-constexpr int GEOMETRY_POINT_WIDTH_PX = 5;
 
 double clamp_zoom(double zoom)
 {
@@ -129,67 +125,6 @@ void R2DWidget::centerViewOnOrigin()
 {
     m_view.set_pan_x(static_cast<double>(width()) * 0.5);
     m_view.set_pan_y(static_cast<double>(height()) * 0.5);
-}
-
-void R2DWidget::paintWorld(QPainter & painter) const
-{
-    if (!m_world)
-    {
-        return;
-    }
-
-    // Map math-convention world (x, y) to Qt screen pixels; z is dropped.
-    auto map = [this](double world_x, double world_y)
-    {
-        double screen_x = 0.0;
-        double screen_y = 0.0;
-        m_view.screen_from_world(world_x, world_y, screen_x, screen_y);
-        return QPointF(screen_x, screen_y);
-    };
-
-    // Segments and flattened curves share one cosmetic stroke pen.
-    QPen geom_pen(GEOMETRY);
-    geom_pen.setCosmetic(true);
-    geom_pen.setWidthF(GEOMETRY_LINE_WIDTH_PX);
-    painter.setPen(geom_pen);
-
-    // 1D straight segments
-    std::shared_ptr<SegmentPadFp64> segments = m_world->collect_live_segments();
-    for (size_t i = 0; i < segments->size(); ++i)
-    {
-        painter.drawLine(map(segments->x0(i), segments->y0(i)),
-                         map(segments->x1(i), segments->y1(i)));
-    }
-
-    // Cubic Beziers; QPainterPath flattens them adaptively, so no sampling.
-    std::shared_ptr<CurvePadFp64> curves = m_world->collect_live_curves();
-    if (curves->size() > 0)
-    {
-        QPainterPath path;
-        for (size_t i = 0; i < curves->size(); ++i)
-        {
-            Bezier3dFp64 const c = curves->get(i);
-            path.moveTo(map(c.x0(), c.y0()));
-            path.cubicTo(map(c.x1(), c.y1()), map(c.x2(), c.y2()), map(c.x3(), c.y3()));
-        }
-        painter.setBrush(Qt::NoBrush); // stroke the outline only, never fill
-        painter.drawPath(path);
-    }
-
-    // 0D standalone points as dots with a fixed pixel size at any zoom.
-    std::shared_ptr<PointPadFp64> const & points = m_world->points();
-    if (points->size() > 0)
-    {
-        QPen point_pen(GEOMETRY);
-        point_pen.setCosmetic(true);
-        point_pen.setWidth(GEOMETRY_POINT_WIDTH_PX);
-        point_pen.setCapStyle(Qt::RoundCap);
-        painter.setPen(point_pen);
-        for (size_t i = 0; i < points->size(); ++i)
-        {
-            painter.drawPoint(map(points->x(i), points->y(i)));
-        }
-    }
 }
 
 void R2DWidget::paintEvent(QPaintEvent * /*event*/)
@@ -259,7 +194,10 @@ void R2DWidget::paintEvent(QPaintEvent * /*event*/)
     }
 
     // World geometry on top of the grid, under the origin marker.
-    paintWorld(painter);
+    if (m_world)
+    {
+        RWorldRenderer2d(*m_world, m_view).paint(painter);
+    }
 
     // Origin dot (cosmetic, fixed pixel size regardless of zoom).
     QPen origin_pen(ORIGIN);
