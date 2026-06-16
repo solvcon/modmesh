@@ -385,17 +385,73 @@ level. Do not duplicate the same test in both layers without a reason.
 A test should encode why a behavior matters, not merely what it does. A test
 that cannot fail when the logic it covers changes is not pulling its weight.
 
+## Comments
+
+Code says what happens. A comment says why, and what a reader must know but
+cannot see. Do not write a comment that merely restates the code (it is only
+noise). Write comments clearly and concisely, and keep two levels separate:
+
+- Interface comments sit before a function, class, or member and describe how
+  to use it: what it does, the meaning and units of each argument and return
+  value, who owns any allocated memory, which values are sentinels (a null
+  pointer, `-1`, an empty array), and the invariants the caller must uphold.
+- Implementation comments sit inside the body and explain what reading it does
+  not reveal: a non-trivial algorithm, why one approach was chosen over a
+  viable alternative, or a single tricky line. Do not repeat the interface
+  comment.
+
+Because this codebase solves numerical problems, state the physical and
+structural facts the types do not encode:
+
+- Units, coordinate conventions, and index bases.
+- The expected shape, layout, or contiguity of an array or buffer.
+- Invariants tying several variables together (e.g. a count that must equal a
+  buffer length).
+- For any formula, cite the literature, equation, or document it comes from.
+
+Further conventions:
+
+- Prefer a clear name over a comment; rename rather than explain an obscure
+  name. A comment cannot rescue an unclear design.
+- Keep the rationale next to the code, not only in a commit message or pull
+  request. When you change the code, change the comment in the same edit.
+- Write comments as full sentences with capitalization and a closing period.
+  The verb mood differs by language -- the C++ and Python sections below fix
+  it. Use ASCII only.
+- A comment describes the code, never the task or conversation that produced
+  it. Do not write "as requested" or reference a review thread.
+- If possible, provide references (with URL) to literature or documents in
+  comments.
+
+### C++ Comment
+
+The general comment rules above apply to C++. Comment blocks follow [the
+doxygen style guidelines](https://www.doxygen.nl/manual/docblocks.html) if
+convenient.
+
+### Python Comment
+
+The general comment rules above apply to Python. The interface comment is the
+docstring, not a `#` comment: give every public module, class, function, and
+method a `"""triple-quoted"""` docstring, per [PEP
+257](https://peps.python.org/pep-0257/). Reserve `#` comments for
+implementation notes inside a body.
+
+- If a function or class is obvious, do not add a docstring.
+- Begin a docstring with a one-line summary that ends with a period. It
+  prescribes what a call does as a command ("Run the solver.", "Return the cell
+  count.").
+- For a multi-line docstring, follow the summary with a blank line, then the
+  detail, and keep the closing `"""` on its own line.
+- When documenting arguments and return values, use the
+  Sphinx/reStructuredText field syntax already used in the codebase (`:param
+  name:`, `:return:`, `:rtype:`) rather than introducing a second docstring
+  dialect.
+
 ## Integer Type
 
 Use fixed-width integers (`int32_t`, `uint8_t`, etc.) Do not use the basic
 integer types (`int`, `long`, etc.) unless there is not another choice.
-
-## C++ Comment
-
-Comment blocks follow [the doxygen style
-guidelines](https://www.doxygen.nl/manual/docblocks.html) if convenient.
-
-If possible, provide references to literature or documents in comments.
 
 ## C++ Include File
 
@@ -706,6 +762,45 @@ That is, never drop curly braces even when you can:
 if (condition)
     return;
 ```
+
+## Commit Log
+
+A commit message records why a change happened, which the diff cannot show.
+Write it for the person who runs `git log` or `git blame` a year from now.  We
+do not use semantic (conventional) commit prefixes such as `feat:` or `fix:`.
+
+We write comments clearly and concisely, like carefully-thinking professionals
+do.
+
+Structure a message as a subject line, a blank line, and an optional body:
+
+- Write the subject in the imperative mood, completing the sentence "If
+  applied, this commit will ..." -- "Add the oblique-shock Euler driver", not
+  "Added ..." or "Adds ...". This matches git's own messages ("Merge ...",
+  "Revert ...").
+- Capitalize the subject and do not end it with a period.
+- Aim for a subject of 50 characters; treat 72 as the hard limit.
+- Separate the subject from the body with one blank line; many git tools rely
+  on this split.
+- Wrap the body at 72 characters. Git does not wrap it for you.
+
+Use the body to explain what changed and why, not how -- the diff already
+shows how. Make it self-contained: a reader should judge the change without
+opening the patch. Describe the behavior before the change in the present
+tense ("The solver drains to vacuum at a slip wall"), then say why the new
+behavior is better. If you considered and rejected an alternative, name it. Do
+not point at a chat log or mailing-list thread for the reasoning; summarize it
+in the message.
+
+A one-line subject is enough when the change is trivial and needs no context
+(e.g. "Fix typo in the buffer header"). Add a body whenever the reason is not
+obvious from the subject.
+
+Do not reference issues or PRs directly in the commit log, unless you have to.
+In the rare occasions to reference issues, follow the rule in `CLAUDE.md`: end
+the body with "Related to #xxx" or "For issue #xxx". Never use closing keywords
+(`close`, `fixes`, `resolves`, ...); commit text must not drive issue
+management.
 
 ## Copyright Notice
 
