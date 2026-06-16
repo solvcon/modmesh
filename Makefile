@@ -81,10 +81,9 @@ else
 endif
 export BUILD_PATH
 
-PYTEST ?= $(shell which py.test-3)
-ifeq ($(PYTEST),)
-	PYTEST := $(shell which pytest)
-endif
+# Test with the build interpreter; an ABI-tagged _modmesh cannot load under a
+# py.test-3 launcher bound to a different Python.
+PYTEST ?= $(WHICH_PYTHON) -m pytest
 ifneq ($(VERBOSE),)
 	PYTEST_OPTS ?= -v -s
 else
