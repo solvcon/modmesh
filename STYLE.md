@@ -387,58 +387,47 @@ that cannot fail when the logic it covers changes is not pulling its weight.
 
 ## Comments
 
-A comment carries what the code cannot: the intent, the constraints, and the
-reasoning that the syntax leaves implicit. Code says what happens; a good
-comment says why it happens and what a reader must know but cannot see. This
-follows the same economy as the rest of the guide -- a comment that merely
-restates the code is noise, and noise is removed.
-
-We write comments clearly and concisely. Comments must not interfere
-readability.
-
-Write comments at two levels, and keep them separate:
+Code says what happens. A comment says why, and what a reader must know but
+cannot see. Do not write a comment that merely restates the code (it is only
+noise). Write comments clearly and concisely, and keep two levels separate:
 
 - Interface comments sit before a function, class, or member and describe how
   to use it: what it does, the meaning and units of each argument and return
   value, who owns any allocated memory, which values are sentinels (a null
   pointer, `-1`, an empty array), and the invariants the caller must uphold.
-- Implementation comments sit inside the body and explain what is not obvious
-  from reading it: the steps of a non-trivial algorithm, why one approach was
-  chosen over a viable alternative, or a single tricky line. Do not repeat the
-  interface comment here.
+- Implementation comments sit inside the body and explain what reading it does
+  not reveal: a non-trivial algorithm, why one approach was chosen over a
+  viable alternative, or a single tricky line. Do not repeat the interface
+  comment.
 
-Because this codebase solves numerical problems, the non-obvious facts are
-often physical or structural. State them:
+Because this codebase solves numerical problems, state the physical and
+structural facts the types do not encode:
 
-- Units, coordinate conventions, and index bases that the types do not encode.
+- Units, coordinate conventions, and index bases.
 - The expected shape, layout, or contiguity of an array or buffer.
 - Invariants tying several variables together (e.g. a count that must equal a
   buffer length).
-- For any formula, cite the literature, equation, or document it comes from so
-  the next reader can verify it.
+- For any formula, cite the literature, equation, or document it comes from.
 
 Further conventions:
 
-- Prefer a clear name over a comment. If a comment exists only to explain an
-  obscure name, rename instead. A comment cannot rescue an unclear design.
-- Keep the rationale in the comment, next to the code -- not only in a commit
-  message or pull request, which are hard to find later. When you change the
-  code, change the comment in the same edit.
+- Prefer a clear name over a comment; rename rather than explain an obscure
+  name. A comment cannot rescue an unclear design.
+- Keep the rationale next to the code, not only in a commit message or pull
+  request. When you change the code, change the comment in the same edit.
 - Write comments as full sentences with capitalization and a closing period.
   The verb mood differs by language -- the C++ and Python sections below fix
-  it -- so a function summary reads as prose, not a fragment. Use ASCII only.
+  it. Use ASCII only.
 - A comment describes the code, never the task or conversation that produced
-  it. Do not write "as requested" or reference a review thread in a source
-  comment.
+  it. Do not write "as requested" or reference a review thread.
+- If possible, provide references (with URL) to literature or documents in
+  comments.
 
 ### C++ Comment
 
-The general comment rules above apply to C++. Write the summary of a function
-or class in the descriptive mood ("Opens the file.", "Returns the cell
-count."). Comment blocks follow [the doxygen style
-guidelines](https://www.doxygen.nl/manual/docblocks.html) if convenient.
-
-If possible, provide references to literature or documents in comments.
+The general comment rules above apply to C++. Comment blocks follow [the
+doxygen style guidelines](https://www.doxygen.nl/manual/docblocks.html) if
+convenient.
 
 ### Python Comment
 
@@ -449,15 +438,15 @@ method a `"""triple-quoted"""` docstring, per [PEP
 implementation notes inside a body.
 
 - If a function or class is obvious, do not add a docstring.
-- Begin a docstring with a one-line summary that ends with a period. Unlike a
-  C++ comment, the summary is imperative -- it prescribes what a call does as a
-  command ("Run the solver.", "Return the cell count."), matching PEP 257 and
-  the docstrings already in the tree.
+- Begin a docstring with a one-line summary that ends with a period. It
+  prescribes what a call does as a command ("Run the solver.", "Return the cell
+  count.").
 - For a multi-line docstring, follow the summary with a blank line, then the
   detail, and keep the closing `"""` on its own line.
-- When documenting arguments and return values, use the reStructuredText field
-  syntax already used in the codebase (`:param name:`, `:return:`, `:rtype:`)
-  rather than introducing a second docstring dialect.
+- When documenting arguments and return values, use the
+  Sphinx/reStructuredText field syntax already used in the codebase (`:param
+  name:`, `:return:`, `:rtype:`) rather than introducing a second docstring
+  dialect.
 
 ## Integer Type
 
