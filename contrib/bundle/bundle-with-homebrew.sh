@@ -537,7 +537,8 @@ while IFS= read -r line; do
 done < <(python3 -c "
 import importlib, os, sys
 seeds = os.environ.get('BUNDLE_SEED_MODULES',
-    'PySide6.QtCore,PySide6.QtWidgets,PySide6.QtGui,numpy,matplotlib').split(',')
+    'PySide6.QtCore,PySide6.QtWidgets,PySide6.QtGui,numpy,matplotlib,'
+    'dateutil.relativedelta,dateutil.tz,dateutil.parser').split(',')
 extras = os.environ.get('BUNDLE_EXTRA_PACKAGES', '').split(',')
 for m in seeds + extras:
     m = m.strip()
