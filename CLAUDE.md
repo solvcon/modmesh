@@ -1,7 +1,8 @@
-# CLAUDE.md
+# Agent Instructions
 
-This file provides guidance to Claude Code (claude.ai/code) when working with
-code in this repository.
+This file provides guidance to AI coding agents working in this repository
+(Claude Code and Cursor). `AGENTS.md` at the repo root and
+`.cursor/AGENTS.md` are symlinks to this file.
 
 ## Project Overview
 
@@ -15,12 +16,27 @@ unstructured meshes. The codebase emphasizes:
 - Qt-based GUI (pilot) for spatial data visualization
 - Integrated runtime profiler for performance analysis
 
-## Claude Code Tooling
+## Agent Tooling (Claude Code and Cursor)
 
-This repository ships a `.claude/` directory with permissions, hooks, and
-skills tuned to this codebase. General behavioral rules live in
+This repository ships `.claude/` and `.cursor/` directories with permissions,
+hooks, and skills tuned to this codebase. General behavioral rules live in
 `contrib/prompt/general-rule.md` (not auto-imported). This section indexes
 the tools.
+
+### Cursor (`.cursor/`)
+
+- `cli.json` -- project shell/file permissions (translated from
+  `.claude/settings.json`; `Shell(...)` replaces Claude's `Bash(...)`).
+- `hooks.json` -- `postToolUse` on `Write|StrReplace` and `afterFileEdit` on
+  `Write|TabWrite`, wired to the shared `check-source.sh` script.
+- `hooks/` -- symlink to `.claude/hooks/`.
+- `skills/` -- symlink to `.claude/skills/`.
+- `AGENTS.md` -- symlink to `CLAUDE.md` at the repo root.
+- `statusline.sh` -- symlink to `.claude/statusline.sh`. Point your
+  `~/.cursor/cli-config.json` `statusLine.command` at
+  `$PROJECT/.cursor/statusline.sh` (or `.claude/statusline.sh`).
+
+## Claude Code Tooling
 
 ### Skills (`.claude/skills/`)
 
