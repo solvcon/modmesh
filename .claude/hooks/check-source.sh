@@ -1,16 +1,24 @@
 #!/bin/bash
 # .claude/hooks/check-source.sh
 #
-# PostToolUse hook for Write|Edit on modmesh source files.
+# PostToolUse hook for Write|Edit on modmesh source files (Claude Code).
+# postToolUse / afterFileEdit hook for Cursor (via .cursor/hooks.json).
 # Deterministic checks (per Rule 5): ASCII-only, no trailing
 # whitespace, modeline at EOF, Python <=79-char lines.
-# Exit 2 with violations on stderr -- Claude sees the message and
-# can self-correct.
+# Claude: exit 2 with violations on stderr. Cursor postToolUse: JSON
+# additional_context on stdout. Cursor afterFileEdit: stderr only.
 
 input=$(cat)
 
+hook_event=""
 if command -v jq >/dev/null 2>&1; then
-    file=$(printf '%s' "$input" | jq -r '.tool_input.file_path // empty')
+    hook_event=$(printf '%s' "$input" | jq -r '.hook_event_name // empty')
+    file=$(printf '%s' "$input" | jq -r '
+        .file_path //
+        .tool_input.file_path //
+        .tool_input.path //
+        empty
+    ')
 else
     file=$(printf '%s' "$input" \
         | sed -n 's/.*"file_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
@@ -64,6 +72,23 @@ fi
 
 if [ -z "$violations" ]; then
     exit 0
+fi
+
+msg=$(printf 'Hook violations:\n%sverdict: issues found\n' "$violations")
+
+if [ -n "$hook_event" ]; then
+    case "$hook_event" in
+    postToolUse)
+        if command -v jq >/dev/null 2>&1; then
+            jq -n --arg ctx "$msg" '{additional_context: $ctx}'
+        fi
+        exit 0
+        ;;
+    afterFileEdit)
+        printf '%s' "$msg" >&2
+        exit 0
+        ;;
+    esac
 fi
 
 {
