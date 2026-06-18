@@ -1,5 +1,5 @@
-# Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
-# BSD-style license; see COPYING
+# Copyright (c) 2019, solvcon team <contact@solvcon.net>
+# BSD 3-Clause License, see COPYING
 
 cmake_minimum_required(VERSION 4.0.1)
 project(modmesh_pymod)

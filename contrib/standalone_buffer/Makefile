@@ -1,5 +1,5 @@
-# Copyright (c) 2022, Yung-Yu Chen <yyc@solvcon.net>
-# BSD-style license; see COPYING
+# Copyright (c) 2022, solvcon team <contact@solvcon.net>
+# BSD 3-Clause License, see COPYING
 
 MMROOT := $(realpath ../..)
 SETUPROOT ?= $(MMROOT)/$(BUILD_PATH)/standalone_buffer

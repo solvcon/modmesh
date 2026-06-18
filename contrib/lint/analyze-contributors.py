@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright (c) 2026, solvcon team <contact@solvcon.net>
+# BSD 3-Clause License, see COPYING
 
 """
 Analyze modmesh contributors and maintain CONTRIBUTORS.md.
