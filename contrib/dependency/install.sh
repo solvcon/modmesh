@@ -1,6 +1,7 @@
 #!/bin/bash
 #
-# Copyright (C) 2018 Yung-Yu Chen <yyc@solvcon.net>.
+# Copyright (c) 2026, solvcon team <contact@solvcon.net>
+# BSD 3-Clause License, see COPYING
 
 if [ "$(uname)" == "Darwin" ] ; then
 INSTALL_PREFIX=${INSTALL_PREFIX:-/usr/local}
