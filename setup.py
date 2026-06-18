@@ -1,5 +1,5 @@
-# Copyright (c) 2020, Yung-Yu Chen <yyc@solvcon.net>
-# BSD-style license; see COPYING
+# Copyright (c) 2020, solvcon team <contact@solvcon.net>
+# BSD 3-Clause License, see COPYING
 
 
 import pathlib

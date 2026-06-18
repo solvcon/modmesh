@@ -1,5 +1,5 @@
-# Copyright (c) 2024, An-Chi Liu <phy.tiger@gmail.com>
-# BSD-style license; see COPYING
+# Copyright (c) 2024, solvcon team <contact@solvcon.net>
+# BSD 3-Clause License, see COPYING
 
 cmake_minimum_required(VERSION 4.0.1)
 
