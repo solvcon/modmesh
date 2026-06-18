@@ -4,7 +4,7 @@ solvcon is made possible by the following contributors.
 
 - Buganini Chiu <buganini@b612.tw>
 - Chun-Hsu Lai <as2266317@gmail.com>
-- Chun-Shih Chang <austin20463@gmail.com> <austin2046@gmail.com> <sankagetsu.cs08@nycu.edu.tw>
+- Chun-Shih Chang <austin20463@gmail.com> <sankagetsu.cs08@nycu.edu.tw>
 - Eldar Iusupzhanov <ferrarijed@gmail.com>
 - Han-Xuan Huang <c1ydehhx@gmail.com> <t109590031@ntut.org.tw>
 - Jenny Yen <jenny35006@gmail.com>

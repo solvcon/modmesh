@@ -22,14 +22,17 @@ import argparse
 import subprocess
 from collections import Counter, defaultdict
 
-
 # Only commits merged here count, so unmerged branch work is excluded.
 MASTER_REF = 'master'
 
 # Emails ignored in both scans (placeholders, mailing lists, bots).
-SKIP_EMAILS = {
+PROJECT_CONTACT_EMAIL = {
     'contact@solvcon.net',
 }
+INVALID_EMAILS = {
+    'austin2046@gmail.com',
+}
+SKIP_EMAILS = PROJECT_CONTACT_EMAIL | INVALID_EMAILS
 
 # A copyright line: "(c)", a year span, then "Name <email>".
 COPYRIGHT_RE = re.compile(
@@ -309,7 +312,7 @@ def print_contributors(rows, stream=sys.stdout, existing_names=None,
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description='Analyze contributors via copyright headers and git '
-        'commit counts to decide who belongs in CONTRIBUTORS.md.'
+                    'commit counts to decide who belongs in CONTRIBUTORS.md.'
     )
     parser.add_argument(
         '--threshold', type=int, default=5,
@@ -322,17 +325,17 @@ def parse_arguments():
     parser.add_argument(
         '--update-file', metavar='FILE',
         help='write CONTRIBUTORS.md bullet lines to FILE instead of printing '
-        'the full report'
+             'the full report'
     )
     parser.add_argument(
         '--update-name', action='store_true',
         help='with --update-file, also refresh contributor names from '
-        'copyright headers; otherwise existing names are kept'
+             'copyright headers; otherwise existing names are kept'
     )
     parser.add_argument(
         '--no-dedup', dest='dedup', action='store_false',
         help='report every email separately instead of merging aliases '
-        'into one contributor (dedup is on by default)'
+             'into one contributor (dedup is on by default)'
     )
     return parser.parse_args()
 
