@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * Copyright (c) 2019, Yung-Yu Chen <yyc@solvcon.net>
+ * Copyright (c) 2019, solvcon team <contact@solvcon.net>
  * BSD 3-Clause License, see COPYING
  */
 
