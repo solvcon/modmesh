@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <set>
@@ -38,6 +39,13 @@ class Polygon3d;
 
 namespace detail
 {
+
+enum class BooleanOperation : uint8_t
+{
+    Union,
+    Intersection,
+    Difference
+}; /* end enum class BooleanOperation */
 
 /**
  * Helper class for boolean operations on two polygons via trapezoidal

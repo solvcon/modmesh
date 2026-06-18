@@ -6,6 +6,7 @@
  */
 
 #include <concepts>
+#include <cstdio>
 #include <functional>
 
 #include <modmesh/simd/neon/neon_alias.hpp>

@@ -16,6 +16,8 @@
 #include <modmesh/universe/coord.hpp>
 #include <modmesh/universe/rtree.hpp>
 
+#include <modmesh/universe/polygon_boolean.hpp>
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -2775,21 +2777,7 @@ std::pair<size_t, size_t> PolygonPad<T>::decompose_to_trapezoid(size_t polygon_i
     return m_decomposer.decompose(polygon_id, points);
 }
 
-namespace detail
-{
-
-enum class BooleanOperation : uint8_t
-{
-    Union,
-    Intersection,
-    Difference
-}; /* end enum class BooleanOperation */
-
-} /* end namespace detail */
-
 } /* end namespace modmesh */
-
-#include <modmesh/universe/polygon_boolean.hpp>
 
 namespace modmesh
 {
