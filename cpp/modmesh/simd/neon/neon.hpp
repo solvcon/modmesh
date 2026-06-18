@@ -6,6 +6,7 @@
  */
 
 #include <concepts>
+#include <cstdint>
 #include <cstdio>
 #include <functional>
 
