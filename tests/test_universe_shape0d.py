@@ -6,8 +6,8 @@ import unittest
 
 import numpy as np
 
-import modmesh
-from modmesh import testing
+import solvcon
+from solvcon import testing
 
 
 class BernsteinTB(testing.TestBase):
@@ -18,7 +18,7 @@ class BernsteinPolynomialTC(BernsteinTB, unittest.TestCase):
 
     def test_degree1(self):
         # linear basis, degree n = 1
-        f = modmesh.calc_bernstein_polynomial
+        f = solvcon.calc_bernstein_polynomial
 
         self.assertEqual(1.0, f(t=0.0, i=0, n=1))
         self.assertEqual(0.0, f(t=1.0, i=0, n=1))
@@ -39,7 +39,7 @@ class BernsteinPolynomialTC(BernsteinTB, unittest.TestCase):
 
     def test_degree2(self):
         # quadratic basis, degree n = 2
-        f = modmesh.calc_bernstein_polynomial
+        f = solvcon.calc_bernstein_polynomial
 
         self.assert_allclose(1.0, f(t=0.0, i=0, n=2))
         self.assert_allclose(0.0, f(t=1.0, i=0, n=2))
@@ -61,7 +61,7 @@ class BernsteinPolynomialTC(BernsteinTB, unittest.TestCase):
 
     def test_degree3(self):
         # cubic basis, degree n = 3
-        f = modmesh.calc_bernstein_polynomial
+        f = solvcon.calc_bernstein_polynomial
 
         self.assertEqual(1.0, f(t=0.0, i=0, n=3))
         self.assertEqual(0.0, f(t=1.0, i=0, n=3))
@@ -87,7 +87,7 @@ class BernsteinInterpolationTC(BernsteinTB, unittest.TestCase):
 
     def test_degree1(self):
         # linear basis, degree n = 1
-        f = modmesh.interpolate_bernstein
+        f = solvcon.interpolate_bernstein
 
         def _check(t, values):
             golden = values[0] * (1 - t) + values[1] * t,
@@ -104,7 +104,7 @@ class BernsteinInterpolationTC(BernsteinTB, unittest.TestCase):
 
     def test_degree2(self):
         # quadratic basis, degree n = 2
-        f = modmesh.interpolate_bernstein
+        f = solvcon.interpolate_bernstein
 
         def _check(t, values):
             golden = values[0] * (1 - t) ** 2
@@ -123,7 +123,7 @@ class BernsteinInterpolationTC(BernsteinTB, unittest.TestCase):
 
     def test_degree3(self):
         # cubic basis, degree n = 3
-        f = modmesh.interpolate_bernstein
+        f = solvcon.interpolate_bernstein
 
         def _check(t, values):
             golden = values[0] * (1 - t) ** 3
@@ -219,7 +219,7 @@ class Point3dTB(testing.TestBase):
 class Point3dFp32TC(Point3dTB, unittest.TestCase):
 
     def setUp(self):
-        self.Point = modmesh.Point3dFp32
+        self.Point = solvcon.Point3dFp32
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -227,23 +227,23 @@ class Point3dFp32TC(Point3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_type(self):
-        self.assertIs(modmesh.Point3dFp32, self.Point)
+        self.assertIs(solvcon.Point3dFp32, self.Point)
 
     def test_repr_str(self):
-        p = modmesh.Point3dFp32(607.7, -64.2, 0)
+        p = solvcon.Point3dFp32(607.7, -64.2, 0)
         golden = "Point3dFp32(607.7, -64.2, 0)"
         # __repr__ is the same as __str__ for Point3d
         self.assertEqual(repr(p), golden)
         self.assertEqual(str(p), golden)
         # Evaluate the string and test the result
-        e = eval(golden, vars(modmesh))
+        e = eval(golden, vars(solvcon))
         self.assertEqual(p, e)
 
 
 class Point3dFp64TC(Point3dTB, unittest.TestCase):
 
     def setUp(self):
-        self.Point = modmesh.Point3dFp64
+        self.Point = solvcon.Point3dFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -251,16 +251,16 @@ class Point3dFp64TC(Point3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_type(self):
-        self.assertIs(modmesh.Point3dFp64, self.Point)
+        self.assertIs(solvcon.Point3dFp64, self.Point)
 
     def test_repr_str(self):
-        p = modmesh.Point3dFp64(607.7, -64.2, 0)
+        p = solvcon.Point3dFp64(607.7, -64.2, 0)
         golden = "Point3dFp64(607.7, -64.2, 0)"
         # __repr__ is the same as __str__ for Point3d
         self.assertEqual(repr(p), golden)
         self.assertEqual(str(p), golden)
         # Evaluate the string and test the result
-        e = eval(golden, vars(modmesh))
+        e = eval(golden, vars(solvcon))
         self.assertEqual(p, e)
 
 
@@ -711,9 +711,9 @@ class PointPadFp32TC(PointPadTB, unittest.TestCase):
 
     def setUp(self):
         self.dtype = 'float32'
-        self.SimpleArray = modmesh.SimpleArrayFloat32
-        self.Point = modmesh.Point3dFp32
-        self.PointPad = modmesh.PointPadFp32
+        self.SimpleArray = solvcon.SimpleArrayFloat32
+        self.Point = solvcon.Point3dFp32
+        self.PointPad = solvcon.PointPadFp32
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -725,9 +725,9 @@ class PointPadFp64TC(PointPadTB, unittest.TestCase):
 
     def setUp(self):
         self.dtype = 'float64'
-        self.SimpleArray = modmesh.SimpleArrayFloat64
-        self.Point = modmesh.Point3dFp64
-        self.PointPad = modmesh.PointPadFp64
+        self.SimpleArray = solvcon.SimpleArrayFloat64
+        self.Point = solvcon.Point3dFp64
+        self.PointPad = solvcon.PointPadFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:

@@ -7,17 +7,17 @@ import unittest
 import math
 import json
 
-import modmesh
+import solvcon
 
 
 class ToggleTC(unittest.TestCase):
 
     def test_report(self):
         self.assertTrue(
-            "Toggle: USE_PYSIDE=" in modmesh.Toggle.instance.report())
+            "Toggle: USE_PYSIDE=" in solvcon.Toggle.instance.report())
 
     def test_solid_names(self):
-        solid = modmesh.Toggle.instance.solid
+        solid = solvcon.Toggle.instance.solid
 
         # Test names
         golden = ["use_pyside"]
@@ -28,7 +28,7 @@ class ToggleTC(unittest.TestCase):
             self.assertTrue(hasattr(solid, n))
 
     def test_fixed_defaults(self):
-        fixed = modmesh.Toggle.instance.fixed
+        fixed = solvcon.Toggle.instance.fixed
 
         # Hardcoding the property names and default values does not scale, but
         # I have only few properties at the momemnt.  A better way for testing
@@ -44,7 +44,7 @@ class ToggleTC(unittest.TestCase):
         self.assertEqual(fixed.show_axis, False)
 
     def test_clone(self):
-        tg = modmesh.Toggle.instance.clone()
+        tg = solvcon.Toggle.instance.clone()
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
@@ -60,7 +60,7 @@ class ToggleTC(unittest.TestCase):
 class ToggleDynamicTC(unittest.TestCase):
 
     def test_all_types(self):
-        tg = modmesh.Toggle.instance.clone()
+        tg = solvcon.Toggle.instance.clone()
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
@@ -136,7 +136,7 @@ class ToggleDynamicTC(unittest.TestCase):
         self.assertEqual(tg.dynamic_keys(), [])
 
     def test_fatigue(self):
-        tg = modmesh.Toggle.instance.clone()
+        tg = solvcon.Toggle.instance.clone()
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
@@ -162,7 +162,7 @@ class ToggleDynamicTC(unittest.TestCase):
         tg.dynamic_clear()
 
     def test_dunder_has_get_set(self):
-        tg = modmesh.Toggle.instance.clone()
+        tg = solvcon.Toggle.instance.clone()
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
@@ -220,7 +220,7 @@ class ToggleDynamicTC(unittest.TestCase):
 class ToggleHierarchicalTC(unittest.TestCase):
 
     def test_multi_level(self):
-        tg = modmesh.Toggle.instance.clone()
+        tg = solvcon.Toggle.instance.clone()
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
@@ -228,7 +228,7 @@ class ToggleHierarchicalTC(unittest.TestCase):
         self.assertEqual(tg.test_int8, 21)
         self.assertEqual(sorted(tg.dynamic_keys()), ["test_int8"])
         tg.add_subkey("level1")
-        self.assertIsInstance(tg.level1, modmesh.HierarchicalToggleAccess)
+        self.assertIsInstance(tg.level1, solvcon.HierarchicalToggleAccess)
         self.assertEqual(sorted(tg.dynamic_keys()), ["level1", "test_int8"])
 
         tg.set_real("level1.test_real", 9.42)
@@ -239,11 +239,11 @@ class ToggleHierarchicalTC(unittest.TestCase):
         # Add second-level subkeys.
         tg.add_subkey("level1.level2")
         self.assertIsInstance(tg.level1.level2,
-                              modmesh.HierarchicalToggleAccess)
+                              solvcon.HierarchicalToggleAccess)
         tg.add_subkey("level1p")
         tg.level1p.add_subkey("level2p")
         self.assertIsInstance(tg.level1p.level2p,
-                              modmesh.HierarchicalToggleAccess)
+                              solvcon.HierarchicalToggleAccess)
         tg.level1p.set_bool("test_bool", True)
         self.assertEqual(tg.get_bool('level1p.test_bool'), True)
         tg.set_int32('level1p.level2p.test_int32', -2132)
@@ -255,7 +255,7 @@ class ToggleHierarchicalTC(unittest.TestCase):
                           'level1p.test_bool', 'test_int8'])
 
     def test_get_value(self):
-        tg = modmesh.Toggle.instance.clone()
+        tg = solvcon.Toggle.instance.clone()
         tg.dynamic_clear()
 
         tg.add_subkey("level1")
@@ -280,7 +280,7 @@ class ToggleHierarchicalTC(unittest.TestCase):
 class ToggleSerializationTC(unittest.TestCase):
 
     def test_to_json(self):
-        tg = modmesh.Toggle.instance.clone()
+        tg = solvcon.Toggle.instance.clone()
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
@@ -297,7 +297,7 @@ class ToggleSerializationTC(unittest.TestCase):
         self.assertEqual(json.loads(json.dumps(data)), golden)
 
     def test_solid_to_json(self):
-        tg = modmesh.Toggle.instance.clone()
+        tg = solvcon.Toggle.instance.clone()
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
@@ -309,7 +309,7 @@ class ToggleSerializationTC(unittest.TestCase):
         self.assertEqual(json.loads(json.dumps(data)), golden)
 
     def test_fixed_to_json(self):
-        tg = modmesh.Toggle.instance.clone()
+        tg = solvcon.Toggle.instance.clone()
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
@@ -321,7 +321,7 @@ class ToggleSerializationTC(unittest.TestCase):
         self.assertEqual(json.loads(json.dumps(data)), golden)
 
     def test_dynamic_to_json(self):
-        tg = modmesh.Toggle.instance.clone()
+        tg = solvcon.Toggle.instance.clone()
         tg.dynamic_clear()
         self.assertEqual(tg.dynamic_keys(), [])
 
@@ -342,16 +342,16 @@ class ToggleLoadTC(unittest.TestCase):
     def test_load(self):
         fixture = '''[{"fixed": {"show_axis": false}},
 {"dynamic": {"apps": {"euler1d": {"use_sub": false}}}}]'''
-        tg = modmesh.toggle.load(
+        tg = solvcon.toggle.load(
             fixture,
-            toggle_instance=modmesh.Toggle.instance.clone())
+            toggle_instance=solvcon.Toggle.instance.clone())
         self.assertEqual(tg.apps.euler1d.use_sub, False)
 
         fixture = '''[{"fixed": {"show_axis": false}},
 {"dynamic": {"apps": {"euler1d": {"use_sub": true}}}}]'''
-        tg = modmesh.toggle.load(
+        tg = solvcon.toggle.load(
             fixture,
-            toggle_instance=modmesh.Toggle.instance.clone())
+            toggle_instance=solvcon.Toggle.instance.clone())
         self.assertEqual(tg.apps.euler1d.use_sub, True)
 
     @unittest.skip("the lifecycle issue may cause segfault")
@@ -364,18 +364,18 @@ class ToggleLoadTC(unittest.TestCase):
                 AttributeError,
                 r'Cannot get non-existing key "apps.euler1d"'
         ):
-            modmesh.toggle.load(
+            solvcon.toggle.load(
                 fixture,
-                toggle_instance=modmesh.Toggle.instance.clone()).apps.euler1d
+                toggle_instance=solvcon.Toggle.instance.clone()).apps.euler1d
 
 
 class CommandLineInfoTC(unittest.TestCase):
 
     def setUp(self):
-        self.cmdline = modmesh.ProcessInfo.instance.command_line
+        self.cmdline = solvcon.ProcessInfo.instance.command_line
 
     def test_populated(self):
-        if "pilot" in modmesh.clinfo.executable_basename:
+        if "pilot" in solvcon.clinfo.executable_basename:
             self.assertTrue(self.cmdline.populated)
             self.assertNotEqual(len(self.cmdline.populated_argv), 0)
         else:
@@ -385,9 +385,9 @@ class CommandLineInfoTC(unittest.TestCase):
 class MetalTC(unittest.TestCase):
 
     # Github Actions macos-12 does not support GPU yet.
-    @unittest.skipUnless(modmesh.METAL_BUILT and "TEST_METAL" in os.environ,
+    @unittest.skipUnless(solvcon.METAL_BUILT and "TEST_METAL" in os.environ,
                          "Metal is not built")
     def test_metal_status(self):
-        self.assertEqual(True, modmesh.metal_running())
+        self.assertEqual(True, solvcon.metal_running())
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

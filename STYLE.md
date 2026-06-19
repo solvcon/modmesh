@@ -5,7 +5,7 @@ code. The consistency reduces the cost to maintain and develop the code, and
 the former matters more than the latter, because the former costs more than the
 latter.
 
-modmesh uses [clang-format](https://clang.llvm.org/docs/ClangFormat.html) to
+solvcon uses [clang-format](https://clang.llvm.org/docs/ClangFormat.html) to
 lint C++ code and [flake8](https://flake8.pycqa.org/) to lint Python code
 according to [PEP-8](https://peps.python.org/pep-0008/). We mind the code
 style when adding new code and changing existing code. The rules of thumb are:
@@ -67,7 +67,7 @@ the required file format:
 * `ff=unix`: Use the [UNIX text file
   format](http://en.wikipedia.org/wiki/Newline) (`\n` line ending).
 * `fenc=utf8`: Use UTF-8 for encoding.
-* `et`: Expand tabs. Do not use tabs for modmesh.
+* `et`: Expand tabs. Do not use tabs for solvcon.
 * `sw=4 ts=4 sts=4`: Use 4 white spaces for tabs.
 
 The modeline for C++ is:
@@ -171,10 +171,10 @@ class HttpRequest
 ### Qt
 
 For Qt sub-classes, follow the Qt naming style, but prefix with `R` instead
-of `Q` and put them in the `modmesh` namespace. (Why "`R`"? It is the
+of `Q` and put them in the `solvcon` namespace. (Why "`R`"? It is the
 next character than "`Q`" and we want to distinguish the classes derived in
-modmesh.) Use `camelCase` (note the leading lower-case character) for
-functions. Member data should use `m_snake_case` as other modmesh C++ class.
+solvcon.) Use `camelCase` (note the leading lower-case character) for
+functions. Member data should use `m_snake_case` as other solvcon C++ class.
 
 ### Iterating Counter
 
@@ -235,9 +235,9 @@ from matplotlib import figure
 from PySide6 import QtCore, QtWidgets, QtGui
 
 # Modules in the current project.
-import modmesh as mm
-from modmesh import onedim
-from modmesh.plot import svg
+import solvcon as mm
+from solvcon import onedim
+from solvcon.plot import svg
 
 # Explicit relative import is OK.
 from . import core
@@ -246,7 +246,7 @@ from . import _base_app
 
 > **Note:**
 >
-> `modmesh` can be shorthanded as `mm`.
+> `solvcon` can be shorthanded as `mm`.
 
 Do not import module content (classes, functions, or constants) directly.
 Always use the `foo.bar` pattern to access classes, functions, or constants:
@@ -304,10 +304,10 @@ line = _base_app.QuantityLine(...)
 Use relative import for peer modules in the same package:
 
 ```python
-# For a module file in modmesh/pilot/
+# For a module file in solvcon/pilot/
 # BAD: use absolute import for peer modules.
-from modmesh.pilot import _gui
-from modmesh.pilot.airfoil import _naca
+from solvcon.pilot import _gui
+from solvcon.pilot.airfoil import _naca
 
 # GOOD: use relative import for peer modules.
 from . import _gui
@@ -317,9 +317,9 @@ from .airfoil import _naca
 Relative import may not be required for modules outside the current package:
 
 ```python
-# For a module file in modmesh/pilot/
+# For a module file in solvcon/pilot/
 # GOOD: use absolute import for non-peer modules.
-from modmesh.plot import svg
+from solvcon.plot import svg
 
 # OK but may be clumsy: use relative import.
 from ..plot import svg
@@ -329,10 +329,10 @@ Do not use dotted import path with `import` for project modules:
 
 ```python
 # BAD: uses dotted path instead of from...import.
-import modmesh.plot.svg as svg
+import solvcon.plot.svg as svg
 
 # GOOD: use from to specify the path.
-from modmesh.plot import svg
+from solvcon.plot import svg
 ```
 
 Do not import multiple modules in one line:
@@ -464,16 +464,16 @@ Always use path-first inclusion (angle bracket). Do not use current-first
 // Use this: search for include file start with the paths to the compiler.
 #include <modmesh/base.hpp>
 // Do not use this. This starts to search from the directory of the file.
-#include "modmesh/toggle.hpp"
+#include "solvcon/toggle.hpp"
 ```
 
 ## C++ Namespace
 
-Put everything in the `modmesh` namespace.
+Put everything in the `solvcon` namespace.
 
 Never `using namespace` outside a local scope (like a function). Another
 namespace is not a local scope and should not `using namespace`. When
-accessing something in a namespace (e.g., `modmesh`) from outside, spell
+accessing something in a namespace (e.g., `solvcon`) from outside, spell
 out the full name:
 
 ```cpp
@@ -486,14 +486,14 @@ modmesh::real_type local_function(modmesh::int_type value);
 } /* end namespace */
 ```
 
-The namespace `modmesh` may be aliased to `mm` in a local scope. No alias
+The namespace `solvcon` may be aliased to `mm` in a local scope. No alias
 should be use outside a local scope.
 
 ```cpp
 modmesh::real_type local_function(modmesh::int_type value)
 {
-    // Alias the modmesh namespace to mm.
-    namespace mm = modmesh;
+    // Alias the solvcon namespace to mm.
+    namespace mm = solvcon;
     return mm::real_type(value); // Same as modmesh::real_type(value);
 }
 ```
@@ -804,7 +804,7 @@ management.
 
 ## Copyright Notice
 
-modmesh uses the [BSD license](http://opensource.org/licenses/BSD-3-Clause).
+solvcon uses the [BSD license](http://opensource.org/licenses/BSD-3-Clause).
 When creating a new file, put the following text at the top of the file
 (replace `<Year>` with the year you create the file and `<Your Name>` with
 your name and maybe email).  The license text formatted for C++ files:

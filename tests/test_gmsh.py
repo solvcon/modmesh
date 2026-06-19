@@ -7,7 +7,7 @@ import unittest
 
 import numpy as np
 
-import modmesh as mm
+import solvcon as sc
 
 
 class GmshTB(unittest.TestCase):
@@ -20,7 +20,7 @@ class GmshTriangleTC(GmshTB):
         path = os.path.join(self.DATADIR, "gmsh_triangle.msh")
 
         data = open(path, 'rb').read()
-        gmsh = mm.Gmsh(data)
+        gmsh = sc.Gmsh(data)
         blk = gmsh.to_block()
 
         # Check nodes information
@@ -47,7 +47,7 @@ class GmshRectangularTC(GmshTB):
         with open(path, 'rb') as fobj:
             data = fobj.read()
         # Create the Gmsh object.
-        gmsh = mm.Gmsh(data)
+        gmsh = sc.Gmsh(data)
         # Convert the Gmsh object to StaticMesh object.
         self.blk = gmsh.to_block()
 

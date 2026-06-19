@@ -2,7 +2,7 @@
 SVG Test Files
 ==============
 
-This directory contains SVG files used for testing purposes in modmesh.
+This directory contains SVG files used for testing purposes in solvcon.
 
 Test Files
 ==========

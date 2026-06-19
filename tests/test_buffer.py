@@ -6,14 +6,14 @@ import unittest
 
 import numpy as np
 
-import modmesh
+import solvcon
 
 
 class ConcreteBufferBasicTC(unittest.TestCase):
 
     def test_ConcreteBuffer(self):
 
-        buf = modmesh.ConcreteBuffer(10)
+        buf = solvcon.ConcreteBuffer(10)
         ndarr = np.array(buf, copy=False)
 
         # initialization
@@ -48,12 +48,12 @@ class ConcreteBufferBasicTC(unittest.TestCase):
 
     def test_ConcreteBuffer_from_ndarray(self):
 
-        buf = modmesh.ConcreteBuffer(24)
+        buf = solvcon.ConcreteBuffer(24)
         self.assertFalse(buf.is_from_python)
 
         ndarr = np.arange(24, dtype='float64').reshape((2, 3, 4))
 
-        buf = modmesh.ConcreteBuffer(array=ndarr)
+        buf = solvcon.ConcreteBuffer(array=ndarr)
         self.assertEqual(ndarr.nbytes, buf.nbytes)
         self.assertTrue(buf.is_from_python)
 
@@ -70,77 +70,77 @@ class ConcreteBufferAlignmentTC(unittest.TestCase):
     """
 
     def test_default_alignment(self):
-        buffer = modmesh.ConcreteBuffer(256)  # default alignment 0
+        buffer = solvcon.ConcreteBuffer(256)  # default alignment 0
         self.assertEqual(0, buffer.alignment)
         self.assertEqual(256, buffer.nbytes)
 
     def test_alignment_creation(self):
-        buffer = modmesh.ConcreteBuffer(256, 16)
+        buffer = solvcon.ConcreteBuffer(256, 16)
         self.assertEqual(16, buffer.alignment)
         self.assertEqual(256, buffer.nbytes)
 
-        buffer = modmesh.ConcreteBuffer(512, 32)
+        buffer = solvcon.ConcreteBuffer(512, 32)
         self.assertEqual(32, buffer.alignment)
         self.assertEqual(512, buffer.nbytes)
 
-        buffer = modmesh.ConcreteBuffer(1024, 64)
+        buffer = solvcon.ConcreteBuffer(1024, 64)
         self.assertEqual(64, buffer.alignment)
         self.assertEqual(1024, buffer.nbytes)
 
     def test_alignment_validation_valid_values(self):
-        modmesh.ConcreteBuffer(256, 16)
-        modmesh.ConcreteBuffer(512, 32)
-        modmesh.ConcreteBuffer(1024, 64)
+        solvcon.ConcreteBuffer(256, 16)
+        solvcon.ConcreteBuffer(512, 32)
+        solvcon.ConcreteBuffer(1024, 64)
 
     def test_alignment_validation_invalid_values(self):
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 17"  # noqa E501
         ):
-            modmesh.ConcreteBuffer(256, 17)
+            solvcon.ConcreteBuffer(256, 17)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 100"  # noqa E501
         ):
-            modmesh.ConcreteBuffer(256, 100)
+            solvcon.ConcreteBuffer(256, 100)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 128"  # noqa E501
         ):
-            modmesh.ConcreteBuffer(1024, 128)
+            solvcon.ConcreteBuffer(1024, 128)
 
     def test_alignment_size_validation(self):
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::allocate: size .* must be a multiple of alignment 64"  # noqa E501
         ):
-            modmesh.ConcreteBuffer(5, 64)
+            solvcon.ConcreteBuffer(5, 64)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::allocate: size .* must be a multiple of alignment 16"  # noqa E501
         ):
-            modmesh.ConcreteBuffer(100, 16)
+            solvcon.ConcreteBuffer(100, 16)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::allocate: size .* must be a multiple of alignment 32"  # noqa E501
         ):
-            modmesh.ConcreteBuffer(200, 32)
+            solvcon.ConcreteBuffer(200, 32)
 
     def test_alignment_with_zero_size(self):
-        buffer = modmesh.ConcreteBuffer(0, 0)
+        buffer = solvcon.ConcreteBuffer(0, 0)
         self.assertEqual(0, buffer.alignment)
         self.assertEqual(0, buffer.nbytes)
 
-        buffer = modmesh.ConcreteBuffer(0, 16)
+        buffer = solvcon.ConcreteBuffer(0, 16)
         self.assertEqual(16, buffer.alignment)
         self.assertEqual(0, buffer.nbytes)
 
     def test_alignment_with_ndarray(self):
-        buffer = modmesh.ConcreteBuffer(256, 16)
+        buffer = solvcon.ConcreteBuffer(256, 16)
         self.assertEqual(16, buffer.alignment)
 
         ndarr = buffer.ndarray
@@ -150,7 +150,7 @@ class ConcreteBufferAlignmentTC(unittest.TestCase):
         self.assertEqual(42, ndarr[0])
 
     def test_alignment_with_clone(self):
-        buffer = modmesh.ConcreteBuffer(256, 32)
+        buffer = solvcon.ConcreteBuffer(256, 32)
         for it in range(len(buffer)):
             buffer[it] = it % 128
 
@@ -167,11 +167,11 @@ class ConcreteBufferAlignmentTC(unittest.TestCase):
 class BufferExpanderBasicTC(unittest.TestCase):
 
     def test_BufferExpander(self):
-        ep = modmesh.BufferExpander(10)
+        ep = solvcon.BufferExpander(10)
         self.assertEqual(10, ep.capacity)
         self.assertEqual(10, len(ep))
 
-        ep = modmesh.BufferExpander()
+        ep = solvcon.BufferExpander()
         self.assertEqual(0, ep.capacity)
         self.assertEqual(0, len(ep))
 
@@ -218,11 +218,11 @@ class BufferExpanderBasicTC(unittest.TestCase):
         self.assertEqual(list(i + 10 for i in range(10)), list(ep))
 
     def test_BufferExpanderFromConcreteBuffer(self):
-        buf = modmesh.ConcreteBuffer(10)
+        buf = solvcon.ConcreteBuffer(10)
         for it in range(len(buf)):
             buf[it] = it
 
-        ep = modmesh.BufferExpander(buf)
+        ep = solvcon.BufferExpander(buf)
         self.assertEqual(10, ep.capacity)
         self.assertEqual(10, len(ep))
         for it in range(len(ep)):
@@ -236,7 +236,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
     def test_SimpleArray(self):
 
-        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        sarr = solvcon.SimpleArrayFloat64((2, 3, 4))
         ndarr = np.array(sarr, copy=False)
 
         self.assertEqual(2 * 3 * 4 * 8, sarr.nbytes)
@@ -282,7 +282,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual((2, 2, 2, 3), sarr.reshape((2, 2, 2, 3)).shape)
 
     def test_SimpleArray_clone(self):
-        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        sarr = solvcon.SimpleArrayFloat64((2, 3, 4))
         sarr.fill(2.0)
         sarr_ref = sarr
         sarr_clone = sarr.clone()
@@ -313,19 +313,19 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ndarr = ndarr.reshape((2, 3, 4, 5))
         ndarrT = ndarr.transpose()
 
-        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr = solvcon.SimpleArrayFloat64(array=ndarr)
         sarr2 = sarr.transpose()
         check_equal(sarr, ndarrT)
         check_equal(sarr2, ndarrT)
         self.assertEqual(memoryview(sarr), memoryview(sarr2))
 
-        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr = solvcon.SimpleArrayFloat64(array=ndarr)
         sarr2 = sarr.transpose(inplace=False)
         check_equal(sarr, ndarr)
         check_equal(sarr2, ndarrT)
         self.assertNotEqual(memoryview(sarr), memoryview(sarr2))
 
-        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr = solvcon.SimpleArrayFloat64(array=ndarr)
         sarr2 = sarr.T
         check_equal(sarr, ndarr)
         check_equal(sarr2, ndarrT)
@@ -333,13 +333,13 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
         ndarrT = ndarr.transpose(0, 3, 2, 1)
 
-        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr = solvcon.SimpleArrayFloat64(array=ndarr)
         sarr2 = sarr.transpose((0, 3, 2, 1))
         check_equal(sarr, ndarrT)
         check_equal(sarr2, ndarrT)
         self.assertEqual(memoryview(sarr), memoryview(sarr2))
 
-        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr = solvcon.SimpleArrayFloat64(array=ndarr)
         sarr2 = sarr.transpose((0, 3, 2, 1), inplace=False)
         check_equal(sarr, ndarr)
         check_equal(sarr2, ndarrT)
@@ -350,7 +350,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         # square / non-square; C-contiguous / F-contiguous input.
 
         def make_sarr(ndarr):
-            return modmesh.SimpleArrayFloat64(array=ndarr.copy())
+            return solvcon.SimpleArrayFloat64(array=ndarr.copy())
 
         def values_equal(sarr, ref):
             np.testing.assert_array_equal(np.array(sarr, copy=False), ref)
@@ -441,7 +441,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
     def test_SimpleArray_ghost_1d(self):
 
-        sarr = modmesh.SimpleArrayFloat64(4 * 3 * 2)
+        sarr = solvcon.SimpleArrayFloat64(4 * 3 * 2)
         ndarr = np.array(sarr, copy=False)
         ndarr[:] = np.arange(24)  # initialize contents
 
@@ -461,7 +461,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual(0, sarr[-34])
 
     def test_SimpleArray_ghost_1d_out_of_range(self):
-        sarr = modmesh.SimpleArrayFloat64(4 * 3 * 2)
+        sarr = solvcon.SimpleArrayFloat64(4 * 3 * 2)
         sarr.nghost = 10
 
         with self.assertRaisesRegex(
@@ -489,7 +489,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
             sarr[14] = 1
 
     def test_SimpleArray_ghost_1d_shifted_negative_index(self):
-        sarr = modmesh.SimpleArrayInt8(8)
+        sarr = solvcon.SimpleArrayInt8(8)
         sarr.ndarray[:] = np.arange(8, dtype='int8')
         sarr.nghost = 3
 
@@ -505,7 +505,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
     def test_SimpleArray_ghost_1d_strided(self):
         base = np.arange(12, dtype='float64')
         strided = base[::2]
-        sarr = modmesh.SimpleArrayFloat64(array=strided)
+        sarr = solvcon.SimpleArrayFloat64(array=strided)
         sarr.nghost = 2
 
         self.assertEqual(2, sarr.stride[0])
@@ -519,19 +519,19 @@ class SimpleArrayBasicTC(unittest.TestCase):
                 IndexError,
                 r"SimpleArray: cannot set nghost 11 > shape\(0\) 10"
         ):
-            sarr = modmesh.SimpleArrayInt8(10)
+            sarr = solvcon.SimpleArrayInt8(10)
             sarr.nghost = 11
 
         with self.assertRaisesRegex(
                 IndexError,
                 r"SimpleArray: cannot set nghost 1 > 0 to an empty array"
         ):
-            sarr = modmesh.SimpleArrayInt8(())
+            sarr = solvcon.SimpleArrayInt8(())
             sarr.nghost = 1
 
     def test_SimpleArray_ghost_md(self):
 
-        sarr = modmesh.SimpleArrayFloat64((4, 3, 2))
+        sarr = solvcon.SimpleArrayFloat64((4, 3, 2))
         ndarr = np.array(sarr, copy=False)
         np.ravel(ndarr)[:] = np.arange(24)  # initialize contents
 
@@ -558,7 +558,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual(110, ndarr[1, 2, 1])
 
     def test_SimpleArray_ghost_md_out_of_range(self):
-        sarr = modmesh.SimpleArrayFloat64((4, 3, 2))
+        sarr = solvcon.SimpleArrayFloat64((4, 3, 2))
         sarr.nghost = 1
 
         with self.assertRaisesRegex(
@@ -628,7 +628,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
             sarr[0, 2, 2] = 1
 
     def test_SimpleArray_negative_index_1d(self):
-        sarr = modmesh.SimpleArrayFloat64(4 * 3 * 2)
+        sarr = solvcon.SimpleArrayFloat64(4 * 3 * 2)
         ndarr = np.array(sarr, copy=False)
         ndarr[:] = np.arange(24)  # initialize contents
 
@@ -647,7 +647,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
     def test_SimpleArray_negative_index_1d_strided(self):
         base = np.arange(12, dtype='float64')
         strided = base[::2]
-        sarr = modmesh.SimpleArrayFloat64(array=strided)
+        sarr = solvcon.SimpleArrayFloat64(array=strided)
 
         self.assertEqual(2, sarr.stride[0])
         self.assertEqual(4, sarr[2])
@@ -656,7 +656,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual(100, base[2])
 
     def test_SimpleArray_negative_index_md(self):
-        sarr = modmesh.SimpleArrayFloat64((4, 3, 2))
+        sarr = solvcon.SimpleArrayFloat64((4, 3, 2))
         ndarr = np.array(sarr, copy=False)
         np.ravel(ndarr)[:] = np.arange(24)  # initialize contents
 
@@ -670,7 +670,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertEqual(230, ndarr[3, 2, 1])
 
     def test_SimpleArray_scalar_index_rejects_md(self):
-        sarr = modmesh.SimpleArrayFloat64((4, 3, 2))
+        sarr = solvcon.SimpleArrayFloat64((4, 3, 2))
 
         with self.assertRaisesRegex(
                 IndexError,
@@ -689,23 +689,23 @@ class SimpleArrayBasicTC(unittest.TestCase):
                 self.assertEqual(dtype, sarr.ndarray.dtype)
 
         # Boolean.
-        _check(modmesh.SimpleArrayBool((2, 3, 4)), 24, 'bool', get=False)
-        _check(modmesh.SimpleArrayBool((2, 3, 4)), 24, 'bool_')
+        _check(solvcon.SimpleArrayBool((2, 3, 4)), 24, 'bool', get=False)
+        _check(solvcon.SimpleArrayBool((2, 3, 4)), 24, 'bool_')
 
         # Integer types.
-        _check(modmesh.SimpleArrayInt8((2, 3)), 6, 'int8')
-        _check(modmesh.SimpleArrayUint8((2, 3)), 6, 'uint8')
-        _check(modmesh.SimpleArrayInt16((3, 5)), 30, 'int16')
-        _check(modmesh.SimpleArrayUint16((3, 5)), 30, 'uint16')
-        _check(modmesh.SimpleArrayInt32(7), 28, 'int32')
-        _check(modmesh.SimpleArrayUint32(7), 28, 'uint32')
-        _check(modmesh.SimpleArrayInt64((2, 3, 4)), 2 * 3 * 4 * 8, 'int64')
-        _check(modmesh.SimpleArrayUint64((2, 3, 4)), 2 * 3 * 4 * 8, 'uint64')
+        _check(solvcon.SimpleArrayInt8((2, 3)), 6, 'int8')
+        _check(solvcon.SimpleArrayUint8((2, 3)), 6, 'uint8')
+        _check(solvcon.SimpleArrayInt16((3, 5)), 30, 'int16')
+        _check(solvcon.SimpleArrayUint16((3, 5)), 30, 'uint16')
+        _check(solvcon.SimpleArrayInt32(7), 28, 'int32')
+        _check(solvcon.SimpleArrayUint32(7), 28, 'uint32')
+        _check(solvcon.SimpleArrayInt64((2, 3, 4)), 2 * 3 * 4 * 8, 'int64')
+        _check(solvcon.SimpleArrayUint64((2, 3, 4)), 2 * 3 * 4 * 8, 'uint64')
 
         # Real-number types.
-        _check(modmesh.SimpleArrayFloat32((2, 3, 4, 5)), 2 * 3 * 4 * 5 * 4,
+        _check(solvcon.SimpleArrayFloat32((2, 3, 4, 5)), 2 * 3 * 4 * 5 * 4,
                'float32')
-        _check(modmesh.SimpleArrayFloat64((2, 3, 4, 5)), 2 * 3 * 4 * 5 * 8,
+        _check(solvcon.SimpleArrayFloat64((2, 3, 4, 5)), 2 * 3 * 4 * 5 * 8,
                'float64')
 
     def test_SimpleArray_from_ndarray(self):
@@ -713,21 +713,21 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ndarr = np.arange(24, dtype='float64').reshape((2, 3, 4))
 
         with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
-            modmesh.SimpleArrayInt8(array=ndarr)
+            solvcon.SimpleArrayInt8(array=ndarr)
         with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
-            modmesh.SimpleArrayUint64(array=ndarr)
+            solvcon.SimpleArrayUint64(array=ndarr)
         with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
-            modmesh.SimpleArrayFloat32(array=ndarr)
+            solvcon.SimpleArrayFloat32(array=ndarr)
 
-        sarr_from_py = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr_from_py = solvcon.SimpleArrayFloat64(array=ndarr)
         self.assertTrue(sarr_from_py.is_from_python)
 
-        sarr_from_cpp = modmesh.SimpleArrayFloat64(shape=(2, 3, 4))
+        sarr_from_cpp = solvcon.SimpleArrayFloat64(shape=(2, 3, 4))
         self.assertFalse(sarr_from_cpp.is_from_python)
 
         shape = (2, 3, 5, 7)
         np_sarr = np.empty(shape, dtype='float64')
-        py_sarr = modmesh.SimpleArrayFloat64(array=np_sarr)
+        py_sarr = solvcon.SimpleArrayFloat64(array=np_sarr)
         self.assertTupleEqual(shape, py_sarr.shape)
         self.assertEqual(np_sarr.nbytes, py_sarr.nbytes)
         self.assertEqual(np_sarr.size, py_sarr.size)
@@ -740,7 +740,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
                     for x in range(5):
                         np_sarr[i, j, k, x] = i * 1000 + j * 100 + k * 10 + x
 
-        py_sarr = modmesh.SimpleArrayFloat64(array=np_sarr)
+        py_sarr = solvcon.SimpleArrayFloat64(array=np_sarr)
         self.assertTupleEqual(shape, py_sarr.shape)
         self.assertEqual(np_sarr.nbytes, py_sarr.nbytes)
         self.assertEqual(np_sarr.size, py_sarr.size)
@@ -748,7 +748,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
     def test_SimpleArray_from_ndarray_content(self):
 
         ndarr = np.arange(24, dtype='float64').reshape((2, 3, 4))
-        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr = solvcon.SimpleArrayFloat64(array=ndarr)
         # Populate using ndarray interface.
         sarr.ndarray.fill(1)
         self.assertTrue((ndarr == 1).all())
@@ -760,7 +760,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         self.assertTrue((ndarr == 100).all())
 
         ndarr = np.zeros((2, 3, 4), dtype='complex128')
-        sarr = modmesh.SimpleArrayComplex128(array=ndarr)
+        sarr = solvcon.SimpleArrayComplex128(array=ndarr)
         # Reassign the numpy array to ensure data is not shared.
         ndarr = np.zeros((2, 3, 4), dtype='complex128')
 
@@ -779,7 +779,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
     def test_SimpleArray_from_ndarray_slice(self):
         ndarr = np.arange(1000, dtype='float64').reshape((10, 10, 10))
         parr = ndarr[1:7:3, 6:2:-1, 3:9]
-        sarr = modmesh.SimpleArrayFloat64(array=ndarr[1:7:3, 6:2:-1, 3:9])
+        sarr = solvcon.SimpleArrayFloat64(array=ndarr[1:7:3, 6:2:-1, 3:9])
 
         for i in range(2):
             for j in range(4):
@@ -792,7 +792,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ndarr = np.arange(350, dtype='float64').reshape((5, 7, 10))
         # The following array is F contiguous.
         parr = ndarr[2:4].T
-        sarr = modmesh.SimpleArrayFloat64(array=ndarr[2:4].T)
+        sarr = solvcon.SimpleArrayFloat64(array=ndarr[2:4].T)
 
         for i in range(10):
             for j in range(7):
@@ -800,7 +800,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
                     self.assertEqual(parr[i, j, k], sarr[i, j, k])
 
     def test_SimpleArray_broadcast_ellipsis_shape(self):
-        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        sarr = solvcon.SimpleArrayFloat64((2, 3, 4))
         ndarr = np.arange(2 * 3 * 4, dtype='float64').reshape((2, 3, 4))
         sarr[...] = ndarr[...]
         v = 0
@@ -831,7 +831,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         N = 13
         G = 3
 
-        sarr = modmesh.SimpleArrayFloat64(N)
+        sarr = solvcon.SimpleArrayFloat64(N)
         ndarr = np.arange(N, dtype='float64')
         sarr.nghost = G
 
@@ -846,7 +846,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         N = 5
         G = 2
 
-        sarr = modmesh.SimpleArrayFloat64((5, 3, 4))
+        sarr = solvcon.SimpleArrayFloat64((5, 3, 4))
         ndarr = np.arange(5 * 3 * 4, dtype='float64').reshape((5, 3, 4))
         sarr.nghost = G
 
@@ -861,7 +861,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
     def test_SimpleArray_broadcast_ellipsis_stride(self):
 
-        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        sarr = solvcon.SimpleArrayFloat64((2, 3, 4))
         ndarr = np.arange(
             (4 * 2) * (3 * 3) * (2 * 4), dtype='float64').reshape(
             (4 * 2, 3 * 3, 2 * 4))
@@ -880,7 +880,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
                     self.assertEqual(stride_arr[i, j, k], sarr[i, j, k])
 
     def test_SimpleArray_broadcast_ellipsis_dtype(self):
-        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        sarr = solvcon.SimpleArrayFloat64((2, 3, 4))
         ndarr = np.arange(2 * 3 * 4, dtype='int32').reshape((2, 3, 4))
         sarr[...] = ndarr[...]
         v = 0
@@ -890,7 +890,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
                     self.assertEqual(v, sarr[i, j, k])
                     v += 1
 
-        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        sarr = solvcon.SimpleArrayFloat64((2, 3, 4))
         ndarr = np.arange(2 * 3 * 4, dtype='uint8').reshape((2, 3, 4))
         sarr[...] = ndarr[...]
         v = 0
@@ -900,7 +900,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
                     self.assertEqual(v, sarr[i, j, k])
                     v += 1
 
-        sarr = modmesh.SimpleArrayFloat64((2, 3, 4))
+        sarr = solvcon.SimpleArrayFloat64((2, 3, 4))
         ndarr = np.arange(2 * 3 * 4, dtype='float32').reshape((2, 3, 4))
         sarr[...] = ndarr[...]
         v = 0
@@ -935,7 +935,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
                                     ndarr[x1, x2, x3, x4, x5],
                                     sarr[x1, x2, x3, x4, x5])
 
-        sarr = modmesh.SimpleArrayFloat64((2, 2, 3, 4, 5))
+        sarr = solvcon.SimpleArrayFloat64((2, 2, 3, 4, 5))
         ndarr = np.arange(2 * 2 * 3 * 4 * 5, dtype='float64').reshape(
             (2, 2, 3, 4, 5))
         init(sarr)
@@ -943,7 +943,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ndarr[::2, ...] = ndarr_input[...]
         check(sarr, ndarr)
 
-        sarr = modmesh.SimpleArrayFloat64((2, 4, 3, 4, 5))
+        sarr = solvcon.SimpleArrayFloat64((2, 4, 3, 4, 5))
         ndarr = np.arange(2 * 4 * 3 * 4 * 5, dtype='float64').reshape(
             (2, 4, 3, 4, 5))
         init(sarr)
@@ -951,7 +951,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ndarr[::2, ::2, ...] = ndarr_input[...]
         check(sarr, ndarr)
 
-        sarr = modmesh.SimpleArrayFloat64((2, 2, 3, 8, 10))
+        sarr = solvcon.SimpleArrayFloat64((2, 2, 3, 8, 10))
         ndarr = np.arange(
             2 * 2 * 3 * 8 * 10, dtype='float64').reshape((2, 2, 3, 8, 10))
         init(sarr)
@@ -959,7 +959,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ndarr[::2, ..., ::2, ::2] = ndarr_input[...]
         check(sarr, ndarr)
 
-        sarr = modmesh.SimpleArrayFloat64((1, 2, 3, 8, 10))
+        sarr = solvcon.SimpleArrayFloat64((1, 2, 3, 8, 10))
         ndarr = np.arange(
             1 * 2 * 3 * 8 * 10, dtype='float64').reshape((1, 2, 3, 8, 10))
         init(sarr)
@@ -967,7 +967,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ndarr[..., ::2, ::2] = ndarr_input[...]
         check(sarr, ndarr)
 
-        sarr = modmesh.SimpleArrayFloat64((2, 4, 6, 8, 10))
+        sarr = solvcon.SimpleArrayFloat64((2, 4, 6, 8, 10))
         ndarr = np.arange(
             2 * 4 * 6 * 8 * 10, dtype='float64').reshape((2, 4, 6, 8, 10))
         init(sarr)
@@ -975,7 +975,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ndarr[::2, ::2, ::2, ::2, ::2] = ndarr_input[...]
         check(sarr, ndarr)
 
-        sarr = modmesh.SimpleArrayFloat64((2, 6, 3, 4, 5))
+        sarr = solvcon.SimpleArrayFloat64((2, 6, 3, 4, 5))
         ndarr = np.arange(
             2 * 6 * 3 * 4 * 5, dtype='float64').reshape((2, 6, 3, 4, 5))
         init(sarr)
@@ -985,11 +985,11 @@ class SimpleArrayBasicTC(unittest.TestCase):
 
     def test_SimpleArray_broadcast_slice_complex_ndarray(self):
         ndarr = np.zeros((2, 3), dtype='complex128')
-        sarr = modmesh.SimpleArrayComplex128(array=ndarr)
+        sarr = solvcon.SimpleArrayComplex128(array=ndarr)
 
         sarr[0, 1] = 1 + 2j
         ndarr[0, 1] = 1 + 2j
-        sarr[1, 2] = modmesh.complex128(3, 4)
+        sarr[1, 2] = solvcon.complex128(3, 4)
         ndarr[1, 2] = 3 + 4j
         np.testing.assert_array_equal(ndarr, sarr.ndarray)
 
@@ -1001,7 +1001,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
     def test_SimpleArray_broadcast_slice_shape(self):
         ndarr = np.arange(2 * 3 * 4, dtype='float64').reshape((2, 3, 4))
 
-        sarr = modmesh.SimpleArrayFloat64((4, 6, 8))
+        sarr = solvcon.SimpleArrayFloat64((4, 6, 8))
         with self.assertRaisesRegex(
                 RuntimeError,
                 r"Broadcast input array from shape\(2, 3, 4\) "
@@ -1009,7 +1009,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         ):
             sarr[::2, ::3, ::4] = ndarr[...]
 
-        sarr = modmesh.SimpleArrayFloat64((4, 6, 8))
+        sarr = solvcon.SimpleArrayFloat64((4, 6, 8))
         with self.assertRaisesRegex(
                 RuntimeError,
                 r"Broadcast input array from shape\(2, 3, 4\) "
@@ -1023,7 +1023,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         G = 3
         STEP = 3
 
-        sarr = modmesh.SimpleArrayFloat64(N)
+        sarr = solvcon.SimpleArrayFloat64(N)
         ndarr = np.arange(math.ceil(N / STEP), dtype='float64')
         ndarr2 = np.arange(N, dtype='float64')
         sarr.nghost = G
@@ -1042,7 +1042,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         G = 2
         STEP = 2
 
-        sarr = modmesh.SimpleArrayFloat64((N, 3, 4))
+        sarr = solvcon.SimpleArrayFloat64((N, 3, 4))
         ndarr = np.arange(math.ceil(N / STEP) * 3 * 4, dtype='float64') \
             .reshape((math.ceil(N / STEP), 3, 4))
         ndarr2 = np.arange(N * 3 * 4, dtype='float64').reshape((N, 3, 4))
@@ -1057,53 +1057,53 @@ class SimpleArrayBasicTC(unittest.TestCase):
                     self.assertEqual(ndarr2[i, j, k], sarr[i - G, j, k])
 
     def test_SimpleArray_broadcast_from_list_list(self):
-        sarr = modmesh.SimpleArrayFloat64((2, 3))
+        sarr = solvcon.SimpleArrayFloat64((2, 3))
         sarr[:, :] = [[1, 2, 3], [4, 5, 6]]
         for i in range(2):
             for j in range(3):
                 self.assertEqual(sarr[i, j], i * 3 + j + 1)
 
-        sarr = modmesh.SimpleArrayFloat64((2, 3))
+        sarr = solvcon.SimpleArrayFloat64((2, 3))
         sarr[:1, :2] = [[1, 2]]
         self.assertEqual(sarr[0, 0], 1)
         self.assertEqual(sarr[0, 1], 2)
 
     def test_SimpleArray_broadcast_from_tuple_list(self):
-        sarr = modmesh.SimpleArrayFloat64((2, 3))
+        sarr = solvcon.SimpleArrayFloat64((2, 3))
         sarr[:, :] = [(1, 2, 3), (4, 5, 6)]
         for i in range(2):
             for j in range(3):
                 self.assertEqual(sarr[i, j], i * 3 + j + 1)
 
-        sarr = modmesh.SimpleArrayFloat64((2, 3))
+        sarr = solvcon.SimpleArrayFloat64((2, 3))
         sarr[:1, :2] = [(1, 2)]
         self.assertEqual(sarr[0, 0], 1)
         self.assertEqual(sarr[0, 1], 2)
 
     def test_SimpleArray_broadcast_from_tuple_tuple(self):
-        sarr = modmesh.SimpleArrayFloat64((2, 3))
+        sarr = solvcon.SimpleArrayFloat64((2, 3))
         sarr[:, :] = ((1, 2, 3), (4, 5, 6))
         for i in range(2):
             for j in range(3):
                 self.assertEqual(sarr[i, j], i * 3 + j + 1)
 
-        sarr = modmesh.SimpleArrayFloat64((2, 3))
+        sarr = solvcon.SimpleArrayFloat64((2, 3))
         sarr[:1, :2] = ((1, 2),)
         self.assertEqual(sarr[0, 0], 1)
         self.assertEqual(sarr[0, 1], 2)
 
     def test_SimpleArray_SimpleArrayPlex_type_switch(self):
-        arrayplex_int32 = modmesh.SimpleArray((2, 3, 4), dtype="int32")
+        arrayplex_int32 = solvcon.SimpleArray((2, 3, 4), dtype="int32")
 
         # from plex to typed
         array_int32 = arrayplex_int32.typed
         self.assertEqual(
-            str(type(array_int32)), "<class '_modmesh.SimpleArrayInt32'>")
+            str(type(array_int32)), "<class '_solvcon.SimpleArrayInt32'>")
 
         # from typed to plex
         arrayplex_int32_2 = array_int32.plex
         self.assertEqual(
-            str(type(arrayplex_int32_2)), "<class '_modmesh.SimpleArray'>")
+            str(type(arrayplex_int32_2)), "<class '_solvcon.SimpleArray'>")
 
     def test_sort(self):
         # Note: tests on array with ghost indices should be added
@@ -1120,10 +1120,10 @@ class SimpleArrayBasicTC(unittest.TestCase):
         def _check(arr, use_float=False):
             if use_float:
                 narr = np.array(arr, dtype='float64')
-                sarr = modmesh.SimpleArrayFloat64(array=narr)
+                sarr = solvcon.SimpleArrayFloat64(array=narr)
             else:
                 narr = np.array(arr, dtype='int32')
-                sarr = modmesh.SimpleArrayInt32(array=narr)
+                sarr = solvcon.SimpleArrayInt32(array=narr)
 
             args = sarr.argsort()
             for i in range(1, len(args)):
@@ -1146,12 +1146,12 @@ class SimpleArrayBasicTC(unittest.TestCase):
     def test_take_along_axis(self):
         data = [1, 5, 10, 2, 6, 9, 7, 8, 4, 3]
         narr = np.array(data, dtype='int32')
-        data_arr = modmesh.SimpleArrayInt32(array=narr)
+        data_arr = solvcon.SimpleArrayInt32(array=narr)
 
         # test 1-D indices
         idx = [0, 2, 4, 6, 1, 3, 5, 7]
         narr = np.array(idx, dtype='uint64')
-        idx_arr = modmesh.SimpleArrayUint64(array=narr)
+        idx_arr = solvcon.SimpleArrayUint64(array=narr)
 
         ret_arr = data_arr.take_along_axis(idx_arr)
         for i in range(len(idx)):
@@ -1164,7 +1164,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         # test 2-D indices
         idx = [[0, 2, 4, 6], [1, 3, 5, 7]]
         narr = np.array(idx, dtype='uint64')
-        idx_arr = modmesh.SimpleArrayUint64(array=narr)
+        idx_arr = solvcon.SimpleArrayUint64(array=narr)
 
         ret_arr = data_arr.take_along_axis(idx_arr)
         for i in range(len(idx)):
@@ -1179,7 +1179,7 @@ class SimpleArrayBasicTC(unittest.TestCase):
         # test out-of-range index
         idx = [[0, 1], [2, 3], [4, 20]]
         narr = np.array(idx, dtype='uint64')
-        idx_arr = modmesh.SimpleArrayUint64(array=narr)
+        idx_arr = solvcon.SimpleArrayUint64(array=narr)
 
         with self.assertRaisesRegex(
             IndexError,
@@ -1204,79 +1204,79 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
     """  # noqa: E501
 
     def test_default_alignment(self):
-        array = modmesh.SimpleArrayFloat64((2, 3, 4))  # default alignment
+        array = solvcon.SimpleArrayFloat64((2, 3, 4))  # default alignment
         self.assertEqual(0, array.alignment)
         self.assertEqual((2, 3, 4), array.shape)
 
     def test_alignment_creation(self):
-        array = modmesh.SimpleArrayFloat64((4, 4), 16)
+        array = solvcon.SimpleArrayFloat64((4, 4), 16)
         self.assertEqual(16, array.alignment)
         self.assertEqual((4, 4), array.shape)
 
-        array = modmesh.SimpleArrayFloat64((8, 8), 32)
+        array = solvcon.SimpleArrayFloat64((8, 8), 32)
         self.assertEqual(32, array.alignment)
         self.assertEqual((8, 8), array.shape)
 
-        array = modmesh.SimpleArrayFloat64((16, 8), 64)
+        array = solvcon.SimpleArrayFloat64((16, 8), 64)
         self.assertEqual(64, array.alignment)
         self.assertEqual((16, 8), array.shape)
 
     def test_alignment_with_value_initialization(self):
         # default alignment 0
-        array = modmesh.SimpleArrayFloat64((4, 4), 3.14159)
+        array = solvcon.SimpleArrayFloat64((4, 4), 3.14159)
         self.assertEqual(0, array.alignment)
         self.assertEqual((4, 4), array.shape)
         self.assertEqual(3.14159, array[0, 0])
 
         # 16-byte alignment
-        array = modmesh.SimpleArrayFloat64((4, 4), 2.71828, 16)
+        array = solvcon.SimpleArrayFloat64((4, 4), 2.71828, 16)
         self.assertEqual(16, array.alignment)
         self.assertEqual((4, 4), array.shape)
         self.assertEqual(2.71828, array[0, 0])
 
     def test_alignment_validation_valid_values(self):
-        modmesh.SimpleArrayFloat64((4, 4), 16)
-        modmesh.SimpleArrayFloat64((8, 8), 32)
-        modmesh.SimpleArrayFloat64((16, 8), 64)
+        solvcon.SimpleArrayFloat64((4, 4), 16)
+        solvcon.SimpleArrayFloat64((8, 8), 32)
+        solvcon.SimpleArrayFloat64((16, 8), 64)
 
     def test_alignment_validation_invalid_values(self):
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 17"  # noqa E501
         ):
-            modmesh.SimpleArrayFloat64((4, 4), 17)
+            solvcon.SimpleArrayFloat64((4, 4), 17)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 100"  # noqa E501
         ):
-            modmesh.SimpleArrayFloat64((4, 4), 100)
+            solvcon.SimpleArrayFloat64((4, 4), 100)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::ConcreteBuffer: alignment must be 0, 16, 32, or 64, but got 128"  # noqa E501
         ):
-            modmesh.SimpleArrayFloat64((16, 16), 128)
+            solvcon.SimpleArrayFloat64((16, 16), 128)
 
     def test_alignment_size_validation(self):
-        modmesh.SimpleArrayFloat64((2, 2), 32)  # 2*2*8=32, multiple of 32
-        modmesh.SimpleArrayFloat64((4, 4), 64)  # 4*4*8=128, multiple of 64
+        solvcon.SimpleArrayFloat64((2, 2), 32)  # 2*2*8=32, multiple of 32
+        solvcon.SimpleArrayFloat64((4, 4), 64)  # 4*4*8=128, multiple of 64
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::allocate: size .* must be a multiple of alignment 16"  # noqa E501
         ):
-            modmesh.SimpleArrayFloat64((5, 1), 16)
+            solvcon.SimpleArrayFloat64((5, 1), 16)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::allocate: size .* must be a multiple of alignment 32"  # noqa E501
         ):
-            modmesh.SimpleArrayFloat64((3, 5), 32)
+            solvcon.SimpleArrayFloat64((3, 5), 32)
 
     def test_alignment_with_operations(self):
-        array1 = modmesh.SimpleArrayFloat64((4, 4), 16)
-        array2 = modmesh.SimpleArrayFloat64((4, 4), 32)
+        array1 = solvcon.SimpleArrayFloat64((4, 4), 16)
+        array2 = solvcon.SimpleArrayFloat64((4, 4), 32)
 
         self.assertEqual(16, array1.alignment)
         self.assertEqual(32, array2.alignment)
@@ -1291,7 +1291,7 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
         self.assertEqual(10.0 * 16, array2.sum())
 
     def test_alignment_with_ndarray_conversion(self):
-        array = modmesh.SimpleArrayFloat64((4, 4), 16)
+        array = solvcon.SimpleArrayFloat64((4, 4), 16)
         self.assertEqual(16, array.alignment)
 
         ndarr = np.array(array, copy=False)
@@ -1302,7 +1302,7 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
         self.assertEqual(42.0, ndarr[0, 0])
 
     def test_alignment_with_clone(self):
-        array = modmesh.SimpleArrayFloat64((4, 4), 3.14, 32)
+        array = solvcon.SimpleArrayFloat64((4, 4), 3.14, 32)
         self.assertEqual(32, array.alignment)
         self.assertEqual(3.14, array[0, 0])
 
@@ -1316,7 +1316,7 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
         self.assertEqual(3.14, cloned[0, 0])
 
     def test_alignment_int32_array(self):
-        array = modmesh.SimpleArrayInt32((8, 8), 16)
+        array = solvcon.SimpleArrayInt32((8, 8), 16)
         self.assertEqual(16, array.alignment)
         self.assertEqual((8, 8), array.shape)
 
@@ -1325,7 +1325,7 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
         self.assertEqual(42 * 64, array.sum())
 
     def test_alignment_uint64_array(self):
-        array = modmesh.SimpleArrayUint64((4, 8), 32)
+        array = solvcon.SimpleArrayUint64((4, 8), 32)
         self.assertEqual(32, array.alignment)
         self.assertEqual((4, 8), array.shape)
 
@@ -1334,15 +1334,15 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
         self.assertEqual(100 * 32, array.sum())
 
     def test_alignment_with_different_shapes(self):
-        array1d = modmesh.SimpleArrayFloat64((32,), 16)
+        array1d = solvcon.SimpleArrayFloat64((32,), 16)
         self.assertEqual(16, array1d.alignment)
         self.assertEqual((32,), array1d.shape)
 
-        array2d = modmesh.SimpleArrayFloat64((4, 8), 32)
+        array2d = solvcon.SimpleArrayFloat64((4, 8), 32)
         self.assertEqual(32, array2d.alignment)
         self.assertEqual((4, 8), array2d.shape)
 
-        array3d = modmesh.SimpleArrayFloat64((2, 4, 4), 64)
+        array3d = solvcon.SimpleArrayFloat64((2, 4, 4), 64)
         self.assertEqual(64, array3d.alignment)
         self.assertEqual((2, 4, 4), array3d.shape)
 
@@ -1351,8 +1351,8 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
         alignments = [16, 32, 64]
 
         for alignment in alignments:
-            arr1 = modmesh.SimpleArrayFloat64((size,), alignment)
-            arr2 = modmesh.SimpleArrayFloat64((size,), alignment)
+            arr1 = solvcon.SimpleArrayFloat64((size,), alignment)
+            arr2 = solvcon.SimpleArrayFloat64((size,), alignment)
 
             self.assertEqual(alignment, arr1.alignment)
             self.assertEqual(alignment, arr2.alignment)
@@ -1389,8 +1389,8 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
         alignments = [16, 32, 64]
 
         for alignment in alignments:
-            array1_2d = modmesh.SimpleArrayFloat64((4, 8), alignment)
-            array2_2d = modmesh.SimpleArrayFloat64((4, 8), alignment)
+            array1_2d = solvcon.SimpleArrayFloat64((4, 8), alignment)
+            array2_2d = solvcon.SimpleArrayFloat64((4, 8), alignment)
 
             self.assertEqual(alignment, array1_2d.alignment)
             self.assertEqual(alignment, array2_2d.alignment)
@@ -1439,8 +1439,8 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
                         expected = value * 3.0 / (value * 2.0)
                         self.assertAlmostEqual(expected, result_div_2d[i, j])
 
-            array1_3d = modmesh.SimpleArrayFloat64((2, 4, 4), alignment)
-            array2_3d = modmesh.SimpleArrayFloat64((2, 4, 4), alignment)
+            array1_3d = solvcon.SimpleArrayFloat64((2, 4, 4), alignment)
+            array2_3d = solvcon.SimpleArrayFloat64((2, 4, 4), alignment)
 
             self.assertEqual(alignment, array1_3d.alignment)
             self.assertEqual(alignment, array2_3d.alignment)
@@ -1503,42 +1503,42 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
                 ValueError,
                 "ConcreteBuffer::allocate: size .* must be a multiple of alignment 16"  # noqa E501
         ):
-            modmesh.SimpleArrayFloat64((1, 3), 16)
+            solvcon.SimpleArrayFloat64((1, 3), 16)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::allocate: size .* must be a multiple of alignment 32"  # noqa E501
         ):
-            modmesh.SimpleArrayFloat64((1, 3), 32)
+            solvcon.SimpleArrayFloat64((1, 3), 32)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::allocate: size .* must be a multiple of alignment 64"  # noqa E501
         ):
-            modmesh.SimpleArrayFloat64((3, 3), 64)
+            solvcon.SimpleArrayFloat64((3, 3), 64)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::allocate: size .* must be a multiple of alignment 16"  # noqa E501
         ):
-            modmesh.SimpleArrayFloat64((1, 1, 1), 16)
+            solvcon.SimpleArrayFloat64((1, 1, 1), 16)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::allocate: size .* must be a multiple of alignment 32"  # noqa E501
         ):
-            modmesh.SimpleArrayFloat64((1, 1, 1), 32)
+            solvcon.SimpleArrayFloat64((1, 1, 1), 32)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::allocate: size .* must be a multiple of alignment 64"  # noqa E501
         ):
-            modmesh.SimpleArrayFloat64((2, 3, 5), 64)
+            solvcon.SimpleArrayFloat64((2, 3, 5), 64)
 
     def test_alignment_with_unaligned_rows(self):
         # 2D arrays that row is not aligned
-        array1_2d = modmesh.SimpleArrayFloat64((2, 3), 16)
-        array2_2d = modmesh.SimpleArrayFloat64((2, 3), 16)
+        array1_2d = solvcon.SimpleArrayFloat64((2, 3), 16)
+        array2_2d = solvcon.SimpleArrayFloat64((2, 3), 16)
 
         self.assertEqual(16, array1_2d.alignment)
         self.assertEqual(16, array2_2d.alignment)
@@ -1562,8 +1562,8 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
                 self.assertAlmostEqual(value * value * 6.0, result_mul[i, j])
 
         # Repeat with 3D data that the innermost dimension is unaligned.
-        array1_3d = modmesh.SimpleArrayFloat64((2, 2, 2), 32)
-        array2_3d = modmesh.SimpleArrayFloat64((2, 2, 2), 32)
+        array1_3d = solvcon.SimpleArrayFloat64((2, 2, 2), 32)
+        array2_3d = solvcon.SimpleArrayFloat64((2, 2, 2), 32)
 
         self.assertEqual(32, array1_3d.alignment)
         self.assertEqual(32, array2_3d.alignment)
@@ -1593,7 +1593,7 @@ class SimpleArrayAlignmentTC(unittest.TestCase):
 class SimpleArrayCalculatorsTC(unittest.TestCase):
 
     def test_minmaxsum(self):
-        sarr = modmesh.SimpleArrayFloat64(shape=(2, 4), value=10.0)
+        sarr = solvcon.SimpleArrayFloat64(shape=(2, 4), value=10.0)
 
         self.assertEqual(sarr.sum(), 10.0 * 2 * 4)
         self.assertEqual(sarr.min(), 10.0)
@@ -1611,13 +1611,13 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         # 1D contiguous: exercises the straight pointer loop in
         # sum_contiguous() with no shape/stride arithmetic involved.
         nparr = np.arange(1, 101, dtype='float64')
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         self.assertEqual(sarr.sum(), np.sum(nparr))
 
         # Multi-dim C-contiguous: still a single dense block, so sum()
         # takes the contiguous path even though shape is multi-dim.
         nparr = np.arange(60, dtype='float64').reshape((3, 4, 5))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         self.assertEqual(sarr.sum(), np.sum(nparr))
 
         # Multi-dim F-contiguous: dense block but with column-major
@@ -1625,7 +1625,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         # still hits every element exactly once.
         nparr = np.asfortranarray(
             np.arange(60, dtype='float64').reshape((3, 4, 5)))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         self.assertEqual(sarr.sum(), np.sum(nparr))
 
     def test_sum_non_contiguous(self):
@@ -1634,7 +1634,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         # mean any indexing bug shifts the result.
         nparr = np.arange(625, dtype='float64').reshape((5, 5, 5, 5))
         nparr = nparr[:3:2, 1:4:2, :3:3, 3:4:2]
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         self.assertEqual(sarr.sum(), np.sum(nparr))
 
     def test_sum_empty_non_contiguous(self):
@@ -1642,29 +1642,29 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         # (0, 1, 0) is neither C- nor F-contiguous, so sum() must
         # short-circuit on n == 0 instead of falling into the strided
         # path and reading from an empty buffer.
-        sarr = modmesh.SimpleArrayFloat64(shape=(3, 4, 0), value=0.0)
+        sarr = solvcon.SimpleArrayFloat64(shape=(3, 4, 0), value=0.0)
         sarr = sarr.transpose(axis=[0, 2, 1])
         self.assertEqual(sarr.sum(), 0.0)
 
     def test_mean_empty_raises(self):
-        sarr = modmesh.SimpleArrayFloat64(shape=(0, 3), value=0.0)
+        sarr = solvcon.SimpleArrayFloat64(shape=(0, 3), value=0.0)
         with self.assertRaisesRegex(RuntimeError, "empty array"):
             sarr.mean()
 
     def test_abs(self):
-        sarr = modmesh.SimpleArrayInt64(shape=(3, 2), value=-2)
+        sarr = solvcon.SimpleArrayInt64(shape=(3, 2), value=-2)
         self.assertEqual(sarr.sum(), -2 * 3 * 2)
         sarr = sarr.abs()
         self.assertEqual(sarr.sum(), 2 * 3 * 2)
 
         # Taking absolute value of unsigned type simply copies the data.
-        sarr = modmesh.SimpleArrayInt8(shape=(3, 2), value=2)
+        sarr = solvcon.SimpleArrayInt8(shape=(3, 2), value=2)
         self.assertEqual(sarr.sum(), 2 * 3 * 2)
         sarr = sarr.abs()
         self.assertEqual(sarr.sum(), 2 * 3 * 2)
 
         # Absolute value of Boolean is special.
-        sarr = modmesh.SimpleArrayBool(shape=(3, 2), value=1)
+        sarr = solvcon.SimpleArrayBool(shape=(3, 2), value=1)
         self.assertEqual(sarr.sum(), True)
         sarr = sarr.abs()
         self.assertEqual(sarr.sum(), True)
@@ -1672,21 +1672,21 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
     def test_median(self):
         nparr = np.arange(24, dtype='float64')
         np.random.shuffle(nparr)
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.median(nparr)
         smed = sarr.median()
         self.assertEqual(npmed, smed)
 
         nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
         np.random.shuffle(nparr)
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.median(nparr)
         smed = sarr.median()
         self.assertEqual(npmed, smed)
 
         nparr = np.arange(81, dtype='float64').reshape((3, 3, 3, 3))
         np.random.shuffle(nparr)
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.median(nparr)
         smed = sarr.median()
         self.assertEqual(npmed, smed)
@@ -1696,7 +1696,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         np.random.shuffle(nparr)
         np.random.shuffle(npimg)
         nparr = nparr + 1j * npimg
-        sarr = modmesh.SimpleArrayComplex128(array=nparr)
+        sarr = solvcon.SimpleArrayComplex128(array=nparr)
         npmed = np.median(nparr)
         smed = sarr.median()
         self.assertEqual(npmed.real, smed.real)
@@ -1704,7 +1704,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
 
         # Reference: https://github.com/numpy/numpy/issues/12943
         nparr = np.array([1 + 10j, 2 + 1j, 3 + 0j, 0 + 3j], dtype='complex128')
-        sarr = modmesh.SimpleArrayComplex128(array=nparr)
+        sarr = solvcon.SimpleArrayComplex128(array=nparr)
         npmed = np.median(nparr)
         smed = sarr.median()
         self.assertEqual(npmed.real, smed.real)
@@ -1712,61 +1712,61 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
 
         nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
         nparr = nparr[::2, ::2, ::2]
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npavg = np.median(nparr)
         savg = sarr.median()
         self.assertEqual(npavg, savg)
 
         nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         sarr.nghost = 1
         self.assertEqual(np.median(nparr), sarr.median())
 
     def test_median_with_axis(self):
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.median(nparr, axis=0)
         smed = sarr.median(axis=0)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.median(nparr, axis=1)
         smed = sarr.median(axis=1)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.median(nparr, axis=2)
         smed = sarr.median(axis=2)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.median(nparr, axis=(0, 1))
         smed = sarr.median(axis=[0, 1])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.median(nparr, axis=(1, 2))
         smed = sarr.median(axis=[1, 2])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.median(nparr, axis=(0, 2))
         smed = sarr.median(axis=[0, 2])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         sarr.nghost = 1
         npmed = np.median(nparr, axis=1)
         smed = sarr.median(axis=1)
@@ -1774,7 +1774,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         sarr.nghost = 1
         npmed = np.median(nparr, axis=0)
         smed = sarr.median(axis=0)
@@ -1783,19 +1783,19 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
 
     def test_median_freq(self):
         bool_data_odd = np.array([True, False, True, False, True], dtype=bool)
-        sarr_bool_odd = modmesh.SimpleArrayBool(array=bool_data_odd)
+        sarr_bool_odd = solvcon.SimpleArrayBool(array=bool_data_odd)
         expected_bool_odd = np.median(bool_data_odd)
         result_bool_odd = sarr_bool_odd.median()
         self.assertEqual(bool(expected_bool_odd), bool(result_bool_odd))
 
         bool_data_even = np.array([True, False, True, False], dtype=bool)
-        sarr_bool_even = modmesh.SimpleArrayBool(array=bool_data_even)
+        sarr_bool_even = solvcon.SimpleArrayBool(array=bool_data_even)
         expected_bool_even = np.median(bool_data_even)
         result_bool_even = sarr_bool_even.median()
         self.assertEqual(bool(expected_bool_even), bool(result_bool_even))
 
         bool_data_all_true = np.array([True, True, True], dtype=bool)
-        sarr_bool_all_true = modmesh.SimpleArrayBool(array=bool_data_all_true)
+        sarr_bool_all_true = solvcon.SimpleArrayBool(array=bool_data_all_true)
         expected_bool_all_true = np.median(bool_data_all_true)
         result_bool_all_true = sarr_bool_all_true.median()
         self.assertEqual(bool(expected_bool_all_true),
@@ -1803,7 +1803,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
 
         bool_data_all_false = np.array([False, False, False, False],
                                        dtype=bool)
-        sarr_bool_all_false = modmesh.SimpleArrayBool(
+        sarr_bool_all_false = solvcon.SimpleArrayBool(
             array=bool_data_all_false)
         expected_bool_all_false = np.median(bool_data_all_false)
         result_bool_all_false = sarr_bool_all_false.median()
@@ -1811,19 +1811,19 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
                          bool(result_bool_all_false))
 
         uint8_data_odd = np.array([10, 5, 20, 15, 25], dtype=np.uint8)
-        sarr_uint8_odd = modmesh.SimpleArrayUint8(array=uint8_data_odd)
+        sarr_uint8_odd = solvcon.SimpleArrayUint8(array=uint8_data_odd)
         expected_uint8_odd = np.median(uint8_data_odd)
         result_uint8_odd = sarr_uint8_odd.median()
         self.assertEqual(int(expected_uint8_odd), int(result_uint8_odd))
 
         uint8_data_even = np.array([10, 5, 20, 15], dtype=np.uint8)
-        sarr_uint8_even = modmesh.SimpleArrayUint8(array=uint8_data_even)
+        sarr_uint8_even = solvcon.SimpleArrayUint8(array=uint8_data_even)
         expected_uint8_even = np.median(uint8_data_even)
         result_uint8_even = sarr_uint8_even.median()
         self.assertEqual(int(expected_uint8_even), int(result_uint8_even))
 
         uint8_data_dup_odd = np.array([0, 0, 0, 0, 0], dtype=np.uint8)
-        sarr_uint8_dup_odd = modmesh.SimpleArrayUint8(
+        sarr_uint8_dup_odd = solvcon.SimpleArrayUint8(
             array=uint8_data_dup_odd)
         expected_uint8_dup_odd = np.median(uint8_data_dup_odd)
         result_uint8_dup_odd = sarr_uint8_dup_odd.median()
@@ -1831,7 +1831,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
                          int(result_uint8_dup_odd))
 
         uint8_data_dup_even = np.array([255, 255, 255, 255], dtype=np.uint8)
-        sarr_uint8_dup_even = modmesh.SimpleArrayUint8(
+        sarr_uint8_dup_even = solvcon.SimpleArrayUint8(
             array=uint8_data_dup_even)
         expected_uint8_dup_even = np.median(uint8_data_dup_even)
         result_uint8_dup_even = sarr_uint8_dup_even.median()
@@ -1839,41 +1839,41 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
                          int(result_uint8_dup_even))
 
         int8_data_odd_pos = np.array([10, 5, 20, 15, 25], dtype=np.int8)
-        sarr_int8_odd_pos = modmesh.SimpleArrayInt8(array=int8_data_odd_pos)
+        sarr_int8_odd_pos = solvcon.SimpleArrayInt8(array=int8_data_odd_pos)
         expected_int8_odd_pos = np.median(int8_data_odd_pos)
         result_int8_odd_pos = sarr_int8_odd_pos.median()
         self.assertEqual(int(expected_int8_odd_pos),
                          int(result_int8_odd_pos))
 
         int8_data_even_pos = np.array([10, 5, 20, 15], dtype=np.int8)
-        sarr_int8_even_pos = modmesh.SimpleArrayInt8(array=int8_data_even_pos)
+        sarr_int8_even_pos = solvcon.SimpleArrayInt8(array=int8_data_even_pos)
         expected_int8_even_pos = np.median(int8_data_even_pos)
         result_int8_even_pos = sarr_int8_even_pos.median()
         self.assertEqual(int(expected_int8_even_pos),
                          int(result_int8_even_pos))
 
         int8_data_odd_neg = np.array([-10, -5, -20, -15, -25], dtype=np.int8)
-        sarr_int8_odd_neg = modmesh.SimpleArrayInt8(array=int8_data_odd_neg)
+        sarr_int8_odd_neg = solvcon.SimpleArrayInt8(array=int8_data_odd_neg)
         expected_int8_odd_neg = np.median(int8_data_odd_neg)
         result_int8_odd_neg = sarr_int8_odd_neg.median()
         self.assertEqual(int(expected_int8_odd_neg),
                          int(result_int8_odd_neg))
 
         int8_data_even_neg = np.array([-10, -5, -20, -15], dtype=np.int8)
-        sarr_int8_even_neg = modmesh.SimpleArrayInt8(array=int8_data_even_neg)
+        sarr_int8_even_neg = solvcon.SimpleArrayInt8(array=int8_data_even_neg)
         expected_int8_even_neg = np.median(int8_data_even_neg)
         result_int8_even_neg = sarr_int8_even_neg.median()
         self.assertEqual(int(expected_int8_even_neg),
                          int(result_int8_even_neg))
 
         int8_data_edge = np.array([-128, -128, -128, -128], dtype=np.int8)
-        sarr_int8_edge = modmesh.SimpleArrayInt8(array=int8_data_edge)
+        sarr_int8_edge = solvcon.SimpleArrayInt8(array=int8_data_edge)
         expected_int8_edge = np.median(int8_data_edge)
         result_int8_edge = sarr_int8_edge.median()
         self.assertEqual(int(expected_int8_edge), int(result_int8_edge))
 
         int8_data_dup_even = np.array([127, 127, 127, 127], dtype=np.int8)
-        sarr_int8_dup_even = modmesh.SimpleArrayInt8(array=int8_data_dup_even)
+        sarr_int8_dup_even = solvcon.SimpleArrayInt8(array=int8_data_dup_even)
         expected_int8_dup_even = np.median(int8_data_dup_even)
         result_int8_dup_even = sarr_int8_dup_even.median()
         self.assertEqual(int(expected_int8_dup_even),
@@ -1882,44 +1882,44 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
     def test_average(self):
         nparr = np.arange(24, dtype='float64')
         np.random.shuffle(nparr)
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npavg = np.average(nparr)
         savg = sarr.average()
         self.assertEqual(npavg, savg)
 
         nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
         np.random.shuffle(nparr)
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npavg = np.average(nparr)
         savg = sarr.average()
         self.assertEqual(npavg, savg)
 
         nparr = np.arange(81, dtype='float64').reshape((3, 3, 3, 3))
         np.random.shuffle(nparr)
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npavg = np.average(nparr)
         savg = sarr.average()
         self.assertEqual(npavg, savg)
 
         nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
         nparr = nparr[::2, ::2, ::2]
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npavg = np.average(nparr)
         savg = sarr.average()
         self.assertEqual(npavg, savg)
 
         nparr = np.array([1, 2, 3, 4, 5], dtype='float64')
         weights = np.array([0.1, 0.2, 0.3, 0.2, 0.2], dtype='float64')
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
-        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
+        sweights = solvcon.SimpleArrayFloat64(array=weights)
         npavg = np.average(nparr, weights=weights)
         savg = sarr.average(weight=sweights)
         self.assertEqual(npavg, savg)
 
         nparr = np.arange(6, dtype='float64').reshape((2, 3))
         weights = np.array([0.5, 0.3, 0.2], dtype='float64')
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
-        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
+        sweights = solvcon.SimpleArrayFloat64(array=weights)
         npavg = np.average(nparr, weights=weights, axis=1)
         savg = sarr.average(axis=1, weight=sweights)
         savg = savg.ndarray
@@ -1927,8 +1927,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
 
         nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
         weights = np.array([0.25, 0.25, 0.25, 0.25], dtype='float64')
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
-        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
+        sweights = solvcon.SimpleArrayFloat64(array=weights)
         npavg = np.average(nparr, weights=weights, axis=2)
         savg = sarr.average(axis=2, weight=sweights)
         savg = savg.ndarray
@@ -1936,15 +1936,15 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
 
         nparr = np.arange(12, dtype='float64').reshape((3, 4))
         weights = np.array([0.5, 0.3, 0.2], dtype='float64')
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
-        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
+        sweights = solvcon.SimpleArrayFloat64(array=weights)
         npavg = np.average(nparr, weights=weights, axis=0)
         savg = sarr.average(axis=0, weight=sweights)
         savg = savg.ndarray
         self.assertTrue(np.allclose(npavg, savg))
 
         nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         sarr.nghost = 1
         npavg = np.average(nparr)
         savg = sarr.average()
@@ -1952,7 +1952,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
 
         weights = np.arange(1, 4 * 3 * 2 + 1, dtype='float64')
         weights = weights.reshape((4, 3, 2))
-        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        sweights = solvcon.SimpleArrayFloat64(array=weights)
         sweights.nghost = 1
         npavg = np.average(nparr, weights=weights)
         savg = sarr.average(weight=sweights)
@@ -1960,42 +1960,42 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
 
     def test_average_with_axis(self):
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.average(nparr, axis=0)
         smed = sarr.average(axis=0)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.average(nparr, axis=1)
         smed = sarr.average(axis=1)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.average(nparr, axis=2)
         smed = sarr.average(axis=2)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.average(nparr, axis=(0, 1))
         smed = sarr.average(axis=[0, 1])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.average(nparr, axis=(1, 2))
         smed = sarr.average(axis=[1, 2])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.average(nparr, axis=(0, 2))
         smed = sarr.average(axis=[0, 2])
         smed = smed.ndarray
@@ -2003,8 +2003,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
         weights = np.array([0.1, 0.2, 0.3, 0.2, 0.2], dtype='float64')
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
-        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
+        sweights = solvcon.SimpleArrayFloat64(array=weights)
         npmed = np.average(nparr, weights=weights, axis=1)
         smed = sarr.average(axis=1, weight=sweights)
         smed = smed.ndarray
@@ -2017,8 +2017,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
             [0.25, 0.25, 0.2, 0.25, 0.25, 0.25],
             [0.25, 0.25, 0.25, 0.2, 0.25, 0.25]
         ], dtype='float64')
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
-        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
+        sweights = solvcon.SimpleArrayFloat64(array=weights)
         npmed = np.average(nparr, weights=weights, axis=(0, 2))
         smed = sarr.average(axis=[0, 2], weight=sweights)
         smed = smed.ndarray
@@ -2027,9 +2027,9 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         nparr = np.arange(60, dtype='float64').reshape((3, 4, 5))
         weights_axis0 = np.array([0.4, 0.3, 0.3], dtype='float64')
         weights_axis2 = np.array([0.2, 0.2, 0.2, 0.2, 0.2], dtype='float64')
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
-        sweights_axis0 = modmesh.SimpleArrayFloat64(array=weights_axis0)
-        sweights_axis2 = modmesh.SimpleArrayFloat64(array=weights_axis2)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
+        sweights_axis0 = solvcon.SimpleArrayFloat64(array=weights_axis0)
+        sweights_axis2 = solvcon.SimpleArrayFloat64(array=weights_axis2)
 
         npmed = np.average(nparr, weights=weights_axis0, axis=0)
         smed = sarr.average(axis=0, weight=sweights_axis0)
@@ -2043,15 +2043,15 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
 
         nparr = np.array([[1, 2], [3, 4]], dtype='float64')
         weights = np.array([0.6, 0.4], dtype='float64')
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
-        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
+        sweights = solvcon.SimpleArrayFloat64(array=weights)
         npmed = np.average(nparr, weights=weights, axis=1)
         smed = sarr.average(axis=1, weight=sweights)
         smed = smed.ndarray
         self.assertTrue(np.allclose(npmed, smed))
 
         nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         sarr.nghost = 1
         npavg = np.average(nparr, axis=0)
         savg = sarr.average(axis=0)
@@ -2059,7 +2059,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         self.assertTrue(np.array_equal(npavg, savg))
 
         weights = np.array([0.5, 0.3, 0.2], dtype='float64')
-        sweights = modmesh.SimpleArrayFloat64(array=weights)
+        sweights = solvcon.SimpleArrayFloat64(array=weights)
         npavg = np.average(nparr, weights=weights, axis=1)
         savg = sarr.average(axis=1, weight=sweights)
         savg = savg.ndarray
@@ -2068,82 +2068,82 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
     def test_mean(self):
         nparr = np.arange(24, dtype='float64')
         np.random.shuffle(nparr)
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npavg = np.mean(nparr)
         savg = sarr.mean()
         self.assertEqual(npavg, savg)
 
         nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
         np.random.shuffle(nparr)
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmean = np.mean(nparr)
         smean = sarr.mean()
         self.assertEqual(npmean, smean)
 
         nparr = np.arange(81, dtype='float64').reshape((3, 3, 3, 3))
         np.random.shuffle(nparr)
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmean = np.mean(nparr)
         smean = sarr.mean()
         self.assertEqual(npmean, smean)
 
         nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
         nparr = nparr[::2, ::2, ::2]
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmean = np.mean(nparr)
         smean = sarr.mean()
         self.assertEqual(npmean, smean)
 
         nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         sarr.nghost = 1
         self.assertEqual(np.mean(nparr), sarr.mean())
 
     def test_mean_with_axis(self):
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.mean(nparr, axis=0)
         smed = sarr.mean(axis=0)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.mean(nparr, axis=1)
         smed = sarr.mean(axis=1)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.mean(nparr, axis=2)
         smed = sarr.mean(axis=2)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.mean(nparr, axis=(0, 1))
         smed = sarr.mean(axis=[0, 1])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.mean(nparr, axis=(1, 2))
         smed = sarr.mean(axis=[1, 2])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.mean(nparr, axis=(0, 2))
         smed = sarr.mean(axis=[0, 2])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         sarr.nghost = 1
         npmean = np.mean(nparr, axis=0)
         smean = sarr.mean(axis=0)
@@ -2153,14 +2153,14 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
     def test_var(self):
         nparr = np.arange(24, dtype='float64')
         np.random.shuffle(nparr)
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npavg = np.var(nparr)
         savg = sarr.var()
         self.assertEqual(npavg, savg)
 
         nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
         np.random.shuffle(nparr)
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npvar = np.var(nparr)
         svar = sarr.var()
         self.assertEqual(npvar, svar)
@@ -2170,68 +2170,68 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         np.random.shuffle(nparr)
         np.random.shuffle(npimg)
         nparr = npimg + 1j * npimg
-        sarr = modmesh.SimpleArrayComplex128(array=nparr)
+        sarr = solvcon.SimpleArrayComplex128(array=nparr)
         npvar = np.var(nparr)
         svar = sarr.var()
         self.assertEqual(npvar, svar)
 
         nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
         nparr = nparr[::2, ::2, ::2]
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npvar = np.var(nparr)
         svar = sarr.var()
         self.assertEqual(npvar, svar)
 
         nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         sarr.nghost = 1
         self.assertEqual(np.var(nparr), sarr.var())
 
     def test_var_with_axis(self):
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.var(nparr, axis=0)
         smed = sarr.var(axis=0)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.var(nparr, axis=1)
         smed = sarr.var(axis=1)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.var(nparr, axis=2)
         smed = sarr.var(axis=2)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.var(nparr, axis=(0, 1))
         smed = sarr.var(axis=[0, 1])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.var(nparr, axis=(1, 2))
         smed = sarr.var(axis=[1, 2])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.var(nparr, axis=(0, 2))
         smed = sarr.var(axis=[0, 2])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         sarr.nghost = 1
         npvar = np.var(nparr, axis=1)
         svar = sarr.var(axis=1)
@@ -2239,7 +2239,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         self.assertTrue(np.allclose(npvar, svar))
 
         nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         sarr.nghost = 1
         npvar = np.var(nparr, axis=0)
         svar = sarr.var(axis=0)
@@ -2249,14 +2249,14 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
     def test_std(self):
         nparr = np.arange(24, dtype='float64')
         np.random.shuffle(nparr)
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npavg = np.std(nparr)
         savg = sarr.std()
         self.assertEqual(npavg, savg)
 
         nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
         np.random.shuffle(nparr)
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npstd = np.std(nparr)
         sstd = sarr.std()
         self.assertEqual(npstd, sstd)
@@ -2266,68 +2266,68 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         np.random.shuffle(nparr)
         np.random.shuffle(npimg)
         nparr = npimg + 1j * npimg
-        sarr = modmesh.SimpleArrayComplex128(array=nparr)
+        sarr = solvcon.SimpleArrayComplex128(array=nparr)
         npstd = np.std(nparr)
         sstd = sarr.std()
         self.assertEqual(npstd, sstd)
 
         nparr = np.arange(24, dtype='float64').reshape((2, 3, 4))
         nparr = nparr[::2, ::2, ::2]
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npstd = np.std(nparr)
         sstd = sarr.std()
         self.assertEqual(npstd, sstd)
 
         nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         sarr.nghost = 1
         self.assertEqual(np.std(nparr), sarr.std())
 
     def test_std_with_axis(self):
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.std(nparr, axis=0)
         smed = sarr.std(axis=0)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.std(nparr, axis=1)
         smed = sarr.std(axis=1)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.std(nparr, axis=2)
         smed = sarr.std(axis=2)
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.std(nparr, axis=(0, 1))
         smed = sarr.std(axis=[0, 1])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.std(nparr, axis=(1, 2))
         smed = sarr.std(axis=[1, 2])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(120, dtype='float64').reshape((4, 5, 6))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         npmed = np.std(nparr, axis=(0, 2))
         smed = sarr.std(axis=[0, 2])
         smed = smed.ndarray
         self.assertTrue(np.array_equal(npmed, smed))
 
         nparr = np.arange(4 * 3 * 2, dtype='float64').reshape((4, 3, 2))
-        sarr = modmesh.SimpleArrayFloat64(array=nparr)
+        sarr = solvcon.SimpleArrayFloat64(array=nparr)
         sarr.nghost = 1
         npstd = np.std(nparr, axis=0)
         sstd = sarr.std(axis=0)
@@ -2336,16 +2336,16 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
 
     def type_convertor(self, dtype):
         return {
-            'int8': modmesh.SimpleArrayInt8,
-            'int16': modmesh.SimpleArrayInt16,
-            'int32': modmesh.SimpleArrayInt32,
-            'int64': modmesh.SimpleArrayInt64,
-            'uint8': modmesh.SimpleArrayUint8,
-            'uint16': modmesh.SimpleArrayUint16,
-            'uint32': modmesh.SimpleArrayUint32,
-            'uint64': modmesh.SimpleArrayUint64,
-            'float32': modmesh.SimpleArrayFloat32,
-            'float64': modmesh.SimpleArrayFloat64,
+            'int8': solvcon.SimpleArrayInt8,
+            'int16': solvcon.SimpleArrayInt16,
+            'int32': solvcon.SimpleArrayInt32,
+            'int64': solvcon.SimpleArrayInt64,
+            'uint8': solvcon.SimpleArrayUint8,
+            'uint16': solvcon.SimpleArrayUint16,
+            'uint32': solvcon.SimpleArrayUint32,
+            'uint64': solvcon.SimpleArrayUint64,
+            'float32': solvcon.SimpleArrayFloat32,
+            'float64': solvcon.SimpleArrayFloat64,
         }[dtype]
 
     def test_add(self):
@@ -2385,8 +2385,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         res = [True, True, True, False, True, False]
         narr1 = np.array(arr1, dtype='bool')
         narr2 = np.array(arr2, dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
-        sarr2 = modmesh.SimpleArrayBool(array=narr2)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
+        sarr2 = solvcon.SimpleArrayBool(array=narr2)
         nres = np.add(narr1, narr2)
         sres = sarr1.add(sarr2)
         sarr1.iadd(sarr2)
@@ -2427,8 +2427,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
                          dtype='bool')
         narr2 = np.array([True, False, True, False, True, False, True, False],
                          dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
-        sarr2 = modmesh.SimpleArrayBool(array=narr2)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
+        sarr2 = solvcon.SimpleArrayBool(array=narr2)
         nres = np.add(narr1, narr2)
         sres = sarr1.add(sarr2)
         for i in range(len(narr1)):
@@ -2477,8 +2477,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         narr2 = np.array([[True, True, False, False],
                           [False, False, True, True],
                           [True, False, True, False]], dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
-        sarr2 = modmesh.SimpleArrayBool(array=narr2)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
+        sarr2 = solvcon.SimpleArrayBool(array=narr2)
         nres = np.add(narr1, narr2)
         sres = sarr1.add(sarr2)
         for i in range(narr1.shape[0]):
@@ -2535,8 +2535,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
                            [True, False]],
                           [[True, False],
                            [True, False]]], dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
-        sarr2 = modmesh.SimpleArrayBool(array=narr2)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
+        sarr2 = solvcon.SimpleArrayBool(array=narr2)
         nres = np.add(narr1, narr2)
         sres = sarr1.add(sarr2)
         for i in range(narr1.shape[0]):
@@ -2578,7 +2578,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         # bool
         narr1 = np.array([True, False, True, False, True, False, True, False],
                          dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
         scalar = True
         nres = np.add(narr1, scalar)
         sres = sarr1.add(scalar)
@@ -2622,7 +2622,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         narr1 = np.array([[True, False, True, False],
                           [False, True, False, True],
                           [True, True, False, False]], dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
         scalar = True
         nres = np.add(narr1, scalar)
         sres = sarr1.add(scalar)
@@ -2672,7 +2672,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
                            [False, True]],
                           [[True, True],
                            [False, False]]], dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
         scalar = True
         nres = np.add(narr1, scalar)
         sres = sarr1.add(scalar)
@@ -2721,8 +2721,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         arr2 = [True, False, True, False, True, False]
         narr1 = np.array(arr1, dtype='bool')
         narr2 = np.array(arr2, dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
-        sarr2 = modmesh.SimpleArrayBool(array=narr2)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
+        sarr2 = solvcon.SimpleArrayBool(array=narr2)
         with self.assertRaisesRegex(
             RuntimeError,
             r"SimpleArray<bool>::isub\(\): "
@@ -2769,8 +2769,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
                          dtype='bool')
         narr2 = np.array([True, False, True, False, True, False, True, False],
                          dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
-        sarr2 = modmesh.SimpleArrayBool(array=narr2)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
+        sarr2 = solvcon.SimpleArrayBool(array=narr2)
         with self.assertRaisesRegex(
             RuntimeError,
             r"SimpleArray<bool>::isub\(\): "
@@ -2824,8 +2824,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         narr2 = np.array([[True, True, False, False],
                           [False, False, True, True],
                           [True, False, True, False]], dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
-        sarr2 = modmesh.SimpleArrayBool(array=narr2)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
+        sarr2 = solvcon.SimpleArrayBool(array=narr2)
         with self.assertRaisesRegex(
             RuntimeError,
             r"SimpleArray<bool>::isub\(\): "
@@ -2885,8 +2885,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
                            [True, False]],
                           [[True, False],
                            [True, False]]], dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
-        sarr2 = modmesh.SimpleArrayBool(array=narr2)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
+        sarr2 = solvcon.SimpleArrayBool(array=narr2)
         with self.assertRaisesRegex(
             RuntimeError,
             r"SimpleArray<bool>::isub\(\): "
@@ -2929,7 +2929,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         # bool
         narr1 = np.array([True, False, True, False, True, False, True, False],
                          dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
         scalar = True
         with self.assertRaisesRegex(
             RuntimeError,
@@ -2978,7 +2978,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         narr1 = np.array([[True, False, True, False],
                           [False, True, False, True],
                           [True, True, False, False]], dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
         scalar = True
         with self.assertRaisesRegex(
             RuntimeError,
@@ -3031,7 +3031,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
                            [False, True]],
                           [[True, True],
                            [False, False]]], dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
         scalar = True
         with self.assertRaisesRegex(
             RuntimeError,
@@ -3081,8 +3081,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         res = [True, False, True, False, False, False]
         narr1 = np.array(arr1, dtype='bool')
         narr2 = np.array(arr2, dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
-        sarr2 = modmesh.SimpleArrayBool(array=narr2)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
+        sarr2 = solvcon.SimpleArrayBool(array=narr2)
         nres = np.multiply(narr2, narr1)
         sres = sarr1.mul(sarr2)
         sarr1.imul(sarr2)
@@ -3269,8 +3269,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         res = [5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0]
         narr1 = np.array(arr1, dtype='float64') / 5
         narr2 = np.array(arr2, dtype='float64') / 2
-        sarr1 = modmesh.SimpleArrayFloat64(array=narr1)
-        sarr2 = modmesh.SimpleArrayFloat64(array=narr2)
+        sarr1 = solvcon.SimpleArrayFloat64(array=narr1)
+        sarr2 = solvcon.SimpleArrayFloat64(array=narr2)
         nres = np.divide(narr2, narr1)
         sres = sarr2.div(sarr1)
         simdres = sarr2.div_simd(sarr1)
@@ -3287,8 +3287,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         res = [True, True, True, False, True, False]
         narr1 = np.array(arr1, dtype='bool')
         narr2 = np.array(arr2, dtype='bool')
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
-        sarr2 = modmesh.SimpleArrayBool(array=narr2)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
+        sarr2 = solvcon.SimpleArrayBool(array=narr2)
         with self.assertRaisesRegex(
             RuntimeError,
             r"SimpleArray<bool>::idiv\(\): "
@@ -3505,8 +3505,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
             r"SimpleArray::eq\(\): shape mismatch: "
             r"this=\(8\) other=\(3\)"
         ):
-            sarr1 = modmesh.SimpleArrayInt32(array=np.arange(8, dtype='int32'))
-            sarr2 = modmesh.SimpleArrayInt32(array=np.arange(3, dtype='int32'))
+            sarr1 = solvcon.SimpleArrayInt32(array=np.arange(8, dtype='int32'))
+            sarr2 = solvcon.SimpleArrayInt32(array=np.arange(3, dtype='int32'))
             sarr1.eq(sarr2)
 
     def test_eq_2d(self):
@@ -3631,8 +3631,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         narr1 = np.array([True, True, False, False], dtype='bool')
         narr2 = np.array([True, False, True, False], dtype='bool')
         res = [True, False, False, True]
-        sarr1 = modmesh.SimpleArrayBool(array=narr1)
-        sarr2 = modmesh.SimpleArrayBool(array=narr2)
+        sarr1 = solvcon.SimpleArrayBool(array=narr1)
+        sarr2 = solvcon.SimpleArrayBool(array=narr2)
 
         nres = np.equal(narr1, narr2)
         sres = sarr1.eq(sarr2)
@@ -3656,8 +3656,8 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         behavior; element-wise comparison is reachable only through eq().
         """
         narr = np.arange(4, dtype='int32')
-        sarr1 = modmesh.SimpleArrayInt32(array=narr)
-        sarr2 = modmesh.SimpleArrayInt32(array=narr.copy())
+        sarr1 = solvcon.SimpleArrayInt32(array=narr)
+        sarr2 = solvcon.SimpleArrayInt32(array=narr.copy())
         # Identity comparison returns a plain bool, not a SimpleArray.
         self.assertIsInstance(sarr1 == sarr2, bool)
         self.assertFalse(sarr1 == sarr2)
@@ -3667,7 +3667,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
 
     def test_eye(self):
         """Test eye() static method for creating identity matrices"""
-        eye2 = modmesh.SimpleArrayFloat64.eye(10)
+        eye2 = solvcon.SimpleArrayFloat64.eye(10)
         for i in range(10):
             for j in range(10):
                 if i == j:
@@ -3679,18 +3679,18 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
             ValueError,
             r"SimpleArray::eye\(\): size must be greater than 0, but got 0"
         ):
-            modmesh.SimpleArrayFloat64.eye(0)
+            solvcon.SimpleArrayFloat64.eye(0)
 
         with self.assertRaisesRegex(
             ValueError,
             r"SimpleArray::eye\(\): size must be greater than 0, but got -1"
         ):
-            modmesh.SimpleArrayFloat64.eye(-1)
+            solvcon.SimpleArrayFloat64.eye(-1)
 
     def test_scaled_eye(self):
         """Test scaled_eye() static method for creating scaled identity
         matrices"""
-        scaled_eye = modmesh.SimpleArrayFloat64.scaled_eye(10, 3.5)
+        scaled_eye = solvcon.SimpleArrayFloat64.scaled_eye(10, 3.5)
         for i in range(10):
             for j in range(10):
                 if i == j:
@@ -3703,14 +3703,14 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
             r"SimpleArray::scaled_eye\(\): size must be greater than 0, "
             r"but got 0"
         ):
-            modmesh.SimpleArrayFloat64.scaled_eye(0, 2.0)
+            solvcon.SimpleArrayFloat64.scaled_eye(0, 2.0)
 
         with self.assertRaisesRegex(
             ValueError,
             r"SimpleArray::scaled_eye\(\): size must be greater than 0, "
             r"but got -1"
         ):
-            modmesh.SimpleArrayFloat64.scaled_eye(-1, 2.0)
+            solvcon.SimpleArrayFloat64.scaled_eye(-1, 2.0)
 
     def test_hermitian(self):
         """Test hermitian() method for creating conjugate transpose"""
@@ -3719,7 +3719,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
                           [13.0 + 14.0j, 15.0 + 16.0j, 17.0 + 18.0j]],
                          dtype='complex128')
 
-        sarr = modmesh.SimpleArrayComplex128(array=ndarr)
+        sarr = solvcon.SimpleArrayComplex128(array=ndarr)
         shermitian = sarr.hermitian()
         ndhermitian = ndarr.conj().T
         print(shermitian.ndarray)
@@ -3727,7 +3727,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         self.assertEqual(shermitian.shape, ndhermitian.shape)
         np.testing.assert_equal(shermitian.ndarray, ndhermitian)
 
-        vector = modmesh.SimpleArrayFloat64(5)
+        vector = solvcon.SimpleArrayFloat64(5)
         with self.assertRaisesRegex(
             RuntimeError,
             r"SimpleArray::hermitian\(\): operation requires 2D SimpleArray, "
@@ -3741,13 +3741,13 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
                          [7.0 + 8.0j, 9.0 + 10.0j, 11.0 + 12.0j],
                          [13.0 + 14.0j, 15.0 + 16.0j, 17.0 + 18.0j]],
                          dtype='complex128')
-        sarr = modmesh.SimpleArrayComplex128(array=ndarr)
+        sarr = solvcon.SimpleArrayComplex128(array=ndarr)
         symmetric = sarr.symmetrize()
         ndsymmetric = (ndarr + ndarr.conj().T) / 2.0
         self.assertEqual(symmetric.shape, ndsymmetric.shape)
         np.testing.assert_equal(symmetric.ndarray, ndsymmetric)
 
-        vector = modmesh.SimpleArrayFloat64(5)
+        vector = solvcon.SimpleArrayFloat64(5)
         with self.assertRaisesRegex(
             RuntimeError,
             r"SimpleArray::symmetrize\(\): operation requires 2D SimpleArray, "
@@ -3755,7 +3755,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         ):
             vector.symmetrize()
 
-        non_square = modmesh.SimpleArrayFloat64((3, 4))
+        non_square = solvcon.SimpleArrayFloat64((3, 4))
         with self.assertRaisesRegex(
             RuntimeError,
             r"SimpleArray::symmetrize\(\): operation requires square "
@@ -3768,22 +3768,22 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         ndarr = np.array([[1.0, 2.0, 3.0],
                           [4.0, 5.0, 6.0],
                           [7.0, 8.0, 9.0]], dtype='float64')
-        sarr = modmesh.SimpleArrayFloat64(array=ndarr)
+        sarr = solvcon.SimpleArrayFloat64(array=ndarr)
         self.assertEqual(sarr.trace(), 15.0)
 
         ndarr_int = np.array([[2, 0, 1],
                               [0, 3, 0],
                               [4, 0, 5]], dtype='int32')
-        sarr_int = modmesh.SimpleArrayInt32(array=ndarr_int)
+        sarr_int = solvcon.SimpleArrayInt32(array=ndarr_int)
         self.assertEqual(sarr_int.trace(), 10)
 
         ndarr_cplx = np.array([[1.0 + 2.0j, 3.0 + 4.0j],
                                [5.0 + 6.0j, 7.0 + 8.0j]],
                               dtype='complex128')
-        sarr_cplx = modmesh.SimpleArrayComplex128(array=ndarr_cplx)
+        sarr_cplx = solvcon.SimpleArrayComplex128(array=ndarr_cplx)
         self.assertEqual(complex(sarr_cplx.trace()), 8.0 + 10.0j)
 
-        vector = modmesh.SimpleArrayFloat64(5)
+        vector = solvcon.SimpleArrayFloat64(5)
         with self.assertRaisesRegex(
             RuntimeError,
             r"SimpleArray::trace\(\): operation requires 2D SimpleArray, "
@@ -3791,7 +3791,7 @@ class SimpleArrayCalculatorsTC(unittest.TestCase):
         ):
             vector.trace()
 
-        non_square = modmesh.SimpleArrayFloat64((3, 4))
+        non_square = solvcon.SimpleArrayFloat64((3, 4))
         with self.assertRaisesRegex(
             RuntimeError,
             r"SimpleArray::trace\(\): operation requires square "
@@ -3806,7 +3806,7 @@ class SimpleArraySearchTC(unittest.TestCase):
         # test 1-D data
         data = [1, 3, 5, 7, 9]
         narr = np.array(data, dtype='uint64')
-        sarr = modmesh.SimpleArrayUint64(array=narr)
+        sarr = solvcon.SimpleArrayUint64(array=narr)
 
         self.assertEqual(sarr.argmin(), 0)
         self.assertEqual(sarr.argmax(), 4)
@@ -3816,7 +3816,7 @@ class SimpleArraySearchTC(unittest.TestCase):
         # test N-D data
         data = [[1, 3, 5, 7, 9], [2, 4, 6, 8, 10], [1, 10, 1, 10, 1]]
         narr = np.array(data, dtype='float64')
-        sarr = modmesh.SimpleArrayFloat64(array=narr)
+        sarr = solvcon.SimpleArrayFloat64(array=narr)
         self.assertEqual(sarr.argmin(), 0)
         self.assertEqual(sarr.argmax(), 9)
         self.assertEqual(narr.argmin(), sarr.argmin())
@@ -3832,36 +3832,36 @@ class SimpleArrayPlexTC(unittest.TestCase):
             "int64", "uint64", "float32", "float64"
         ]
         for dtype in dtype_list:
-            modmesh.SimpleArray((2, 3, 4), dtype=dtype)
+            solvcon.SimpleArray((2, 3, 4), dtype=dtype)
 
         # 2. shape and value constructor
-        modmesh.SimpleArray((2, 3, 4), dtype="bool", value=True)
+        solvcon.SimpleArray((2, 3, 4), dtype="bool", value=True)
         with self.assertRaisesRegex(
                 TypeError,
                 r"Data type mismatch, expected Python bool"
         ):
-            modmesh.SimpleArray((2, 3, 4), dtype="bool", value=3.3)
+            solvcon.SimpleArray((2, 3, 4), dtype="bool", value=3.3)
 
         dtype_list_int = [
             "int8", "uint8", "int16", "uint16", "int32", "uint32",
             "int64", "uint64"
         ]
         for dtype in dtype_list_int:
-            modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3)
+            solvcon.SimpleArray((2, 3, 4), dtype=dtype, value=3)
             with self.assertRaisesRegex(
                     TypeError,
                     r"Data type mismatch, expected Python int"
             ):
-                modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3.3)
+                solvcon.SimpleArray((2, 3, 4), dtype=dtype, value=3.3)
 
         dtype_list_float = ["float32", "float64"]
         for dtype in dtype_list_float:
-            modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3.0)
+            solvcon.SimpleArray((2, 3, 4), dtype=dtype, value=3.0)
             with self.assertRaisesRegex(
                     TypeError,
                     r"Data type mismatch, expected Python float"
             ):
-                modmesh.SimpleArray((2, 3, 4), dtype=dtype, value=3)
+                solvcon.SimpleArray((2, 3, 4), dtype=dtype, value=3)
 
         # 3. np.ndarray constructor
         # exclude bool, since it cannot use np.arange
@@ -3871,12 +3871,12 @@ class SimpleArrayPlexTC(unittest.TestCase):
         ]
         for dtype in dtype_list_no_bool:
             ndarr = np.arange(2 * 3 * 4, dtype=dtype)
-            modmesh.SimpleArray(ndarr)
+            solvcon.SimpleArray(ndarr)
         boolean_array = np.array([True, False, True], dtype='bool')
-        modmesh.SimpleArray(boolean_array)
+        solvcon.SimpleArray(boolean_array)
 
     def test_SimpleArray_clone(self):
-        sarr = modmesh.SimpleArray((2, 3, 4), value=2.0, dtype='float64')
+        sarr = solvcon.SimpleArray((2, 3, 4), value=2.0, dtype='float64')
         sarr_ref = sarr
         sarr_clone = sarr.clone()
 
@@ -3896,7 +3896,7 @@ class SimpleArrayPlexTC(unittest.TestCase):
 
     def test_SimpleArrayPlex_buffer(self):
         magic_number = 3.1415
-        sarr = modmesh.SimpleArray(
+        sarr = solvcon.SimpleArray(
             (2, 3, 4), value=magic_number, dtype='float64')
         ndarr = np.array(sarr, copy=False)
         self.assertEqual((2, 3, 4), ndarr.shape)
@@ -3904,14 +3904,14 @@ class SimpleArrayPlexTC(unittest.TestCase):
 
     def test_SimpleArrayPlex_get_item(self):
         magic_number = 3.1415
-        sarr = modmesh.SimpleArray(
+        sarr = solvcon.SimpleArray(
             (2, 3, 4), value=magic_number, dtype='float64')
         self.assertEqual(sarr[1, 2, 3], magic_number)
 
     def test_SimpleArrayPlex_properties(self):
         magic_number = 3.1415
         shape = (2, 3, 4)
-        sarr = modmesh.SimpleArray(shape, value=magic_number, dtype='float64')
+        sarr = solvcon.SimpleArray(shape, value=magic_number, dtype='float64')
 
         self.assertEqual(sarr.nbytes, 2 * 3 * 4 * 8)
         self.assertEqual(sarr.size, 2 * 3 * 4)
@@ -3923,7 +3923,7 @@ class SimpleArrayPlexTC(unittest.TestCase):
         self.assertEqual(sarr.nghost, 0)
 
     def test_minmaxsum(self):
-        sarr = modmesh.SimpleArray((2, 4), value=10.0, dtype='float64')
+        sarr = solvcon.SimpleArray((2, 4), value=10.0, dtype='float64')
 
         self.assertEqual(sarr.sum(), 10.0 * 2 * 4)
         self.assertEqual(sarr.min(), 10.0)
@@ -3938,7 +3938,7 @@ class SimpleArrayPlexTC(unittest.TestCase):
         self.assertEqual(sarr.max(), 9.2)
 
     def test_abs(self):
-        sarr = modmesh.SimpleArray((3, 2), value=-2, dtype='int64')
+        sarr = solvcon.SimpleArray((3, 2), value=-2, dtype='int64')
         self.assertEqual(sarr.sum(), -2 * 3 * 2)
         sarr = sarr.abs()
         self.assertEqual(sarr.sum(), 2 * 3 * 2)
@@ -3948,19 +3948,19 @@ class SimpleArrayPlexTC(unittest.TestCase):
         # more detailed tests are in SimpleArrayBasicTC
         magic_number = 1214
 
-        sarr = modmesh.SimpleArray(20, dtype="uint32")
+        sarr = solvcon.SimpleArray(20, dtype="uint32")
         sarr[7] = magic_number
         self.assertEqual(sarr[7], magic_number)
 
         magic_number = 12141618
-        sarr = modmesh.SimpleArray((2, 3, 4), dtype="uint64")
+        sarr = solvcon.SimpleArray((2, 3, 4), dtype="uint64")
         sarr[1, 2, 3] = magic_number
         self.assertEqual(sarr[1, 2, 3], magic_number)
 
     def test_SimpleArrayPlex_set_item_ellipse(self):
         # just test if the SimpleArrayPlex works
         # more detailed tests are in SimpleArrayBasicTC
-        sarr = modmesh.SimpleArray((2, 3, 4), dtype="float64")
+        sarr = solvcon.SimpleArray((2, 3, 4), dtype="float64")
         ndarr = np.arange(
             (4 * 2) * (3 * 3) * (2 * 4), dtype='float64').reshape(
             (4 * 2, 3 * 3, 2 * 4))
@@ -3980,39 +3980,39 @@ class SimpleArrayPlexTC(unittest.TestCase):
 
     # maps dtype with (typed class, typed class name, numpy dtype)
     _DTINFO = {
-        "bool": (modmesh.SimpleArrayBool,
-                 "_modmesh.SimpleArrayBool", np.bool_),
-        "int8": (modmesh.SimpleArrayInt8,
-                 "_modmesh.SimpleArrayInt8", np.int8),
-        "int16": (modmesh.SimpleArrayInt16,
-                  "_modmesh.SimpleArrayInt16", np.int16),
-        "int32": (modmesh.SimpleArrayInt32,
-                  "_modmesh.SimpleArrayInt32", np.int32),
-        "int64": (modmesh.SimpleArrayInt64,
-                  "_modmesh.SimpleArrayInt64", np.int64),
-        "uint8": (modmesh.SimpleArrayUint8,
-                  "_modmesh.SimpleArrayUint8", np.uint8),
-        "uint16": (modmesh.SimpleArrayUint16,
-                   "_modmesh.SimpleArrayUint16", np.uint16),
-        "uint32": (modmesh.SimpleArrayUint32,
-                   "_modmesh.SimpleArrayUint32", np.uint32),
-        "uint64": (modmesh.SimpleArrayUint64,
-                   "_modmesh.SimpleArrayUint64", np.uint64),
-        "float32": (modmesh.SimpleArrayFloat32,
-                    "_modmesh.SimpleArrayFloat32", np.float32),
-        "float64": (modmesh.SimpleArrayFloat64,
-                    "_modmesh.SimpleArrayFloat64", np.float64),
-        "complex64": (modmesh.SimpleArrayComplex64,
-                      "_modmesh.SimpleArrayComplex64",
+        "bool": (solvcon.SimpleArrayBool,
+                 "_solvcon.SimpleArrayBool", np.bool_),
+        "int8": (solvcon.SimpleArrayInt8,
+                 "_solvcon.SimpleArrayInt8", np.int8),
+        "int16": (solvcon.SimpleArrayInt16,
+                  "_solvcon.SimpleArrayInt16", np.int16),
+        "int32": (solvcon.SimpleArrayInt32,
+                  "_solvcon.SimpleArrayInt32", np.int32),
+        "int64": (solvcon.SimpleArrayInt64,
+                  "_solvcon.SimpleArrayInt64", np.int64),
+        "uint8": (solvcon.SimpleArrayUint8,
+                  "_solvcon.SimpleArrayUint8", np.uint8),
+        "uint16": (solvcon.SimpleArrayUint16,
+                   "_solvcon.SimpleArrayUint16", np.uint16),
+        "uint32": (solvcon.SimpleArrayUint32,
+                   "_solvcon.SimpleArrayUint32", np.uint32),
+        "uint64": (solvcon.SimpleArrayUint64,
+                   "_solvcon.SimpleArrayUint64", np.uint64),
+        "float32": (solvcon.SimpleArrayFloat32,
+                    "_solvcon.SimpleArrayFloat32", np.float32),
+        "float64": (solvcon.SimpleArrayFloat64,
+                    "_solvcon.SimpleArrayFloat64", np.float64),
+        "complex64": (solvcon.SimpleArrayComplex64,
+                      "_solvcon.SimpleArrayComplex64",
                       np.complex64),
-        "complex128": (modmesh.SimpleArrayComplex128,
-                       "_modmesh.SimpleArrayComplex128",
+        "complex128": (solvcon.SimpleArrayComplex128,
+                       "_solvcon.SimpleArrayComplex128",
                        np.complex128),
     }
 
     def test_SimpleArrayPlex_uniform_type(self):
         arrays = {
-            dtype: modmesh.SimpleArray((2, 3, 4), dtype=dtype)
+            dtype: solvcon.SimpleArray((2, 3, 4), dtype=dtype)
             for dtype in self._DTINFO
         }
         first = next(iter(arrays.values()))
@@ -4020,12 +4020,12 @@ class SimpleArrayPlexTC(unittest.TestCase):
             with self.subTest(dtype=dtype):
                 self.assertTrue(type(arr) is type(first))
                 self.assertEqual(str(type(arr)),
-                                 "<class '_modmesh.SimpleArray'>")
+                                 "<class '_solvcon.SimpleArray'>")
 
     def test_SimpleArrayPlex_cast_to_typed(self):
         for dtype, (_, typed_name, np_dtype) in self._DTINFO.items():
             with self.subTest(dtype=dtype):
-                plex = modmesh.SimpleArray((2, 3, 4), dtype=dtype)
+                plex = solvcon.SimpleArray((2, 3, 4), dtype=dtype)
                 typed = plex.typed
                 self.assertEqual(str(type(typed)),
                                  "<class '{}'>".format(typed_name))
@@ -4035,23 +4035,23 @@ class SimpleArrayPlexTC(unittest.TestCase):
         # Constructing a typed array from an ndarray whose
         # dtype doesn't match must raise RuntimeError.
         mismatch_cases = [
-            ("bool", modmesh.SimpleArrayFloat64),
-            ("int8", modmesh.SimpleArrayUint8),
-            ("int16", modmesh.SimpleArrayInt32),
-            ("int32", modmesh.SimpleArrayFloat64),
-            ("int64", modmesh.SimpleArrayUint64),
-            ("uint8", modmesh.SimpleArrayInt8),
-            ("uint16", modmesh.SimpleArrayUint32),
-            ("uint32", modmesh.SimpleArrayInt32),
-            ("uint64", modmesh.SimpleArrayFloat64),
-            ("float32", modmesh.SimpleArrayFloat64),
-            ("float64", modmesh.SimpleArrayInt32),
-            ("complex64", modmesh.SimpleArrayComplex128),
-            ("complex128", modmesh.SimpleArrayFloat64),
+            ("bool", solvcon.SimpleArrayFloat64),
+            ("int8", solvcon.SimpleArrayUint8),
+            ("int16", solvcon.SimpleArrayInt32),
+            ("int32", solvcon.SimpleArrayFloat64),
+            ("int64", solvcon.SimpleArrayUint64),
+            ("uint8", solvcon.SimpleArrayInt8),
+            ("uint16", solvcon.SimpleArrayUint32),
+            ("uint32", solvcon.SimpleArrayInt32),
+            ("uint64", solvcon.SimpleArrayFloat64),
+            ("float32", solvcon.SimpleArrayFloat64),
+            ("float64", solvcon.SimpleArrayInt32),
+            ("complex64", solvcon.SimpleArrayComplex128),
+            ("complex128", solvcon.SimpleArrayFloat64),
         ]
         for dtype, wrong_cls in mismatch_cases:
             with self.subTest(dtype=dtype):
-                plex = modmesh.SimpleArray((2, 3, 4), dtype=dtype)
+                plex = solvcon.SimpleArray((2, 3, 4), dtype=dtype)
                 ndarr = np.array(plex, copy=False)
                 with self.assertRaisesRegex(RuntimeError, r"dtype mismatch"):
                     wrong_cls(array=ndarr)
@@ -4059,16 +4059,16 @@ class SimpleArrayPlexTC(unittest.TestCase):
     def test_SimpleArrayPlex_typed_roundtrip(self):
         for dtype, (_, typed_name, _) in self._DTINFO.items():
             with self.subTest(dtype=dtype):
-                plex = modmesh.SimpleArray((2, 3, 4), dtype=dtype)
+                plex = solvcon.SimpleArray((2, 3, 4), dtype=dtype)
                 typed = plex.typed
                 plex2 = typed.plex
 
                 self.assertEqual(str(type(plex)),
-                                 "<class '_modmesh.SimpleArray'>")
+                                 "<class '_solvcon.SimpleArray'>")
                 self.assertEqual(str(type(typed)),
                                  "<class '{}'>".format(typed_name))
                 self.assertEqual(str(type(plex2)),
-                                 "<class '_modmesh.SimpleArray'>")
+                                 "<class '_solvcon.SimpleArray'>")
 
                 # Verify data survives the roundtrip:
                 # write through typed, read back from plex2
@@ -4086,7 +4086,7 @@ class SimpleArrayPlexTC(unittest.TestCase):
         }
         for dtype, value in value_cases.items():
             with self.subTest(dtype=dtype):
-                plex = modmesh.SimpleArray((4,), dtype=dtype, value=value)
+                plex = solvcon.SimpleArray((4,), dtype=dtype, value=value)
                 typed = plex.typed
                 for i in range(4):
                     self.assertEqual(typed[i], value)
@@ -4096,7 +4096,7 @@ class SimpleArrayPlexTC(unittest.TestCase):
         for np_dtype in (np.complex64, np.complex128):
             with self.subTest(dtype=str(np_dtype)):
                 ndarr = np.full((4,), 1.5 + 2.5j, dtype=np_dtype)
-                plex = modmesh.SimpleArray(ndarr)
+                plex = solvcon.SimpleArray(ndarr)
                 typed = plex.typed
                 for i in range(4):
                     self.assertEqual(complex(typed[i]), 1.5 + 2.5j)
@@ -4107,7 +4107,7 @@ class SimpleArrayPlexTC(unittest.TestCase):
                 # typed array built from constructor
                 direct = cls((2, 3, 4))
                 # typed array obtained via plex.typed
-                via_plex = modmesh.SimpleArray((2, 3, 4), dtype=dtype).typed
+                via_plex = solvcon.SimpleArray((2, 3, 4), dtype=dtype).typed
                 self.assertTrue(type(direct) is type(via_plex))
                 self.assertEqual(str(type(direct)),
                                  "<class '{}'>".format(typed_name))
@@ -4118,39 +4118,39 @@ class SimpleArrayPlexTC(unittest.TestCase):
 class SimpleArrayPlexAlignmentTC(unittest.TestCase):
 
     def test_default_alignment(self):
-        array = modmesh.SimpleArray((2, 3, 4), dtype='float64')
+        array = solvcon.SimpleArray((2, 3, 4), dtype='float64')
         self.assertEqual(0, array.alignment)
         self.assertEqual((2, 3, 4), array.typed.shape)
 
     def test_alignment_creation(self):
-        array = modmesh.SimpleArray((4, 4), dtype='float64', alignment=16)
+        array = solvcon.SimpleArray((4, 4), dtype='float64', alignment=16)
         self.assertEqual(16, array.alignment)
         self.assertEqual((4, 4), array.typed.shape)
 
-        array = modmesh.SimpleArray((8, 8), dtype='float64', alignment=32)
+        array = solvcon.SimpleArray((8, 8), dtype='float64', alignment=32)
         self.assertEqual(32, array.alignment)
         self.assertEqual((8, 8), array.typed.shape)
 
-        array = modmesh.SimpleArray((16, 8), dtype='float64', alignment=64)
+        array = solvcon.SimpleArray((16, 8), dtype='float64', alignment=64)
         self.assertEqual(64, array.alignment)
         self.assertEqual((16, 8), array.typed.shape)
 
     def test_alignment_with_value_initialization(self):
-        array = modmesh.SimpleArray((4, 4), value=3.14159, dtype='float64')
+        array = solvcon.SimpleArray((4, 4), value=3.14159, dtype='float64')
         self.assertEqual(0, array.alignment)
         self.assertEqual((4, 4), array.typed.shape)
         self.assertEqual(3.14159, array[0, 0])
 
-        array = modmesh.SimpleArray((4, 4), value=2.71828,
+        array = solvcon.SimpleArray((4, 4), value=2.71828,
                                     dtype='float64', alignment=16)
         self.assertEqual(16, array.alignment)
         self.assertEqual((4, 4), array.typed.shape)
         self.assertEqual(2.71828, array[0, 0])
 
     def test_alignment_validation_valid_values(self):
-        modmesh.SimpleArray((4, 4), dtype='float64', alignment=16)
-        modmesh.SimpleArray((8, 8), dtype='float64', alignment=32)
-        modmesh.SimpleArray((16, 8), dtype='float64', alignment=64)
+        solvcon.SimpleArray((4, 4), dtype='float64', alignment=16)
+        solvcon.SimpleArray((8, 8), dtype='float64', alignment=32)
+        solvcon.SimpleArray((16, 8), dtype='float64', alignment=64)
 
     def test_alignment_validation_invalid_values(self):
         with self.assertRaisesRegex(
@@ -4158,43 +4158,43 @@ class SimpleArrayPlexAlignmentTC(unittest.TestCase):
                 "ConcreteBuffer::ConcreteBuffer: "
                 "alignment must be 0, 16, 32, or 64, but got 17"
         ):
-            modmesh.SimpleArray((4, 4), dtype='float64', alignment=17)
+            solvcon.SimpleArray((4, 4), dtype='float64', alignment=17)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::ConcreteBuffer: "
                 "alignment must be 0, 16, 32, or 64, but got 100"
         ):
-            modmesh.SimpleArray((4, 4), dtype='float64', alignment=100)
+            solvcon.SimpleArray((4, 4), dtype='float64', alignment=100)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::ConcreteBuffer: "
                 "alignment must be 0, 16, 32, or 64, but got 128"
         ):
-            modmesh.SimpleArray((16, 16), dtype='float64', alignment=128)
+            solvcon.SimpleArray((16, 16), dtype='float64', alignment=128)
 
     def test_alignment_size_validation(self):
-        modmesh.SimpleArray((2, 2), dtype='float64', alignment=32)
-        modmesh.SimpleArray((4, 4), dtype='float64', alignment=64)
+        solvcon.SimpleArray((2, 2), dtype='float64', alignment=32)
+        solvcon.SimpleArray((4, 4), dtype='float64', alignment=64)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::allocate: "
                 "size .* must be a multiple of alignment 16"
         ):
-            modmesh.SimpleArray((5, 1), dtype='float64', alignment=16)
+            solvcon.SimpleArray((5, 1), dtype='float64', alignment=16)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "ConcreteBuffer::allocate: "
                 "size .* must be a multiple of alignment 32"
         ):
-            modmesh.SimpleArray((3, 5), dtype='float64', alignment=32)
+            solvcon.SimpleArray((3, 5), dtype='float64', alignment=32)
 
     def test_alignment_with_operations(self):
-        array1 = modmesh.SimpleArray((4, 4), dtype='float64', alignment=16)
-        array2 = modmesh.SimpleArray((4, 4), dtype='float64', alignment=32)
+        array1 = solvcon.SimpleArray((4, 4), dtype='float64', alignment=16)
+        array2 = solvcon.SimpleArray((4, 4), dtype='float64', alignment=32)
 
         self.assertEqual(16, array1.alignment)
         self.assertEqual(32, array2.alignment)
@@ -4209,7 +4209,7 @@ class SimpleArrayPlexAlignmentTC(unittest.TestCase):
         self.assertEqual(10.0 * 16, array2.sum())
 
     def test_alignment_with_ndarray_conversion(self):
-        array = modmesh.SimpleArray((4, 4), dtype='float64', alignment=16)
+        array = solvcon.SimpleArray((4, 4), dtype='float64', alignment=16)
         self.assertEqual(16, array.alignment)
 
         ndarr = np.array(array, copy=False)
@@ -4220,7 +4220,7 @@ class SimpleArrayPlexAlignmentTC(unittest.TestCase):
         self.assertEqual(42.0, ndarr[0, 0])
 
     def test_alignment_with_clone(self):
-        array = modmesh.SimpleArray((4, 4), value=3.14,
+        array = solvcon.SimpleArray((4, 4), value=3.14,
                                     dtype='float64', alignment=32)
         self.assertEqual(32, array.alignment)
         self.assertEqual(3.14, array[0, 0])
@@ -4235,7 +4235,7 @@ class SimpleArrayPlexAlignmentTC(unittest.TestCase):
         self.assertEqual(3.14, cloned[0, 0])
 
     def test_alignment_int32_array(self):
-        array = modmesh.SimpleArray((8, 8), dtype='int32', alignment=16)
+        array = solvcon.SimpleArray((8, 8), dtype='int32', alignment=16)
         self.assertEqual(16, array.alignment)
         self.assertEqual((8, 8), array.typed.shape)
 
@@ -4244,7 +4244,7 @@ class SimpleArrayPlexAlignmentTC(unittest.TestCase):
         self.assertEqual(42 * 64, array.sum())
 
     def test_alignment_uint64_array(self):
-        array = modmesh.SimpleArray((4, 8), dtype='uint64', alignment=32)
+        array = solvcon.SimpleArray((4, 8), dtype='uint64', alignment=32)
         self.assertEqual(32, array.alignment)
         self.assertEqual((4, 8), array.typed.shape)
 
@@ -4253,15 +4253,15 @@ class SimpleArrayPlexAlignmentTC(unittest.TestCase):
         self.assertEqual(100 * 32, array.sum())
 
     def test_alignment_with_different_shapes(self):
-        array1d = modmesh.SimpleArray((32,), dtype='float64', alignment=16)
+        array1d = solvcon.SimpleArray((32,), dtype='float64', alignment=16)
         self.assertEqual(16, array1d.alignment)
         self.assertEqual((32,), array1d.typed.shape)
 
-        array2d = modmesh.SimpleArray((4, 8), dtype='float64', alignment=32)
+        array2d = solvcon.SimpleArray((4, 8), dtype='float64', alignment=32)
         self.assertEqual(32, array2d.alignment)
         self.assertEqual((4, 8), array2d.typed.shape)
 
-        array3d = modmesh.SimpleArray((2, 4, 4), dtype='float64', alignment=64)
+        array3d = solvcon.SimpleArray((2, 4, 4), dtype='float64', alignment=64)
         self.assertEqual(64, array3d.alignment)
         self.assertEqual((2, 4, 4), array3d.typed.shape)
 
@@ -4270,24 +4270,24 @@ class SimpleArrayPlexAlignmentTC(unittest.TestCase):
                       'uint16', 'uint32', 'uint64', 'float32', 'float64']
 
         for dtype in dtype_list:
-            array = modmesh.SimpleArray((4, 4), dtype=dtype, alignment=16)
+            array = solvcon.SimpleArray((4, 4), dtype=dtype, alignment=16)
             self.assertEqual(16, array.alignment)
 
-            array = modmesh.SimpleArray((8, 8), dtype=dtype, alignment=32)
+            array = solvcon.SimpleArray((8, 8), dtype=dtype, alignment=32)
             self.assertEqual(32, array.alignment)
 
-            array = modmesh.SimpleArray((16, 8), dtype=dtype, alignment=64)
+            array = solvcon.SimpleArray((16, 8), dtype=dtype, alignment=64)
             self.assertEqual(64, array.alignment)
 
 
 class SimpleCollectorTC(unittest.TestCase):
 
     def test_construct(self):
-        ct = modmesh.SimpleCollectorFloat64(10)
+        ct = solvcon.SimpleCollectorFloat64(10)
         self.assertEqual(10, ct.capacity)
         self.assertEqual(10, len(ct))
 
-        ct = modmesh.SimpleCollectorFloat64()
+        ct = solvcon.SimpleCollectorFloat64()
         self.assertEqual(0, ct.capacity)
         self.assertEqual(0, len(ct))
 
@@ -4333,7 +4333,7 @@ class SimpleCollectorTC(unittest.TestCase):
 
     def test_push_back(self):
         # Starting from 0.
-        ct = modmesh.SimpleCollectorFloat64()
+        ct = solvcon.SimpleCollectorFloat64()
         self.assertEqual(0, ct.capacity)
         self.assertEqual(0, len(ct))
 
@@ -4358,7 +4358,7 @@ class SimpleCollectorTC(unittest.TestCase):
             self.assertEqual(ct[3 + it], 3.14159 * (3 + it + 1))
 
         # Starting from non-zero and not power of 2.
-        ct = modmesh.SimpleCollectorFloat64(10)
+        ct = solvcon.SimpleCollectorFloat64(10)
         self.assertEqual(10, ct.capacity)
         self.assertEqual(10, len(ct))
 
@@ -4369,16 +4369,16 @@ class SimpleCollectorTC(unittest.TestCase):
 
     def test_alignment_validation(self):
         # Valid alignments: 0, 16, 32, 64
-        ct = modmesh.SimpleCollectorFloat64(16, 16)
+        ct = solvcon.SimpleCollectorFloat64(16, 16)
         self.assertEqual(16, ct.alignment)
 
-        ct = modmesh.SimpleCollectorFloat64(32, 32)
+        ct = solvcon.SimpleCollectorFloat64(32, 32)
         self.assertEqual(32, ct.alignment)
 
-        ct = modmesh.SimpleCollectorFloat64(64, 64)
+        ct = solvcon.SimpleCollectorFloat64(64, 64)
         self.assertEqual(64, ct.alignment)
 
-        ct = modmesh.SimpleCollectorFloat64(16, 0)
+        ct = solvcon.SimpleCollectorFloat64(16, 0)
         self.assertEqual(0, ct.alignment)
 
         # Invalid alignments
@@ -4386,26 +4386,26 @@ class SimpleCollectorTC(unittest.TestCase):
                 ValueError,
                 "BufferExpander::BufferExpander: alignment must be 0, 16, 32, or 64, but got 8"  # noqa E501
         ):
-            modmesh.SimpleCollectorFloat64(16, 8)
+            solvcon.SimpleCollectorFloat64(16, 8)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "BufferExpander::BufferExpander: alignment must be 0, 16, 32, or 64, but got 128"  # noqa E501
         ):
-            modmesh.SimpleCollectorFloat64(128, 128)
+            solvcon.SimpleCollectorFloat64(128, 128)
 
     def test_alignment_size_validation(self):
         # Size must be a multiple of alignment
-        ct = modmesh.SimpleCollectorFloat64(0, 16)
+        ct = solvcon.SimpleCollectorFloat64(0, 16)
         self.assertEqual(16, ct.alignment)
 
-        ct = modmesh.SimpleCollectorFloat64(16, 16)
+        ct = solvcon.SimpleCollectorFloat64(16, 16)
         self.assertEqual(16, len(ct))
 
-        ct = modmesh.SimpleCollectorFloat64(32, 16)
+        ct = solvcon.SimpleCollectorFloat64(32, 16)
         self.assertEqual(32, len(ct))
 
-        ct = modmesh.SimpleCollectorFloat64(64, 32)
+        ct = solvcon.SimpleCollectorFloat64(64, 32)
         self.assertEqual(64, len(ct))
 
         # Invalid sizes (not multiple of alignment)
@@ -4413,17 +4413,17 @@ class SimpleCollectorTC(unittest.TestCase):
                 ValueError,
                 "BufferExpander::allocate: size .* must be a multiple of alignment 16"  # noqa E501
         ):
-            modmesh.SimpleCollectorFloat64(17, 16)
+            solvcon.SimpleCollectorFloat64(17, 16)
 
         with self.assertRaisesRegex(
                 ValueError,
                 "BufferExpander::allocate: size .* must be a multiple of alignment 32"  # noqa E501
         ):
-            modmesh.SimpleCollectorFloat64(31, 32)
+            solvcon.SimpleCollectorFloat64(31, 32)
 
     def test_alignment_with_reserve(self):
         # Test that reserve maintains alignment
-        ct = modmesh.SimpleCollectorFloat64(16, 16)
+        ct = solvcon.SimpleCollectorFloat64(16, 16)
         self.assertEqual(16, ct.capacity)
 
         # Reserve with aligned size
@@ -4440,7 +4440,7 @@ class SimpleCollectorTC(unittest.TestCase):
         ):
             ct.reserve(33)
 
-        ct = modmesh.SimpleCollectorFloat64(0, 32)  # start from 0 capacity
+        ct = solvcon.SimpleCollectorFloat64(0, 32)  # start from 0 capacity
         self.assertEqual(0, ct.capacity)
         self.assertEqual(32, ct.alignment)
         ct.reserve(64)
@@ -4448,7 +4448,7 @@ class SimpleCollectorTC(unittest.TestCase):
 
     def test_alignment_with_push_back(self):
         # Test that push_back works with alignment
-        ct = modmesh.SimpleCollectorFloat64(16, 16)
+        ct = solvcon.SimpleCollectorFloat64(16, 16)
         self.assertEqual(16, len(ct))
         self.assertEqual(16, ct.capacity)
 
@@ -4462,7 +4462,7 @@ class SimpleCollectorTC(unittest.TestCase):
         self.assertEqual(16, ct.alignment)
 
     def test_alignment_preserved_in_as_array(self):
-        ct = modmesh.SimpleCollectorFloat64(16, 32)
+        ct = solvcon.SimpleCollectorFloat64(16, 32)
         self.assertEqual(32, ct.alignment)
         self.assertEqual(16, len(ct))
 
@@ -4478,7 +4478,7 @@ class SimpleCollectorTC(unittest.TestCase):
 
     def test_clear(self):
         # Clear an empty collector.
-        ct = modmesh.SimpleCollectorFloat64()
+        ct = solvcon.SimpleCollectorFloat64()
         self.assertEqual(0, ct.capacity)
         self.assertEqual(0, len(ct))
         ct.clear()
@@ -4486,7 +4486,7 @@ class SimpleCollectorTC(unittest.TestCase):
         self.assertEqual(0, len(ct))
 
         # Clear a collector with data from push_back.
-        ct = modmesh.SimpleCollectorFloat64()
+        ct = solvcon.SimpleCollectorFloat64()
         for it in range(5):
             ct.push_back(it * 1.1)
         self.assertEqual(5, len(ct))
@@ -4511,7 +4511,7 @@ class SimpleCollectorTC(unittest.TestCase):
         self.assertEqual(old_capacity, ct.capacity)  # capacity still preserved
 
         # Clear a collector created with initial size.
-        ct = modmesh.SimpleCollectorFloat64(10)
+        ct = solvcon.SimpleCollectorFloat64(10)
         self.assertEqual(10, len(ct))
         self.assertEqual(10, ct.capacity)
         ct.clear()
@@ -4519,7 +4519,7 @@ class SimpleCollectorTC(unittest.TestCase):
         self.assertEqual(10, ct.capacity)
 
     def test_clear_with_alignment(self):
-        ct = modmesh.SimpleCollectorFloat64(16, 16)
+        ct = solvcon.SimpleCollectorFloat64(16, 16)
         self.assertEqual(16, ct.alignment)
         self.assertEqual(16, len(ct))
 
@@ -4529,7 +4529,7 @@ class SimpleCollectorTC(unittest.TestCase):
         self.assertEqual(16, ct.alignment)  # alignment preserved
 
     def test_clear_after_as_array(self):
-        ct = modmesh.SimpleCollectorFloat64()
+        ct = solvcon.SimpleCollectorFloat64()
         for it in range(5):
             ct.push_back(it * 1.1)
         self.assertEqual(5, len(ct))
@@ -4555,7 +4555,7 @@ class SimpleCollectorTC(unittest.TestCase):
         self.assertEqual(42.0, ct[0])
 
     def test_alignment_preserved_in_as_concrete(self):
-        ep = modmesh.BufferExpander(128, 16)
+        ep = solvcon.BufferExpander(128, 16)
         self.assertEqual(16, ep.alignment)
         self.assertEqual(128, len(ep))
 
@@ -4570,7 +4570,7 @@ class SimpleCollectorTC(unittest.TestCase):
             self.assertEqual(it, cbuf[it])
 
     def test_alignment_preserved_in_as_concrete_with_capacity(self):
-        ep = modmesh.BufferExpander(64, 32)
+        ep = solvcon.BufferExpander(64, 32)
         self.assertEqual(32, ep.alignment)
         self.assertEqual(64, len(ep))
 
@@ -4585,7 +4585,7 @@ class SimpleCollectorTC(unittest.TestCase):
             self.assertEqual(it, cbuf[it])
 
     def test_alignment_validation_in_as_concrete(self):
-        ep = modmesh.BufferExpander(64, 32)
+        ep = solvcon.BufferExpander(64, 32)
         self.assertEqual(32, ep.alignment)
 
         with self.assertRaisesRegex(

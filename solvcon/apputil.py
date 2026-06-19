@@ -44,7 +44,7 @@ class AppEnvironment:
     def __init__(self, name):
         self.globals = {
             # Give the application an alias of the top package.
-            'mm': importlib.import_module('modmesh'),
+            'sc': importlib.import_module('solvcon'),
             'appenv': self,
         }
         self.locals = {}

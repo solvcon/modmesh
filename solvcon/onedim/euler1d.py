@@ -9,9 +9,9 @@ One-dimensional Solver for the Euler Equations
 import numpy as np
 
 try:
-    from _modmesh import onedim as _impl  # noqa: F401
+    from _solvcon import onedim as _impl  # noqa: F401
 except ImportError:
-    from .._modmesh import onedim as _impl  # noqa: F401
+    from .._solvcon import onedim as _impl  # noqa: F401
 
 __all__ = [
     'Euler1DSolver',

@@ -11,26 +11,26 @@ class PilotFeature(QtCore.QObject):
     Base class to house common GUI code for prototyping pilot features.
 
     :ivar _mgr:
-        The modmesh pilot application manager implemented with Qt in C++.
-    :vartype mgr: modmesh.pilot.RManager
+        The solvcon pilot application manager implemented with Qt in C++.
+    :vartype mgr: solvcon.pilot.RManager
     """
 
     def __init__(self, *args, **kw):
         """
         :param mgr:
-            The modmesh pilot application manager implemented with Qt in C++.
-        :type mgr: modmesh.pilot.RManager
+            The solvcon pilot application manager implemented with Qt in C++.
+        :type mgr: solvcon.pilot.RManager
         """
         self._mgr = kw.pop('mgr')
         if not isinstance(self._mgr, _pcore.RManager):
             raise TypeError(
-                "'mgr' must be an instance of 'modmesh.pilot.RManager'")
+                "'mgr' must be an instance of 'solvcon.pilot.RManager'")
         super(PilotFeature, self).__init__(*args, **kw)
 
     @property
     def _pycon(self):
         """
-        :rtype: modmesh.pilot.RPythonConsoleDockWidget
+        :rtype: solvcon.pilot.RPythonConsoleDockWidget
         """
         return self._mgr.pycon
 

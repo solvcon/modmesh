@@ -6,7 +6,7 @@ import unittest
 
 import numpy as np
 
-import modmesh
+import solvcon
 
 
 class StaticMeshTC(unittest.TestCase):
@@ -54,13 +54,13 @@ class StaticMeshTC(unittest.TestCase):
                               nbound=0, ngstnode=0, ngstface=0, ngstcell=0,
                               nedge=0)
 
-        _test(modmesh.StaticMesh, ndim=2)
-        _test(modmesh.StaticMesh, ndim=3)
+        _test(solvcon.StaticMesh, ndim=2)
+        _test(solvcon.StaticMesh, ndim=3)
 
     def test_2d_trivial_triangles(self):
-        mh = modmesh.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
+        mh = solvcon.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
         mh.ndcrd.ndarray[:, :] = (0, 0), (-1, -1), (1, -1), (0, 1)
-        mh.cltpn.ndarray[:] = modmesh.StaticMesh.TRIANGLE
+        mh.cltpn.ndarray[:] = solvcon.StaticMesh.TRIANGLE
         mh.clnds.ndarray[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
 
         self._check_shape(mh, ndim=2, nnode=4, nface=0, ncell=3,
@@ -116,9 +116,9 @@ class StaticMeshTC(unittest.TestCase):
                           nedge=6)
 
     def test_3d_single_tetrahedron(self):
-        mh = modmesh.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
+        mh = solvcon.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
         mh.ndcrd.ndarray[:, :] = (0, 0, 0), (0, 1, 0), (-1, 1, 0), (0, 1, 1)
-        mh.cltpn.ndarray[:] = modmesh.StaticMesh.TETRAHEDRON
+        mh.cltpn.ndarray[:] = solvcon.StaticMesh.TETRAHEDRON
         mh.clnds.ndarray[:, :5] = [(4, 0, 1, 2, 3)]
 
         self._check_shape(mh, ndim=3, nnode=4, nface=4, ncell=1,
@@ -179,9 +179,9 @@ class StaticMeshTC(unittest.TestCase):
                           nedge=6)
 
     def test_1d_single_line(self):
-        mh = modmesh.StaticMesh(ndim=1, nnode=2, nface=0, ncell=1)
+        mh = solvcon.StaticMesh(ndim=1, nnode=2, nface=0, ncell=1)
         mh.ndcrd.ndarray[:] = [[0], [1]]
-        mh.cltpn.ndarray[:] = modmesh.StaticMesh.LINE
+        mh.cltpn.ndarray[:] = solvcon.StaticMesh.LINE
         mh.clnds.ndarray[:, :3] = [(2, 0, 1)]
 
         self._check_shape(mh, ndim=1, nnode=2, nface=0, ncell=1,

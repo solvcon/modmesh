@@ -1,6 +1,6 @@
-# modmesh
+# solvcon
 
-modmesh is a hybrid C++/Python library for solving conservation laws with
+solvcon is a hybrid C++/Python library for solving conservation laws with
 {doc}`the space-time Conservation Element and Solution Element (CESE) method
 <cese/index>` using unstructured meshes of mixed elements.
 

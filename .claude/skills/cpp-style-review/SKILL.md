@@ -1,10 +1,10 @@
 ---
 name: cpp-style-review
-description: Apply modmesh's judgment-call C++ style rules (m_ prefix, function-body placement, SimpleCollector preference, pybind11 binding split, const_cast) to changed lines in cpp/ or gtests/. Use after editing C++ sources.
+description: Apply solvcon's judgment-call C++ style rules (m_ prefix, function-body placement, SimpleCollector preference, pybind11 binding split, const_cast) to changed lines in cpp/ or gtests/. Use after editing C++ sources.
 tools: Read, Grep, Glob, Edit, Bash
 ---
 
-# C++ Style Review (modmesh)
+# C++ Style Review (solvcon)
 
 Authoritative reference is `STYLE.md` at the repo root; `CLAUDE.md` is a
 summary. If they disagree, follow `STYLE.md` and flag the drift in the

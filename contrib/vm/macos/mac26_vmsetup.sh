@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Automate setup of a modmesh development environment on a fresh macOS VM.
+# Automate setup of a solvcon development environment on a fresh macOS VM.
 #
 # Usage:
 #   bash mac26_vmsetup.sh [step]
@@ -26,7 +26,7 @@
 # * `claude`
 #
 # In a VM, automatic detection of available cores may not be accurate. Use a
-# setup.mk file in the modmesh repository root with the explicit process
+# setup.mk file in the solvcon repository root with the explicit process
 # number:
 # ```
 # MAKE_PARALLEL ?= -j4
@@ -64,7 +64,7 @@ step_shell() {
 }
 
 step_workspace() {
-    log "Making the modmesh working directory"
+    log "Making the solvcon working directory"
     mkdir -p "${MWORK_DIR}"
     mkdir -p "${HOME}/tmp"
 }
@@ -108,7 +108,7 @@ step_homebrew() {
 }
 
 step_dependency() {
-    log "Installing modmesh build/runtime dependencies via Homebrew"
+    log "Installing solvcon build/runtime dependencies via Homebrew"
     brew install \
         tree gh cmake clang-format qt pyside \
         python numpy python-matplotlib pybind11 \

@@ -3,7 +3,7 @@
 
 
 """
-modmesh: the description of the package is intentionally left blank
+solvcon: the description of the package is intentionally left blank
 """
 
 

@@ -6,10 +6,10 @@ import itertools
 
 import numpy as np
 
-import modmesh as mm
+import solvcon as sc
 
 
-class MatrixTestBase(mm.testing.TestBase):
+class MatrixTestBase(sc.testing.TestBase):
     """Base class for matrix operations"""
 
     def test_eye_method(self):
@@ -48,16 +48,16 @@ class MatrixTestBase(mm.testing.TestBase):
 class MatrixFloat32TC(MatrixTestBase, unittest.TestCase):
     def setUp(self):
         self.dtype = np.float32
-        self.SimpleArray = mm.SimpleArrayFloat32
+        self.SimpleArray = sc.SimpleArrayFloat32
 
 
 class MatrixFloat64TC(MatrixTestBase, unittest.TestCase):
     def setUp(self):
         self.dtype = np.float64
-        self.SimpleArray = mm.SimpleArrayFloat64
+        self.SimpleArray = sc.SimpleArrayFloat64
 
 
-class MatmulTestBase(mm.testing.TestBase):
+class MatmulTestBase(sc.testing.TestBase):
     """Tests for matrix-matrix multiplication"""
     def assert_matmul(self, lhs, rhs, expected):
         result = lhs.matmul(rhs)
@@ -472,7 +472,7 @@ class MatmulTestBase(mm.testing.TestBase):
         np.testing.assert_array_almost_equal(a.ndarray, expected)
 
 
-class MatrixPowerTestBase(mm.testing.TestBase):
+class MatrixPowerTestBase(sc.testing.TestBase):
     """Tests for matrix power A^n with non-negative integer n"""
 
     def assert_pow(self, mat, mat_data, n):
@@ -583,24 +583,24 @@ class MatrixPowerTestBase(mm.testing.TestBase):
 class MatrixPowerFloat32TC(MatrixPowerTestBase, unittest.TestCase):
     def setUp(self):
         self.dtype = np.float32
-        self.SimpleArray = mm.SimpleArrayFloat32
+        self.SimpleArray = sc.SimpleArrayFloat32
 
 
 class MatrixPowerFloat64TC(MatrixPowerTestBase, unittest.TestCase):
     def setUp(self):
         self.dtype = np.float64
-        self.SimpleArray = mm.SimpleArrayFloat64
+        self.SimpleArray = sc.SimpleArrayFloat64
 
 
 class MatmulFloat32TC(MatmulTestBase, unittest.TestCase):
     def setUp(self):
         self.dtype = np.float32
-        self.SimpleArray = mm.SimpleArrayFloat32
+        self.SimpleArray = sc.SimpleArrayFloat32
 
 
 class MatmulFloat64TC(MatmulTestBase, unittest.TestCase):
     def setUp(self):
         self.dtype = np.float64
-        self.SimpleArray = mm.SimpleArrayFloat64
+        self.SimpleArray = sc.SimpleArrayFloat64
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

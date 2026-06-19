@@ -3,13 +3,13 @@
 
 
 import unittest
-import modmesh
+import solvcon
 
 
 class OasisRecordRectTC(unittest.TestCase):
     # Please refer the comment of modmesh::OasisRecordRect in oasis_device.cpp
     def test_to_byte(self):
-        rec = modmesh.OasisRecordRect(70, 800, 180, 40)
+        rec = solvcon.OasisRecordRect(70, 800, 180, 40)
 
         expected_record_bytes = '\x14\x7B\x00\x00\xB4\x01\x28\x8C\x01\xC0\x0C'
         record_bytes = rec.to_bytes()
@@ -20,7 +20,7 @@ class OasisRecordRectTC(unittest.TestCase):
 class OasisRecordPolyTC(unittest.TestCase):
     # Please refer the comment of modmesh::OasisRecordPoly in oasis_device.cpp
     def test_type_1_to_byte(self):
-        rec = modmesh.OasisRecordPoly([
+        rec = solvcon.OasisRecordPoly([
             [410, 720], [410, 920], [70, 920],
             [70, 880], [370, 880], [370, 760], [70, 760], [70, 720]])
 
@@ -33,7 +33,7 @@ class OasisRecordPolyTC(unittest.TestCase):
         self.assertEqual(record_bytes, list(map(ord, expected_record_bytes)))
 
     def test_type_0_to_byte(self):
-        rec = modmesh.OasisRecordPoly([
+        rec = solvcon.OasisRecordPoly([
             [70, 720], [410, 720], [410, 920], [70, 920],
             [70, 880], [370, 880], [370, 760], [70, 760]])
 
@@ -60,14 +60,14 @@ class OasisDeviceTC(unittest.TestCase):
             return list(map(ord, magic_bytes + start + cell + records + end))
 
     def test_empty_oasis(self):
-        device = modmesh.OasisDevice()
+        device = solvcon.OasisDevice()
         oasis_bytes = device.to_bytes()
 
         self.assertEqual(oasis_bytes, self.oasis_bytes())
 
     def test_rect_oasis(self):
-        device = modmesh.OasisDevice()
-        rec = modmesh.OasisRecordRect(70, 800, 180, 40)
+        device = solvcon.OasisDevice()
+        rec = solvcon.OasisRecordRect(70, 800, 180, 40)
 
         device.add_rect_record(rec)
 
@@ -76,8 +76,8 @@ class OasisDeviceTC(unittest.TestCase):
         self.assertEqual(oasis_bytes, self.oasis_bytes(rec_record_bytes))
 
     def test_poly_oasis(self):
-        device = modmesh.OasisDevice()
-        rec = modmesh.OasisRecordPoly([
+        device = solvcon.OasisDevice()
+        rec = solvcon.OasisRecordPoly([
             [70, 720], [410, 720], [410, 920], [70, 920],
             [70, 880], [370, 880], [370, 760], [70, 760]])
 
@@ -91,11 +91,11 @@ class OasisDeviceTC(unittest.TestCase):
         self.assertEqual(oasis_bytes, self.oasis_bytes(poly_record_bytes))
 
     def test_mix_geometry_record_oasis(self):
-        device = modmesh.OasisDevice()
-        rec_poly = modmesh.OasisRecordPoly([
+        device = solvcon.OasisDevice()
+        rec_poly = solvcon.OasisRecordPoly([
             [70, 720], [410, 720], [410, 920], [70, 920],
             [70, 880], [370, 880], [370, 760], [70, 760]])
-        rec_rect = modmesh.OasisRecordRect(70, 800, 180, 40)
+        rec_rect = solvcon.OasisRecordRect(70, 800, 180, 40)
 
         device.add_poly_record(rec_poly)
         device.add_rect_record(rec_rect)

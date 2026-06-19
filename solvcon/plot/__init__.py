@@ -3,7 +3,7 @@
 
 
 """
-No-GUI drawing sub-system (without GUI libraries) of modmesh.
+No-GUI drawing sub-system (without GUI libraries) of solvcon.
 """
 
 from . import curve, svg, plane_layer

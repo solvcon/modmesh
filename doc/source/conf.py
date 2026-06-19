@@ -1,7 +1,7 @@
 # Configuration file for the Sphinx documentation builder.
 #
 # Minimal prototype of a hybrid C++/Python documentation toolchain for
-# modmesh.  The pieces, and why each is here:
+# solvcon.  The pieces, and why each is here:
 #
 #   myst_parser          author pages in Markdown (matches the repo
 #                        culture: README.md, STYLE.md, CLAUDE.md)
@@ -16,16 +16,16 @@
 import os
 import sys
 
-# Make the in-tree ``modmesh`` package importable for autodoc.  The repo
+# Make the in-tree ``solvcon`` package importable for autodoc.  The repo
 # root is two levels up from this file (doc/source/conf.py).
 sys.path.insert(0, os.path.abspath("../.."))
 sys.path.insert(0, os.path.abspath("../ext"))
 
 # -- Project information ----------------------------------------------------
 
-project = "modmesh"
-copyright = "2019-2026, Yung-Yu Chen and modmesh contributors"
-author = "Yung-Yu Chen and modmesh contributors"
+project = "solvcon"
+copyright = "2019-2026, Yung-Yu Chen and solvcon contributors"
+author = "Yung-Yu Chen and solvcon contributors"
 
 # -- General configuration --------------------------------------------------
 
@@ -53,10 +53,10 @@ myst_enable_extensions = [
 
 autosummary_generate = True
 
-# The compiled _modmesh extension is a build artifact, absent on a clean
+# The compiled _solvcon extension is a build artifact, absent on a clean
 # checkout (and on Read the Docs).  Mock it so autodoc can still import
 # the pure-Python layers that sit on top of it.
-autodoc_mock_imports = ["_modmesh"]
+autodoc_mock_imports = ["_solvcon"]
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
@@ -66,8 +66,8 @@ intersphinx_mapping = {
 # -- Breathe (C++ bridge) ---------------------------------------------------
 
 # Points at the Doxygen XML produced by ``make doxygen`` (see Doxyfile).
-breathe_projects = {"modmesh": "../build/doxygen/xml"}
-breathe_default_project = "modmesh"
+breathe_projects = {"solvcon": "../build/doxygen/xml"}
+breathe_default_project = "solvcon"
 
 # -- sphinxcontrib.bibtex ---------------------------------------------------
 
@@ -79,7 +79,7 @@ bibtex_bibfiles = ["reference.bib"]
 # Python stack (NumPy, SciPy, pandas, matplotlib).  See doc/README.md
 # for the sphinx-book-theme alternative tuned for teaching material.
 html_theme = "pydata_sphinx_theme"
-html_title = "modmesh"
+html_title = "solvcon"
 html_static_path = ["_static"]
 
 # -- MathJax configuration --------------------------------------------------

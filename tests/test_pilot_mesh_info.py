@@ -5,11 +5,11 @@
 import os
 import unittest
 
-import modmesh
+import solvcon
 
 try:
-    from modmesh import pilot
-    from modmesh.pilot import _mesh_info
+    from solvcon import pilot
+    from solvcon.pilot import _mesh_info
     from PySide6.QtWidgets import QApplication, QMenu
 except ImportError:
     pilot = None
@@ -22,7 +22,7 @@ def _make_sample_mesh():
     Two triangles and one quadrilateral; ``build_ghost`` adds ghost cells
     and nodes whose presence the panel must not count.
     """
-    core = modmesh.core
+    core = solvcon.core
     T = core.StaticMesh.TRIANGLE
     Q = core.StaticMesh.QUADRILATERAL
     mh = core.StaticMesh(ndim=2, nnode=6, nface=0, ncell=3)
@@ -42,7 +42,7 @@ def _make_single_triangle():
     Its ``ncell`` of 1 differs from the sample mesh's 3, so a test cannot
     pass on mesh state left in the shared ``RManager`` singleton.
     """
-    core = modmesh.core
+    core = solvcon.core
     mh = core.StaticMesh(ndim=2, nnode=3, nface=0, ncell=1)
     mh.ndcrd.ndarray[:, :] = [(0, 0), (1, 0), (0, 1)]
     mh.cltpn.ndarray[:] = [core.StaticMesh.TRIANGLE]
@@ -76,7 +76,7 @@ def _tree_sections(tree):
     return result
 
 
-@unittest.skipUnless(modmesh.HAS_PILOT, "Qt pilot is not built")
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
 class MakeMeshInfoTC(unittest.TestCase):
     def test_excludes_ghost_entities(self):
         info = _section_map(
@@ -92,7 +92,7 @@ class MakeMeshInfoTC(unittest.TestCase):
         self.assertEqual(info["Bounding box"]["y"], "[0, 1]")
 
 
-@unittest.skipIf(GITHUB_ACTIONS or not modmesh.HAS_PILOT,
+@unittest.skipIf(GITHUB_ACTIONS or not solvcon.HAS_PILOT,
                  "GUI is not available in GitHub Actions")
 class MeshInfoTC(unittest.TestCase):
     def setUp(self):

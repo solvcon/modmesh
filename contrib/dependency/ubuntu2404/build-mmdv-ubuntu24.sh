@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Build modmesh's runtime dependencies from source on Ubuntu 24.04, with no
+# Build solvcon's runtime dependencies from source on Ubuntu 24.04, with no
 # dependency on the devenv tool. The per-package build recipes here are inlined
 # translations of the scripts under devenv/scripts/build.d/ (zlib, openssl,
 # sqlite, python, pybind11, cython, numpy, scipy, qt, pyside6).
@@ -68,7 +68,7 @@
 #       and Qt version.
 #     MMDV_DLDIR: Directory for downloaded tarballs (real dir or symlink,
 #       depending on MMDV_SHARED_DLDIR).
-#     MMDV_SHARED_DLDIR: Shared cache for downloaded tarballs across modmesh
+#     MMDV_SHARED_DLDIR: Shared cache for downloaded tarballs across solvcon
 #       development environments (mmdvs).
 
 set -e
@@ -173,7 +173,7 @@ fi
 MMDV_BASE=${MMDV_BASE:-${MMDV_PREFIX}-py${PYTHON_VERSION}-qt${QT_MAJOR_VER}.${QT_SUB_VER}}
 # Directory for downloaded tarballs.
 MMDV_DLDIR=${MMDV_DLDIR:-${MMDV_BASE}/downloaded}
-# Shared cache for downloaded tarballs across modmesh development environments
+# Shared cache for downloaded tarballs across solvcon development environments
 # (mmdvs).  When non-empty, ${MMDV_DLDIR} is created as a symlink that points
 # here.  The "-" (not ":-") form lets the caller explicitly set
 # MMDV_SHARED_DLDIR= to opt out and keep a per-mmdv directory instead.
@@ -308,11 +308,11 @@ else
   export CMAKE_PREFIX_PATH=${MMDV_USRDIR}
 fi
 
-# modmesh's _modmesh module constructs a QApplication during PyInit__modmesh;
+# solvcon's _solvcon module constructs a QApplication during PyInit__modmesh;
 # without a display or QT_QPA_PLATFORM Qt aborts in
 # QGuiApplicationPrivate::createPlatformIntegration. Default to the offscreen
 # platform when nothing is set and no display is available, so plain `import
-# modmesh` and `make pytest` work in headless shells.  If a real display
+# solvcon` and `make pytest` work in headless shells.  If a real display
 # becomes available later the user can `export QT_QPA_PLATFORM=xcb` (or unset
 # it) without re-sourcing.
 if [ -z "${QT_QPA_PLATFORM-}" ] \

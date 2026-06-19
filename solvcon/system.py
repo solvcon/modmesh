@@ -13,7 +13,7 @@ import os
 import argparse
 import traceback
 
-import modmesh
+import solvcon
 from . import apputil
 
 
@@ -59,14 +59,14 @@ def _parse_command_line(argv):
 def _run_pilot(argv=None):
     """Run the pilot application."""
     # The local importing pilot delays loading GUI/Qt code. GUI/Qt may be
-    # unavailable in some execution modes and the module modmesh.pilot and
+    # unavailable in some execution modes and the module solvcon.pilot and
     # PySide6 should not be imported at module level.
     from . import pilot
     return pilot.launch()
 
 
 def _run_pytest(extra_args=None):
-    """Run the pytest harness against modmesh's tests directory.
+    """Run the pytest harness against solvcon's tests directory.
 
     :param extra_args: Pytest options passed on the pilot command line
         (after ``--mode=pytest``). When non-empty, takes precedence over
@@ -77,10 +77,10 @@ def _run_pytest(extra_args=None):
     :rtype: int
     """
     # Import pytest locally to avoid making it a dependency to the whole
-    # modmesh.
+    # solvcon.
     import pytest
     import shlex
-    mmpath = os.path.join(os.path.dirname(modmesh.__file__), '..', 'tests')
+    mmpath = os.path.join(os.path.dirname(solvcon.__file__), '..', 'tests')
     mmpath = os.path.abspath(mmpath)
     if extra_args:
         opts = list(extra_args)
@@ -93,8 +93,8 @@ def _run_pytest(extra_args=None):
 def setup_process(argv):
     """Set up the runtime environment for the process."""
     # Install the namespace.
-    builtins.modmesh = modmesh
-    builtins.mm = modmesh
+    builtins.solvcon = solvcon
+    builtins.sc = solvcon
 
 
 def enter_main(argv):

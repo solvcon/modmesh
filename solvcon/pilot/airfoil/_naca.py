@@ -8,7 +8,7 @@ NACA airfoil shape
 
 import numpy as np
 
-from modmesh import core
+from solvcon import core
 
 __all__ = [
     'Naca4',

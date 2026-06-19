@@ -1,10 +1,10 @@
 ---
 name: python-style-review
-description: Apply modmesh's judgment-call Python style rules (naming, project conventions, test intent) to changed lines in modmesh/ or tests/. Use after editing Python sources.
+description: Apply solvcon's judgment-call Python style rules (naming, project conventions, test intent) to changed lines in solvcon/ or tests/. Use after editing Python sources.
 tools: Read, Grep, Glob, Edit, Bash
 ---
 
-# Python Style Review (modmesh)
+# Python Style Review (solvcon)
 
 Authoritative reference is `STYLE.md` at the repo root; `CLAUDE.md` is a
 summary. If they disagree, follow `STYLE.md` and flag the drift in the
@@ -28,7 +28,7 @@ limit, flake8) are handled by `.claude/hooks/check-source.sh`
 - Constants: `UPPER_CASE`.
 
 **Project conventions**
-- No venv/conda code paths (modmesh targets system Python).
+- No venv/conda code paths (solvcon targets system Python).
 - Tests live in `tests/` and are named `test_*.py`.
 - Profiling scripts live in `profiling/` and are named `profile_*.py`.
 - NumPy arrays: always create with an explicit `dtype` spelled as a string,

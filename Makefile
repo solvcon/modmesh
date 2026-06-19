@@ -1,7 +1,7 @@
 # Copyright (c) 2019, solvcon team <contact@solvcon.net>
 # BSD 3-Clause License, see COPYING
 
-# Build modmesh Python extension (even when the timestamp is clean):
+# Build solvcon Python extension (even when the timestamp is clean):
 #   make
 # Build verbosely:
 #   make VERBOSE=1
@@ -37,7 +37,7 @@ NPROC ?= $(shell getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 MAKE_PARALLEL ?= -j $(NPROC)
 MODMESH_ROOT ?= $(shell pwd)
 CMAKE_INSTALL_PREFIX ?= $(MODMESH_ROOT)/build/fakeinstall
-CMAKE_LIBRARY_OUTPUT_DIRECTORY ?= $(MODMESH_ROOT)/modmesh
+CMAKE_LIBRARY_OUTPUT_DIRECTORY ?= $(MODMESH_ROOT)/solvcon
 # Use CMAKE_PREFIX_PATH to make it easier to build with Qt, e.g.,
 # CMAKE_PREFIX_PATH=/path/to/qt/6.2.3/macos
 CMAKE_PREFIX_PATH ?=
@@ -63,7 +63,7 @@ endif
 # In case Python is not system Python. For example. Python virtual environment
 # is used.
 # However, please note a Python virtual environment is strongly discouraged in
-# developing modmesh. We do not actively resolve bugs related to any virtual
+# developing solvcon. We do not actively resolve bugs related to any virtual
 # env including venv or conda.
 # See https://github.com/solvcon/modmesh/pull/177 for more details.
 WHICH_PYTHON := $(shell which python3)
@@ -81,7 +81,7 @@ else
 endif
 export BUILD_PATH
 
-# Test with the build interpreter; an ABI-tagged _modmesh cannot load under a
+# Test with the build interpreter; an ABI-tagged _solvcon cannot load under a
 # py.test-3 launcher bound to a different Python.
 PYTEST ?= $(WHICH_PYTHON) -m pytest
 ifneq ($(VERBOSE),)
@@ -127,7 +127,7 @@ $(BUILD_PATH)_xcode/Makefile: CMakeLists.txt Makefile
 
 .PHONY: buildext
 buildext: cmake
-	cmake --build $(BUILD_PATH) --target _modmesh_py VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)
+	cmake --build $(BUILD_PATH) --target _solvcon_py VERBOSE=$(VERBOSE) $(MAKE_PARALLEL)
 
 .PHONY: install
 install: cmake
@@ -307,12 +307,12 @@ format: pyformat
 
 .PHONY: clean
 clean:
-	rm -f $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
-	rm -f $(MODMESH_ROOT)/_modmesh$(pyextsuffix)
+	rm -f $(MODMESH_ROOT)/solvcon/_solvcon$(pyextsuffix)
+	rm -f $(MODMESH_ROOT)/_solvcon$(pyextsuffix)
 	make -C $(BUILD_PATH) clean
 
 .PHONY: cmakeclean
 cmakeclean:
-	rm -f $(MODMESH_ROOT)/modmesh/_modmesh$(pyextsuffix)
-	rm -f $(MODMESH_ROOT)/_modmesh$(pyextsuffix)
+	rm -f $(MODMESH_ROOT)/solvcon/_solvcon$(pyextsuffix)
+	rm -f $(MODMESH_ROOT)/_solvcon$(pyextsuffix)
 	rm -rf $(BUILD_PATH)

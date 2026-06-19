@@ -8,11 +8,11 @@ import time
 import json
 import jsonschema
 import functools
-import modmesh
+import solvcon
 
 
 # TODO
-# 1. Implement profile_funcion somewhere else under python modmesh lib
+# 1. Implement profile_funcion somewhere else under python solvcon lib
 # 2. Add a filed in each node in profiler to distinguish where profiler run
 #    like from: C++, from: Python
 # 3. Try profile a real app that has both python and C++ codes
@@ -20,7 +20,7 @@ import modmesh
 def profile_function(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        _ = modmesh.CallProfilerProbe(func.__name__)
+        _ = solvcon.CallProfilerProbe(func.__name__)
         result = func(*args, **kwargs)
         return result
     return wrapper
@@ -36,7 +36,7 @@ def busy_loop(duration):
 class CallProfilerTC(unittest.TestCase):
 
     def test_singleton(self):
-        self.assertIs(modmesh.call_profiler, modmesh.CallProfiler.instance)
+        self.assertIs(solvcon.call_profiler, solvcon.CallProfiler.instance)
 
     def test_reset(self):
 
@@ -45,8 +45,8 @@ class CallProfilerTC(unittest.TestCase):
             busy_loop(0.01)
 
         foo1()
-        modmesh.call_profiler.reset()
-        result = modmesh.call_profiler.result()
+        solvcon.call_profiler.reset()
+        result = solvcon.call_profiler.result()
         self.assertEqual(result, {})
 
     def test_profiler_result_schema(self):
@@ -55,9 +55,9 @@ class CallProfilerTC(unittest.TestCase):
         def foo1():
             busy_loop(0.001)
 
-        modmesh.call_profiler.reset()
+        solvcon.call_profiler.reset()
         foo1()
-        result = modmesh.call_profiler.result()
+        result = solvcon.call_profiler.result()
 
         path = os.path.join(os.path.abspath(os.path.dirname(__file__)),
                             "data", "profiler_python_schema.json")
@@ -75,9 +75,9 @@ class CallProfilerTC(unittest.TestCase):
         def foo():
             busy_loop(0.001)
 
-        modmesh.call_profiler.reset()
+        solvcon.call_profiler.reset()
         foo()
-        root_result = modmesh.call_profiler.result()
+        root_result = solvcon.call_profiler.result()
         self.assertEqual(len(root_result["children"]), 1)
         self.assertEqual(root_result["children"][0]["name"], "foo")
         foo_result = root_result["children"][0]
@@ -96,9 +96,9 @@ class CallProfilerTC(unittest.TestCase):
             busy_loop(0.001)
             bar()
 
-        modmesh.call_profiler.reset()
+        solvcon.call_profiler.reset()
         foo()
-        root_result = modmesh.call_profiler.result()
+        root_result = solvcon.call_profiler.result()
         self.assertEqual(len(root_result["children"]), 1)
         self.assertEqual(root_result["children"][0]["name"], "foo")
         foo_result = root_result["children"][0]
@@ -123,10 +123,10 @@ class CallProfilerTC(unittest.TestCase):
             busy_loop(0.001)
             bar()
 
-        modmesh.call_profiler.reset()
+        solvcon.call_profiler.reset()
         bar()
         foo()
-        root_result = modmesh.call_profiler.result()
+        root_result = solvcon.call_profiler.result()
         self.assertEqual(len(root_result["children"]), 2)
         search_bar = [i for i in root_result["children"] if i["name"] == "bar"]
         self.assertEqual(len(search_bar), 1)
@@ -157,7 +157,7 @@ class CallProfilerTC(unittest.TestCase):
         @profile_function
         def foo():
             busy_loop(0.001)
-            root_result = modmesh.call_profiler.result()
+            root_result = solvcon.call_profiler.result()
             self.assertEqual(len(root_result["children"]), 1)
             self.assertEqual(root_result["children"][0]["name"], "foo")
             foo_result = root_result["children"][0]
@@ -167,12 +167,12 @@ class CallProfilerTC(unittest.TestCase):
             self.assertTrue(foo_result["current_node"])
             bar()
 
-        modmesh.call_profiler.reset()
+        solvcon.call_profiler.reset()
         foo()
 
     def test_zero_callers_serializing(self):
-        modmesh.call_profiler.reset()
-        sdict = json.loads(modmesh.call_profiler.serialize())
+        solvcon.call_profiler.reset()
+        sdict = json.loads(solvcon.call_profiler.serialize())
 
         # There are 3 keys in the serialization_dict
         self.assertEqual(sdict["id_map"], {})
@@ -197,10 +197,10 @@ class CallProfilerTC(unittest.TestCase):
             busy_loop(0.001)
             bar()
 
-        modmesh.call_profiler.reset()
+        solvcon.call_profiler.reset()
         bar()
         foo()
-        sdict = json.loads(modmesh.call_profiler.serialize())
+        sdict = json.loads(solvcon.call_profiler.serialize())
 
         # There are 3 keys in the serialization_dict
         self.assertEqual(sdict["id_map"], {'bar': 0, 'foo': 1})
@@ -248,7 +248,7 @@ class CallProfilerTC(unittest.TestCase):
         def foo():
             bar()
             busy_loop(0.001)
-            sdict = json.loads(modmesh.call_profiler.serialize())
+            sdict = json.loads(solvcon.call_profiler.serialize())
 
             # There are 3 keys in the serialization_dict
             self.assertEqual(sdict["id_map"], {})
@@ -262,38 +262,38 @@ class CallProfilerTC(unittest.TestCase):
             self.assertEqual(radix_tree["total_time"], 0)
             self.assertEqual(radix_tree["children"], [])
 
-        modmesh.call_profiler.reset()
+        solvcon.call_profiler.reset()
         foo()
 
     def test_status(self):
-        modmesh.wrapper_profiler_status.disable()
-        self.assertFalse(modmesh.wrapper_profiler_status.enabled)
+        solvcon.wrapper_profiler_status.disable()
+        self.assertFalse(solvcon.wrapper_profiler_status.enabled)
 
-        modmesh.call_profiler.reset()
-        buf = modmesh.ConcreteBuffer(10)
-        self.assertEqual({}, modmesh.call_profiler.result())
+        solvcon.call_profiler.reset()
+        buf = solvcon.ConcreteBuffer(10)
+        self.assertEqual({}, solvcon.call_profiler.result())
 
-        modmesh.wrapper_profiler_status.enable()
-        modmesh.call_profiler.reset()
-        buf = modmesh.ConcreteBuffer(10)  # noqa: F841
-        res = modmesh.call_profiler.result().get("children")
+        solvcon.wrapper_profiler_status.enable()
+        solvcon.call_profiler.reset()
+        buf = solvcon.ConcreteBuffer(10)  # noqa: F841
+        res = solvcon.call_profiler.result().get("children")
         self.assertEqual(['ConcreteBuffer.__init__'], [d["name"] for d in res])
 
     def test_names(self):
-        modmesh.call_profiler.reset()
-        buf = modmesh.ConcreteBuffer(10)
+        solvcon.call_profiler.reset()
+        buf = solvcon.ConcreteBuffer(10)
         buf2 = buf.clone()  # noqa: F841
-        c = modmesh.call_profiler.result().get("children")
+        c = solvcon.call_profiler.result().get("children")
         self.assertEqual(
             ['ConcreteBuffer.__init__', 'ConcreteBuffer.clone'],
             [d["name"] for d in c])
 
     def test_entry(self):
-        modmesh.call_profiler.reset()
-        buf = modmesh.ConcreteBuffer(10)
+        solvcon.call_profiler.reset()
+        buf = solvcon.ConcreteBuffer(10)
         buf2 = buf.clone()  # noqa: F841
         buf2 = buf.clone()  # noqa: F841
-        c = modmesh.call_profiler.result().get("children")
+        c = solvcon.call_profiler.result().get("children")
         init_result = list(filter(
             lambda d: d["name"] == "ConcreteBuffer.__init__", c
         ))[0]

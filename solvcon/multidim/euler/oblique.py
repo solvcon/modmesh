@@ -64,7 +64,7 @@ class ObliqueShockMesher(object):
                 self._nid(it + 1, jt + 1), self._nid(it, jt + 1))
 
     def make_mesh(self, cell_type='quad'):
-        """Build a :class:`~modmesh.core.StaticMesh` of the selected flavor.
+        """Build a :class:`~solvcon.core.StaticMesh` of the selected flavor.
 
         ``cell_type`` selects the element shape:
         - ``'quad'`` keeps one quadrilateral per grid box,

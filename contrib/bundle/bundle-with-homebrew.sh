@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # This script is a prototype to create a self-contained macOS .app bundle for
-# modmesh, package it into a DMG file, and verify both are hermetic. It employs
+# solvcon, package it into a DMG file, and verify both are hermetic. It employs
 # macdeployqt, otool, and install_name_tool to process the binaires, and ad-hoc
 # codesign to reseal them.
 #
@@ -94,7 +94,7 @@ require_command() {
 
 python_module_check() {
     local module="$1" hint="${2:-}" out
-    out=$(mktemp -t modmesh-bundle-pycheck)
+    out=$(mktemp -t solvcon-bundle-pycheck)
     if python3 - "$module" <<'PY' >"$out" 2>&1
 import importlib
 import sys
@@ -282,7 +282,7 @@ runtime_import_check() {
     env -i HOME="${HOME:-/}" USER="${USER:-nobody}" \
         PATH=/usr/bin:/bin TERM="${TERM:-xterm}" \
         "$bin" --mode=python -c \
-        "import matplotlib; import modmesh.pilot._base_app"
+        "import matplotlib; import solvcon.pilot._base_app"
 }
 
 smoke_launch_verify() {
@@ -337,10 +337,10 @@ verify_dmg() {
     shasum -a 256 "$dmg"
     hdiutil imageinfo "$dmg" >/dev/null
 
-    VERIFY_MNT=$(mktemp -d -t modmesh-release-dmg)
-    VERIFY_TMP=$(mktemp -d -t modmesh-release-app)
-    VERIFY_TRACE=$(mktemp -t modmesh-release-dyld)
-    VERIFY_MARKER=$(mktemp -t modmesh-release-marker)
+    VERIFY_MNT=$(mktemp -d -t solvcon-release-dmg)
+    VERIFY_TMP=$(mktemp -d -t solvcon-release-app)
+    VERIFY_TRACE=$(mktemp -t solvcon-release-dyld)
+    VERIFY_MARKER=$(mktemp -t solvcon-release-marker)
     mnt="$VERIFY_MNT"
     tmp="$VERIFY_TMP"
     trace="$VERIFY_TRACE"
@@ -653,17 +653,17 @@ fi
 echo "    [Step 4 (Bundle site-packages): $((SECONDS - T_STEP))s]"
 
 # ---------------------------------------------------------------------------
-# Step 5: Bundle modmesh
+# Step 5: Bundle solvcon
 # ---------------------------------------------------------------------------
 
 T_STEP=$SECONDS
-echo "==> Copying modmesh package into bundled site-packages"
-# Copy the modmesh Python package. Skip _modmesh*.so because the binary code is
+echo "==> Copying solvcon package into bundled site-packages"
+# Copy the solvcon Python package. Skip _solvcon*.so because the binary code is
 # statically linked into pilot via PYBIND11_EMBEDDED_MODULE.
-rsync -a --exclude '__pycache__' --exclude '_modmesh*.so' \
-    "$BUNDLE_REPO_ROOT/modmesh" "$BUNDLED_SITE/"
-echo "    modmesh -> $BUNDLED_SITE/modmesh"
-echo "    [Step 5 (Bundle modmesh): $((SECONDS - T_STEP))s]"
+rsync -a --exclude '__pycache__' --exclude '_solvcon*.so' \
+    "$BUNDLE_REPO_ROOT/solvcon" "$BUNDLED_SITE/"
+echo "    solvcon -> $BUNDLED_SITE/solvcon"
+echo "    [Step 5 (Bundle solvcon): $((SECONDS - T_STEP))s]"
 
 # ---------------------------------------------------------------------------
 # Step 5.5: Pre-compile bundled bytecode
@@ -1098,7 +1098,7 @@ T_STEP=$SECONDS
 mkdir -p "$OUTPUT_DIR"
 DMG="$OUTPUT_DIR/pilot.dmg"
 echo "==> Creating $DMG from $APP"
-hdiutil create -volname "modmesh Pilot" \
+hdiutil create -volname "solvcon Pilot" \
     -srcfolder "$APP" \
     -ov -format UDZO \
     "$DMG"

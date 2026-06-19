@@ -4,7 +4,7 @@
 # BSD 3-Clause License, see COPYING
 
 """
-Analyze modmesh contributors and maintain CONTRIBUTORS.md.
+Analyze solvcon contributors and maintain CONTRIBUTORS.md.
 
 A contributor belongs in the list when an email appears in a source-file
 copyright header or reaches a commit threshold on ``master`` (default 5).

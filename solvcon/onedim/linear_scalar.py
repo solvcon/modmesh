@@ -5,9 +5,9 @@
 import numpy as np
 
 try:
-    from _modmesh import spacetime as _impl  # noqa: F401
+    from _solvcon import spacetime as _impl  # noqa: F401
 except ImportError:
-    from .._modmesh import spacetime as _impl  # noqa: F401
+    from .._solvcon import spacetime as _impl  # noqa: F401
 
 __all__ = [
     'LinearScalarSolver',

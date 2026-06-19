@@ -6,25 +6,25 @@ import os
 import unittest
 import time
 
-import modmesh
+import solvcon
 
 
 class StopWatchTC(unittest.TestCase):
 
     def test_singleton(self):
 
-        self.assertIs(modmesh.stop_watch, modmesh.StopWatch.me)
+        self.assertIs(solvcon.stop_watch, solvcon.StopWatch.me)
 
     def test_microsecond_resolution(self):
 
-        sw = modmesh.stop_watch
+        sw = solvcon.stop_watch
         self.assertGreater(1.e-6, sw.resolution)
 
     @unittest.skipUnless("nt" != os.name,
                          "timing code on windows does not work yet")
     def test_lap_with_sleep(self):
 
-        sw = modmesh.stop_watch
+        sw = solvcon.stop_watch
 
         # Mark start
         sw.lap()

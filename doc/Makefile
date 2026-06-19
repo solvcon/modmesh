@@ -1,4 +1,4 @@
-# Minimal documentation build for modmesh.
+# Minimal documentation build for solvcon.
 #
 # Quick start:
 #   pip install -r requirements.txt   # plus a system Doxygen for C++ docs

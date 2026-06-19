@@ -62,20 +62,20 @@ class cmake_build_ext(build_ext.build_ext):
 
 def main():
     setuptools.setup(
-        name="modmesh",
+        name="solvcon",
         version="0.0",
         packages=[
-            'modmesh',
-            'modmesh.multidim',
-            'modmesh.multidim.euler',
-            'modmesh.onedim',
-            'modmesh.pilot',
-            'modmesh.pilot.airfoil',
-            'modmesh.plot',
-            'modmesh.profiling',
-            'modmesh.track',
+            'solvcon',
+            'solvcon.multidim',
+            'solvcon.multidim.euler',
+            'solvcon.onedim',
+            'solvcon.pilot',
+            'solvcon.pilot.airfoil',
+            'solvcon.plot',
+            'solvcon.profiling',
+            'solvcon.track',
         ],
-        ext_modules=[CMakeExtension("_modmesh")],
+        ext_modules=[CMakeExtension("_solvcon")],
         cmdclass={'build_ext': cmake_build_ext},
     )
 

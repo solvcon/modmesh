@@ -1,9 +1,9 @@
-# Minimal Doxygen config for the modmesh C++ API.
+# Minimal Doxygen config for the solvcon C++ API.
 #
 # Emits XML only -- breathe consumes the XML and Sphinx renders it.  HTML
 # and LaTeX output are disabled so Sphinx remains the single front end.
 
-PROJECT_NAME      = modmesh
+PROJECT_NAME      = solvcon
 OUTPUT_DIRECTORY  = build/doxygen
 INPUT             = ../cpp/modmesh
 FILE_PATTERNS     = *.hpp *.cpp

@@ -4,8 +4,8 @@
 
 import unittest
 
-import modmesh as mm
-from modmesh.pilot.airfoil import _naca
+import solvcon as sc
+from solvcon.pilot.airfoil import _naca
 
 
 class Naca4TC(unittest.TestCase):
@@ -32,7 +32,7 @@ class Naca4TC(unittest.TestCase):
 
 class Naca4SamplerTC(unittest.TestCase):
     def test_construction(self):
-        w = mm.WorldFp64()
+        w = sc.WorldFp64()
         naca4 = _naca.Naca4(number='0012', open_trailing_edge=False,
                             cosine_spacing=False)
         _naca.Naca4Sampler(w, naca4)

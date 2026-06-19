@@ -66,7 +66,7 @@ def search_library_root(curr_path, lib_root_name, timeout=1.0):
     :return: None
     """
     # Try to find the library root, if failed to find it
-    # modmesh will raise ImportError and remind the user.
+    # solvcon will raise ImportError and remind the user.
     lib_path = {}
     folder_name = os.path.join(lib_root_name)
     _path = curr_path

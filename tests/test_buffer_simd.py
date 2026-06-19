@@ -7,7 +7,7 @@ import unittest
 
 import numpy as np
 
-import modmesh
+import solvcon
 
 
 class SimdDispatchTC(unittest.TestCase):
@@ -17,8 +17,8 @@ class SimdDispatchTC(unittest.TestCase):
     def test_neon_active_on_aarch64(self):
         # _simd_feature is intentionally private: the underlying detector only
         # reflects the dispatched backend on aarch64 today, so it is reached
-        # through the C++ module rather than the public modmesh namespace.
-        feature = modmesh.core._impl._simd_feature()
+        # through the C++ module rather than the public solvcon namespace.
+        feature = solvcon.core._impl._simd_feature()
         if platform.machine() in ("arm64", "aarch64"):
             self.assertEqual(feature, "NEON")
         else:
@@ -37,8 +37,8 @@ class SimdTransformBinaryTC(unittest.TestCase):
         for n in (1, 3, 4, 5, 8, 17):
             a_vals = np.arange(n, dtype=np.int32)
             b_vals = np.array([2 * i + 1 for i in range(n)], dtype=np.int32)
-            a = modmesh.SimpleArrayInt32(array=a_vals)
-            b = modmesh.SimpleArrayInt32(array=b_vals)
+            a = solvcon.SimpleArrayInt32(array=a_vals)
+            b = solvcon.SimpleArrayInt32(array=b_vals)
             out = a.add_simd(b)
             for i in range(n):
                 self.assertEqual(
@@ -50,8 +50,8 @@ class SimdTransformBinaryTC(unittest.TestCase):
         n = 7
         a_vals = np.array([float(i + 10) for i in range(n)], dtype=np.float32)
         b_vals = np.array([float(i + 1) for i in range(n)], dtype=np.float32)
-        a = modmesh.SimpleArrayFloat32(array=a_vals)
-        b = modmesh.SimpleArrayFloat32(array=b_vals)
+        a = solvcon.SimpleArrayFloat32(array=a_vals)
+        b = solvcon.SimpleArrayFloat32(array=b_vals)
 
         sub_out = a.sub_simd(b)
         mul_out = a.mul_simd(b)
@@ -64,9 +64,9 @@ class SimdTransformBinaryTC(unittest.TestCase):
     # vmulq has no int64 overload; SFINAE in the NEON path must route int64
     # multiply to the scalar generic implementation
     def test_int64_mul_falls_back_to_generic(self):
-        a = modmesh.SimpleArrayInt64(
+        a = solvcon.SimpleArrayInt64(
             array=np.array([1, 2, 3, 4, 5], dtype=np.int64))
-        b = modmesh.SimpleArrayInt64(
+        b = solvcon.SimpleArrayInt64(
             array=np.array([10, 20, 30, 40, 50], dtype=np.int64))
         out = a.mul_simd(b)
         expected = [10, 40, 90, 160, 250]

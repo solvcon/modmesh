@@ -6,14 +6,14 @@ import unittest
 
 import numpy as np
 
-import modmesh
+import solvcon
 
 
 class StaticGrid1dTC(unittest.TestCase):
 
     def test_getset(self):
 
-        gd = modmesh.StaticGrid1d(11)
+        gd = solvcon.StaticGrid1d(11)
 
         self.assertEqual(11, gd.nx)
         self.assertEqual(11, len(gd))
@@ -24,7 +24,7 @@ class StaticGrid1dTC(unittest.TestCase):
 
     def test_coord(self):
 
-        gd = modmesh.StaticGrid1d(11)
+        gd = solvcon.StaticGrid1d(11)
 
         # gd.coord is a SimpleArray.
         self.assertEqual(np.float64, gd.coord.ndarray.dtype)
@@ -51,7 +51,7 @@ class StaticGrid1dTC(unittest.TestCase):
         # coord keeps living after the grid housing it deceased.
         def check_life_cycle():
 
-            gd2 = modmesh.StaticGrid1d(5)
+            gd2 = solvcon.StaticGrid1d(5)
             gd2.coord = np.arange(5, dtype='float64')
             return gd2.coord
 
@@ -60,7 +60,7 @@ class StaticGrid1dTC(unittest.TestCase):
 
     def test_fill(self):
 
-        gd = modmesh.StaticGrid1d(11)
+        gd = solvcon.StaticGrid1d(11)
         gd.fill(102)
         self.assertEqual([102] * gd.nx, list(gd))
 

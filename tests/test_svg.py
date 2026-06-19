@@ -5,8 +5,8 @@ import unittest
 
 import os
 
-from modmesh import testing
-from modmesh.plot import svg
+from solvcon import testing
+from solvcon.plot import svg
 
 
 class SvgParserTB(testing.TestBase, unittest.TestCase):

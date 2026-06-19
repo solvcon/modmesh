@@ -1,4 +1,4 @@
-name: Set up modmesh CI dependencies on Linux
+name: Set up solvcon CI dependencies on Linux
 description: Set up the necessary dependencies for running CI tests on Github action Linux runners
 
 inputs:

@@ -3,7 +3,7 @@
 
 
 import unittest
-from modmesh.plot import plane_layer
+from solvcon.plot import plane_layer
 
 
 class PlaneLayerTC(unittest.TestCase):

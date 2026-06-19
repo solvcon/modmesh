@@ -3,13 +3,13 @@
 
 import unittest
 
-import modmesh as mm
+import solvcon as sc
 
 
 class EulerCoreTC(unittest.TestCase):
 
     def test_construct(self):
-        mh = mm.StaticMesh(ndim=2, nnode=0)
-        mm.EulerCore(mesh=mh, time_increment=0.0)
+        mh = sc.StaticMesh(ndim=2, nnode=0)
+        sc.EulerCore(mesh=mh, time_increment=0.0)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

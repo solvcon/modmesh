@@ -4,26 +4,26 @@
 import json
 
 import numpy
-import modmesh
+import solvcon
 
 
 def make_container(data):
     if numpy.isdtype(data.dtype, numpy.uint8):
-        return modmesh.SimpleArrayUint8(array=data)
+        return solvcon.SimpleArrayUint8(array=data)
     elif numpy.isdtype(data.dtype, numpy.uint16):
-        return modmesh.SimpleArrayUint16(array=data)
+        return solvcon.SimpleArrayUint16(array=data)
     elif numpy.isdtype(data.dtype, numpy.uint32):
-        return modmesh.SimpleArrayUint32(array=data)
+        return solvcon.SimpleArrayUint32(array=data)
     elif numpy.isdtype(data.dtype, numpy.uint64):
-        return modmesh.SimpleArrayUint64(array=data)
+        return solvcon.SimpleArrayUint64(array=data)
 
 
 def main():
-    modmesh.call_profiler.reset()
+    solvcon.call_profiler.reset()
     simple_array = make_container(numpy.arange(0, 1e6, dtype="uint8"))
     simple_array.median()
 
-    print(json.dumps(modmesh.call_profiler.result().get("children"), indent=4))
+    print(json.dumps(solvcon.call_profiler.result().get("children"), indent=4))
 
 
 if __name__ == "__main__":

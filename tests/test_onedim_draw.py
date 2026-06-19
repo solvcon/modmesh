@@ -10,7 +10,7 @@ import os
 
 import numpy as np
 
-import modmesh as mm
+import solvcon as sc
 
 
 class DrawBase:
@@ -72,14 +72,14 @@ class DrawCeseMarching(DrawBase):
     @staticmethod
     def draw():
 
-        grid = mm.spacetime.Grid(0, 6, 4)
-        sol = mm.spacetime.Solver(grid=grid, nvar=1, time_increment=6 / 4)
+        grid = sc.spacetime.Grid(0, 6, 4)
+        sol = sc.spacetime.Solver(grid=grid, nvar=1, time_increment=6 / 4)
 
         dx = (grid.xmax - grid.xmin) / grid.ncelm
         dt = dx
         hdt = dt / 2
 
-        c = mm.onedim.draw.PstCanvas(unit='2cm', padding=0.5)
+        c = sc.onedim.draw.PstCanvas(unit='2cm', padding=0.5)
         c.set(linewidth='1pt')
         c.set(linecolor='black')
 
@@ -158,7 +158,7 @@ class DrawCeseMarching(DrawBase):
     @staticmethod
     def draw_cce():
 
-        c = mm.onedim.draw.PstCanvas(unit='2cm', extent=(-2.4, -0.5, 2.4, 1.5))
+        c = sc.onedim.draw.PstCanvas(unit='2cm', extent=(-2.4, -0.5, 2.4, 1.5))
         c.set(linewidth='1pt')
         c.set(linecolor='black')
         c.frame((-1, 0), (1, 1))
@@ -466,14 +466,14 @@ class DrawNonuniSe(DrawBase):
     def draw():
 
         xloc = np.array([-1, 0, 2, 3.5])
-        grid = mm.spacetime.Grid(xloc=xloc)
-        sol = mm.spacetime.Solver(grid=grid, nvar=1, time_increment=6 / 4)
+        grid = sc.spacetime.Grid(xloc=xloc)
+        sol = sc.spacetime.Solver(grid=grid, nvar=1, time_increment=6 / 4)
 
         dx = (grid.xmax - grid.xmin) / grid.ncelm
         dt = dx
         hdt = dt / 2
 
-        c = mm.onedim.draw.PstCanvas(unit='2cm', padding=0.5)
+        c = sc.onedim.draw.PstCanvas(unit='2cm', padding=0.5)
         c.set(linewidth='1pt')
         c.set(linecolor='black')
 
@@ -529,7 +529,7 @@ class DrawNonuniSe(DrawBase):
     @staticmethod
     def draw_cce():
 
-        c = mm.onedim.draw.PstCanvas(unit='2cm', extent=(-2.4, -0.5, 2.4, 1.5))
+        c = sc.onedim.draw.PstCanvas(unit='2cm', extent=(-2.4, -0.5, 2.4, 1.5))
         c.set(linewidth='1pt')
         c.set(linecolor='black')
         c.frame((-1, 0), (1, 1))
@@ -705,14 +705,14 @@ class DrawSeFlux(DrawBase):
     @staticmethod
     def draw():
         xloc = np.array([-1, 0, 2, 3.5])
-        grid = mm.spacetime.Grid(xloc=xloc)
-        sol = mm.spacetime.Solver(grid=grid, nvar=1, time_increment=1)
+        grid = sc.spacetime.Grid(xloc=xloc)
+        sol = sc.spacetime.Solver(grid=grid, nvar=1, time_increment=1)
 
         dt = sol.dt
         hdt = dt / 2
         qdt = hdt / 2
 
-        c = mm.onedim.draw.PstCanvas(unit='5cm',
+        c = sc.onedim.draw.PstCanvas(unit='5cm',
                                      padding=[0.75, 0.25, 0.7, 0.25])
         c.set(linewidth='1pt')
         c.set(linecolor='black')

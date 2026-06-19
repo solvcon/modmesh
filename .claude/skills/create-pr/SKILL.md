@@ -1,11 +1,11 @@
 ---
 name: create-pr
-description: Open a modmesh pull request that follows the project PR protocol (concise subject, clear description, "related to #xxx" wording, draft by default, ready-for-review via global comment). Use when the user asks to create, open, or draft a pull request.
+description: Open a solvcon pull request that follows the project PR protocol (concise subject, clear description, "related to #xxx" wording, draft by default, ready-for-review via global comment). Use when the user asks to create, open, or draft a pull request.
 ---
 
-# Create Pull Request (modmesh)
+# Create Pull Request (solvcon)
 
-This file is the authoritative reference for the modmesh PR protocol.
+This file is the authoritative reference for the solvcon PR protocol.
 The "Pull Request Guidelines" section of `CLAUDE.md` is the project-wide
 cross-reference; flag any drift between the two.
 
@@ -47,7 +47,7 @@ cross-reference; flag any drift between the two.
    - Is this ready for review, or should it be opened as draft?
    - One-line gist of the change.
 
-2. **Verify branch state.** modmesh's main branch is `master`. Run in
+2. **Verify branch state.** solvcon's main branch is `master`. Run in
    parallel:
    - `git status --porcelain` -- check for staged or unstaged changes
      and untracked files.

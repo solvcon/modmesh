@@ -1,6 +1,6 @@
-# modmesh: modules to solve conservation laws with unstructured meshes
+# solvcon: modules to solve conservation laws with unstructured meshes
 
-modmesh is a modularized code implementing [the space-time conservation element
+solvcon is a modularized code implementing [the space-time conservation element
 and solution element (CESE)
 method](https://yyc.solvcon.net/en/latest/cese/index.html) based on
 unstructured meshes of mixed element to solve conservation laws. It is

@@ -2,15 +2,15 @@ import unittest
 
 import numpy as np
 
-import modmesh as mm
+import solvcon as sc
 
 
-@unittest.skipIf(mm.EigenSystem is None,
-                 "mm.EigenSystem is not built (no vendor LAPACK)")
+@unittest.skipIf(sc.EigenSystem is None,
+                 "sc.EigenSystem is not built (no vendor LAPACK)")
 class TestEigenSystemPlexTC(unittest.TestCase):
     """Verify the type-erased EigenSystem surrogate (C++ EigenSystemPlex).
 
-    mm.EigenSystem accepts a SimpleArrayPlex and dispatches on its runtime
+    sc.EigenSystem accepts a SimpleArrayPlex and dispatches on its runtime
     element type to the matching typed EigenSystem<T>.  Eigenvalues are
     exposed as real/imaginary parts via wr/wi for every element type.
     """
@@ -22,10 +22,10 @@ class TestEigenSystemPlexTC(unittest.TestCase):
     def _typed(self, arr, dtype):
         # The matching typed (non-plex) solver, used as the oracle.
         table = {
-            "float32": (mm.EigenSystemFloat32, mm.SimpleArrayFloat32),
-            "float64": (mm.EigenSystemFloat64, mm.SimpleArrayFloat64),
-            "complex64": (mm.EigenSystemComplex64, mm.SimpleArrayComplex64),
-            "complex128": (mm.EigenSystemComplex128, mm.SimpleArrayComplex128),
+            "float32": (sc.EigenSystemFloat32, sc.SimpleArrayFloat32),
+            "float64": (sc.EigenSystemFloat64, sc.SimpleArrayFloat64),
+            "complex64": (sc.EigenSystemComplex64, sc.SimpleArrayComplex64),
+            "complex128": (sc.EigenSystemComplex128, sc.SimpleArrayComplex128),
         }
         eig_cls, arr_cls = table[dtype]
         return eig_cls(arr_cls(array=arr))
@@ -41,7 +41,7 @@ class TestEigenSystemPlexTC(unittest.TestCase):
         for dtype in self.ALL:
             with self.subTest(dtype=dtype):
                 arr = np.ascontiguousarray(A_np, dtype=dtype)
-                solver = mm.EigenSystem(mm.SimpleArray(arr))
+                solver = sc.EigenSystem(sc.SimpleArray(arr))
                 self.assertFalse(solver.done)
                 solver.run()
                 self.assertTrue(solver.done)
@@ -61,27 +61,27 @@ class TestEigenSystemPlexTC(unittest.TestCase):
         # (std::invalid_argument) rather than dispatch.
         for dtype in ("int32", "int64", "uint8"):
             with self.subTest(dtype=dtype):
-                A = mm.SimpleArray(np.eye(2, dtype=dtype))
+                A = sc.SimpleArray(np.eye(2, dtype=dtype))
                 with self.assertRaisesRegex(
                         ValueError, r"data type must be"):
-                    mm.EigenSystem(A)
+                    sc.EigenSystem(A)
 
     def test_non_square_rejected(self):
         # A supported dtype dispatches, then hits the square-2D guard inside
         # the typed EigenSystem constructor.
-        A = mm.SimpleArray(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]))
+        A = sc.SimpleArray(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]))
         with self.assertRaisesRegex(
                 ValueError, r"must be a square 2D SimpleArray"):
-            mm.EigenSystem(A)
+            sc.EigenSystem(A)
 
     def test_forwards_do_vl_do_vr_flags(self):
         # do_vl/do_vr pass through to the dispatched solver unchanged.
         A_np = np.array([[2.0, 0.0], [0.0, 3.0]])
-        solver = mm.EigenSystem(mm.SimpleArray(A_np))
+        solver = sc.EigenSystem(sc.SimpleArray(A_np))
         self.assertTrue(solver.do_vl)
         self.assertTrue(solver.do_vr)
 
-        solver = mm.EigenSystem(mm.SimpleArray(A_np), do_vr=False)
+        solver = sc.EigenSystem(sc.SimpleArray(A_np), do_vr=False)
         solver.run()
         self.assertTrue(solver.do_vl)
         self.assertFalse(solver.do_vr)
@@ -93,8 +93,8 @@ class TestEigenSystemPlexTC(unittest.TestCase):
         # keep_alive<1, 2>() must keep the plex (and the typed array it owns)
         # alive after the Python-side plex reference is dropped.
         A_np = np.array([[3.0, 1.0], [0.0, 2.0]])
-        plex = mm.SimpleArray(A_np)
-        solver = mm.EigenSystem(plex)
+        plex = sc.SimpleArray(A_np)
+        solver = sc.EigenSystem(plex)
         del plex
         np.testing.assert_array_equal(np.array(solver.matrix), A_np)
 
@@ -395,44 +395,44 @@ class EigenSystemTB:
         self.assertEqual(empty_vr.size, 0)
 
 
-@unittest.skipIf(mm.EigenSystemFloat32 is None,
+@unittest.skipIf(sc.EigenSystemFloat32 is None,
                  "EigenSystem is not built (no vendor LAPACK)")
 class TestLinalgEigenSystemFloat32TC(EigenSystemTB, unittest.TestCase):
-    array_cls = mm.SimpleArrayFloat32
-    eig_cls = mm.EigenSystemFloat32
+    array_cls = sc.SimpleArrayFloat32
+    eig_cls = sc.EigenSystemFloat32
     np_dtype = np.float32
     is_complex = False
     rtol = 1e-4
     atol = 1e-5
 
 
-@unittest.skipIf(mm.EigenSystemFloat64 is None,
+@unittest.skipIf(sc.EigenSystemFloat64 is None,
                  "EigenSystem is not built (no vendor LAPACK)")
 class TestLinalgEigenSystemFloat64TC(EigenSystemTB, unittest.TestCase):
-    array_cls = mm.SimpleArrayFloat64
-    eig_cls = mm.EigenSystemFloat64
+    array_cls = sc.SimpleArrayFloat64
+    eig_cls = sc.EigenSystemFloat64
     np_dtype = np.float64
     is_complex = False
     rtol = 1e-10
     atol = 1e-12
 
 
-@unittest.skipIf(mm.EigenSystemComplex64 is None,
+@unittest.skipIf(sc.EigenSystemComplex64 is None,
                  "EigenSystem is not built (no vendor LAPACK)")
 class TestLinalgEigenSystemComplex64TC(EigenSystemTB, unittest.TestCase):
-    array_cls = mm.SimpleArrayComplex64
-    eig_cls = mm.EigenSystemComplex64
+    array_cls = sc.SimpleArrayComplex64
+    eig_cls = sc.EigenSystemComplex64
     np_dtype = np.complex64
     is_complex = True
     rtol = 1e-4
     atol = 1e-5
 
 
-@unittest.skipIf(mm.EigenSystemComplex128 is None,
+@unittest.skipIf(sc.EigenSystemComplex128 is None,
                  "EigenSystem is not built (no vendor LAPACK)")
 class TestLinalgEigenSystemComplex128TC(EigenSystemTB, unittest.TestCase):
-    array_cls = mm.SimpleArrayComplex128
-    eig_cls = mm.EigenSystemComplex128
+    array_cls = sc.SimpleArrayComplex128
+    eig_cls = sc.EigenSystemComplex128
     np_dtype = np.complex128
     is_complex = True
     rtol = 1e-10

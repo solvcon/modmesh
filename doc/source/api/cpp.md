@@ -13,7 +13,7 @@ Below is an example using `modmesh::ConcreteBuffer`.
 
 ```{eval-rst}
 .. doxygenclass:: modmesh::ConcreteBuffer
-   :project: modmesh
+   :project: solvcon
    :members:
 ```
 

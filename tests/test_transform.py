@@ -5,10 +5,10 @@ import unittest
 
 import numpy as np
 
-import modmesh as mm
+import solvcon as sc
 
 
-class FourierTransformTB(mm.testing.TestBase):
+class FourierTransformTB(sc.testing.TestBase):
 
     def setUp(self):
         pass
@@ -29,7 +29,7 @@ class FourierTransformTB(mm.testing.TestBase):
         np_input = np.array(mm_input, copy=False)
 
         mm_output = self.SimpleArray(input_size, self.complex())
-        mm.FourierTransform.dft(mm_input, mm_output)
+        sc.FourierTransform.dft(mm_input, mm_output)
 
         np_output = np.fft.fft(np_input)
 
@@ -47,8 +47,8 @@ class FourierTransformTB(mm.testing.TestBase):
         np_input = np.array(mm_input, copy=False)
 
         mm_output = self.SimpleArray(input_size, self.complex())
-        mm.FourierTransform.dft(mm_input, mm_output)
-        mm.FourierTransform.dft(mm_input, mm_output)
+        sc.FourierTransform.dft(mm_input, mm_output)
+        sc.FourierTransform.dft(mm_input, mm_output)
 
         np_output = np.fft.fft(np_input)
 
@@ -66,7 +66,7 @@ class FourierTransformTB(mm.testing.TestBase):
         np_input = np.array(mm_input, copy=False)
 
         mm_output = self.SimpleArray(input_size, self.complex())
-        mm.FourierTransform.fft(mm_input, mm_output)
+        sc.FourierTransform.fft(mm_input, mm_output)
 
         np_output = np.fft.fft(np_input)
 
@@ -84,7 +84,7 @@ class FourierTransformTB(mm.testing.TestBase):
         np_input = np.array(mm_input, copy=False)
 
         mm_output = self.SimpleArray(input_size, self.complex())
-        mm.FourierTransform.ifft(mm_input, mm_output)
+        sc.FourierTransform.ifft(mm_input, mm_output)
 
         np_output = np.fft.ifft(np_input)
 
@@ -108,8 +108,8 @@ class TransformFp32TC(FourierTransformTB, unittest.TestCase):
 
     def setUp(self):
         np.random.seed()
-        self.complex = mm.complex64
-        self.SimpleArray = mm.SimpleArrayComplex64
+        self.complex = sc.complex64
+        self.SimpleArray = sc.SimpleArrayComplex64
 
 
 class TransformFp64TC(FourierTransformTB, unittest.TestCase):
@@ -127,7 +127,7 @@ class TransformFp64TC(FourierTransformTB, unittest.TestCase):
 
     def setUp(self):
         np.random.seed()
-        self.complex = mm.complex128
-        self.SimpleArray = mm.SimpleArrayComplex128
+        self.complex = sc.complex128
+        self.SimpleArray = sc.SimpleArrayComplex128
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -1,5 +1,5 @@
 <!--
-modmesh pull request guidelines.
+solvcon pull request guidelines.
 
 - Subject: concise and informative.
 - Description: clear prose.  Write single-line paragraphs separated by blank
