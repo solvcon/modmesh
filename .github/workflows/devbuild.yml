@@ -104,7 +104,7 @@ jobs:
       # QT_QPA_PLATFORM is set per-OS by the setup actions (xcb on Linux via
       # Xvfb, offscreen on macOS). Do not set it at the job level.
       PIP_BREAK_SYSTEM_PACKAGES: 1 # disabling PEP668 (for MacOS runner)
-      # Fix issue: https://github.com/solvcon/modmesh/issues/366
+      # Fix issue: https://github.com/solvcon/solvcon/issues/366
       # Use custom config for jurplel/install-qt-action@v4
       AQT_CONFIG: "thirdparty/aqt_settings.ini"
 
@@ -262,7 +262,7 @@ jobs:
 
     env:
       QT_DEBUG_PLUGINS: 1
-      # Fix issue: https://github.com/solvcon/modmesh/issues/366
+      # Fix issue: https://github.com/solvcon/solvcon/issues/366
       # Use custom config for jurplel/install-qt-action@v4
       AQT_CONFIG: "thirdparty/aqt_settings.ini"
 

@@ -123,7 +123,7 @@ struct RTreeValueOps
 template <typename E, typename B, typename ValueOpsType>
 struct RTreeNode
 {
-    // TODO: optimize memory layout and  pointer operations (https://github.com/solvcon/modmesh/pull/637#discussion_r2552441239)
+    // TODO: optimize memory layout and  pointer operations (https://github.com/solvcon/solvcon/pull/637#discussion_r2552441239)
     B bbox;
     std::vector<E> items;
 

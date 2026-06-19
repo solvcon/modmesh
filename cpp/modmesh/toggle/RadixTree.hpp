@@ -325,7 +325,7 @@ private:
     CallProfiler & m_profiler;
 }; /* end struct CallProfilerProbe */
 
-// TODO: https://github.com/solvcon/modmesh/pull/559
+// TODO: https://github.com/solvcon/solvcon/pull/559
 #ifdef MODMESH_PROFILE
 
 #ifdef _MSC_VER

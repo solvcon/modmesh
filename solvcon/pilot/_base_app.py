@@ -628,7 +628,7 @@ class OneDimBaseApp(_gui_common.PilotFeature):
         Print log messages to the console window and standard output.
         """
         # stdout can be None under some conditions
-        # ref: https://github.com/solvcon/modmesh/issues/334
+        # ref: https://github.com/solvcon/solvcon/issues/334
         if sys.stdout is not None:
             sys.stdout.write(msg)
             sys.stdout.write('\n')

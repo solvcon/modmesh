@@ -245,7 +245,7 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
         (*this)
             .def(
                 // Use lambda to avoid bad implicit conversion of SimpleArray<T>in pybind11
-                // (see https://github.com/solvcon/modmesh/issues/283)
+                // (see https://github.com/solvcon/solvcon/issues/283)
                 "fill",
                 [](wrapped_type & arr, value_type const value)
                 { arr.fill(value); },

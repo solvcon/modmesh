@@ -18,7 +18,7 @@ endif
 # (e.g. BUILD_PATH_EXT=_noqt).
 BUILD_PATH_EXT ?=
 
-# To workaround macos SIP: https://github.com/solvcon/modmesh/pull/16.
+# To workaround macos SIP: https://github.com/solvcon/solvcon/pull/16.
 # Additional configuration can be loaded from SETUP_FILE.
 RUNENV += PYTHONPATH=$(MODMESH_ROOT)
 
@@ -65,7 +65,7 @@ endif
 # However, please note a Python virtual environment is strongly discouraged in
 # developing solvcon. We do not actively resolve bugs related to any virtual
 # env including venv or conda.
-# See https://github.com/solvcon/modmesh/pull/177 for more details.
+# See https://github.com/solvcon/solvcon/pull/177 for more details.
 WHICH_PYTHON := $(shell which python3)
 REALPATH_PYTHON := $(realpath $(WHICH_PYTHON))
 export DIRNAME_PYTHON := $(dir $(REALPATH_PYTHON))
