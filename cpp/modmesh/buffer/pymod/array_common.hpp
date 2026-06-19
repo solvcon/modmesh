@@ -16,7 +16,7 @@
 // While the root cause of the problem remains unclear, a workaround is
 // available by including the caster header in this file, impacting
 // wrap_SimpleArray.cpp.
-// See more details in the issue: https://github.com/solvcon/modmesh/issues/283
+// See more details in the issue: https://github.com/solvcon/solvcon/issues/283
 #include <modmesh/buffer/pymod/SimpleArrayCaster.hpp>
 
 namespace pybind11

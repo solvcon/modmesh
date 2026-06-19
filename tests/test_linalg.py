@@ -381,7 +381,7 @@ class KalmanFilterPredictTC(unittest.TestCase):
 
 
 # The bug is reported in issue #603:
-# https://github.com/solvcon/modmesh/issues/603
+# https://github.com/solvcon/solvcon/issues/603
 # Issue #603: F-contiguous check in SimpleArray breaks when creating
 # SimpleArray
 # with shape = (n, 1) or shape = (1, n) from ndarray
