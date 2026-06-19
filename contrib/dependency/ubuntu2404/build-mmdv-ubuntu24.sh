@@ -8,7 +8,7 @@
 # 4 sections (BASE, PYTHON, NUMPY, QT) are guarded by the corresponding
 # MMDVBUILD_* environment variables.
 #
-# Before running this script, install the apt prerequisites. The two helper
+# Before running this script, install the apt prerequisites. The helper
 # functions below print the exact commands; copy and run them yourself (the
 # script never invokes apt). LLVM_INSTALL_DIR defaults to /usr/lib/llvm-22 (the
 # apt llvm-22-dev path); override if needed.
@@ -48,10 +48,11 @@
 #       to stdout and exit.  Nothing else is printed and no directories are
 #       created, so this is safe to capture: PREFIX=$(./script --print-prefix).
 #   ./build-mmdv-ubuntu24.sh --print-apt
-#       Print the apt prerequisite commands (the BASE/PYTHON/NUMPY section
-#       and the QT section) to stdout and exit.  Nothing is built and no
-#       directories are created.  The script never runs apt itself; copy the
-#       output, review it, and run it.
+#       Print the apt prerequisite commands (the BASE/PYTHON/NUMPY section,
+#       the QT section, and the LaTeX section for the doc/ pstake PSTricks
+#       figures) to stdout and exit.  Nothing is built and no directories are
+#       created.  The script never runs apt itself; copy the output, review
+#       it, and run it.
 #
 # Overridable variables (search in the script for their defaults and
 # descriptions; not repeating here):
@@ -208,6 +209,40 @@ sudo apt install -y \
 EOF
 }
 
+mmdv_apt_latex_cmd() {
+  # Print the apt command for the LaTeX toolchain the documentation needs.
+  # This is required by the ordinary HTML build (make html in doc/), not just
+  # a PDF: math is rendered client-side by MathJax (no TeX), but the pstake
+  # Sphinx extension (doc/ext/pstake.py) turns the ".. pstake::" PSTricks
+  # figures into PNG at build time by shelling out to latex -> dvips (EPS) ->
+  # ImageMagick convert (EPS -> PNG; Ghostscript is the fallback and also
+  # convert's EPS delegate).  pstake's TeX template needs pst-all/pst-3dplot/
+  # pst-eps/pst-coil/pst-bar/multido (texlive-pstricks), fancyvrb
+  # (texlive-latex-recommended), and optionally cmbright
+  # (texlive-fonts-extra); latex/dvips come from texlive-latex-base.
+  #
+  # The package set below is deliberately broad: texlive-latex-extra and
+  # texlive-pictures (TikZ/PGF and the pst-node family) catch any package a
+  # figure pulls in beyond the core pst-* styles, texlive-plain-generic
+  # covers generic (non-LaTeX) macros, and texlive-extra-utils plus
+  # texlive-font-utils supply helper binaries (epstopdf, dvips/dvipdf
+  # wrappers, font tools) used along the dvips/EPS path.
+  #
+  # Gotcha: Ubuntu's ImageMagick ships /etc/ImageMagick-6/policy.xml with the
+  # EPS/PS coders disabled by default, so convert fails on the generated .eps.
+  # The pstake input is locally built and trusted, so comment out the
+  # rights="none" lines for "EPS" and "PS" there (or rely on the Ghostscript
+  # fallback by not installing imagemagick).
+  cat <<'EOF'
+sudo apt install -y \
+  texlive-latex-base texlive-latex-recommended texlive-latex-extra \
+  texlive-pstricks texlive-pictures texlive-plain-generic \
+  texlive-fonts-recommended texlive-fonts-extra \
+  texlive-extra-utils texlive-font-utils \
+  ghostscript imagemagick
+EOF
+}
+
 mmdv_apt_qt_cmd() {
   # Print the apt command for the QT section (Qt + pyside6 build deps).
   # The X11/XCB -dev packages are the full set Qt's xcb platform plugin
@@ -239,6 +274,8 @@ if [ "${MMDV_PRINT_APT_ONLY}" = "1" ] ; then
   mmdv_apt_base_cmd
   echo
   mmdv_apt_qt_cmd
+  echo
+  mmdv_apt_latex_cmd
   exit 0
 fi
 
