@@ -401,6 +401,8 @@ void BooleanDecompositionHelper<T>::find_crossing(
         return; // edges are parallel, no crossing
     }
     value_type const t = (edge_b_x_at_bottom - edge_a_x_at_bottom) / denom;
+    // This floating-point range test is satisfiable; clang-tidy misfires.
+    // NOLINTNEXTLINE(misc-redundant-expression)
     if (t > 0 && t < 1)
     {
         value_type const crossing_y = overlap_y_bottom + t * (overlap_y_top - overlap_y_bottom);
