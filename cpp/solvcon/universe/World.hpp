@@ -7,6 +7,7 @@
 
 #include <solvcon/base.hpp>
 #include <solvcon/buffer/SimpleCollector.hpp>
+#include <solvcon/serialization/SerializableItem.hpp>
 #include <solvcon/universe/bernstein.hpp>
 #include <solvcon/universe/bezier.hpp>
 #include <solvcon/universe/rtree.hpp>
@@ -28,14 +29,152 @@ enum class ShapeType : uint8_t
 
     // 1D shapes
     LINE = 2,
+    BEZIER = 3, ///< single cubic Bezier curve
 
     // 2D shapes
-    TRIANGLE = 3,
-    RECTANGLE = 4,
-    SQUARE = 5, ///< specialization of RECTANGLE with equal side lengths
-    ELLIPSE = 6,
-    CIRCLE = 7, ///< specialization of ELLIPSE with equal radii
+    TRIANGLE = 4,
+    RECTANGLE = 5,
+    SQUARE = 6, ///< specialization of RECTANGLE with equal side lengths
+    ELLIPSE = 7,
+    CIRCLE = 8, ///< specialization of ELLIPSE with equal radii
 }; /* end of enum class ShapeType */
+
+inline std::string shape_type_name(ShapeType st)
+{
+    switch (st)
+    {
+    case ShapeType::DEAD: return "DEAD";
+    case ShapeType::POINT: return "point";
+    case ShapeType::LINE: return "line";
+    case ShapeType::BEZIER: return "bezier";
+    case ShapeType::TRIANGLE: return "triangle";
+    case ShapeType::RECTANGLE: return "rectangle";
+    case ShapeType::SQUARE: return "square";
+    case ShapeType::ELLIPSE: return "ellipse";
+    case ShapeType::CIRCLE: return "circle";
+    default: return "unknown";
+    }
+}
+
+/// Level of detail for World::describe_state. C++ callers pass the enum; the
+/// Python binding accepts the equivalent lower-case string.
+enum class DescribeLevel : uint8_t
+{
+    BASIC = 0, ///< only what the 2D image draws
+}; /* end enum class DescribeLevel */
+
+inline DescribeLevel describe_level_from_string(std::string const & level)
+{
+    if (level == "basic")
+    {
+        return DescribeLevel::BASIC;
+    }
+    throw std::invalid_argument(
+        std::format("World: describe_state level '{}' not supported", level));
+}
+
+/// JSON-serializable view of one shape's rendered 2D geometry: its id, type,
+/// bounding box, segment endpoints, and curve control points. The z component
+/// is not rendered, so coordinates are 2D.
+// TODO: The shared JSON tool formats numbers with std::to_string, which keeps
+// only 6 decimal places. Coordinates that differ past the 6th decimal then
+// serialize identically and small magnitudes round to 0, which can confuse the
+// numeric oracles downstream.
+class WorldShapeState : public SerializableItem
+{
+
+public:
+
+    using coords_type = std::vector<double>;
+    using segment_list_type = std::vector<std::vector<double>>;
+    using curve_list_type = std::vector<std::vector<std::vector<double>>>;
+
+    WorldShapeState() = default;
+    WorldShapeState(WorldShapeState const &) = default;
+    WorldShapeState(WorldShapeState &&) = default;
+    WorldShapeState & operator=(WorldShapeState const &) = default;
+    WorldShapeState & operator=(WorldShapeState &&) = default;
+    ~WorldShapeState() override = default;
+
+    int32_t id() const { return m_id; }
+    int32_t & id() { return m_id; }
+
+    ShapeType type() const { return m_type; }
+    ShapeType & type() { return m_type; }
+
+    coords_type const & bbox() const { return m_bbox; }
+    coords_type & bbox() { return m_bbox; }
+
+    segment_list_type const & segments() const { return m_segments; }
+    segment_list_type & segments() { return m_segments; }
+
+    curve_list_type const & curves() const { return m_curves; }
+    curve_list_type & curves() { return m_curves; }
+
+    // The shape type serializes to its lower-case name (e.g. "triangle") so
+    // the rendered JSON stays human-readable; this is an output-only view.
+    MM_DECL_SERIALIZABLE(
+        register_member("id", m_id);
+        register_member("type", shape_type_name(m_type));
+        register_member("bbox", m_bbox);
+        register_member("segments", m_segments);
+        register_member("curves", m_curves);)
+
+private:
+
+    int32_t m_id = 0;
+    ShapeType m_type = ShapeType::DEAD;
+    coords_type m_bbox; ///< [min_x, min_y, max_x, max_y]
+    segment_list_type m_segments; ///< each [x0, y0, x1, y1]
+    curve_list_type m_curves; ///< each four [x, y]
+
+}; /* end class WorldShapeState */
+
+/// JSON view of the whole world: shapes plus the bare segments, bare curves,
+/// and free points that also render but belong to no shape.
+class WorldState : public SerializableItem
+{
+
+public:
+
+    using shape_list_type = std::vector<WorldShapeState>;
+    using segment_list_type = std::vector<std::vector<double>>;
+    using curve_list_type = std::vector<std::vector<std::vector<double>>>;
+    using point_list_type = std::vector<std::vector<double>>;
+
+    WorldState() = default;
+    WorldState(WorldState const &) = default;
+    WorldState(WorldState &&) = default;
+    WorldState & operator=(WorldState const &) = default;
+    WorldState & operator=(WorldState &&) = default;
+    ~WorldState() override = default;
+
+    shape_list_type const & shapes() const { return m_shapes; }
+    shape_list_type & shapes() { return m_shapes; }
+
+    segment_list_type const & segments() const { return m_segments; }
+    segment_list_type & segments() { return m_segments; }
+
+    curve_list_type const & curves() const { return m_curves; }
+    curve_list_type & curves() { return m_curves; }
+
+    point_list_type const & points() const { return m_points; }
+    point_list_type & points() { return m_points; }
+
+    MM_DECL_SERIALIZABLE(
+        register_member("shapes", m_shapes);
+        register_member("segments", m_segments);
+        register_member("curves", m_curves);
+        register_member("points", m_points);)
+
+private:
+
+    shape_list_type m_shapes;
+    segment_list_type m_segments; ///< bare segments
+    curve_list_type m_curves; ///< bare curves
+    point_list_type m_points; ///< free points, each [x, y]
+
+}; /* end class WorldState */
 
 /**
  * Lightweight record mapping a shape ID to the segment and curve ranges
@@ -205,6 +344,16 @@ public:
     int32_t add_circle(T cx, T cy, T r);
 
     /**
+     * Add a cubic Bezier controlled by four points.
+     */
+    int32_t add_bezier_shape(point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3);
+
+    /**
+     * Add a cubic Bezier from a bezier_type struct.
+     */
+    int32_t add_bezier_shape(bezier_type const & bezier);
+
+    /**
      * Translate all segments and curves belonging to a shape by (dx, dy).
      */
     void translate_shape(int32_t shape_id, value_type dx, value_type dy);
@@ -242,7 +391,27 @@ public:
      */
     void clear();
 
+    /**
+     * Describe the world state as a JSON-serializable object.
+     */
+    std::string describe_state(DescribeLevel level = DescribeLevel::BASIC) const;
+
 private:
+
+    /// 2D endpoints of segment i, as [x0, y0, x1, y1].
+    std::vector<double> segment_coords(size_t i) const
+    {
+        return {m_segments->x0(i), m_segments->y0(i), m_segments->x1(i), m_segments->y1(i)};
+    }
+
+    /// 2D control points of curve i, as four [x, y] pairs.
+    std::vector<std::vector<double>> curve_coords(size_t i) const
+    {
+        return {{m_curves->x0(i), m_curves->y0(i)},
+                {m_curves->x1(i), m_curves->y1(i)},
+                {m_curves->x2(i), m_curves->y2(i)},
+                {m_curves->x3(i), m_curves->y3(i)}};
+    }
 
     void check_size(size_t i, size_t s, char const * msg) const
     {
@@ -394,6 +563,22 @@ int32_t World<T>::add_circle(T cx, T cy, T r)
     int32_t const sid = add_ellipse(cx, cy, r, r);
     m_shape_registry[sid].type = ShapeType::CIRCLE;
     return sid;
+}
+
+template <typename T>
+int32_t World<T>::add_bezier_shape(point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3)
+{
+    size_t const offset = m_curves->size();
+    m_curves->append(p0, p1, p2, p3);
+    return register_shape(ShapeType::BEZIER, /*seg_off*/ 0, /*seg_cnt*/ 0, offset, 1);
+}
+
+template <typename T>
+int32_t World<T>::add_bezier_shape(bezier_type const & bezier)
+{
+    size_t const offset = m_curves->size();
+    m_curves->append(bezier);
+    return register_shape(ShapeType::BEZIER, /*seg_off*/ 0, /*seg_cnt*/ 0, offset, 1);
 }
 
 template <typename T>
@@ -560,6 +745,71 @@ void World<T>::check_shape_id(int32_t shape_id) const
         throw std::invalid_argument(
             std::format("World: shape_id {} is DEAD", shape_id));
     }
+}
+
+template <typename T>
+std::string World<T>::describe_state(DescribeLevel level) const
+{
+    (void)level; // Only BASIC exists today; richer levels are added later.
+
+    // Find the segments and curves owned by live shapes
+    small_vector<bool> segment_owned(m_segments->size(), false);
+    small_vector<bool> curve_owned(m_curves->size(), false);
+
+    WorldState state;
+    for (size_t sid = 0; sid < m_shape_registry.size(); ++sid)
+    {
+        ShapeRecord const & rec = m_shape_registry[sid];
+        for (uint32_t i = 0; i < rec.segment_count; ++i)
+        {
+            segment_owned[rec.segment_offset + i] = true;
+        }
+        for (uint32_t i = 0; i < rec.curve_count; ++i)
+        {
+            curve_owned[rec.curve_offset + i] = true;
+        }
+        if (rec.type == ShapeType::DEAD)
+        {
+            continue;
+        }
+        bbox_type const bb = compute_shape_bbox(rec);
+        WorldShapeState shape;
+        shape.id() = static_cast<int32_t>(sid);
+        shape.type() = rec.type;
+        shape.bbox() = {bb.min_x(), bb.min_y(), bb.max_x(), bb.max_y()};
+        for (uint32_t i = 0; i < rec.segment_count; ++i)
+        {
+            shape.segments().push_back(segment_coords(rec.segment_offset + i));
+        }
+        for (uint32_t i = 0; i < rec.curve_count; ++i)
+        {
+            shape.curves().push_back(curve_coords(rec.curve_offset + i));
+        }
+        state.shapes().push_back(std::move(shape));
+    }
+
+    for (size_t i = 0; i < m_segments->size(); ++i)
+    {
+        if (!segment_owned[i])
+        {
+            // already exclude DEAD shape segments, but include bare segments
+            state.segments().push_back(segment_coords(i));
+        }
+    }
+    for (size_t i = 0; i < m_curves->size(); ++i)
+    {
+        if (!curve_owned[i])
+        {
+            state.curves().push_back(curve_coords(i));
+        }
+    }
+    for (size_t i = 0; i < m_points->size(); ++i)
+    {
+        point_type const p = m_points->get(i);
+        state.points().push_back({p.x(), p.y()});
+    }
+
+    return state.to_json();
 }
 
 using WorldFp32 = World<float>;
