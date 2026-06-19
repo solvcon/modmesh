@@ -288,6 +288,8 @@ else()
     endif()
 endif()
 
+add_subdirectory(profiling)
+
 add_subdirectory(cpp/binary/pymod_modmesh)
 if(BUILD_QT)
 add_subdirectory(cpp/binary/pilot)
