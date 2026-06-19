@@ -5,7 +5,7 @@
 
 PROJECT_NAME      = solvcon
 OUTPUT_DIRECTORY  = build/doxygen
-INPUT             = ../cpp/modmesh
+INPUT             = ../cpp/solvcon
 FILE_PATTERNS     = *.hpp *.cpp
 RECURSIVE         = YES
 

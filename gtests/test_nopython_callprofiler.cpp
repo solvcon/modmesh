@@ -5,9 +5,9 @@
 #error "Python.h should not be included."
 #endif
 
-#define MODMESH_PROFILE 1
-#include <modmesh/toggle/RadixTree.hpp>
-namespace modmesh
+#define SOLVCON_PROFILE 1
+#include <solvcon/toggle/RadixTree.hpp>
+namespace solvcon
 {
 
 namespace detail
@@ -35,7 +35,7 @@ constexpr int uniqueTime3 = 7;
 
 void foo3()
 {
-    MODMESH_PROFILE_FUNCTION();
+    SOLVCON_PROFILE_FUNCTION();
     auto start_time = std::chrono::high_resolution_clock::now();
     while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count() < uniqueTime1)
     {
@@ -45,7 +45,7 @@ void foo3()
 
 void foo2()
 {
-    MODMESH_PROFILE_FUNCTION();
+    SOLVCON_PROFILE_FUNCTION();
     auto start_time = std::chrono::high_resolution_clock::now();
     while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count() < uniqueTime2)
     {
@@ -56,7 +56,7 @@ void foo2()
 
 void foo1()
 {
-    MODMESH_PROFILE_FUNCTION();
+    SOLVCON_PROFILE_FUNCTION();
     foo2();
     auto start_time = std::chrono::high_resolution_clock::now();
     while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start_time).count() < uniqueTime3)
@@ -76,21 +76,21 @@ TEST_F(CallProfilerTest, test_print_result)
 }
 
 #ifdef _MSC_VER
-auto foo1Name = "void __cdecl modmesh::detail::foo1(void)";
+auto foo1Name = "void __cdecl solvcon::detail::foo1(void)";
 #else
-auto foo1Name = "void modmesh::detail::foo1()";
+auto foo1Name = "void solvcon::detail::foo1()";
 #endif
 
 #ifdef _MSC_VER
-auto foo2Name = "void __cdecl modmesh::detail::foo2(void)";
+auto foo2Name = "void __cdecl solvcon::detail::foo2(void)";
 #else
-auto foo2Name = "void modmesh::detail::foo2()";
+auto foo2Name = "void solvcon::detail::foo2()";
 #endif
 
 #ifdef _MSC_VER
-auto foo3Name = "void __cdecl modmesh::detail::foo3(void)";
+auto foo3Name = "void __cdecl solvcon::detail::foo3(void)";
 #else
-auto foo3Name = "void modmesh::detail::foo3()";
+auto foo3Name = "void solvcon::detail::foo3()";
 #endif
 
 TEST_F(CallProfilerTest, test_simple_case1)
@@ -100,9 +100,9 @@ TEST_F(CallProfilerTest, test_simple_case1)
     foo1();
 
     // Example:
-    // void modmesh::foo1() - Total Time: 61 ms, Call Count: 1
-    //   void modmesh::foo2() - Total Time: 54 ms, Call Count: 1
-    //      void modmesh::foo3() - Total Time: 19 ms, Call Count: 1
+    // void solvcon::foo1() - Total Time: 61 ms, Call Count: 1
+    //   void solvcon::foo2() - Total Time: 54 ms, Call Count: 1
+    //      void solvcon::foo3() - Total Time: 19 ms, Call Count: 1
 
     int key = 0;
 
@@ -132,12 +132,12 @@ TEST_F(CallProfilerTest, simple_case_2)
     foo3();
 
     // Example:
-    // void modmesh::foo1 - Total Time: 61 ms, Call Count: 1
-    //   void modmesh::foo2 - Total Time: 54 ms, Call Count: 1
-    //     void modmesh::foo3 - Total Time: 19 ms, Call Count: 1
-    // void modmesh::foo2 - Total Time: 54 ms, Call Count: 1
-    //   void modmesh::foo3 - Total Time: 19 ms, Call Count: 1
-    // void modmesh::foo3 - Total Time: 38 ms, Call Count: 2
+    // void solvcon::foo1 - Total Time: 61 ms, Call Count: 1
+    //   void solvcon::foo2 - Total Time: 54 ms, Call Count: 1
+    //     void solvcon::foo3 - Total Time: 19 ms, Call Count: 1
+    // void solvcon::foo2 - Total Time: 54 ms, Call Count: 1
+    //   void solvcon::foo3 - Total Time: 19 ms, Call Count: 1
+    // void solvcon::foo3 - Total Time: 38 ms, Call Count: 2
 
     // for first `foo1()` call
     {
@@ -191,11 +191,11 @@ TEST_F(CallProfilerTest, cancel)
 
     auto test1 = [&]()
     {
-        MODMESH_PROFILE_FUNCTION();
+        SOLVCON_PROFILE_FUNCTION();
 
         auto test2 = [&]()
         {
-            MODMESH_PROFILE_FUNCTION();
+            SOLVCON_PROFILE_FUNCTION();
             pProfiler->cancel();
         };
 
@@ -207,6 +207,6 @@ TEST_F(CallProfilerTest, cancel)
 }
 
 } // namespace detail
-} // namespace modmesh
+} // namespace solvcon
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

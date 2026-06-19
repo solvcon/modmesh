@@ -7,7 +7,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-#include <modmesh/base.hpp>
+#include <solvcon/base.hpp>
 
 #include <gtest/gtest.h>
 
@@ -21,7 +21,7 @@
 
 TEST(Formatter, basic_usage)
 {
-    modmesh::Formatter formatter;
+    solvcon::Formatter formatter;
     formatter << "Hello, "
               << "World!"
               << " " << 42;
@@ -36,7 +36,7 @@ TEST(Formatter, basic_usage)
 
 TEST(Formatter, numeric_types)
 {
-    modmesh::Formatter formatter;
+    solvcon::Formatter formatter;
     formatter << "int: " << 123 << ", double: " << 3.14159 << ", bool: " << true;
     std::string formatter_result = formatter.str();
 
@@ -48,7 +48,7 @@ TEST(Formatter, numeric_types)
 
 TEST(Formatter, chaining)
 {
-    std::string formatter_result = (modmesh::Formatter() << "x = " << 10 << ", y = " << 20).str();
+    std::string formatter_result = (solvcon::Formatter() << "x = " << 10 << ", y = " << 20).str();
 
     std::string format_result = std::format("x = {}, y = {}", 10, 20);
 
@@ -59,7 +59,7 @@ TEST(Formatter, chaining)
 
 TEST(Formatter, conversion_operator)
 {
-    std::string formatter_result = modmesh::Formatter() << "Test " << 123;
+    std::string formatter_result = solvcon::Formatter() << "Test " << 123;
 
     std::string format_result = std::format("Test {}", 123);
 
@@ -72,7 +72,7 @@ TEST(StdFormat, basic_usage)
 {
     std::string format_result = std::format("Hello, {}! {}", "World", 42);
 
-    std::string formatter_result = (modmesh::Formatter() << "Hello, "
+    std::string formatter_result = (solvcon::Formatter() << "Hello, "
                                                          << "World!"
                                                          << " " << 42)
                                        .str();
@@ -86,7 +86,7 @@ TEST(StdFormat, numeric_types)
 {
     std::string format_result = std::format("int: {}, double: {}, bool: {}", 123, 3.14159, true);
 
-    modmesh::Formatter formatter;
+    solvcon::Formatter formatter;
     formatter << "int: " << 123 << ", double: " << 3.14159 << ", bool: " << true;
     std::string formatter_result = formatter.str();
 
@@ -98,7 +98,7 @@ TEST(StdFormat, formatting_options)
 {
     std::string format_result = std::format("hex: {:#x}, precision: {:.2f}", 255, 3.14159);
 
-    std::string formatter_result = (modmesh::Formatter() << "hex: " << 255 << ", precision: " << 3.14159).str();
+    std::string formatter_result = (solvcon::Formatter() << "hex: " << 255 << ", precision: " << 3.14159).str();
 
     EXPECT_EQ(format_result, "hex: 0xff, precision: 3.14");
     EXPECT_EQ(formatter_result, "hex: 255, precision: 3.14159");
@@ -106,7 +106,7 @@ TEST(StdFormat, formatting_options)
 
 TEST(FormatterVsStdFormat, simple_string_comparison)
 {
-    std::string formatter_result = (modmesh::Formatter() << "Value: " << 42).str();
+    std::string formatter_result = (solvcon::Formatter() << "Value: " << 42).str();
     std::string format_result = std::format("Value: {}", 42);
 
     EXPECT_EQ(formatter_result, format_result);
@@ -114,7 +114,7 @@ TEST(FormatterVsStdFormat, simple_string_comparison)
 
 TEST(FormatterVsStdFormat, multiple_values_comparison)
 {
-    std::string formatter_result = (modmesh::Formatter() << "x = " << 10 << ", y = " << 20 << ", z = " << 30).str();
+    std::string formatter_result = (solvcon::Formatter() << "x = " << 10 << ", y = " << 20 << ", z = " << 30).str();
     std::string format_result = std::format("x = {}, y = {}, z = {}", 10, 20, 30);
 
     EXPECT_EQ(formatter_result, format_result);
@@ -127,7 +127,7 @@ TEST(FormatterVsStdFormat, performance_formatter)
     std::string result;
     for (int32_t i = 0; i < 10000; ++i)
     {
-        result = (modmesh::Formatter() << "Iteration: " << i << ", Value: " << i * 2).str();
+        result = (solvcon::Formatter() << "Iteration: " << i << ", Value: " << i * 2).str();
     }
 
     auto end = std::chrono::high_resolution_clock::now();

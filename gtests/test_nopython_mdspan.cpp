@@ -3,7 +3,7 @@
  * BSD 3-Clause License, see COPYING
  */
 
-#include <modmesh/buffer/buffer.hpp>
+#include <solvcon/buffer/buffer.hpp>
 
 #include <gtest/gtest.h>
 
@@ -13,7 +13,7 @@
 
 TEST(SimpleArray, mdspan_1d)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
 
     mm::SimpleArray<double> arr(mm::small_vector<size_t>{6});
     for (size_t i = 0; i < 6; ++i) { arr(i) = static_cast<double>(i); }
@@ -34,7 +34,7 @@ TEST(SimpleArray, mdspan_1d)
 
 TEST(SimpleArray, mdspan_1d_const)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
 
     mm::SimpleArray<double> arr(mm::small_vector<size_t>{6}, 5.0);
     const auto & carr = arr;
@@ -52,7 +52,7 @@ TEST(SimpleArray, mdspan_1d_const)
 
 TEST(SimpleArray, mdspan_1d_ghost)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
 
     // 1D array: 5 total elements, 1 ghost at the front.
     mm::SimpleArray<double> arr(mm::small_vector<size_t>{5});
@@ -71,7 +71,7 @@ TEST(SimpleArray, mdspan_1d_ghost)
 
 TEST(SimpleArray, mdspan_2d)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
 
     mm::SimpleArray<double> arr(mm::small_vector<size_t>{3, 4});
     for (size_t i = 0; i < 3; ++i)
@@ -112,7 +112,7 @@ TEST(SimpleArray, mdspan_2d)
 
 TEST(SimpleArray, mdspan_2d_const)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
 
     mm::SimpleArray<double> arr(mm::small_vector<size_t>{2, 3}, 7.0);
     const auto & carr = arr;
@@ -135,7 +135,7 @@ TEST(SimpleArray, mdspan_2d_const)
 
 TEST(SimpleArray, mdspan_2d_ghost)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
 
     // shape {5, 4}: 5 rows (1 ghost + 4 body), 4 columns.
     mm::SimpleArray<double> arr(mm::small_vector<size_t>{5, 4});
@@ -171,7 +171,7 @@ TEST(SimpleArray, mdspan_2d_ghost)
 
 TEST(SimpleArray, mdspan_3d)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
 
     mm::SimpleArray<double> arr(mm::small_vector<size_t>{2, 3, 4});
     for (size_t i = 0; i < 2; ++i)
@@ -220,7 +220,7 @@ TEST(SimpleArray, mdspan_3d)
 
 TEST(SimpleArray, mdspan_3d_ghost)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
 
     // shape {4, 3, 2}: 4 slices (2 ghost + 2 body), 3 rows, 2 columns.
     mm::SimpleArray<double> arr(mm::small_vector<size_t>{4, 3, 2});
@@ -263,7 +263,7 @@ TEST(SimpleArray, mdspan_3d_ghost)
 
 TEST(SimpleArray, mdspan_4d)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
 
     mm::SimpleArray<double> arr(mm::small_vector<size_t>{2, 3, 4, 5});
     for (size_t i = 0; i < 2; ++i)
@@ -322,7 +322,7 @@ TEST(SimpleArray, mdspan_4d)
 
 TEST(SimpleArray, mdspan_4d_ghost)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
 
     // shape {4, 3, 2, 2}: 4 slices (1 ghost + 3 body), 3 rows, 2 columns, 2 depth.
     mm::SimpleArray<double> arr(mm::small_vector<size_t>{4, 3, 2, 2});
@@ -372,7 +372,7 @@ TEST(SimpleArray, mdspan_4d_ghost)
 
 TEST(SimpleArray, mdspan_rank_mismatch)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
 
     mm::SimpleArray<double> arr(mm::small_vector<size_t>{3, 4});
     EXPECT_THROW(arr.as_mdspan<3>(), std::out_of_range);
@@ -380,7 +380,7 @@ TEST(SimpleArray, mdspan_rank_mismatch)
 
 TEST(SimpleArray, mdspan_non_contiguous)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
 
     // Build a 3x4 view whose stride differs from the row-major layout, so the
     // array is neither C- nor F-contiguous over the underlying buffer.

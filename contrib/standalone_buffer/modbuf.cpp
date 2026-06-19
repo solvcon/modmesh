@@ -1,12 +1,12 @@
 #include <pybind11/pybind11.h>
-#include <modmesh/buffer/buffer.hpp>
-#include <modmesh/buffer/pymod/buffer_pymod.hpp>
+#include <solvcon/buffer/buffer.hpp>
+#include <solvcon/buffer/pymod/buffer_pymod.hpp>
 
 #include <pybind11/numpy.h>
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-namespace modmesh
+namespace solvcon
 {
 
 namespace python
@@ -27,11 +27,11 @@ void import_numpy()
 
 } // namespace python
 
-} // namespace modmesh
+} // namespace solvcon
 
 PYBIND11_MODULE(modbuf, mod)
 {
-    modmesh::python::initialize_buffer(mod);
+    solvcon::python::initialize_buffer(mod);
 }
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

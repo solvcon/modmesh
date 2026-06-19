@@ -7,7 +7,7 @@ import solvcon
 
 
 class OasisRecordRectTC(unittest.TestCase):
-    # Please refer the comment of modmesh::OasisRecordRect in oasis_device.cpp
+    # Please refer the comment of solvcon::OasisRecordRect in oasis_device.cpp
     def test_to_byte(self):
         rec = solvcon.OasisRecordRect(70, 800, 180, 40)
 
@@ -18,7 +18,7 @@ class OasisRecordRectTC(unittest.TestCase):
 
 
 class OasisRecordPolyTC(unittest.TestCase):
-    # Please refer the comment of modmesh::OasisRecordPoly in oasis_device.cpp
+    # Please refer the comment of solvcon::OasisRecordPoly in oasis_device.cpp
     def test_type_1_to_byte(self):
         rec = solvcon.OasisRecordPoly([
             [410, 720], [410, 920], [70, 920],
@@ -46,7 +46,7 @@ class OasisRecordPolyTC(unittest.TestCase):
         self.assertEqual(record_bytes, list(map(ord, expected_record_bytes)))
 
 
-# For OASIS format, refer modmesh::OasisDevice comment in oasis_device.cpp
+# For OASIS format, refer solvcon::OasisDevice comment in oasis_device.cpp
 class OasisDeviceTC(unittest.TestCase):
     def oasis_bytes(self, records=None):
         magic_bytes = '%SEMI-OASIS\x0D\x0A'

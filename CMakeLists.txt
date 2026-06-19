@@ -19,7 +19,7 @@ message(STATUS "BUILD_QT: ${BUILD_QT}")
 option(BUILD_METAL "build with Metal" OFF)
 message(STATUS "BUILD_METAL: ${BUILD_METAL}")
 if(BUILD_METAL)
-    add_compile_options(-DMODMESH_METAL)
+    add_compile_options(-DSOLVCON_METAL)
 endif()
 
 option(USE_CLANG_TIDY "use clang-tidy" OFF)
@@ -171,13 +171,13 @@ if(DEBUG_SYMBOL)
     endif()
 endif()
 
-option(MODMESH_PROFILE "enable profiler" OFF)
-message(STATUS "MODMESH_PROFILE: ${MODMESH_PROFILE}")
-if(MODMESH_PROFILE)
+option(SOLVCON_PROFILE "enable profiler" OFF)
+message(STATUS "SOLVCON_PROFILE: ${SOLVCON_PROFILE}")
+if(SOLVCON_PROFILE)
     if(MSVC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DMODMESH_PROFILE")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DSOLVCON_PROFILE")
     else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DMODMESH_PROFILE")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSOLVCON_PROFILE")
     endif()
 endif()
 
@@ -198,9 +198,9 @@ find_package(NumPy REQUIRED)
 message(STATUS "NUMPY_INCLUDE_DIR: ${NUMPY_INCLUDE_DIR}")
 include_directories(${NUMPY_INCLUDE_DIR})
 
-set(MODMESH_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/cpp" CACHE INTERNAL "")
+set(SOLVCON_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/cpp" CACHE INTERNAL "")
 
-include_directories(${MODMESH_INCLUDE_DIR})
+include_directories(${SOLVCON_INCLUDE_DIR})
 
 execute_process(
     COMMAND python3 -c "import sys, os, PySide6; sys.stdout.write(os.path.dirname(PySide6.__file__))"
@@ -270,11 +270,11 @@ endif()
 message(STATUS "PYSIDE6_LIBFILE: ${PYSIDE6_LIBFILE}")
 message(STATUS "SHIBOKEN6_LIBFILE: ${SHIBOKEN6_LIBFILE}")
 
-add_subdirectory(cpp/modmesh)
+add_subdirectory(cpp/solvcon)
 
 include(GNUInstallDirs)
 
-set(MODMESH_PY_DIR "${PROJECT_SOURCE_DIR}/solvcon")
+set(SOLVCON_PY_DIR "${PROJECT_SOURCE_DIR}/solvcon")
 
 if(MSVC)
     set(COMMON_COMPILER_OPTIONS /W4 /bigobj /WX)

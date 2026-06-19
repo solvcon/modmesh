@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <modmesh/toggle/RadixTree.hpp>
+#include <solvcon/toggle/RadixTree.hpp>
 
 #ifdef Py_PYTHON_H
 #error "Python.h should not be included."
@@ -33,7 +33,7 @@ private:
 }; /* end class TestedTimedEntry */
 
 template <typename T>
-std::string get_info(modmesh::RadixTreeNode<T> & r)
+std::string get_info(solvcon::RadixTreeNode<T> & r)
 {
     std::ostringstream oss;
     if (nullptr != r.get_prev())
@@ -45,14 +45,14 @@ std::string get_info(modmesh::RadixTreeNode<T> & r)
 
 TEST(RadixTree, construction)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
     mm::RadixTree<TestedTimedEntry> radix_tree;
     EXPECT_EQ(radix_tree.get_unique_node(), 0);
 }
 
 TEST(RadixTree, single_insertion)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
     mm::RadixTree<TestedTimedEntry> radix_tree;
     TestedTimedEntry & entry1 = radix_tree.entry("a");
     entry1.add_time(5.2);
@@ -68,7 +68,7 @@ TEST(RadixTree, single_insertion)
 
 TEST(RadixTree, multiple_insertion)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
     mm::RadixTree<TestedTimedEntry> radix_tree;
     TestedTimedEntry & entry1 = radix_tree.entry("a");
     entry1.add_time(5.2);
@@ -85,7 +85,7 @@ TEST(RadixTree, multiple_insertion)
 
 TEST(RadixTree, move_current_pointer)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
     mm::RadixTree<TestedTimedEntry> radix_tree;
     TestedTimedEntry & entry1 = radix_tree.entry("a");
     entry1.add_time(5.2);

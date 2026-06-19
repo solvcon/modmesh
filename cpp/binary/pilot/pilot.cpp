@@ -3,17 +3,17 @@
  * BSD 3-Clause License, see COPYING
  */
 
-#include <modmesh/python/python.hpp> // Must be the first include.
-#include <modmesh/python/module.hpp>
+#include <solvcon/python/python.hpp> // Must be the first include.
+#include <solvcon/python/module.hpp>
 
 PYBIND11_EMBEDDED_MODULE(_solvcon, mod) // NOLINT
 {
-    modmesh::python::initialize(mod);
+    solvcon::python::initialize(mod);
 }
 
 int main(int argc, char ** argv)
 {
-    return modmesh::python::program_entrance(argc, argv);
+    return solvcon::python::program_entrance(argc, argv);
 }
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -1,5 +1,5 @@
-#include <modmesh/modmesh.hpp>
-#include <modmesh/multidim/multidim.hpp>
+#include <solvcon/solvcon.hpp>
+#include <solvcon/multidim/multidim.hpp>
 
 #include <gtest/gtest.h>
 
@@ -12,7 +12,7 @@
 #error "Python.h should not be included."
 #endif
 
-using namespace modmesh;
+using namespace solvcon;
 
 namespace
 {

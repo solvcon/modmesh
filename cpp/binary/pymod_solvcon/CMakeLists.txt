@@ -2,7 +2,7 @@
 # BSD 3-Clause License, see COPYING
 
 cmake_minimum_required(VERSION 4.0.1)
-project(modmesh_pymod)
+project(solvcon_pymod)
 
 pybind11_add_module(
     _solvcon
@@ -12,7 +12,7 @@ pybind11_add_module(
 target_link_libraries(
     _solvcon PUBLIC
     pybind11::module
-    modmesh_primary
+    solvcon_primary
 )
 
 if (HIDE_SYMBOL)
@@ -45,10 +45,10 @@ execute_process(
 )
 
 add_custom_target(_solvcon_py
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:_solvcon> ${MODMESH_PY_DIR}/../_solvcon${PYEXTSUFFIX}
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:_solvcon> ${SOLVCON_PY_DIR}/../_solvcon${PYEXTSUFFIX}
     DEPENDS _solvcon)
 
 message(STATUS "CMAKE_INSTALL_INCLUDEDIR: ${CMAKE_INSTALL_INCLUDEDIR}")
-install(DIRECTORY ${MODMESH_INCLUDE_DIR}/modmesh DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY ${SOLVCON_INCLUDE_DIR}/solvcon DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

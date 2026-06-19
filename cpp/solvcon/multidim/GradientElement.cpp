@@ -1,0 +1,294 @@
+/*
+ * Copyright (c) 2018, solvcon team <contact@solvcon.net>
+ * BSD 3-Clause License, see COPYING
+ */
+
+#include <solvcon/multidim/GradientElement.hpp>
+
+#include <stdexcept>
+
+namespace solvcon
+{
+
+namespace detail
+{
+
+GradientElementTypeGroup::GradientElementTypeGroup()
+    : m_types{}
+{
+    GradientElementType & q = m_types[CellType::QUADRILATERAL];
+    q.clnfc = 4;
+    q.nfge = 4;
+    q.nfge_inverse = 1.0 / 4;
+    q.faces[0] = {1, 2, -1};
+    q.faces[1] = {2, 3, -1};
+    q.faces[2] = {3, 4, -1};
+    q.faces[3] = {4, 1, -1};
+
+    GradientElementType & t = m_types[CellType::TRIANGLE];
+    t.clnfc = 3;
+    t.nfge = 3;
+    t.nfge_inverse = 1.0 / 3;
+    t.faces[0] = {1, 2, -1};
+    t.faces[1] = {2, 3, -1};
+    t.faces[2] = {3, 1, -1};
+
+    GradientElementType & h = m_types[CellType::HEXAHEDRON];
+    h.clnfc = 6;
+    h.nfge = 8;
+    h.nfge_inverse = 1.0 / 8;
+    h.faces[0] = {2, 3, 5};
+    h.faces[1] = {6, 3, 2};
+    h.faces[2] = {4, 3, 6};
+    h.faces[3] = {5, 3, 4};
+    h.faces[4] = {5, 1, 2};
+    h.faces[5] = {2, 1, 6};
+    h.faces[6] = {6, 1, 4};
+    h.faces[7] = {4, 1, 5};
+
+    GradientElementType & e = m_types[CellType::TETRAHEDRON];
+    e.clnfc = 4;
+    e.nfge = 4;
+    e.nfge_inverse = 1.0 / 4;
+    e.faces[0] = {3, 1, 2};
+    e.faces[1] = {2, 1, 4};
+    e.faces[2] = {4, 1, 3};
+    e.faces[3] = {2, 4, 3};
+
+    GradientElementType & p = m_types[CellType::PRISM];
+    p.clnfc = 5;
+    p.nfge = 6;
+    p.nfge_inverse = 1.0 / 6;
+    p.faces[0] = {5, 2, 4};
+    p.faces[1] = {3, 2, 5};
+    p.faces[2] = {4, 2, 3};
+    p.faces[3] = {4, 1, 5};
+    p.faces[4] = {5, 1, 3};
+    p.faces[5] = {3, 1, 4};
+
+    GradientElementType & y = m_types[CellType::PYRAMID];
+    y.clnfc = 5;
+    y.nfge = 6;
+    y.nfge_inverse = 1.0 / 6;
+    y.faces[0] = {1, 5, 2};
+    y.faces[1] = {2, 5, 3};
+    y.faces[2] = {3, 5, 4};
+    y.faces[3] = {4, 5, 1};
+    y.faces[4] = {1, 3, 4};
+    y.faces[5] = {3, 1, 2};
+}
+
+std::array<double, 3> calc_gge_centroid(
+    GradientElementType const & ge,
+    std::array<double, 3> const & avg,
+    std::array<std::array<double, 3>, StaticMesh::CLMFC> const & gp,
+    size_t ndim)
+{
+    using vec3 = std::array<double, 3>;
+    vec3 cnd = {0, 0, 0};
+    double voc = 0.0;
+    for (int32_t isub = 0; isub < ge.nfge; ++isub)
+    {
+        vec3 subcnd = avg;
+        std::array<vec3, 3> dst = {};
+        for (size_t ivx = 0; ivx < ndim; ++ivx)
+        {
+            int32_t const fl = ge.faces[isub][ivx] - 1;
+            for (size_t d = 0; d < ndim; ++d)
+            {
+                subcnd[d] += gp[fl][d];
+                dst[ivx][d] = gp[fl][d] - avg[d];
+            }
+        }
+        for (size_t d = 0; d < ndim; ++d)
+        {
+            subcnd[d] /= static_cast<double>(ndim + 1);
+        }
+
+        double vob = 0.0;
+        if (2 == ndim)
+        {
+            vob = dst[0][0] * dst[1][1] - dst[0][1] * dst[1][0];
+        }
+        else
+        {
+            // clang-format off
+            vob = dst[0][0] * (dst[1][1] * dst[2][2] - dst[1][2] * dst[2][1])
+                - dst[0][1] * (dst[1][0] * dst[2][2] - dst[1][2] * dst[2][0])
+                + dst[0][2] * (dst[1][0] * dst[2][1] - dst[1][1] * dst[2][0]);
+            // clang-format on
+        }
+
+        voc += vob;
+        for (size_t d = 0; d < ndim; ++d)
+        {
+            cnd[d] += subcnd[d] * vob;
+        }
+    }
+    for (size_t d = 0; d < ndim; ++d)
+    {
+        cnd[d] /= voc;
+    }
+    return cnd;
+}
+
+} /* end namespace detail */
+
+GradientElement::GradientElement(
+    StaticMesh const & mesh,
+    SimpleArray<real_type> const & cecnd,
+    int_type icl,
+    real_type tau)
+    : m_icl(icl)
+    , m_ndim(mesh.ndim())
+    , m_clnfc(mesh.clfcs(icl, 0))
+    , m_rcls{}
+    , m_idis{}
+    , m_jdis{}
+{
+    if (m_ndim < 2 || m_ndim > 3)
+    {
+        throw std::invalid_argument("GradientElement: ndim must be 2 or 3");
+    }
+
+    m_getype = &getype(mesh.cltpn(icl));
+
+    size_t const ndim = m_ndim;
+
+    // Self CE centroid.
+    std::array<real_type, 3> icecnd = {0, 0, 0};
+    for (size_t d = 0; d < ndim; ++d)
+    {
+        icecnd[d] = cecnd(icl, d);
+    }
+
+    // Gradient evaluation points (absolute positions).
+    std::array<std::array<real_type, 3>, StaticMesh::CLMFC> gp = {};
+    std::array<std::array<real_type, 3>, StaticMesh::CLMFC> jd = {};
+
+    for (int_type ifl = 0; ifl < m_clnfc; ++ifl)
+    {
+        int_type const ifc = mesh.clfcs(icl, ifl + 1);
+        int_type const jcl = mesh.fcrcl(ifc, icl);
+        m_rcls[ifl] = jcl;
+
+        size_t const bce_col = static_cast<size_t>(ifl + 1) * ndim;
+        for (size_t d = 0; d < ndim; ++d)
+        {
+            real_type const mid = cecnd(icl, bce_col + d);
+            real_type const jce = (jcl >= 0) ? cecnd(jcl, d) : mesh.clcnd(jcl, d);
+            gp[ifl][d] = mid + tau * (jce - mid);
+            jd[ifl][d] = gp[ifl][d] - jce;
+        }
+    }
+
+    // Average of gradient evaluation points.
+    std::array<real_type, 3> avg = {0, 0, 0};
+    for (int_type ifl = 0; ifl < m_clnfc; ++ifl)
+    {
+        for (size_t d = 0; d < ndim; ++d)
+        {
+            avg[d] += gp[ifl][d];
+        }
+    }
+    for (size_t d = 0; d < ndim; ++d)
+    {
+        avg[d] /= m_clnfc;
+    }
+
+    // GGE centroid via sub-element triangulation.
+    GradientElementType const & ge = *m_getype;
+    std::array<real_type, 3> const cnd = detail::calc_gge_centroid(ge, avg, gp, ndim);
+
+    // Shift so the GGE centroid coincides with the self CE
+    // centroid (solution point).
+    for (int_type ifl = 0; ifl < m_clnfc; ++ifl)
+    {
+        for (size_t d = 0; d < ndim; ++d)
+        {
+            m_idis[ifl][d] = gp[ifl][d] - cnd[d];
+            m_jdis[ifl][d] = jd[ifl][d] + icecnd[d] - cnd[d];
+        }
+    }
+}
+
+GradientElement::real_type GradientElement::determinant(ge_matrix_type const & a, size_t ndim)
+{
+    if (2 == ndim)
+    {
+        return a[0][0] * a[1][1] - a[0][1] * a[1][0];
+    }
+    // clang-format off
+    return a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1])
+         - a[0][1] * (a[1][0] * a[2][2] - a[1][2] * a[2][0])
+         + a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0]);
+    // clang-format on
+}
+
+GradientElement::ge_matrix_type GradientElement::adjugate(ge_matrix_type const & a, size_t ndim)
+{
+    ge_matrix_type r = {};
+    if (2 == ndim)
+    {
+        r[0][0] = a[1][1];
+        r[0][1] = -a[0][1];
+        r[1][0] = -a[1][0];
+        r[1][1] = a[0][0];
+        return r;
+    }
+    r[0][0] = a[1][1] * a[2][2] - a[1][2] * a[2][1];
+    r[0][1] = a[0][2] * a[2][1] - a[0][1] * a[2][2];
+    r[0][2] = a[0][1] * a[1][2] - a[0][2] * a[1][1];
+    r[1][0] = a[1][2] * a[2][0] - a[1][0] * a[2][2];
+    r[1][1] = a[0][0] * a[2][2] - a[0][2] * a[2][0];
+    r[1][2] = a[0][2] * a[1][0] - a[0][0] * a[1][2];
+    r[2][0] = a[1][0] * a[2][1] - a[1][1] * a[2][0];
+    r[2][1] = a[0][1] * a[2][0] - a[0][0] * a[2][1];
+    r[2][2] = a[0][0] * a[1][1] - a[0][1] * a[1][0];
+    return r;
+}
+
+GradientElement::ge_vector_type GradientElement::multiply(ge_matrix_type const & a, ge_vector_type const & x, size_t ndim)
+{
+    ge_vector_type r = {0, 0, 0};
+    for (size_t i = 0; i < ndim; ++i)
+    {
+        for (size_t j = 0; j < ndim; ++j)
+        {
+            r[i] += a[i][j] * x[j];
+        }
+    }
+    return r;
+}
+
+GradientElement::ge_matrix_type GradientElement::displacement_matrix(int_type ifge) const
+{
+    ge_matrix_type dst = {};
+    GradientElementType::face_list_type const & tface = m_getype->faces[ifge];
+    for (size_t ivx = 0; ivx < m_ndim; ++ivx)
+    {
+        int_type const ifl = tface[ivx] - 1;
+        for (size_t d = 0; d < m_ndim; ++d)
+        {
+            dst[ivx][d] = m_idis[ifl][d];
+        }
+    }
+    return dst;
+}
+
+GradientElement::ge_vector_type GradientElement::solve_gradient(int_type ifge, ge_vector_type const & udf) const
+{
+    ge_matrix_type const dst = displacement_matrix(ifge);
+    ge_vector_type const adjudf = multiply(adjugate(dst, m_ndim), udf, m_ndim);
+    real_type const det = determinant(dst, m_ndim);
+    ge_vector_type grad = {0, 0, 0};
+    for (size_t d = 0; d < m_ndim; ++d)
+    {
+        grad[d] = adjudf[d] / det;
+    }
+    return grad;
+}
+
+} /* end namespace solvcon */
+
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
