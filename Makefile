@@ -20,12 +20,12 @@ BUILD_PATH_EXT ?=
 
 # To workaround macos SIP: https://github.com/solvcon/solvcon/pull/16.
 # Additional configuration can be loaded from SETUP_FILE.
-RUNENV += PYTHONPATH=$(MODMESH_ROOT)
+RUNENV += PYTHONPATH=$(SOLVCON_ROOT)
 
 SKIP_PYTHON_EXECUTABLE ?= OFF
 HIDE_SYMBOL ?= ON
 DEBUG_SYMBOL ?= ON
-MODMESH_PROFILE ?= OFF
+SOLVCON_PROFILE ?= OFF
 BUILD_METAL ?= OFF
 BUILD_QT ?= ON
 USE_CLANG_TIDY ?= OFF
@@ -35,9 +35,9 @@ CMAKE_BUILD_TYPE ?= Release
 # back to 1 if unavailable. Override to cap parallelism, e.g. NPROC=2.
 NPROC ?= $(shell getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 MAKE_PARALLEL ?= -j $(NPROC)
-MODMESH_ROOT ?= $(shell pwd)
-CMAKE_INSTALL_PREFIX ?= $(MODMESH_ROOT)/build/fakeinstall
-CMAKE_LIBRARY_OUTPUT_DIRECTORY ?= $(MODMESH_ROOT)/solvcon
+SOLVCON_ROOT ?= $(shell pwd)
+CMAKE_INSTALL_PREFIX ?= $(SOLVCON_ROOT)/build/fakeinstall
+CMAKE_LIBRARY_OUTPUT_DIRECTORY ?= $(SOLVCON_ROOT)/solvcon
 # Use CMAKE_PREFIX_PATH to make it easier to build with Qt, e.g.,
 # CMAKE_PREFIX_PATH=/path/to/qt/6.2.3/macos
 CMAKE_PREFIX_PATH ?=
@@ -45,7 +45,7 @@ CMAKE_ARGS ?=
 VERBOSE ?=
 FORCE_CLANG_FORMAT ?=
 QT3D_USE_RHI ?= OFF
-RELEASE_OUTPUT ?= $(MODMESH_ROOT)/build
+RELEASE_OUTPUT ?= $(SOLVCON_ROOT)/build
 RELEASE_ARTIFACT ?= $(RELEASE_OUTPUT)/pilot.dmg
 RELEASE_ARGS ?=
 
@@ -58,7 +58,7 @@ CMAKE_ARGS += -DCMAKE_TOOLCHAIN_FILE=$(CMAKE_TOOLCHAIN_FILE)
 CMAKE_ARGS += -DVCPKG_TARGET_TRIPLET=x64-windows
 endif
 
-# !!! NOTE: USING ANY VENV IS STRONGLY DISCOURAGED IN DEVELOPING MODMESH !!!
+# !!! NOTE: USING ANY VENV IS STRONGLY DISCOURAGED IN DEVELOPING SOLVCON !!!
 # This treatment is a "smarter" way to find python3-config executable.
 # In case Python is not system Python. For example. Python virtual environment
 # is used.
@@ -99,7 +99,7 @@ cmake: $(BUILD_PATH)/Makefile
 .PHONY: xcode
 xcode: $(BUILD_PATH)_xcode/Makefile
 
-CMAKE_CMD = cmake $(MODMESH_ROOT) \
+CMAKE_CMD = cmake $(SOLVCON_ROOT) \
 	-DCMAKE_PREFIX_PATH=$(CMAKE_PREFIX_PATH) \
 	-DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX) \
 	-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$(CMAKE_LIBRARY_OUTPUT_DIRECTORY) \
@@ -111,7 +111,7 @@ CMAKE_CMD = cmake $(MODMESH_ROOT) \
 	-DBUILD_QT=$(BUILD_QT) \
 	-DUSE_CLANG_TIDY=$(USE_CLANG_TIDY) \
 	-DLINT_AS_ERRORS=ON \
-	-DMODMESH_PROFILE=$(MODMESH_PROFILE) \
+	-DSOLVCON_PROFILE=$(SOLVCON_PROFILE) \
 	-DQT3D_USE_RHI=$(QT3D_USE_RHI) \
 	$(CMAKE_ARGS)
 
@@ -165,11 +165,11 @@ pilot: cmake
 
 .PHONY: pilot_clang_tidy_diff
 pilot_clang_tidy_diff: cmake
-	@test -n "$(MODMESH_DIFF_BASE)" || { \
-		echo "Error: MODMESH_DIFF_BASE is required."; \
+	@test -n "$(SOLVCON_DIFF_BASE)" || { \
+		echo "Error: SOLVCON_DIFF_BASE is required."; \
 		exit 1; \
 	}
-	env MODMESH_DIFF_BASE="$(MODMESH_DIFF_BASE)" \
+	env SOLVCON_DIFF_BASE="$(SOLVCON_DIFF_BASE)" \
 		cmake --build $(BUILD_PATH) --target $@ VERBOSE=$(VERBOSE)
 
 .PHONY: gtest
@@ -189,16 +189,16 @@ run_pilot_pytest: pilot
 
 .PHONY: bundle-precheck
 bundle-precheck:
-	$(MODMESH_ROOT)/contrib/bundle/bundle-with-homebrew.sh check
+	$(SOLVCON_ROOT)/contrib/bundle/bundle-with-homebrew.sh check
 
 .PHONY: bundle
 bundle:
-	$(MODMESH_ROOT)/contrib/bundle/bundle-with-homebrew.sh all \
+	$(SOLVCON_ROOT)/contrib/bundle/bundle-with-homebrew.sh all \
 		--output "$(RELEASE_OUTPUT)" $(RELEASE_ARGS)
 
 .PHONY: bundle-test
 bundle-test:
-	$(MODMESH_ROOT)/contrib/bundle/bundle-with-homebrew.sh verify \
+	$(SOLVCON_ROOT)/contrib/bundle/bundle-with-homebrew.sh verify \
 		"$(RELEASE_ARTIFACT)"
 
 .PHONY: standalone_buffer_setup
@@ -307,12 +307,12 @@ format: pyformat
 
 .PHONY: clean
 clean:
-	rm -f $(MODMESH_ROOT)/solvcon/_solvcon$(pyextsuffix)
-	rm -f $(MODMESH_ROOT)/_solvcon$(pyextsuffix)
+	rm -f $(SOLVCON_ROOT)/solvcon/_solvcon$(pyextsuffix)
+	rm -f $(SOLVCON_ROOT)/_solvcon$(pyextsuffix)
 	make -C $(BUILD_PATH) clean
 
 .PHONY: cmakeclean
 cmakeclean:
-	rm -f $(MODMESH_ROOT)/solvcon/_solvcon$(pyextsuffix)
-	rm -f $(MODMESH_ROOT)/_solvcon$(pyextsuffix)
+	rm -f $(SOLVCON_ROOT)/solvcon/_solvcon$(pyextsuffix)
+	rm -f $(SOLVCON_ROOT)/_solvcon$(pyextsuffix)
 	rm -rf $(BUILD_PATH)

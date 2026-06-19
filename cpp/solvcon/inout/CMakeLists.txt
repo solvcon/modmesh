@@ -1,0 +1,33 @@
+
+cmake_minimum_required(VERSION 4.0.1)
+
+set(SOLVCON_INOUT_HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/inout.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/inout_util.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gmsh.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/plot3d.hpp
+    CACHE FILEPATH "" FORCE)
+
+set(SOLVCON_INOUT_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/inout_util.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gmsh.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/plot3d.cpp
+    CACHE FILEPATH "" FORCE)
+
+set(SOLVCON_INOUT_PYMODHEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/inout_pymod.hpp
+    CACHE FILEPATH "" FORCE)
+
+set(SOLVCON_INOUT_PYMODSOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/inout_pymod.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_Gmsh.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_Plot3d.cpp
+    CACHE FILEPATH "" FORCE)
+
+set(SOLVCON_INOUT_FILES
+    ${SOLVCON_INOUT_HEADERS}
+    ${SOLVCON_INOUT_SOURCES}
+    ${SOLVCON_INOUT_PYMODHEADERS}
+    ${SOLVCON_INOUT_PYMODSOURCES}
+    CACHE FILEPATH "" FORCE)
+# vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

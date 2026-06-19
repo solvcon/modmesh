@@ -46,7 +46,7 @@ endif()
 target_link_libraries(
     pilot PUBLIC
     pybind11::embed
-    modmesh_primary
+    solvcon_primary
 )
 if(WIN32)
     set_target_properties(
@@ -78,7 +78,7 @@ target_compile_options(
 if(APPLE)
     # pilot.cpp pulls in apple's accelerate/veclib headers, whose CF_ENUM
     # macros trip clang-diagnostic-elaborated-enum-base, and the lint job
-    # runs clang-tidy with -warnings-as-errors=*. modmesh_primary already
+    # runs clang-tidy with -warnings-as-errors=*. solvcon_primary already
     # suppresses this; the pilot target needs it too. The library's other
     # -Wno flags are not needed here: pilot.cpp lints clean on Linux
     # without them, so this stays apple-only.
@@ -125,18 +125,18 @@ add_custom_target(run_pilot_pytest $<TARGET_FILE:pilot> --mode=pytest)
 
 if(DO_CLANG_TIDY_DIFF)
     get_target_property(
-        MODMESH_PRIMARY_FILES
-        modmesh_primary
+        SOLVCON_PRIMARY_FILES
+        solvcon_primary
         SOURCES
     )
 
     string(
         CONCAT
         PILOT_CLANG_TIDY_DIFF_COMMAND
-        "test -n \"$MODMESH_DIFF_BASE\""
+        "test -n \"$SOLVCON_DIFF_BASE\""
         " && "
-        "git diff --no-color -U0 \"$MODMESH_DIFF_BASE\" HEAD"
-        " -- $<JOIN:${MODMESH_PRIMARY_FILES};${CMAKE_CURRENT_SOURCE_DIR}, >"
+        "git diff --no-color -U0 \"$SOLVCON_DIFF_BASE\" HEAD"
+        " -- $<JOIN:${SOLVCON_PRIMARY_FILES};${CMAKE_CURRENT_SOURCE_DIR}, >"
         " | "
         "$<JOIN:${DO_CLANG_TIDY_DIFF}, > -path \"${CMAKE_BINARY_DIR}\""
     )

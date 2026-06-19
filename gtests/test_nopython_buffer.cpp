@@ -1,4 +1,4 @@
-#include <modmesh/buffer/buffer.hpp>
+#include <solvcon/buffer/buffer.hpp>
 
 #include <gtest/gtest.h>
 
@@ -9,7 +9,7 @@
 
 TEST(ConcreteBuffer, iterator)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     auto buffer = ConcreteBuffer::construct(10);
     int8_t i = 0;
@@ -27,7 +27,7 @@ TEST(ConcreteBuffer, iterator)
 
 TEST(SimpleArray, construction)
 {
-    namespace mm = modmesh;
+    namespace mm = solvcon;
     mm::SimpleArray<double> arr_double(10);
     EXPECT_EQ(arr_double.nbody(), 10);
     mm::SimpleArray<int> arr_int(17);
@@ -36,7 +36,7 @@ TEST(SimpleArray, construction)
 
 TEST(SimpleArray, minmaxsum)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     SimpleArray<double> arr_double(small_vector<size_t>{10}, 0);
     EXPECT_EQ(arr_double.sum(), 0);
@@ -67,7 +67,7 @@ TEST(SimpleArray, minmaxsum)
 
 TEST(SimpleArray, abs)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     SimpleArray<double> arr(small_vector<size_t>{10}, -1.0);
     EXPECT_EQ(arr.sum(), -10.0);
@@ -78,7 +78,7 @@ TEST(SimpleArray, abs)
 
 TEST(SimpleArray, iterator)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     SimpleArray<double> arr(10);
     int8_t i = 0;
@@ -96,28 +96,28 @@ TEST(SimpleArray, iterator)
 
 TEST(SimpleArray_DataType, from_type)
 {
-    modmesh::DataType dt_double = modmesh::DataType::from<double>();
-    EXPECT_EQ(dt_double.type(), modmesh::DataType::Float64);
+    solvcon::DataType dt_double = solvcon::DataType::from<double>();
+    EXPECT_EQ(dt_double.type(), solvcon::DataType::Float64);
 
-    modmesh::DataType dt_int = modmesh::DataType::from<int>();
-    EXPECT_EQ(dt_int.type(), modmesh::DataType::Int32);
+    solvcon::DataType dt_int = solvcon::DataType::from<int>();
+    EXPECT_EQ(dt_int.type(), solvcon::DataType::Int32);
 }
 
 TEST(SimpleArray_DataType, from_string)
 {
-    modmesh::DataType dt_double = modmesh::DataType("float64");
-    EXPECT_EQ(dt_double.type(), modmesh::DataType::Float64);
+    solvcon::DataType dt_double = solvcon::DataType("float64");
+    EXPECT_EQ(dt_double.type(), solvcon::DataType::Float64);
 
-    modmesh::DataType dt_bool = modmesh::DataType("bool");
-    EXPECT_EQ(dt_bool.type(), modmesh::DataType::Bool);
+    solvcon::DataType dt_bool = solvcon::DataType("bool");
+    EXPECT_EQ(dt_bool.type(), solvcon::DataType::Bool);
 
-    EXPECT_THROW(modmesh::DataType("float16"), std::invalid_argument); // float16 does not exist
-    EXPECT_THROW(modmesh::DataType("bool8"), std::invalid_argument); // bool8 does not exist
+    EXPECT_THROW(solvcon::DataType("float16"), std::invalid_argument); // float16 does not exist
+    EXPECT_THROW(solvcon::DataType("bool8"), std::invalid_argument); // bool8 does not exist
 }
 
 TEST(BufferExpander, iterator)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     auto buffer = BufferExpander::construct(10);
     int8_t i = 0;
@@ -146,7 +146,7 @@ TEST(small_vector, select_kth)
 
     for (size_t k = 0; k < n; ++k)
     {
-        modmesh::small_vector<int> sv(scrambled);
+        solvcon::small_vector<int> sv(scrambled);
         int result = sv.select_kth(k);
         EXPECT_EQ(result, static_cast<int>(k));
     }
@@ -158,7 +158,7 @@ TEST(small_vector, select_kth_random)
     std::vector<int> vec(n);
     std::iota(vec.begin(), vec.end(), 0);
 
-    modmesh::small_vector<int> sv(vec);
+    solvcon::small_vector<int> sv(vec);
     for (size_t i = 0; i < n; ++i)
     {
         auto rng = std::default_random_engine{};
@@ -170,7 +170,7 @@ TEST(small_vector, select_kth_random)
 
 TEST(TakeAlongAxisSimd, basic_int32)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     // Create a simple array with values [10, 20, 30, 40, 50]
     SimpleArray<int32_t> data(small_vector<size_t>{5});
@@ -200,7 +200,7 @@ TEST(TakeAlongAxisSimd, basic_int32)
 
 TEST(TakeAlongAxisSimd, basic_float64)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     // Create a simple array with float values
     SimpleArray<double> data(small_vector<size_t>{6});
@@ -231,7 +231,7 @@ TEST(TakeAlongAxisSimd, basic_float64)
 
 TEST(TakeAlongAxisSimd, large_array)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     // Create a larger array
     const size_t data_size = 1000;
@@ -262,7 +262,7 @@ TEST(TakeAlongAxisSimd, large_array)
 
 TEST(TakeAlongAxisSimd, out_of_range)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     // Create a simple array
     SimpleArray<int32_t> data(small_vector<size_t>{5});
@@ -284,7 +284,7 @@ TEST(TakeAlongAxisSimd, out_of_range)
 
 TEST(TakeAlongAxisSimd, empty_indices)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     // Create a simple array
     SimpleArray<int32_t> data(small_vector<size_t>{5});
@@ -306,7 +306,7 @@ TEST(TakeAlongAxisSimd, empty_indices)
 
 TEST(TakeAlongAxisSimd, sequential_indices)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     // Create array [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     const size_t size = 10;
@@ -336,7 +336,7 @@ TEST(TakeAlongAxisSimd, sequential_indices)
 
 TEST(TakeAlongAxisSimd, single_index_element)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     // Create a data array with multiple elements
     SimpleArray<int32_t> data(small_vector<size_t>{10});

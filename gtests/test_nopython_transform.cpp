@@ -1,5 +1,5 @@
-#include <modmesh/modmesh.hpp>
-#include <modmesh/transform/transform.hpp>
+#include <solvcon/solvcon.hpp>
+#include <solvcon/transform/transform.hpp>
 #include <random>
 #include <gtest/gtest.h>
 
@@ -24,10 +24,10 @@ public:
 protected:
     static constexpr size_t VN = is_pow_2 ? 1024 : 1000;
 
-    modmesh::SimpleArray<modmesh::Complex<T>> signal{
-        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{0.0, 0.0}};
-    modmesh::SimpleArray<modmesh::Complex<T>> out{
-        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{0.0, 0.0}};
+    solvcon::SimpleArray<solvcon::Complex<T>> signal{
+        solvcon::small_vector<size_t>{VN}, solvcon::Complex<T>{0.0, 0.0}};
+    solvcon::SimpleArray<solvcon::Complex<T>> out{
+        solvcon::small_vector<size_t>{VN}, solvcon::Complex<T>{0.0, 0.0}};
 
     // Set up the test fixture: generate the signal once
     void SetUp() override
@@ -37,7 +37,7 @@ protected:
         for (unsigned int i = 0; i < VN; ++i)
         {
             T val = val_dist(rng);
-            signal[i] = modmesh::Complex<T>{val, 0.0};
+            signal[i] = solvcon::Complex<T>{val, 0.0};
         }
     }
 
@@ -73,14 +73,14 @@ protected:
 
     std::mt19937 rng{std::random_device{}()};
 
-    modmesh::SimpleArray<modmesh::Complex<T>> signal{
-        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{0.0, 0.0}};
-    modmesh::SimpleArray<modmesh::Complex<T>> out{
-        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{0.0, 0.0}};
+    solvcon::SimpleArray<solvcon::Complex<T>> signal{
+        solvcon::small_vector<size_t>{VN}, solvcon::Complex<T>{0.0, 0.0}};
+    solvcon::SimpleArray<solvcon::Complex<T>> out{
+        solvcon::small_vector<size_t>{VN}, solvcon::Complex<T>{0.0, 0.0}};
 
     void SetUp() override
     {
-        signal[0] = modmesh::Complex<T>{1.0, 0.0};
+        signal[0] = solvcon::Complex<T>{1.0, 0.0};
     }
 
     void verify_delta_function()
@@ -107,12 +107,12 @@ protected:
 
     std::mt19937 rng{std::random_device{}()};
 
-    modmesh::SimpleArray<modmesh::Complex<T>> signal{
-        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{0.0, 0.0}};
-    modmesh::SimpleArray<modmesh::Complex<T>> freq_domain{
-        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{0.0, 0.0}};
-    modmesh::SimpleArray<modmesh::Complex<T>> time_domain{
-        modmesh::small_vector<size_t>{VN}, modmesh::Complex<T>{0.0, 0.0}};
+    solvcon::SimpleArray<solvcon::Complex<T>> signal{
+        solvcon::small_vector<size_t>{VN}, solvcon::Complex<T>{0.0, 0.0}};
+    solvcon::SimpleArray<solvcon::Complex<T>> freq_domain{
+        solvcon::small_vector<size_t>{VN}, solvcon::Complex<T>{0.0, 0.0}};
+    solvcon::SimpleArray<solvcon::Complex<T>> time_domain{
+        solvcon::small_vector<size_t>{VN}, solvcon::Complex<T>{0.0, 0.0}};
 
     void SetUp() override
     {
@@ -121,7 +121,7 @@ protected:
         for (unsigned int i = 0; i < VN; ++i)
         {
             T val = val_dist(rng);
-            signal[i] = modmesh::Complex<T>{val, 0.0};
+            signal[i] = solvcon::Complex<T>{val, 0.0};
         }
     }
 
@@ -148,44 +148,44 @@ TYPED_TEST_SUITE(InverseTest, TestTypes);
 
 TYPED_TEST(ParsevalTest, fft)
 {
-    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
+    solvcon::FourierTransform::fft<solvcon::Complex, typename TypeParam::Type>(this->signal, this->out);
 
     this->verify_parseval();
 }
 
 TYPED_TEST(ParsevalTest, dft)
 {
-    modmesh::FourierTransform::dft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
+    solvcon::FourierTransform::dft<solvcon::Complex, typename TypeParam::Type>(this->signal, this->out);
 
     this->verify_parseval();
 }
 
 TYPED_TEST(DeltaFunctionTest, fft)
 {
-    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
+    solvcon::FourierTransform::fft<solvcon::Complex, typename TypeParam::Type>(this->signal, this->out);
 
     this->verify_delta_function();
 }
 
 TYPED_TEST(DeltaFunctionTest, dft)
 {
-    modmesh::FourierTransform::dft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->out);
+    solvcon::FourierTransform::dft<solvcon::Complex, typename TypeParam::Type>(this->signal, this->out);
 
     this->verify_delta_function();
 }
 
 TYPED_TEST(InverseTest, fft)
 {
-    modmesh::FourierTransform::fft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->freq_domain);
-    modmesh::FourierTransform::ifft<modmesh::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain);
+    solvcon::FourierTransform::fft<solvcon::Complex, typename TypeParam::Type>(this->signal, this->freq_domain);
+    solvcon::FourierTransform::ifft<solvcon::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain);
 
     this->verify_inverse_fft_function();
 }
 
 TYPED_TEST(InverseTest, dft)
 {
-    modmesh::FourierTransform::dft<modmesh::Complex, typename TypeParam::Type>(this->signal, this->freq_domain);
-    modmesh::FourierTransform::ifft<modmesh::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain);
+    solvcon::FourierTransform::dft<solvcon::Complex, typename TypeParam::Type>(this->signal, this->freq_domain);
+    solvcon::FourierTransform::ifft<solvcon::Complex, typename TypeParam::Type>(this->freq_domain, this->time_domain);
 
     this->verify_inverse_fft_function();
 }

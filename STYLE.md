@@ -462,7 +462,7 @@ Always use path-first inclusion (angle bracket). Do not use current-first
 
 ```cpp
 // Use this: search for include file start with the paths to the compiler.
-#include <modmesh/base.hpp>
+#include <solvcon/base.hpp>
 // Do not use this. This starts to search from the directory of the file.
 #include "solvcon/toggle.hpp"
 ```
@@ -481,7 +481,7 @@ out the full name:
 namespace
 {
 
-modmesh::real_type local_function(modmesh::int_type value);
+solvcon::real_type local_function(solvcon::int_type value);
 
 } /* end namespace */
 ```
@@ -490,11 +490,11 @@ The namespace `solvcon` may be aliased to `mm` in a local scope. No alias
 should be use outside a local scope.
 
 ```cpp
-modmesh::real_type local_function(modmesh::int_type value)
+solvcon::real_type local_function(solvcon::int_type value)
 {
     // Alias the solvcon namespace to mm.
     namespace mm = solvcon;
-    return mm::real_type(value); // Same as modmesh::real_type(value);
+    return mm::real_type(value); // Same as solvcon::real_type(value);
 }
 ```
 
@@ -505,7 +505,7 @@ Needless to say that `using namespace std;` is absolutely forbidden.
 Name the namespace for implementation details to `detail`.
 
 ```cpp
-namespace modmesh
+namespace solvcon
 {
 
 namespace detail
@@ -513,7 +513,7 @@ namespace detail
     // Implementation detail
 } /* end namespace detail */
 
-} /* end namespace modmesh */
+} /* end namespace solvcon */
 ```
 
 ## C Pre-Processor Macro
@@ -623,7 +623,7 @@ Add ending marks to classes and namespaces.  They are usually too long (across
 hundreds of lines) to keep track of.
 
 ```cpp
-namespace modmesh
+namespace solvcon
 {
 
 class MyClass
@@ -631,7 +631,7 @@ class MyClass
     // Code.
 }; /* end class MyClass */
 
-} /* end namespace modmesh */
+} /* end namespace solvcon */
 ```
 
 ## C++ STL Containers

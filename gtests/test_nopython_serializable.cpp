@@ -4,8 +4,8 @@
 #error "Python.h should not be included."
 #endif
 
-#include <modmesh/serialization/SerializableItem.hpp>
-namespace modmesh
+#include <solvcon/serialization/SerializableItem.hpp>
+namespace solvcon
 {
 
 namespace detail
@@ -541,6 +541,6 @@ TEST(Json, round_trip_string_with_comma)
     EXPECT_EQ(restored.zip_codes.size(), 0);
 }
 
-} // namespace modmesh
+} // namespace solvcon
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

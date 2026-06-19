@@ -1,0 +1,42 @@
+# Copyright (c) 2019, solvcon team <contact@solvcon.net>
+# BSD 3-Clause License, see COPYING
+
+cmake_minimum_required(VERSION 4.0.1)
+
+set(SOLVCON_PILOT_PYMODHEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/R3DWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/R2DWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RWorldRenderer2d.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RWorld.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RManager.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RAxisMark.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RCameraController.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RPythonConsoleDockWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RStaticMesh.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RAction.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pilot.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wrap_pilot.hpp
+    CACHE FILEPATH "" FORCE
+)
+
+set(SOLVCON_PILOT_PYMODSOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/R3DWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/R2DWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RWorldRenderer2d.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RWorld.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RAxisMark.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RCameraController.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RPythonConsoleDockWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RStaticMesh.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RAction.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wrap_pilot.cpp
+    CACHE FILEPATH "" FORCE
+)
+
+set(SOLVCON_PILOT_FILES
+    ${SOLVCON_PILOT_PYMODHEADERS}
+    ${SOLVCON_PILOT_PYMODSOURCES}
+    CACHE FILEPATH "" FORCE)
+
+# vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

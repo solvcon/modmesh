@@ -4,7 +4,7 @@
  */
 
 #include <gtest/gtest.h>
-#include <modmesh/universe/rtree.hpp>
+#include <solvcon/universe/rtree.hpp>
 
 #include <random>
 #ifdef Py_PYTHON_H
@@ -23,7 +23,7 @@ struct Point2D
     }
 };
 
-using TestBoundBox3d = modmesh::BoundBox3d<double>;
+using TestBoundBox3d = solvcon::BoundBox3d<double>;
 
 struct Point2DValueOps
 {
@@ -93,7 +93,7 @@ struct Point3DValueOps
 
 TEST(RTree, basic_operations)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
@@ -112,7 +112,7 @@ TEST(RTree, basic_operations)
 
 TEST(RTree, basic_operations_3d)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point3D, TestBoundBox3d, Point3DValueOps> rtree;
 
@@ -132,7 +132,7 @@ TEST(RTree, basic_operations_3d)
 
 TEST(RTree, complex_operations)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point2D, TestBoundBox3d, Point2DValueOps, 4> rtree; // Small max items per node to force splits
 
@@ -156,7 +156,7 @@ TEST(RTree, complex_operations)
 
 TEST(RTree, empty_tree_operations)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
@@ -170,7 +170,7 @@ TEST(RTree, empty_tree_operations)
 
 TEST(RTree, single_point_operations)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
@@ -190,7 +190,7 @@ TEST(RTree, single_point_operations)
 
 TEST(RTree, overlapping_search_regions)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
@@ -209,7 +209,7 @@ TEST(RTree, overlapping_search_regions)
 
 TEST(RTree, boundary_conditions)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
@@ -227,7 +227,7 @@ TEST(RTree, boundary_conditions)
 
 TEST(RTree, large_scale_insertion_2d)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point2D, TestBoundBox3d, Point2DValueOps, 8> rtree;
 
@@ -243,7 +243,7 @@ TEST(RTree, large_scale_insertion_2d)
 
 TEST(RTree, random_insertion_and_search_2d)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point2D, TestBoundBox3d, Point2DValueOps, 16> rtree;
     std::mt19937 gen(42);
@@ -273,7 +273,7 @@ TEST(RTree, random_insertion_and_search_2d)
 
 TEST(RTree, multiple_removals_2d)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point2D, TestBoundBox3d, Point2DValueOps, 4> rtree;
 
@@ -294,7 +294,7 @@ TEST(RTree, multiple_removals_2d)
 
 TEST(RTree, scattered_points_2d)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
@@ -314,7 +314,7 @@ TEST(RTree, scattered_points_2d)
 
 TEST(RTree, duplicate_points_2d)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 
@@ -334,7 +334,7 @@ TEST(RTree, duplicate_points_2d)
 
 TEST(RTree, large_scale_insertion_3d)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point3D, TestBoundBox3d, Point3DValueOps, 8> rtree;
 
@@ -352,7 +352,7 @@ TEST(RTree, large_scale_insertion_3d)
 
 TEST(RTree, random_insertion_and_search_3d)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point3D, TestBoundBox3d, Point3DValueOps, 16> rtree;
     std::mt19937 gen(123);
@@ -384,7 +384,7 @@ TEST(RTree, random_insertion_and_search_3d)
 
 TEST(RTree, corner_cases_3d)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point3D, TestBoundBox3d, Point3DValueOps> rtree;
 
@@ -403,7 +403,7 @@ TEST(RTree, corner_cases_3d)
 
 TEST(RTree, sequential_removal_3d)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point3D, TestBoundBox3d, Point3DValueOps, 4> rtree;
 
@@ -428,7 +428,7 @@ TEST(RTree, sequential_removal_3d)
 
 TEST(RTree, stress_test_insert_remove_2d)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point2D, TestBoundBox3d, Point2DValueOps, 8> rtree;
     std::mt19937 gen(999);
@@ -454,7 +454,7 @@ TEST(RTree, stress_test_insert_remove_2d)
 
 TEST(RTree, non_overlapping_searches_2d)
 {
-    using namespace modmesh;
+    using namespace solvcon;
 
     RTree<Point2D, TestBoundBox3d, Point2DValueOps> rtree;
 

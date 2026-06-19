@@ -73,7 +73,7 @@ owned by hooks, not skills.
 ## Build, Test, Lint, Format
 
 All workflows are driven through `make` from the repo root. The Makefile sets
-`PYTHONPATH=$(MODMESH_ROOT)` so the in-tree `_solvcon` extension is picked up
+`PYTHONPATH=$(SOLVCON_ROOT)` so the in-tree `_solvcon` extension is picked up
 without installation, and works around macOS SIP stripping `DYLD_LIBRARY_PATH`.
 
 **Build**
@@ -121,7 +121,7 @@ Key build variables (set in `setup.mk` or as environment variables):
 - `CMAKE_BUILD_TYPE`: `Release` (default) or `Debug`
 - `BUILD_QT`: `ON` (default) or `OFF` - build Qt GUI components
 - `BUILD_METAL`: `OFF` (default) or `ON` - build Metal GPU support
-- `MODMESH_PROFILE`: `OFF` (default) or `ON` - enable profiler
+- `SOLVCON_PROFILE`: `OFF` (default) or `ON` - enable profiler
 - `USE_CLANG_TIDY`: `OFF` (default) or `ON` - use clang-tidy
 - `HIDE_SYMBOL`: `ON` (default) - hide Python wrapper symbols
 - `DEBUG_SYMBOL`: `ON` (default) - add debug information
@@ -136,7 +136,7 @@ Build paths (`$(pyvminor)` is the active Python major+minor, e.g. `314`):
 
 solvcon uses a dual-layer hybrid architecture:
 
-1. **C++ Core** (`cpp/modmesh/`): High-performance numerical code
+1. **C++ Core** (`cpp/solvcon/`): High-performance numerical code
    - Compiled to native libraries with pybind11 bindings
    - Exposed to Python through the `_solvcon` extension module
 
@@ -146,7 +146,7 @@ solvcon uses a dual-layer hybrid architecture:
 
 ### C++ Component Structure
 
-C++ core lives in `cpp/modmesh/`. Load-bearing pieces:
+C++ core lives in `cpp/solvcon/`. Load-bearing pieces:
 
 - `buffer/` -- `ConcreteBuffer`, `SimpleArray`, `BufferExpander`,
   `small_vector`.
@@ -163,7 +163,7 @@ solvers), `profiling/` (runtime profiler), `simd/` (NEON/SSE/AVX),
 wrappers. `spacetime/` is an old, incorrect CESE implementation kept
 for reference only -- do not extend it.
 
-See `cpp/modmesh/` for the current tree.
+See `cpp/solvcon/` for the current tree.
 
 ### Python Package Structure
 
@@ -270,7 +270,7 @@ any dependency requires user review and consent.
 
 solvcon includes an integrated runtime profiler:
 
-1. Enable with `MODMESH_PROFILE=ON` during build
+1. Enable with `SOLVCON_PROFILE=ON` during build
 2. Use `toggle.py` API to enable/disable profiling regions
 3. Run profiling scripts with `make pyprof`
 4. Results written to `profiling/results/`
@@ -288,9 +288,9 @@ The pilot application (`cpp/binary/pilot/`) is a standalone Qt6-based viewer:
 
 ### Adding a New C++ Component
 
-1. Create a directory under `cpp/modmesh/`.
+1. Create a directory under `cpp/solvcon/`.
 2. Add header files with proper include guards.
-3. Update `cpp/modmesh/CMakeLists.txt` to include new sources.
+3. Update `cpp/solvcon/CMakeLists.txt` to include new sources.
 4. Add pybind11 bindings if Python access is needed.
 5. Write tests. Prefer Python tests in `tests/`; add a `gtests/` test only
    when the behavior cannot or should not be exercised from Python.

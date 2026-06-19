@@ -25,7 +25,7 @@ endif () # APPLE
 add_executable(
     test_nopython
     test_nopython_buffer.cpp
-    test_nopython_modmesh.cpp
+    test_nopython_solvcon.cpp
     test_nopython_inout.cpp
     test_nopython_radixtree.cpp
     test_nopython_callprofiler.cpp
@@ -35,13 +35,13 @@ add_executable(
     test_nopython_formatter.cpp
     test_nopython_mdspan.cpp
     test_nopython_multidim.cpp
-    ${MODMESH_TOGGLE_SOURCES}
-    ${MODMESH_BUFFER_SOURCES}
-    ${MODMESH_SERIALIZATION_SOURCES}
-    ${MODMESH_TRANSFORM_SOURCES}
-    ${MODMESH_SIMD_SOURCES}
-    ${MODMESH_MESH_SOURCES}
-    ${MODMESH_MULTIDIM_SOURCES}
+    ${SOLVCON_TOGGLE_SOURCES}
+    ${SOLVCON_BUFFER_SOURCES}
+    ${SOLVCON_SERIALIZATION_SOURCES}
+    ${SOLVCON_TRANSFORM_SOURCES}
+    ${SOLVCON_SIMD_SOURCES}
+    ${SOLVCON_MESH_SOURCES}
+    ${SOLVCON_MULTIDIM_SOURCES}
 )
 
 target_link_libraries(

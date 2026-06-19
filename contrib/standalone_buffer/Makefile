@@ -32,34 +32,34 @@ run: build
 	env PYTHONPATH=$(SETUPROOT) python3 -c \
 		"import modbuf; print(modbuf.SimpleArrayFloat64(3).ndarray)"
 
-$(SETUPROOT)/wrap_ConcreteBuffer.o: $(SETUPROOT)/modmesh/buffer/pymod/wrap_ConcreteBuffer.cpp Makefile
+$(SETUPROOT)/wrap_ConcreteBuffer.o: $(SETUPROOT)/solvcon/buffer/pymod/wrap_ConcreteBuffer.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
-$(SETUPROOT)/wrap_SimpleArray.o: $(SETUPROOT)/modmesh/buffer/pymod/wrap_SimpleArray.cpp Makefile
+$(SETUPROOT)/wrap_SimpleArray.o: $(SETUPROOT)/solvcon/buffer/pymod/wrap_SimpleArray.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
-$(SETUPROOT)/wrap_SimpleArrayPlex.o: $(SETUPROOT)/modmesh/buffer/pymod/wrap_SimpleArrayPlex.cpp Makefile
+$(SETUPROOT)/wrap_SimpleArrayPlex.o: $(SETUPROOT)/solvcon/buffer/pymod/wrap_SimpleArrayPlex.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
-$(SETUPROOT)/buffer_pymod.o: $(SETUPROOT)/modmesh/buffer/pymod/buffer_pymod.cpp Makefile
+$(SETUPROOT)/buffer_pymod.o: $(SETUPROOT)/solvcon/buffer/pymod/buffer_pymod.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
-$(SETUPROOT)/BufferExpander.o: $(SETUPROOT)/modmesh/buffer/BufferExpander.cpp Makefile
+$(SETUPROOT)/BufferExpander.o: $(SETUPROOT)/solvcon/buffer/BufferExpander.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
-$(SETUPROOT)/SimpleArray.o: $(SETUPROOT)/modmesh/buffer/SimpleArray.cpp Makefile
+$(SETUPROOT)/SimpleArray.o: $(SETUPROOT)/solvcon/buffer/SimpleArray.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
-$(SETUPROOT)/blas_compat.o: $(SETUPROOT)/modmesh/math/blas_compat.cpp Makefile
+$(SETUPROOT)/blas_compat.o: $(SETUPROOT)/solvcon/math/blas_compat.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
-$(SETUPROOT)/simd_support.o: $(SETUPROOT)/modmesh/simd/simd_support.cpp Makefile
+$(SETUPROOT)/simd_support.o: $(SETUPROOT)/solvcon/simd/simd_support.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
 $(SETUPROOT)/modbuf.o: modbuf.cpp
 	c++ $(CFLAGS) -c $< -o $@
 
-$(SETUPROOT)/radix_tree.o: $(SETUPROOT)/modmesh/toggle/RadixTree.cpp Makefile
+$(SETUPROOT)/radix_tree.o: $(SETUPROOT)/solvcon/toggle/RadixTree.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
 OBJS = \
@@ -81,16 +81,16 @@ $(MODPATH): Makefile $(OBJS)
 copy:
 	@echo "BUILD_PATH": $(BUILD_PATH)
 	@echo "standalone buffer root": $(SETUPROOT)
-	rm -rf $(SETUPROOT)/modmesh
-	mkdir -p $(SETUPROOT)/modmesh
-	cp $(MMROOT)/cpp/modmesh/base.hpp $(SETUPROOT)/modmesh/base.hpp
-	cp -a $(MMROOT)/cpp/modmesh/buffer $(SETUPROOT)/modmesh/buffer
-	mkdir -p $(SETUPROOT)/modmesh/python
-	cp $(MMROOT)/cpp/modmesh/python/common.hpp $(SETUPROOT)/modmesh/python/common.hpp
-	cp -a $(MMROOT)/cpp/modmesh/toggle $(SETUPROOT)/modmesh/toggle
-	rm -rf $(SETUPROOT)/modmesh/toggle/pymod
-	cp -a $(MMROOT)/cpp/modmesh/math $(SETUPROOT)/modmesh/math
-	rm -rf $(SETUPROOT)/modmesh/math/pymod
-	cp -a $(MMROOT)/cpp/modmesh/simd $(SETUPROOT)/modmesh/simd
-	cp $(MMROOT)/cpp/modmesh/base.hpp $(SETUPROOT)/modmesh/
+	rm -rf $(SETUPROOT)/solvcon
+	mkdir -p $(SETUPROOT)/solvcon
+	cp $(MMROOT)/cpp/solvcon/base.hpp $(SETUPROOT)/solvcon/base.hpp
+	cp -a $(MMROOT)/cpp/solvcon/buffer $(SETUPROOT)/solvcon/buffer
+	mkdir -p $(SETUPROOT)/solvcon/python
+	cp $(MMROOT)/cpp/solvcon/python/common.hpp $(SETUPROOT)/solvcon/python/common.hpp
+	cp -a $(MMROOT)/cpp/solvcon/toggle $(SETUPROOT)/solvcon/toggle
+	rm -rf $(SETUPROOT)/solvcon/toggle/pymod
+	cp -a $(MMROOT)/cpp/solvcon/math $(SETUPROOT)/solvcon/math
+	rm -rf $(SETUPROOT)/solvcon/math/pymod
+	cp -a $(MMROOT)/cpp/solvcon/simd $(SETUPROOT)/solvcon/simd
+	cp $(MMROOT)/cpp/solvcon/base.hpp $(SETUPROOT)/solvcon/
 	find $(SETUPROOT) -name CMakeLists.txt -delete
