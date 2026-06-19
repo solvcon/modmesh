@@ -4,6 +4,7 @@
  * BSD 3-Clause License, see COPYING
  */
 #include <pybind11/pybind11.h>
+#include <pybind11/functional.h>
 
 #include <modmesh/buffer/buffer.hpp>
 #include <modmesh/math/math.hpp>
