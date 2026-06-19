@@ -4,7 +4,7 @@ import unittest
 import numpy as np
 from numpy.testing import assert_almost_equal
 
-import modmesh
+import solvcon
 
 
 class EulerCoreCETriangleTC(unittest.TestCase):
@@ -12,15 +12,15 @@ class EulerCoreCETriangleTC(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
+        mh = solvcon.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
         mh.ndcrd[:, :] = [(0, 0), (-1, -1), (1, -1), (0, 1)]
-        mh.cltpn.fill(modmesh.StaticMesh.TRIANGLE)
+        mh.cltpn.fill(solvcon.StaticMesh.TRIANGLE)
         mh.clnds[:, :4] = (3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)
         mh.build_interior(do_metric=True)
         mh.build_boundary()
         mh.build_ghost()
         cls.mesh = mh
-        cls.ec = modmesh.EulerCore(mesh=mh, time_increment=0.01)
+        cls.ec = solvcon.EulerCore(mesh=mh, time_increment=0.01)
 
     def test_dimensions(self):
         self.assertEqual(2, self.ec.ndim)
@@ -30,26 +30,26 @@ class EulerCoreCETriangleTC(unittest.TestCase):
     def test_cevol_shape(self):
         total = self.ec.ngstcell + self.ec.ncell
         self.assertEqual(
-            (total, modmesh.StaticMesh.CLMFC + 1),
+            (total, solvcon.StaticMesh.CLMFC + 1),
             self.ec.cevol.shape)
 
     def test_cecnd_shape(self):
         total = self.ec.ngstcell + self.ec.ncell
         self.assertEqual(
-            (total, (modmesh.StaticMesh.CLMFC + 1) * self.ec.ndim),
+            (total, (solvcon.StaticMesh.CLMFC + 1) * self.ec.ndim),
             self.ec.cecnd.shape)
 
     def test_sfcnd_shape(self):
         self.assertEqual(
             (self.ec.ncell,
-             modmesh.StaticMesh.CLMFC * modmesh.StaticMesh.FCMND,
+             solvcon.StaticMesh.CLMFC * solvcon.StaticMesh.FCMND,
              self.ec.ndim),
             self.ec.sfcnd.shape)
 
     def test_sfnml_shape(self):
         self.assertEqual(
             (self.ec.ncell,
-             modmesh.StaticMesh.CLMFC * modmesh.StaticMesh.FCMND,
+             solvcon.StaticMesh.CLMFC * solvcon.StaticMesh.FCMND,
              self.ec.ndim),
             self.ec.sfnml.shape)
 
@@ -89,15 +89,15 @@ class EulerCoreCEQuadTC(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=2, nnode=4, nface=0, ncell=1)
+        mh = solvcon.StaticMesh(ndim=2, nnode=4, nface=0, ncell=1)
         mh.ndcrd[:, :] = [(0, 0), (1, 0), (1, 1), (0, 1)]
-        mh.cltpn.fill(modmesh.StaticMesh.QUADRILATERAL)
+        mh.cltpn.fill(solvcon.StaticMesh.QUADRILATERAL)
         mh.clnds[:, :5] = [(4, 0, 1, 2, 3)]
         mh.build_interior(do_metric=True)
         mh.build_boundary()
         mh.build_ghost()
         cls.mesh = mh
-        cls.ec = modmesh.EulerCore(mesh=mh, time_increment=0.01)
+        cls.ec = solvcon.EulerCore(mesh=mh, time_increment=0.01)
 
     def test_dimensions(self):
         self.assertEqual(2, self.ec.ndim)
@@ -122,22 +122,22 @@ class EulerCoreCEQuadTC(unittest.TestCase):
     def test_sfcnd_nonzero(self):
         self.assertTrue(any(
             self.ec.sfcnd[0, si, d] != 0
-            for si in range(modmesh.StaticMesh.CLMFC
-                            * modmesh.StaticMesh.FCMND)
+            for si in range(solvcon.StaticMesh.CLMFC
+                            * solvcon.StaticMesh.FCMND)
             for d in range(self.ec.ndim)))
 
     def test_sfnml_nonzero(self):
         self.assertTrue(any(
             self.ec.sfnml[0, si, d] != 0
-            for si in range(modmesh.StaticMesh.CLMFC
-                            * modmesh.StaticMesh.FCMND)
+            for si in range(solvcon.StaticMesh.CLMFC
+                            * solvcon.StaticMesh.FCMND)
             for d in range(self.ec.ndim)))
 
     def test_sfnml_magnitudes(self):
         ec, ndim = self.ec, self.ec.ndim
         for ifc in range(4):
-            for ind in range(modmesh.StaticMesh.FCMND):
-                si = ifc * modmesh.StaticMesh.FCMND + ind
+            for ind in range(solvcon.StaticMesh.FCMND):
+                si = ifc * solvcon.StaticMesh.FCMND + ind
                 nml = [ec.sfnml[0, si, d] for d in range(ndim)]
                 mag = np.linalg.norm(nml)
                 if mag > 1e-14:
@@ -149,22 +149,22 @@ class EulerCoreCEMixedTC(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=2, nnode=6, nface=0, ncell=3)
+        mh = solvcon.StaticMesh(ndim=2, nnode=6, nface=0, ncell=3)
         mh.ndcrd[:, :] = [
             (0, 0), (1, 0), (2, 0),
             (0, 1), (1, 1), (2, 1),
         ]
         mh.cltpn[:] = [
-            modmesh.StaticMesh.QUADRILATERAL,
-            modmesh.StaticMesh.TRIANGLE,
-            modmesh.StaticMesh.TRIANGLE,
+            solvcon.StaticMesh.QUADRILATERAL,
+            solvcon.StaticMesh.TRIANGLE,
+            solvcon.StaticMesh.TRIANGLE,
         ]
         mh.clnds[:, :5] = [(4, 0, 1, 4, 3), (3, 1, 2, 4, 0), (3, 2, 5, 4, 0)]
         mh.build_interior(do_metric=True)
         mh.build_boundary()
         mh.build_ghost()
         cls.mesh = mh
-        cls.ec = modmesh.EulerCore(mesh=mh, time_increment=0.01)
+        cls.ec = solvcon.EulerCore(mesh=mh, time_increment=0.01)
 
     def test_varying_clfcs_counts(self):
         mh = self.mesh
@@ -199,23 +199,23 @@ class EulerCoreCERectangleTC(unittest.TestCase):
         path = os.path.join(cls.DATADIR, "rectangle.msh")
         with open(path, 'rb') as f:
             data = f.read()
-        gmsh = modmesh.Gmsh(data)
+        gmsh = solvcon.Gmsh(data)
         cls.blk = gmsh.to_block()
-        cls.ec = modmesh.EulerCore(
+        cls.ec = solvcon.EulerCore(
             mesh=cls.blk, time_increment=0.01)
 
     def test_triangle_ce_total(self):
         blk = self.blk
         tri_ce_sum = 0.0
         for i in range(self.ec.ncell):
-            if blk.cltpn[i] == modmesh.StaticMesh.TRIANGLE:
+            if blk.cltpn[i] == solvcon.StaticMesh.TRIANGLE:
                 tri_ce_sum += self.ec.cevol[i, 0]
         assert_almost_equal(tri_ce_sum, 8.0, decimal=6)
 
     def test_triangle_bce_sum_equals_cce(self):
         blk = self.blk
         for i in range(self.ec.ncell):
-            if blk.cltpn[i] != modmesh.StaticMesh.TRIANGLE:
+            if blk.cltpn[i] != solvcon.StaticMesh.TRIANGLE:
                 continue
             nfc = blk.clfcs[i, 0]
             bce_sum = sum(self.ec.cevol[i, ifl] for ifl in range(1, nfc + 1))
@@ -230,16 +230,16 @@ class EulerCoreCETetrahedronTC(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
+        mh = solvcon.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
         mh.ndcrd[:, :] = (
             (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1))
-        mh.cltpn.fill(modmesh.StaticMesh.TETRAHEDRON)
+        mh.cltpn.fill(solvcon.StaticMesh.TETRAHEDRON)
         mh.clnds[:, :5] = [(4, 0, 1, 2, 3)]
         mh.build_interior(do_metric=True)
         mh.build_boundary()
         mh.build_ghost()
         cls.mesh = mh
-        cls.ec = modmesh.EulerCore(mesh=mh, time_increment=0.01)
+        cls.ec = solvcon.EulerCore(mesh=mh, time_increment=0.01)
 
     def test_dimensions(self):
         self.assertEqual(3, self.ec.ndim)

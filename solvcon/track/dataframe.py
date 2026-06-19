@@ -6,7 +6,7 @@ import os
 import contextlib
 import numpy as np
 
-from modmesh import SimpleArrayUint64, SimpleArrayFloat64
+from solvcon import SimpleArrayUint64, SimpleArrayFloat64
 
 all = ['DataFrame']
 

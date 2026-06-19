@@ -1,6 +1,6 @@
-# modmesh documentation
+# solvcon documentation
 
-modmesh is a *hybrid C++/Python* numerical library.  This directory contains
+solvcon is a *hybrid C++/Python* numerical library.  This directory contains
 the Sphinx-based documentation.
 
 ## Build

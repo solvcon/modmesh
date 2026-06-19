@@ -12,7 +12,7 @@ Import C++ implementation.
 # Try to import the C++ pilot code but easily give up.
 enable = False
 try:
-    from _modmesh import pilot as _pilot_impl  # noqa: F401
+    from _solvcon import pilot as _pilot_impl  # noqa: F401
 
     enable = True
 except ImportError:

@@ -2,7 +2,7 @@
 # BSD 3-Clause License, see COPYING
 
 cmake_minimum_required(VERSION 4.0.1)
-project(modmesh)
+project(solvcon)
 
 cmake_policy(SET CMP0148 OLD)
 
@@ -102,7 +102,7 @@ if(USE_CLANG_TIDY)
             # FIXME: Remove --allow-no-checks in the future after figuring out
             # why the error message "Error: no checks enabled." appears with
             # some files, after upgrading to clang-tidy-22.
-            # Related information (but not what we see in modmesh):
+            # Related information (but not what we see in solvcon):
             # https://github.com/llvm/llvm-project/issues/192713
             "--allow-no-checks")
         if(APPLE AND CLANG_TIDY_APPLE_SYSROOT)
@@ -274,7 +274,7 @@ add_subdirectory(cpp/modmesh)
 
 include(GNUInstallDirs)
 
-set(MODMESH_PY_DIR "${PROJECT_SOURCE_DIR}/modmesh")
+set(MODMESH_PY_DIR "${PROJECT_SOURCE_DIR}/solvcon")
 
 if(MSVC)
     set(COMMON_COMPILER_OPTIONS /W4 /bigobj /WX)
@@ -288,7 +288,7 @@ else()
     endif()
 endif()
 
-add_subdirectory(cpp/binary/pymod_modmesh)
+add_subdirectory(cpp/binary/pymod_solvcon)
 if(BUILD_QT)
 add_subdirectory(cpp/binary/pilot)
 endif()

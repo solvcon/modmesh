@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from numpy.testing import assert_almost_equal
 
-import modmesh
+import solvcon
 
 
 def _euler_flux(u, gamma):
@@ -108,7 +108,7 @@ def _calc_dsoln_reference(mh, ec):
         acfl = abs(ec.cflc[icl])
         sgm0 = ec.sigma0 / acfl
         tau = ec.taumin + acfl * ec.tauscale
-        ge = modmesh.GradientElement(mesh=mh, cecnd=ec.cecnd, icl=icl, tau=tau)
+        ge = solvcon.GradientElement(mesh=mh, cecnd=ec.cecnd, icl=icl, tau=tau)
         nfge, ofg1 = ge.nfge, ge.nfge_inverse
         grad = np.zeros((nfge, neq, nd), dtype="float64")
         widv = np.zeros((nfge, neq), dtype="float64")
@@ -154,15 +154,15 @@ class _TriangleMeshBase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
+        mh = solvcon.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
         mh.ndcrd[:, :] = [(0, 0), (-1, -1), (1, -1), (0, 1)]
-        mh.cltpn.fill(modmesh.StaticMesh.TRIANGLE)
+        mh.cltpn.fill(solvcon.StaticMesh.TRIANGLE)
         mh.clnds[:, :4] = [(3, 0, 1, 2), (3, 0, 2, 3), (3, 0, 3, 1)]
         mh.build_interior(do_metric=True)
         mh.build_boundary()
         mh.build_ghost()
         cls.mesh = mh
-        cls.ec = modmesh.EulerCore(mesh=mh, time_increment=0.01)
+        cls.ec = solvcon.EulerCore(mesh=mh, time_increment=0.01)
 
 
 class _QuadMeshBase(unittest.TestCase):
@@ -170,15 +170,15 @@ class _QuadMeshBase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=2, nnode=4, nface=0, ncell=1)
+        mh = solvcon.StaticMesh(ndim=2, nnode=4, nface=0, ncell=1)
         mh.ndcrd[:, :] = [(0, 0), (1, 0), (1, 1), (0, 1)]
-        mh.cltpn.fill(modmesh.StaticMesh.QUADRILATERAL)
+        mh.cltpn.fill(solvcon.StaticMesh.QUADRILATERAL)
         mh.clnds[:, :5] = [(4, 0, 1, 2, 3)]
         mh.build_interior(do_metric=True)
         mh.build_boundary()
         mh.build_ghost()
         cls.mesh = mh
-        cls.ec = modmesh.EulerCore(mesh=mh, time_increment=0.01)
+        cls.ec = solvcon.EulerCore(mesh=mh, time_increment=0.01)
 
 
 class _MixedMeshBase(unittest.TestCase):
@@ -186,15 +186,15 @@ class _MixedMeshBase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=2, nnode=6, nface=0, ncell=3)
+        mh = solvcon.StaticMesh(ndim=2, nnode=6, nface=0, ncell=3)
         mh.ndcrd[:, :] = [
             (0, 0), (1, 0), (2, 0),
             (0, 1), (1, 1), (2, 1),
         ]
         mh.cltpn[:] = [
-            modmesh.StaticMesh.QUADRILATERAL,
-            modmesh.StaticMesh.TRIANGLE,
-            modmesh.StaticMesh.TRIANGLE,
+            solvcon.StaticMesh.QUADRILATERAL,
+            solvcon.StaticMesh.TRIANGLE,
+            solvcon.StaticMesh.TRIANGLE,
         ]
         mh.clnds[:, :5] = [
             (4, 0, 1, 4, 3),
@@ -205,7 +205,7 @@ class _MixedMeshBase(unittest.TestCase):
         mh.build_boundary()
         mh.build_ghost()
         cls.mesh = mh
-        cls.ec = modmesh.EulerCore(mesh=mh, time_increment=0.01)
+        cls.ec = solvcon.EulerCore(mesh=mh, time_increment=0.01)
 
 
 class _TetrahedronMeshBase(unittest.TestCase):
@@ -213,15 +213,15 @@ class _TetrahedronMeshBase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
+        mh = solvcon.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
         mh.ndcrd[:, :] = [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)]
-        mh.cltpn.fill(modmesh.StaticMesh.TETRAHEDRON)
+        mh.cltpn.fill(solvcon.StaticMesh.TETRAHEDRON)
         mh.clnds[:, :5] = [(4, 0, 1, 2, 3)]
         mh.build_interior(do_metric=True)
         mh.build_boundary()
         mh.build_ghost()
         cls.mesh = mh
-        cls.ec = modmesh.EulerCore(mesh=mh, time_increment=0.01)
+        cls.ec = solvcon.EulerCore(mesh=mh, time_increment=0.01)
 
 
 class _HexahedronMeshBase(unittest.TestCase):
@@ -229,18 +229,18 @@ class _HexahedronMeshBase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=3, nnode=8, nface=6, ncell=1)
+        mh = solvcon.StaticMesh(ndim=3, nnode=8, nface=6, ncell=1)
         mh.ndcrd[:, :] = [
             (0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0),
             (0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1),
         ]
-        mh.cltpn.fill(modmesh.StaticMesh.HEXAHEDRON)
+        mh.cltpn.fill(solvcon.StaticMesh.HEXAHEDRON)
         mh.clnds[:, :9] = [(8, 0, 1, 2, 3, 4, 5, 6, 7)]
         mh.build_interior(do_metric=True)
         mh.build_boundary()
         mh.build_ghost()
         cls.mesh = mh
-        cls.ec = modmesh.EulerCore(mesh=mh, time_increment=0.01)
+        cls.ec = solvcon.EulerCore(mesh=mh, time_increment=0.01)
 
 
 class _PrismMeshBase(unittest.TestCase):
@@ -248,18 +248,18 @@ class _PrismMeshBase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=3, nnode=6, nface=5, ncell=1)
+        mh = solvcon.StaticMesh(ndim=3, nnode=6, nface=5, ncell=1)
         mh.ndcrd[:, :] = [
             (0, 0, 0), (1, 0, 0), (0, 1, 0),
             (0, 0, 1), (1, 0, 1), (0, 1, 1),
         ]
-        mh.cltpn.fill(modmesh.StaticMesh.PRISM)
+        mh.cltpn.fill(solvcon.StaticMesh.PRISM)
         mh.clnds[:, :7] = [(6, 0, 1, 2, 3, 4, 5)]
         mh.build_interior(do_metric=True)
         mh.build_boundary()
         mh.build_ghost()
         cls.mesh = mh
-        cls.ec = modmesh.EulerCore(mesh=mh, time_increment=0.01)
+        cls.ec = solvcon.EulerCore(mesh=mh, time_increment=0.01)
 
 
 class _PyramidMeshBase(unittest.TestCase):
@@ -267,18 +267,18 @@ class _PyramidMeshBase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=3, nnode=5, nface=5, ncell=1)
+        mh = solvcon.StaticMesh(ndim=3, nnode=5, nface=5, ncell=1)
         mh.ndcrd[:, :] = [
             (0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0),
             (0.5, 0.5, 1),
         ]
-        mh.cltpn.fill(modmesh.StaticMesh.PYRAMID)
+        mh.cltpn.fill(solvcon.StaticMesh.PYRAMID)
         mh.clnds[:, :6] = [(5, 0, 1, 2, 3, 4)]
         mh.build_interior(do_metric=True)
         mh.build_boundary()
         mh.build_ghost()
         cls.mesh = mh
-        cls.ec = modmesh.EulerCore(mesh=mh, time_increment=0.01)
+        cls.ec = solvcon.EulerCore(mesh=mh, time_increment=0.01)
 
 
 class _GradientElementBoundsBase:
@@ -286,7 +286,7 @@ class _GradientElementBoundsBase:
 
     def _ge(self, icl, tau=1.0):
         mh, cecnd = self.mesh, self.ec.cecnd
-        return modmesh.GradientElement(mesh=mh, cecnd=cecnd, icl=icl, tau=tau)
+        return solvcon.GradientElement(mesh=mh, cecnd=cecnd, icl=icl, tau=tau)
 
     def test_basic_properties(self):
         ge = self._ge(0)
@@ -457,7 +457,7 @@ class _EulerSolutionBase:
 
     def _ec(self):
         # A fresh core per test keeps the shared class mesh read-only.
-        return modmesh.EulerCore(mesh=self.mesh, time_increment=0.01)
+        return solvcon.EulerCore(mesh=self.mesh, time_increment=0.01)
 
     def _vel(self, nd):
         return list(self.VEL[:nd])
@@ -607,7 +607,7 @@ class _EulerMarchBase:
 
     def _ec(self):
         # A fresh core per test keeps the shared class mesh read-only.
-        return modmesh.EulerCore(mesh=self.mesh, time_increment=0.01)
+        return solvcon.EulerCore(mesh=self.mesh, time_increment=0.01)
 
     def _vel(self, nd):
         return list(self.VEL[:nd])
@@ -809,11 +809,11 @@ class EulerMarchHexahedronTC(_EulerMarchBase, _HexahedronMeshBase):
 
 def _build_quad_channel(nx, ny, lx, ly):
     """A structured nx-by-ny quadrilateral grid over [0, lx] x [0, ly]."""
-    mh = modmesh.StaticMesh(ndim=2, nnode=(nx + 1) * (ny + 1), nface=0,
+    mh = solvcon.StaticMesh(ndim=2, nnode=(nx + 1) * (ny + 1), nface=0,
                             ncell=nx * ny)
     mh.ndcrd[:, :] = [(i * lx / nx, j * ly / ny)
                       for j in range(ny + 1) for i in range(nx + 1)]
-    mh.cltpn.fill(modmesh.StaticMesh.QUADRILATERAL)
+    mh.cltpn.fill(solvcon.StaticMesh.QUADRILATERAL)
 
     def nid(i, j):
         return j * (nx + 1) + i
@@ -834,7 +834,7 @@ class _EulerBCBase:
 
     def _ec(self):
         # A fresh core per test keeps the shared class mesh read-only.
-        return modmesh.EulerCore(mesh=self.mesh, time_increment=0.01)
+        return solvcon.EulerCore(mesh=self.mesh, time_increment=0.01)
 
     def _faces(self):
         return [int(f) for f in self.mesh.bndfcs.ndarray[:, 0]]
@@ -1057,7 +1057,7 @@ class EulerChannelMarchTC(unittest.TestCase):
         self.assertTrue(left)
         self.assertTrue(right)
         self.assertTrue(walls)
-        ec = modmesh.EulerCore(mesh=mh, time_increment=0.04)
+        ec = solvcon.EulerCore(mesh=mh, time_increment=0.04)
         ec.init_solution(gamma=self.GAMMA, rho=self.RHO,
                          v=[self.VX, 0.0], p=self.PRES)
         ec.add_inlet(left,

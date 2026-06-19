@@ -6,8 +6,8 @@ import unittest
 
 import numpy as np
 
-import modmesh
-from modmesh import testing
+import solvcon
+from solvcon import testing
 
 
 class Segment3dTB(testing.TestBase):
@@ -67,8 +67,8 @@ class Segment3dTB(testing.TestBase):
 class Segment3dFp32TC(Segment3dTB, unittest.TestCase):
 
     def setUp(self):
-        self.Point = modmesh.Point3dFp32
-        self.Segment = modmesh.Segment3dFp32
+        self.Point = solvcon.Point3dFp32
+        self.Segment = solvcon.Segment3dFp32
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -76,23 +76,23 @@ class Segment3dFp32TC(Segment3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_repr_str(self):
-        s = modmesh.Segment3dFp32(modmesh.Point3dFp32(504.8, -64.2, 0),
-                                  modmesh.Point3dFp32(421.4, -250.5, 0))
+        s = solvcon.Segment3dFp32(solvcon.Point3dFp32(504.8, -64.2, 0),
+                                  solvcon.Point3dFp32(421.4, -250.5, 0))
         golden = ("Segment3dFp32(Point3dFp32(504.8, -64.2, 0), "
                   "Point3dFp32(421.4, -250.5, 0))")
         # __repr__ is the same as __str__ for Segment3d
         self.assertEqual(repr(s), golden)
         self.assertEqual(str(s), golden)
         # Evaluate the string and test the result
-        e = eval(golden, vars(modmesh))
+        e = eval(golden, vars(solvcon))
         self.assertEqual(s, e)
 
 
 class Segment3dFp64TC(Segment3dTB, unittest.TestCase):
 
     def setUp(self):
-        self.Point = modmesh.Point3dFp64
-        self.Segment = modmesh.Segment3dFp64
+        self.Point = solvcon.Point3dFp64
+        self.Segment = solvcon.Segment3dFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -100,15 +100,15 @@ class Segment3dFp64TC(Segment3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_repr_str(self):
-        s = modmesh.Segment3dFp64(modmesh.Point3dFp64(504.8, -64.2, 0),
-                                  modmesh.Point3dFp64(421.4, -250.5, 0))
+        s = solvcon.Segment3dFp64(solvcon.Point3dFp64(504.8, -64.2, 0),
+                                  solvcon.Point3dFp64(421.4, -250.5, 0))
         golden = ("Segment3dFp64(Point3dFp64(504.8, -64.2, 0), "
                   "Point3dFp64(421.4, -250.5, 0))")
         # __repr__ is the same as __str__ for Segment3d
         self.assertEqual(repr(s), golden)
         self.assertEqual(str(s), golden)
         # Evaluate the string and test the result
-        e = eval(golden, vars(modmesh))
+        e = eval(golden, vars(solvcon))
         self.assertEqual(s, e)
 
 
@@ -226,8 +226,8 @@ class Bezier3dTB(testing.TestBase):
 class Bezier3dFp32TC(Bezier3dTB, unittest.TestCase):
 
     def setUp(self):
-        self.Point = modmesh.Point3dFp32
-        self.Bezier = modmesh.Bezier3dFp32
+        self.Point = solvcon.Point3dFp32
+        self.Bezier = solvcon.Bezier3dFp32
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -235,11 +235,11 @@ class Bezier3dFp32TC(Bezier3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_repr_str(self):
-        b = modmesh.Bezier3dFp32(
-            modmesh.Point3dFp32(607.7, -64.2, 0),
-            modmesh.Point3dFp32(504.8, -64.2, 0),
-            modmesh.Point3dFp32(421.4, -147.6, 0),
-            modmesh.Point3dFp32(421.4, -250.5, 0))
+        b = solvcon.Bezier3dFp32(
+            solvcon.Point3dFp32(607.7, -64.2, 0),
+            solvcon.Point3dFp32(504.8, -64.2, 0),
+            solvcon.Point3dFp32(421.4, -147.6, 0),
+            solvcon.Point3dFp32(421.4, -250.5, 0))
         golden = ("Bezier3dFp32(Point3dFp32(607.7, -64.2, 0), "
                   "Point3dFp32(504.8, -64.2, 0), "
                   "Point3dFp32(421.4, -147.6, 0), "
@@ -248,15 +248,15 @@ class Bezier3dFp32TC(Bezier3dTB, unittest.TestCase):
         self.assertEqual(repr(b), golden)
         self.assertEqual(str(b), golden)
         # Evaluate the string and test the result
-        e = eval(golden, vars(modmesh))
+        e = eval(golden, vars(solvcon))
         self.assertEqual(b, e)
 
 
 class Bezier3dFp64TC(Bezier3dTB, unittest.TestCase):
 
     def setUp(self):
-        self.Point = modmesh.Point3dFp64
-        self.Bezier = modmesh.Bezier3dFp64
+        self.Point = solvcon.Point3dFp64
+        self.Bezier = solvcon.Bezier3dFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -264,11 +264,11 @@ class Bezier3dFp64TC(Bezier3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_repr_str(self):
-        b = modmesh.Bezier3dFp64(
-            modmesh.Point3dFp64(607.7, -64.2, 0),
-            modmesh.Point3dFp64(504.8, -64.2, 0),
-            modmesh.Point3dFp64(421.4, -147.6, 0),
-            modmesh.Point3dFp64(421.4, -250.5, 0))
+        b = solvcon.Bezier3dFp64(
+            solvcon.Point3dFp64(607.7, -64.2, 0),
+            solvcon.Point3dFp64(504.8, -64.2, 0),
+            solvcon.Point3dFp64(421.4, -147.6, 0),
+            solvcon.Point3dFp64(421.4, -250.5, 0))
         golden = ("Bezier3dFp64(Point3dFp64(607.7, -64.2, 0), "
                   "Point3dFp64(504.8, -64.2, 0), "
                   "Point3dFp64(421.4, -147.6, 0), "
@@ -277,7 +277,7 @@ class Bezier3dFp64TC(Bezier3dTB, unittest.TestCase):
         self.assertEqual(repr(b), golden)
         self.assertEqual(str(b), golden)
         # Evaluate the string and test the result
-        e = eval(golden, vars(modmesh))
+        e = eval(golden, vars(solvcon))
         self.assertEqual(b, e)
 
 
@@ -646,11 +646,11 @@ class SegmentPadFp32TC(SegmentPadTB, unittest.TestCase):
 
     def setUp(self):
         self.dtype = 'float32'
-        self.SimpleArray = modmesh.SimpleArrayFloat32
-        self.Point = modmesh.Point3dFp32
-        self.PointPad = modmesh.PointPadFp32
-        self.Segment = modmesh.Segment3dFp32
-        self.SegmentPad = modmesh.SegmentPadFp32
+        self.SimpleArray = solvcon.SimpleArrayFloat32
+        self.Point = solvcon.Point3dFp32
+        self.PointPad = solvcon.PointPadFp32
+        self.Segment = solvcon.Segment3dFp32
+        self.SegmentPad = solvcon.SegmentPadFp32
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -662,11 +662,11 @@ class SegmentPadFp64TC(SegmentPadTB, unittest.TestCase):
 
     def setUp(self):
         self.dtype = 'float64'
-        self.SimpleArray = modmesh.SimpleArrayFloat64
-        self.Point = modmesh.Point3dFp64
-        self.PointPad = modmesh.PointPadFp64
-        self.Segment = modmesh.Segment3dFp64
-        self.SegmentPad = modmesh.SegmentPadFp64
+        self.SimpleArray = solvcon.SimpleArrayFloat64
+        self.Point = solvcon.Point3dFp64
+        self.PointPad = solvcon.PointPadFp64
+        self.Segment = solvcon.Segment3dFp64
+        self.SegmentPad = solvcon.SegmentPadFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -972,13 +972,13 @@ class CurvePadFp32TC(CurvePadTB, unittest.TestCase):
 
     def setUp(self):
         self.dtype = 'float32'
-        self.SimpleArray = modmesh.SimpleArrayFloat32
-        self.Point = modmesh.Point3dFp32
-        self.PointPad = modmesh.PointPadFp32
-        self.Segment = modmesh.Segment3dFp32
-        self.SegmentPad = modmesh.SegmentPadFp32
-        self.Bezier = modmesh.Bezier3dFp32
-        self.CurvePad = modmesh.CurvePadFp32
+        self.SimpleArray = solvcon.SimpleArrayFloat32
+        self.Point = solvcon.Point3dFp32
+        self.PointPad = solvcon.PointPadFp32
+        self.Segment = solvcon.Segment3dFp32
+        self.SegmentPad = solvcon.SegmentPadFp32
+        self.Bezier = solvcon.Bezier3dFp32
+        self.CurvePad = solvcon.CurvePadFp32
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -990,13 +990,13 @@ class CurvePadFp64TC(CurvePadTB, unittest.TestCase):
 
     def setUp(self):
         self.dtype = 'float64'
-        self.SimpleArray = modmesh.SimpleArrayFloat64
-        self.Point = modmesh.Point3dFp64
-        self.PointPad = modmesh.PointPadFp64
-        self.Segment = modmesh.Segment3dFp64
-        self.SegmentPad = modmesh.SegmentPadFp64
-        self.Bezier = modmesh.Bezier3dFp64
-        self.CurvePad = modmesh.CurvePadFp64
+        self.SimpleArray = solvcon.SimpleArrayFloat64
+        self.Point = solvcon.Point3dFp64
+        self.PointPad = solvcon.PointPadFp64
+        self.Segment = solvcon.Segment3dFp64
+        self.SegmentPad = solvcon.SegmentPadFp64
+        self.Bezier = solvcon.Bezier3dFp64
+        self.CurvePad = solvcon.CurvePadFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:

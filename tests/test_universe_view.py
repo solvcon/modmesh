@@ -5,7 +5,7 @@
 import math
 import unittest
 
-import modmesh
+import solvcon
 
 
 # Tolerance for floating-point identity checks; comfortably above
@@ -20,7 +20,7 @@ class ViewTransform2dTC(unittest.TestCase):
         transform is the +Y-up flip on screen_y. Exercises both
         directions.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         sx, sy = v.screen_from_world(3.5, -2.25)
         # identity (zoom=1, pan=0) flips Y because of the +Y-up convention.
         self.assertEqual(sx, 3.5)
@@ -33,7 +33,7 @@ class ViewTransform2dTC(unittest.TestCase):
         """`pan(dx, dy)` is a pure screen-space translation: at zoom=1,
         the world origin maps to (dx, dy) on screen.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.pan(100.0, 50.0)
         sx, sy = v.screen_from_world(0.0, 0.0)
         self.assertEqual(sx, 100.0)
@@ -44,7 +44,7 @@ class ViewTransform2dTC(unittest.TestCase):
         is not rescaled by zoom. Without this, a drag at non-unit zoom
         would move the view at the wrong rate.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.zoom = 4.0
         v.pan(100.0, 50.0)
         self.assertEqual(v.pan_x, 100.0)
@@ -60,7 +60,7 @@ class ViewTransform2dTC(unittest.TestCase):
         symmetric sign-flip bug across both functions cannot hide
         behind a round-trip test.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.pan(10.0, 20.0)
         v.zoom = 4.0
         sx, sy = v.screen_from_world(2.0, 3.0)
@@ -74,7 +74,7 @@ class ViewTransform2dTC(unittest.TestCase):
         screen pixels with the screen origin held fixed. The +Y flip
         still applies.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.zoom_at(2.0, 0.0, 0.0)
         self.assertEqual(v.zoom, 2.0)
         sx, sy = v.screen_from_world(1.0, 1.0)
@@ -87,12 +87,12 @@ class ViewTransform2dTC(unittest.TestCase):
         after the zoom. This is what makes wheel-zoom feel right in
         the GUI.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.pan(120.0, 80.0)
         v.zoom_at(1.5, 200.0, 175.0)
         # The world coordinate that was under the cursor before the zoom
         # should still be under the cursor after the zoom.
-        prior = modmesh.ViewTransform2dFp64()
+        prior = solvcon.ViewTransform2dFp64()
         prior.pan(120.0, 80.0)
         before_x, before_y = prior.world_from_screen(200.0, 175.0)
         after_x, after_y = v.world_from_screen(200.0, 175.0)
@@ -104,7 +104,7 @@ class ViewTransform2dTC(unittest.TestCase):
         multiplicatively into a single zoom of factor1*factor2, and the
         anchor-preservation invariant survives the compounding.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.zoom_at(2.0, 100.0, 100.0)
         v.zoom_at(2.0, 100.0, 100.0)
         self.assertEqual(v.zoom, 4.0)
@@ -120,7 +120,7 @@ class ViewTransform2dTC(unittest.TestCase):
         unchanged). Zero would invert the affine map; negative would
         mirror, which the widget never wants from a wheel notch.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.pan(50.0, 70.0)
         v.zoom = 3.0
         v.zoom_at(0.0, 10.0, 10.0)
@@ -137,7 +137,7 @@ class ViewTransform2dTC(unittest.TestCase):
         identity state regardless of how much prior pan/zoom was
         applied.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.pan(50.0, 70.0)
         v.zoom_at(3.0, 0.0, 0.0)
         v.reset()
@@ -150,7 +150,7 @@ class ViewTransform2dTC(unittest.TestCase):
         zoom would poison every subsequent screen<->world calculation,
         so the math layer refuses the input before it can propagate.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.pan(50.0, 70.0)
         v.zoom = 2.0
         v.zoom_at(math.inf, 5.0, 5.0)
@@ -168,7 +168,7 @@ class ViewTransform2dTC(unittest.TestCase):
         coordinates and the subsequent pan recomputation would poison
         the transform; recovery would require an explicit reset().
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.pan(50.0, 70.0)
         v.zoom = 2.0
         v.zoom_at(1.5, math.nan, 10.0)
@@ -186,7 +186,7 @@ class ViewTransform2dTC(unittest.TestCase):
         zoom < inf invariant must hold for any caller that bypasses
         setViewTransform's widget-side clamping.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.pan(50.0, 70.0)
         v.zoom = 1.0e300
         v.zoom_at(1.0e10, 5.0, 5.0)  # desired = 1e310 -> overflows to inf
@@ -199,7 +199,7 @@ class ViewTransform2dTC(unittest.TestCase):
         the band. Here a 5x request from zoom=10 would land at 50, but
         max_zoom=20 caps it at exactly 20.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.zoom = 10.0
         v.zoom_at_clamped(5.0, 0.0, 0.0, 0.1, 20.0)
         self.assertEqual(v.zoom, 20.0)
@@ -211,7 +211,7 @@ class ViewTransform2dTC(unittest.TestCase):
         would still move pan even when zoom is clamped, which would
         feel like rubber-banding in the GUI.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.pan(50.0, 70.0)
         v.zoom = 100.0
         pan_x_before = v.pan_x
@@ -227,7 +227,7 @@ class ViewTransform2dTC(unittest.TestCase):
         further zoom-out request must leave both zoom and pan
         untouched.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.pan(50.0, 70.0)
         v.zoom = 0.01
         pan_x_before = v.pan_x
@@ -246,7 +246,7 @@ class ViewTransform2dTC(unittest.TestCase):
         # Step from near-max into the clamp; the cursor world
         # coordinate must stay pinned even though the zoom request was
         # truncated.
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.pan(120.0, 80.0)
         v.zoom = 50.0
         anchor_x = 200.0
@@ -264,7 +264,7 @@ class ViewTransform2dTC(unittest.TestCase):
         branch below covers one rejection path; in all cases zoom must
         stay unchanged.
         """
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.pan(50.0, 70.0)
         v.zoom = 2.0
         v.zoom_at_clamped(math.inf, 0.0, 0.0, 0.1, 10.0)

@@ -6,9 +6,9 @@ import unittest
 
 import numpy as np
 
-import modmesh
-import modmesh as mm
-from modmesh import testing
+import solvcon
+import solvcon as sc
+from solvcon import testing
 
 
 class Triangle3dTB(testing.TestBase):
@@ -110,8 +110,8 @@ class Triangle3dTB(testing.TestBase):
 class Triangle3dFp32TC(Triangle3dTB, unittest.TestCase):
 
     def setUp(self):
-        self.Point = modmesh.Point3dFp32
-        self.Triangle = modmesh.Triangle3dFp32
+        self.Point = solvcon.Point3dFp32
+        self.Triangle = solvcon.Triangle3dFp32
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -119,23 +119,23 @@ class Triangle3dFp32TC(Triangle3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_repr_str(self):
-        t = modmesh.Triangle3dFp32(modmesh.Point3dFp32(1.5, 2.5, 3.5),
-                                   modmesh.Point3dFp32(4.5, 5.5, 6.5),
-                                   modmesh.Point3dFp32(7.5, 8.5, 9.5))
+        t = solvcon.Triangle3dFp32(solvcon.Point3dFp32(1.5, 2.5, 3.5),
+                                   solvcon.Point3dFp32(4.5, 5.5, 6.5),
+                                   solvcon.Point3dFp32(7.5, 8.5, 9.5))
         golden = ("Triangle3dFp32(Point3dFp32(1.5, 2.5, 3.5), "
                   "Point3dFp32(4.5, 5.5, 6.5), "
                   "Point3dFp32(7.5, 8.5, 9.5))")
         self.assertEqual(repr(t), golden)
         self.assertEqual(str(t), golden)
-        e = eval(golden, vars(modmesh))
+        e = eval(golden, vars(solvcon))
         self.assertEqual(t, e)
 
 
 class Triangle3dFp64TC(Triangle3dTB, unittest.TestCase):
 
     def setUp(self):
-        self.Point = modmesh.Point3dFp64
-        self.Triangle = modmesh.Triangle3dFp64
+        self.Point = solvcon.Point3dFp64
+        self.Triangle = solvcon.Triangle3dFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -143,15 +143,15 @@ class Triangle3dFp64TC(Triangle3dTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_repr_str(self):
-        t = modmesh.Triangle3dFp64(modmesh.Point3dFp64(1.5, 2.5, 3.5),
-                                   modmesh.Point3dFp64(4.5, 5.5, 6.5),
-                                   modmesh.Point3dFp64(7.5, 8.5, 9.5))
+        t = solvcon.Triangle3dFp64(solvcon.Point3dFp64(1.5, 2.5, 3.5),
+                                   solvcon.Point3dFp64(4.5, 5.5, 6.5),
+                                   solvcon.Point3dFp64(7.5, 8.5, 9.5))
         golden = ("Triangle3dFp64(Point3dFp64(1.5, 2.5, 3.5), "
                   "Point3dFp64(4.5, 5.5, 6.5), "
                   "Point3dFp64(7.5, 8.5, 9.5))")
         self.assertEqual(repr(t), golden)
         self.assertEqual(str(t), golden)
-        e = eval(golden, vars(modmesh))
+        e = eval(golden, vars(solvcon))
         self.assertEqual(t, e)
 
 
@@ -464,10 +464,10 @@ class TrianglePadFp32TC(TrianglePadTB, unittest.TestCase):
 
     def setUp(self):
         self.dtype = 'float32'
-        self.SimpleArray = modmesh.SimpleArrayFloat32
-        self.Point = modmesh.Point3dFp32
-        self.Triangle = modmesh.Triangle3dFp32
-        self.TrianglePad = modmesh.TrianglePadFp32
+        self.SimpleArray = solvcon.SimpleArrayFloat32
+        self.Point = solvcon.Point3dFp32
+        self.Triangle = solvcon.Triangle3dFp32
+        self.TrianglePad = solvcon.TrianglePadFp32
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -479,10 +479,10 @@ class TrianglePadFp64TC(TrianglePadTB, unittest.TestCase):
 
     def setUp(self):
         self.dtype = 'float64'
-        self.SimpleArray = modmesh.SimpleArrayFloat64
-        self.Point = modmesh.Point3dFp64
-        self.Triangle = modmesh.Triangle3dFp64
-        self.TrianglePad = modmesh.TrianglePadFp64
+        self.SimpleArray = solvcon.SimpleArrayFloat64
+        self.Point = solvcon.Point3dFp64
+        self.Triangle = solvcon.Triangle3dFp64
+        self.TrianglePad = solvcon.TrianglePadFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -647,8 +647,8 @@ class Polygon3dTB(testing.TestBase):
         pad.add_polygon(square1)
         pad.add_polygon(square2)
 
-        BoundBox = (mm.BoundBox3dFp32 if self.dtype == 'float32'
-                    else mm.BoundBox3dFp64)
+        BoundBox = (sc.BoundBox3dFp32 if self.dtype == 'float32'
+                    else sc.BoundBox3dFp64)
 
         search_box1 = BoundBox(-0.5, -0.5, -0.5, 1.5, 1.5, 0.5)
         results1 = pad.search_segments(search_box1)
@@ -1287,20 +1287,20 @@ class Polygon3dTB(testing.TestBase):
 
 class Polygon3dFp32TC(Polygon3dTB, unittest.TestCase):
     dtype = 'float32'
-    Point = mm.Point3dFp32
-    SegmentPad = mm.SegmentPadFp32
-    CurvePad = mm.CurvePadFp32
-    PolygonPad = mm.PolygonPadFp32
-    SimpleArray = mm.SimpleArrayFloat32
+    Point = sc.Point3dFp32
+    SegmentPad = sc.SegmentPadFp32
+    CurvePad = sc.CurvePadFp32
+    PolygonPad = sc.PolygonPadFp32
+    SimpleArray = sc.SimpleArrayFloat32
 
 
 class Polygon3dFp64TC(Polygon3dTB, unittest.TestCase):
     dtype = 'float64'
-    Point = mm.Point3dFp64
-    SegmentPad = mm.SegmentPadFp64
-    CurvePad = mm.CurvePadFp64
-    PolygonPad = mm.PolygonPadFp64
-    SimpleArray = mm.SimpleArrayFloat64
+    Point = sc.Point3dFp64
+    SegmentPad = sc.SegmentPadFp64
+    CurvePad = sc.CurvePadFp64
+    PolygonPad = sc.PolygonPadFp64
+    SimpleArray = sc.SimpleArrayFloat64
 
 
 class TrapezoidalDecomposerTB(testing.TestBase):
@@ -1497,13 +1497,13 @@ class TrapezoidalDecomposerTB(testing.TestBase):
 
     def test_floating_point_precision(self):
         """Test decomposition with different floating point precisions."""
-        decomposer_fp32 = mm.TrapezoidalDecomposerFp32(2)
+        decomposer_fp32 = sc.TrapezoidalDecomposerFp32(2)
         decomposer_fp64 = self.TrapezoidalDecomposer(2)
 
         triangle_fp32 = [
-            mm.Point3dFp32(0.0, 0.0, 0.0),
-            mm.Point3dFp32(1.0, 0.0, 0.0),
-            mm.Point3dFp32(0.5, 1.0, 0.0)
+            sc.Point3dFp32(0.0, 0.0, 0.0),
+            sc.Point3dFp32(1.0, 0.0, 0.0),
+            sc.Point3dFp32(0.5, 1.0, 0.0)
         ]
 
         triangle_fp64 = self._make_2d_points(
@@ -1565,8 +1565,8 @@ class TrapezoidalDecomposerTB(testing.TestBase):
 class TrapezoidalDecomposerFp32TC(TrapezoidalDecomposerTB, unittest.TestCase):
 
     def setUp(self):
-        self.Point = mm.Point3dFp32
-        self.TrapezoidalDecomposer = mm.TrapezoidalDecomposerFp32
+        self.Point = sc.Point3dFp32
+        self.TrapezoidalDecomposer = sc.TrapezoidalDecomposerFp32
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -1577,8 +1577,8 @@ class TrapezoidalDecomposerFp32TC(TrapezoidalDecomposerTB, unittest.TestCase):
 class TrapezoidalDecomposerFp64TC(TrapezoidalDecomposerTB, unittest.TestCase):
 
     def setUp(self):
-        self.Point = mm.Point3dFp64
-        self.TrapezoidalDecomposer = mm.TrapezoidalDecomposerFp64
+        self.Point = sc.Point3dFp64
+        self.TrapezoidalDecomposer = sc.TrapezoidalDecomposerFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:

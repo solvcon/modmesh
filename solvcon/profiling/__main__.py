@@ -2,7 +2,7 @@
 # BSD 3-Clause License, see COPYING
 
 import functools
-import modmesh
+import solvcon
 import numpy as np
 
 from . import _result
@@ -11,7 +11,7 @@ from . import _result
 def profile_function(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        _ = modmesh.CallProfilerProbe(func.__name__)
+        _ = solvcon.CallProfilerProbe(func.__name__)
         result = func(*args, **kwargs)
         return result
 
@@ -20,13 +20,13 @@ def profile_function(func):
 
 def make_container(data):
     if np.isdtype(data.dtype, np.uint8):
-        return modmesh.SimpleArrayUint8(array=data)
+        return solvcon.SimpleArrayUint8(array=data)
     elif np.isdtype(data.dtype, np.uint16):
-        return modmesh.SimpleArrayUint16(array=data)
+        return solvcon.SimpleArrayUint16(array=data)
     elif np.isdtype(data.dtype, np.uint32):
-        return modmesh.SimpleArrayUint32(array=data)
+        return solvcon.SimpleArrayUint32(array=data)
     elif np.isdtype(data.dtype, np.uint64):
-        return modmesh.SimpleArrayUint64(array=data)
+        return solvcon.SimpleArrayUint64(array=data)
 
 
 @profile_function
@@ -70,14 +70,14 @@ def main():
     it = 10
 
     print("## `sort` Ascending Data\n")
-    modmesh.call_profiler.reset()
+    solvcon.call_profiler.reset()
     for _ in range(it):
         test_data = np.arange(0, N, dtype='uint32')
         profile_sort_np(test_data)
         profile_sort_sa(make_container(test_data))
 
     printer = _result.ProfilingResultPrinter(
-        modmesh.call_profiler.result()["children"]
+        solvcon.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
 
@@ -87,14 +87,14 @@ def main():
     printer.print_result(column_width=30)
 
     print("## `sort` Descending Data\n")
-    modmesh.call_profiler.reset()
+    solvcon.call_profiler.reset()
     for _ in range(it):
         test_data = np.arange(N, 0, -1, dtype='uint32')
         profile_sort_np(test_data)
         profile_sort_sa(make_container(test_data))
 
     printer = _result.ProfilingResultPrinter(
-        modmesh.call_profiler.result()["children"]
+        solvcon.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
 
@@ -104,7 +104,7 @@ def main():
     printer.print_result(column_width=30)
 
     print("## `sort` Random Data\n")
-    modmesh.call_profiler.reset()
+    solvcon.call_profiler.reset()
     for _ in range(it):
         test_data = np.arange(0, N, dtype='uint32')
         np.random.shuffle(test_data)
@@ -112,7 +112,7 @@ def main():
         profile_sort_sa(make_container(test_data))
 
     printer = _result.ProfilingResultPrinter(
-        modmesh.call_profiler.result()["children"]
+        solvcon.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
 
@@ -122,14 +122,14 @@ def main():
     printer.print_result(column_width=30)
 
     print("## `argsort` Ascending Data\n")
-    modmesh.call_profiler.reset()
+    solvcon.call_profiler.reset()
     for _ in range(it):
         test_data = np.arange(0, N, dtype='uint32')
         profile_argsort_np(test_data)
         profile_argsort_sa(make_container(test_data))
 
     printer = _result.ProfilingResultPrinter(
-        modmesh.call_profiler.result()["children"]
+        solvcon.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
 
@@ -139,14 +139,14 @@ def main():
     printer.print_result(column_width=30)
 
     print("## `argsort` Descending Data\n")
-    modmesh.call_profiler.reset()
+    solvcon.call_profiler.reset()
     for _ in range(it):
         test_data = np.arange(N, 0, -1, dtype='uint32')
         profile_argsort_np(test_data)
         profile_argsort_sa(make_container(test_data))
 
     printer = _result.ProfilingResultPrinter(
-        modmesh.call_profiler.result()["children"]
+        solvcon.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
 
@@ -156,7 +156,7 @@ def main():
     printer.print_result(column_width=30)
 
     print("## `argsort` Random Data\n")
-    modmesh.call_profiler.reset()
+    solvcon.call_profiler.reset()
     for _ in range(it):
         test_data = np.arange(0, N, dtype='uint32')
         np.random.shuffle(test_data)
@@ -164,7 +164,7 @@ def main():
         profile_argsort_sa(make_container(test_data))
 
     printer = _result.ProfilingResultPrinter(
-        modmesh.call_profiler.result()["children"]
+        solvcon.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
 
@@ -174,7 +174,7 @@ def main():
     printer.print_result(column_width=30)
 
     print("## `take_along_axis` Ascending Data\n")
-    modmesh.call_profiler.reset()
+    solvcon.call_profiler.reset()
     for _ in range(it):
         test_data = np.arange(0, N, dtype='uint32')
         indices = np.arange(0, N-1, dtype='uint32')
@@ -185,7 +185,7 @@ def main():
         profile_take_along_axis_simd(test_sa, idx_sa)
 
     printer = _result.ProfilingResultPrinter(
-        modmesh.call_profiler.result()["children"]
+        solvcon.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
 
@@ -195,7 +195,7 @@ def main():
     printer.print_result(column_width=30)
 
     print("## `take_along_axis` Descending Data\n")
-    modmesh.call_profiler.reset()
+    solvcon.call_profiler.reset()
     for _ in range(it):
         test_data = np.arange(N, 0, -1, dtype='uint32')
         indices = np.arange(N-1, 0, -1, dtype='uint32')
@@ -206,7 +206,7 @@ def main():
         profile_take_along_axis_simd(test_sa, idx_sa)
 
     printer = _result.ProfilingResultPrinter(
-        modmesh.call_profiler.result()["children"]
+        solvcon.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
 
@@ -216,7 +216,7 @@ def main():
     printer.print_result(column_width=30)
 
     print("## `take_along_axis` Random Data\n")
-    modmesh.call_profiler.reset()
+    solvcon.call_profiler.reset()
     for _ in range(it):
         test_data = np.arange(0, N, dtype='uint32')
         indices = np.arange(0, N-1, dtype='uint32')
@@ -229,7 +229,7 @@ def main():
         profile_take_along_axis_simd(test_sa, idx_sa)
 
     printer = _result.ProfilingResultPrinter(
-        modmesh.call_profiler.result()["children"]
+        solvcon.call_profiler.result()["children"]
     )
     printer.add_column("per call (ms)", lambda r: r.total_time)
 

@@ -3,13 +3,13 @@
 
 import functools
 import numpy as np
-import modmesh
+import solvcon
 
 
 def profile_function(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        _ = modmesh.CallProfilerProbe(func.__name__)
+        _ = solvcon.CallProfilerProbe(func.__name__)
         result = func(*args, **kwargs)
         return result
     return wrapper
@@ -17,13 +17,13 @@ def profile_function(func):
 
 def make_container(data):
     if np.isdtype(data.dtype, np.uint8):
-        return modmesh.SimpleArrayUint8(array=data)
+        return solvcon.SimpleArrayUint8(array=data)
     elif np.isdtype(data.dtype, np.uint16):
-        return modmesh.SimpleArrayUint16(array=data)
+        return solvcon.SimpleArrayUint16(array=data)
     elif np.isdtype(data.dtype, np.uint32):
-        return modmesh.SimpleArrayUint32(array=data)
+        return solvcon.SimpleArrayUint32(array=data)
     elif np.isdtype(data.dtype, np.uint64):
-        return modmesh.SimpleArrayUint64(array=data)
+        return solvcon.SimpleArrayUint64(array=data)
 
 
 @profile_function
@@ -46,7 +46,7 @@ def profile_take_along_axis(pow, it=10):
     ORDER = ["", "K", "M", "G", "T"][pow // 10]
     dtype = ["uint8", "uint16", "uint32", "uint64"][pow // 8]
 
-    modmesh.call_profiler.reset()
+    solvcon.call_profiler.reset()
     for _ in range(it):
         test_data = np.arange(0, N, dtype=dtype)
         indices = np.arange(0, N-1, dtype=dtype)
@@ -59,7 +59,7 @@ def profile_take_along_axis(pow, it=10):
         profile_take_along_axis_sa(test_sa, idx_sa)
         profile_take_along_axis_simd(test_sa, idx_sa)
 
-    res = modmesh.call_profiler.result()["children"]
+    res = solvcon.call_profiler.result()["children"]
 
     print(f"## N = {2 ** (pow % 10)}{ORDER} type: {dtype}\n")
     out = {}

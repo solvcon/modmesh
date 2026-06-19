@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-from modmesh import spacetime as libst
+from solvcon import spacetime as libst
 
 
 class InviscidBurgersSolverTC(unittest.TestCase):

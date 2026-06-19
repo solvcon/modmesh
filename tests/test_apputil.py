@@ -4,26 +4,26 @@
 
 import unittest
 
-import modmesh
+import solvcon
 
 
 class AppenvTC(unittest.TestCase):
 
     def setUp(self):
-        self.envbak = modmesh.apputil.environ.copy()
+        self.envbak = solvcon.apputil.environ.copy()
         self.envbasenum = len(self.envbak)
 
     def tearDown(self):
-        modmesh.apputil.environ.clear()
-        modmesh.apputil.environ = self.envbak.copy()
+        solvcon.apputil.environ.clear()
+        solvcon.apputil.environ = self.envbak.copy()
 
     def test_anonymous(self):
         def _check(i, basenum):
-            env = modmesh.apputil.get_appenv()
+            env = solvcon.apputil.get_appenv()
             self.assertEqual(f'anonymous{i}', env.name)
-            self.assertEqual(env, modmesh.apputil.environ[f'anonymous{i}'])
+            self.assertEqual(env, solvcon.apputil.environ[f'anonymous{i}'])
             self.assertEqual(basenum + i + 1,
-                             len(modmesh.apputil.environ))
+                             len(solvcon.apputil.environ))
 
         _check(0, basenum=self.envbasenum)
         _check(1, basenum=self.envbasenum)
@@ -41,7 +41,7 @@ class AppenvTC(unittest.TestCase):
             _check(10, basenum=self.envbasenum)
 
         # Try to reset the environment dictionary.
-        modmesh.apputil.environ.clear()
+        solvcon.apputil.environ.clear()
         _check(0, basenum=0)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

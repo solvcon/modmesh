@@ -4,7 +4,7 @@
 """
 ASCII-only character and
 no trailing whitespace checker
-for modmesh source code files.
+for solvcon source code files.
 
 This script checks that all source files contain
 only ASCII characters and no trailing whitespace,

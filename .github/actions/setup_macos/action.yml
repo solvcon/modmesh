@@ -1,4 +1,4 @@
-name: Set up modmesh CI dependencies on MacOS
+name: Set up solvcon CI dependencies on MacOS
 description: Set up the necessary dependencies for running CI tests on Github action MacOS runners
 
 inputs:

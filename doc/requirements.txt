@@ -1,4 +1,4 @@
-# Python build dependencies for the modmesh documentation.
+# Python build dependencies for the solvcon documentation.
 # The C++ API path additionally needs a system Doxygen (e.g. `apt install
 # doxygen`); it is not a Python package.
 

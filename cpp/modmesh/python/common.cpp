@@ -69,7 +69,7 @@ Interpreter & Interpreter::setup_modmesh_path()
     std::string const cmd = R""""(def _set_modmesh_path():
     import os
     import sys
-    filename = os.path.join('modmesh', '__init__.py')
+    filename = os.path.join('solvcon', '__init__.py')
     path = os.getcwd()
     while True:
         if os.path.exists(os.path.join(path, filename)):
@@ -99,7 +99,7 @@ Interpreter & Interpreter::setup_process()
     try
     {
         // NOLINTNEXTLINE(misc-const-correctness)
-        pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
+        pybind11::object mod_sys = pybind11::module_::import("solvcon.system");
         mod_sys.attr("setup_process")(cmdinfo.python_argv());
     }
     catch (const pybind11::error_already_set & e)
@@ -117,7 +117,7 @@ int Interpreter::enter_main()
     try
     {
         // NOLINTNEXTLINE(misc-const-correctness)
-        pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
+        pybind11::object mod_sys = pybind11::module_::import("solvcon.system");
         ret = pybind11::cast<int>(mod_sys.attr("enter_main")(cmdinfo.python_argv()));
     }
     catch (const pybind11::error_already_set & e)
@@ -174,7 +174,7 @@ void Interpreter::exec_code(std::string const & code)
     try
     {
         // NOLINTNEXTLINE(misc-const-correctness)
-        pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
+        pybind11::object mod_sys = pybind11::module_::import("solvcon.system");
         mod_sys.attr("exec_code")(code);
     }
     catch (const pybind11::error_already_set & e)
@@ -191,7 +191,7 @@ std::vector<std::string> Interpreter::get_completions(std::string const & text)
     {
         pybind11::gil_scoped_acquire const gil;
         // NOLINTNEXTLINE(misc-const-correctness)
-        pybind11::object mod_sys = pybind11::module_::import("modmesh.system");
+        pybind11::object mod_sys = pybind11::module_::import("solvcon.system");
         pybind11::object const py_result = mod_sys.attr("get_completions")(text);
         result = py_result.cast<std::vector<std::string>>();
     }

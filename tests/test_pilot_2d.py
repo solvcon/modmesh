@@ -15,10 +15,10 @@ the planned pixel-level coverage and what it needs first.
 
 import unittest
 
-import modmesh
+import solvcon
 
 try:
-    from modmesh import pilot
+    from solvcon import pilot
 except ImportError:
     pilot = None
 
@@ -29,14 +29,14 @@ def _build_world():
     that gets projected, and a removed (DEAD) shape whose geometry must be
     dropped by collect_live_*.
     """
-    w = modmesh.WorldFp64()
+    w = solvcon.WorldFp64()
     # Bare segment (owned by no shape) and a bare cubic Bezier.
-    w.add_segment(modmesh.Point3dFp64(-3, 3, 0),
-                  modmesh.Point3dFp64(3, 3, 0))
-    w.add_bezier(modmesh.Point3dFp64(-3, 0, 0),
-                 modmesh.Point3dFp64(-1, 2, 0),
-                 modmesh.Point3dFp64(1, -2, 0),
-                 modmesh.Point3dFp64(3, 0, 0))
+    w.add_segment(solvcon.Point3dFp64(-3, 3, 0),
+                  solvcon.Point3dFp64(3, 3, 0))
+    w.add_bezier(solvcon.Point3dFp64(-3, 0, 0),
+                 solvcon.Point3dFp64(-1, 2, 0),
+                 solvcon.Point3dFp64(1, -2, 0),
+                 solvcon.Point3dFp64(3, 0, 0))
     # Shapes: segment-backed and Bezier-backed.
     w.add_triangle(0, 0, 1, 0, 0, 1)
     w.add_rectangle(2, 2, 4, 3)
@@ -49,7 +49,7 @@ def _build_world():
     return w
 
 
-@unittest.skipUnless(modmesh.HAS_PILOT, "Qt pilot is not built")
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
 class R2DWidgetWorldTC(unittest.TestCase):
 
     @classmethod
@@ -85,7 +85,7 @@ class R2DWidgetWorldTC(unittest.TestCase):
         (the live Canvas sample flow) repaints the new state. Guards that
         the widget re-reads the world rather than caching a snapshot.
         """
-        w = modmesh.WorldFp64()
+        w = solvcon.WorldFp64()
         w.add_circle(0.0, 0.0, 1.0)
         self.widget.updateWorld(w)
         w.add_rectangle(-2, -2, 2, 2)
@@ -96,7 +96,7 @@ class R2DWidgetWorldTC(unittest.TestCase):
         """A world with no geometry is valid: the loops are simply empty.
         Catches off-by-one / null-pad assumptions in RWorldRenderer2d.
         """
-        self.widget.updateWorld(modmesh.WorldFp64())
+        self.widget.updateWorld(solvcon.WorldFp64())
         self.widget.requestRepaint()
 
     def test_view_transform_round_trip(self):
@@ -105,7 +105,7 @@ class R2DWidgetWorldTC(unittest.TestCase):
         property (zoom 3.0 is well within the widget's clamp band).
         """
         self.widget.resetView()
-        v = modmesh.ViewTransform2dFp64()
+        v = solvcon.ViewTransform2dFp64()
         v.pan(40.0, 25.0)
         v.zoom = 3.0
         self.widget.setViewTransform(v)
@@ -121,7 +121,7 @@ class R2DWidgetWorldTC(unittest.TestCase):
         Needs a synchronous-render hook (saveImage, parity with
         R3DWidget) to grab the canvas headless. Skipped until then.
         """
-        # w = modmesh.WorldFp64()
+        # w = solvcon.WorldFp64()
         # live = w.add_rectangle(-3, -3, -1, -1)   # region A (lower-left)
         # dead = w.add_rectangle(1, 1, 3, 3)       # region B (upper-right)
         # w.remove_shape(dead)

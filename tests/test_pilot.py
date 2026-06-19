@@ -6,20 +6,20 @@ import unittest
 import numpy as np
 import os
 
-import modmesh
+import solvcon
 try:
-    from modmesh import pilot
+    from solvcon import pilot
 except ImportError:
     pilot = None
 
 GITHUB_ACTIONS = os.getenv('GITHUB_ACTIONS', False)
 
 
-@unittest.skipUnless(modmesh.HAS_PILOT, "Qt pilot is not built")
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
 class PilotTC(unittest.TestCase):
 
     def test_import(self):
-        self.assertTrue(hasattr(modmesh.pilot, "mgr"))
+        self.assertTrue(hasattr(solvcon.pilot, "mgr"))
 
     @unittest.skip("headless testing is not ready")
     def test_pycon(self):
@@ -33,7 +33,7 @@ class PilotCameraTB:
 
     @classmethod
     def setUpClass(cls):
-        if modmesh.HAS_PILOT:
+        if solvcon.HAS_PILOT:
             widget = pilot.RManager.instance.setUp().add3DWidget()
 
             if cls.camera_type is not None:
@@ -44,7 +44,7 @@ class PilotCameraTB:
 
     @classmethod
     def tearDownClass(cls):
-        if modmesh.HAS_PILOT:
+        if solvcon.HAS_PILOT:
             cls.widget = None
 
     def angle_axis(self, angle_deg, axis):
@@ -71,7 +71,7 @@ class PilotCameraTB:
         return vec / np.linalg.norm(vec)
 
 
-@unittest.skipIf(GITHUB_ACTIONS or not modmesh.HAS_PILOT,
+@unittest.skipIf(GITHUB_ACTIONS or not solvcon.HAS_PILOT,
                  "GUI is not available in GitHub Actions")
 class PilotCommonCameraTC(PilotCameraTB, unittest.TestCase):
     def test_value_get_set(self):
@@ -163,7 +163,7 @@ class PilotCommonCameraTC(PilotCameraTB, unittest.TestCase):
             self.assertEqual(c.view_center[2], new_view_center[2])
 
 
-@unittest.skipIf(GITHUB_ACTIONS or not modmesh.HAS_PILOT,
+@unittest.skipIf(GITHUB_ACTIONS or not solvcon.HAS_PILOT,
                  "GUI is not available in GitHub Actions")
 class PilotFPSCameraTC(PilotCameraTB, unittest.TestCase):
     camera_type = "fps"
@@ -235,7 +235,7 @@ class PilotFPSCameraTC(PilotCameraTB, unittest.TestCase):
         self.assertAlmostEqual(view_center[2], new_view_center[2], delta=1e-5)
 
 
-@unittest.skipIf(GITHUB_ACTIONS or not modmesh.HAS_PILOT,
+@unittest.skipIf(GITHUB_ACTIONS or not solvcon.HAS_PILOT,
                  "GUI is not available in GitHub Actions")
 class PilotOrbitCameraTC(PilotCameraTB, unittest.TestCase):
     camera_type = "orbit"

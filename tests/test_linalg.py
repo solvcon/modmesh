@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-import modmesh as mm
+import solvcon as sc
 
 
 class TestLinalgFactorization(unittest.TestCase):
@@ -15,8 +15,8 @@ class TestLinalgFactorization(unittest.TestCase):
             [0.25, 0.375, 0.5, 0.75]
         ])
         A_np = L_desired @ L_desired.T
-        A = mm.SimpleArrayFloat64(array=A_np)
-        L = mm.llt_factorization(A)
+        A = sc.SimpleArrayFloat64(array=A_np)
+        L = sc.llt_factorization(A)
         assert L.shape == (4, 4)
         L_np = np.array(L)
         np.testing.assert_allclose(L_np, L_desired, rtol=1e-10)
@@ -30,8 +30,8 @@ class TestLinalgFactorization(unittest.TestCase):
             [0.125, 0.1875, 0.25, 0.375, 0.5]
         ])
         A_np = L_desired @ L_desired.T
-        A = mm.SimpleArrayFloat64(array=A_np)
-        L = mm.llt_factorization(A)
+        A = sc.SimpleArrayFloat64(array=A_np)
+        L = sc.llt_factorization(A)
         assert L.shape == (5, 5)
         L_np = np.array(L)
         np.testing.assert_allclose(L_np, L_desired, rtol=1e-10)
@@ -45,20 +45,20 @@ class TestLinalgFactorization(unittest.TestCase):
             [0.125+0.0625j, 0.1875+0.09375j, 0.25+0.0j, 0.375+0.0j, 0.5+0.0j]
         ])
         A_np = L_desired @ L_desired.conj().T
-        A = mm.SimpleArrayComplex128(array=A_np)
-        L = mm.llt_factorization(A)
+        A = sc.SimpleArrayComplex128(array=A_np)
+        L = sc.llt_factorization(A)
         assert L.shape == (5, 5)
         L_np = np.array(L)
         np.testing.assert_allclose(L_np, L_desired, rtol=1e-10)
 
     def test_llt_factorization_invalid_input(self):
-        A = mm.SimpleArrayFloat64([2, 3])
+        A = sc.SimpleArrayFloat64([2, 3])
         with self.assertRaisesRegex(
                 Exception,
                 r"Llt::factorize: The first argument a must be a square "
                 r"2D SimpleArray"
         ):
-            mm.llt_factorization(A)
+            sc.llt_factorization(A)
 
 
 class TestLinalgSolver(unittest.TestCase):
@@ -72,9 +72,9 @@ class TestLinalgSolver(unittest.TestCase):
         ])
         A_np = B_np.T @ B_np + np.eye(4)
         b_np = np.array([1.0, 2.0, 3.0, 4.0])
-        A = mm.SimpleArrayFloat64(array=A_np)
-        b = mm.SimpleArrayFloat64(array=b_np)
-        x = mm.llt_solve(A, b)
+        A = sc.SimpleArrayFloat64(array=A_np)
+        b = sc.SimpleArrayFloat64(array=b_np)
+        x = sc.llt_solve(A, b)
         assert x.shape == (4,)
         x_np = np.array(x)
         A_np = np.array(A)
@@ -92,9 +92,9 @@ class TestLinalgSolver(unittest.TestCase):
         ])
         A_np = B_np.T @ B_np + np.eye(5)
         b_np = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
-        A = mm.SimpleArrayFloat64(array=A_np)
-        b = mm.SimpleArrayFloat64(array=b_np)
-        x = mm.llt_solve(A, b)
+        A = sc.SimpleArrayFloat64(array=A_np)
+        b = sc.SimpleArrayFloat64(array=b_np)
+        x = sc.llt_solve(A, b)
         assert x.shape == (5,)
         x_np = np.array(x)
         A_np = np.array(A)
@@ -112,9 +112,9 @@ class TestLinalgSolver(unittest.TestCase):
         ])
         A_np = B_np.conj().T @ B_np + np.eye(5, dtype=complex)
         b_np = np.array([1.0+0.0j, 2.0+0.0j, 3.0+0.0j, 4.0+0.0j, 5.0+0.0j])
-        A = mm.SimpleArrayComplex128(array=A_np)
-        b = mm.SimpleArrayComplex128(array=b_np)
-        x = mm.llt_solve(A, b)
+        A = sc.SimpleArrayComplex128(array=A_np)
+        b = sc.SimpleArrayComplex128(array=b_np)
+        x = sc.llt_solve(A, b)
         assert x.shape == (5,)
         x_np = np.array(x)
         A_np = np.array(A)
@@ -123,10 +123,10 @@ class TestLinalgSolver(unittest.TestCase):
         np.testing.assert_allclose(Ax_np, b_np, rtol=1e-10)
 
     def test_llt_solve_invalid_input(self):
-        A = mm.SimpleArrayFloat64([2, 3])
-        b = mm.SimpleArrayFloat64([2])
+        A = sc.SimpleArrayFloat64([2, 3])
+        b = sc.SimpleArrayFloat64([2])
         with self.assertRaises(Exception):
-            mm.llt_solve(A, b)
+            sc.llt_solve(A, b)
 
     def test_llt_solve_2d_multi_rhs_double(self):
         B_np = np.array([
@@ -144,9 +144,9 @@ class TestLinalgSolver(unittest.TestCase):
             [10.0, 11.0, 12.0],
             [13.0, 14.0, 15.0]
         ])
-        A = mm.SimpleArrayFloat64(array=A_np)
-        b_2d = mm.SimpleArrayFloat64(array=b_2d_np)
-        x_2d = mm.llt_solve(A, b_2d)
+        A = sc.SimpleArrayFloat64(array=A_np)
+        b_2d = sc.SimpleArrayFloat64(array=b_2d_np)
+        x_2d = sc.llt_solve(A, b_2d)
         assert x_2d.shape == (5, 3)
         x_2d_np = np.array(x_2d)
         A_np = np.array(A)
@@ -168,9 +168,9 @@ class TestLinalgSolver(unittest.TestCase):
             [7.0+0.0j, 8.0+0.5j, 9.0+1.0j],
             [10.0+0.0j, 11.0+0.5j, 12.0+1.0j]
         ])
-        A = mm.SimpleArrayComplex128(array=A_np)
-        b_2d = mm.SimpleArrayComplex128(array=b_2d_np)
-        x_2d = mm.llt_solve(A, b_2d)
+        A = sc.SimpleArrayComplex128(array=A_np)
+        b_2d = sc.SimpleArrayComplex128(array=b_2d_np)
+        x_2d = sc.llt_solve(A, b_2d)
         assert x_2d.shape == (4, 3)
         x_2d_np = np.array(x_2d)
         A_np = np.array(A)
@@ -180,27 +180,27 @@ class TestLinalgSolver(unittest.TestCase):
 
     def test_llt_solve_shape_mismatch_errors(self):
         # Test 1: A is not square
-        A_rect = mm.SimpleArrayFloat64(array=np.array([
+        A_rect = sc.SimpleArrayFloat64(array=np.array([
             [1.0, 2.0, 3.0, 4.0],
             [5.0, 6.0, 7.0, 8.0],
             [9.0, 10.0, 11.0, 12.0]
         ]))
-        b = mm.SimpleArrayFloat64(array=np.array([1.0, 2.0, 3.0]))
+        b = sc.SimpleArrayFloat64(array=np.array([1.0, 2.0, 3.0]))
         with self.assertRaisesRegex(
                 Exception,
                 r"Llt::solve: The first argument a must be a square "
                 r"2D SimpleArray"
         ):
-            mm.llt_solve(A_rect, b)
+            sc.llt_solve(A_rect, b)
 
         # Test 2: A and b dimension mismatch (1D case)
-        A_square = mm.SimpleArrayFloat64(array=np.array([
+        A_square = sc.SimpleArrayFloat64(array=np.array([
             [1.0, 2.0, 3.0, 4.0],
             [5.0, 6.0, 7.0, 8.0],
             [9.0, 10.0, 11.0, 12.0],
             [13.0, 14.0, 15.0, 16.0]
         ]))
-        b_wrong_size = mm.SimpleArrayFloat64(array=np.array(
+        b_wrong_size = sc.SimpleArrayFloat64(array=np.array(
             [1.0, 2.0, 3.0]
         ))
         with self.assertRaisesRegex(
@@ -208,10 +208,10 @@ class TestLinalgSolver(unittest.TestCase):
                 r"Llt::solve: The first argument a and the second "
                 r"argument b dimension mismatch"
         ):
-            mm.llt_solve(A_square, b_wrong_size)
+            sc.llt_solve(A_square, b_wrong_size)
 
         # Test 3: A and b dimension mismatch (2D case)
-        b_2d_wrong_size = mm.SimpleArrayFloat64(array=np.array([
+        b_2d_wrong_size = sc.SimpleArrayFloat64(array=np.array([
             [1.0, 2.0],
             [3.0, 4.0],
             [5.0, 6.0]
@@ -221,10 +221,10 @@ class TestLinalgSolver(unittest.TestCase):
                 r"Llt::solve: The first argument a and the second "
                 r"argument b dimension mismatch"
         ):
-            mm.llt_solve(A_square, b_2d_wrong_size)
+            sc.llt_solve(A_square, b_2d_wrong_size)
 
         # Test 4: b is 3D (should fail)
-        b_3d = mm.SimpleArrayFloat64(array=np.array([
+        b_3d = sc.SimpleArrayFloat64(array=np.array([
             [[1.0], [2.0]],
             [[3.0], [4.0]],
             [[5.0], [6.0]],
@@ -234,7 +234,7 @@ class TestLinalgSolver(unittest.TestCase):
                 Exception,
                 r"Llt::solve: The second argument b must be 1D or 2D"
         ):
-            mm.llt_solve(A_square, b_3d)
+            sc.llt_solve(A_square, b_3d)
 
     def test_llt_solve_non_spd_matrix(self):
         # Create a non-SPD matrix
@@ -242,82 +242,82 @@ class TestLinalgSolver(unittest.TestCase):
             [1.0, 2.0],
             [2.0, 1.0]
         ])
-        b = mm.SimpleArrayFloat64(array=np.array([1.0, 2.0]))
-        A = mm.SimpleArrayFloat64(array=A_nspd)
+        b = sc.SimpleArrayFloat64(array=np.array([1.0, 2.0]))
+        A = sc.SimpleArrayFloat64(array=A_nspd)
         with self.assertRaisesRegex(
                 Exception,
                 r"Llt::factorize: Cholesky failed: SimpleArray not "
                 r"\(numerically\) SPD"
         ):
-            mm.llt_solve(A, b)
+            sc.llt_solve(A, b)
 
 
 class KalmanFilterInitTC(unittest.TestCase):
 
     def test_transition_dimension_error(self):
-        x0 = mm.SimpleArrayFloat64([2])
-        f_wrong = mm.SimpleArrayFloat64([1, 2])
-        h = mm.SimpleArrayFloat64([1, 2])
+        x0 = sc.SimpleArrayFloat64([2])
+        f_wrong = sc.SimpleArrayFloat64([1, 2])
+        h = sc.SimpleArrayFloat64([1, 2])
 
         with self.assertRaisesRegex(
                 ValueError,
                 "KalmanFilter::check_dimensions: The state "
                 "transition SimpleArray f must be state_sizexstate_size, "
                 "but got shape \\(1, 2\\)"):
-            mm.KalmanFilterFp64(
+            sc.KalmanFilterFp64(
                 x=x0, f=f_wrong, h=h, process_noise=0.1, measurement_noise=1.0)
 
     def test_measurement_dimension_error(self):
-        x0 = mm.SimpleArrayFloat64([2])
-        f = mm.SimpleArrayFloat64([2, 2])
-        h_wrong = mm.SimpleArrayFloat64([1, 1])
+        x0 = sc.SimpleArrayFloat64([2])
+        f = sc.SimpleArrayFloat64([2, 2])
+        h_wrong = sc.SimpleArrayFloat64([1, 1])
 
         with self.assertRaisesRegex(
                 ValueError,
                 "KalmanFilter::check_dimensions: The "
                 "measurement SimpleArray h must be "
                 "measurement_sizexstate_size, but got shape \\(1, 1\\)"):
-            mm.KalmanFilterFp64(
+            sc.KalmanFilterFp64(
                 x=x0, f=f, h=h_wrong, process_noise=0.1, measurement_noise=1.0)
 
     def test_state_dimension_error(self):
-        x0_wrong = mm.SimpleArrayFloat64([2, 2])
-        f = mm.SimpleArrayFloat64([2, 2])
-        h = mm.SimpleArrayFloat64([1, 2])
+        x0_wrong = sc.SimpleArrayFloat64([2, 2])
+        f = sc.SimpleArrayFloat64([2, 2])
+        h = sc.SimpleArrayFloat64([1, 2])
 
         with self.assertRaisesRegex(
                 ValueError,
                 "KalmanFilter::check_dimensions: The state SimpleArray "
                 "x must be 1D of length state_size, but got shape \\(2, 2\\)"):
-            mm.KalmanFilterFp64(
+            sc.KalmanFilterFp64(
                 x=x0_wrong, f=f, h=h, process_noise=0.1, measurement_noise=1.0)
 
     def test_control_1d_error(self):
-        x0 = mm.SimpleArrayFloat64([2])
-        f = mm.SimpleArrayFloat64([2, 2])
-        b_wrong = mm.SimpleArrayFloat64([2])
-        h = mm.SimpleArrayFloat64([1, 2])
+        x0 = sc.SimpleArrayFloat64([2])
+        f = sc.SimpleArrayFloat64([2, 2])
+        b_wrong = sc.SimpleArrayFloat64([2])
+        h = sc.SimpleArrayFloat64([1, 2])
 
         with self.assertRaisesRegex(
                 ValueError,
                 "KalmanFilter::check_dimensions: The control SimpleArray "
                 "b must be state_sizex0 when control_size = 0, but got "
                 "shape \\(2\\)"):
-            mm.KalmanFilterFp64(
+            sc.KalmanFilterFp64(
                 x=x0, f=f, b=b_wrong, h=h, process_noise=0.1,
                 measurement_noise=1.0)
 
     def test_control_2d_error(self):
-        x0 = mm.SimpleArrayFloat64([2])
-        f = mm.SimpleArrayFloat64([2, 2])
-        b_wrong = mm.SimpleArrayFloat64([1, 2])
-        h = mm.SimpleArrayFloat64([1, 2])
+        x0 = sc.SimpleArrayFloat64([2])
+        f = sc.SimpleArrayFloat64([2, 2])
+        b_wrong = sc.SimpleArrayFloat64([1, 2])
+        h = sc.SimpleArrayFloat64([1, 2])
 
         with self.assertRaisesRegex(
                 ValueError,
                 "KalmanFilter::check_dimensions: The control SimpleArray "
                 "b must be state_sizexcontrol_size, but got shape \\(1, 2\\)"):
-            mm.KalmanFilterFp64(
+            sc.KalmanFilterFp64(
                 x=x0, f=f, b=b_wrong, h=h, process_noise=0.1,
                 measurement_noise=1.0)
 
@@ -339,10 +339,10 @@ class KalmanFilterPredictTC(unittest.TestCase):
         q = (sigma_w**2) * np.eye(n)
         x_pred_np, p_pred_np = self.kf_predict_numpy(x0, p0, f, q)
 
-        x_sa = mm.SimpleArrayFloat64(array=x0)
-        f_sa = mm.SimpleArrayFloat64(array=f)
-        h_sa = mm.SimpleArrayFloat64([1, n])
-        kf = mm.KalmanFilterFp64(
+        x_sa = sc.SimpleArrayFloat64(array=x0)
+        f_sa = sc.SimpleArrayFloat64(array=f)
+        h_sa = sc.SimpleArrayFloat64([1, n])
+        kf = sc.KalmanFilterFp64(
             x=x_sa, f=f_sa, h=h_sa,
             process_noise=sigma_w,
             measurement_noise=1.0,
@@ -364,10 +364,10 @@ class KalmanFilterPredictTC(unittest.TestCase):
         q = (sigma_w**2) * np.eye(n, dtype=np.complex128)
         x_pred_np, p_pred_np = self.kf_predict_numpy(x0, p0, f, q)
 
-        x_sa = mm.SimpleArrayComplex128(array=x0)
-        f_sa = mm.SimpleArrayComplex128(array=f)
-        h_sa = mm.SimpleArrayComplex128([1, n])
-        kf = mm.KalmanFilterComplex128(
+        x_sa = sc.SimpleArrayComplex128(array=x0)
+        f_sa = sc.SimpleArrayComplex128(array=f)
+        h_sa = sc.SimpleArrayComplex128([1, n])
+        kf = sc.KalmanFilterComplex128(
             x=x_sa, f=f_sa, h=h_sa,
             process_noise=sigma_w,
             measurement_noise=1.0,
@@ -422,13 +422,13 @@ class KalmanFilterRadarExampleTC(unittest.TestCase):
                       [0.0, 2.25]])
         z1 = np.array([11020.0, 202.0])
 
-        kf = mm.KalmanFilterFp64(
-            x=sa_from_np(x0, mm.SimpleArrayFloat64),
-            f=sa_from_np(f, mm.SimpleArrayFloat64),
-            h=sa_from_np(h, mm.SimpleArrayFloat64),
-            q=sa_from_np(q, mm.SimpleArrayFloat64),
-            r=sa_from_np(r, mm.SimpleArrayFloat64),
-            p=sa_from_np(p0, mm.SimpleArrayFloat64),
+        kf = sc.KalmanFilterFp64(
+            x=sa_from_np(x0, sc.SimpleArrayFloat64),
+            f=sa_from_np(f, sc.SimpleArrayFloat64),
+            h=sa_from_np(h, sc.SimpleArrayFloat64),
+            q=sa_from_np(q, sc.SimpleArrayFloat64),
+            r=sa_from_np(r, sc.SimpleArrayFloat64),
+            p=sa_from_np(p0, sc.SimpleArrayFloat64),
             jitter=0.0,
         )
 
@@ -443,7 +443,7 @@ class KalmanFilterRadarExampleTC(unittest.TestCase):
         np.testing.assert_allclose(
             kf.covariance.ndarray, p_pred_expected, atol=1e-12, rtol=0.0)
 
-        kf.update(sa_from_np(z1, mm.SimpleArrayFloat64))
+        kf.update(sa_from_np(z1, sc.SimpleArrayFloat64))
 
         x_update_expected = np.array([
             11009.371124889283,
@@ -465,13 +465,13 @@ class TestKnownIssues603(unittest.TestCase):
     @unittest.expectedFailure
     def test_issue_603_shape_n_by_1(self):
         narr = np.array([[1.0], [0.0]])
-        sa = mm.SimpleArrayFloat64(array=narr)
+        sa = sc.SimpleArrayFloat64(array=narr)
         self.assertEqual(sa.shape(), [2, 1])
 
     @unittest.expectedFailure
     def test_issue_603_shape_1_by_n(self):
         narr = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]])
-        sa = mm.SimpleArrayFloat64(array=narr)
+        sa = sc.SimpleArrayFloat64(array=narr)
         self.assertEqual(sa.shape(), [1, 5])
 
 
@@ -503,12 +503,12 @@ class KalmanFilterUpdateTC(unittest.TestCase):
         x_upd_np, p_upd_np = self.kf_update_numpy(
             x_pred, p_pred, h, r_var, z)
 
-        x_sa = sa_from_np(x_pred, mm.SimpleArrayFloat64)
-        f_sa = sa_from_np(f, mm.SimpleArrayFloat64)
-        h_sa = sa_from_np(h, mm.SimpleArrayFloat64)
-        z_sa = sa_from_np(z, mm.SimpleArrayFloat64)
+        x_sa = sa_from_np(x_pred, sc.SimpleArrayFloat64)
+        f_sa = sa_from_np(f, sc.SimpleArrayFloat64)
+        h_sa = sa_from_np(h, sc.SimpleArrayFloat64)
+        z_sa = sa_from_np(z, sc.SimpleArrayFloat64)
 
-        kf = mm.KalmanFilterFp64(
+        kf = sc.KalmanFilterFp64(
             x=x_sa, f=f_sa, h=h_sa,
             process_noise=1.0, measurement_noise=sigma_v)
         kf.update(z_sa)
@@ -534,12 +534,12 @@ class KalmanFilterUpdateTC(unittest.TestCase):
         x_upd_np, p_upd_np = self.kf_update_numpy(
             x_pred, p_pred, h, r_var, z)
 
-        x_sa = sa_from_np(x_pred, mm.SimpleArrayComplex128)
-        f_sa = sa_from_np(f, mm.SimpleArrayComplex128)
-        h_sa = sa_from_np(h, mm.SimpleArrayComplex128)
-        z_sa = sa_from_np(z, mm.SimpleArrayComplex128)
+        x_sa = sa_from_np(x_pred, sc.SimpleArrayComplex128)
+        f_sa = sa_from_np(f, sc.SimpleArrayComplex128)
+        h_sa = sa_from_np(h, sc.SimpleArrayComplex128)
+        z_sa = sa_from_np(z, sc.SimpleArrayComplex128)
 
-        kf = mm.KalmanFilterComplex128(
+        kf = sc.KalmanFilterComplex128(
             x=x_sa, f=f_sa, h=h_sa,
             process_noise=1.0, measurement_noise=sigma_v)
         kf.update(z_sa)
@@ -556,16 +556,16 @@ class KalmanFilterUpdateTC(unittest.TestCase):
 
     def test_update_measurement_dimension_error(self):
         n = 2
-        x0 = mm.SimpleArrayFloat64([n])
-        f = mm.SimpleArrayFloat64([n, n])
-        h = mm.SimpleArrayFloat64([1, n])
+        x0 = sc.SimpleArrayFloat64([n])
+        f = sc.SimpleArrayFloat64([n, n])
+        h = sc.SimpleArrayFloat64([1, n])
 
-        kf = mm.KalmanFilterFp64(
+        kf = sc.KalmanFilterFp64(
             x=x0, f=f, h=h,
             process_noise=0.1, measurement_noise=1.0)
 
         # Test wrong measurement dimension
-        z_wrong = mm.SimpleArrayFloat64([2])  # Should be length 1
+        z_wrong = sc.SimpleArrayFloat64([2])  # Should be length 1
 
         with self.assertRaisesRegex(
                 ValueError,
@@ -576,16 +576,16 @@ class KalmanFilterUpdateTC(unittest.TestCase):
 
     def test_update_measurement_2d_error(self):
         n = 2
-        x0 = mm.SimpleArrayFloat64([n])
-        f = mm.SimpleArrayFloat64([n, n])
-        h = mm.SimpleArrayFloat64([1, n])
+        x0 = sc.SimpleArrayFloat64([n])
+        f = sc.SimpleArrayFloat64([n, n])
+        h = sc.SimpleArrayFloat64([1, n])
 
-        kf = mm.KalmanFilterFp64(
+        kf = sc.KalmanFilterFp64(
             x=x0, f=f, h=h,
             process_noise=0.1, measurement_noise=1.0)
 
         # Test 2D measurement (should be 1D)
-        z_2d = mm.SimpleArrayFloat64([1, 1])  # 2D array
+        z_2d = sc.SimpleArrayFloat64([1, 1])  # 2D array
 
         with self.assertRaisesRegex(
                 ValueError,
@@ -622,13 +622,13 @@ class KalmanFilterControlTC(unittest.TestCase):
             x0, p0, f, q, b, u
         )
 
-        x_sa = sa_from_np(x0, mm.SimpleArrayFloat64)
-        f_sa = sa_from_np(f, mm.SimpleArrayFloat64)
-        b_sa = sa_from_np(b, mm.SimpleArrayFloat64)
-        h_sa = sa_from_np(h, mm.SimpleArrayFloat64)
-        u_sa = sa_from_np(u, mm.SimpleArrayFloat64)
+        x_sa = sa_from_np(x0, sc.SimpleArrayFloat64)
+        f_sa = sa_from_np(f, sc.SimpleArrayFloat64)
+        b_sa = sa_from_np(b, sc.SimpleArrayFloat64)
+        h_sa = sa_from_np(h, sc.SimpleArrayFloat64)
+        u_sa = sa_from_np(u, sc.SimpleArrayFloat64)
 
-        kf = mm.KalmanFilterFp64(
+        kf = sc.KalmanFilterFp64(
             x=x_sa, f=f_sa, b=b_sa, h=h_sa,
             process_noise=sigma_w, measurement_noise=1.0
         )
@@ -649,12 +649,12 @@ class KalmanFilterControlTC(unittest.TestCase):
         h[0, 0] = 1.0
         u = np.array([1.0])
 
-        x_sa = sa_from_np(x0, mm.SimpleArrayFloat64)
-        f_sa = sa_from_np(f, mm.SimpleArrayFloat64)
-        h_sa = sa_from_np(h, mm.SimpleArrayFloat64)
-        u_sa = sa_from_np(u, mm.SimpleArrayFloat64)
+        x_sa = sa_from_np(x0, sc.SimpleArrayFloat64)
+        f_sa = sa_from_np(f, sc.SimpleArrayFloat64)
+        h_sa = sa_from_np(h, sc.SimpleArrayFloat64)
+        u_sa = sa_from_np(u, sc.SimpleArrayFloat64)
 
-        kf = mm.KalmanFilterFp64(
+        kf = sc.KalmanFilterFp64(
             x=x_sa, f=f_sa, h=h_sa,
             process_noise=0.0, measurement_noise=1.0
         )
@@ -675,13 +675,13 @@ class KalmanFilterControlTC(unittest.TestCase):
         h[0, 0] = 1.0
         u_wrong = np.array([1.0, 2.0])
 
-        x_sa = sa_from_np(x0, mm.SimpleArrayFloat64)
-        f_sa = sa_from_np(f, mm.SimpleArrayFloat64)
-        b_sa = sa_from_np(b, mm.SimpleArrayFloat64)
-        h_sa = sa_from_np(h, mm.SimpleArrayFloat64)
-        u_wrong_sa = sa_from_np(u_wrong, mm.SimpleArrayFloat64)
+        x_sa = sa_from_np(x0, sc.SimpleArrayFloat64)
+        f_sa = sa_from_np(f, sc.SimpleArrayFloat64)
+        b_sa = sa_from_np(b, sc.SimpleArrayFloat64)
+        h_sa = sa_from_np(h, sc.SimpleArrayFloat64)
+        u_wrong_sa = sa_from_np(u_wrong, sc.SimpleArrayFloat64)
 
-        kf = mm.KalmanFilterFp64(
+        kf = sc.KalmanFilterFp64(
             x=x_sa, f=f_sa, b=b_sa, h=h_sa,
             process_noise=0.0, measurement_noise=1.0
         )
@@ -735,12 +735,12 @@ class KalmanFilterBatchFilterTC(unittest.TestCase):
         zs = np.zeros((m, 2))
         for i in range(m):
             zs[i] = np.array([i * i, i * 0.5 + 1.0])
-        x_sa = mm.SimpleArrayFloat64(array=x0)
-        f_sa = mm.SimpleArrayFloat64(array=f)
-        h_sa = mm.SimpleArrayFloat64(array=h)
-        zs_sa = mm.SimpleArrayFloat64(array=zs)
+        x_sa = sc.SimpleArrayFloat64(array=x0)
+        f_sa = sc.SimpleArrayFloat64(array=f)
+        h_sa = sc.SimpleArrayFloat64(array=h)
+        zs_sa = sc.SimpleArrayFloat64(array=zs)
 
-        kf = mm.KalmanFilterFp64(
+        kf = sc.KalmanFilterFp64(
             x=x_sa, f=f_sa, h=h_sa,
             process_noise=sigma_w,
             measurement_noise=1.0,
@@ -751,7 +751,7 @@ class KalmanFilterBatchFilterTC(unittest.TestCase):
         xs_upd = bps.posterior_states
         ps_upd = bps.posterior_states_covariance
 
-        kf = mm.KalmanFilterFp64(
+        kf = sc.KalmanFilterFp64(
             x=x_sa, f=f_sa, h=h_sa,
             process_noise=sigma_w,
             measurement_noise=1.0,
@@ -782,14 +782,14 @@ class KalmanFilterBatchFilterTC(unittest.TestCase):
         us = np.zeros((m, 3))
         for i in range(m):
             us[i] = np.array([i, pow(i, 3.5), pow(i, 0.5)])
-        x_sa = mm.SimpleArrayFloat64(array=x0)
-        f_sa = mm.SimpleArrayFloat64(array=f)
-        b_sa = mm.SimpleArrayFloat64(array=b)
-        h_sa = mm.SimpleArrayFloat64(array=h)
-        zs_sa = mm.SimpleArrayFloat64(array=zs)
-        us_sa = mm.SimpleArrayFloat64(array=us)
+        x_sa = sc.SimpleArrayFloat64(array=x0)
+        f_sa = sc.SimpleArrayFloat64(array=f)
+        b_sa = sc.SimpleArrayFloat64(array=b)
+        h_sa = sc.SimpleArrayFloat64(array=h)
+        zs_sa = sc.SimpleArrayFloat64(array=zs)
+        us_sa = sc.SimpleArrayFloat64(array=us)
 
-        kf = mm.KalmanFilterFp64(
+        kf = sc.KalmanFilterFp64(
             x=x_sa, f=f_sa, b=b_sa, h=h_sa,
             process_noise=sigma_w,
             measurement_noise=1.0,
@@ -800,7 +800,7 @@ class KalmanFilterBatchFilterTC(unittest.TestCase):
         xs_upd = bps.posterior_states
         ps_upd = bps.posterior_states_covariance
 
-        kf = mm.KalmanFilterFp64(
+        kf = sc.KalmanFilterFp64(
             x=x_sa, f=f_sa, b=b_sa, h=h_sa,
             process_noise=sigma_w,
             measurement_noise=1.0,
@@ -873,8 +873,8 @@ class TestLuFactorization(unittest.TestCase):
 
     def test_factorize_3x3_reconstructs_PA(self):
         # Baseline: well-conditioned 3x3, also checks output shape/piv length.
-        A = mm.SimpleArrayFloat64(array=self.A_3x3)
-        lu, piv = mm.lu_factorization(A)
+        A = sc.SimpleArrayFloat64(array=self.A_3x3)
+        lu, piv = sc.lu_factorization(A)
         lu_np = np.array(lu)
         self.assertEqual(lu_np.shape, (3, 3))
         self.assertEqual(len(piv), 3)
@@ -882,23 +882,23 @@ class TestLuFactorization(unittest.TestCase):
 
     def test_factorize_4x4_reconstructs_PA(self):
         # Larger 4x4 where partial pivoting must trigger on the first column.
-        A = mm.SimpleArrayFloat64(array=self.A_4x4)
-        lu, piv = mm.lu_factorization(A)
+        A = sc.SimpleArrayFloat64(array=self.A_4x4)
+        lu, piv = sc.lu_factorization(A)
         lu_np = np.array(lu)
         _assert_PA_equals_LU(self.A_4x4, lu_np, piv, rtol=1e-12, atol=1e-12)
 
     def test_factorize_complex_3x3_reconstructs_PA(self):
         # Complex128 path: exercises the complex template instantiation.
-        A = mm.SimpleArrayComplex128(array=self.A_complex_3x3)
-        lu, piv = mm.lu_factorization(A)
+        A = sc.SimpleArrayComplex128(array=self.A_complex_3x3)
+        lu, piv = sc.lu_factorization(A)
         lu_np = np.array(lu)
         _assert_PA_equals_LU(
             self.A_complex_3x3, lu_np, piv, rtol=1e-12, atol=1e-12)
 
     def test_factorize_pivots_away_from_tiny_diagonal(self):
         # Numerical stability: A[0][0] ~ 1e-15 forces a row swap at step 0.
-        A = mm.SimpleArrayFloat64(array=self.A_tiny_pivot)
-        lu, piv = mm.lu_factorization(A)
+        A = sc.SimpleArrayFloat64(array=self.A_tiny_pivot)
+        lu, piv = sc.lu_factorization(A)
         # With A[0][0] ~ 1e-15 and A[1][0] = 1.0, partial pivoting must
         # swap row 0 with a later row.
         self.assertNotEqual(piv[0], 0)
@@ -909,8 +909,8 @@ class TestLuFactorization(unittest.TestCase):
     def test_factorize_float32_reconstructs_PA(self):
         # Float32 path: same input as 3x3 case but in single precision.
         A_np = self.A_3x3.astype(np.float32)
-        A = mm.SimpleArrayFloat32(array=A_np)
-        lu, piv = mm.lu_factorization(A)
+        A = sc.SimpleArrayFloat32(array=A_np)
+        lu, piv = sc.lu_factorization(A)
         lu_np = np.array(lu)
         _assert_PA_equals_LU(A_np, lu_np, piv, rtol=1e-5, atol=1e-5)
 
@@ -944,36 +944,36 @@ class TestLuSolve(unittest.TestCase):
 
     def test_solve_2x2_matches_known_solution(self):
         # Smallest case: 2x2 with 1D rhs, also checks output shape.
-        A = mm.SimpleArrayFloat64(array=self.A_2x2)
-        b = mm.SimpleArrayFloat64(array=self.b_2x2)
-        x = mm.lu_solve(A, b)
+        A = sc.SimpleArrayFloat64(array=self.A_2x2)
+        b = sc.SimpleArrayFloat64(array=self.b_2x2)
+        x = sc.lu_solve(A, b)
         self.assertEqual(x.shape, (2,))
         np.testing.assert_allclose(
             np.array(x), self.x_2x2_expected, rtol=1e-12, atol=1e-14)
 
     def test_solve_3x3_matches_known_solution(self):
         # 3x3 with 1D rhs against a precomputed exact solution.
-        A = mm.SimpleArrayFloat64(array=self.A_3x3)
-        b = mm.SimpleArrayFloat64(array=self.b_3x3)
-        x = mm.lu_solve(A, b)
+        A = sc.SimpleArrayFloat64(array=self.A_3x3)
+        b = sc.SimpleArrayFloat64(array=self.b_3x3)
+        x = sc.lu_solve(A, b)
         self.assertEqual(x.shape, (3,))
         np.testing.assert_allclose(
             np.array(x), self.x_3x3_expected, rtol=1e-12, atol=1e-14)
 
     def test_solve_float32(self):
         # Float32 path: same 3x3 system in single precision.
-        A = mm.SimpleArrayFloat32(array=self.A_3x3.astype(np.float32))
-        b = mm.SimpleArrayFloat32(array=self.b_3x3.astype(np.float32))
-        x = mm.lu_solve(A, b)
+        A = sc.SimpleArrayFloat32(array=self.A_3x3.astype(np.float32))
+        b = sc.SimpleArrayFloat32(array=self.b_3x3.astype(np.float32))
+        x = sc.lu_solve(A, b)
         np.testing.assert_allclose(
             np.array(x), self.x_3x3_expected.astype(np.float32),
             rtol=1e-5, atol=1e-5)
 
     def test_solve_complex128_matches_known_solution(self):
         # Complex128 path with a known exact complex solution.
-        A = mm.SimpleArrayComplex128(array=self.A_c2x2)
-        b = mm.SimpleArrayComplex128(array=self.b_c2x2)
-        x = mm.lu_solve(A, b)
+        A = sc.SimpleArrayComplex128(array=self.A_c2x2)
+        b = sc.SimpleArrayComplex128(array=self.b_c2x2)
+        x = sc.lu_solve(A, b)
         np.testing.assert_allclose(
             np.array(x), self.x_c2x2_expected, rtol=1e-12, atol=1e-14)
 
@@ -981,9 +981,9 @@ class TestLuSolve(unittest.TestCase):
         # Complex64 path: same complex system in single precision.
         A_np = self.A_c2x2.astype(np.complex64)
         b_np = self.b_c2x2.astype(np.complex64)
-        A = mm.SimpleArrayComplex64(array=A_np)
-        b = mm.SimpleArrayComplex64(array=b_np)
-        x = mm.lu_solve(A, b)
+        A = sc.SimpleArrayComplex64(array=A_np)
+        b = sc.SimpleArrayComplex64(array=b_np)
+        x = sc.lu_solve(A, b)
         np.testing.assert_allclose(
             np.array(x), self.x_c2x2_expected.astype(np.complex64),
             rtol=1e-5, atol=1e-5)
@@ -995,9 +995,9 @@ class TestLuSolve(unittest.TestCase):
             [-2.0, -10.0, -8.0],
             [9.0, 3.0, 15.0],
         ], dtype="float64")
-        A = mm.SimpleArrayFloat64(array=self.A_3x3)
-        B = mm.SimpleArrayFloat64(array=B_np)
-        X = mm.lu_solve(A, B)
+        A = sc.SimpleArrayFloat64(array=self.A_3x3)
+        B = sc.SimpleArrayFloat64(array=B_np)
+        X = sc.lu_solve(A, B)
         self.assertEqual(X.shape, (3, 3))
         # Verify A @ X == B column-by-column.
         np.testing.assert_allclose(
@@ -1010,9 +1010,9 @@ class TestLuSolve(unittest.TestCase):
             self.b_c2x2 * (1.0 + 0.5j),
             self.b_c2x2.conj(),
         ])
-        A = mm.SimpleArrayComplex128(array=self.A_c2x2)
-        B = mm.SimpleArrayComplex128(array=B_np)
-        X = mm.lu_solve(A, B)
+        A = sc.SimpleArrayComplex128(array=self.A_c2x2)
+        B = sc.SimpleArrayComplex128(array=B_np)
+        X = sc.lu_solve(A, B)
         self.assertEqual(X.shape, (2, 3))
         np.testing.assert_allclose(
             self.A_c2x2 @ np.array(X), B_np, rtol=1e-12, atol=1e-12)
@@ -1033,8 +1033,8 @@ class TestLuInv(unittest.TestCase):
 
     def test_inv_2x2_matches_known_inverse(self):
         # 2x2 against a hand-computed inverse, also checks output shape.
-        A = mm.SimpleArrayFloat64(array=self.A_2x2)
-        A_inv = mm.lu_inv(A)
+        A = sc.SimpleArrayFloat64(array=self.A_2x2)
+        A_inv = sc.lu_inv(A)
         self.assertEqual(A_inv.shape, (2, 2))
         np.testing.assert_allclose(
             np.array(A_inv), self.A_2x2_inv_expected,
@@ -1042,16 +1042,16 @@ class TestLuInv(unittest.TestCase):
 
     def test_inv_diagonal_matches_elementwise_reciprocal(self):
         # Diagonal matrix: inverse must be elementwise 1/diag.
-        A = mm.SimpleArrayFloat64(array=self.A_diag)
-        A_inv = np.array(mm.lu_inv(A))
+        A = sc.SimpleArrayFloat64(array=self.A_diag)
+        A_inv = np.array(sc.lu_inv(A))
         np.testing.assert_allclose(
             A_inv, self.A_diag_inv_expected, rtol=1e-12, atol=1e-14)
 
     def test_inv_of_identity_is_identity(self):
         # Identity edge case: inv(I) must be I.
         identity = np.eye(4)
-        A = mm.SimpleArrayFloat64(array=identity)
-        A_inv = np.array(mm.lu_inv(A))
+        A = sc.SimpleArrayFloat64(array=identity)
+        A_inv = np.array(sc.lu_inv(A))
         np.testing.assert_allclose(A_inv, identity, rtol=1e-12, atol=1e-14)
 
     def test_inv_times_A_equals_identity(self):
@@ -1061,8 +1061,8 @@ class TestLuInv(unittest.TestCase):
             [4.0, -6.0, 0.0],
             [-2.0, 7.0, 2.0],
         ], dtype="float64")
-        A = mm.SimpleArrayFloat64(array=A_np)
-        A_inv = np.array(mm.lu_inv(A))
+        A = sc.SimpleArrayFloat64(array=A_np)
+        A_inv = np.array(sc.lu_inv(A))
         np.testing.assert_allclose(
             A_np @ A_inv, np.eye(3), rtol=1e-12, atol=1e-12)
         np.testing.assert_allclose(
@@ -1074,8 +1074,8 @@ class TestLuInv(unittest.TestCase):
             [2.0 + 1.0j, 1.0 - 1.0j],
             [0.0 + 1.0j, 3.0 + 0.0j],
         ], dtype="complex128")
-        A = mm.SimpleArrayComplex128(array=A_np)
-        A_inv = np.array(mm.lu_inv(A))
+        A = sc.SimpleArrayComplex128(array=A_np)
+        A_inv = np.array(sc.lu_inv(A))
         np.testing.assert_allclose(
             A_np @ A_inv, np.eye(2, dtype="complex128"),
             rtol=1e-12, atol=1e-12)
@@ -1086,24 +1086,24 @@ class TestLuDet(unittest.TestCase):
 
     def test_det_1x1_is_the_single_entry(self):
         A_np = np.array([[3.5]], dtype="float64")
-        A = mm.SimpleArrayFloat64(array=A_np)
-        self.assertAlmostEqual(mm.lu_det(A), 3.5, places=12)
+        A = sc.SimpleArrayFloat64(array=A_np)
+        self.assertAlmostEqual(sc.lu_det(A), 3.5, places=12)
 
     def test_det_2x2_matches_known_value(self):
         # A = [[4, 7], [2, 6]]; det = 4 * 6 - 7 * 2 = 10.
         A_np = np.array([[4.0, 7.0], [2.0, 6.0]], dtype="float64")
-        A = mm.SimpleArrayFloat64(array=A_np)
-        self.assertAlmostEqual(mm.lu_det(A), 10.0, places=12)
+        A = sc.SimpleArrayFloat64(array=A_np)
+        self.assertAlmostEqual(sc.lu_det(A), 10.0, places=12)
 
     def test_det_diagonal_is_product_of_diagonal(self):
         # det = product of the diagonal.
         A_np = np.diag(np.array([2.0, 4.0, 5.0], dtype="float64"))
-        A = mm.SimpleArrayFloat64(array=A_np)
-        self.assertAlmostEqual(mm.lu_det(A), 40.0, places=12)
+        A = sc.SimpleArrayFloat64(array=A_np)
+        self.assertAlmostEqual(sc.lu_det(A), 40.0, places=12)
 
     def test_det_of_identity_is_one(self):
-        A = mm.SimpleArrayFloat64(array=np.eye(5))
-        self.assertAlmostEqual(mm.lu_det(A), 1.0, places=12)
+        A = sc.SimpleArrayFloat64(array=np.eye(5))
+        self.assertAlmostEqual(sc.lu_det(A), 1.0, places=12)
 
     def test_det_sign_tracks_row_swaps(self):
         # The pivot row swap must flip the determinant sign (negative here).
@@ -1112,9 +1112,9 @@ class TestLuDet(unittest.TestCase):
             [1.0, 1.0, 1.0],
             [0.0, 1.0, 2.0],
         ], dtype="float64")
-        A = mm.SimpleArrayFloat64(array=A_np)
+        A = sc.SimpleArrayFloat64(array=A_np)
         np.testing.assert_allclose(
-            mm.lu_det(A), np.linalg.det(A_np), rtol=1e-9, atol=1e-12)
+            sc.lu_det(A), np.linalg.det(A_np), rtol=1e-9, atol=1e-12)
 
     def test_det_matches_numpy_for_general_matrix(self):
         # General non-symmetric 4x4 against numpy.
@@ -1124,9 +1124,9 @@ class TestLuDet(unittest.TestCase):
             [-2.0, 7.0, 2.0, 5.0],
             [1.0, 0.0, 8.0, -1.0],
         ], dtype="float64")
-        A = mm.SimpleArrayFloat64(array=A_np)
+        A = sc.SimpleArrayFloat64(array=A_np)
         np.testing.assert_allclose(
-            mm.lu_det(A), np.linalg.det(A_np), rtol=1e-12, atol=1e-12)
+            sc.lu_det(A), np.linalg.det(A_np), rtol=1e-12, atol=1e-12)
 
     def test_det_complex_matches_numpy(self):
         # Complex determinant against numpy.
@@ -1135,8 +1135,8 @@ class TestLuDet(unittest.TestCase):
             [0.0 + 1.0j, 3.0 + 0.0j, 1.0 + 2.0j],
             [1.0 + 0.0j, 2.0 - 1.0j, 0.0 + 1.0j],
         ], dtype="complex128")
-        A = mm.SimpleArrayComplex128(array=A_np)
-        det = mm.lu_det(A)
+        A = sc.SimpleArrayComplex128(array=A_np)
+        det = sc.lu_det(A)
         self.assertIsInstance(det, complex)
         np.testing.assert_allclose(
             det, np.linalg.det(A_np), rtol=1e-12, atol=1e-12)
@@ -1149,8 +1149,8 @@ class TestLuDet(unittest.TestCase):
             [4.0 + 0.0j, -1.0 + 2.0j, 1.0 + 1.0j],
             [1.0 - 1.0j, 5.0 + 0.0j, 2.0 + 3.0j],
         ], dtype="complex128")
-        A = mm.SimpleArrayComplex128(array=A_np)
-        det = mm.LuFactorizationComplex128(A).det()
+        A = sc.SimpleArrayComplex128(array=A_np)
+        det = sc.LuFactorizationComplex128(A).det()
         self.assertIsInstance(det, complex)
         np.testing.assert_allclose(
             det, np.linalg.det(A_np), rtol=1e-12, atol=1e-12)
@@ -1162,10 +1162,10 @@ class TestLuSimpleArrayMethods(unittest.TestCase):
 
     # (SimpleArray class, numpy dtype, tolerance)
     _FLOAT_CASES = [
-        (mm.SimpleArrayFloat32, np.float32, 1e-5),
-        (mm.SimpleArrayFloat64, np.float64, 1e-12),
-        (mm.SimpleArrayComplex64, np.complex64, 1e-5),
-        (mm.SimpleArrayComplex128, np.complex128, 1e-12),
+        (sc.SimpleArrayFloat32, np.float32, 1e-5),
+        (sc.SimpleArrayFloat64, np.float64, 1e-12),
+        (sc.SimpleArrayComplex64, np.complex64, 1e-5),
+        (sc.SimpleArrayComplex128, np.complex128, 1e-12),
     ]
 
     @staticmethod
@@ -1176,13 +1176,13 @@ class TestLuSimpleArrayMethods(unittest.TestCase):
         return A, b
 
     def test_solve_method_matches_free_function_for_all_dtypes(self):
-        # A.solve(b) must match mm.lu_solve(A, b) across float/complex dtypes.
+        # A.solve(b) must match sc.lu_solve(A, b) across float/complex dtypes.
         for sa_cls, np_dtype, tol in self._FLOAT_CASES:
             with self.subTest(cls=sa_cls.__name__):
                 A_np, b_np = self._build_system(np_dtype)
                 A = sa_cls(array=A_np)
                 b = sa_cls(array=b_np)
-                x_free = np.array(mm.lu_solve(A, b))
+                x_free = np.array(sc.lu_solve(A, b))
                 x_method = np.array(A.solve(b))
                 np.testing.assert_allclose(
                     x_method, x_free, rtol=tol, atol=tol)
@@ -1190,12 +1190,12 @@ class TestLuSimpleArrayMethods(unittest.TestCase):
                     A_np @ x_method, b_np, rtol=tol, atol=tol)
 
     def test_inv_method_matches_free_function_for_all_dtypes(self):
-        # A.inv() must match mm.lu_inv(A) across all float/complex dtypes.
+        # A.inv() must match sc.lu_inv(A) across all float/complex dtypes.
         for sa_cls, np_dtype, tol in self._FLOAT_CASES:
             with self.subTest(cls=sa_cls.__name__):
                 A_np, _ = self._build_system(np_dtype)
                 A = sa_cls(array=A_np)
-                inv_free = np.array(mm.lu_inv(A))
+                inv_free = np.array(sc.lu_inv(A))
                 inv_method = np.array(A.inv())
                 np.testing.assert_allclose(
                     inv_method, inv_free, rtol=tol, atol=tol)
@@ -1204,12 +1204,12 @@ class TestLuSimpleArrayMethods(unittest.TestCase):
                     rtol=tol, atol=tol)
 
     def test_det_method_matches_free_function_for_all_dtypes(self):
-        # A.det() must match mm.lu_det(A) across all float/complex dtypes.
+        # A.det() must match sc.lu_det(A) across all float/complex dtypes.
         for sa_cls, np_dtype, tol in self._FLOAT_CASES:
             with self.subTest(cls=sa_cls.__name__):
                 A_np, _ = self._build_system(np_dtype)
                 A = sa_cls(array=A_np)
-                det_free = mm.lu_det(A)
+                det_free = sc.lu_det(A)
                 det_method = A.det()
                 np.testing.assert_allclose(
                     det_method, det_free, rtol=tol, atol=tol)
@@ -1219,11 +1219,11 @@ class TestLuSimpleArrayMethods(unittest.TestCase):
     def test_solve_inv_det_absent_on_integer_types(self):
         # Integer/bool SimpleArrays must not expose .solve()/.inv()/.det().
         int_classes = (
-            mm.SimpleArrayBool,
-            mm.SimpleArrayInt8, mm.SimpleArrayInt16,
-            mm.SimpleArrayInt32, mm.SimpleArrayInt64,
-            mm.SimpleArrayUint8, mm.SimpleArrayUint16,
-            mm.SimpleArrayUint32, mm.SimpleArrayUint64,
+            sc.SimpleArrayBool,
+            sc.SimpleArrayInt8, sc.SimpleArrayInt16,
+            sc.SimpleArrayInt32, sc.SimpleArrayInt64,
+            sc.SimpleArrayUint8, sc.SimpleArrayUint16,
+            sc.SimpleArrayUint32, sc.SimpleArrayUint64,
         )
         for cls in int_classes:
             with self.subTest(cls=cls.__name__):
@@ -1238,19 +1238,19 @@ class TestLuErrorHandling(unittest.TestCase):
 
     def test_factorize_rejects_non_square(self):
         # Rectangular 2D input must raise a clear shape error.
-        A_rect = mm.SimpleArrayFloat64(array=np.array(
+        A_rect = sc.SimpleArrayFloat64(array=np.array(
             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype="float64"))
         with self.assertRaisesRegex(
                 ValueError, r"must be a square 2D SimpleArray"):
-            mm.lu_factorization(A_rect)
+            sc.lu_factorization(A_rect)
 
     def test_factorize_rejects_1d_input(self):
         # 1D input must raise the same shape error (not silently reshape).
-        A_1d = mm.SimpleArrayFloat64(array=np.array(
+        A_1d = sc.SimpleArrayFloat64(array=np.array(
             [1.0, 2.0, 3.0], dtype="float64"))
         with self.assertRaisesRegex(
                 ValueError, r"must be a square 2D SimpleArray"):
-            mm.lu_factorization(A_1d)
+            sc.lu_factorization(A_1d)
 
     def test_factorize_rejects_singular_duplicate_row(self):
         # Singular matrix (duplicate row) must raise the singular error.
@@ -1259,10 +1259,10 @@ class TestLuErrorHandling(unittest.TestCase):
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ], dtype="float64")
-        A = mm.SimpleArrayFloat64(array=A_sing)
+        A = sc.SimpleArrayFloat64(array=A_sing)
         with self.assertRaisesRegex(
                 RuntimeError, r"singular or near-singular"):
-            mm.lu_factorization(A)
+            sc.lu_factorization(A)
 
     def test_factorize_rejects_near_singular_tiny_eigenvalue(self):
         # A = v v^T + eps * I for v = [1, 1] has eigenvalues {2 + eps, eps}.
@@ -1273,48 +1273,48 @@ class TestLuErrorHandling(unittest.TestCase):
             [1.0 + eps, 1.0],
             [1.0, 1.0 + eps],
         ], dtype="float64")
-        A = mm.SimpleArrayFloat64(array=A_near_sing)
+        A = sc.SimpleArrayFloat64(array=A_near_sing)
         with self.assertRaisesRegex(
                 RuntimeError, r"singular or near-singular"):
-            mm.lu_factorization(A)
+            sc.lu_factorization(A)
 
     def test_solve_rejects_non_square_A(self):
         # lu_solve must reject rectangular A with the same shape error.
-        A_rect = mm.SimpleArrayFloat64(array=np.array(
+        A_rect = sc.SimpleArrayFloat64(array=np.array(
             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype="float64"))
-        b = mm.SimpleArrayFloat64(array=np.array(
+        b = sc.SimpleArrayFloat64(array=np.array(
             [1.0, 2.0], dtype="float64"))
         with self.assertRaisesRegex(
                 ValueError, r"must be a square 2D SimpleArray"):
-            mm.lu_solve(A_rect, b)
+            sc.lu_solve(A_rect, b)
 
     def test_solve_rejects_1d_dimension_mismatch(self):
         # 1D rhs length must match A's dimension; otherwise raise.
-        A = mm.SimpleArrayFloat64(array=np.array(
+        A = sc.SimpleArrayFloat64(array=np.array(
             [[1.0, 2.0], [3.0, 4.0]], dtype="float64"))
-        b_wrong = mm.SimpleArrayFloat64(array=np.array(
+        b_wrong = sc.SimpleArrayFloat64(array=np.array(
             [1.0, 2.0, 3.0], dtype="float64"))
         with self.assertRaisesRegex(ValueError, r"dimension mismatch"):
-            mm.lu_solve(A, b_wrong)
+            sc.lu_solve(A, b_wrong)
 
     def test_solve_rejects_2d_dimension_mismatch(self):
         # 2D rhs row-count must match A's dimension; otherwise raise.
-        A = mm.SimpleArrayFloat64(array=np.array(
+        A = sc.SimpleArrayFloat64(array=np.array(
             [[1.0, 2.0], [3.0, 4.0]], dtype="float64"))
-        B_wrong = mm.SimpleArrayFloat64(array=np.array([
+        B_wrong = sc.SimpleArrayFloat64(array=np.array([
             [1.0, 2.0], [3.0, 4.0], [5.0, 6.0],
         ], dtype="float64"))
         with self.assertRaisesRegex(ValueError, r"dimension mismatch"):
-            mm.lu_solve(A, B_wrong)
+            sc.lu_solve(A, B_wrong)
 
     def test_solve_rejects_3d_rhs(self):
         # rhs must be 1D or 2D; 3D input must raise.
-        A = mm.SimpleArrayFloat64(array=np.array(
+        A = sc.SimpleArrayFloat64(array=np.array(
             [[1.0, 2.0], [3.0, 4.0]], dtype="float64"))
-        b_3d = mm.SimpleArrayFloat64(array=np.array(
+        b_3d = sc.SimpleArrayFloat64(array=np.array(
             [[[1.0], [2.0]], [[3.0], [4.0]]], dtype="float64"))
         with self.assertRaisesRegex(ValueError, r"b must be 1D or 2D"):
-            mm.lu_solve(A, b_3d)
+            sc.lu_solve(A, b_3d)
 
     def test_solve_rejects_singular(self):
         # Singular A must cause lu_solve to raise rather than return garbage.
@@ -1323,19 +1323,19 @@ class TestLuErrorHandling(unittest.TestCase):
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ], dtype="float64")
-        A = mm.SimpleArrayFloat64(array=A_sing)
-        b = mm.SimpleArrayFloat64(array=np.array(
+        A = sc.SimpleArrayFloat64(array=A_sing)
+        b = sc.SimpleArrayFloat64(array=np.array(
             [1.0, 2.0, 3.0], dtype="float64"))
         with self.assertRaises(RuntimeError):
-            mm.lu_solve(A, b)
+            sc.lu_solve(A, b)
 
     def test_inv_rejects_non_square(self):
         # lu_inv must reject rectangular input with the same shape error.
-        A_rect = mm.SimpleArrayFloat64(array=np.array(
+        A_rect = sc.SimpleArrayFloat64(array=np.array(
             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype="float64"))
         with self.assertRaisesRegex(
                 ValueError, r"must be a square 2D SimpleArray"):
-            mm.lu_inv(A_rect)
+            sc.lu_inv(A_rect)
 
     def test_inv_rejects_singular(self):
         # Singular A must cause lu_inv to raise rather than return garbage.
@@ -1344,8 +1344,8 @@ class TestLuErrorHandling(unittest.TestCase):
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ], dtype="float64")
-        A = mm.SimpleArrayFloat64(array=A_sing)
+        A = sc.SimpleArrayFloat64(array=A_sing)
         with self.assertRaises(RuntimeError):
-            mm.lu_inv(A)
+            sc.lu_inv(A)
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

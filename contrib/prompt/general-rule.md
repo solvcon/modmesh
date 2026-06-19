@@ -40,7 +40,7 @@ Flag the other for cleanup. Don't blend conflicting patterns.
 
 ## Rule 8 -- Read before you write
 Before adding code, read exports, immediate callers, shared utilities.
-Specifically for modmesh: before editing a `wrap_*.cpp` read its corresponding
+Specifically for solvcon: before editing a `wrap_*.cpp` read its corresponding
 C++ source; before editing `SimpleArray` / `ConcreteBuffer` / `BufferExpander`
 check their `buffer/pymod/` wrappers; before changing a pybind11 binding check
 the Python tests in `tests/` that exercise it. "Looks orthogonal" is dangerous.

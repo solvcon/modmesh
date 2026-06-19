@@ -6,21 +6,21 @@ import typing
 import numpy
 import unittest
 
-import modmesh
-from modmesh import profiling
-from modmesh.profiling import _result
+import solvcon
+from solvcon import profiling
+from solvcon.profiling import _result
 
 
 class TestProfilingResultPrinter(unittest.TestCase):
     def run_profile_function(self):
-        _ = modmesh.CallProfilerProbe("numpy_arange_100")
+        _ = solvcon.CallProfilerProbe("numpy_arange_100")
         numpy.arange(0, 100, dtype="uint32")
 
     def setUp(self):
-        modmesh.call_profiler.reset()
+        solvcon.call_profiler.reset()
         self.run_profile_function()
         result: dict[str, typing.Any] = (
-            modmesh.call_profiler.result()["children"])
+            solvcon.call_profiler.result()["children"])
 
         self.profiling_result_fixture = result
 

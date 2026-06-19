@@ -3,13 +3,13 @@
 
 import functools
 import numpy as np
-import modmesh
+import solvcon
 
 
 def profile_function(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        _ = modmesh.CallProfilerProbe(func.__name__)
+        _ = solvcon.CallProfilerProbe(func.__name__)
         result = func(*args, **kwargs)
         return result
 
@@ -18,9 +18,9 @@ def profile_function(func):
 
 def make_container(data):
     if np.issubdtype(data.dtype, np.float32):
-        return modmesh.SimpleArrayFloat32(array=data)
+        return solvcon.SimpleArrayFloat32(array=data)
     elif np.issubdtype(data.dtype, np.float64):
-        return modmesh.SimpleArrayFloat64(array=data)
+        return solvcon.SimpleArrayFloat64(array=data)
     raise ValueError(f"Unsupported dtype: {data.dtype}")
 
 
@@ -41,7 +41,7 @@ def profile_matmul_blas_sa(lhs, rhs):
 
 def profile_matmul_fast_sa(lhs, rhs, tile_x, tile_y, tile_z):
     name = f"profile_matmul_fast_sa_{tile_x}_{tile_y}_{tile_z}"
-    _ = modmesh.CallProfilerProbe(name)
+    _ = solvcon.CallProfilerProbe(name)
     return lhs.matmul_fast(rhs, tile_x=tile_x, tile_y=tile_y, tile_z=tile_z)
 
 
@@ -60,7 +60,7 @@ def profile_matmul_operation(dtype, shapes, it=10):
         rhs = make_data(dtype, (m, m))
         lhs_sa = make_container(lhs)
         rhs_sa = make_container(rhs)
-        modmesh.call_profiler.reset()
+        solvcon.call_profiler.reset()
         for _ in range(it):
             profile_matmul_np(lhs, rhs)
             profile_matmul_naive_sa(lhs_sa, rhs_sa)
@@ -68,7 +68,7 @@ def profile_matmul_operation(dtype, shapes, it=10):
             for tile_x, tile_y, tile_z in tile_configs:
                 profile_matmul_fast_sa(lhs_sa, rhs_sa, tile_x, tile_y, tile_z)
 
-        res = modmesh.call_profiler.result()["children"]
+        res = solvcon.call_profiler.result()["children"]
         out = {}
         for r in res:
             name = r["name"].replace("profile_matmul_", "")

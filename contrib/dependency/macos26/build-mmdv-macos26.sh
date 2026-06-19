@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Build modmesh's runtime dependencies from source on Ubuntu 24.04, with no
+# Build solvcon's runtime dependencies from source on Ubuntu 24.04, with no
 # dependency on the devenv tool.
 #
 # 4 sections (BASE, PYTHON, NUMPY, QT) are guarded by the corresponding
@@ -20,7 +20,7 @@
 # to use an existing libclang (e.g. a brew llvm) instead of fetching.
 #
 # Apple Silicon (arm64) is the assumed default.  The script also runs on Intel
-# Macs, but modmesh does not plan to support Intel Macs.
+# Macs, but solvcon does not plan to support Intel Macs.
 #
 # Python is built --enable-shared (matching the Ubuntu script) into
 # ${MMDV_USRDIR}, rather than --enable-framework.  Python.framework support
@@ -32,7 +32,7 @@
 # not packaged via brew by default; Python is built with
 # --with-system-libmpdec=no to use its bundled copy.  tk-dev / gdbm are not
 # included in the brew prereqs: tkinter and dbm.gnu are not load-bearing for
-# modmesh, and including them would force every user to install tcl-tk and gdbm
+# solvcon, and including them would force every user to install tcl-tk and gdbm
 # even when they will never import them.  xcb / X11 prereqs do not apply: Qt on
 # macOS uses the cocoa platform plugin, not xcb.
 #
@@ -77,7 +77,7 @@
 #       and Qt version.
 #     MMDV_DLDIR: Directory for downloaded tarballs (real dir or symlink,
 #       depending on MMDV_SHARED_DLDIR).
-#     MMDV_SHARED_DLDIR: Shared cache for downloaded tarballs across modmesh
+#     MMDV_SHARED_DLDIR: Shared cache for downloaded tarballs across solvcon
 #       development environments (mmdvs).
 #     BREW_PREFIX: Homebrew install prefix (auto-detected from `brew
 #       --prefix`; falls back to /opt/homebrew then /usr/local).
@@ -202,7 +202,7 @@ fi
 MMDV_BASE=${MMDV_BASE:-${MMDV_PREFIX}-py${PYTHON_VERSION}-qt${QT_MAJOR_VER}.${QT_SUB_VER}}
 # Directory for downloaded tarballs.
 MMDV_DLDIR=${MMDV_DLDIR:-${MMDV_BASE}/downloaded}
-# Shared cache for downloaded tarballs across modmesh development environments
+# Shared cache for downloaded tarballs across solvcon development environments
 # (mmdvs).  When non-empty, ${MMDV_DLDIR} is created as a symlink that points
 # here.  The "-" (not ":-") form lets the caller explicitly set
 # MMDV_SHARED_DLDIR= to opt out and keep a per-mmdv directory instead.
@@ -833,7 +833,7 @@ build_qt() {
     cfgcmd+=("-DCMAKE_PREFIX_PATH=${MMDV_USRDIR}")
     # Skip Qt's build-time Xcode-version check: it runs `xcrun xcodebuild
     # -version` and aborts ("Can't determine Xcode version.  Is Xcode
-    # installed?") on a CLT-only machine -- the common modmesh dev setup --
+    # installed?") on a CLT-only machine -- the common solvcon dev setup --
     # where xcodebuild (shipped only with the full Xcode.app) is absent.  Qt
     # builds fine with Apple clang from the Command Line Tools; only the
     # version probe needs disabling.  Qt 6.11 also supports the macOS 26 SDK
@@ -867,7 +867,7 @@ build_pyside6() {
   download_md5 "${fn}" "${url}" a6fe3db5855d3cd09a381d0aca7d7f5e
   unpack "${fn}" "${full}"
   # CMake 3.27+ auto-adds the Homebrew prefix to its system search path on
-  # macOS.  With brew's `qt` and `pyside` formulae installed (the modmesh macOS
+  # macOS.  With brew's `qt` and `pyside` formulae installed (the solvcon macOS
   # VM setup does `brew install ... qt pyside`), pyside-setup's find_package
   # calls resolve Qt6 / Shiboken6 / PySide6 to brew's copies instead of the
   # ones this mmdv just built.  That mixes incompatible Qt versions (brew's

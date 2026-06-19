@@ -508,13 +508,13 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
     static pybind11::object take_along_axis(wrapped_type & self, pybind11::object const & indices)
     {
         std::string py_typename(pybind11::detail::obj_class_name(indices.ptr()));
-        const std::size_t found = py_typename.find("_modmesh.SimpleArray");
+        const std::size_t found = py_typename.find("_solvcon.SimpleArray");
         if (found == std::string::npos)
         {
             return pybind11::cast(std::move(self));
         }
 
-        py_typename.replace(0, strlen("_modmesh.SimpleArray"), "");
+        py_typename.replace(0, strlen("_solvcon.SimpleArray"), "");
         py_typename[0] = tolower(py_typename[0]);
         const DataType dt(py_typename);
 
@@ -543,13 +543,13 @@ class MODMESH_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
     static pybind11::object take_along_axis_simd(wrapped_type & self, pybind11::object const & indices)
     {
         std::string py_typename(pybind11::detail::obj_class_name(indices.ptr()));
-        const std::size_t found = py_typename.find("_modmesh.SimpleArray");
+        const std::size_t found = py_typename.find("_solvcon.SimpleArray");
         if (found == std::string::npos)
         {
             return pybind11::cast(std::move(self));
         }
 
-        py_typename.replace(0, strlen("_modmesh.SimpleArray"), "");
+        py_typename.replace(0, strlen("_solvcon.SimpleArray"), "");
         py_typename[0] = tolower(py_typename[0]);
         const DataType dt(py_typename);
 

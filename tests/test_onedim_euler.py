@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-from modmesh.onedim import euler1d
+from solvcon.onedim import euler1d
 
 
 class Euler1DSolverTC(unittest.TestCase):

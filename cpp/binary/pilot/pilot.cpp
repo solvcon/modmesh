@@ -6,7 +6,7 @@
 #include <modmesh/python/python.hpp> // Must be the first include.
 #include <modmesh/python/module.hpp>
 
-PYBIND11_EMBEDDED_MODULE(_modmesh, mod) // NOLINT
+PYBIND11_EMBEDDED_MODULE(_solvcon, mod) // NOLINT
 {
     modmesh::python::initialize(mod);
 }

@@ -3,13 +3,13 @@
 
 import functools
 import numpy as np
-import modmesh
+import solvcon
 
 
 def profile_function(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        _ = modmesh.CallProfilerProbe(func.__name__)
+        _ = solvcon.CallProfilerProbe(func.__name__)
         result = func(*args, **kwargs)
         return result
     return wrapper
@@ -17,25 +17,25 @@ def profile_function(func):
 
 def make_container(data):
     if np.isdtype(data.dtype, np.uint8):
-        return modmesh.SimpleArrayUint8(array=data)
+        return solvcon.SimpleArrayUint8(array=data)
     elif np.isdtype(data.dtype, np.uint16):
-        return modmesh.SimpleArrayUint16(array=data)
+        return solvcon.SimpleArrayUint16(array=data)
     elif np.isdtype(data.dtype, np.uint32):
-        return modmesh.SimpleArrayUint32(array=data)
+        return solvcon.SimpleArrayUint32(array=data)
     elif np.isdtype(data.dtype, np.uint64):
-        return modmesh.SimpleArrayUint64(array=data)
+        return solvcon.SimpleArrayUint64(array=data)
     if np.isdtype(data.dtype, np.int8):
-        return modmesh.SimpleArrayInt8(array=data)
+        return solvcon.SimpleArrayInt8(array=data)
     elif np.isdtype(data.dtype, np.int16):
-        return modmesh.SimpleArrayInt16(array=data)
+        return solvcon.SimpleArrayInt16(array=data)
     elif np.isdtype(data.dtype, np.int32):
-        return modmesh.SimpleArrayInt32(array=data)
+        return solvcon.SimpleArrayInt32(array=data)
     elif np.isdtype(data.dtype, np.int64):
-        return modmesh.SimpleArrayInt64(array=data)
+        return solvcon.SimpleArrayInt64(array=data)
     elif np.isdtype(data.dtype, np.float32):
-        return modmesh.SimpleArrayFloat32(array=data)
+        return solvcon.SimpleArrayFloat32(array=data)
     elif np.isdtype(data.dtype, np.float64):
-        return modmesh.SimpleArrayFloat64(array=data)
+        return solvcon.SimpleArrayFloat64(array=data)
 
 
 @profile_function
@@ -142,13 +142,13 @@ def make_data(dtype, min_val, max_val, N=2 ** 22):
 def profile_arithmetic_operation(op, val_range, prof_func, dtype, it=10):
     N = 2 ** 22
 
-    modmesh.call_profiler.reset()
+    solvcon.call_profiler.reset()
     for _ in range(it):
         src1 = make_data(dtype, val_range[0], val_range[1], N)
         src2 = make_data(dtype, val_range[0], val_range[1], N)
         prof_func(src1, src2)
 
-    res = modmesh.call_profiler.result()["children"]
+    res = solvcon.call_profiler.result()["children"]
 
     print(f"## {op} N = 4M range: $[{val_range[0]}, {val_range[1]}]$ "
           f"type: `{dtype}`\n")

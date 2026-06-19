@@ -7,14 +7,14 @@ import os
 
 import sys
 
-from modmesh import pylibmgr
+from solvcon import pylibmgr
 
 
 class pylibmgrTC(unittest.TestCase):
 
     def test_pylibmgr_search_library_root(self):
-        # This test case assumes that modmesh third-party lib root's name is
-        # thirdparty, it is located at modmesh project root: /path/to/modmesh.
+        # This test case assumes that solvcon third-party lib root's name is
+        # thirdparty, it is located at solvcon project root: /path/to/solvcon.
         pylibmgr.search_library_root(os.getcwd(), 'thirdparty')
         finder = next(finder for finder in sys.meta_path
                       if isinstance(finder, pylibmgr.ModmeshPathFinder))

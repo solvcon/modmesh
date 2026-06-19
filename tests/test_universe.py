@@ -6,8 +6,8 @@ import unittest
 
 import numpy as np
 
-import modmesh
-from modmesh import testing
+import solvcon
+from solvcon import testing
 
 
 class WorldTB(testing.TestBase):
@@ -212,13 +212,13 @@ class WorldFp32TC(WorldTB, unittest.TestCase):
 
     def setUp(self):
         self.dtype = 'float32'
-        self.SimpleArray = modmesh.SimpleArrayFloat32
-        self.Point = modmesh.Point3dFp32
-        self.Segment = modmesh.Segment3dFp32
-        self.Bezier = modmesh.Bezier3dFp32
-        self.SegmentPad = modmesh.SegmentPadFp32
-        self.CurvePad = modmesh.CurvePadFp32
-        self.World = modmesh.WorldFp32
+        self.SimpleArray = solvcon.SimpleArrayFloat32
+        self.Point = solvcon.Point3dFp32
+        self.Segment = solvcon.Segment3dFp32
+        self.Bezier = solvcon.Bezier3dFp32
+        self.SegmentPad = solvcon.SegmentPadFp32
+        self.CurvePad = solvcon.CurvePadFp32
+        self.World = solvcon.WorldFp32
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -226,20 +226,20 @@ class WorldFp32TC(WorldTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_type(self):
-        self.assertIs(modmesh.WorldFp32, self.World)
+        self.assertIs(solvcon.WorldFp32, self.World)
 
 
 class WorldFp64TC(WorldTB, unittest.TestCase):
 
     def setUp(self):
         self.dtype = 'float64'
-        self.SimpleArray = modmesh.SimpleArrayFloat64
-        self.Point = modmesh.Point3dFp64
-        self.Segment = modmesh.Segment3dFp64
-        self.Bezier = modmesh.Bezier3dFp64
-        self.SegmentPad = modmesh.SegmentPadFp64
-        self.CurvePad = modmesh.CurvePadFp64
-        self.World = modmesh.WorldFp64
+        self.SimpleArray = solvcon.SimpleArrayFloat64
+        self.Point = solvcon.Point3dFp64
+        self.Segment = solvcon.Segment3dFp64
+        self.Bezier = solvcon.Bezier3dFp64
+        self.SegmentPad = solvcon.SegmentPadFp64
+        self.CurvePad = solvcon.CurvePadFp64
+        self.World = solvcon.WorldFp64
 
     def assert_allclose(self, *args, **kw):
         if 'rtol' not in kw:
@@ -247,14 +247,14 @@ class WorldFp64TC(WorldTB, unittest.TestCase):
         return super().assert_allclose(*args, **kw)
 
     def test_type(self):
-        self.assertIs(modmesh.WorldFp64, self.World)
+        self.assertIs(solvcon.WorldFp64, self.World)
 
 
 class WorldShapeTC(unittest.TestCase):
     """Shape registry: add, translate, remove, clear."""
 
     def setUp(self):
-        self.w = modmesh.WorldFp64()
+        self.w = solvcon.WorldFp64()
 
     def test_add_triangle(self):
         sid = self.w.add_triangle(0, 0, 1, 0, 0, 1)
@@ -320,9 +320,9 @@ class WorldShapeTC(unittest.TestCase):
         self.w.add_triangle(0, 0, 1, 0, 0, 1)
         self.w.add_triangle(2, 2, 3, 2, 2, 3)
         self.w.add_segment(
-            s=modmesh.Segment3dFp64(
-                modmesh.Point3dFp64(0, 0),
-                modmesh.Point3dFp64(1, 1),
+            s=solvcon.Segment3dFp64(
+                solvcon.Point3dFp64(0, 0),
+                solvcon.Point3dFp64(1, 1),
             )
         )
         self.w.clear()
@@ -334,7 +334,7 @@ class WorldViewportTC(unittest.TestCase):
     """R-tree spatial index and viewport query."""
 
     def setUp(self):
-        self.w = modmesh.WorldFp64()
+        self.w = solvcon.WorldFp64()
 
     def test_all_visible(self):
         self.w.add_triangle(0, 0, 1, 0, 0, 1)
@@ -369,7 +369,7 @@ class WorldLineTC(unittest.TestCase):
     """add_line: one segment per shape."""
 
     def setUp(self):
-        self.w = modmesh.WorldFp64()
+        self.w = solvcon.WorldFp64()
 
     def test_add_line(self):
         sid = self.w.add_line(0, 0, 3, 4)
@@ -401,7 +401,7 @@ class WorldRectangleTC(unittest.TestCase):
     """add_rectangle and specialized add_square."""
 
     def setUp(self):
-        self.w = modmesh.WorldFp64()
+        self.w = solvcon.WorldFp64()
 
     def test_add_rectangle(self):
         sid = self.w.add_rectangle(0, 0, 4, 2)
@@ -442,7 +442,7 @@ class WorldEllipseTC(unittest.TestCase):
     """add_ellipse and specialized add_circle."""
 
     def setUp(self):
-        self.w = modmesh.WorldFp64()
+        self.w = solvcon.WorldFp64()
 
     def test_add_ellipse(self):
         sid = self.w.add_ellipse(0, 0, 2, 1)
@@ -496,7 +496,7 @@ class WorldEllipseTC(unittest.TestCase):
         self.assertAlmostEqual(b2[0][1], 0.0)
 
     def test_circle_is_ellipse_with_equal_radii(self):
-        w2 = modmesh.WorldFp64()
+        w2 = solvcon.WorldFp64()
         self.w.add_circle(1, 2, 3)
         w2.add_ellipse(1, 2, 3, 3)
         for i in range(4):

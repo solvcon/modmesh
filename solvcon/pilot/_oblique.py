@@ -6,7 +6,7 @@
 Example pilot apps for the oblique-shock reflection.
 
 The mesh construction, boundary tagging, and solver driver live in
-:mod:`modmesh.multidim.euler.oblique`.  :class:`ObliqueShockMesh` draws the
+:mod:`solvcon.multidim.euler.oblique`.  :class:`ObliqueShockMesh` draws the
 mesh in a 3D widget and reports the boundary classification (inlet / slip wall
 / outflow) to the console; :class:`ObliqueShockSolver` runs the Euler driver
 and animates the evolving density as a flat 2D color field, drawn with the

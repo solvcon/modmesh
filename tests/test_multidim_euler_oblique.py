@@ -16,8 +16,8 @@ import unittest
 
 from numpy.testing import assert_almost_equal
 
-import modmesh
-from modmesh.multidim.euler.oblique import ObliqueShock, ObliqueShockMesher
+import solvcon
+from solvcon.multidim.euler.oblique import ObliqueShock, ObliqueShockMesher
 
 
 class _ObliqueMeshBase:
@@ -181,7 +181,7 @@ class ObliqueShockQuadMeshTC(_ObliqueMeshBase, unittest.TestCase):
 
     CELL_TYPE = 'quad'
     CELLS_PER_BOX = 1
-    CLTPN = modmesh.StaticMesh.QUADRILATERAL
+    CLTPN = solvcon.StaticMesh.QUADRILATERAL
 
 
 class ObliqueShockTriangleMeshTC(_ObliqueMeshBase, _SingleBoundaryFaceTB,
@@ -190,7 +190,7 @@ class ObliqueShockTriangleMeshTC(_ObliqueMeshBase, _SingleBoundaryFaceTB,
 
     CELL_TYPE = 'triangle'
     CELLS_PER_BOX = 2
-    CLTPN = modmesh.StaticMesh.TRIANGLE
+    CLTPN = solvcon.StaticMesh.TRIANGLE
 
 
 class ObliqueShockUnstructuredMeshTC(_ObliqueMeshBase, _SingleBoundaryFaceTB,
@@ -202,7 +202,7 @@ class ObliqueShockUnstructuredMeshTC(_ObliqueMeshBase, _SingleBoundaryFaceTB,
 
     CELL_TYPE = 'unstructured'
     CELLS_PER_BOX = None  # not box-based; test_mesh_shape is overridden
-    CLTPN = modmesh.StaticMesh.TRIANGLE
+    CLTPN = solvcon.StaticMesh.TRIANGLE
 
     def _body_connectivity(self, mh):
         # The body cells as (type, node-id tuple) pairs, plus the node

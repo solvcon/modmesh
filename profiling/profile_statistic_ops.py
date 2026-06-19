@@ -6,13 +6,13 @@ import functools
 import numpy as np
 import matplotlib.pyplot as plt
 
-import modmesh
+import solvcon
 
 
 def profile_function(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        _ = modmesh.CallProfilerProbe(func.__name__)
+        _ = solvcon.CallProfilerProbe(func.__name__)
         result = func(*args, **kwargs)
         return result
     return wrapper
@@ -22,15 +22,15 @@ def make_container(data, dtype=None):
     if dtype is None:
         dtype = data.dtype
     if np.issubdtype(dtype, np.float64):
-        return modmesh.SimpleArrayFloat64(array=data)
+        return solvcon.SimpleArrayFloat64(array=data)
     elif np.issubdtype(dtype, np.float32):
-        return modmesh.SimpleArrayFloat32(array=data)
+        return solvcon.SimpleArrayFloat32(array=data)
     elif np.issubdtype(dtype, np.int64):
-        return modmesh.SimpleArrayInt64(array=data)
+        return solvcon.SimpleArrayInt64(array=data)
     elif np.issubdtype(dtype, np.int32):
-        return modmesh.SimpleArrayInt32(array=data)
+        return solvcon.SimpleArrayInt32(array=data)
     elif np.issubdtype(dtype, np.int8):
-        return modmesh.SimpleArrayInt8(array=data)
+        return solvcon.SimpleArrayInt8(array=data)
     else:
         raise ValueError(f"Unsupported dtype: {dtype}")
 
@@ -118,7 +118,7 @@ def profile_stat_op(op, prof_func_np, prof_func_sa, dtype, sizes, it=10,
                 else:
                     src = np.random.randint(-1000, 1000, N, dtype=dtype)
             src_sa = make_container(src, dtype)
-        modmesh.call_profiler.reset()
+        solvcon.call_profiler.reset()
         for _ in range(it):
             if axis is not None:
                 prof_func_np(src, axis=axis)
@@ -126,7 +126,7 @@ def profile_stat_op(op, prof_func_np, prof_func_sa, dtype, sizes, it=10,
             else:
                 prof_func_np(src)
                 prof_func_sa(src_sa)
-        res = modmesh.call_profiler.result()["children"]
+        res = solvcon.call_profiler.result()["children"]
         out = {}
         for r in res:
             name = r["name"].replace(f"profile_{op}_", "")

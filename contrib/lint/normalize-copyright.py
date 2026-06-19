@@ -4,7 +4,7 @@
 # BSD 3-Clause License, see COPYING
 
 """
-Normalize the copyright header in modmesh source files.
+Normalize the copyright header in solvcon source files.
 
 With ``CONTRIBUTORS.md`` holding the contributor list, each per-file
 header is reduced to the copyright line plus a pointer to the full

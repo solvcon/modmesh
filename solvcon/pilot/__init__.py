@@ -3,11 +3,11 @@
 
 
 """
-Drawing and visualization sub-system of modmesh.
+Drawing and visualization sub-system of solvcon.
 """
 
 # The "pilot" sub-package houses all GUI related code and should not be
-# imported to the top-level "modmesh" namespace.
+# imported to the top-level "solvcon" namespace.
 
 # Import _pilot_core first for C++ code.
 from ._pilot_core import (  # noqa: F401

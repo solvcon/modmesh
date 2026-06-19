@@ -4,7 +4,7 @@ import unittest
 import numpy as np
 from numpy.testing import assert_almost_equal
 
-import modmesh
+import solvcon
 
 
 class StaticMesh2dQuadSingleTC(unittest.TestCase):
@@ -13,9 +13,9 @@ class StaticMesh2dQuadSingleTC(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=2, nnode=4, nface=0, ncell=1)
+        mh = solvcon.StaticMesh(ndim=2, nnode=4, nface=0, ncell=1)
         mh.ndcrd[:, :] = [(0, 0), (1, 0), (1, 1), (0, 1)]
-        mh.cltpn.fill(modmesh.StaticMesh.QUADRILATERAL)
+        mh.cltpn.fill(solvcon.StaticMesh.QUADRILATERAL)
         mh.clnds[:, :5] = [(4, 0, 1, 2, 3)]
         mh.build_interior(do_metric=True)
         mh.build_boundary()
@@ -61,13 +61,13 @@ class StaticMesh2dQuadGridTC(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=2, nnode=9, nface=0, ncell=4)
+        mh = solvcon.StaticMesh(ndim=2, nnode=9, nface=0, ncell=4)
         mh.ndcrd[:, :] = [
             (0.0, 0.0), (0.5, 0.0), (1.0, 0.0),
             (0.0, 0.5), (0.5, 0.5), (1.0, 0.5),
             (0.0, 1.0), (0.5, 1.0), (1.0, 1.0),
         ]
-        mh.cltpn.fill(modmesh.StaticMesh.QUADRILATERAL)
+        mh.cltpn.fill(solvcon.StaticMesh.QUADRILATERAL)
         mh.clnds[:, :5] = [
             (4, 0, 1, 4, 3), (4, 1, 2, 5, 4),
             (4, 3, 4, 7, 6), (4, 4, 5, 8, 7),
@@ -101,15 +101,15 @@ class StaticMesh2dMixedTC(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=2, nnode=6, nface=0, ncell=3)
+        mh = solvcon.StaticMesh(ndim=2, nnode=6, nface=0, ncell=3)
         mh.ndcrd[:, :] = [
             (0, 0), (1, 0), (2, 0),
             (0, 1), (1, 1), (2, 1),
         ]
         mh.cltpn[:] = [
-            modmesh.StaticMesh.QUADRILATERAL,
-            modmesh.StaticMesh.TRIANGLE,
-            modmesh.StaticMesh.TRIANGLE,
+            solvcon.StaticMesh.QUADRILATERAL,
+            solvcon.StaticMesh.TRIANGLE,
+            solvcon.StaticMesh.TRIANGLE,
         ]
         mh.clnds[:, :5] = (
             (4, 0, 1, 4, 3), (3, 1, 2, 4, 0), (3, 2, 5, 4, 0))
@@ -121,9 +121,9 @@ class StaticMesh2dMixedTC(unittest.TestCase):
     def test_cltpn_mix(self):
         self.assertEqual(
             list(self.mesh.cltpn),
-            [modmesh.StaticMesh.QUADRILATERAL,
-             modmesh.StaticMesh.TRIANGLE,
-             modmesh.StaticMesh.TRIANGLE])
+            [solvcon.StaticMesh.QUADRILATERAL,
+             solvcon.StaticMesh.TRIANGLE,
+             solvcon.StaticMesh.TRIANGLE])
 
     def test_face_count(self):
         self.assertEqual(8, self.mesh.nface)
@@ -152,7 +152,7 @@ class GmshMixedTQTC(unittest.TestCase):
         path = os.path.join(cls.DATADIR, "mixed_tq.msh")
         with open(path, 'rb') as f:
             data = f.read()
-        gmsh = modmesh.Gmsh(data)
+        gmsh = solvcon.Gmsh(data)
         cls.blk = gmsh.to_block()
 
     def test_node_count(self):
@@ -163,8 +163,8 @@ class GmshMixedTQTC(unittest.TestCase):
 
     def test_mixed_cell_types(self):
         types = set(self.blk.cltpn)
-        self.assertIn(modmesh.StaticMesh.TRIANGLE, types)
-        self.assertIn(modmesh.StaticMesh.QUADRILATERAL, types)
+        self.assertIn(solvcon.StaticMesh.TRIANGLE, types)
+        self.assertIn(solvcon.StaticMesh.QUADRILATERAL, types)
 
     def test_volume_sum(self):
         assert_almost_equal(sum(self.blk.clvol), 3.0, decimal=10)
@@ -183,9 +183,9 @@ class StaticMesh2dSingleTriEdgeTC(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        mh = modmesh.StaticMesh(ndim=2, nnode=3, nface=0, ncell=1)
+        mh = solvcon.StaticMesh(ndim=2, nnode=3, nface=0, ncell=1)
         mh.ndcrd[:, :] = [(0, 0), (1, 0), (0, 1)]
-        mh.cltpn.fill(modmesh.StaticMesh.TRIANGLE)
+        mh.cltpn.fill(solvcon.StaticMesh.TRIANGLE)
         mh.clnds[:, :4] = [(3, 0, 1, 2)]
         mh.build_interior(do_metric=True)
         mh.build_boundary()

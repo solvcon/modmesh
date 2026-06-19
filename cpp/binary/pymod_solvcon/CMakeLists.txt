@@ -5,30 +5,30 @@ cmake_minimum_required(VERSION 4.0.1)
 project(modmesh_pymod)
 
 pybind11_add_module(
-    _modmesh
+    _solvcon
     module.cpp
 )
 
 target_link_libraries(
-    _modmesh PUBLIC
+    _solvcon PUBLIC
     pybind11::module
     modmesh_primary
 )
 
 if (HIDE_SYMBOL)
-    set_target_properties(_modmesh PROPERTIES CXX_VISIBILITY_PRESET "hidden")
+    set_target_properties(_solvcon PROPERTIES CXX_VISIBILITY_PRESET "hidden")
 else () # HIDE_SYMBOL
-    set_target_properties(_modmesh PROPERTIES CXX_VISIBILITY_PRESET "default")
+    set_target_properties(_solvcon PROPERTIES CXX_VISIBILITY_PRESET "default")
 endif () # HIDE_SYMBOL
 
 target_compile_options(
-    _modmesh PRIVATE
+    _solvcon PRIVATE
     ${COMMON_COMPILER_OPTIONS}
 )
 
 if (CLANG_TIDY_EXE AND USE_CLANG_TIDY)
     set_target_properties(
-        _modmesh PROPERTIES
+        _solvcon PROPERTIES
         CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
     )
 endif ()
@@ -44,9 +44,9 @@ execute_process(
     OUTPUT_VARIABLE PYEXTSUFFIX
 )
 
-add_custom_target(_modmesh_py
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:_modmesh> ${MODMESH_PY_DIR}/../_modmesh${PYEXTSUFFIX}
-    DEPENDS _modmesh)
+add_custom_target(_solvcon_py
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:_solvcon> ${MODMESH_PY_DIR}/../_solvcon${PYEXTSUFFIX}
+    DEPENDS _solvcon)
 
 message(STATUS "CMAKE_INSTALL_INCLUDEDIR: ${CMAKE_INSTALL_INCLUDEDIR}")
 install(DIRECTORY ${MODMESH_INCLUDE_DIR}/modmesh DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

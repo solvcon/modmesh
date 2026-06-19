@@ -6,7 +6,7 @@ track: Track NASA flight dataset with Kalman Filter.
 
 How to download the dataset::
 
-  python3 -m modmesh.track.dataset
+  python3 -m solvcon.track.dataset
 """
 
 __all__ = [

@@ -1,7 +1,7 @@
 #!/bin/bash
 # .claude/hooks/check-source.sh
 #
-# PostToolUse hook for Write|Edit on modmesh source files (Claude Code).
+# PostToolUse hook for Write|Edit on solvcon source files (Claude Code).
 # postToolUse / afterFileEdit hook for Cursor (via .cursor/hooks.json).
 # Deterministic checks (per Rule 5): ASCII-only, no trailing
 # whitespace, modeline at EOF, Python <=79-char lines.

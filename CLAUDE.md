@@ -6,7 +6,7 @@ This file provides guidance to AI coding agents working in this repository
 
 ## Project Overview
 
-modmesh is a hybrid C++/Python library for solving conservation laws using the
+solvcon is a hybrid C++/Python library for solving conservation laws using the
 space-time Conservation Element and Solution Element (CESE) method with
 unstructured meshes. The codebase emphasizes:
 
@@ -46,7 +46,7 @@ the tools.
   or `gtests/`.
 - `python-style-review` -- judgment-call Python review (naming, test intent,
   project conventions). Scoped to `git diff`. Invoke after editing files in
-  `modmesh/` or `tests/`.
+  `solvcon/` or `tests/`.
 
 Skills inherit the caller's model rather than pinning their own. Deterministic
 style checks (ASCII, trailing whitespace, modeline, 79-char Python lines) are
@@ -73,12 +73,12 @@ owned by hooks, not skills.
 ## Build, Test, Lint, Format
 
 All workflows are driven through `make` from the repo root. The Makefile sets
-`PYTHONPATH=$(MODMESH_ROOT)` so the in-tree `_modmesh` extension is picked up
+`PYTHONPATH=$(MODMESH_ROOT)` so the in-tree `_solvcon` extension is picked up
 without installation, and works around macOS SIP stripping `DYLD_LIBRARY_PATH`.
 
 **Build**
 
-- `make` -- build the `_modmesh` Python extension (default target).
+- `make` -- build the `_solvcon` Python extension (default target).
 - `make pilot` -- build the Qt pilot GUI binary.
 - `make clean` / `make cmakeclean` -- remove build artifacts.
 
@@ -134,13 +134,13 @@ Build paths (`$(pyvminor)` is the active Python major+minor, e.g. `314`):
 
 ### Hybrid C++/Python Design
 
-modmesh uses a dual-layer hybrid architecture:
+solvcon uses a dual-layer hybrid architecture:
 
 1. **C++ Core** (`cpp/modmesh/`): High-performance numerical code
    - Compiled to native libraries with pybind11 bindings
-   - Exposed to Python through the `_modmesh` extension module
+   - Exposed to Python through the `_solvcon` extension module
 
-2. **Python Interface** (`modmesh/`): High-level API and utilities
+2. **Python Interface** (`solvcon/`): High-level API and utilities
    - Imports C++ components via `from .core import *`
    - Provides Python-native functionality (plotting, utilities, etc.)
 
@@ -167,7 +167,7 @@ See `cpp/modmesh/` for the current tree.
 
 ### Python Package Structure
 
-Python interface in `modmesh/`:
+Python interface in `solvcon/`:
 
 - `core.py`: Main Python API wrapping the C++ extension
 - `onedim/`: One-dimensional solver utilities
@@ -232,7 +232,7 @@ management.
 - CMake is the primary build system (minimum version 3.27)
 - Makefile wraps CMake for convenience
 - Python extension built via setuptools with custom CMake integration
-- Build output: `_modmesh.cpython-<version>-<platform>.so` in `modmesh/`
+- Build output: `_solvcon.cpython-<version>-<platform>.so` in `solvcon/`
 
 ### Dependencies
 
@@ -254,7 +254,7 @@ Install scripts available in `contrib/dependency/`
 ### Virtual Environments
 
 **IMPORTANT**: Using Python virtual environments (venv, conda) is **strongly
-discouraged** for modmesh development. The project is designed to work with
+discouraged** for solvcon development. The project is designed to work with
 system Python. Virtual environment bugs are not actively resolved.
 
 Use https://github.com/solvcon/devenv to build dependency from source and
@@ -268,7 +268,7 @@ any dependency requires user review and consent.
 
 ## Profiling System
 
-modmesh includes an integrated runtime profiler:
+solvcon includes an integrated runtime profiler:
 
 1. Enable with `MODMESH_PROFILE=ON` during build
 2. Use `toggle.py` API to enable/disable profiling regions
@@ -297,8 +297,8 @@ The pilot application (`cpp/binary/pilot/`) is a standalone Qt6-based viewer:
 
 ### Adding Python-Only Functionality
 
-1. Add a module to `modmesh/`.
-2. Update `modmesh/__init__.py` if needed.
+1. Add a module to `solvcon/`.
+2. Update `solvcon/__init__.py` if needed.
 3. Write tests in `tests/`.
 4. Update `setup.py` packages list if adding a new package.
 

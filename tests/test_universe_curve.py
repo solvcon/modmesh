@@ -4,9 +4,9 @@
 
 import unittest
 
-import modmesh as mm
+import solvcon as sc
 
-from modmesh.plot import curve
+from solvcon.plot import curve
 
 
 """
@@ -34,25 +34,25 @@ class EllipseTC(unittest.TestCase):
 
 class CurveSamplerTC(unittest.TestCase):
     def test_construction(self):
-        w = mm.WorldFp64()
+        w = sc.WorldFp64()
         curve.CurveSampler(w, curve.Ellipse(a=2.0, b=1.0))
 
     def test_draw_ellipse(self):
-        w = mm.WorldFp64()
+        w = sc.WorldFp64()
         sampler = curve.CurveSampler(w, curve.Ellipse(a=2.0, b=1.0))
         sampler.populate_points(npoint=20)
         sampler.draw_cbc()
         self.assertEqual(w.nbezier, 20)
 
     def test_draw_parabola(self):
-        w = mm.WorldFp64()
+        w = sc.WorldFp64()
         sampler = curve.CurveSampler(w, curve.Parabola(a=0.5))
         sampler.populate_points(npoint=20)
         sampler.draw_cbc()
         self.assertEqual(w.nbezier, 20)
 
     def test_draw_hyperbola(self):
-        w = mm.WorldFp64()
+        w = sc.WorldFp64()
         sampler = curve.CurveSampler(w, curve.Hyperbola(a=1.0, b=1.0))
         sampler.populate_points(npoint=20)
         sampler.draw_cbc()
@@ -129,12 +129,12 @@ class BezierSampleTC(unittest.TestCase):
 
 class BezierSamplerTC(unittest.TestCase):
     def test_construction(self):
-        w = mm.WorldFp64()
+        w = sc.WorldFp64()
         bs = curve.BezierSample.arch()
         curve.BezierSampler(w, bs)
 
     def test_draw(self):
-        w = mm.WorldFp64()
+        w = sc.WorldFp64()
         bs = curve.BezierSample.arch()
         sampler = curve.BezierSampler(w, bs)
         # nsample=10 is small enough to keep the test fast but large enough
@@ -149,7 +149,7 @@ class BezierSamplerTC(unittest.TestCase):
         self.assertEqual(w.nsegment, 11)
 
     def test_draw_no_control_polygon(self):
-        w = mm.WorldFp64()
+        w = sc.WorldFp64()
         bs = curve.BezierSample.arch()
         sampler = curve.BezierSampler(w, bs)
         sampler.draw(nsample=10, show_control_polygon=False)
@@ -159,7 +159,7 @@ class BezierSamplerTC(unittest.TestCase):
         self.assertEqual(w.nsegment, 8)
 
     def test_draw_no_control_points(self):
-        w = mm.WorldFp64()
+        w = sc.WorldFp64()
         bs = curve.BezierSample.arch()
         sampler = curve.BezierSampler(w, bs)
         sampler.draw(nsample=10, show_control_points=False)
@@ -168,7 +168,7 @@ class BezierSamplerTC(unittest.TestCase):
         self.assertEqual(w.nsegment, 3)
 
     def test_draw_curve_only(self):
-        w = mm.WorldFp64()
+        w = sc.WorldFp64()
         bs = curve.BezierSample.arch()
         sampler = curve.BezierSampler(w, bs)
         sampler.draw(nsample=10, show_control_polygon=False,

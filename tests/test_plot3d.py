@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-import modmesh
+import solvcon
 
 
 class Plot3dTC(unittest.TestCase):
@@ -18,7 +18,7 @@ class Plot3dTC(unittest.TestCase):
 0 0 1 1 0 0 1 1
 0 1 0 1 0 1 0 1
 """
-        plot3d_instance = modmesh.core.Plot3d(data.encode('utf-8'))
+        plot3d_instance = solvcon.core.Plot3d(data.encode('utf-8'))
         blk = plot3d_instance.to_block()
 
         # Check nodes information

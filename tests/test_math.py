@@ -5,10 +5,10 @@ import unittest
 
 import numpy as np
 
-import modmesh as mm
+import solvcon as sc
 
 
-class ComplexTB(mm.testing.TestBase):
+class ComplexTB(sc.testing.TestBase):
 
     def test_construct_default(self):
         cplx = self.mm_complex()
@@ -199,16 +199,16 @@ class ComplexFp32TC(ComplexTB, unittest.TestCase):
 
     def mm_complex(self, real=None, imag=None):
         if real is not None and imag is not None:
-            return mm.complex64(real, imag)
+            return sc.complex64(real, imag)
         else:
-            return mm.complex64()
+            return sc.complex64()
 
     def mm_simplearraycomplex(self, size=None, array=None):
         if size is not None:
-            return mm.SimpleArrayComplex64(size)
+            return sc.SimpleArrayComplex64(size)
         if array is not None:
-            return mm.SimpleArrayComplex64(array=array)
-        return mm.SimpleArrayComplex64(0)
+            return sc.SimpleArrayComplex64(array=array)
+        return sc.SimpleArrayComplex64(0)
 
     def np_float(self, val):
         return np.float32(val)
@@ -219,7 +219,7 @@ class ComplexFp32TC(ComplexTB, unittest.TestCase):
         self.real2 = np.float32(2.5)
         self.imag2 = np.float32(3.4)
         self.realv = np.float32(2.0)
-        self.dtype = mm.complex64.dtype()
+        self.dtype = sc.complex64.dtype()
         self.expected_dtype = np.dtype('complex64')
         self.esize = 4 * 2
 
@@ -233,16 +233,16 @@ class ComplexFp64TC(ComplexTB, unittest.TestCase):
 
     def mm_complex(self, real=None, imag=None):
         if real is not None and imag is not None:
-            return mm.complex128(real, imag)
+            return sc.complex128(real, imag)
         else:
-            return mm.complex128()
+            return sc.complex128()
 
     def mm_simplearraycomplex(self, size=None, array=None):
         if size is not None:
-            return mm.SimpleArrayComplex128(size)
+            return sc.SimpleArrayComplex128(size)
         if array is not None:
-            return mm.SimpleArrayComplex128(array=array)
-        return mm.SimpleArrayComplex128(0)
+            return sc.SimpleArrayComplex128(array=array)
+        return sc.SimpleArrayComplex128(0)
 
     def np_float(self, val):
         return np.float64(val)
@@ -253,6 +253,6 @@ class ComplexFp64TC(ComplexTB, unittest.TestCase):
         self.real2 = np.float64(6.1)
         self.imag2 = np.float64(7.0)
         self.realv = np.float64(2.0)
-        self.dtype = mm.complex128.dtype()
+        self.dtype = sc.complex128.dtype()
         self.expected_dtype = np.dtype('complex128')
         self.esize = 8 * 2

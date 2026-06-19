@@ -167,7 +167,7 @@ jobs:
     - name: make pytest BUILD_QT=OFF
       run: |
         echo "::group::make pytest BUILD_QT=OFF"
-        python3 -c "import modmesh; assert modmesh.HAS_PILOT == False"
+        python3 -c "import solvcon; assert solvcon.HAS_PILOT == False"
         JOB_MAKE_ARGS="${JOB_MAKE_ARGS} VERBOSE=1"
         if [ "${{ matrix.os }}" == "macos-26" ] ; then \
           JOB_MAKE_ARGS="${JOB_MAKE_ARGS} BUILD_METAL=ON" ; \
@@ -190,7 +190,7 @@ jobs:
     - name: make pytest BUILD_QT=ON
       run: |
         echo "::group::make pytest BUILD_QT=ON"
-        python3 -c "import modmesh; assert modmesh.HAS_PILOT == True"
+        python3 -c "import solvcon; assert solvcon.HAS_PILOT == True"
         JOB_MAKE_ARGS="${JOB_MAKE_ARGS} VERBOSE=1"
         if [ "${{ matrix.os }}" == "macos-26" ] ; then \
           # PySide6 installed by pip will bundle with a prebuilt Qt,
@@ -398,7 +398,7 @@ jobs:
           # Get the Python version installed and extract the major+minor version components
           $py_ver=$(python3 -V | awk '{print $2}')
           $py_main_ver=$(echo $py_ver | awk -F. '{print $1$2}')
-          $destination=".\modmesh-pilot-win64\modmesh-pilot-win64"
+          $destination=".\solvcon-pilot-win64\solvcon-pilot-win64"
           $py_exec="$destination\python.exe"
 
           # Create the destination directory
@@ -439,7 +439,7 @@ jobs:
           # Deploy the Qt environment for the pilot executable and copy necessary files
           Copy-Item -Path ".\build\cpp\binary\pilot\Release\pilot.exe" -Destination $destination
           windeployqt --release "$destination\pilot.exe"
-          Copy-Item -Path ".\modmesh" -Destination $destination -Recurse
+          Copy-Item -Path ".\solvcon" -Destination $destination -Recurse
           # Also include potential thirdparty
           Copy-Item -Path ".\thirdparty" -Destination $destination -Recurse
           echo "::endgroup::"
@@ -448,8 +448,8 @@ jobs:
         if: ${{ matrix.cmake_build_type == 'Release' }}
         uses: actions/upload-artifact@v7
         with:
-          name: modmesh-pilot-win64
-          path: modmesh-pilot-win64/
+          name: solvcon-pilot-win64
+          path: solvcon-pilot-win64/
 
   send_email_on_failure:
     needs: [standalone_buffer, build, build_windows]
