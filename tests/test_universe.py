@@ -2,6 +2,7 @@
 # BSD 3-Clause License, see COPYING
 
 
+import json
 import unittest
 
 import numpy as np
@@ -522,5 +523,193 @@ class WorldEllipseTC(unittest.TestCase):
         self.w.remove_shape(sid)
         self.assertEqual(self.w.nshape, 0)
         self.assertEqual(len(self.w.query_visible(-2, -2, 2, 2)), 0)
+
+
+class WorldBezierShapeTC(unittest.TestCase):
+    """add_bezier_shape: one cubic Bezier per shape (curve counterpart of
+    add_line). The bare add_bezier leaves the curve owned by no shape."""
+
+    def setUp(self):
+        self.w = solvcon.WorldFp64()
+        self.Point = solvcon.Point3dFp64
+        self.Bezier = solvcon.Bezier3dFp64
+
+    def test_add_bezier_shape(self):
+        p = self.Point
+        sid = self.w.add_bezier_shape(p(0, 0, 0), p(1, 0, 0),
+                                      p(2, 1, 0), p(3, 1, 0))
+        self.assertEqual(self.w.nshape, 1)
+        # The shape owns one cubic Bezier and no segments.
+        self.assertEqual(self.w.nbezier, 1)
+        self.assertEqual(self.w.nsegment, 0)
+        self.assertEqual(self.w.shape_type_of(sid), "bezier")
+
+    def test_add_bezier_shape_from_bezier(self):
+        p = self.Point
+        b = self.Bezier(p0=p(0, 0, 0), p1=p(1, 0, 0),
+                        p2=p(2, 1, 0), p3=p(3, 1, 0))
+        sid = self.w.add_bezier_shape(b=b)
+        self.assertEqual(self.w.shape_type_of(sid), "bezier")
+        self.assertEqual(self.w.nbezier, 1)
+
+    def test_bare_bezier_is_not_a_shape(self):
+        p = self.Point
+        self.w.add_bezier(p(0, 0, 0), p(1, 0, 0), p(2, 1, 0), p(3, 1, 0))
+        self.assertEqual(self.w.nshape, 0)
+        self.assertEqual(self.w.nbezier, 1)
+
+    def test_translate_bezier_shape(self):
+        p = self.Point
+        sid = self.w.add_bezier_shape(p(0, 0, 0), p(1, 0, 0),
+                                      p(2, 1, 0), p(3, 1, 0))
+        self.w.translate_shape(sid, 10, 20)
+        b = self.w.bezier(0)
+        self.assertAlmostEqual(b[0][0], 10.0)
+        self.assertAlmostEqual(b[0][1], 20.0)
+        self.assertAlmostEqual(b[3][0], 13.0)
+        self.assertAlmostEqual(b[3][1], 21.0)
+
+    def test_bezier_shape_visible(self):
+        p = self.Point
+        self.w.add_bezier_shape(p(0, 0, 0), p(1, 0, 0),
+                                p(2, 1, 0), p(3, 1, 0))
+        self.w.add_bezier_shape(p(100, 100, 0), p(101, 100, 0),
+                                p(102, 101, 0), p(103, 101, 0))
+        self.assertEqual(len(self.w.query_visible(-1, -1, 5, 5)), 1)
+
+    def test_remove_bezier_shape(self):
+        p = self.Point
+        sid = self.w.add_bezier_shape(p(0, 0, 0), p(1, 0, 0),
+                                      p(2, 1, 0), p(3, 1, 0))
+        self.w.remove_shape(sid)
+        self.assertEqual(self.w.nshape, 0)
+        self.assertEqual(len(self.w.query_visible(-1, -1, 5, 5)), 0)
+
+
+class WorldDescribeStateTC(unittest.TestCase):
+    """describe_state(level="basic"): JSON serialization of visible state."""
+
+    def setUp(self):
+        self.w = solvcon.WorldFp64()
+
+    def test_empty_world(self):
+        # Locks the schema shape and the default level.
+        self.assertEqual(
+            self.w.describe_state(),
+            '{"shapes":[],"segments":[],"curves":[],"points":[]}')
+
+    def test_triangle_segments(self):
+        sid = self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        state = json.loads(self.w.describe_state(level="basic"))
+        self.assertEqual(len(state["shapes"]), 1)
+        shape = state["shapes"][0]
+        self.assertEqual(shape["id"], sid)
+        self.assertEqual(shape["type"], "triangle")
+        self.assertEqual(shape["bbox"], [0, 0, 1, 1])
+        self.assertEqual(shape["segments"],
+                         [[0, 0, 1, 0], [1, 0, 0, 1], [0, 1, 0, 0]])
+        self.assertEqual(shape["curves"], [])
+
+    def test_circle_curves(self):
+        self.w.add_circle(0, 0, 1)
+        shape = json.loads(self.w.describe_state())["shapes"][0]
+        self.assertEqual(shape["type"], "circle")
+        self.assertEqual(shape["bbox"], [-1, -1, 1, 1])
+        self.assertEqual(shape["segments"], [])
+        self.assertEqual(len(shape["curves"]), 4)
+        for curve in shape["curves"]:
+            self.assertEqual(len(curve), 4)  # four control points
+            for ctrl in curve:
+                self.assertEqual(len(ctrl), 2)  # 2D: x, y only
+        # First quadrant sweeps from (1, 0) to (0, 1).
+        self.assertEqual(shape["curves"][0][0], [1, 0])
+        self.assertEqual(shape["curves"][0][3], [0, 1])
+
+    def test_bezier_shape_curves(self):
+        p = solvcon.Point3dFp64
+        sid = self.w.add_bezier_shape(p(0, 0, 0), p(1, 0, 0),
+                                      p(2, 1, 0), p(3, 1, 0))
+        state = json.loads(self.w.describe_state())
+        shape = state["shapes"][0]
+        self.assertEqual(shape["id"], sid)
+        self.assertEqual(shape["type"], "bezier")
+        self.assertEqual(shape["segments"], [])
+        self.assertEqual(len(shape["curves"]), 1)
+        self.assertEqual(shape["curves"][0],
+                         [[0, 0], [1, 0], [2, 1], [3, 1]])
+        # The shape owns its curve, so it is not also a bare top-level curve.
+        self.assertEqual(state["curves"], [])
+
+    def test_bare_segment_and_curve(self):
+        # add_segment / add_bezier create geometry no shape owns, but it
+        # still renders, so it appears under top-level segments/curves.
+        p = solvcon.Point3dFp64
+        self.w.add_segment(p(0, 0), p(1, 2))
+        self.w.add_bezier(p(0, 0), p(1, 0), p(2, 1), p(3, 1))
+        state = json.loads(self.w.describe_state())
+        self.assertEqual(state["shapes"], [])
+        self.assertEqual(state["segments"], [[0, 0, 1, 2]])
+        self.assertEqual(len(state["curves"]), 1)
+        self.assertEqual(state["curves"][0][0], [0, 0])
+        self.assertEqual(state["curves"][0][3], [3, 1])
+
+    def test_shape_curves_are_not_double_reported(self):
+        # A circle's curves belong to the shape; they must not also appear as
+        # bare top-level curves.
+        self.w.add_circle(0, 0, 1)
+        state = json.loads(self.w.describe_state())
+        self.assertEqual(len(state["shapes"][0]["curves"]), 4)
+        self.assertEqual(state["curves"], [])
+
+    def test_coordinate_precision(self):
+        # describe_state serializes through the shared JSON tool, whose
+        # number format keeps six decimal places.
+        self.w.add_point(1.0 / 3.0, 2.5, 0)
+        pt = json.loads(self.w.describe_state())["points"][0]
+        self.assertAlmostEqual(pt[0], 0.333333, places=6)
+        self.assertEqual(pt[1], 2.5)
+
+    def test_free_points(self):
+        self.w.add_point(1, 2, 3)
+        self.w.add_point(-4, 5, 6)
+        state = json.loads(self.w.describe_state())
+        # z is not rendered, so only x, y appear.
+        self.assertEqual(state["points"], [[1, 2], [-4, 5]])
+
+    def test_dead_shapes_excluded(self):
+        keep = self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        drop = self.w.add_circle(10, 10, 1)
+        self.w.remove_shape(drop)
+        state = json.loads(self.w.describe_state())
+        ids = [s["id"] for s in state["shapes"]]
+        self.assertEqual(ids, [keep])
+        # The dead circle does not render, so its curves must not leak into
+        # the bare arrays either.
+        self.assertEqual(state["curves"], [])
+        self.assertEqual(state["segments"], [])
+
+    def test_deterministic(self):
+        def build(w):
+            w.add_circle(0, 0, 1)
+            w.add_rectangle(-2, -2, 2, 2)
+            w.add_point(1, 1, 0)
+        build(self.w)
+        other = solvcon.WorldFp64()
+        build(other)
+        # Stable across repeated calls and equal across equal worlds.
+        self.assertEqual(self.w.describe_state(), self.w.describe_state())
+        self.assertEqual(self.w.describe_state(), other.describe_state())
+
+    def test_unknown_level_raises(self):
+        self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        with self.assertRaises(ValueError):
+            self.w.describe_state(level="+diagnostics")
+
+    def test_fp32(self):
+        w = solvcon.WorldFp32()
+        w.add_line(0, 0, 1, 1)
+        shape = json.loads(w.describe_state())["shapes"][0]
+        self.assertEqual(shape["type"], "line")
+        self.assertEqual(shape["segments"], [[0, 0, 1, 1]])
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

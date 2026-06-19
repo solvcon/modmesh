@@ -82,21 +82,16 @@ WrapWorld<T> & WrapWorld<T>::wrap_management()
             "shape_type_of",
             [](wrapped_type const & self, int32_t shape_id)
             {
-                ShapeType const st = self.shape_type_of(shape_id);
-                switch (st)
-                {
-                case ShapeType::DEAD: return std::string("DEAD");
-                case ShapeType::POINT: return std::string("point");
-                case ShapeType::LINE: return std::string("line");
-                case ShapeType::TRIANGLE: return std::string("triangle");
-                case ShapeType::RECTANGLE: return std::string("rectangle");
-                case ShapeType::SQUARE: return std::string("square");
-                case ShapeType::ELLIPSE: return std::string("ellipse");
-                case ShapeType::CIRCLE: return std::string("circle");
-                default: return std::string("unknown");
-                }
+                return shape_type_name(self.shape_type_of(shape_id));
             },
             py::arg("shape_id"))
+        .def(
+            "describe_state",
+            [](wrapped_type const & self, std::string const & level)
+            {
+                return self.describe_state(describe_level_from_string(level));
+            },
+            py::arg("level") = "basic")
         .def("clear", &wrapped_type::clear)
         .def(
             "translate_shape",
@@ -310,6 +305,23 @@ WrapWorld<T> & WrapWorld<T>::wrap_shape()
             py::arg("cx"),
             py::arg("cy"),
             py::arg("r"))
+        .def(
+            "add_bezier_shape",
+            [](wrapped_type & self, point_type const & p0, point_type const & p1, point_type const & p2, point_type const & p3)
+            {
+                return self.add_bezier_shape(p0, p1, p2, p3);
+            },
+            py::arg("p0"),
+            py::arg("p1"),
+            py::arg("p2"),
+            py::arg("p3"))
+        .def(
+            "add_bezier_shape",
+            [](wrapped_type & self, bezier_type const & bezier)
+            {
+                return self.add_bezier_shape(bezier);
+            },
+            py::arg("b"))
         //
         ;
 
