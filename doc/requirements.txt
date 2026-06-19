@@ -3,6 +3,7 @@
 # doxygen`); it is not a Python package.
 
 sphinx>=7.0
+numpy
 myst-parser>=2.0
 pydata-sphinx-theme>=0.15
 breathe>=4.35
