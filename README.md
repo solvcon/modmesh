@@ -7,14 +7,20 @@ unstructured meshes of mixed element to solve conservation laws. It is
 developed by using C++ and Python to provide:
 
 1. Contiguous buffers and multi-dimensional arrays.
-2. One-dimensional solvers for demonstrating the CESE method.
-3. (Being ported from https://github.com/solvcon/pastsolvcon) unstructured
-   meshes of mixed elements for solving conservation laws by using the CESE
-   method in two- and three-dimensional space.
-4. (Under development) two- and three-dimensional body mesh generation.
-5. (Under development) an integrated runtime profiler.
-6. A graphical user interface (GUI) application based on Qt for the spatial data
-   and analysis.
+2. Linear algebra built on BLAS and LAPACK, including a general eigensolver,
+   LU factorization, and a Kalman filter.
+3. Integral transform (the Fourier transform).
+4. One-dimensional solvers for the Euler and linear scalar equations to
+   demonstrate the CESE method.
+5. Two- and three-dimensional solvers for the Euler equations using the
+   CESE method. (Under development.)
+6. Mesh and field file input and output for the Gmsh and Plot3D formats.
+7. A geometry processor with polygons, Bezier curves, and R-tree spatial
+   indexing.
+8. Two- and three-dimensional body mesh generation. (Under development.)
+9. An integrated runtime profiler.
+10. A graphical user interface (GUI) application based on Qt for the spatial
+    data and analysis.
 
 An experimental Windows binary (portable) can be downloaded from the [devbuild
 GitHub
