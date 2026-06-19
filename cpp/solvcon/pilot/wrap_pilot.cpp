@@ -3,15 +3,18 @@
  * BSD 3-Clause License, see COPYING
  */
 
-#include <solvcon/pilot/wrap_pilot.hpp> // Must be the first include.
-#include <solvcon/python/common.hpp>
 #include <pybind11/stl.h>
 
+#include <solvcon/pilot/wrap_pilot.hpp> // Must be the first include for solvcon
+#include <solvcon/python/common.hpp>
+
+#include <solvcon/pilot/R2DWidget.hpp>
 #include <solvcon/pilot/pilot.hpp>
 
-#include <QPointer>
 #include <QClipboard>
 #include <QMenu>
+#include <QPointer>
+#include <QString>
 
 // Usually SOLVCON_PYSIDE6_FULL is not defined unless for debugging.
 #ifdef SOLVCON_PYSIDE6_FULL
@@ -146,13 +149,13 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
                 [](wrapped_type & self)
                 {
                     QClipboard * clipboard = QGuiApplication::clipboard();
-                    clipboard->setPixmap(self.grabPixmap());
+                    clipboard->setPixmap(self.grab());
                 })
             .def(
                 "saveImage",
                 [](wrapped_type & self, std::string const & filename)
                 {
-                    self.grabPixmap().save(filename.c_str());
+                    self.grab().save(filename.c_str());
                 },
                 py::arg("filename"))
             .def(
@@ -201,7 +204,20 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapR2DWidget
             .def("setViewTransform", &wrapped_type::setViewTransform, py::arg("v"))
             .def("resetView", &wrapped_type::resetView)
             .def("updateWorld", &wrapped_type::updateWorld, py::arg("world"))
-            .def("requestRepaint", &wrapped_type::requestRepaint);
+            .def("requestRepaint", &wrapped_type::requestRepaint)
+            //
+            ;
+
+        (*this)
+            .def("clipImage", [](wrapped_type & self)
+                 {
+                     QClipboard * clipboard = QGuiApplication::clipboard();
+                     clipboard->setPixmap(self.grab()); })
+            .def("saveImage", [](wrapped_type & self, std::string const & filename)
+                 { self.grab().save(filename.c_str()); },
+                 py::arg("filename"))
+            //
+            ;
     }
 
 }; /* end class WrapR2DWidget */
@@ -340,6 +356,18 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRManager
                 [](wrapped_type & self)
                 {
                     return self.currentR3DWidget();
+                })
+            .def(
+                "currentR2DWidget",
+                [](wrapped_type & self)
+                {
+                    return self.currentR2DWidget();
+                })
+            .def(
+                "list2DWidgets",
+                [](wrapped_type & self)
+                {
+                    return self.list2DWidgets();
                 })
             .def(
                 "toggleConsole",

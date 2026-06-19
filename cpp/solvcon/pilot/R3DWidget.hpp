@@ -104,8 +104,6 @@ public:
 
     RCameraController * cameraController() const { return m_scene->controller(); }
 
-    QPixmap grabPixmap() const { return m_view->screen()->grabWindow(m_view->winId()); }
-
     void showMark();
     void updateMesh(std::shared_ptr<StaticMesh> const & mesh);
     void updateWorld(std::shared_ptr<WorldFp64> const & world);

@@ -20,28 +20,33 @@ namespace solvcon
 /**
  * Renders a world's live points, segments, and curves into a QPainter in
  * screen space, mapping math-convention world coordinates through a 2D view
- * transform. The world and view it draws are held as required construction
- * arguments, so an instance can only exist for a renderable pair. This is the
- * shared routine used by both the on-screen R2DWidget and the offscreen image
- * renderer, so neither path can drift from the other. It paints only the
- * geometry; the caller owns the background, grid, axes, and any origin marker.
+ * transform. paint() draws geometry only; paint_canvas() adds the backdrop
+ * and optional grid/axes/origin chrome.
+ * m_world is non-owning and may be null.
  */
 class RWorldRenderer2d
 {
 public:
-    RWorldRenderer2d(WorldFp64 const & world, ViewTransform2dFp64 const & view)
+    RWorldRenderer2d(WorldFp64 const * world, ViewTransform2dFp64 const & view)
         : m_world(world)
         , m_view(view)
     {
     }
 
-    void paint(QPainter & painter) const;
+    /// Paint backdrop, geometry, and optional chrome.
+    /// @param painter Target painter in screen space.
+    /// @param width Canvas width in pixels.
+    /// @param height Canvas height in pixels.
+    /// @param full_canvas If true, draw grid, axes, and the origin marker.
+    void paint_canvas(QPainter & painter, int width, int height, bool full_canvas) const;
 
 private:
+    void paint(QPainter & painter) const;
+
     // Map math-convention world (x, y) to Qt screen pixels; z is dropped.
     QPointF map(double world_x, double world_y) const;
 
-    WorldFp64 const & m_world;
+    WorldFp64 const * m_world;
     ViewTransform2dFp64 const & m_view;
 }; /* end class RWorldRenderer2d */
 
