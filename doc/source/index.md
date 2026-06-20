@@ -12,6 +12,7 @@ system/index
 pilot/index
 cese/index
 devguide/index
+devplan/index
 api/index
 reference
 ```
