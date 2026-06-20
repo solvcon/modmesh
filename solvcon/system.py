@@ -96,6 +96,10 @@ def setup_process(argv):
     builtins.solvcon = solvcon
     builtins.sc = solvcon
 
+    if solvcon.HAS_PILOT:
+        from . import pilot
+        builtins.pilot = pilot
+
 
 def enter_main(argv):
     args = _parse_command_line(argv)

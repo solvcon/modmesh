@@ -28,6 +28,18 @@ class PilotTC(unittest.TestCase):
         self.assertFalse(pilot.mgr.pycon.python_redirect)
 
 
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
+class SetupProcessTC(unittest.TestCase):
+
+    def test_namespace_includes_pilot(self):
+        import builtins
+        from solvcon import system, pilot
+        system.setup_process([])
+        self.assertIs(builtins.solvcon, solvcon)
+        self.assertIs(builtins.sc, solvcon)
+        self.assertIs(builtins.pilot, pilot)
+
+
 class PilotCameraTB:
     camera_type = None
 
