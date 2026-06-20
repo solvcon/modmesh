@@ -69,6 +69,6 @@ environment variables:
 | `SOLVCON_PROFILE`    | `OFF`     | enable the runtime profiler      |
 | `USE_CLANG_TIDY`     | `OFF`     | run clang-tidy during the build  |
 
-After building, run the tests as described in {doc}`/dev/testing`.
+After building, run the tests as described in {doc}`/devguide/testing`.
 
 <!-- vim: set ft=markdown ff=unix fenc=utf8 et sw=2 ts=2 sts=2 tw=79: -->
