@@ -19,8 +19,13 @@ __all__ = [  # noqa: F822
 ]
 
 
-class MeshInfoPanel(QWidget):
+class MeshInfoTree(QWidget):
     """Widget that presents the mesh information tree inside the dock."""
+
+    # Data roles that route a tree item's check-box toggle; the boundary
+    # index rides in the role after the kind.
+    _ROLE_KIND = Qt.UserRole
+    _ROLE_IBC = Qt.UserRole + 1
 
     # Map cell type numbers to human-readable names.
     CELL_TYPE_NAME = {
@@ -45,6 +50,14 @@ class MeshInfoPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._tree)
         self.setLayout(layout)
+        # Called when a check box flips; the owner wires these to the viewer.
+        # ``boundary_toggled(ibc, checked)`` follows a boundary set and
+        # ``mesh_toggled(checked)`` the wireframe.  ``_building`` suppresses
+        # the signal while ``set_mesh`` populates the check boxes.
+        self.boundary_toggled = None
+        self.mesh_toggled = None
+        self._building = False
+        self._tree.itemChanged.connect(self._on_item_changed)
         self.set_mesh(mh)
 
     @classmethod
@@ -89,21 +102,76 @@ class MeshInfoPanel(QWidget):
             sections.append(("Cell types", cells))
         return sections
 
+    @classmethod
+    def make_boundary_info(cls, mh):
+        """Return one ``[ibc, nface]`` row per boundary set.
+
+        Each boundary face records its set index in column 1 of ``bndfcs``,
+        so grouping the rows by that index yields the face count of every
+        set, including the trailing catch-all set of unspecified faces.
+        """
+        bnd = mh.bndfcs.ndarray
+        if bnd.size:
+            counts = np.bincount(bnd[:, 1], minlength=mh.nbcs)
+        else:
+            counts = np.zeros(mh.nbcs, dtype='int64')
+        return [[ibc, int(counts[ibc])] for ibc in range(mh.nbcs)]
+
     def set_mesh(self, mh):
         """Rebuild the tree from ``mh``, or show "No mesh loaded" when None."""
-        self._tree.clear()
-        if mh is None:
-            QTreeWidgetItem(self._tree, ["No mesh loaded"])
+        self._building = True
+        try:
+            self._tree.clear()
+            if mh is None:
+                QTreeWidgetItem(self._tree, ["No mesh loaded"])
+                return
+            root = QTreeWidgetItem(self._tree, [f"StaticMesh ({mh.ndim}D)"])
+            # Keep the display toggles (wireframe, then boundaries) together
+            # at the top, above the read-only information sections.
+            self._add_mesh_toggle(root)
+            self._add_boundary_group(root, mh)
+            for section, rows in self.make_mesh_info(mh):
+                group = QTreeWidgetItem(root, [section])
+                for prop, value in rows:
+                    QTreeWidgetItem(group, [f"{prop}: {value}"])
+                group.setExpanded(True)
+            root.setExpanded(True)
+            # Widen the column so long entries are not clipped.
+            self._tree.resizeColumnToContents(0)
+        finally:
+            self._building = False
+
+    def _add_mesh_toggle(self, root):
+        """Add the wireframe on/off check box (default on)."""
+        item = QTreeWidgetItem(root, ["wireframe"])
+        item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+        item.setData(0, self._ROLE_KIND, 'mesh')
+        item.setCheckState(0, Qt.Checked)
+
+    def _add_boundary_group(self, root, mh):
+        """Add the boundary sets as a group of check boxes (default off)."""
+        binfo = self.make_boundary_info(mh)
+        if not binfo:
             return
-        root = QTreeWidgetItem(self._tree, [f"StaticMesh ({mh.ndim}D)"])
-        for section, rows in self.make_mesh_info(mh):
-            group = QTreeWidgetItem(root, [section])
-            for prop, value in rows:
-                QTreeWidgetItem(group, [f"{prop}: {value}"])
-            group.setExpanded(True)
-        root.setExpanded(True)
-        # Widen the column so long entries are not clipped.
-        self._tree.resizeColumnToContents(0)
+        group = QTreeWidgetItem(root, ["Boundaries"])
+        for ibc, count in binfo:
+            item = QTreeWidgetItem(group, [f"bc {ibc}: {count} faces"])
+            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setData(0, self._ROLE_KIND, 'boundary')
+            item.setData(0, self._ROLE_IBC, ibc)
+            item.setCheckState(0, Qt.Unchecked)
+        group.setExpanded(True)
+
+    def _on_item_changed(self, item, _column):
+        """Route a check-box toggle to its handler, ignoring plain rows."""
+        if self._building:
+            return
+        checked = item.checkState(0) == Qt.Checked
+        kind = item.data(0, self._ROLE_KIND)
+        if kind == 'boundary' and self.boundary_toggled is not None:
+            self.boundary_toggled(item.data(0, self._ROLE_IBC), checked)
+        elif kind == 'mesh' and self.mesh_toggled is not None:
+            self.mesh_toggled(checked)
 
 
 class MeshInfo(_gui_common.PilotFeature):
@@ -141,7 +209,9 @@ class MeshInfo(_gui_common.PilotFeature):
         """Build the dock lazily and follow sub-window activation."""
         if self._panel is not None:
             return
-        self._panel = MeshInfoPanel()
+        self._panel = MeshInfoTree()
+        self._panel.boundary_toggled = self._on_boundary_toggled
+        self._panel.mesh_toggled = self._on_mesh_toggled
         self._dock = QDockWidget("mesh")
         self._dock.setWidget(self._panel)
         self._mgr.mainWindow.addDockWidget(Qt.LeftDockWidgetArea,
@@ -165,6 +235,18 @@ class MeshInfo(_gui_common.PilotFeature):
     def _refresh(self):
         """Show the active sub-window's mesh."""
         self._panel.set_mesh(self._active_mesh())
+
+    def _on_boundary_toggled(self, ibc, checked):
+        """Highlight or clear boundary set ``ibc`` in the active viewer."""
+        widget = self._mgr.currentR3DWidget()
+        if widget is not None:
+            widget.showBoundary(ibc, checked)
+
+    def _on_mesh_toggled(self, checked):
+        """Show or hide the wireframe in the active viewer."""
+        widget = self._mgr.currentR3DWidget()
+        if widget is not None:
+            widget.showMesh(checked)
 
     def _mdi_area(self):
         return self._mainWindow.centralWidget()
