@@ -10,6 +10,7 @@ import solvcon
 try:
     from solvcon import pilot
     from solvcon.pilot import _mesh_info
+    from PySide6.QtCore import Qt
     from PySide6.QtWidgets import QApplication, QMenu
 except ImportError:
     pilot = None
@@ -80,7 +81,7 @@ def _tree_sections(tree):
 class MakeMeshInfoTC(unittest.TestCase):
     def test_excludes_ghost_entities(self):
         info = _section_map(
-            _mesh_info.MeshInfoPanel.make_mesh_info(_make_sample_mesh()))
+            _mesh_info.MeshInfoTree.make_mesh_info(_make_sample_mesh()))
         self.assertEqual(info["Counts"]["dim"], "2")
         self.assertEqual(info["Counts"]["node"], "6")
         self.assertEqual(info["Counts"]["cell"], "3")
@@ -90,6 +91,14 @@ class MakeMeshInfoTC(unittest.TestCase):
         # The bounding box must come from the body nodes only.
         self.assertEqual(info["Bounding box"]["x"], "[0, 2]")
         self.assertEqual(info["Bounding box"]["y"], "[0, 1]")
+
+    def test_boundary_info_groups_every_face(self):
+        mh = _make_sample_mesh()
+        binfo = _mesh_info.MeshInfoTree.make_boundary_info(mh)
+        # With no add_bc, build_boundary gathers every boundary face into a
+        # single catch-all set, so the one row must report all of them.
+        self.assertGreater(mh.nbound, 0)
+        self.assertEqual(binfo, [[0, mh.nbound]])
 
 
 @unittest.skipIf(GITHUB_ACTIONS or not solvcon.HAS_PILOT,
@@ -120,6 +129,53 @@ class MeshInfoTC(unittest.TestCase):
         sections = _tree_sections(feature._panel._tree)
         self.assertEqual(sections["Counts"]["cell"], "3")
         self.assertEqual(sections["Cell types"]["triangle"], "2")
+
+    def test_boundary_toggle_drives_viewer(self):
+        widget = self.mgr.add3DWidget()
+        widget.updateMesh(_make_sample_mesh())
+        feature = _mesh_info.MeshInfo(mgr=self.mgr, menu=self.menu)
+        feature.populate_menu()
+        feature._action.setChecked(True)
+        # Record the routed (ibc, checked) while still driving the real
+        # viewer hook, so the highlight build is exercised too.
+        calls = []
+        inner = feature._panel.boundary_toggled
+
+        def record(ibc, checked):
+            calls.append((ibc, checked))
+            inner(ibc, checked)
+        feature._panel.boundary_toggled = record
+        root = feature._panel._tree.topLevelItem(0)
+        group = next(root.child(i) for i in range(root.childCount())
+                     if root.child(i).text(0) == "Boundaries")
+        item = group.child(0)
+        self.assertEqual(item.checkState(0), Qt.Unchecked)  # default off
+        item.setCheckState(0, Qt.Checked)
+        item.setCheckState(0, Qt.Unchecked)
+        # Each flip routes the set index and its new state to the viewer.
+        self.assertEqual(calls, [(0, True), (0, False)])
+
+    def test_wireframe_toggle_drives_viewer(self):
+        widget = self.mgr.add3DWidget()
+        widget.updateMesh(_make_sample_mesh())
+        feature = _mesh_info.MeshInfo(mgr=self.mgr, menu=self.menu)
+        feature.populate_menu()
+        feature._action.setChecked(True)
+        calls = []
+        inner = feature._panel.mesh_toggled
+
+        def record(checked):
+            calls.append(checked)
+            inner(checked)
+        feature._panel.mesh_toggled = record
+        root = feature._panel._tree.topLevelItem(0)
+        item = next(root.child(i) for i in range(root.childCount())
+                    if root.child(i).text(0) == "wireframe")
+        self.assertEqual(item.checkState(0), Qt.Checked)  # default on
+        item.setCheckState(0, Qt.Unchecked)
+        item.setCheckState(0, Qt.Checked)
+        # The wireframe visibility flips reach the viewer in order.
+        self.assertEqual(calls, [False, True])
 
     def test_panel_without_mesh(self):
         self.mgr.add3DWidget()  # fresh viewer becomes current, no mesh

@@ -50,6 +50,34 @@ private:
 
 }; /* end class RStaticMesh */
 
+/**
+ * Render the faces of a single boundary set as thick colored ribbons so the
+ * set stands out over the wireframe mesh.  Each edge is widened into two
+ * triangles because glLineWidth is clamped to 1 in the OpenGL core profile.
+ * One entity is created per highlighted boundary set; @ref ibc identifies
+ * which set it draws.
+ */
+class RBoundary
+    : public Qt3DCore::QEntity
+{
+
+public:
+
+    RBoundary(std::shared_ptr<StaticMesh> const & mesh, int ibc, Qt3DCore::QNode * parent = nullptr);
+
+    int ibc() const { return m_ibc; }
+
+private:
+
+    static void build_geometry(StaticMesh const & mh, int ibc, Qt3DCore::QGeometry * geom);
+
+    int m_ibc = -1;
+    Qt3DCore::QGeometry * m_geometry = nullptr;
+    Qt3DRender::QGeometryRenderer * m_renderer = nullptr;
+    Qt3DRender::QMaterial * m_material = nullptr;
+
+}; /* end class RBoundary */
+
 } /* end namespace solvcon */
 
 // vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

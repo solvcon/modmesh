@@ -108,6 +108,8 @@ public:
 
     void showMark();
     void updateMesh(std::shared_ptr<StaticMesh> const & mesh);
+    void showMesh(bool show);
+    void showBoundary(int ibc, bool show);
     void updateWorld(std::shared_ptr<WorldFp64> const & world);
     void updateColorField(
         SimpleArray<float> const & vertices,
