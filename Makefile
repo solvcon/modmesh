@@ -223,8 +223,6 @@ CLANG_FORMAT_CI_VERSION ?= 20
 #   E201,E202,E203,E241   whitespace inside brackets / around commas; preserve
 #                         deliberate `# noqa` numeric alignment such as in
 #                         `tests/test_mesh.py`
-#   E226                  whitespace around arithmetic operator
-#                         (flake8 default-ignored)
 #   E301,E303             blank-line rules that pycodestyle does not flag in
 #                         their current uses (docstring-followed methods and
 #                         nested defs inside `if HAS_SPHINX:`); autopep8 would
@@ -234,7 +232,7 @@ CLANG_FORMAT_CI_VERSION ?= 20
 #   W503,W504             line-break style around binary operators
 #                         (flake8 default-ignored)
 AUTOPEP8_OPTS ?= --recursive --max-line-length=79 \
-                 --ignore=E121,E123,E126,E201,E202,E203,E226,E241,E301,E303,E501,W503,W504 \
+                 --ignore=E121,E123,E126,E201,E202,E203,E241,E301,E303,E501,W503,W504 \
                  --exclude=thirdparty,tmp,_deps
 
 CFFILES = $(shell find cpp gtests -type f -name '*.[ch]pp' | sort)
@@ -273,7 +271,7 @@ flake8:
 		echo "  Install: pip install flake8"; \
 		exit 1; \
 	}
-	$(FLAKE8) . --jobs $(NPROC) --exclude thirdparty,tmp,_deps
+	$(FLAKE8) . --jobs $(NPROC)
 
 .PHONY: checkascii
 checkascii:

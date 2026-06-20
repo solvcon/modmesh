@@ -1,0 +1,3 @@
+[flake8]
+extend-select = E226
+exclude = thirdparty,tmp,_deps
