@@ -3,9 +3,9 @@
  * BSD 3-Clause License, see COPYING
  */
 
-#include <pybind11/stl.h>
+#include <pybind11/stl.h> // Must be the first include.
 
-#include <solvcon/pilot/wrap_pilot.hpp> // Must be the first include for solvcon
+#include <solvcon/pilot/wrap_pilot.hpp> // Must be the first include but give way to above.
 #include <solvcon/python/common.hpp>
 
 #include <solvcon/pilot/R2DWidget.hpp>
