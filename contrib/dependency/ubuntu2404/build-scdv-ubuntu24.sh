@@ -801,7 +801,7 @@ build_qt() {
     cfgcmd+=("-DCMAKE_BUILD_TYPE=Release")
     # Disable Qt modules we do not need (mirrors devenv defaults).
     local m
-    for m in qtquicktimeline qtquick3d qtgraphs qt5compat qtactiveqt \
+    for m in qtquicktimeline qtgraphs qt5compat qtactiveqt \
              qtcharts qtcoap qtconnectivity qtdatavis3d qtwebsockets \
              qthttpserver qttools qtdoc qtlottie qtmqtt qtnetworkauth \
              qtopcua qtserialport qtlocation qtpositioning \

@@ -11,7 +11,8 @@ start/index
 system/index
 pilot/index
 cese/index
-dev/index
+devguide/index
+devplan/index
 api/index
 reference
 ```
