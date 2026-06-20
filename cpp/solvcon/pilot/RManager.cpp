@@ -102,6 +102,7 @@ R2DWidget * RManager::add2DWidget()
         viewer->show();
         auto * subwin = this->addSubWindow(viewer);
         subwin->resize(400, 300);
+        viewer->resize(400, 300);
     }
     return viewer;
 }
@@ -120,6 +121,42 @@ R3DWidget * RManager::currentR3DWidget()
     }
 
     return dynamic_cast<R3DWidget *>(subwin->widget());
+}
+
+R2DWidget * RManager::currentR2DWidget()
+{
+    if (m_mdiArea == nullptr)
+    {
+        return nullptr;
+    }
+
+    const auto * subwin = m_mdiArea->currentSubWindow();
+    if (subwin == nullptr)
+    {
+        return nullptr;
+    }
+
+    return dynamic_cast<R2DWidget *>(subwin->widget());
+}
+
+std::vector<R2DWidget *> RManager::list2DWidgets()
+{
+    std::vector<R2DWidget *> widgets;
+    if (m_mdiArea == nullptr)
+    {
+        return widgets;
+    }
+
+    for (auto subwin : m_mdiArea->subWindowList())
+    {
+        auto * viewer = dynamic_cast<R2DWidget *>(subwin->widget());
+
+        if (viewer == nullptr)
+            continue;
+
+        widgets.push_back(viewer);
+    }
+    return widgets;
 }
 
 void RManager::toggleConsole()

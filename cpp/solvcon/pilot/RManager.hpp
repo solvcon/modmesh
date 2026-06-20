@@ -12,6 +12,8 @@
 #include <solvcon/pilot/R2DWidget.hpp>
 #include <solvcon/pilot/RAction.hpp>
 
+#include <vector>
+
 #include <QMainWindow>
 #include <QMdiArea>
 #include <QMdiSubWindow>
@@ -39,6 +41,8 @@ public:
     R3DWidget * add3DWidget();
     R2DWidget * add2DWidget();
     R3DWidget * currentR3DWidget();
+    R2DWidget * currentR2DWidget();
+    std::vector<R2DWidget *> list2DWidgets();
 
     RPythonConsoleDockWidget * pycon() { return m_pycon; }
 
