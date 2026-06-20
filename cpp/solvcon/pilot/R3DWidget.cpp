@@ -161,13 +161,41 @@ void R3DWidget::updateMesh(std::shared_ptr<StaticMesh> const & mesh)
 {
     for (Qt3DCore::QNode * child : m_scene->childNodes())
     {
-        if (typeid(*child) == typeid(RStaticMesh))
+        if (typeid(*child) == typeid(RStaticMesh) || typeid(*child) == typeid(RBoundary))
         {
             child->deleteLater();
         }
     }
     new RStaticMesh(mesh, m_scene);
     m_mesh = mesh;
+}
+
+void R3DWidget::showMesh(bool show)
+{
+    for (Qt3DCore::QNode * child : m_scene->childNodes())
+    {
+        if (typeid(*child) == typeid(RStaticMesh))
+        {
+            child->setEnabled(show);
+        }
+    }
+}
+
+void R3DWidget::showBoundary(int ibc, bool show)
+{
+    // Remove an existing boundary highlight for this set so a re-show stays
+    // single and a hide simply leaves none behind.
+    for (Qt3DCore::QNode * child : m_scene->childNodes())
+    {
+        if (typeid(*child) == typeid(RBoundary) && static_cast<RBoundary *>(child)->ibc() == ibc)
+        {
+            child->deleteLater();
+        }
+    }
+    if (show && nullptr != m_mesh)
+    {
+        new RBoundary(m_mesh, ibc, m_scene);
+    }
 }
 
 void R3DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)

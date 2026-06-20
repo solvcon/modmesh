@@ -133,6 +133,8 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
         (*this)
             .def_property_readonly("mesh", &wrapped_type::mesh)
             .def("updateMesh", &wrapped_type::updateMesh, py::arg("mesh"))
+            .def("showMesh", &wrapped_type::showMesh, py::arg("show"))
+            .def("showBoundary", &wrapped_type::showBoundary, py::arg("ibc"), py::arg("show"))
             .def("updateWorld", &wrapped_type::updateWorld, py::arg("world"))
             .def(
                 "updateColorField",
