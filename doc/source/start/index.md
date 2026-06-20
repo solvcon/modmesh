@@ -1,7 +1,7 @@
 # Getting Started
 
 solvcon is a hybrid C++/Python project in its early stage of development.
-The dependencies should be built from source.  The mmdv scripts under
+The dependencies should be built from source.  The scdv scripts under
 [`contrib/dependency/{macos26,ubuntu2404}/`](https://github.com/solvcon/solvcon/tree/master/contrib/dependency/)
 build the whole chain in user space.  The dependencies are:
 
