@@ -14,13 +14,13 @@ class InviscidBurgersSolverTC(unittest.TestCase):
     def _build_solver(resolution):
 
         # Build grid.
-        xcrd = np.arange(resolution+1) / resolution
+        xcrd = np.arange(resolution + 1) / resolution
         xcrd *= 2 * np.pi
         grid = libst.Grid(xcrd)
         dx = (grid.xmax - grid.xmin) / grid.ncelm
 
         # Build solver.
-        time_stop = 2*np.pi
+        time_stop = 2 * np.pi
         cfl_max = 1.0
         dt_max = dx * cfl_max
         nstep = int(np.ceil(time_stop / dt_max))
@@ -46,7 +46,7 @@ class InviscidBurgersSolverTC(unittest.TestCase):
 
     def test_result_bound(self):
 
-        for it in range(self.nstep*self.cycle):
+        for it in range(self.nstep * self.cycle):
             res = self.svr.get_so0(0).ndarray
             self.assertLessEqual(res.max(), 1)
             self.assertGreaterEqual(res.min(), -1)

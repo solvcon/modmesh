@@ -97,8 +97,8 @@ class Burgers1DApp(_base_app.OneDimBaseApp):
             x_des = f"The point {i} of x axis"
             region.append([x_var, x, x_des])
         for i, vel in enumerate(self.region_velocity):
-            vel_var = f"velocity{i}{i+1}"
-            vel_des = f"The velocity between point {i} and {i+1}"
+            vel_var = f"velocity{i}{i + 1}"
+            vel_des = f"The velocity between point {i} and {i + 1}"
             region.append([vel_var, vel, vel_des])
         return region
 
@@ -112,7 +112,7 @@ class Burgers1DApp(_base_app.OneDimBaseApp):
             self.region_x.append(self.solver_config[x_var]["value"])
         self.region_velocity = []
         for i in range(self.num_region):
-            vel_var = f"velocity{i}{i+1}"
+            vel_var = f"velocity{i}{i + 1}"
             self.region_velocity.append(self.solver_config[vel_var]["value"])
 
     def init_solver_config(self):
@@ -175,9 +175,9 @@ class Burgers1DApp(_base_app.OneDimBaseApp):
                   self.region_x[-1],
                   f"The point {pos_x} of x axis"]
         pos_vel = self.num_region * 2 - 1
-        data_vel = [f"velocity{pos_x-1}{pos_x}",
+        data_vel = [f"velocity{pos_x - 1}{pos_x}",
                     self.region_velocity[-1],
-                    f"The velocity between point {pos_x-1} and {pos_x}"]
+                    f"The velocity between point {pos_x - 1} and {pos_x}"]
         return [(pos_x, data_x), (pos_vel, data_vel)]
 
     def get_region_delete(self):

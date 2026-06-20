@@ -49,7 +49,7 @@ def profile_take_along_axis(pow, it=10):
     solvcon.call_profiler.reset()
     for _ in range(it):
         test_data = np.arange(0, N, dtype=dtype)
-        indices = np.arange(0, N-1, dtype=dtype)
+        indices = np.arange(0, N - 1, dtype=dtype)
         np.random.shuffle(test_data)
         np.random.shuffle(indices)
         test_sa = make_container(test_data)
@@ -77,7 +77,8 @@ def profile_take_along_axis(pow, it=10):
     npbase = out["np"]
     sabase = out["sa"]
     for k, v in out.items():
-        print_row(f"{k:8s}", f"{v:.3E}", f"{v/npbase:.3f}", f"{v/sabase:.3f}")
+        print_row(f"{k:8s}", f"{v:.3E}",
+                  f"{v / npbase:.3f}", f"{v / sabase:.3f}")
 
     print()
 

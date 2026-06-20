@@ -167,7 +167,8 @@ def profile_arithmetic_operation(op, val_range, prof_func, dtype, it=10):
     npbase = out["np"]
     sabase = out["sa"]
     for k, v in out.items():
-        print_row(f"{k:8s}", f"{v:.3E}", f"{v/npbase:.3f}", f"{v/sabase:.3f}")
+        print_row(f"{k:8s}", f"{v:.3E}",
+                  f"{v / npbase:.3f}", f"{v / sabase:.3f}")
 
     print()
 

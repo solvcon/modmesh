@@ -57,10 +57,11 @@ class GridTC(unittest.TestCase):
 
     def test_xcoord(self):
 
-        nx = (self.grid10.ncelm + self.grid10.BOUND_COUNT)*2 + 1
+        nx = (self.grid10.ncelm + self.grid10.BOUND_COUNT) * 2 + 1
         golden_x = np.arange(0.0, 10.1, 0.5)
         golden_front = golden_x[0] - golden_x[self.grid10.BOUND_COUNT:0:-1]
-        golden_back = golden_x[-1] - golden_x[-2:-self.grid10.BOUND_COUNT-2:-1]
+        golden_back = (
+            golden_x[-1] - golden_x[-2:-self.grid10.BOUND_COUNT - 2:-1])
         golden_back += golden_x[-1]
         golden_x = np.hstack([golden_front, golden_x, golden_back])
 
@@ -68,7 +69,7 @@ class GridTC(unittest.TestCase):
         self.assertEqual(golden_x.tolist(),
                          self.grid10.xcoord.ndarray.tolist())
         self.grid10.xcoord.ndarray.fill(10)
-        self.assertEqual([10]*nx, self.grid10.xcoord.ndarray.tolist())
+        self.assertEqual([10] * nx, self.grid10.xcoord.ndarray.tolist())
 
     def test_number(self):
 

@@ -16,13 +16,13 @@ class LinearScalarSolverTC(unittest.TestCase):
     def _build_solver(resolution):
 
         # Build grid.
-        xcrd = np.arange(resolution+1) / resolution
+        xcrd = np.arange(resolution + 1) / resolution
         xcrd *= 2 * np.pi
         grid = libst.Grid(xcrd)
         dx = (grid.xmax - grid.xmin) / grid.ncelm
 
         # Build solver.
-        time_stop = 2*np.pi
+        time_stop = 2 * np.pi
         cfl_max = 1.0
         dt_max = dx * cfl_max
         nstep = int(np.ceil(time_stop / dt_max))
@@ -45,7 +45,7 @@ class LinearScalarSolverTC(unittest.TestCase):
     def test_xctr(self):
 
         # On even plane.
-        self.assertEqual(len(self.svr.xctr()), self.svr.grid.ncelm+1)
+        self.assertEqual(len(self.svr.xctr()), self.svr.grid.ncelm + 1)
         self.assertEqual(self.svr.xctr().tolist(), self.xcrd.tolist())
         self.assertEqual(self.svr.xctr().tolist(),
                          [e.xctr for e in self.svr.selms(odd_plane=False)])
@@ -65,7 +65,7 @@ class LinearScalarSolverTC(unittest.TestCase):
 
         v1 = [e.get_so0(0) for e in self.svr.selms(odd_plane=False)]
         v2 = self.svr.get_so0(0).ndarray.tolist()
-        self.assertEqual(self.svr.grid.ncelm+1, len(v2))
+        self.assertEqual(self.svr.grid.ncelm + 1, len(v2))
         self.assertEqual(v1, v2)
 
         with self.assertRaisesRegex(IndexError, "out of nvar range"):
@@ -75,7 +75,7 @@ class LinearScalarSolverTC(unittest.TestCase):
 
         v1 = [e.get_so1(0) for e in self.svr.selms(odd_plane=False)]
         v2 = self.svr.get_so1(0).ndarray.tolist()
-        self.assertEqual(self.svr.grid.ncelm+1, len(v2))
+        self.assertEqual(self.svr.grid.ncelm + 1, len(v2))
         self.assertEqual(v1, v2)
 
         with self.assertRaisesRegex(IndexError, "out of nvar range"):
@@ -105,7 +105,7 @@ class LinearScalarSolverTC(unittest.TestCase):
 
     def test_march(self):
 
-        self.svr.march_alpha2(self.nstep*self.cycle)
+        self.svr.march_alpha2(self.nstep * self.cycle)
         np.testing.assert_allclose(self.svr.get_so0(0), np.sin(self.xcrd),
                                    rtol=0, atol=1.e-14)
         ones = np.ones(self.svr.grid.nselm, dtype='float64')
@@ -129,7 +129,7 @@ class LinearScalarSolverTC(unittest.TestCase):
 
         svr2 = self._build_solver(self.resolution)[-1]
 
-        for it in range(self.nstep*self.cycle):
+        for it in range(self.nstep * self.cycle):
             _march()
             svr2.march_alpha2(steps=1)
             self.assertEqual(self.svr.get_so0(0).ndarray.tolist(),
@@ -207,15 +207,15 @@ class LinearScalarGridTestTC(unittest.TestCase):
         def _check(v, r):
             self.assertAlmostEqual(v, r, places=1)
 
-        _check(1.0, _rate(err[0]/err[1], dx[0]/dx[1]))
-        _check(1.0, _rate(err[1]/err[2], dx[1]/dx[2]))
-        _check(1.1, _rate(err[2]/err[3], dx[2]/dx[3]))
-        _check(1.0, _rate(err[3]/err[4], dx[3]/dx[4]))
-        _check(1.0, _rate(err[4]/err[5], dx[4]/dx[5]))
-        _check(1.0, _rate(err[5]/err[6], dx[5]/dx[6]))
-        _check(0.87, _rate(err[6]/err[7], dx[6]/dx[7]))
-        _check(1.0, _rate(err[7]/err[8], dx[7]/dx[8]))
-        _check(1.0, _rate(err[8]/err[9], dx[8]/dx[9]))
-        _check(1.0, _rate(err[9]/err[10], dx[9]/dx[10]))
+        _check(1.0, _rate(err[0] / err[1], dx[0] / dx[1]))
+        _check(1.0, _rate(err[1] / err[2], dx[1] / dx[2]))
+        _check(1.1, _rate(err[2] / err[3], dx[2] / dx[3]))
+        _check(1.0, _rate(err[3] / err[4], dx[3] / dx[4]))
+        _check(1.0, _rate(err[4] / err[5], dx[4] / dx[5]))
+        _check(1.0, _rate(err[5] / err[6], dx[5] / dx[6]))
+        _check(0.87, _rate(err[6] / err[7], dx[6] / dx[7]))
+        _check(1.0, _rate(err[7] / err[8], dx[7] / dx[8]))
+        _check(1.0, _rate(err[8] / err[9], dx[8] / dx[9]))
+        _check(1.0, _rate(err[9] / err[10], dx[9] / dx[10]))
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

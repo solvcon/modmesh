@@ -110,12 +110,12 @@ class EPath(object):
 
         # compute angles (start, delta)
         def angle(u, v):
-            dot = u[0]*v[0] + u[1]*v[1]
-            det = u[0]*v[1] - u[1]*v[0]
+            dot = u[0] * v[0] + u[1] * v[1]
+            det = u[0] * v[1] - u[1] * v[0]
             return math.atan2(det, dot)
 
-        u = [(xp - cxp)/rx, (yp - cyp)/ry]
-        v = [(-xp - cxp)/rx, (-yp - cyp)/ry]
+        u = [(xp - cxp) / rx, (yp - cyp) / ry]
+        v = [(-xp - cxp) / rx, (-yp - cyp) / ry]
 
         theta1 = angle([1, 0], u)
         delta_theta = angle(u, v)
@@ -157,7 +157,7 @@ class EPath(object):
                 # Move position:
                 #   command: [M|m] (relative position in lowercase command)
                 #   parameter: (dx, dy)+
-                dx, dy = coords[i:i+2]
+                dx, dy = coords[i:i + 2]
                 x_cur, y_cur = current_pos[0], current_pos[1]
 
                 if cmd == 'M':
@@ -172,7 +172,7 @@ class EPath(object):
 
                 # implicit line-to command
                 while i + 1 < len(coords):
-                    dx, dy = coords[i:i+2]
+                    dx, dy = coords[i:i + 2]
                     x_cur, y_cur = current_pos[0], current_pos[1]
 
                     x_end = dx
@@ -193,7 +193,7 @@ class EPath(object):
                 #   command: [L|l] (relative position in lowercase command)
                 #   parameter: (dx1, dy1)+
                 while i + 1 < len(coords):
-                    dx, dy = coords[i:i+2]
+                    dx, dy = coords[i:i + 2]
                     x_cur, y_cur = current_pos[0], current_pos[1]
 
                     x_end = dx
@@ -249,7 +249,7 @@ class EPath(object):
                 #   command: [C|c] (relative position in lowercase command)
                 #   parameter: (dx1, dy1, dx2, dy2, dx3, dy3)+
                 while i + 5 < len(coords):
-                    dx1, dy1, dx2, dy2, dx3, dy3 = coords[i:i+6]
+                    dx1, dy1, dx2, dy2, dx3, dy3 = coords[i:i + 6]
                     x_cur, y_cur = current_pos[0], current_pos[1]
 
                     if cmd == 'C':
@@ -281,7 +281,7 @@ class EPath(object):
                 # command: [S|s] (relative position in lowercase command)
                 # parameter: (dx2, dy2, dx3, dy3)+
                 while i + 3 < len(coords):
-                    dx2, dy2, dx3, dy3 = coords[i:i+4]
+                    dx2, dy2, dx3, dy3 = coords[i:i + 4]
                     x_cur, y_cur = current_pos[0], current_pos[1]
 
                     if cmd == 'S':
@@ -317,7 +317,7 @@ class EPath(object):
                 #   command: [Q|q] (relative position in lowercase command)
                 #   parameter: (dx1, dy1, dx2, dy2)+
                 while i + 3 < len(coords):
-                    dx1, dy1, dx2, dy2 = coords[i:i+4]
+                    dx1, dy1, dx2, dy2 = coords[i:i + 4]
                     x_cur, y_cur = current_pos[0], current_pos[1]
 
                     if cmd == 'Q':
@@ -346,7 +346,7 @@ class EPath(object):
                 #   command: [T|t] (relative position in lowercase command)
                 #   parameter: (dx2, dy2)+
                 while i + 1 < len(coords):
-                    dx2, dy2 = coords[i:i+2]
+                    dx2, dy2 = coords[i:i + 2]
                     x_cur, y_cur = current_pos[0], current_pos[1]
 
                     if cmd == 'T':
@@ -381,7 +381,7 @@ class EPath(object):
                 while i + 6 < len(coords):
                     start_pt = current_pos
                     (rx, ry, rotation,
-                     Flarge_arc, Fsweep, dx, dy) = coords[i:i+7]
+                     Flarge_arc, Fsweep, dx, dy) = coords[i:i + 7]
                     x_cur, y_cur = current_pos[0], current_pos[1]
 
                     x_end = dx
@@ -394,9 +394,9 @@ class EPath(object):
                     arc_pts = self.calc_arc2pnts(start_pt, end, rx, ry,
                                                  rotation, Flarge_arc, Fsweep)
 
-                    for p in range(arc_pts.shape[0]-1):
+                    for p in range(arc_pts.shape[0] - 1):
                         p_from = Point(arc_pts[p][0], arc_pts[p][1], 0)
-                        p_to = Point(arc_pts[p+1][0], arc_pts[p+1][1], 0)
+                        p_to = Point(arc_pts[p + 1][0], arc_pts[p + 1][1], 0)
                         sp2d.append(Segment(p_from, p_to))
 
                     current_pos = end
