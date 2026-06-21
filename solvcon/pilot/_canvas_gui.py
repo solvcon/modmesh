@@ -21,10 +21,17 @@ class Canvas(_gui_common.PilotFeature):
     """
 
     def __init__(self, *args, **kw):
+        # The Painter toolbox is owned by the controller so it can also be
+        # toggled from View > Panels; the canvas drives it when a blank
+        # canvas opens.
+        self._painter = kw.pop('painter')
         super(Canvas, self).__init__(*args, **kw)
         self._world = core.WorldFp64()
         self._widget = None
         self._widget_2d = None
+        # Worlds backing blank canvases, kept independent of the sample
+        # geometry above and held so they outlive the menu callback.
+        self._blank_worlds = []
 
     def populate_menu(self):
         self._add_menu_item(
@@ -77,11 +84,33 @@ class Canvas(_gui_common.PilotFeature):
         self._mgr.canvasMenu.addSeparator()
         self._add_menu_item(
             menu=self._mgr.canvasMenu,
+            text="Create blank 2D canvas",
+            tip="Open an empty 2D canvas with the Painter toolbox for "
+                "drawing shapes",
+            func=self._create_blank_2d_canvas,
+        )
+        self._add_menu_item(
+            menu=self._mgr.canvasMenu,
             text="View: Open canvas in 2D",
             tip="Show the current canvas world in a strictly-2D QPainter "
                 "widget; the same world also drives the 3D view",
             func=self._open_2d,
         )
+
+    def _create_blank_2d_canvas(self):
+        """
+        Open an empty 2D canvas and show the Painter toolbox. Each blank
+        canvas gets its own world, so shapes drawn here stay independent of
+        the sample geometry and of other blank canvases. The new canvas
+        takes focus, so the toolbox drives it right away.
+        """
+        world = core.WorldFp64()
+        widget = self._mgr.add2DWidget()
+        widget.updateWorld(world)
+        widget.resetView()
+        self._blank_worlds.append(world)
+        self._painter.present()
+        return widget
 
     @staticmethod
     def _draw_layer(world, layer):

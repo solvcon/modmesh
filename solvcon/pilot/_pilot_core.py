@@ -51,6 +51,12 @@ list_of_rcameracontroller = [
     'RCameraController',
 ]
 
+# DrawTool.hpp/.cpp
+list_of_drawtool = [
+    'draw_tool_names',
+    'default_draw_tool_name',
+]
+
 
 _from_impl = (  # noqa: F822
     list_of_r3dwidget +
@@ -58,7 +64,8 @@ _from_impl = (  # noqa: F822
     list_of_raxismark +
     list_of_rmanager +
     list_of_rpythonconsole +
-    list_of_rcameracontroller
+    list_of_rcameracontroller +
+    list_of_drawtool
 )
 
 __all__ = _from_impl + [  # noqa: F822
@@ -81,6 +88,7 @@ _load(list_of_raxismark)
 _load(list_of_rmanager)
 _load(list_of_rpythonconsole)
 _load(list_of_rcameracontroller)
+_load(list_of_drawtool)
 
 del _load
 

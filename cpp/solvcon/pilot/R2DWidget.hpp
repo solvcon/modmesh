@@ -7,15 +7,18 @@
 
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
+#include <solvcon/pilot/DrawTool.hpp>
 #include <solvcon/universe/ViewTransform2d.hpp>
 #include <solvcon/universe/World.hpp>
 
 #include <memory>
+#include <string>
 
 #include <QPointF>
 #include <QWidget>
 
 class QMouseEvent;
+class QPainter;
 class QPaintEvent;
 class QResizeEvent;
 class QWheelEvent;
@@ -39,6 +42,12 @@ public:
 
     /// Read-only access to the current view state.
     ViewTransform2dFp64 const & viewTransform() const { return m_view; }
+
+    /// Get the name of the active draw tool
+    std::string drawTool() const { return m_tool->name(); }
+
+    /// Select the active pointer tool by name
+    void setDrawTool(std::string const & name);
 
     /// Replace the view state. Non-finite inputs are ignored and zoom
     /// is clamped to the widget's internal bounds, so the widget's
@@ -72,11 +81,22 @@ private:
 
     void centerViewOnOrigin();
 
+    /// Paint the active tool's rubber-band preview while a drag is in
+    /// progress; a no-op for the pan tool or when no drag is underway.
+    void paintDrawPreview(QPainter & painter) const;
+
     ViewTransform2dFp64 m_view;
     std::shared_ptr<WorldFp64> m_world;
     bool m_panning = false;
     bool m_view_modified = false;
     QPointF m_last_mouse_pos;
+
+    std::unique_ptr<DrawToolBase> m_tool; ///< active tool, shared by every 2D canvas
+    bool m_drawing = false; ///< a shape drag is in progress
+    double m_draw_start_x = 0.0; ///< press anchor, world coordinates
+    double m_draw_start_y = 0.0;
+    double m_draw_current_x = 0.0; ///< live pointer, world coordinates
+    double m_draw_current_y = 0.0;
 
 }; /* end class R2DWidget */
 

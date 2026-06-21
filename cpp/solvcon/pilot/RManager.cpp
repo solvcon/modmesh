@@ -5,8 +5,10 @@
 
 #include <solvcon/pilot/RManager.hpp> // Must be the first include.
 
+#include <stdexcept>
 #include <vector>
 
+#include <solvcon/pilot/DrawTool.hpp>
 #include <solvcon/pilot/RAction.hpp>
 #include <Qt>
 #include <QMenuBar>
@@ -159,6 +161,26 @@ std::vector<R2DWidget *> RManager::list2DWidgets()
     return widgets;
 }
 
+void RManager::setDrawTool(std::string const & name)
+{
+    // Validate eagerly so an unknown tool is rejected even when no 2D
+    // canvas is focused to surface the error.
+    if (!is_draw_tool(name))
+    {
+        throw std::invalid_argument("RManager::setDrawTool: unknown tool '" + name + "'");
+    }
+    m_draw_tool = name;
+    applyDrawTool();
+}
+
+void RManager::applyDrawTool()
+{
+    if (R2DWidget * canvas = currentR2DWidget())
+    {
+        canvas->setDrawTool(m_draw_tool);
+    }
+}
+
 void RManager::toggleConsole()
 {
     if (m_pycon)
@@ -187,6 +209,10 @@ void RManager::setUpCentral()
     m_mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_mdiArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_mainWindow->setCentralWidget(m_mdiArea);
+    // Keep the focused 2D canvas in step with the active draw tool, so the
+    // single Painter toolbox always drives whichever canvas has focus.
+    QObject::connect(m_mdiArea, &QMdiArea::subWindowActivated, m_mdiArea, [this](QMdiSubWindow *)
+                     { applyDrawTool(); });
 }
 
 void RManager::setUpMenu()

@@ -26,6 +26,7 @@ if _pcore.enable:
     from . import _svg_gui
     from . import _linear_wave
     from . import _canvas_gui
+    from . import _painter_gui
     from . import _profiling
 
 __all__ = [  # noqa: F822
@@ -64,6 +65,7 @@ class _Controller(metaclass=_Singleton):
         self.eulerone = None
         self.burgers = None
         self.linear_wave = None
+        self.painter = None
         self.canvas = None
         self.openprofiledata = None
         self.runprofiling = None
@@ -98,7 +100,9 @@ class _Controller(metaclass=_Singleton):
         self.eulerone = _euler1d.Euler1DApp(mgr=self._rmgr)
         self.burgers = _burgers1d.Burgers1DApp(mgr=self._rmgr)
         self.linear_wave = _linear_wave.LinearWave1DApp(mgr=self._rmgr)
-        self.canvas = _canvas_gui.Canvas(mgr=self._rmgr)
+        self.painter = _painter_gui.Painter(mgr=self._rmgr,
+                                            menu=self.panels_menu)
+        self.canvas = _canvas_gui.Canvas(mgr=self._rmgr, painter=self.painter)
         self.openprofiledata = _profiling.Profiling(mgr=self._rmgr)
         self.runprofiling = _profiling.RunProfiling(mgr=self._rmgr)
         self.populate_menu()
@@ -126,6 +130,7 @@ class _Controller(metaclass=_Singleton):
         self.gmsh_dialog.populate_menu()
         self.svg_dialog.populate_menu()
         self.mesh_info.populate_menu()
+        self.painter.populate_menu()
         self.sample_mesh.populate_menu()
         self.oblique_shock.populate_menu()
         self.oblique_solver.populate_menu()

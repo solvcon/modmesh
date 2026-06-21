@@ -7,6 +7,7 @@
 
 #include <solvcon/pilot/RWorldRenderer2d.hpp>
 
+#include <array>
 #include <cmath>
 
 #include <QMouseEvent>
@@ -26,6 +27,11 @@ constexpr double ZOOM_STEP_PER_DEGREE = 1.0 / 360.0;
 
 constexpr double MIN_ZOOM = 1.0e-6;
 constexpr double MAX_ZOOM = 1.0e6;
+
+// Drags spanning fewer than this many screen pixels commit nothing, so a
+// stray click in a shape tool does not drop a degenerate shape into the
+// world.
+constexpr double MIN_DRAW_DRAG_PX = 2.0;
 
 double clamp_zoom(double zoom)
 {
@@ -53,6 +59,7 @@ bool is_finite_view(ViewTransform2dFp64 const & v)
 
 R2DWidget::R2DWidget(QWidget * parent, Qt::WindowFlags f)
     : QWidget(parent, f)
+    , m_tool(make_draw_tool(default_draw_tool_name()))
 {
     setFocusPolicy(Qt::StrongFocus);
     setAttribute(Qt::WA_OpaquePaintEvent, true);
@@ -81,6 +88,30 @@ void R2DWidget::resetView()
     update();
 }
 
+void R2DWidget::setDrawTool(std::string const & name)
+{
+    if (name == drawTool())
+    {
+        return;
+    }
+    // make_draw_tool throws for an unknown name; let it propagate before any
+    // state changes so an invalid request leaves the current tool untouched.
+    std::unique_ptr<DrawToolBase> tool = make_draw_tool(name);
+    m_tool = std::move(tool);
+    // A tool switch abandons any in-progress drag without committing.
+    m_drawing = false;
+    // A crosshair signals draw mode; the pan tool keeps the default arrow.
+    if (m_tool->can_draw_shape())
+    {
+        setCursor(Qt::CrossCursor);
+    }
+    else
+    {
+        unsetCursor();
+    }
+    update();
+}
+
 void R2DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
 {
     m_world = world;
@@ -98,6 +129,24 @@ void R2DWidget::paintEvent(QPaintEvent * /*event*/)
     QPainter painter(this);
     constexpr bool full_canvas = true;
     RWorldRenderer2d(m_world.get(), m_view).paint_canvas(painter, width(), height(), full_canvas);
+
+    // Rubber-band preview of the shape currently being dragged, if any.
+    paintDrawPreview(painter);
+}
+
+void R2DWidget::paintDrawPreview(QPainter & painter) const
+{
+    if (!m_drawing)
+    {
+        return;
+    }
+    // avoid painting when the canvas is just re-entered
+    if (m_draw_current_x == m_draw_start_x && m_draw_current_y == m_draw_start_y)
+    {
+        return;
+    }
+    std::array<DrawPoint, 2> const points{{{m_draw_start_x, m_draw_start_y}, {m_draw_current_x, m_draw_current_y}}};
+    m_tool->paint_preview(painter, m_view, points);
 }
 
 void R2DWidget::wheelEvent(QWheelEvent * event)
@@ -121,8 +170,21 @@ void R2DWidget::mousePressEvent(QMouseEvent * event)
 {
     if (event->button() == Qt::LeftButton)
     {
+        QPointF const pos = event->position();
+        if (m_tool->can_draw_shape())
+        {
+            // Anchor the drag in world space so it is robust to any pan or
+            // zoom that happens mid-stroke. The current point starts at the
+            // anchor and tracks the pointer until release.
+            m_view.world_from_screen(pos.x(), pos.y(), m_draw_start_x, m_draw_start_y);
+            m_draw_current_x = m_draw_start_x;
+            m_draw_current_y = m_draw_start_y;
+            m_drawing = true;
+            event->accept();
+            return;
+        }
         m_panning = true;
-        m_last_mouse_pos = event->position();
+        m_last_mouse_pos = pos;
         setCursor(Qt::ClosedHandCursor);
         event->accept();
         return;
@@ -132,9 +194,16 @@ void R2DWidget::mousePressEvent(QMouseEvent * event)
 
 void R2DWidget::mouseMoveEvent(QMouseEvent * event)
 {
+    QPointF const pos = event->position();
+    if (m_drawing)
+    {
+        m_view.world_from_screen(pos.x(), pos.y(), m_draw_current_x, m_draw_current_y);
+        update();
+        event->accept();
+        return;
+    }
     if (m_panning)
     {
-        QPointF const pos = event->position();
         QPointF const delta = pos - m_last_mouse_pos;
         m_last_mouse_pos = pos;
         m_view.pan(delta.x(), delta.y());
@@ -148,6 +217,28 @@ void R2DWidget::mouseMoveEvent(QMouseEvent * event)
 
 void R2DWidget::mouseReleaseEvent(QMouseEvent * event)
 {
+    if (event->button() == Qt::LeftButton && m_drawing)
+    {
+        m_drawing = false;
+        // Commit only a drag long enough to be intentional, and only when a
+        // tool and a world exist to receive it. The drag span maps to screen
+        // pixels through the zoom, so the guard is shape-agnostic. Committed
+        // shapes are first-class World shapes that serialize through
+        // describe_state for tools.
+        double const drag_px = m_view.zoom() * std::hypot(
+                                                   m_draw_current_x - m_draw_start_x,
+                                                   m_draw_current_y - m_draw_start_y);
+        if (m_world && drag_px >= MIN_DRAW_DRAG_PX)
+        {
+            std::array<DrawPoint, 2> const points{
+                {{m_draw_start_x, m_draw_start_y},
+                 {m_draw_current_x, m_draw_current_y}}};
+            m_tool->commit(*m_world, points);
+        }
+        update();
+        event->accept();
+        return;
+    }
     if (event->button() == Qt::LeftButton && m_panning)
     {
         m_panning = false;

@@ -7,17 +7,18 @@
 
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
-#include <solvcon/pilot/RPythonConsoleDockWidget.hpp>
-#include <solvcon/pilot/R3DWidget.hpp>
+#include <solvcon/pilot/DrawTool.hpp>
 #include <solvcon/pilot/R2DWidget.hpp>
+#include <solvcon/pilot/R3DWidget.hpp>
 #include <solvcon/pilot/RAction.hpp>
+#include <solvcon/pilot/RPythonConsoleDockWidget.hpp>
 
 #include <vector>
 
+#include <QApplication>
 #include <QMainWindow>
 #include <QMdiArea>
 #include <QMdiSubWindow>
-#include <QApplication>
 #include <Qt>
 
 namespace solvcon
@@ -44,9 +45,17 @@ public:
     R2DWidget * currentR2DWidget();
     std::vector<R2DWidget *> list2DWidgets();
 
+    /// Name of the active canvas drawing tool.
+    std::string drawTool() const { return m_draw_tool; }
+
+    /// Select the active drawing tool and apply it to the focused 2D canvas.
+    void setDrawTool(std::string const & name);
+
     RPythonConsoleDockWidget * pycon() { return m_pycon; }
 
     QMainWindow * mainWindow() { return m_mainWindow; }
+
+    QMdiArea * mdiArea() { return m_mdiArea; }
 
     template <typename... Args>
     QMdiSubWindow * addSubWindow(Args &&... args);
@@ -74,6 +83,10 @@ private:
     void setUpCentral();
     void setUpMenu();
 
+    /// Push the active draw tool onto the focused 2D canvas, if any. A
+    /// no-op when the focused subwindow is not a 2D canvas.
+    void applyDrawTool();
+
     void setUpCameraControllersMenuItems() const;
     void setUpCameraMovementMenuItems() const;
 
@@ -95,6 +108,10 @@ private:
 
     RPythonConsoleDockWidget * m_pycon = nullptr;
     QMdiArea * m_mdiArea = nullptr;
+
+    /// Active canvas drawing tool, shared by every 2D canvas. Starts on
+    /// the default tool (pan navigation).
+    std::string m_draw_tool = default_draw_tool_name();
 }; /* end class RManager */
 
 template <typename... Args>
