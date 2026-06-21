@@ -177,7 +177,7 @@ def main():
     solvcon.call_profiler.reset()
     for _ in range(it):
         test_data = np.arange(0, N, dtype='uint32')
-        indices = np.arange(0, N-1, dtype='uint32')
+        indices = np.arange(0, N - 1, dtype='uint32')
         test_sa = make_container(test_data)
         idx_sa = make_container(indices)
         profile_take_along_axis_np(test_data, indices)
@@ -198,7 +198,7 @@ def main():
     solvcon.call_profiler.reset()
     for _ in range(it):
         test_data = np.arange(N, 0, -1, dtype='uint32')
-        indices = np.arange(N-1, 0, -1, dtype='uint32')
+        indices = np.arange(N - 1, 0, -1, dtype='uint32')
         test_sa = make_container(test_data)
         idx_sa = make_container(indices)
         profile_take_along_axis_np(test_data, indices)
@@ -219,7 +219,7 @@ def main():
     solvcon.call_profiler.reset()
     for _ in range(it):
         test_data = np.arange(0, N, dtype='uint32')
-        indices = np.arange(0, N-1, dtype='uint32')
+        indices = np.arange(0, N - 1, dtype='uint32')
         np.random.shuffle(test_data)
         np.random.shuffle(indices)
         test_sa = make_container(test_data)

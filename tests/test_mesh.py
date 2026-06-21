@@ -35,10 +35,13 @@ class StaticMeshTC(unittest.TestCase):
         self.assertEqual((mh.ngstcell + mh.ncell,), mh.cltpn.shape)
         self.assertEqual((mh.ngstcell + mh.ncell,), mh.clgrp.shape)
 
-        self.assertEqual((mh.ngstface + mh.nface, mh.FCMND+1), mh.fcnds.shape)
+        self.assertEqual(
+            (mh.ngstface + mh.nface, mh.FCMND + 1), mh.fcnds.shape)
         self.assertEqual((mh.ngstface + mh.nface, mh.FCREL), mh.fccls.shape)
-        self.assertEqual((mh.ngstcell + mh.ncell, mh.CLMND+1), mh.clnds.shape)
-        self.assertEqual((mh.ngstcell + mh.ncell, mh.CLMFC+1), mh.clfcs.shape)
+        self.assertEqual(
+            (mh.ngstcell + mh.ncell, mh.CLMND + 1), mh.clnds.shape)
+        self.assertEqual(
+            (mh.ngstcell + mh.ncell, mh.CLMFC + 1), mh.clfcs.shape)
 
     def _check_metric_trivial(self, mh):
         self.assertTrue((mh.fccnd.ndarray[:, :] == 0).all())

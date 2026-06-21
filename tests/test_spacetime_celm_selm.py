@@ -217,8 +217,8 @@ class SelmTC(unittest.TestCase):
         self.assertEqual(0.5, self.se0.xpos)
         self.assertEqual(self.se0.xpos - self.se0.xneg, self.se0.dx)
         self.assertEqual(self.dt, self.se0.dt)
-        self.assertEqual(self.dt/2, self.se0.hdt)
-        self.assertEqual(self.dt/4, self.se0.qdt)
+        self.assertEqual(self.dt / 2, self.se0.hdt)
+        self.assertEqual(self.dt / 4, self.se0.qdt)
 
     def test_move_is_inplace(self):
 

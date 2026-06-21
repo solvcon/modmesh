@@ -8,10 +8,10 @@ class PlaneLayer:
 
     def add_rectangle(self, x, y, w, h):
         rect = [
-            [(x, y), (x+w, y)],
-            [(x+w, y), (x+w, y+h)],
-            [(x+w, y+h), (x, y+h)],
-            [(x, y+h), (x, y)]
+            [(x, y), (x + w, y)],
+            [(x + w, y), (x + w, y + h)],
+            [(x + w, y + h), (x, y + h)],
+            [(x, y + h), (x, y)]
         ]
 
         self.polys.append(rect)
@@ -25,8 +25,8 @@ class PlaneLayer:
             curr_idx = i * 2
             next_idx = ((i + 1) % point_count) * 2
             poly.append([
-                (coords[curr_idx], coords[curr_idx+1]),
-                (coords[next_idx], coords[next_idx+1])])
+                (coords[curr_idx], coords[curr_idx + 1]),
+                (coords[next_idx], coords[next_idx + 1])])
 
         self.polys.append(poly)
 

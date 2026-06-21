@@ -38,11 +38,12 @@ class TestLinalgFactorization(unittest.TestCase):
 
     def test_llt_factorization_complex_5x5(self):
         L_desired = np.array([
-            [2.0+0.0j, 0.0+0.0j, 0.0+0.0j, 0.0+0.0j, 0.0+0.0j],
-            [1.0+0.5j, 1.5+0.0j, 0.0+0.0j, 0.0+0.0j, 0.0+0.0j],
-            [0.5+0.25j, 0.75+0.375j, 1.0+0.0j, 0.0+0.0j, 0.0+0.0j],
-            [0.25+0.0j, 0.375+0.0j, 0.5+0.0j, 0.75+0.0j, 0.0+0.0j],
-            [0.125+0.0625j, 0.1875+0.09375j, 0.25+0.0j, 0.375+0.0j, 0.5+0.0j]
+            [2.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j],
+            [1.0 + 0.5j, 1.5 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j],
+            [0.5 + 0.25j, 0.75 + 0.375j, 1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j],
+            [0.25 + 0.0j, 0.375 + 0.0j, 0.5 + 0.0j, 0.75 + 0.0j, 0.0 + 0.0j],
+            [0.125 + 0.0625j, 0.1875 + 0.09375j, 0.25 + 0.0j, 0.375 + 0.0j,
+             0.5 + 0.0j]
         ])
         A_np = L_desired @ L_desired.conj().T
         A = sc.SimpleArrayComplex128(array=A_np)
@@ -104,14 +105,17 @@ class TestLinalgSolver(unittest.TestCase):
 
     def test_llt_solve_complex_5x5(self):
         B_np = np.array([
-            [2.0+0.0j, 1.0+0.5j, 0.5+0.25j, 0.25+0.0j, 0.125+0.0625j],
-            [0.0+0.0j, 1.5+0.0j, 0.75+0.375j, 0.375+0.0j, 0.1875+0.09375j],
-            [0.0+0.0j, 0.0+0.0j, 1.0+0.0j, 0.5+0.0j, 0.25+0.0j],
-            [0.0+0.0j, 0.0+0.0j, 0.0+0.0j, 0.75+0.0j, 0.375+0.0j],
-            [0.0+0.0j, 0.0+0.0j, 0.0+0.0j, 0.0+0.0j, 0.5+0.0j]
+            [2.0 + 0.0j, 1.0 + 0.5j, 0.5 + 0.25j, 0.25 + 0.0j,
+             0.125 + 0.0625j],
+            [0.0 + 0.0j, 1.5 + 0.0j, 0.75 + 0.375j, 0.375 + 0.0j,
+             0.1875 + 0.09375j],
+            [0.0 + 0.0j, 0.0 + 0.0j, 1.0 + 0.0j, 0.5 + 0.0j, 0.25 + 0.0j],
+            [0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.75 + 0.0j, 0.375 + 0.0j],
+            [0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.5 + 0.0j]
         ])
         A_np = B_np.conj().T @ B_np + np.eye(5, dtype=complex)
-        b_np = np.array([1.0+0.0j, 2.0+0.0j, 3.0+0.0j, 4.0+0.0j, 5.0+0.0j])
+        b_np = np.array([1.0 + 0.0j, 2.0 + 0.0j, 3.0 + 0.0j, 4.0 + 0.0j,
+                         5.0 + 0.0j])
         A = sc.SimpleArrayComplex128(array=A_np)
         b = sc.SimpleArrayComplex128(array=b_np)
         x = sc.llt_solve(A, b)
@@ -156,17 +160,17 @@ class TestLinalgSolver(unittest.TestCase):
 
     def test_llt_solve_2d_multi_rhs_complex(self):
         B_np = np.array([
-            [2.0+0.0j, 1.0+0.5j, 0.5+0.25j, 0.25+0.0j],
-            [0.0+0.0j, 1.5+0.0j, 0.75+0.375j, 0.375+0.0j],
-            [0.0+0.0j, 0.0+0.0j, 1.0+0.0j, 0.5+0.0j],
-            [0.0+0.0j, 0.0+0.0j, 0.0+0.0j, 0.75+0.0j]
+            [2.0 + 0.0j, 1.0 + 0.5j, 0.5 + 0.25j, 0.25 + 0.0j],
+            [0.0 + 0.0j, 1.5 + 0.0j, 0.75 + 0.375j, 0.375 + 0.0j],
+            [0.0 + 0.0j, 0.0 + 0.0j, 1.0 + 0.0j, 0.5 + 0.0j],
+            [0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.75 + 0.0j]
         ])
         A_np = B_np.conj().T @ B_np + np.eye(4, dtype=complex)
         b_2d_np = np.array([
-            [1.0+0.0j, 2.0+0.5j, 3.0+1.0j],
-            [4.0+0.0j, 5.0+0.5j, 6.0+1.0j],
-            [7.0+0.0j, 8.0+0.5j, 9.0+1.0j],
-            [10.0+0.0j, 11.0+0.5j, 12.0+1.0j]
+            [1.0 + 0.0j, 2.0 + 0.5j, 3.0 + 1.0j],
+            [4.0 + 0.0j, 5.0 + 0.5j, 6.0 + 1.0j],
+            [7.0 + 0.0j, 8.0 + 0.5j, 9.0 + 1.0j],
+            [10.0 + 0.0j, 11.0 + 0.5j, 12.0 + 1.0j]
         ])
         A = sc.SimpleArrayComplex128(array=A_np)
         b_2d = sc.SimpleArrayComplex128(array=b_2d_np)
@@ -356,9 +360,9 @@ class KalmanFilterPredictTC(unittest.TestCase):
 
     def test_predict_cp128(self):
         n = 2
-        x0 = np.array([1.0+0.5j, 2.0-0.3j], dtype=np.complex128)
-        f = np.array([[1.1+0.1j, 0.2-0.1j],
-                      [0.1+0.1j, 0.9+0.0j]], dtype=np.complex128)
+        x0 = np.array([1.0 + 0.5j, 2.0 - 0.3j], dtype=np.complex128)
+        f = np.array([[1.1 + 0.1j, 0.2 - 0.1j],
+                      [0.1 + 0.1j, 0.9 + 0.0j]], dtype=np.complex128)
         p0 = np.eye(n, dtype=np.complex128)
         sigma_w = 0.316
         q = (sigma_w**2) * np.eye(n, dtype=np.complex128)

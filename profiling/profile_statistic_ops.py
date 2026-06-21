@@ -94,7 +94,7 @@ def profile_stat_op(op, prof_func_np, prof_func_sa, dtype, sizes, it=10,
 
     for N in sizes:
         if axis is not None:
-            shape = (N//100, 100) if axis == 1 else (100, N//100)
+            shape = (N // 100, 100) if axis == 1 else (100, N // 100)
             if min(shape) <= 0:
                 continue
             if np.issubdtype(dtype, np.floating):
@@ -148,13 +148,13 @@ def profile_stat_op(op, prof_func_np, prof_func_sa, dtype, sizes, it=10,
         def print_row(*cols):
             print(str.format("| {:10s} | {:15s} | {:15s} |", *(cols[0:3])))
         print_row('func', 'per call (ms)', 'cmp to np')
-        print_row('-'*10, '-'*15, '-'*15)
+        print_row('-' * 10, '-' * 15, '-' * 15)
         if axis is not None:
             npbase = out.get("np_axis", 1e-12)
         else:
             npbase = out.get("np", 1e-12)
         for k, v in out.items():
-            print_row(f"{k:8s}", f"{v:.3E}", f"{v/npbase:.3f}")
+            print_row(f"{k:8s}", f"{v:.3E}", f"{v / npbase:.3f}")
         print()
 
     return results
@@ -225,7 +225,7 @@ def create_1d_performance_plot(all_results, op, dtypes):
     sorted_dtypes = sorted(dtypes)
     n_dtypes = len(sorted_dtypes)
 
-    fig, axes = plt.subplots(n_dtypes, 2, figsize=(15, 4*n_dtypes))
+    fig, axes = plt.subplots(n_dtypes, 2, figsize=(15, 4 * n_dtypes))
     fig.suptitle(f'1D Performance: {op.title()}', fontsize=16)
 
     if n_dtypes == 1:
@@ -272,7 +272,7 @@ def create_axis_performance_plot(all_results, op, dtypes):
     sorted_dtypes = sorted(dtypes)
     n_dtypes = len(sorted_dtypes)
 
-    fig, axes = plt.subplots(n_dtypes, 4, figsize=(20, 4*n_dtypes))
+    fig, axes = plt.subplots(n_dtypes, 4, figsize=(20, 4 * n_dtypes))
     fig.suptitle(f'Axis Performance: {op.title()}', fontsize=16)
 
     if n_dtypes == 1:
