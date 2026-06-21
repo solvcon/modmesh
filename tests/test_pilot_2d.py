@@ -17,6 +17,8 @@ try:
 except ImportError:
     pilot = None
 
+GITHUB_ACTIONS = os.getenv('GITHUB_ACTIONS', False)
+
 _PNG_MAGIC = b'\x89PNG\r\n\x1a\n'
 
 
@@ -51,6 +53,26 @@ def _build_world():
     dead = w.add_triangle(8, 8, 9, 8, 8, 9)
     w.remove_shape(dead)
     return w
+
+
+def _send_mouse(widget, kind, x, y):
+    """Post a synthetic left-button mouse event to ``widget``.
+    """
+    from PySide6 import QtCore, QtGui, QtWidgets
+    kinds = {
+        'press': (QtCore.QEvent.Type.MouseButtonPress,
+                  QtCore.Qt.LeftButton, QtCore.Qt.LeftButton),
+        'move': (QtCore.QEvent.Type.MouseMove,
+                 QtCore.Qt.NoButton, QtCore.Qt.LeftButton),
+        'release': (QtCore.QEvent.Type.MouseButtonRelease,
+                    QtCore.Qt.LeftButton, QtCore.Qt.NoButton),
+    }
+    etype, button, buttons = kinds[kind]
+    pos = QtCore.QPointF(x, y)
+    glob = widget.mapToGlobal(pos.toPoint())
+    event = QtGui.QMouseEvent(etype, pos, QtCore.QPointF(glob), button,
+                              buttons, QtCore.Qt.NoModifier)
+    QtWidgets.QApplication.sendEvent(widget, event)
 
 
 @unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
@@ -117,6 +139,20 @@ class R2DWidgetWorldTC(unittest.TestCase):
         self.assertEqual(got.pan_x, 40.0)
         self.assertEqual(got.pan_y, 25.0)
         self.assertEqual(got.zoom, 3.0)
+
+    def test_draw_tool_round_trip(self):
+        """setDrawTool selects the tool the Painter toolbox drives; it
+        reads back through the drawTool property, defaults to pan, and
+        rejects an unknown name with ValueError.
+        """
+        self.widget.setDrawTool("circle")
+        self.assertEqual(self.widget.drawTool, "circle")
+        self.widget.setDrawTool("pan")
+        self.assertEqual(self.widget.drawTool, "pan")
+        with self.assertRaises(ValueError):
+            self.widget.setDrawTool("triangle")
+        # An invalid request leaves the previous tool untouched.
+        self.assertEqual(self.widget.drawTool, "pan")
 
     @unittest.skip("TODO: pixel-level DEAD-shape culling assertions")
     def test_dead_shape_culling_renders_pixels(self):
@@ -214,6 +250,95 @@ class R2DWidgetScreenshotTC(unittest.TestCase):
         self.assertFalse(pixmap.isNull())
         self.assertGreater(pixmap.width(), 0)
         self.assertGreater(pixmap.height(), 0)
+
+
+@unittest.skipIf(GITHUB_ACTIONS or not solvcon.HAS_PILOT,
+                 "live-GUI interaction is unstable under GitHub Actions")
+class PainterToolboxTC(unittest.TestCase):
+    """Run-through coverage of the Painter toolbox and the 'Create blank 2D
+    canvas' flow.
+
+    The painter is still a prototype, so these stay at the run-through
+    level -- open the flow and drive it without crashing -- and leave
+    detailed behavioral assertions for future work. They drive live widgets
+    (docks, focus changes, mouse gestures), so they are skipped on GitHub
+    Actions like the other interactive pilot tests; the draw-tool API itself
+    is covered headlessly by R2DWidgetWorldTC.test_draw_tool_round_trip.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mgr = pilot.RManager.instance.setUp()
+
+    def test_create_blank_canvas_shows_toolbox(self):
+        """'Create blank 2D canvas' opens an empty, focused canvas on the
+        Pan tool and brings up the Painter toolbox.
+        """
+        from solvcon.pilot import _canvas_gui, _painter_gui
+        painter = _painter_gui.Painter(mgr=self.mgr)
+        canvas = _canvas_gui.Canvas(mgr=self.mgr, painter=painter)
+        widget = canvas._create_blank_2d_canvas()
+        self.assertIsNotNone(painter._dock)
+        self.assertEqual(widget.drawTool, "pan")
+
+    def test_draw_across_blank_canvases(self):
+        """The PR's manual test: create two blank canvases and rubber-band a
+        circle onto each in turn, exercising tool routing and the 2D path's
+        handling of multiple canvases and rapid focus changes. Surviving the
+        gestures without a crash is the assertion.
+        """
+        import gc
+        from PySide6 import QtWidgets
+        from solvcon.pilot import _canvas_gui, _painter_gui
+        painter = _painter_gui.Painter(mgr=self.mgr)
+        canvas = _canvas_gui.Canvas(mgr=self.mgr, painter=painter)
+        first = canvas._create_blank_2d_canvas()
+        second = canvas._create_blank_2d_canvas()
+        del first, second
+        gc.collect()
+        self.mgr.show()
+        area = self.mgr.mdiArea
+        subs = list(area.subWindowList())
+        for sub in subs:
+            sub.show()
+        QtWidgets.QApplication.processEvents()
+        self.mgr.setDrawTool("circle")
+        # Select each canvas in turn and rubber-band a circle onto it.
+        for _ in range(3):
+            for sub in subs:
+                area.setActiveSubWindow(sub)
+                QtWidgets.QApplication.processEvents()
+                target = sub.widget()
+                _send_mouse(target, 'press', 40, 40)
+                _send_mouse(target, 'move', 110, 100)
+                _send_mouse(target, 'release', 110, 100)
+                QtWidgets.QApplication.processEvents()
+        self.assertIn(self.mgr.currentR2DWidget().drawTool, ("pan", "circle"))
+
+    def test_press_then_repaint_with_circle_tool_does_not_crash(self):
+        """The zero-radius preview used to crash because the painter's pen
+        was uninitialized until the first paint event, so pressing without
+        moving then forcing a repaint triggered a null pointer dereference.
+        """
+        from PySide6 import QtWidgets
+        from solvcon.pilot import _canvas_gui, _painter_gui
+        painter = _painter_gui.Painter(mgr=self.mgr)
+        canvas = _canvas_gui.Canvas(mgr=self.mgr, painter=painter)
+        canvas._create_blank_2d_canvas()
+        self.mgr.show()
+        sub = self.mgr.mdiArea.subWindowList()[-1]
+        sub.show()
+        self.mgr.setDrawTool("circle")
+        target = sub.widget()
+        QtWidgets.QApplication.processEvents()
+        # Press without moving, then force the synchronous repaint the
+        # zero-radius preview used to crash on.
+        _send_mouse(target, 'press', 60, 60)
+        target.repaint()
+        QtWidgets.QApplication.processEvents()
+        _send_mouse(target, 'release', 60, 60)
+        # Surviving the repaint is the assertion; the canvas still answers.
+        self.assertEqual(self.mgr.currentR2DWidget().drawTool, "circle")
 
 
 if __name__ == '__main__':

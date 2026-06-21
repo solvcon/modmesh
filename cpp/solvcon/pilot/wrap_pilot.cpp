@@ -107,6 +107,7 @@ QT_TYPE_CASTER(QMenu, _("QMenu"));
 QT_TYPE_CASTER(QCoreApplication, _("QCoreApplication"));
 QT_TYPE_CASTER(QApplication, _("QApplication"));
 QT_TYPE_CASTER(QMainWindow, _("QMainWindow"));
+QT_TYPE_CASTER(QMdiArea, _("QMdiArea"));
 QT_TYPE_CASTER(QMdiSubWindow, _("QMdiSubWindow"));
 
 } /* end namespace detail */
@@ -207,6 +208,8 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapR2DWidget
             .def("resetView", &wrapped_type::resetView)
             .def("updateWorld", &wrapped_type::updateWorld, py::arg("world"))
             .def("requestRepaint", &wrapped_type::requestRepaint)
+            .def("setDrawTool", &wrapped_type::setDrawTool, py::arg("name"))
+            .def_property_readonly("drawTool", &wrapped_type::drawTool)
             //
             ;
 
@@ -370,6 +373,14 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRManager
                 [](wrapped_type & self)
                 {
                     return self.list2DWidgets();
+                })
+            .def("setDrawTool", &wrapped_type::setDrawTool, py::arg("name"))
+            .def_property_readonly("drawTool", &wrapped_type::drawTool)
+            .def_property_readonly(
+                "mdiArea",
+                [](wrapped_type & self)
+                {
+                    return self.mdiArea();
                 })
             .def(
                 "toggleConsole",
@@ -606,6 +617,10 @@ void wrap_pilot(pybind11::module & mod)
     WrapRCameraController::commit(mod, "RCameraController", "RCameraController");
     WrapRManager::commit(mod, "RManager", "RManager");
     WrapRManagerProxy::commit(mod, "RManagerProxy", "RManagerProxy");
+
+    // The C++ tool registry is the single source of truth for drawing tools.
+    mod.def("draw_tool_names", &draw_tool_names);
+    mod.def("default_draw_tool_name", &default_draw_tool_name);
 
     mod.attr("mgr") = RManagerProxy();
 
