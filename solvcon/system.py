@@ -12,6 +12,7 @@ import sys
 import os
 import argparse
 import traceback
+import warnings
 
 import solvcon
 from . import apputil
@@ -97,8 +98,13 @@ def setup_process(argv):
     builtins.sc = solvcon
 
     if solvcon.HAS_PILOT:
-        from . import pilot
-        builtins.pilot = pilot
+        # Tolerate a broken pilot import so the GUI can still be entered;
+        # warn instead of crashing the whole process.
+        try:
+            from . import pilot
+            builtins.pilot = pilot
+        except ImportError as e:
+            warnings.warn("failed to import pilot: {}".format(e))
 
 
 def enter_main(argv):

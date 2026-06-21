@@ -39,6 +39,22 @@ class SetupProcessTC(unittest.TestCase):
         self.assertIs(builtins.sc, solvcon)
         self.assertIs(builtins.pilot, pilot)
 
+    def test_broken_pilot_import_warns(self):
+        import sys
+        from unittest import mock
+        from solvcon import system
+        # Force "from . import pilot" to raise ImportError: drop the cached
+        # attribute so the import re-runs, and poison sys.modules so it
+        # fails. setup_process must warn instead of crashing.
+        saved = solvcon.pilot
+        del solvcon.pilot
+        try:
+            with mock.patch.dict(sys.modules, {'solvcon.pilot': None}):
+                with self.assertWarns(UserWarning):
+                    system.setup_process([])
+        finally:
+            solvcon.pilot = saved
+
 
 class PilotCameraTB:
     camera_type = None
