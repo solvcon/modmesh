@@ -21,16 +21,11 @@ class Canvas(_gui_common.PilotFeature):
     """
 
     def __init__(self, *args, **kw):
-        # The Painter toolbox is owned by the controller so it can also be
-        # toggled from View > Panels; the canvas drives it when a blank
-        # canvas opens.
         self._painter = kw.pop('painter')
         super(Canvas, self).__init__(*args, **kw)
         self._world = core.WorldFp64()
         self._widget = None
         self._widget_2d = None
-        # Worlds backing blank canvases, kept independent of the sample
-        # geometry above and held so they outlive the menu callback.
         self._blank_worlds = []
 
     def populate_menu(self):

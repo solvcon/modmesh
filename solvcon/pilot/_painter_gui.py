@@ -3,15 +3,6 @@
 
 """
 Painter toolbox for the 2D canvas.
-
-A dock-widget tool palette, modeled loosely on a paint program's toolbox.
-Selecting a tool sets it on the manager, which routes it to whichever 2D
-canvas has focus and re-applies it as focus moves between canvases, so the
-single toolbox always drives the focused canvas. It is toggled from the
-View > Panels submenu, so it can be closed and reopened at will. The tool
-set, order, and default come from the C++ registry (``draw_tool_names`` /
-``default_draw_tool_name``); ``TOOL_LABELS`` only maps a tool id to its
-button label, so registering a new shape is a C++-side change.
 """
 
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -96,10 +87,6 @@ class Painter(_gui_common.PilotFeature):
     def present(self):
         """
         Show the toolbox dock and reset the focused canvas to the Pan tool.
-
-        Called when a blank canvas opens. The toolbox is not bound to that
-        canvas; the manager routes the selected tool to whichever 2D canvas
-        has focus.
         """
         self._ensure_dock()
         default_tool = default_draw_tool_name()

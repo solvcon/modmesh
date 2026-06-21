@@ -174,8 +174,7 @@ void R2DWidget::mousePressEvent(QMouseEvent * event)
         if (m_tool->can_draw_shape())
         {
             // Anchor the drag in world space so it is robust to any pan or
-            // zoom that happens mid-stroke. The current point starts at the
-            // anchor and tracks the pointer until release.
+            // zoom that happens mid-stroke.
             m_view.world_from_screen(pos.x(), pos.y(), m_draw_start_x, m_draw_start_y);
             m_draw_current_x = m_draw_start_x;
             m_draw_current_y = m_draw_start_y;
@@ -220,14 +219,10 @@ void R2DWidget::mouseReleaseEvent(QMouseEvent * event)
     if (event->button() == Qt::LeftButton && m_drawing)
     {
         m_drawing = false;
-        // Commit only a drag long enough to be intentional, and only when a
-        // tool and a world exist to receive it. The drag span maps to screen
-        // pixels through the zoom, so the guard is shape-agnostic. Committed
-        // shapes are first-class World shapes that serialize through
-        // describe_state for tools.
-        double const drag_px = m_view.zoom() * std::hypot(
-                                                   m_draw_current_x - m_draw_start_x,
-                                                   m_draw_current_y - m_draw_start_y);
+
+        double const diff = std::hypot(m_draw_current_x - m_draw_start_x, m_draw_current_y - m_draw_start_y);
+        double const drag_px = m_view.zoom() * diff;
+
         if (m_world && drag_px >= MIN_DRAW_DRAG_PX)
         {
             std::array<DrawPoint, 2> const points{
@@ -235,6 +230,7 @@ void R2DWidget::mouseReleaseEvent(QMouseEvent * event)
                  {m_draw_current_x, m_draw_current_y}}};
             m_tool->commit(*m_world, points);
         }
+
         update();
         event->accept();
         return;

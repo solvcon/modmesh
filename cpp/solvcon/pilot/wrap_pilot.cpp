@@ -208,8 +208,6 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapR2DWidget
             .def("resetView", &wrapped_type::resetView)
             .def("updateWorld", &wrapped_type::updateWorld, py::arg("world"))
             .def("requestRepaint", &wrapped_type::requestRepaint)
-            // setDrawTool validates the name and maps an unknown one to a
-            // std::invalid_argument that pybind11 surfaces as ValueError.
             .def("setDrawTool", &wrapped_type::setDrawTool, py::arg("name"))
             .def_property_readonly("drawTool", &wrapped_type::drawTool)
             //
@@ -620,9 +618,7 @@ void wrap_pilot(pybind11::module & mod)
     WrapRManager::commit(mod, "RManager", "RManager");
     WrapRManagerProxy::commit(mod, "RManagerProxy", "RManagerProxy");
 
-    // The C++ tool registry is the single source of truth for which draw
-    // tools exist, their toolbox order, and the default; the Painter GUI
-    // reads these instead of duplicating the list in Python.
+    // The C++ tool registry is the single source of truth for drawing tools.
     mod.def("draw_tool_names", &draw_tool_names);
     mod.def("default_draw_tool_name", &default_draw_tool_name);
 

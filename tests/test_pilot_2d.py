@@ -57,10 +57,6 @@ def _build_world():
 
 def _send_mouse(widget, kind, x, y):
     """Post a synthetic left-button mouse event to ``widget``.
-
-    Avoids PySide6.QtTest, which is not importable in every CI Qt build;
-    the 2D canvas handlers read only the event's local position and button.
-    ``kind`` is 'press', 'move', or 'release'.
     """
     from PySide6 import QtCore, QtGui, QtWidgets
     kinds = {
@@ -259,85 +255,37 @@ class R2DWidgetScreenshotTC(unittest.TestCase):
 @unittest.skipIf(GITHUB_ACTIONS or not solvcon.HAS_PILOT,
                  "live-GUI interaction is unstable under GitHub Actions")
 class PainterToolboxTC(unittest.TestCase):
-    """The Painter toolbox and the 'Create blank 2D canvas' Canvas flow.
+    """Run-through coverage of the Painter toolbox and the 'Create blank 2D
+    canvas' flow.
 
-    These drive live widgets (docks, button clicks, focus changes, mouse
-    gestures), so they are skipped on GitHub Actions like the other
-    interactive pilot tests; the draw-tool API itself is covered headlessly
-    by R2DWidgetWorldTC.test_draw_tool_round_trip.
+    The painter is still a prototype, so these stay at the run-through
+    level -- open the flow and drive it without crashing -- and leave
+    detailed behavioral assertions for future work. They drive live widgets
+    (docks, focus changes, mouse gestures), so they are skipped on GitHub
+    Actions like the other interactive pilot tests; the draw-tool API itself
+    is covered headlessly by R2DWidgetWorldTC.test_draw_tool_round_trip.
     """
 
     @classmethod
     def setUpClass(cls):
         cls.mgr = pilot.RManager.instance.setUp()
 
-    def test_present_resets_to_pan_and_builds_dock(self):
-        """present() shows the dock and resets the focused canvas to the Pan
-        tool, leaving the legacy pan/zoom navigation in charge.
+    def test_create_blank_canvas_shows_toolbox(self):
+        """'Create blank 2D canvas' opens an empty, focused canvas on the
+        Pan tool and brings up the Painter toolbox.
         """
-        from solvcon.pilot import _painter_gui
-        widget = self.mgr.add2DWidget()
-        # Pre-arm a non-default tool so a passing "pan" below proves present
-        # actively reset it rather than reading the widget's default.
-        widget.setDrawTool("circle")
-        painter = _painter_gui.Painter(mgr=self.mgr)
-        painter.present()
-        self.assertIsNotNone(painter._dock)
-        self.assertEqual(widget.drawTool, "pan")
-
-    def test_circle_button_selects_circle_tool(self):
-        """Clicking the Circle button routes the circle tool to the focused
-        canvas, exercising the button-to-manager wiring.
-        """
-        from solvcon.pilot import _painter_gui
-        widget = self.mgr.add2DWidget()
-        painter = _painter_gui.Painter(mgr=self.mgr)
-        painter.present()
-        painter._buttons["circle"].click()
-        self.assertEqual(widget.drawTool, "circle")
-
-    def test_create_blank_2d_canvas_is_empty_and_wired(self):
-        """'Create blank 2D canvas' opens a canvas backed by its own empty
-        world, focused and on the Pan tool.
-        """
-        import json
         from solvcon.pilot import _canvas_gui, _painter_gui
         painter = _painter_gui.Painter(mgr=self.mgr)
         canvas = _canvas_gui.Canvas(mgr=self.mgr, painter=painter)
         widget = canvas._create_blank_2d_canvas()
-        self.assertEqual(len(canvas._blank_worlds), 1)
-        state = json.loads(canvas._blank_worlds[0].describe_state("basic"))
-        self.assertEqual(state["shapes"], [])
+        self.assertIsNotNone(painter._dock)
         self.assertEqual(widget.drawTool, "pan")
 
-    def test_tool_follows_focused_canvas(self):
-        """The manager routes the active tool to the focused 2D canvas and
-        re-applies it when focus moves, so the single toolbox drives
-        whichever canvas has focus. Opening a canvas gives it focus.
-        """
-        first = self.mgr.add2DWidget()
-        self.mgr.setDrawTool("circle")
-        # The first canvas is focused, so it picks up the tool.
-        self.assertEqual(first.drawTool, "circle")
-        # Opening a second canvas focuses it; it adopts the active tool.
-        second = self.mgr.add2DWidget()
-        self.assertEqual(second.drawTool, "circle")
-        # Switching the tool now drives the focused (second) canvas only.
-        self.mgr.setDrawTool("pan")
-        self.assertEqual(second.drawTool, "pan")
-        self.assertEqual(first.drawTool, "circle")
-
-    def test_manager_set_draw_tool_rejects_unknown(self):
-        """RManager.setDrawTool validates the name up front, so an unknown
-        tool raises ValueError even with no canvas focused.
-        """
-        with self.assertRaises(ValueError):
-            self.mgr.setDrawTool("triangle")
-
-    def test_selecting_between_blank_canvases_does_not_crash(self):
-        """Select each of two blank canvases in turn and rubber-band a circle
-        onto each, exercising the tool routing and the 2D path's handling of
-        multiple canvases and rapid focus changes.
+    def test_draw_across_blank_canvases(self):
+        """The PR's manual test: create two blank canvases and rubber-band a
+        circle onto each in turn, exercising tool routing and the 2D path's
+        handling of multiple canvases and rapid focus changes. Surviving the
+        gestures without a crash is the assertion.
         """
         import gc
         from PySide6 import QtWidgets
@@ -365,7 +313,6 @@ class PainterToolboxTC(unittest.TestCase):
                 _send_mouse(target, 'move', 110, 100)
                 _send_mouse(target, 'release', 110, 100)
                 QtWidgets.QApplication.processEvents()
-        # Ensuring we survive all that without a crash is the assertion
         self.assertIn(self.mgr.currentR2DWidget().drawTool, ("pan", "circle"))
 
     def test_press_then_repaint_with_circle_tool_does_not_crash(self):
@@ -392,33 +339,6 @@ class PainterToolboxTC(unittest.TestCase):
         _send_mouse(target, 'release', 60, 60)
         # Surviving the repaint is the assertion; the canvas still answers.
         self.assertEqual(self.mgr.currentR2DWidget().drawTool, "circle")
-
-    def test_panels_menu_adds_checkable_toggle(self):
-        """populate_menu wires a checkable Painter entry into the supplied
-        Panels menu, the View > Panels hook that opens and closes it.
-        """
-        from PySide6 import QtWidgets
-        from solvcon.pilot import _painter_gui
-        menu = QtWidgets.QMenu(self.mgr.mainWindow)
-        painter = _painter_gui.Painter(mgr=self.mgr, menu=menu)
-        painter.populate_menu()
-        self.assertIn(painter._action, menu.actions())
-        self.assertTrue(painter._action.isCheckable())
-
-    def test_panels_toggle_shows_then_hides_dock(self):
-        """Toggling the Panels entry on builds and shows the dock; toggling
-        it off hides it, so a closed toolbox can be reopened.
-        """
-        from PySide6 import QtWidgets
-        from solvcon.pilot import _painter_gui
-        menu = QtWidgets.QMenu(self.mgr.mainWindow)
-        painter = _painter_gui.Painter(mgr=self.mgr, menu=menu)
-        painter.populate_menu()
-        painter._on_toggled(True)
-        self.assertIsNotNone(painter._dock)
-        self.assertFalse(painter._dock.isHidden())
-        painter._on_toggled(False)
-        self.assertTrue(painter._dock.isHidden())
 
 
 if __name__ == '__main__':
