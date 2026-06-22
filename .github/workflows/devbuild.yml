@@ -51,6 +51,8 @@ jobs:
         with:
           fetch-depth: 1
 
+      - uses: ./.github/actions/job_guard
+
       - name: event name
         run: |
           echo "github.event_name: ${{ github.event_name }}"
@@ -73,6 +75,8 @@ jobs:
           make standalone_buffer_setup
           make standalone_buffer
           echo "::endgroup::"
+
+      - uses: ./.github/actions/job_done
 
   build:
 
@@ -120,6 +124,8 @@ jobs:
     - uses: actions/checkout@v6
       with:
         fetch-depth: 1
+
+    - uses: ./.github/actions/job_guard
 
     - name: event name
       run: |
@@ -241,6 +247,8 @@ jobs:
         make pytest VERBOSE=1
         echo "::endgroup::"
 
+    - uses: ./.github/actions/job_done
+
   build_windows:
 
     needs: [check_skip]
@@ -279,6 +287,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 1
+
+      - uses: ./.github/actions/job_guard
 
       - name: event name
         run: |
@@ -451,9 +461,11 @@ jobs:
           name: solvcon-pilot-win64
           path: solvcon-pilot-win64/
 
+      - uses: ./.github/actions/job_done
+
   send_email_on_failure:
     needs: [standalone_buffer, build, build_windows]
-    # Run if any of the dependencies failed in master branch
+    # Run if any of the dependencies failed or timed out in master branch
     if: ${{ always() && contains(needs.*.result, 'failure') && github.ref_name == 'master' && github.event.repository.fork == false }}
     uses: ./.github/workflows/send_email_on_fail.yml
     with:
