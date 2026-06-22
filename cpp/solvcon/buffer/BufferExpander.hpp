@@ -97,6 +97,8 @@ public:
         return static_cast<size_type>(this->m_end_cap - this->m_begin);
     }
 
+    bool empty() const noexcept { return size() == 0; }
+
     void reserve(size_type cap);
 
     void expand(size_type length)
@@ -124,6 +126,19 @@ public:
                             capacity()));
         }
         m_end += amount;
+    }
+
+    /**
+     * Pull the size down by amount, keeping the capacity intact.
+     * @param amount Number of bytes to pull down.
+     */
+    void pop_size(size_type amount)
+    {
+        if (amount > size())
+        {
+            throw std::out_of_range(std::format("{}: amount {} > size() {}", name(), amount, size()));
+        }
+        m_end -= amount;
     }
 
     std::shared_ptr<ConcreteBuffer> copy_concrete(size_type cap = 0) const;
@@ -200,4 +215,4 @@ private:
 
 } /* end namespace solvcon */
 
-/* vim: set et ts=4 sw=4: */
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

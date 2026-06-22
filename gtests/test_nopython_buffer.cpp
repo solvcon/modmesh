@@ -133,6 +133,52 @@ TEST(BufferExpander, iterator)
     }
 }
 
+TEST(BufferExpander, pop_size)
+{
+    using namespace solvcon;
+
+    auto buffer = BufferExpander::construct(4);
+    EXPECT_FALSE(buffer->empty());
+    EXPECT_EQ(buffer->size(), 4);
+    buffer->pop_size(3);
+    EXPECT_EQ(buffer->size(), 1);
+    // Capacity is left untouched when the size is pulled down.
+    EXPECT_EQ(buffer->capacity(), 4);
+    buffer->pop_size(1);
+    EXPECT_TRUE(buffer->empty());
+    EXPECT_THROW(buffer->pop_size(1), std::out_of_range);
+}
+
+TEST(SimpleCollector, pop_back)
+{
+    using namespace solvcon;
+
+    SimpleCollector<int32_t> coll;
+    EXPECT_TRUE(coll.empty());
+    coll.push_back(10);
+    coll.push_back(20);
+    coll.push_back(30);
+    EXPECT_EQ(coll.size(), 3);
+    EXPECT_EQ(coll.front(), 10);
+    EXPECT_EQ(coll.back(), 30);
+
+    coll.pop_back();
+    EXPECT_EQ(coll.size(), 2);
+    EXPECT_EQ(coll.back(), 20);
+
+    // pop_back keeps the surviving elements intact and reusable.
+    coll.push_back(40);
+    EXPECT_EQ(coll.front(), 10);
+    EXPECT_EQ(coll.back(), 40);
+    EXPECT_EQ(coll[0], 10);
+
+    coll.pop_back();
+    coll.pop_back();
+    coll.pop_back();
+    EXPECT_TRUE(coll.empty());
+    EXPECT_THROW(coll.pop_back(), std::out_of_range);
+}
+
 TEST(small_vector, select_kth)
 {
     const size_t n = 1024;
