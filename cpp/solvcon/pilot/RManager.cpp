@@ -65,6 +65,7 @@ void RManager::reset()
     m_core.reset();
     m_mainWindow = nullptr;
     m_fileMenu = nullptr;
+    m_editMenu = nullptr;
     m_viewMenu = nullptr;
     m_oneMenu = nullptr;
     m_meshMenu = nullptr;
@@ -181,6 +182,30 @@ void RManager::applyDrawTool()
     }
 }
 
+void RManager::undoCanvas() const
+{
+    auto const * subwin = m_mdiArea ? m_mdiArea->currentSubWindow() : nullptr;
+    auto * canvas = subwin ? dynamic_cast<R2DWidget *>(subwin->widget()) : nullptr;
+    if (canvas == nullptr || canvas->world() == nullptr)
+    {
+        return;
+    }
+    canvas->world()->undo();
+    canvas->requestRepaint();
+}
+
+void RManager::redoCanvas() const
+{
+    auto const * subwin = m_mdiArea ? m_mdiArea->currentSubWindow() : nullptr;
+    auto * canvas = subwin ? dynamic_cast<R2DWidget *>(subwin->widget()) : nullptr;
+    if (canvas == nullptr || canvas->world() == nullptr)
+    {
+        return;
+    }
+    canvas->world()->redo();
+    canvas->requestRepaint();
+}
+
 void RManager::toggleConsole()
 {
     if (m_pycon)
@@ -222,6 +247,8 @@ void RManager::setUpMenu()
     // "exited with code -1073740791".  The reason is not yet clarified.
 
     m_fileMenu = m_mainWindow->menuBar()->addMenu(QString("File"));
+    m_editMenu = m_mainWindow->menuBar()->addMenu(QString("Edit"));
+    setUpEditMenuItems();
     m_viewMenu = m_mainWindow->menuBar()->addMenu(QString("View"));
     {
         // Code for controlling camera is not exposed to Python yet
@@ -233,6 +260,26 @@ void RManager::setUpMenu()
     m_canvasMenu = m_mainWindow->menuBar()->addMenu(QString("Canvas"));
     m_profilingMenu = m_mainWindow->menuBar()->addMenu(QString("Profiling"));
     m_windowMenu = m_mainWindow->menuBar()->addMenu(QString("Window"));
+}
+
+void RManager::setUpEditMenuItems() const
+{
+    auto * undo_action = new RAction(
+        QString("Undo"),
+        QString("Undo the last shape drawn on the focused 2D canvas"),
+        [this]()
+        { undoCanvas(); });
+    undo_action->setShortcut(QKeySequence::Undo);
+
+    auto * redo_action = new RAction(
+        QString("Redo"),
+        QString("Redo the last undone shape on the focused 2D canvas"),
+        [this]()
+        { redoCanvas(); });
+    redo_action->setShortcut(QKeySequence::Redo);
+
+    m_editMenu->addAction(undo_action);
+    m_editMenu->addAction(redo_action);
 }
 
 void RManager::setUpCameraControllersMenuItems() const
