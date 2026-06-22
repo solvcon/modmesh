@@ -3,7 +3,7 @@ name: lint
 on:
   push:
   pull_request:
-    types: [opened, reopened, synchronize, labeled, unlabeled]
+    types: [opened, reopened, synchronize]
   schedule:
     - cron: '34 17 * * *'
 
