@@ -27,6 +27,10 @@ class Painter(_gui_common.PilotFeature):
     # A tool with no entry here falls back to its title-cased id.
     TOOL_LABELS = {
         "pan": "Pan / Move",
+        "line": "Line",
+        "triangle": "Triangle",
+        "rectangle": "Rectangle",
+        "ellipse": "Ellipse",
         "circle": "Circle",
     }
 

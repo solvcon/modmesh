@@ -141,16 +141,21 @@ class R2DWidgetWorldTC(unittest.TestCase):
         self.assertEqual(got.zoom, 3.0)
 
     def test_draw_tool_round_trip(self):
-        """setDrawTool selects the tool the Painter toolbox drives; it
-        reads back through the drawTool property, defaults to pan, and
-        rejects an unknown name with ValueError.
+        """setDrawTool selects the tool the Painter toolbox drives; every
+        registered tool reads back through the drawTool property, the
+        default is pan, and an unknown name is rejected with ValueError.
         """
-        self.widget.setDrawTool("circle")
-        self.assertEqual(self.widget.drawTool, "circle")
+        from solvcon.pilot import _pilot_core
+        # The Painter toolbox exposes one button per registered shape tool.
+        self.assertLessEqual(
+            {"pan", "line", "triangle", "rectangle", "ellipse", "circle"},
+            set(_pilot_core.draw_tool_names()))
+        for tool in _pilot_core.draw_tool_names():
+            self.widget.setDrawTool(tool)
+            self.assertEqual(self.widget.drawTool, tool)
         self.widget.setDrawTool("pan")
-        self.assertEqual(self.widget.drawTool, "pan")
         with self.assertRaises(ValueError):
-            self.widget.setDrawTool("triangle")
+            self.widget.setDrawTool("no-such-tool")
         # An invalid request leaves the previous tool untouched.
         self.assertEqual(self.widget.drawTool, "pan")
 
@@ -339,6 +344,37 @@ class PainterToolboxTC(unittest.TestCase):
         _send_mouse(target, 'release', 60, 60)
         # Surviving the repaint is the assertion; the canvas still answers.
         self.assertEqual(self.mgr.currentR2DWidget().drawTool, "circle")
+
+    def test_each_shape_tool_commits_expected_type(self):
+        """Each shape tool maps one rubber-band gesture onto the matching
+        World primitive: drawing grows the canvas world by a single shape of
+        the expected type. This covers the 2-point -> add_* mapping in C++
+        that the headless round-trip test cannot reach.
+        """
+        from PySide6 import QtWidgets
+        from solvcon.pilot import _canvas_gui, _painter_gui
+        painter = _painter_gui.Painter(mgr=self.mgr)
+        canvas = _canvas_gui.Canvas(mgr=self.mgr, painter=painter)
+        canvas._create_blank_2d_canvas()
+        world = canvas._blank_worlds[-1]
+        self.mgr.show()
+        sub = self.mgr.mdiArea.subWindowList()[-1]
+        sub.show()
+        self.mgr.mdiArea.setActiveSubWindow(sub)
+        target = sub.widget()
+        QtWidgets.QApplication.processEvents()
+        # The non-pan tools, paired with the shape type each one commits.
+        shapes = [("line", "line"), ("triangle", "triangle"),
+                  ("rectangle", "rectangle"), ("ellipse", "ellipse"),
+                  ("circle", "circle")]
+        for index, (tool, shape) in enumerate(shapes):
+            self.mgr.setDrawTool(tool)
+            _send_mouse(target, 'press', 40, 40)
+            _send_mouse(target, 'move', 120, 100)
+            _send_mouse(target, 'release', 120, 100)
+            QtWidgets.QApplication.processEvents()
+            self.assertEqual(world.nshape, index + 1)
+            self.assertEqual(world.shape_type_of(index), shape)
 
 
 if __name__ == '__main__':
