@@ -79,6 +79,7 @@ public:
     size_t size() const { return expander().size() / ITEMSIZE; }
     size_t capacity() const { return expander().capacity() / ITEMSIZE; }
     size_t alignment() const { return expander().alignment(); }
+    bool empty() const { return size() == 0; }
 
     value_type const & operator[](size_t it) const noexcept { return data(it); }
     value_type & operator[](size_t it) noexcept { return data(it); }
@@ -115,6 +116,20 @@ public:
         size_t const it = size();
         push_size();
         (*this)[it] = std::move(value);
+    }
+
+    value_type const & front() const noexcept { return (*this)[0]; }
+    value_type & front() noexcept { return (*this)[0]; }
+    value_type const & back() const noexcept { return (*this)[size() - 1]; }
+    value_type & back() noexcept { return (*this)[size() - 1]; }
+
+    void pop_back()
+    {
+        if (size() == 0)
+        {
+            throw std::out_of_range("SimpleCollector: pop_back on empty collector");
+        }
+        expander().pop_size(ITEMSIZE);
     }
 
     /* Backdoor */
@@ -165,4 +180,4 @@ private:
 
 } /* end namespace solvcon */
 
-/* vim: set et ts=4 sw=4: */
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

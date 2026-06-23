@@ -331,6 +331,84 @@ class WorldShapeTC(unittest.TestCase):
         self.assertEqual(self.w.nsegment, 0)
 
 
+class WorldUndoRedoTC(unittest.TestCase):
+    """Undo and redo of shape creation."""
+
+    def setUp(self):
+        self.w = solvcon.WorldFp64()
+
+    def test_empty_world(self):
+        self.assertFalse(self.w.can_undo)
+        self.assertFalse(self.w.can_redo)
+        # Undo/redo on an empty world are harmless no-ops.
+        self.w.undo()
+        self.w.redo()
+        self.assertEqual(self.w.nshape, 0)
+
+    def test_undo_removes_last_shape(self):
+        self.w.add_circle(0, 0, 5)
+        self.assertTrue(self.w.can_undo)
+        self.assertFalse(self.w.can_redo)
+        self.w.undo()
+        self.assertEqual(self.w.nshape, 0)
+        self.assertFalse(self.w.can_undo)
+        self.assertTrue(self.w.can_redo)
+
+    def test_redo_restores_shape(self):
+        sid = self.w.add_circle(0, 0, 5)
+        self.w.undo()
+        self.w.redo()
+        self.assertEqual(self.w.nshape, 1)
+        self.assertEqual(self.w.shape_type_of(sid), "circle")
+        self.assertTrue(self.w.can_undo)
+        self.assertFalse(self.w.can_redo)
+
+    def test_undo_redo_order(self):
+        s0 = self.w.add_circle(0, 0, 1)
+        s1 = self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        self.w.undo()
+        self.assertEqual(self.w.nshape, 1)
+        self.assertEqual(self.w.shape_type_of(s0), "circle")
+        with self.assertRaises(ValueError):
+            self.w.shape_type_of(s1)
+        self.w.undo()
+        self.assertEqual(self.w.nshape, 0)
+
+    def test_redo_restores_in_reverse(self):
+        self.w.add_circle(0, 0, 1)
+        self.w.add_square(0, 0, 2)
+        self.w.undo()
+        self.w.undo()
+        self.w.redo()
+        self.assertEqual(self.w.nshape, 1)
+        self.w.redo()
+        self.assertEqual(self.w.nshape, 2)
+
+    def test_new_shape_clears_redo(self):
+        self.w.add_circle(0, 0, 1)
+        self.w.undo()
+        self.assertTrue(self.w.can_redo)
+        self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        # A fresh creation discards the redo history.
+        self.assertFalse(self.w.can_redo)
+        self.w.redo()
+        self.assertEqual(self.w.nshape, 1)
+
+    def test_undone_shape_not_visible(self):
+        self.w.add_circle(0, 0, 1)
+        self.w.undo()
+        self.assertEqual(len(self.w.query_visible(-10, -10, 10, 10)), 0)
+        self.w.redo()
+        self.assertEqual(len(self.w.query_visible(-10, -10, 10, 10)), 1)
+
+    def test_clear_resets_history(self):
+        self.w.add_circle(0, 0, 1)
+        self.w.undo()
+        self.w.clear()
+        self.assertFalse(self.w.can_undo)
+        self.assertFalse(self.w.can_redo)
+
+
 class WorldViewportTC(unittest.TestCase):
     """R-tree spatial index and viewport query."""
 

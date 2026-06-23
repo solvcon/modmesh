@@ -366,6 +366,18 @@ public:
 
     ShapeType shape_type_of(int32_t shape_id) const { return find_shape_or_throw(shape_id).type; }
 
+    /// Undo the most recent shape creation.
+    void undo();
+
+    /// Redo the most recent undone shape creation.
+    void redo();
+
+    /// Whether a shape creation is available to undo.
+    bool can_undo() const { return !m_undo_stack.empty(); }
+
+    /// Whether an undone shape creation is available to redo.
+    bool can_redo() const { return !m_redo_stack.empty(); }
+
     size_t nshape() const { return m_nshape; }
 
     /**
@@ -462,6 +474,16 @@ private:
     size_t m_nshape = 0; ///< count of live (non-DEAD) shapes
     std::unique_ptr<rtree_type> m_rtree; ///< spatial index for shapes for viewport query
 
+    /// A shape creation recorded for redo: its id and the type to restore.
+    struct ShapeRedoRecord
+    {
+        int32_t shape_id;
+        ShapeType type;
+    }; /* end of struct ShapeRedoRecord */
+
+    SimpleCollector<int32_t> m_undo_stack; ///< Created shape ids, oldest first; the back is the next to undo.
+    std::vector<ShapeRedoRecord> m_redo_stack; ///< Undone shapes awaiting redo
+
 }; /* end class World */
 
 template <typename T>
@@ -475,6 +497,12 @@ int32_t World<T>::register_shape(ShapeType type,
     m_shape_registry.push_back(ShapeRecord{type, segment_offset, segment_count, curve_offset, curve_count}); // NOLINT(modernize-use-designated-initializers)
     ++m_nshape;
     m_rtree->insert(ShapeEntry<T>{shape_id, compute_shape_bbox(m_shape_registry[shape_id])});
+
+    // Creating a shape becomes the newest undoable step and invalidates any
+    // pending redo, mirroring the usual editor undo/redo semantics.
+    m_undo_stack.push_back(shape_id);
+    m_redo_stack.clear();
+
     return shape_id;
 }
 
@@ -621,6 +649,44 @@ void World<T>::remove_shape(int32_t shape_id)
 }
 
 template <typename T>
+void World<T>::undo()
+{
+    // Skip ids already killed by a direct remove_shape so undo never tries to
+    // drop the same shape twice.
+    while (!m_undo_stack.empty())
+    {
+        int32_t const shape_id = m_undo_stack.back();
+        m_undo_stack.pop_back();
+        ShapeRecord & rec = m_shape_registry[shape_id];
+        if (rec.type == ShapeType::DEAD)
+        {
+            continue;
+        }
+        m_rtree->remove(ShapeEntry<T>{shape_id, compute_shape_bbox(rec)});
+        m_redo_stack.push_back(ShapeRedoRecord{shape_id, rec.type});
+        rec.type = ShapeType::DEAD;
+        --m_nshape;
+        return;
+    }
+}
+
+template <typename T>
+void World<T>::redo()
+{
+    if (m_redo_stack.empty())
+    {
+        return;
+    }
+    ShapeRedoRecord const record = m_redo_stack.back();
+    m_redo_stack.pop_back();
+    ShapeRecord & rec = m_shape_registry[record.shape_id];
+    rec.type = record.type;
+    ++m_nshape;
+    m_rtree->insert(ShapeEntry<T>{record.shape_id, compute_shape_bbox(rec)});
+    m_undo_stack.push_back(record.shape_id);
+}
+
+template <typename T>
 std::vector<int32_t> World<T>::query_visible(T min_x, T min_y, T max_x, T max_y) const
 {
     bbox_type const viewport(min_x, min_y, T(0), max_x, max_y, T(0));
@@ -701,6 +767,8 @@ void World<T>::clear()
     m_shape_registry.clear();
     m_nshape = 0;
     m_rtree = std::make_unique<rtree_type>();
+    m_undo_stack.clear();
+    m_redo_stack.clear();
 }
 
 template <typename T>

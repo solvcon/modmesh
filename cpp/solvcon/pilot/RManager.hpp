@@ -61,6 +61,7 @@ public:
     QMdiSubWindow * addSubWindow(Args &&... args);
 
     QMenu * fileMenu() { return m_fileMenu; }
+    QMenu * editMenu() { return m_editMenu; }
     QMenu * viewMenu() { return m_viewMenu; }
     QMenu * oneMenu() { return m_oneMenu; }
     QMenu * meshMenu() { return m_meshMenu; }
@@ -87,8 +88,14 @@ private:
     /// no-op when the focused subwindow is not a 2D canvas.
     void applyDrawTool();
 
+    void setUpEditMenuItems() const;
     void setUpCameraControllersMenuItems() const;
     void setUpCameraMovementMenuItems() const;
+
+    /// Undo or redo the most recent shape change on the focused 2D canvas,
+    /// then repaint it. A no-op when no 2D canvas is focused.
+    void undoCanvas() const;
+    void redoCanvas() const;
 
     std::function<void()> createCameraMovementItemHandler(const std::function<void(CameraInputState &)> &) const;
 
@@ -99,6 +106,7 @@ private:
     QMainWindow * m_mainWindow = nullptr;
 
     QMenu * m_fileMenu = nullptr;
+    QMenu * m_editMenu = nullptr;
     QMenu * m_viewMenu = nullptr;
     QMenu * m_oneMenu = nullptr;
     QMenu * m_meshMenu = nullptr;
