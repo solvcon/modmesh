@@ -307,6 +307,18 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: sccache
+        uses: hendrikmuhs/ccache-action@v1.2.23
+        with:
+          variant: sccache
+          key: ${{ runner.os }}-sccache-${{ matrix.cmake_build_type }}
+          restore-keys: ${{ runner.os }}-sccache-${{ matrix.cmake_build_type }}
+          # Bound the cache so it does not grow without limit across the rolling
+          # key. A master push or nightly run saves this cache; pull requests
+          # restore it (a PR on a non-default base branch cannot, so it runs
+          # cold).
+          max-size: 500M
+
       - name: Cache vcpkg (install artifacts)
         uses: actions/cache@v4
         with:
@@ -363,23 +375,26 @@ jobs:
       - name: cmake ALL_BUILD
         run: |
           echo "::group::cmake ALL_BUILD"
-          cmake `
+          # Use the Ninja generator: CMAKE_<LANG>_COMPILER_LAUNCHER (the
+          # sccache hook) is honored only by Ninja/Makefile generators, not
+          # the Visual Studio (MSBuild) generator, which silently ignores it.
+          cmake -GNinja `
             -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} `
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
+            -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
             -DVCPKG_TARGET_TRIPLET="x64-windows" `
             -Dpybind11_DIR="$(pybind11-config --cmakedir)" `
             -S${{ github.workspace }} `
             -B${{ github.workspace }}/build
-          cmake --build ${{ github.workspace }}/build `
-            --config ${{ matrix.cmake_build_type }} `
-            --target ALL_BUILD
+          cmake --build ${{ github.workspace }}/build
           echo "::endgroup::"
 
       - name: cmake run_gtest
         run: |
           echo "::group::cmake run_gtest"
           cmake --build ${{ github.workspace }}/build `
-            --config ${{ matrix.cmake_build_type }} `
             --target run_gtest
           echo "::endgroup::"
 
@@ -387,7 +402,6 @@ jobs:
         run: |
           echo "::group::cmake run_pilot_pytest"
           cmake --build ${{ github.workspace }}/build `
-            --config ${{ matrix.cmake_build_type }} `
             --target run_pilot_pytest
           echo "::endgroup::"
 
@@ -432,12 +446,14 @@ jobs:
           # Remove redundant Qt DLLs from PySide6
           Remove-Item -Path $pyside6_path\Qt*.dll
 
-          # Configure and build the pilot
+          # Configure and build the pilot. The build dir is already
+          # configured with the Ninja single-config generator above, so reuse
+          # it without --config and read pilot.exe from the non-config path.
           cmake -Dpybind11_DIR="$(pybind11-config --cmakedir)" -S . -B build
-          cmake --build build --config Release --target pilot
+          cmake --build build --target pilot
 
           # Deploy the Qt environment for the pilot executable and copy necessary files
-          Copy-Item -Path ".\build\cpp\binary\pilot\Release\pilot.exe" -Destination $destination
+          Copy-Item -Path ".\build\cpp\binary\pilot\pilot.exe" -Destination $destination
           windeployqt --release "$destination\pilot.exe"
           Copy-Item -Path ".\solvcon" -Destination $destination -Recurse
           # Also include potential thirdparty
