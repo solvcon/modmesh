@@ -24,13 +24,16 @@ jobs:
 
     needs: [check_skip]
 
+    # The setup.py install path re-verifies packaging and duplicates the build
+    # job's pytest. It does not gate correctness on a pull request, so it runs
+    # on the nightly schedule and on release tag pushes only, not on pull
+    # requests or master pushes. Set the MMGH_FORCE_NOUSE_INSTALL variable to
+    # 'enable' to force it on a fork.
     if: |
       needs.check_skip.outputs.skip != 'true' && (
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'push' &&
-       (vars.MMGH_PUSH_RUN_BRANCH == '*' ||
-        contains(vars.MMGH_PUSH_RUN_BRANCH, github.ref_name))) ||
-      (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable'))
+      (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
+      vars.MMGH_FORCE_NOUSE_INSTALL == 'enable')
 
     name: nouse_install_${{ matrix.os }}_Release
 
