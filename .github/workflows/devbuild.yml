@@ -66,6 +66,11 @@ jobs:
           key: ${{ runner.os }}-standalone-buffer-${{ matrix.cmake_build_type }}
           restore-keys: ${{ runner.os }}-standalone-buffer-${{ matrix.cmake_build_type }}
           create-symlink: true
+          # Bound the cache so it does not grow without limit across the rolling
+          # key. A master push or nightly run saves this cache; pull requests
+          # restore it (a PR on a non-default base branch cannot, so it runs
+          # cold).
+          max-size: 500M
 
       - name: make standalone_buffer
         run: |
@@ -76,7 +81,9 @@ jobs:
 
   build:
 
-    needs: [check_skip]
+    # Gate the heavy build behind the fast standalone_buffer smoke compile so
+    # a broken build short-circuits before the full matrix launches.
+    needs: [check_skip, standalone_buffer]
 
     if: |
       needs.check_skip.outputs.skip != 'true' && (
@@ -143,6 +150,11 @@ jobs:
         key: ${{ runner.os }}-${{ matrix.cmake_build_type }}
         restore-keys: ${{ runner.os }}-${{ matrix.cmake_build_type }}
         create-symlink: true
+        # Bound the cache so it does not grow without limit across the rolling
+        # key. A master push or nightly run saves this cache; pull requests
+        # restore it (a PR on a non-default base branch cannot, so it runs
+        # cold).
+        max-size: 1500M
 
     - name: make gtest BUILD_QT=OFF
       run: |
@@ -226,27 +238,19 @@ jobs:
         make run_pilot_pytest VERBOSE=1
         echo "::endgroup::"
 
-    # FIXME: turn off until all issues resolved
-    - name: make cmake USE_SANITIZER=ON & make pytest
-      run: |
-        echo "::group::make cmake USE_SANITIZER=ON & make pytest"
-        export ASAN_OPTIONS=verify_asan_link_order=0
-        rm -f build/*/Makefile
-        make cmake \
-          VERBOSE=1 USE_CLANG_TIDY=OFF \
-          BUILD_QT=OFF \
-          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
-          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_SANITIZER=OFF"
-        make buildext VERBOSE=1
-        make pytest VERBOSE=1
-        echo "::endgroup::"
-
   build_windows:
 
-    needs: [check_skip]
+    # Gate the expensive Windows build behind the fast standalone_buffer smoke
+    # compile so it does not burn runner minutes in parallel with a build that
+    # is already broken. (lint lives in a separate workflow and cannot be named
+    # as a dependency here; standalone_buffer is the fast in-workflow gate.)
+    needs: [check_skip, standalone_buffer]
 
+    # cpp != 'false' keeps the expensive Windows build off pull requests that
+    # touch no C++ or build files (it is empty, so truthy, for push/schedule).
     if: |
-      needs.check_skip.outputs.skip != 'true' && (
+      needs.check_skip.outputs.skip != 'true' &&
+      needs.check_skip.outputs.cpp != 'false' && (
       github.event_name == 'pull_request' ||
       (github.event_name == 'push' &&
        (vars.MMGH_PUSH_RUN_BRANCH == '*' ||
@@ -269,8 +273,11 @@ jobs:
     strategy:
       matrix:
         os: [windows-2022]
-        # Build Debug because there is not a job for windows in lint.yml (which uses the Debug build type)
-        cmake_build_type: [Release, Debug]
+        # Release runs on every pull request and master push. Debug is the
+        # only Windows Debug compile (lint.yml has no Windows job), but it is
+        # heavy and rarely breaks on its own, so it runs on the nightly
+        # schedule only.
+        cmake_build_type: ${{ (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable' && fromJSON('["Release", "Debug"]')) || fromJSON('["Release"]') }}
 
       fail-fast: false
 
@@ -306,6 +313,18 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+
+      - name: sccache
+        uses: hendrikmuhs/ccache-action@v1.2.23
+        with:
+          variant: sccache
+          key: ${{ runner.os }}-sccache-${{ matrix.cmake_build_type }}
+          restore-keys: ${{ runner.os }}-sccache-${{ matrix.cmake_build_type }}
+          # Bound the cache so it does not grow without limit across the rolling
+          # key. A master push or nightly run saves this cache; pull requests
+          # restore it (a PR on a non-default base branch cannot, so it runs
+          # cold).
+          max-size: 500M
 
       - name: Cache vcpkg (install artifacts)
         uses: actions/cache@v4
@@ -363,23 +382,26 @@ jobs:
       - name: cmake ALL_BUILD
         run: |
           echo "::group::cmake ALL_BUILD"
-          cmake `
+          # Use the Ninja generator: CMAKE_<LANG>_COMPILER_LAUNCHER (the
+          # sccache hook) is honored only by Ninja/Makefile generators, not
+          # the Visual Studio (MSBuild) generator, which silently ignores it.
+          cmake -GNinja `
             -DCMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} `
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
+            -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
             -DVCPKG_TARGET_TRIPLET="x64-windows" `
             -Dpybind11_DIR="$(pybind11-config --cmakedir)" `
             -S${{ github.workspace }} `
             -B${{ github.workspace }}/build
-          cmake --build ${{ github.workspace }}/build `
-            --config ${{ matrix.cmake_build_type }} `
-            --target ALL_BUILD
+          cmake --build ${{ github.workspace }}/build
           echo "::endgroup::"
 
       - name: cmake run_gtest
         run: |
           echo "::group::cmake run_gtest"
           cmake --build ${{ github.workspace }}/build `
-            --config ${{ matrix.cmake_build_type }} `
             --target run_gtest
           echo "::endgroup::"
 
@@ -387,12 +409,11 @@ jobs:
         run: |
           echo "::group::cmake run_pilot_pytest"
           cmake --build ${{ github.workspace }}/build `
-            --config ${{ matrix.cmake_build_type }} `
             --target run_pilot_pytest
           echo "::endgroup::"
 
       - name: generate portable
-        if: ${{ matrix.cmake_build_type == 'Release' }}
+        if: ${{ matrix.cmake_build_type == 'Release' && github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable' }}
         run: |
           echo "::group::generate portable"
           # Get the Python version installed and extract the major+minor version components
@@ -432,12 +453,14 @@ jobs:
           # Remove redundant Qt DLLs from PySide6
           Remove-Item -Path $pyside6_path\Qt*.dll
 
-          # Configure and build the pilot
+          # Configure and build the pilot. The build dir is already
+          # configured with the Ninja single-config generator above, so reuse
+          # it without --config and read pilot.exe from the non-config path.
           cmake -Dpybind11_DIR="$(pybind11-config --cmakedir)" -S . -B build
-          cmake --build build --config Release --target pilot
+          cmake --build build --target pilot
 
           # Deploy the Qt environment for the pilot executable and copy necessary files
-          Copy-Item -Path ".\build\cpp\binary\pilot\Release\pilot.exe" -Destination $destination
+          Copy-Item -Path ".\build\cpp\binary\pilot\pilot.exe" -Destination $destination
           windeployqt --release "$destination\pilot.exe"
           Copy-Item -Path ".\solvcon" -Destination $destination -Recurse
           # Also include potential thirdparty
@@ -445,14 +468,80 @@ jobs:
           echo "::endgroup::"
 
       - name: archive portable artifacts
-        if: ${{ matrix.cmake_build_type == 'Release' }}
+        if: ${{ matrix.cmake_build_type == 'Release' && github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable' }}
         uses: actions/upload-artifact@v7
         with:
           name: solvcon-pilot-win64
           path: solvcon-pilot-win64/
 
+  sanitizer:
+
+    needs: [check_skip]
+
+    # A genuine -DUSE_SANITIZER=ON ASAN/UBSAN build. It is slow, so it runs on
+    # the nightly schedule only (set MMGH_FORCE_SANITIZER to 'enable' to force
+    # it on a fork). This restores the real sanitizer coverage that the build
+    # job used to stub out by configuring -DUSE_SANITIZER=OFF.
+    if: |
+      needs.check_skip.outputs.skip != 'true' && (
+      (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') ||
+      vars.MMGH_FORCE_SANITIZER == 'enable')
+
+    name: sanitizer_${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}
+
+    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '45') }}
+
+    env:
+      MAKE_PARALLEL: -j2
+      PIP_BREAK_SYSTEM_PACKAGES: 1
+
+    strategy:
+      matrix:
+        os: [ubuntu-24.04]
+        cmake_build_type: [Release]
+
+      fail-fast: false
+
+    steps:
+
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 1
+
+    - name: event name
+      run: |
+        echo "github.event_name: ${{ github.event_name }}"
+
+    - name: setup dependencies for Linux
+      uses: ./.github/actions/setup_linux
+      with:
+        workflow: 'build'
+
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2.23
+      with:
+        key: ${{ runner.os }}-sanitizer-${{ matrix.cmake_build_type }}
+        restore-keys: ${{ runner.os }}-sanitizer-${{ matrix.cmake_build_type }}
+        create-symlink: true
+        max-size: 1500M
+
+    - name: make gtest USE_SANITIZER=ON
+      run: |
+        echo "::group::make gtest USE_SANITIZER=ON"
+        # Run ASAN/UBSAN over the C++ gtest binary rather than pytest. The
+        # gtest executable is linked directly against the sanitizer runtime,
+        # so ASan initializes first and intercepts every allocation.
+        make gtest \
+          VERBOSE=1 USE_CLANG_TIDY=OFF \
+          BUILD_QT=OFF \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_SANITIZER=ON"
+        echo "::endgroup::"
+
   send_email_on_failure:
-    needs: [standalone_buffer, build, build_windows]
+    needs: [standalone_buffer, build, build_windows, sanitizer]
     # Run if any of the dependencies failed in master branch
     if: ${{ always() && contains(needs.*.result, 'failure') && github.ref_name == 'master' && github.event.repository.fork == false }}
     uses: ./.github/workflows/send_email_on_fail.yml
@@ -461,6 +550,7 @@ jobs:
         - standalone_buffer: ${{ needs.standalone_buffer.result }}
         - build: ${{ needs.build.result }}
         - build_windows: ${{ needs.build_windows.result }}
+        - sanitizer: ${{ needs.sanitizer.result }}
     secrets:
       EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
       EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}

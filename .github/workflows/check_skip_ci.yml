@@ -29,6 +29,12 @@ on:
           "true" when CI should be skipped for the triggering pull request,
           "false" or empty otherwise.
         value: ${{ jobs.check.outputs.skip }}
+      cpp:
+        description: >-
+          "true" when the pull request touches C++ or build files (so the C++
+          matrix must run), "false" when it does not, empty for non-pull_request
+          events.
+        value: ${{ jobs.check.outputs.cpp }}
 
 permissions: {}
 
@@ -49,6 +55,7 @@ jobs:
 
     outputs:
       skip: ${{ steps.check.outputs.skip }}
+      cpp: ${{ steps.check.outputs.cpp }}
 
     steps:
 
@@ -101,4 +108,34 @@ jobs:
               return;
             }
 
+            // 4. Path-based gating. A documentation-only pull request skips all
+            // heavy CI automatically; a pull request that touches no C++ or
+            // build files reports cpp=false so the C++-only jobs can opt out
+            // while the Python tests and lint still run.
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                per_page: 100,
+              });
+            const paths = files.map(file => file.filename);
+            const isDoc = p =>
+              p.startsWith('doc/') || p.endsWith('.md') ||
+              p.endsWith('.rst') || p.startsWith('contrib/prompt/');
+            const isCpp = p =>
+              p.startsWith('cpp/') || p.startsWith('gtests/') ||
+              p.startsWith('thirdparty/') || p.startsWith('.github/') ||
+              p.endsWith('CMakeLists.txt') || p.endsWith('.cmake') ||
+              p.endsWith('.mk') || p === 'Makefile' || p === 'setup.py';
+
+            if (paths.length && paths.every(isDoc)) {
+              core.notice('CI skipped: documentation-only pull request.');
+              core.setOutput('skip', 'true');
+              core.setOutput('cpp', 'false');
+              return;
+            }
+
+            core.setOutput('cpp', paths.some(isCpp) ? 'true' : 'false');
             core.setOutput('skip', 'false');
