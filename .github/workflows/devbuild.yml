@@ -236,8 +236,11 @@ jobs:
     # as a dependency here; standalone_buffer is the fast in-workflow gate.)
     needs: [check_skip, standalone_buffer]
 
+    # cpp != 'false' keeps the expensive Windows build off pull requests that
+    # touch no C++ or build files (it is empty, so truthy, for push/schedule).
     if: |
-      needs.check_skip.outputs.skip != 'true' && (
+      needs.check_skip.outputs.skip != 'true' &&
+      needs.check_skip.outputs.cpp != 'false' && (
       github.event_name == 'pull_request' ||
       (github.event_name == 'push' &&
        (vars.MMGH_PUSH_RUN_BRANCH == '*' ||
