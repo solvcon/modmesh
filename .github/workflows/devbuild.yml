@@ -76,7 +76,9 @@ jobs:
 
   build:
 
-    needs: [check_skip]
+    # Gate the heavy build behind the fast standalone_buffer smoke compile so
+    # a broken build short-circuits before the full matrix launches.
+    needs: [check_skip, standalone_buffer]
 
     if: |
       needs.check_skip.outputs.skip != 'true' && (
@@ -228,7 +230,11 @@ jobs:
 
   build_windows:
 
-    needs: [check_skip]
+    # Gate the expensive Windows build behind the fast standalone_buffer smoke
+    # compile so it does not burn runner minutes in parallel with a build that
+    # is already broken. (lint lives in a separate workflow and cannot be named
+    # as a dependency here; standalone_buffer is the fast in-workflow gate.)
+    needs: [check_skip, standalone_buffer]
 
     if: |
       needs.check_skip.outputs.skip != 'true' && (
