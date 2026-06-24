@@ -99,11 +99,12 @@ runs:
         clang-format --version
         echo "::endgroup::"
 
-    - name: dependency (manual)
+    - name: install pybind11 (pip wheel)
       shell: bash
       run: |
-        echo "::group::dependency (manual)"
-        sudo NO_INSTALL_PREFIX=1 ${GITHUB_WORKSPACE}/contrib/dependency/install.sh pybind11
+        echo "::group::install pybind11 (pip wheel)"
+        python3 -m pip install --break-system-packages --upgrade 'pybind11==3.0.1'
+        echo "pybind11_ROOT=$(python3 -c 'import os, pybind11; print(os.path.dirname(pybind11.__file__))')" >> "$GITHUB_ENV"
         echo "::endgroup::"
 
     - name: dependency (manual) for build

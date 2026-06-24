@@ -12,6 +12,7 @@ CFLAGS := \
 	-std=c++23 -fPIC \
 	-I$(SETUPROOT) \
 	-I$(shell python3 -c 'import numpy as np; print(np.get_include())') \
+	-I$(shell python3 -c 'import pybind11; print(pybind11.get_include())') \
 	-I$(shell $(DIRNAME_PYTHON)/python3-config --prefix)/include \
 	$(shell $(DIRNAME_PYTHON)/python3-config --cflags)
 
