@@ -225,6 +225,20 @@ When opening a pull request, reference the related issue (e.g., "Related to
 "fixes #725". We do not let PR and commit log comments to mandate the
 management.
 
+## Writing Style for Prose
+
+This applies to every passage you write for humans: code comments, commit
+messages, PR and issue descriptions and comments, and documentation.
+
+- Minimize em-dashes (the "--" rendered as a long dash, or the Unicode `U+2014`
+  character). They are hard to read. Prefer a comma, a colon, parentheses, or
+  two separate sentences. Reserve a dash only when no other punctuation reads
+  as clearly.
+- Source files are ASCII-only (see "Code Style"), so never emit the Unicode
+  em-dash, en-dash, or "smart quotes" in them. The same restraint is expected
+  in GitHub prose even though GitHub accepts Unicode.
+- Write plainly. Short sentences beat long ones strung together with dashes.
+
 ## Development Workflow
 
 ### Build System Notes
