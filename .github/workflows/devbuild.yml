@@ -260,8 +260,11 @@ jobs:
     strategy:
       matrix:
         os: [windows-2022]
-        # Build Debug because there is not a job for windows in lint.yml (which uses the Debug build type)
-        cmake_build_type: [Release, Debug]
+        # Release runs on every pull request and master push. Debug is the
+        # only Windows Debug compile (lint.yml has no Windows job), but it is
+        # heavy and rarely breaks on its own, so it runs on the nightly
+        # schedule only.
+        cmake_build_type: ${{ (github.event_name == 'schedule' && fromJSON('["Release", "Debug"]')) || fromJSON('["Release"]') }}
 
       fail-fast: false
 
