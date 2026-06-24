@@ -406,7 +406,7 @@ jobs:
           echo "::endgroup::"
 
       - name: generate portable
-        if: ${{ matrix.cmake_build_type == 'Release' }}
+        if: ${{ matrix.cmake_build_type == 'Release' && github.event_name == 'schedule' }}
         run: |
           echo "::group::generate portable"
           # Get the Python version installed and extract the major+minor version components
@@ -461,7 +461,7 @@ jobs:
           echo "::endgroup::"
 
       - name: archive portable artifacts
-        if: ${{ matrix.cmake_build_type == 'Release' }}
+        if: ${{ matrix.cmake_build_type == 'Release' && github.event_name == 'schedule' }}
         uses: actions/upload-artifact@v7
         with:
           name: solvcon-pilot-win64
