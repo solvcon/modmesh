@@ -277,7 +277,7 @@ jobs:
         # only Windows Debug compile (lint.yml has no Windows job), but it is
         # heavy and rarely breaks on its own, so it runs on the nightly
         # schedule only.
-        cmake_build_type: ${{ (github.event_name == 'schedule' && fromJSON('["Release", "Debug"]')) || fromJSON('["Release"]') }}
+        cmake_build_type: ${{ (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable' && fromJSON('["Release", "Debug"]')) || fromJSON('["Release"]') }}
 
       fail-fast: false
 
@@ -413,7 +413,7 @@ jobs:
           echo "::endgroup::"
 
       - name: generate portable
-        if: ${{ matrix.cmake_build_type == 'Release' && github.event_name == 'schedule' }}
+        if: ${{ matrix.cmake_build_type == 'Release' && github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable' }}
         run: |
           echo "::group::generate portable"
           # Get the Python version installed and extract the major+minor version components
@@ -468,7 +468,7 @@ jobs:
           echo "::endgroup::"
 
       - name: archive portable artifacts
-        if: ${{ matrix.cmake_build_type == 'Release' && github.event_name == 'schedule' }}
+        if: ${{ matrix.cmake_build_type == 'Release' && github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable' }}
         uses: actions/upload-artifact@v7
         with:
           name: solvcon-pilot-win64
