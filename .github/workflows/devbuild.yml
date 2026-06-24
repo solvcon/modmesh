@@ -461,8 +461,73 @@ jobs:
           name: solvcon-pilot-win64
           path: solvcon-pilot-win64/
 
+  sanitizer:
+
+    needs: [check_skip]
+
+    # A genuine -DUSE_SANITIZER=ON ASAN/UBSAN build. It is slow, so it runs on
+    # the nightly schedule only (set MMGH_FORCE_SANITIZER to 'enable' to force
+    # it on a fork). This restores the real sanitizer coverage that the build
+    # job used to stub out by configuring -DUSE_SANITIZER=OFF.
+    if: |
+      needs.check_skip.outputs.skip != 'true' && (
+      (github.event_name == 'schedule' && vars.MMGH_NIGHTLY == 'enable') ||
+      vars.MMGH_FORCE_SANITIZER == 'enable')
+
+    name: sanitizer_${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}
+
+    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '45') }}
+
+    env:
+      MAKE_PARALLEL: -j2
+      PIP_BREAK_SYSTEM_PACKAGES: 1
+
+    strategy:
+      matrix:
+        os: [ubuntu-24.04]
+        cmake_build_type: [Release]
+
+      fail-fast: false
+
+    steps:
+
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 1
+
+    - name: event name
+      run: |
+        echo "github.event_name: ${{ github.event_name }}"
+
+    - name: setup dependencies for Linux
+      uses: ./.github/actions/setup_linux
+      with:
+        workflow: 'build'
+
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2.23
+      with:
+        key: ${{ runner.os }}-sanitizer-${{ matrix.cmake_build_type }}
+        restore-keys: ${{ runner.os }}-sanitizer-${{ matrix.cmake_build_type }}
+        create-symlink: true
+
+    - name: make gtest USE_SANITIZER=ON
+      run: |
+        echo "::group::make gtest USE_SANITIZER=ON"
+        # Run ASAN/UBSAN over the C++ gtest binary rather than pytest. The
+        # gtest executable is linked directly against the sanitizer runtime,
+        # so ASan initializes first and intercepts every allocation.
+        make gtest \
+          VERBOSE=1 USE_CLANG_TIDY=OFF \
+          BUILD_QT=OFF \
+          CMAKE_BUILD_TYPE=${{ matrix.cmake_build_type }} \
+          CMAKE_ARGS="-DPYTHON_EXECUTABLE=$(which python3) -DUSE_SANITIZER=ON"
+        echo "::endgroup::"
+
   send_email_on_failure:
-    needs: [standalone_buffer, build, build_windows]
+    needs: [standalone_buffer, build, build_windows, sanitizer]
     # Run if any of the dependencies failed in master branch
     if: ${{ always() && contains(needs.*.result, 'failure') && github.ref_name == 'master' && github.event.repository.fork == false }}
     uses: ./.github/workflows/send_email_on_fail.yml
@@ -471,6 +536,7 @@ jobs:
         - standalone_buffer: ${{ needs.standalone_buffer.result }}
         - build: ${{ needs.build.result }}
         - build_windows: ${{ needs.build_windows.result }}
+        - sanitizer: ${{ needs.sanitizer.result }}
     secrets:
       EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
       EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
