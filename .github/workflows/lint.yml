@@ -93,6 +93,11 @@ jobs:
         key: ${{ runner.os }}-tidy-${{ matrix.cmake_build_type }}
         restore-keys: ${{ runner.os }}-tidy-${{ matrix.cmake_build_type }}
         create-symlink: true
+        # Bound the cache so it does not grow without limit across the rolling
+        # key. A master push or nightly run saves this cache; pull requests
+        # restore it (a PR on a non-default base branch cannot, so it runs
+        # cold).
+        max-size: 1500M
 
     - name: make cformat (clang-format check)
       run: |

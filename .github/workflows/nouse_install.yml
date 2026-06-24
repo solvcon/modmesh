@@ -79,6 +79,11 @@ jobs:
           key: ${{ runner.os }}-Release
           restore-keys: ${{ runner.os }}-Release
           create-symlink: true
+          # Bound the cache so it does not grow without limit across the rolling
+          # key. A master push or nightly run saves this cache; pull requests
+          # restore it (a PR on a non-default base branch cannot, so it runs
+          # cold).
+          max-size: 1500M
 
       - name: setup.py install build_ext
         run: |
