@@ -8,8 +8,8 @@
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
 #include <solvcon/pilot/DrawTool.hpp>
+#include <solvcon/pilot/RDomainWidget.hpp>
 #include <solvcon/pilot/R2DWidget.hpp>
-#include <solvcon/pilot/R3DWidget.hpp>
 #include <solvcon/pilot/RAction.hpp>
 #include <solvcon/pilot/RPythonConsoleDockWidget.hpp>
 
@@ -39,9 +39,9 @@ public:
 
     QCoreApplication * core() { return m_core.get(); }
 
-    R3DWidget * add3DWidget();
+    RDomainWidget * add3DWidget();
     R2DWidget * add2DWidget();
-    R3DWidget * currentR3DWidget();
+    RDomainWidget * currentR3DWidget();
     R2DWidget * currentR2DWidget();
     std::vector<R2DWidget *> list2DWidgets();
 
@@ -97,7 +97,9 @@ private:
     void undoCanvas() const;
     void redoCanvas() const;
 
-    std::function<void()> createCameraMovementItemHandler(const std::function<void(CameraInputState &)> &) const;
+    std::function<void()> createCameraMovementItemHandler(const std::function<void(RDomainWidget *)> &) const;
+
+    static RDomainWidget * domainWidgetOf(QMdiSubWindow * subwin);
 
     bool m_already_setup = false;
 

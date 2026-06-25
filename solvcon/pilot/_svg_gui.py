@@ -85,9 +85,11 @@ class SVGFileDialog(_gui_common.PilotFeature):
             cpad.mirror(axis='x')
             world.add_beziers(pad=cpad)
 
-        wid = self._mgr.add3DWidget()
+        # World geometry (segments and curves) renders in the 2D canvas; the
+        # 3D domain viewer is for meshes and fields.
+        wid = self._mgr.add2DWidget()
         wid.updateWorld(world)
-        wid.showMark()
+        wid.resetView()
 
         # Add the data objects to the appenv for command-line access.
         cae = apputil.get_current_appenv()

@@ -36,11 +36,6 @@ option(LINT_AS_ERRORS "clang-tidy warnings as errors" OFF)
 option(USE_SANITIZER "use sanitizer (undefined, leak, address)" OFF)
 
 
-if(BUILD_QT)
-    option(QT3D_USE_RHI "Qt use RHI" OFF)
-    message(STATUS "QT3D_USE_RHI: ${QT3D_USE_RHI}")
-endif()
-
 # PUI-related code has been migrated to PySide6, so it doesn't need to be installed by default.
 # Yet, you can still install it by setting the INSTALL_PUI option to ON.
 option(INSTALL_PUI "install PUI" OFF)

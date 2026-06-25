@@ -24,10 +24,12 @@ if (BUILD_QT)
     find_package(Qt6 REQUIRED COMPONENTS Core)
     find_package(Qt6 REQUIRED COMPONENTS Widgets)
     find_package(Qt6 REQUIRED COMPONENTS Gui)
-    find_package(Qt6 REQUIRED COMPONENTS 3DCore)
-    find_package(Qt6 REQUIRED COMPONENTS 3DRender)
-    find_package(Qt6 REQUIRED COMPONENTS 3DInput)
-    find_package(Qt6 REQUIRED COMPONENTS 3DExtras)
+    # GuiPrivate exposes <rhi/qrhi.h>. Some prebuilt Qt packages ship the
+    # public Gui module without the GuiPrivate CMake config, so treat it as
+    # optional and fall back to the private header layout when linking below.
+    find_package(Qt6 QUIET OPTIONAL_COMPONENTS GuiPrivate)
+    # ShaderTools provides qt6_add_shaders() and the qsb tool.
+    find_package(Qt6 REQUIRED COMPONENTS ShaderTools)
 endif () # BUILD_QT
 
 add_subdirectory(buffer)
@@ -114,12 +116,39 @@ if (BUILD_QT)
     target_link_libraries(
         solvcon_primary PUBLIC
         Qt::Widgets
-        Qt::3DCore
-        Qt::3DExtras
-        Qt::3DInput
-        Qt::3DRender
         Qt::Core
         Qt::Gui
+    )
+
+    # <rhi/qrhi.h> lives in the QtGui private headers. Prefer the GuiPrivate
+    # CMake target when present; otherwise add the private include directory
+    # directly (the QRhi symbols themselves are exported from Qt::Gui).
+    if (TARGET Qt6::GuiPrivate)
+        target_link_libraries(solvcon_primary PUBLIC Qt::GuiPrivate)
+    else ()
+        get_target_property(SOLVCON_QTGUI_INCS Qt6::Gui INTERFACE_INCLUDE_DIRECTORIES)
+        set(SOLVCON_FOUND_QRHI FALSE)
+        foreach (SOLVCON_INC IN LISTS SOLVCON_QTGUI_INCS)
+            if (EXISTS "${SOLVCON_INC}/${Qt6Gui_VERSION}/QtGui/rhi/qrhi.h")
+                target_include_directories(solvcon_primary PRIVATE
+                    "${SOLVCON_INC}/${Qt6Gui_VERSION}/QtGui")
+                set(SOLVCON_FOUND_QRHI TRUE)
+            endif ()
+        endforeach ()
+        if (NOT SOLVCON_FOUND_QRHI)
+            message(FATAL_ERROR
+                "Qt6::GuiPrivate is unavailable and <rhi/qrhi.h> could not be "
+                "located in the QtGui private headers.")
+        endif ()
+    endif ()
+
+    # Bake the pilot GLSL shaders to .qsb and embed them in the Qt resource
+    # system under :/solvcon/pilot/shaders/. Loaded by RMaterial at runtime.
+    qt6_add_shaders(solvcon_primary "solvcon_pilot_shaders"
+        BATCHABLE
+        PREFIX "/solvcon/pilot"
+        BASE "${SOLVCON_PILOT_SHADERDIR}/.."
+        FILES ${SOLVCON_PILOT_SHADERS}
     )
 
     target_link_libraries(
@@ -230,12 +259,5 @@ else () # MSVC
         -Wno-elaborated-enum-base # for apple accelerate/veclib
     )
 endif () # MSVC
-
-if(QT3D_USE_RHI)
-    target_compile_options(solvcon_primary PRIVATE
-        ${COMMON_COMPILER_OPTIONS}
-        -DQT3D_USE_RHI
-    )
-endif() # QT3D_USE_RHI
 
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

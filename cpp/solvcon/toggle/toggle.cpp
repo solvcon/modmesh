@@ -167,16 +167,7 @@ ProcessInfo::ProcessInfo()
 
 ProcessInfo & ProcessInfo::set_environment_variables()
 {
-// TODO: Use Qt RHI when it stablizes.
-// At the time of testing (Qt 6.4), RHI is not stable.  A workaround is to use
-// OpenGL instead of RHI.  See more detail at
-// https://doc.qt.io/qtforpython/overviews/qt3drender-porting-to-rhi.html
-#ifdef QT3D_USE_RHI
-    setenv("QT3D_RENDERER", "rhi", 1);
-#else // QT3D_USE_RHI
-    setenv("QT3D_RENDERER", "opengl", 1);
-#endif // QT3D_USE_RHI
-
+    // No process environment variables need to be set at present.
     return *this;
 }
 

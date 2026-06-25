@@ -139,12 +139,13 @@ class Canvas(_gui_common.PilotFeature):
         self._update_widget()
 
     def _update_widget(self):
+        # The canvas world is planar geometry, so it renders in the 2D canvas
+        # (the 3D domain viewer is for meshes and fields).
         if self._widget is None:
-            self._widget = self._mgr.add3DWidget()
+            self._widget = self._mgr.add2DWidget()
         self._widget.updateWorld(self._world)
-        self._widget.showMark()
-        # Keep the 2D view in sync once it has been opened. The same world
-        # drives both widgets; only the backend (Qt3D vs QPainter) differs.
+        self._widget.resetView()
+        # Keep a separately-opened 2D view in sync with the same world.
         if self._widget_2d is not None:
             self._widget_2d.updateWorld(self._world)
 

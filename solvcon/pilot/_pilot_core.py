@@ -20,19 +20,14 @@ except ImportError:
 
 # pilot directory symbols organized by source files
 
-# R3DWidget.hpp/.cpp
-list_of_r3dwidget = [
-    'R3DWidget',
+# RDomainWidget.hpp/.cpp
+list_of_rdomainwidget = [
+    'RDomainWidget',
 ]
 
 # R2DWidget.hpp/.cpp
 list_of_r2dwidget = [
     'R2DWidget',
-]
-
-# RAxisMark.hpp/.cpp
-list_of_raxismark = [
-    'RLine',
 ]
 
 # RManager.hpp/.cpp
@@ -46,11 +41,6 @@ list_of_rpythonconsole = [
     'RPythonConsoleDockWidget',
 ]
 
-# RCameraController.hpp/.cpp
-list_of_rcameracontroller = [
-    'RCameraController',
-]
-
 # DrawTool.hpp/.cpp
 list_of_drawtool = [
     'draw_tool_names',
@@ -59,12 +49,10 @@ list_of_drawtool = [
 
 
 _from_impl = (  # noqa: F822
-    list_of_r3dwidget +
+    list_of_rdomainwidget +
     list_of_r2dwidget +
-    list_of_raxismark +
     list_of_rmanager +
     list_of_rpythonconsole +
-    list_of_rcameracontroller +
     list_of_drawtool
 )
 
@@ -82,12 +70,10 @@ def _load(symbol_list):
             globals()[name] = None
 
 
-_load(list_of_r3dwidget)
+_load(list_of_rdomainwidget)
 _load(list_of_r2dwidget)
-_load(list_of_raxismark)
 _load(list_of_rmanager)
 _load(list_of_rpythonconsole)
-_load(list_of_rcameracontroller)
 _load(list_of_drawtool)
 
 del _load

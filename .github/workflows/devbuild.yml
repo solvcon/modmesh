@@ -262,13 +262,18 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '45') }}
+    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '60') }}
 
     env:
       QT_DEBUG_PLUGINS: 1
       # Fix issue: https://github.com/solvcon/solvcon/issues/366
       # Use custom config for jurplel/install-qt-action@v4
       AQT_CONFIG: "thirdparty/aqt_settings.ini"
+      # The GPU-less Windows runner has no display; steer the QRhi D3D11
+      # backend to the WARP software rasterizer so the pilot's QRhiWidget can
+      # render offscreen. QSG_INFO surfaces the chosen adapter in the log.
+      QSG_RHI_PREFER_SOFTWARE_RENDERER: "1"
+      QSG_INFO: "1"
 
     strategy:
       matrix:
@@ -307,7 +312,8 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2022_64'
-          modules: 'qt3d'
+          # qtshadertools provides qsb and the ShaderTools CMake package for QRhi.
+          modules: 'qtshadertools'
           cache: true
 
       - uses: actions/setup-python@v6

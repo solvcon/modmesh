@@ -39,8 +39,9 @@ class Naca4Airfoil(_gui_common.PilotFeature):
             sampler.draw_line()
         else:
             sampler.draw_cbc()
-        wid = self._mgr.add3DWidget()
+        # The airfoil curve is world geometry, so it renders in the 2D canvas.
+        wid = self._mgr.add2DWidget()
         wid.updateWorld(w)
-        wid.showMark()
+        wid.resetView()
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

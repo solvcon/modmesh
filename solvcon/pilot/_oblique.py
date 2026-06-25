@@ -10,7 +10,7 @@ The mesh construction, boundary tagging, and solver driver live in
 mesh in a 3D widget and reports the boundary classification (inlet / slip wall
 / outflow) to the console; :class:`ObliqueShockSolver` runs the Euler driver
 and animates the evolving density as a flat 2D color field, drawn with the
-native ``R3DWidget.updateColorField`` per-cell-colored triangles.
+native ``RDomainWidget.updateColorField`` per-cell-colored triangles.
 """
 
 import numpy as np
@@ -109,7 +109,7 @@ class ObliqueShockMesh(_gui_common.PilotFeature):
         inlet, walls, outflow = mesher.classify_boundary(mh)
         w = self._mgr.add3DWidget()
         w.updateMesh(mh)
-        w.showMark()
+        w.showAxis(True)
         self._pycon.writeToHistory(
             f"oblique-shock {cell_type} mesh: {mh.ncell} cells, "
             f"{mh.nedge} edges\n"
@@ -153,7 +153,7 @@ class ObliqueShockSolver(_gui_common.PilotFeature):
         # so triangulate once and cache the vertex/index arrays.
         verts, indices, nnds = _cell_triangulation(shock.mesh)
         widget = self._mgr.add3DWidget()
-        widget.showMark()
+        widget.showAxis(True)
         timer = QtCore.QTimer()
         session = dict(shock=shock, widget=widget, timer=timer, nnds=nnds,
                        verts=core.SimpleArrayFloat32(array=verts),

@@ -27,9 +27,9 @@ namespace solvcon
 {
 
 /**
- * Strictly-2D drawing widget for the pilot. Paints the geometry of the
- * same `World<double>` that R3DWidget renders, but maps it to screen
- * space through a 2D view transform instead of a Qt3D camera.
+ * Strictly-2D drawing widget for the pilot. Paints the geometry of a
+ * `World<double>` by mapping it to screen space through a 2D view
+ * transform, drawn with QPainter.
  */
 class R2DWidget
     : public QWidget

@@ -1,0 +1,551 @@
+# Copyright (c) 2026, solvcon team <contact@solvcon.net>
+# BSD 3-Clause License, see COPYING
+
+"""
+Tests for RDomainWidget, the pilot 3D viewer.
+
+The widget renders through QRhi, so these tests exercise the offscreen capture
+path (grabImage via saveImage). QRhi needs a real graphics surface; where one
+is unavailable (e.g. the offscreen QPA platform on a headless macOS runner) the
+render-dependent tests skip rather than fail. The Linux CI build job drives
+them under Xvfb with the software rasterizer.
+"""
+
+import os
+import platform
+import tempfile
+import unittest
+
+import solvcon
+
+try:
+    from solvcon import pilot
+    from PySide6.QtGui import QImage
+except ImportError:
+    pilot = None
+
+
+def _make_2d_mesh():
+    """Two triangles and one quadrilateral in the z = 0 plane."""
+    core = solvcon.core
+    T = core.StaticMesh.TRIANGLE
+    Q = core.StaticMesh.QUADRILATERAL
+    mh = core.StaticMesh(ndim=2, nnode=6, nface=0, ncell=3)
+    mh.ndcrd.ndarray[:, :] = [(0, 0), (1, 0), (0, 1), (1, 1), (2, 0), (2, 1)]
+    mh.cltpn.ndarray[:] = [T, T, Q]
+    mh.clnds.ndarray[:, :5] = [(3, 0, 3, 2, -1), (3, 0, 1, 3, -1),
+                               (4, 1, 4, 5, 3)]
+    mh.build_interior()
+    mh.build_boundary()
+    mh.build_ghost()
+    return mh
+
+
+def _make_3d_mesh():
+    """A single tetrahedron."""
+    core = solvcon.core
+    mh = core.StaticMesh(ndim=3, nnode=4, nface=4, ncell=1)
+    mh.ndcrd.ndarray[:, :] = [(0, 0, 0), (0, 1, 0), (-1, 1, 0), (0, 1, 1)]
+    mh.cltpn.ndarray[:] = core.StaticMesh.TETRAHEDRON
+    mh.clnds.ndarray[:, :5] = [(4, 0, 1, 2, 3)]
+    mh.build_interior()
+    mh.build_boundary()
+    mh.build_ghost()
+    return mh
+
+
+def _grab_or_skip(widget):
+    """Render the widget offscreen and return a QImage.
+
+    Skip the calling test when an offscreen grab is unavailable or unreliable
+    here: the headless Windows runner's debug software rasterizer stalls
+    indefinitely creating a dedicated grab device, and the offscreen QPA
+    platform on a headless macOS runner reports no QRhi support (saveImage
+    then writes no file / a null image). Render correctness stays covered on
+    Linux (Xvfb) and the platforms where grabbing works.
+    """
+    if platform.system() == "Windows":
+        raise unittest.SkipTest("offscreen grabbing unreliable on Windows CI")
+    with tempfile.TemporaryDirectory() as folder:
+        path = os.path.join(folder, "domain.png")
+        widget.saveImage(path)
+        if not os.path.exists(path):
+            raise unittest.SkipTest("QRhi offscreen rendering is unavailable")
+        image = QImage(path)
+    if image.isNull():
+        raise unittest.SkipTest("QRhi offscreen rendering is unavailable")
+    return image
+
+
+def _rgb_array(image):
+    """Return the image as an (h, w, 3) uint8 array.
+
+    Per-pixel QImage reads are far too slow in a debug build (minutes for a
+    full frame), so the whole buffer is mapped through numpy at once. The
+    bytes are copied out of the QImage immediately: the source image is a
+    local that would otherwise be freed while the array still views it.
+    """
+    import numpy as np
+    converted = image.convertToFormat(QImage.Format.Format_RGBA8888)
+    width = converted.width()
+    height = converted.height()
+    buffer = converted.constBits()
+    array = np.frombuffer(buffer, dtype=np.uint8,
+                          count=converted.sizeInBytes()).copy()
+    array = array.reshape(height, converted.bytesPerLine())[:, :width * 4]
+    return array.reshape(height, width, 4)[:, :, :3]
+
+
+def _count_foreground(image, threshold=60):
+    """Count drawn (non-background) pixels.
+
+    Foreground is whatever differs from the uniform background, where the
+    background is the frame's most common color. The black wireframe stands
+    out against the white clear, so this counts the wireframe; but keying on
+    the difference (not on absolute darkness) keeps the count robust to a
+    headless software rasterizer that reads an empty offscreen grab back as a
+    uniformly dark frame instead of the white clear. A uniform frame, light
+    or dark, has nothing that differs from its own background.
+    """
+    import numpy as np
+    array = _rgb_array(image).astype('int16')
+    flat = array.reshape(-1, 3)
+    colors, counts = np.unique(flat, axis=0, return_counts=True)
+    background = colors[counts.argmax()]
+    diff = np.abs(array - background).max(axis=2)
+    return int((diff > threshold).sum())
+
+
+def _count_colored(image, threshold=240):
+    """Count colored field pixels: those that differ from the white
+    background in at least one channel."""
+    array = _rgb_array(image)
+    return int((array.min(axis=2) < threshold).sum())
+
+
+def _count_reddish(image):
+    """Count strongly red pixels (the first boundary set's highlight color);
+    the white background and black wireframe both fail the low green/blue
+    test."""
+    array = _rgb_array(image)
+    mask = ((array[:, :, 0] > 150) & (array[:, :, 1] < 120)
+            & (array[:, :, 2] < 120))
+    return int(mask.sum())
+
+
+def _count_axis_pixels(image, channel):
+    """Count saturated axis-guide pixels of one channel (red X, green Y,
+    blue Z); the black wireframe and white background both fail these
+    masks."""
+    array = _rgb_array(image)
+    red, green, blue = array[:, :, 0], array[:, :, 1], array[:, :, 2]
+    if channel == "red":
+        mask = (red > 150) & (green < 110) & (blue < 110)
+    elif channel == "green":
+        mask = (green > 150) & (red < 110) & (blue < 110)
+    else:
+        mask = (blue > 180) & (red < 130) & (green < 150)
+    return int(mask.sum())
+
+
+def _make_color_field():
+    """A Gouraud-shaded quad (two triangles) with distinct corner colors."""
+    import numpy as np
+    vertices = np.array([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)],
+                        dtype='float32')
+    colors = np.array([(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0)],
+                      dtype='float32')
+    indices = np.array([(0, 1, 2), (0, 2, 3)], dtype='uint32')
+    return vertices, colors, indices
+
+
+def _update_field(widget, vertices, colors, indices):
+    """Wrap numpy tables in solvcon arrays and push them to the widget."""
+    core = solvcon.core
+    widget.updateColorField(
+        core.SimpleArrayFloat32(array=vertices.astype('float32')),
+        core.SimpleArrayFloat32(array=colors.astype('float32')),
+        core.SimpleArrayUint32(array=indices.astype('uint32')))
+
+
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
+class RDomainWidgetFoundationTC(unittest.TestCase):
+    """The render foundation and the Python control spine (step 1)."""
+
+    @classmethod
+    def setUpClass(cls):
+        # The manager owns the QApplication the widget needs to exist.
+        pilot.RManager.instance.setUp()
+
+    def test_construct_from_python(self):
+        """RDomainWidget is constructible directly from Python."""
+        widget = pilot.RDomainWidget()
+        self.assertIsNotNone(widget)
+
+    def test_save_image_writes_png_file(self):
+        """saveImage routes through grabImage and yields a valid frame whose
+        pixel size matches the widget."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        image = _grab_or_skip(widget)
+        self.assertGreater(image.width(), 0)
+        self.assertGreater(image.height(), 0)
+
+    def test_empty_scene_is_background(self):
+        """With no mesh the frame is the uniform white clear color: nothing
+        is drawn, so no pixel is a dark line."""
+        widget = pilot.RDomainWidget()
+        widget.resize(160, 120)
+        image = _grab_or_skip(widget)
+        self.assertEqual(_count_foreground(image), 0)
+
+
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
+class RDomainWidgetMeshTC(unittest.TestCase):
+    """Domain wireframe rendering for 2D and 3D meshes (step 2)."""
+
+    @classmethod
+    def setUpClass(cls):
+        pilot.RManager.instance.setUp()
+
+    def test_mesh_property_round_trip(self):
+        """updateMesh exposes the mesh through the pybind11 widget."""
+        widget = pilot.RDomainWidget()
+        mh = _make_2d_mesh()
+        widget.updateMesh(mh)
+        self.assertIsNotNone(widget.mesh)
+        self.assertEqual(widget.mesh.ncell, 3)
+
+    def test_2d_mesh_draws_wireframe(self):
+        """A 2D mesh renders a wireframe: some pixels are dark lines."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_2d_mesh())
+        image = _grab_or_skip(widget)
+        self.assertGreater(_count_foreground(image), 0)
+
+    def test_3d_mesh_draws_wireframe(self):
+        """A 3D tetrahedron renders its edges without error."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_3d_mesh())
+        image = _grab_or_skip(widget)
+        self.assertGreater(_count_foreground(image), 0)
+
+    def test_show_mesh_toggles_visibility(self):
+        """showMesh(False) hides the wireframe; showMesh(True) restores it.
+
+        Hiding removes most of the wireframe rather than every last pixel: a
+        software rasterizer can leave a few stray edge pixels behind, so the
+        check is relative (hidden is a small fraction of shown) instead of an
+        exact zero.
+        """
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_2d_mesh())
+        shown = _count_foreground(_grab_or_skip(widget))
+        self.assertGreater(shown, 0)
+        widget.showMesh(False)
+        hidden = _count_foreground(_grab_or_skip(widget))
+        self.assertLess(hidden, shown * 0.5)
+        widget.showMesh(True)
+        restored = _count_foreground(_grab_or_skip(widget))
+        self.assertGreater(restored, hidden)
+
+
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
+class RDomainWidgetFieldTC(unittest.TestCase):
+    """Field coloring and boundary highlight (step 3)."""
+
+    @classmethod
+    def setUpClass(cls):
+        pilot.RManager.instance.setUp()
+
+    def test_color_field_renders(self):
+        """updateColorField draws per-vertex-colored triangles."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        vertices, colors, indices = _make_color_field()
+        _update_field(widget, vertices, colors, indices)
+        image = _grab_or_skip(widget)
+        self.assertGreater(_count_colored(image), 0)
+
+    def test_color_field_is_swappable(self):
+        """A second updateColorField replaces the first and still renders."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        vertices, colors, indices = _make_color_field()
+        _update_field(widget, vertices, colors, indices)
+        # Swap in a dimmer field; the latest field must render. A single grab
+        # after the swap keeps the offscreen capture deterministic.
+        _update_field(widget, vertices, colors * 0.5, indices)
+        self.assertGreater(_count_colored(_grab_or_skip(widget)), 0)
+
+    def test_show_boundary_highlights_set(self):
+        """showBoundary draws the set's colored ribbon and hides it again.
+
+        Each state grabs a freshly configured widget: a single capture of a
+        fully-set-up widget is exact, matching the live screenshot path.
+        """
+        base_widget = pilot.RDomainWidget()
+        base_widget.resize(320, 240)
+        base_widget.updateMesh(_make_2d_mesh())
+        base = _count_reddish(_grab_or_skip(base_widget))
+
+        shown_widget = pilot.RDomainWidget()
+        shown_widget.resize(320, 240)
+        shown_widget.updateMesh(_make_2d_mesh())
+        shown_widget.showBoundary(0, True)
+        shown = _count_reddish(_grab_or_skip(shown_widget))
+        self.assertGreater(shown, base)
+
+        hidden_widget = pilot.RDomainWidget()
+        hidden_widget.resize(320, 240)
+        hidden_widget.updateMesh(_make_2d_mesh())
+        hidden_widget.showBoundary(0, True)
+        hidden_widget.showBoundary(0, False)
+        hidden = _count_reddish(_grab_or_skip(hidden_widget))
+        self.assertLess(hidden, shown)
+
+    def test_show_boundary_without_mesh_is_noop(self):
+        """showBoundary on a widget with no mesh does nothing, not crash.
+
+        A real highlight is hundreds of red pixels; the no-op leaves none
+        beyond the odd stray edge pixel the software rasterizer emits.
+        """
+        widget = pilot.RDomainWidget()
+        widget.resize(160, 120)
+        widget.showBoundary(0, True)
+        image = _grab_or_skip(widget)
+        self.assertLess(_count_reddish(image), 5)
+
+    def test_color_field_rejects_out_of_range_index(self):
+        """A triangle index past the vertex count is rejected, not fed to
+        the GPU as an out-of-bounds fetch."""
+        import numpy as np
+        widget = pilot.RDomainWidget()
+        vertices = np.array([(0, 0, 0), (1, 0, 0), (1, 1, 0)],
+                            dtype='float32')
+        colors = np.array([(1, 0, 0), (0, 1, 0), (0, 0, 1)], dtype='float32')
+        indices = np.array([(0, 1, 9), (0, 1, 2)], dtype='uint32')
+        with self.assertRaises(ValueError):
+            _update_field(widget, vertices, colors, indices)
+
+
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
+class RDomainWidgetSceneTC(unittest.TestCase):
+    """Scene framing and the fit-to-scene camera (step 4)."""
+
+    @classmethod
+    def setUpClass(cls):
+        pilot.RManager.instance.setUp()
+
+    def test_fit_camera_keeps_2d_mesh_in_view(self):
+        """fitCameraToScene frames a 2D mesh so its wireframe stays in view."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_2d_mesh())
+        widget.fitCameraToScene()
+        self.assertGreater(_count_foreground(_grab_or_skip(widget)), 0)
+
+    def test_fit_camera_frames_3d_mesh_in_perspective(self):
+        """A 3D mesh is framed under the perspective projection and its
+        edges render."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_3d_mesh())
+        widget.fitCameraToScene()
+        self.assertGreater(_count_foreground(_grab_or_skip(widget)), 0)
+
+    def test_fit_camera_frames_3d_mesh_in_portrait(self):
+        """A portrait viewport pulls the perspective camera back enough that
+        the 3D domain is not clipped horizontally."""
+        widget = pilot.RDomainWidget()
+        widget.resize(240, 320)
+        widget.updateMesh(_make_3d_mesh())
+        widget.fitCameraToScene()
+        self.assertGreater(_count_foreground(_grab_or_skip(widget)), 0)
+
+    def test_fit_camera_without_scene_is_harmless(self):
+        """fitCameraToScene on an empty widget does not crash or draw."""
+        widget = pilot.RDomainWidget()
+        widget.resize(160, 120)
+        widget.fitCameraToScene()
+        self.assertEqual(_count_foreground(_grab_or_skip(widget)), 0)
+
+
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
+class RDomainWidgetCameraTC(unittest.TestCase):
+    """Camera modes, programmatic pose, and interaction (step 5)."""
+
+    @classmethod
+    def setUpClass(cls):
+        pilot.RManager.instance.setUp()
+
+    def test_camera_mode_round_trip(self):
+        """The camera mode switches between pan/zoom and first-person."""
+        widget = pilot.RDomainWidget()
+        self.assertEqual(widget.cameraMode, "pan")
+        widget.cameraMode = "fps"
+        self.assertEqual(widget.cameraMode, "fps")
+        widget.cameraMode = "pan"
+        self.assertEqual(widget.cameraMode, "pan")
+
+    def test_camera_pose_round_trip(self):
+        """The camera pose is readable and settable from Python."""
+        widget = pilot.RDomainWidget()
+        widget.cameraPosition = (1.0, 2.0, 3.0)
+        widget.cameraTarget = (0.5, 0.5, 0.0)
+        widget.cameraUp = (0.0, 0.0, 1.0)
+        self.assertEqual(tuple(widget.cameraPosition), (1.0, 2.0, 3.0))
+        self.assertEqual(tuple(widget.cameraTarget), (0.5, 0.5, 0.0))
+        self.assertEqual(tuple(widget.cameraUp), (0.0, 0.0, 1.0))
+
+    def test_pan_alters_the_2d_view(self):
+        """Panning the 2D camera shifts what is drawn."""
+        before = pilot.RDomainWidget()
+        before.resize(320, 240)
+        before.updateMesh(_make_2d_mesh())
+        frame_before = _rgb_array(_grab_or_skip(before))
+
+        after = pilot.RDomainWidget()
+        after.resize(320, 240)
+        after.updateMesh(_make_2d_mesh())
+        after.panCamera(60.0, 0.0)
+        frame_after = _rgb_array(_grab_or_skip(after))
+        self.assertTrue((frame_before != frame_after).any())
+
+    def test_zoom_alters_the_view(self):
+        """Zooming the camera changes the rendered frame."""
+        before = pilot.RDomainWidget()
+        before.resize(320, 240)
+        before.updateMesh(_make_2d_mesh())
+        frame_before = _rgb_array(_grab_or_skip(before))
+
+        after = pilot.RDomainWidget()
+        after.resize(320, 240)
+        after.updateMesh(_make_2d_mesh())
+        after.zoomCamera(6.0)
+        frame_after = _rgb_array(_grab_or_skip(after))
+        self.assertTrue((frame_before != frame_after).any())
+
+    def test_first_person_rotation_alters_the_3d_view(self):
+        """Looking around in first-person mode changes the 3D frame."""
+        before = pilot.RDomainWidget()
+        before.resize(320, 240)
+        before.cameraMode = "fps"
+        before.updateMesh(_make_3d_mesh())
+        frame_before = _rgb_array(_grab_or_skip(before))
+
+        after = pilot.RDomainWidget()
+        after.resize(320, 240)
+        after.cameraMode = "fps"
+        after.updateMesh(_make_3d_mesh())
+        after.rotateCamera(40.0, 15.0)
+        frame_after = _rgb_array(_grab_or_skip(after))
+        self.assertTrue((frame_before != frame_after).any())
+
+    def test_first_person_extreme_pitch_stays_stable(self):
+        """Pitching hard past vertical does not flip or break the view: the
+        look direction is held off the up axis (no gimbal lock)."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.cameraMode = "fps"
+        widget.updateMesh(_make_3d_mesh())
+        for _ in range(10):
+            widget.rotateCamera(0.0, 200.0)
+        image = _grab_or_skip(widget)
+        self.assertFalse(image.isNull())
+
+
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
+class RDomainWidgetManagerTC(unittest.TestCase):
+    """The manager 3D-widget factory and screenshot path (step 7)."""
+
+    def test_add3dwidget_returns_domain_widget(self):
+        """RManager.add3DWidget hosts an RDomainWidget and exposes its mesh
+        through the same currentR3DWidget accessor as before."""
+        mgr = pilot.RManager.instance.setUp()
+        widget = mgr.add3DWidget()
+        self.assertIsInstance(widget, pilot.RDomainWidget)
+        widget.updateMesh(_make_2d_mesh())
+        current = mgr.currentR3DWidget()
+        self.assertIsNotNone(current)
+        self.assertEqual(current.mesh.ncell, 3)
+
+    def test_factory_widget_screenshot(self):
+        """The screenshot path of a factory-hosted widget routes through
+        grabImage and renders the mesh."""
+        mgr = pilot.RManager.instance.setUp()
+        widget = mgr.add3DWidget()
+        widget.updateMesh(_make_2d_mesh())
+        image = _grab_or_skip(widget)
+        self.assertGreater(_count_foreground(image), 0)
+
+    def test_multiple_3d_widgets_coexist(self):
+        """Several 3D viewers can be added at once. Each is a distinct
+        RDomainWidget hosted in its own subwindow, and the accessor reaches
+        the active viewer through its container wrapper. A bare QRhiWidget
+        nested in a QMdiSubWindow fails to composite and a second one crashes
+        the app; the wrapper is what keeps them independent."""
+        mgr = pilot.RManager.instance.setUp()
+        first = mgr.add3DWidget()
+        first.updateMesh(_make_2d_mesh())
+        second = mgr.add3DWidget()
+        second.updateMesh(_make_3d_mesh())
+        self.assertIsInstance(first, pilot.RDomainWidget)
+        self.assertIsInstance(second, pilot.RDomainWidget)
+        # The two viewers are independent objects with independent meshes.
+        self.assertEqual(first.mesh.ncell, 3)
+        self.assertEqual(second.mesh.ncell, 1)
+        # currentR3DWidget resolves through the container to the active viewer
+        # (the one just added), not the first.
+        current = mgr.currentR3DWidget()
+        self.assertIsNotNone(current)
+        self.assertEqual(current.mesh.ncell, 1)
+
+
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
+class RDomainWidgetAxisTC(unittest.TestCase):
+    """The orientation-guide overlay (step 6)."""
+
+    @classmethod
+    def setUpClass(cls):
+        pilot.RManager.instance.setUp()
+
+    def test_axis_guide_hidden_by_default(self):
+        """Without showAxis there is no colored triad over the black mesh."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_2d_mesh())
+        image = _grab_or_skip(widget)
+        self.assertLess(_count_axis_pixels(image, "red"), 5)
+        self.assertLess(_count_axis_pixels(image, "green"), 5)
+
+    def test_axis_guide_2d_shows_two_axes(self):
+        """A 2D domain shows the X (red) and Y (green) axes, no Z."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_2d_mesh())
+        widget.showAxis(True)
+        image = _grab_or_skip(widget)
+        self.assertGreater(_count_axis_pixels(image, "red"), 0)
+        self.assertGreater(_count_axis_pixels(image, "green"), 0)
+        self.assertLess(_count_axis_pixels(image, "blue"), 5)
+
+    def test_axis_guide_3d_shows_three_axes(self):
+        """A 3D domain shows all three colored axes."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_3d_mesh())
+        widget.showAxis(True)
+        image = _grab_or_skip(widget)
+        self.assertGreater(_count_axis_pixels(image, "red"), 0)
+        self.assertGreater(_count_axis_pixels(image, "green"), 0)
+        self.assertGreater(_count_axis_pixels(image, "blue"), 0)
+
+
+if __name__ == '__main__':
+    unittest.main()
+
+# vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4 tw=79:

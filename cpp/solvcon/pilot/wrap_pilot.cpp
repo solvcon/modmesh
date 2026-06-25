@@ -13,6 +13,7 @@
 
 #include <QClipboard>
 #include <QMenu>
+#include <QPixmap>
 #include <QPointer>
 #include <QString>
 
@@ -122,71 +123,114 @@ namespace solvcon
 namespace python
 {
 
-class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
-    : public WrapBase<WrapR3DWidget, R3DWidget, QPointer<R3DWidget>>
+class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRDomainWidget
+    : public WrapBase<WrapRDomainWidget, RDomainWidget, QPointer<RDomainWidget>>
 {
 
     friend root_base_type;
 
-    WrapR3DWidget(pybind11::module & mod, char const * pyname, char const * pydoc)
+    WrapRDomainWidget(pybind11::module & mod, char const * pyname, char const * pydoc)
         : root_base_type(mod, pyname, pydoc)
     {
 
         namespace py = pybind11;
 
         (*this)
+            .def(py::init(
+                []()
+                {
+                    return new RDomainWidget();
+                }))
+            .def(
+                "resize",
+                [](wrapped_type & self, int w, int h)
+                {
+                    self.resize(w, h);
+                },
+                py::arg("w"),
+                py::arg("h"))
             .def_property_readonly("mesh", &wrapped_type::mesh)
             .def("updateMesh", &wrapped_type::updateMesh, py::arg("mesh"))
             .def("showMesh", &wrapped_type::showMesh, py::arg("show"))
-            .def("showBoundary", &wrapped_type::showBoundary, py::arg("ibc"), py::arg("show"))
-            .def("updateWorld", &wrapped_type::updateWorld, py::arg("world"))
             .def(
                 "updateColorField",
                 &wrapped_type::updateColorField,
                 py::arg("vertices"),
                 py::arg("colors"),
                 py::arg("indices"))
-            .def("showMark", &wrapped_type::showMark)
+            .def("showBoundary", &wrapped_type::showBoundary, py::arg("ibc"), py::arg("show"))
+            .def("showAxis", &wrapped_type::showAxis, py::arg("show"))
+            .def("fitCameraToScene", &wrapped_type::fitCameraToScene)
+            .def_property(
+                "cameraMode",
+                [](wrapped_type & self)
+                {
+                    return self.cameraMode();
+                },
+                [](wrapped_type & self, std::string const & name)
+                {
+                    self.setCameraMode(name);
+                })
+            .def(
+                "rotateCamera",
+                [](wrapped_type & self, float dx, float dy)
+                {
+                    self.rotateCamera(dx, dy);
+                },
+                py::arg("dx"),
+                py::arg("dy"))
+            .def(
+                "panCamera",
+                [](wrapped_type & self, float dx, float dy)
+                {
+                    self.panCamera(dx, dy);
+                },
+                py::arg("dx"),
+                py::arg("dy"))
+            .def(
+                "zoomCamera",
+                [](wrapped_type & self, float steps)
+                {
+                    self.zoomCamera(steps);
+                },
+                py::arg("steps"))
+#define MM_DECL_CAMERA_VECTOR(NAME, GETTER, SETTER)            \
+    .def_property(                                             \
+        NAME,                                                  \
+        [](wrapped_type & self)                                \
+        {                                                      \
+            QVector3D const v = self.GETTER();                 \
+            return py::make_tuple(v.x(), v.y(), v.z());        \
+        },                                                     \
+        [](wrapped_type & self, std::vector<double> const & v) \
+        {                                                      \
+            self.SETTER(QVector3D(v.at(0), v.at(1), v.at(2))); \
+        })
+            // clang-format off
+            MM_DECL_CAMERA_VECTOR("cameraPosition", cameraPosition, setCameraPosition)
+            MM_DECL_CAMERA_VECTOR("cameraTarget", cameraTarget, setCameraTarget)
+            MM_DECL_CAMERA_VECTOR("cameraUp", cameraUp, setCameraUp)
+        // clang-format on
+#undef MM_DECL_CAMERA_VECTOR
+            .def(
+                "saveImage",
+                [](wrapped_type & self, std::string const & filename)
+                {
+                    self.grabImage().save(filename.c_str());
+                },
+                py::arg("filename"))
             .def(
                 "clipImage",
                 [](wrapped_type & self)
                 {
                     QClipboard * clipboard = QGuiApplication::clipboard();
-                    clipboard->setPixmap(self.grab());
+                    clipboard->setPixmap(QPixmap::fromImage(self.grabImage()));
                 })
-            .def(
-                "saveImage",
-                [](wrapped_type & self, std::string const & filename)
-                {
-                    self.grab().save(filename.c_str());
-                },
-                py::arg("filename"))
-            .def(
-                "setCameraType",
-                [](wrapped_type & self, std::string const & name)
-                {
-                    if (name == "orbit")
-                    {
-                        qDebug() << "Use Orbit Camera Controller";
-                        self.scene()->setOrbitCameraController();
-                        self.scene()->controller()->setCamera(self.camera());
-                    }
-                    else if (name == "fps")
-                    {
-                        qDebug() << "Use First Person Camera (fps) Controller";
-                        self.scene()->setFirstPersonCameraController();
-                        self.scene()->controller()->setCamera(self.camera());
-                    }
-                    else
-                    {
-                        qDebug() << "name needs to be either orbit or fps";
-                    }
-                },
-                py::arg("name"))
-            .def_property_readonly("camera", &wrapped_type::cameraController);
+            //
+            ;
     }
 
-}; /* end class WrapR3DWidget */
+}; /* end class WrapRDomainWidget */
 
 class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapR2DWidget
     : public WrapBase<WrapR2DWidget, R2DWidget, QPointer<R2DWidget>>
@@ -226,34 +270,6 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapR2DWidget
     }
 
 }; /* end class WrapR2DWidget */
-
-class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRLine
-    : public WrapBase<WrapRLine, RLine>
-{
-
-    friend root_base_type;
-
-    WrapRLine(pybind11::module & mod, char const * pyname, char const * pydoc)
-        : root_base_type(mod, pyname, pydoc)
-    {
-        namespace py = pybind11;
-
-        (*this)
-            .def(
-                py::init(
-                    [](R3DWidget & w, float x0, float y0, float z0, float x1, float y1, float z1, uint8_t color_r, uint8_t color_g, uint8_t color_b)
-                    {
-                        auto * scene = w.scene();
-                        QVector3D v0(x0, y0, z0);
-                        QVector3D v1(x1, y1, z1);
-                        QColor color(color_r, color_g, color_b, 255);
-                        auto * ret = new RLine(v0, v1, color, scene);
-                        ret->addArrowHead(0.2f, 0.4f);
-                        return ret;
-                    }));
-    }
-
-}; /* end class WrapRLine */
 
 class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRPythonConsoleDockWidget
     : public WrapBase<WrapRPythonConsoleDockWidget, RPythonConsoleDockWidget>
@@ -460,122 +476,6 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRManager
 
 }; /* end class WrapRManager */
 
-class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRCameraController
-    : public WrapBase<WrapRCameraController, RCameraController>
-{
-
-    friend root_base_type;
-
-    WrapRCameraController(pybind11::module & mod, char const * pyname, char const * pydoc)
-        : root_base_type(mod, pyname, pydoc)
-    {
-        namespace py = pybind11;
-
-        (*this)
-            .def(
-                "reset",
-                [](wrapped_type & self)
-                { self.reset(); })
-            .def(
-                "move",
-                [](
-                    wrapped_type & self,
-                    float x,
-                    float y,
-                    float z,
-                    float pitch,
-                    float yaw,
-                    bool left_mouse_button,
-                    bool right_mouse_button,
-                    bool alt_key,
-                    bool shift_key)
-                {
-                    CameraInputState input{};
-                    input.txAxisValue = x;
-                    input.tyAxisValue = y;
-                    input.tzAxisValue = z;
-                    // yaw is for rotation around y-axis. horizontal movement of mouse rotates camera around y-axis
-                    input.rxAxisValue = yaw;
-                    // pitch is for rotation around x-axis. vertical movement of mouse rotates camera around x-axis
-                    input.ryAxisValue = pitch;
-                    input.leftMouseButtonActive = left_mouse_button;
-                    input.rightMouseButtonActive = right_mouse_button;
-                    input.altKeyActive = alt_key;
-                    input.shiftKeyActive = shift_key;
-
-                    constexpr float dt = 1.0f;
-                    self.moveCamera(input, dt);
-                },
-
-                py::arg("x") = 0.f,
-                py::arg("y") = 0.f,
-                py::arg("z") = 0.f,
-                py::arg("pitch") = 0.f,
-                py::arg("yaw") = 0.f,
-                py::arg("left_mouse_button") = false,
-                py::arg("right_mouse_button") = false,
-                py::arg("alt_key") = false,
-                py::arg("shift_key") = false)
-            .def_property_readonly(
-                "view_vector",
-                [](wrapped_base_type & self)
-                {
-                    const auto vector = self.viewVector();
-                    return py::make_tuple(vector.x(), vector.y(), vector.z());
-                });
-
-#define MM_DECL_QVECTOR3D_PROPERTY(NAME, GETTER, SETTER)       \
-    .def_property(                                             \
-        #NAME,                                                 \
-        [](wrapped_type & self)                                \
-        {                                                      \
-            QVector3D const v = self.GETTER();                 \
-            return py::make_tuple(v.x(), v.y(), v.z());        \
-        },                                                     \
-        [](wrapped_type & self, std::vector<double> const & v) \
-        {                                                      \
-            double const x = v.at(0);                          \
-            double const y = v.at(1);                          \
-            double const z = v.at(2);                          \
-            self.SETTER(QVector3D(x, y, z));                   \
-        })
-
-        (*this)
-            // clang-format off
-                    MM_DECL_QVECTOR3D_PROPERTY(position, position, setPosition)
-                    MM_DECL_QVECTOR3D_PROPERTY(up_vector, upVector, setUpVector)
-                    MM_DECL_QVECTOR3D_PROPERTY(view_center, viewCenter, setViewCenter)
-                    MM_DECL_QVECTOR3D_PROPERTY(default_position, defaultPosition, setDefaultPosition)
-                    MM_DECL_QVECTOR3D_PROPERTY(default_view_center, defaultViewCenter, setDefaultViewCenter)
-                    MM_DECL_QVECTOR3D_PROPERTY(default_up_vector, defaultUpVector, setDefaultUpVector)
-            // clang-format on
-            ;
-#undef MM_DECL_QVECTOR3D_PROPERTY
-
-#define MM_DECL_FLOAT_PROPERTY(NAME, GETTER, SETTER) \
-    .def_property(                                   \
-        #NAME,                                       \
-        [](wrapped_type & self)                      \
-        {                                            \
-            return self.GETTER();                    \
-        },                                           \
-        [](wrapped_type & self, float v)             \
-        {                                            \
-            self.SETTER(v);                          \
-        })
-
-        (*this)
-            // clang-format off
-                MM_DECL_FLOAT_PROPERTY(linear_speed, linearSpeed, setLinearSpeed)
-                MM_DECL_FLOAT_PROPERTY(look_speed, lookSpeed, setLookSpeed)
-                MM_DECL_FLOAT_PROPERTY(default_linear_speed, defaultLinearSpeed, setDefaultLinearSpeed)
-                MM_DECL_FLOAT_PROPERTY(default_look_speed, defaultLookSpeed, setDefaultLookSpeed)
-            // clang-format on
-            ;
-#undef MM_DECL_FLOAT_PROPERTY
-    }
-};
-
 struct RManagerProxy
 {
 };
@@ -610,11 +510,17 @@ void wrap_pilot(pybind11::module & mod)
 {
     namespace py = pybind11;
 
-    WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
+    WrapRDomainWidget::commit(
+        mod,
+        "RDomainWidget",
+        "Interactive QRhi viewer for 2D and 3D unstructured-mesh domains and "
+        "fields. Drive it with updateMesh / showMesh, updateColorField, "
+        "showBoundary, and showAxis; navigate with cameraMode, the "
+        "cameraPosition / cameraTarget / cameraUp pose, rotateCamera / "
+        "panCamera / zoomCamera, and fitCameraToScene; capture frames with "
+        "saveImage / clipImage.");
     WrapR2DWidget::commit(mod, "R2DWidget", "R2DWidget");
-    WrapRLine::commit(mod, "RLine", "RLine");
     WrapRPythonConsoleDockWidget::commit(mod, "RPythonConsoleDockWidget", "RPythonConsoleDockWidget");
-    WrapRCameraController::commit(mod, "RCameraController", "RCameraController");
     WrapRManager::commit(mod, "RManager", "RManager");
     WrapRManagerProxy::commit(mod, "RManagerProxy", "RManagerProxy");
 
