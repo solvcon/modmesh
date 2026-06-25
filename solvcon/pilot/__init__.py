@@ -13,13 +13,10 @@ Drawing and visualization sub-system of solvcon.
 from ._pilot_core import (  # noqa: F401
     enable,
     mgr,
-    R3DWidget,
     RDomainWidget,
     R2DWidget,
-    RLine,
     RPythonConsoleDockWidget,
     RManager,
-    RCameraController,
 )
 if enable:
     from ._gui import (  # noqa: F401

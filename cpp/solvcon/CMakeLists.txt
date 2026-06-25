@@ -30,10 +30,6 @@ if (BUILD_QT)
     find_package(Qt6 QUIET OPTIONAL_COMPONENTS GuiPrivate)
     # ShaderTools provides qt6_add_shaders() and the qsb tool.
     find_package(Qt6 REQUIRED COMPONENTS ShaderTools)
-    find_package(Qt6 REQUIRED COMPONENTS 3DCore)
-    find_package(Qt6 REQUIRED COMPONENTS 3DRender)
-    find_package(Qt6 REQUIRED COMPONENTS 3DInput)
-    find_package(Qt6 REQUIRED COMPONENTS 3DExtras)
 endif () # BUILD_QT
 
 add_subdirectory(buffer)
@@ -120,10 +116,6 @@ if (BUILD_QT)
     target_link_libraries(
         solvcon_primary PUBLIC
         Qt::Widgets
-        Qt::3DCore
-        Qt::3DExtras
-        Qt::3DInput
-        Qt::3DRender
         Qt::Core
         Qt::Gui
     )
@@ -267,12 +259,5 @@ else () # MSVC
         -Wno-elaborated-enum-base # for apple accelerate/veclib
     )
 endif () # MSVC
-
-if(QT3D_USE_RHI)
-    target_compile_options(solvcon_primary PRIVATE
-        ${COMMON_COMPILER_OPTIONS}
-        -DQT3D_USE_RHI
-    )
-endif() # QT3D_USE_RHI
 
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

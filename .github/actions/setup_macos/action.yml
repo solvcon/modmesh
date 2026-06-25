@@ -64,7 +64,7 @@ runs:
         arch: 'clang_64'
         # qtshadertools provides qsb and the ShaderTools CMake package used to
         # bake the pilot QRhi shaders.
-        modules: 'qt3d qtshadertools'
+        modules: 'qtshadertools'
         setup-python: 'false'
         cache: true
 

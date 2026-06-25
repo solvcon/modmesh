@@ -317,7 +317,7 @@ jobs:
           arch: 'win64_msvc2022_64'
           # qtshadertools provides qsb and the ShaderTools CMake package used
           # to bake the pilot QRhi shaders.
-          modules: 'qt3d qtshadertools'
+          modules: 'qtshadertools'
           cache: true
 
       - uses: actions/setup-python@v6
