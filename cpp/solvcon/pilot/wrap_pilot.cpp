@@ -215,6 +215,9 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRDomainWidget
                 },
                 py::arg("w"),
                 py::arg("h"))
+            .def_property_readonly("mesh", &wrapped_type::mesh)
+            .def("updateMesh", &wrapped_type::updateMesh, py::arg("mesh"))
+            .def("showMesh", &wrapped_type::showMesh, py::arg("show"))
             .def(
                 "saveImage",
                 [](wrapped_type & self, std::string const & filename)

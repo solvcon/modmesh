@@ -262,7 +262,10 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '45') }}
+    # The Windows runner's vcpkg + MSVC build sits right at the 45-minute mark
+    # (Release finishes near 44, Debug overruns), so give the Windows jobs more
+    # headroom than the default build timeout.
+    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '70') }}
 
     env:
       QT_DEBUG_PLUGINS: 1
