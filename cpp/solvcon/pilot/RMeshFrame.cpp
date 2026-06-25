@@ -30,8 +30,8 @@ RMeshFrame::RMeshFrame(std::shared_ptr<StaticMesh> const & mesh)
         m_indices.push_back(static_cast<uint32_t>(mh.ednds(ie, 1)));
     }
 
-    // A light hairline color over the dark background.
-    setColor(QVector4D(0.82f, 0.86f, 0.92f, 1.0f));
+    // A black hairline over the white background.
+    setColor(QVector4D(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
 QRhiVertexInputLayout RMeshFrame::vertexInputLayout() const

@@ -15,6 +15,8 @@
 #include <QMenu>
 #include <QAction>
 #include <QActionGroup>
+#include <QVBoxLayout>
+#include <QWidget>
 
 namespace solvcon
 {
@@ -86,10 +88,19 @@ RDomainWidget * RManager::add3DWidget()
     RDomainWidget * viewer = nullptr;
     if (m_mdiArea)
     {
-        viewer = new RDomainWidget(/*parent*/ m_mdiArea);
-        viewer->setWindowTitle("Domain viewer");
-        viewer->show();
-        auto * subwin = this->addSubWindow(viewer);
+        // A QRhiWidget cannot be the direct child of a QMdiSubWindow: nested
+        // there it never reaches a QRhi-flushed backing store, so it logs
+        // "QRhiWidget: No QRhi" and draws nothing, and a second viewer brings
+        // the swapchain down with it (seen on macOS). Host the viewer inside a
+        // plain container widget, which composites correctly and lets several
+        // viewers coexist.
+        auto * host = new QWidget;
+        host->setWindowTitle("Domain viewer");
+        auto * layout = new QVBoxLayout(host);
+        layout->setContentsMargins(0, 0, 0, 0);
+        viewer = new RDomainWidget(/*parent*/ host);
+        layout->addWidget(viewer);
+        auto * subwin = this->addSubWindow(host);
         subwin->resize(400, 300);
     }
     return viewer;
@@ -117,13 +128,27 @@ RDomainWidget * RManager::currentR3DWidget()
         return nullptr;
     }
 
-    const auto * subwin = m_mdiArea->currentSubWindow();
+    return domainWidgetOf(m_mdiArea->currentSubWindow());
+}
+
+RDomainWidget * RManager::domainWidgetOf(QMdiSubWindow * subwin)
+{
     if (subwin == nullptr)
     {
         return nullptr;
     }
-
-    return dynamic_cast<RDomainWidget *>(subwin->widget());
+    QWidget * host = subwin->widget();
+    if (host == nullptr)
+    {
+        return nullptr;
+    }
+    // The host is the container; the viewer is its child. Guard the host
+    // itself too, in case an unwrapped viewer is ever added directly.
+    if (auto * viewer = dynamic_cast<RDomainWidget *>(host))
+    {
+        return viewer;
+    }
+    return host->findChild<RDomainWidget *>();
 }
 
 R2DWidget * RManager::currentR2DWidget()
@@ -288,7 +313,7 @@ void RManager::setUpCameraControllersMenuItems() const
     {
         for (auto subwin : m_mdiArea->subWindowList())
         {
-            if (auto * viewer = dynamic_cast<RDomainWidget *>(subwin->widget()))
+            if (auto * viewer = domainWidgetOf(subwin))
             {
                 viewer->setCameraMode(mode);
             }
@@ -416,12 +441,7 @@ std::function<void()> RManager::createCameraMovementItemHandler(const std::funct
         {
             return;
         }
-        const auto * subwin = m_mdiArea->currentSubWindow();
-        if (subwin == nullptr)
-        {
-            return;
-        }
-        if (auto * viewer = dynamic_cast<RDomainWidget *>(subwin->widget()))
+        if (auto * viewer = domainWidgetOf(m_mdiArea->currentSubWindow()))
         {
             func(viewer);
         }

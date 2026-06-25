@@ -330,7 +330,7 @@ void RDomainWidget::render(QRhiCommandBuffer * cb)
     m_gizmo.update(
         m_rhi, rpdesc, sampleCount(), pixel_size, camera_forward, m_scene.camera().up(), batch);
 
-    QColor const clear_color = QColor::fromRgbF(0.12f, 0.12f, 0.14f, 1.0f);
+    QColor const clear_color = QColor::fromRgbF(1.0f, 1.0f, 1.0f, 1.0f);
     QRhiDepthStencilClearValue const ds_clear(1.0f, 0);
 
     cb->beginPass(renderTarget(), clear_color, ds_clear, batch);

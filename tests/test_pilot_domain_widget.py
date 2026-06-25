@@ -96,29 +96,37 @@ def _rgb_array(image):
     return array.reshape(height, width, 4)[:, :, :3]
 
 
-def _count_foreground(image, threshold=150):
-    """Count wireframe line pixels.
+def _count_foreground(image, threshold=60):
+    """Count drawn (non-background) pixels.
 
-    The wireframe is a light hairline, bright in every channel (~0.85), over
-    a dark background (~0.12). Requiring all three channels to be bright
-    distinguishes the line from the dark backdrop and from the odd
-    single-channel edge pixel the software rasterizer can leave behind.
+    Foreground is whatever differs from the uniform background, where the
+    background is the frame's most common color. The black wireframe stands
+    out against the white clear, so this counts the wireframe; but keying on
+    the difference (not on absolute darkness) keeps the count robust to a
+    headless software rasterizer that reads an empty offscreen grab back as a
+    uniformly dark frame instead of the white clear. A uniform frame, light
+    or dark, has nothing that differs from its own background.
     """
-    array = _rgb_array(image)
-    mask = ((array[:, :, 0] > threshold) & (array[:, :, 1] > threshold)
-            & (array[:, :, 2] > threshold))
-    return int(mask.sum())
+    import numpy as np
+    array = _rgb_array(image).astype('int16')
+    flat = array.reshape(-1, 3)
+    colors, counts = np.unique(flat, axis=0, return_counts=True)
+    background = colors[counts.argmax()]
+    diff = np.abs(array - background).max(axis=2)
+    return int((diff > threshold).sum())
 
 
-def _count_colored(image, threshold=100):
-    """Count pixels brighter than the dark clear color in any channel."""
+def _count_colored(image, threshold=240):
+    """Count colored field pixels: those that differ from the white
+    background in at least one channel."""
     array = _rgb_array(image)
-    return int((array.max(axis=2) > threshold).sum())
+    return int((array.min(axis=2) < threshold).sum())
 
 
 def _count_reddish(image):
-    """Count strongly red pixels (the first boundary set's highlight color),
-    excluding the bright-in-every-channel wireframe."""
+    """Count strongly red pixels (the first boundary set's highlight color);
+    the white background and black wireframe both fail the low green/blue
+    test."""
     array = _rgb_array(image)
     mask = ((array[:, :, 0] > 150) & (array[:, :, 1] < 120)
             & (array[:, :, 2] < 120))
@@ -127,7 +135,8 @@ def _count_reddish(image):
 
 def _count_axis_pixels(image, channel):
     """Count saturated axis-guide pixels of one channel (red X, green Y,
-    blue Z), excluding the light-gray wireframe and the dark background."""
+    blue Z); the black wireframe and white background both fail these
+    masks."""
     array = _rgb_array(image)
     red, green, blue = array[:, :, 0], array[:, :, 1], array[:, :, 2]
     if channel == "red":
@@ -183,8 +192,8 @@ class RDomainWidgetFoundationTC(unittest.TestCase):
         self.assertGreater(image.height(), 0)
 
     def test_empty_scene_is_background(self):
-        """With no mesh the frame is the uniform dark clear color: nothing
-        is drawn, so no pixel is a bright line."""
+        """With no mesh the frame is the uniform white clear color: nothing
+        is drawn, so no pixel is a dark line."""
         widget = pilot.RDomainWidget()
         widget.resize(160, 120)
         image = _grab_or_skip(widget)
@@ -208,7 +217,7 @@ class RDomainWidgetMeshTC(unittest.TestCase):
         self.assertEqual(widget.mesh.ncell, 3)
 
     def test_2d_mesh_draws_wireframe(self):
-        """A 2D mesh renders a wireframe: some pixels are bright lines."""
+        """A 2D mesh renders a wireframe: some pixels are dark lines."""
         widget = pilot.RDomainWidget()
         widget.resize(320, 240)
         widget.updateMesh(_make_2d_mesh())
@@ -473,6 +482,28 @@ class RDomainWidgetManagerTC(unittest.TestCase):
         image = _grab_or_skip(widget)
         self.assertGreater(_count_foreground(image), 0)
 
+    def test_multiple_3d_widgets_coexist(self):
+        """Several 3D viewers can be added at once. Each is a distinct
+        RDomainWidget hosted in its own subwindow, and the accessor reaches
+        the active viewer through its container wrapper. A bare QRhiWidget
+        nested in a QMdiSubWindow fails to composite and a second one crashes
+        the app; the wrapper is what keeps them independent."""
+        mgr = pilot.RManager.instance.setUp()
+        first = mgr.add3DWidget()
+        first.updateMesh(_make_2d_mesh())
+        second = mgr.add3DWidget()
+        second.updateMesh(_make_3d_mesh())
+        self.assertIsInstance(first, pilot.RDomainWidget)
+        self.assertIsInstance(second, pilot.RDomainWidget)
+        # The two viewers are independent objects with independent meshes.
+        self.assertEqual(first.mesh.ncell, 3)
+        self.assertEqual(second.mesh.ncell, 1)
+        # currentR3DWidget resolves through the container to the active viewer
+        # (the one just added), not the first.
+        current = mgr.currentR3DWidget()
+        self.assertIsNotNone(current)
+        self.assertEqual(current.mesh.ncell, 1)
+
 
 @unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
 class RDomainWidgetAxisTC(unittest.TestCase):
@@ -483,7 +514,7 @@ class RDomainWidgetAxisTC(unittest.TestCase):
         pilot.RManager.instance.setUp()
 
     def test_axis_guide_hidden_by_default(self):
-        """Without showAxis there is no colored triad over the gray mesh."""
+        """Without showAxis there is no colored triad over the black mesh."""
         widget = pilot.RDomainWidget()
         widget.resize(320, 240)
         widget.updateMesh(_make_2d_mesh())
