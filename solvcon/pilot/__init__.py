@@ -14,6 +14,7 @@ from ._pilot_core import (  # noqa: F401
     enable,
     mgr,
     R3DWidget,
+    RDomainWidget,
     R2DWidget,
     RLine,
     RPythonConsoleDockWidget,

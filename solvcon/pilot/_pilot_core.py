@@ -25,6 +25,11 @@ list_of_r3dwidget = [
     'R3DWidget',
 ]
 
+# RDomainWidget.hpp/.cpp
+list_of_rdomainwidget = [
+    'RDomainWidget',
+]
+
 # R2DWidget.hpp/.cpp
 list_of_r2dwidget = [
     'R2DWidget',
@@ -60,6 +65,7 @@ list_of_drawtool = [
 
 _from_impl = (  # noqa: F822
     list_of_r3dwidget +
+    list_of_rdomainwidget +
     list_of_r2dwidget +
     list_of_raxismark +
     list_of_rmanager +
@@ -83,6 +89,7 @@ def _load(symbol_list):
 
 
 _load(list_of_r3dwidget)
+_load(list_of_rdomainwidget)
 _load(list_of_r2dwidget)
 _load(list_of_raxismark)
 _load(list_of_rmanager)

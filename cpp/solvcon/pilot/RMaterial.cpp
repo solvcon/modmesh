@@ -1,0 +1,67 @@
+/*
+ * Copyright (c) 2025, solvcon team <contact@solvcon.net>
+ * BSD 3-Clause License, see COPYING
+ */
+
+#include <solvcon/pilot/RMaterial.hpp> // Must be the first include.
+
+#include <QFile>
+
+namespace solvcon
+{
+
+QShader RMaterial::loadShader(QString const & resource_path)
+{
+    QFile file(resource_path);
+    if (!file.open(QIODevice::ReadOnly))
+    {
+        qWarning("RMaterial: failed to open shader %s", qPrintable(resource_path));
+        return QShader();
+    }
+    QByteArray const data = file.readAll();
+    return QShader::fromSerialized(data);
+}
+
+RMaterial::RMaterial(Kind kind)
+    : m_kind(kind)
+{
+    switch (kind)
+    {
+    case Kind::FlatColor:
+        m_vert = loadShader(QStringLiteral(":/solvcon/pilot/shaders/color.vert.qsb"));
+        m_frag = loadShader(QStringLiteral(":/solvcon/pilot/shaders/color.frag.qsb"));
+        break;
+    }
+}
+
+QRhiGraphicsPipeline * RMaterial::buildPipeline(
+    QRhi * rhi,
+    QRhiShaderResourceBindings * srb,
+    QRhiRenderPassDescriptor * rpdesc,
+    QRhiVertexInputLayout const & input_layout,
+    QRhiGraphicsPipeline::Topology topology,
+    int sample_count) const
+{
+    QRhiGraphicsPipeline * pipeline = rhi->newGraphicsPipeline();
+    pipeline->setShaderStages({
+        {QRhiShaderStage::Vertex, m_vert},
+        {QRhiShaderStage::Fragment, m_frag},
+    });
+    pipeline->setVertexInputLayout(input_layout);
+    pipeline->setShaderResourceBindings(srb);
+    pipeline->setRenderPassDescriptor(rpdesc);
+    pipeline->setTopology(topology);
+    pipeline->setSampleCount(sample_count);
+    pipeline->setDepthTest(true);
+    pipeline->setDepthWrite(true);
+    if (!pipeline->create())
+    {
+        delete pipeline;
+        return nullptr;
+    }
+    return pipeline;
+}
+
+} /* end namespace solvcon */
+
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

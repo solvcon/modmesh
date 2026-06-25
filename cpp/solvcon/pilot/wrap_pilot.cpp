@@ -13,6 +13,7 @@
 
 #include <QClipboard>
 #include <QMenu>
+#include <QPixmap>
 #include <QPointer>
 #include <QString>
 
@@ -187,6 +188,52 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapR3DWidget
     }
 
 }; /* end class WrapR3DWidget */
+
+class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRDomainWidget
+    : public WrapBase<WrapRDomainWidget, RDomainWidget, QPointer<RDomainWidget>>
+{
+
+    friend root_base_type;
+
+    WrapRDomainWidget(pybind11::module & mod, char const * pyname, char const * pydoc)
+        : root_base_type(mod, pyname, pydoc)
+    {
+
+        namespace py = pybind11;
+
+        (*this)
+            .def(py::init(
+                []()
+                {
+                    return new RDomainWidget();
+                }))
+            .def(
+                "resize",
+                [](wrapped_type & self, int w, int h)
+                {
+                    self.resize(w, h);
+                },
+                py::arg("w"),
+                py::arg("h"))
+            .def(
+                "saveImage",
+                [](wrapped_type & self, std::string const & filename)
+                {
+                    self.grabImage().save(filename.c_str());
+                },
+                py::arg("filename"))
+            .def(
+                "clipImage",
+                [](wrapped_type & self)
+                {
+                    QClipboard * clipboard = QGuiApplication::clipboard();
+                    clipboard->setPixmap(QPixmap::fromImage(self.grabImage()));
+                })
+            //
+            ;
+    }
+
+}; /* end class WrapRDomainWidget */
 
 class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapR2DWidget
     : public WrapBase<WrapR2DWidget, R2DWidget, QPointer<R2DWidget>>
@@ -611,6 +658,7 @@ void wrap_pilot(pybind11::module & mod)
     namespace py = pybind11;
 
     WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
+    WrapRDomainWidget::commit(mod, "RDomainWidget", "RDomainWidget");
     WrapR2DWidget::commit(mod, "R2DWidget", "R2DWidget");
     WrapRLine::commit(mod, "RLine", "RLine");
     WrapRPythonConsoleDockWidget::commit(mod, "RPythonConsoleDockWidget", "RPythonConsoleDockWidget");

@@ -8,6 +8,7 @@
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
 #include <solvcon/pilot/R3DWidget.hpp>
+#include <solvcon/pilot/RDomainWidget.hpp>
 #include <solvcon/pilot/RManager.hpp>
 #include <solvcon/pilot/RPythonConsoleDockWidget.hpp>
 #include <solvcon/pilot/RCameraController.hpp>

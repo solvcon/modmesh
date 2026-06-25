@@ -5,6 +5,8 @@ cmake_minimum_required(VERSION 4.0.1)
 
 set(SOLVCON_PILOT_PYMODHEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/R3DWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RDomainWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RMaterial.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/R2DWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DrawTool.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RWorldRenderer2d.hpp
@@ -22,6 +24,8 @@ set(SOLVCON_PILOT_PYMODHEADERS
 
 set(SOLVCON_PILOT_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/R3DWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RDomainWidget.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RMaterial.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/R2DWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DrawTool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RWorldRenderer2d.cpp
@@ -39,6 +43,17 @@ set(SOLVCON_PILOT_PYMODSOURCES
 set(SOLVCON_PILOT_FILES
     ${SOLVCON_PILOT_PYMODHEADERS}
     ${SOLVCON_PILOT_PYMODSOURCES}
+    CACHE FILEPATH "" FORCE)
+
+# GLSL shader sources baked to .qsb by the qsb tool and embedded in the Qt
+# resource system. Consumed by qt6_add_shaders() in cpp/solvcon/CMakeLists.txt.
+set(SOLVCON_PILOT_SHADERDIR
+    ${CMAKE_CURRENT_SOURCE_DIR}/shaders
+    CACHE PATH "" FORCE)
+
+set(SOLVCON_PILOT_SHADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/shaders/color.vert
+    ${CMAKE_CURRENT_SOURCE_DIR}/shaders/color.frag
     CACHE FILEPATH "" FORCE)
 
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:
