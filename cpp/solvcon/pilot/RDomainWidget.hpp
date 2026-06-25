@@ -7,6 +7,7 @@
 
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
+#include <solvcon/pilot/RDomainScene.hpp>
 #include <solvcon/pilot/RDrawable.hpp>
 
 #include <solvcon/solvcon.hpp>
@@ -14,12 +15,9 @@
 #include <rhi/qrhi.h>
 
 #include <QImage>
-#include <QMatrix4x4>
 #include <QRhiWidget>
-#include <QVector3D>
 
 #include <memory>
-#include <vector>
 
 namespace solvcon
 {
@@ -30,10 +28,10 @@ namespace solvcon
  *
  * This is the QRhi reimplementation of the pilot 3D viewer. It is a
  * QRhiWidget: Qt owns the swapchain, color and depth buffers, and drives the
- * render loop through initialize()/render(). The widget holds a list of
- * RDrawable objects (the mesh wireframe and, later, fields and highlights)
- * and a fit-to-domain view-projection. It is built side by side with the
- * legacy Qt 3D prototype while the latter is being retired.
+ * render loop through initialize()/render(). The widget hosts an RDomainScene
+ * (the drawables, the domain bounding box, and the framing camera) and drives
+ * it. It is built side by side with the legacy Qt 3D prototype while the
+ * latter is being retired.
  */
 class RDomainWidget
     : public QRhiWidget
@@ -62,6 +60,9 @@ public:
     /// Show or hide the highlight ribbon for boundary set @p ibc.
     void showBoundary(int ibc, bool show);
 
+    /// Frame the camera so the whole domain is in view.
+    void fitCameraToScene();
+
     std::shared_ptr<StaticMesh> mesh() const { return m_mesh; }
 
     /// Render the current frame offscreen and return it as a QImage. Thin
@@ -76,27 +77,15 @@ protected:
 
 private:
 
-    /// Build a view-projection that frames the domain bounding box into the
-    /// given pixel viewport. A precursor to the dedicated scene framing.
-    QMatrix4x4 computeViewProj(QSize pixel_size) const;
-
     QRhi * m_rhi = nullptr; ///< Tracked to detect device changes.
     QRhiRenderPassDescriptor * m_rpdesc = nullptr; ///< Tracked to detect target changes.
     int m_sample_count = 0; ///< Tracked to detect MSAA changes.
 
-    /// Grow the domain bounding box to include the point range [lo, hi].
-    void extendBoundingBox(QVector3D const & lo, QVector3D const & hi);
-
-    std::vector<std::unique_ptr<RDrawable>> m_drawables;
-    RDrawable * m_mesh_frame = nullptr; ///< Non-owning; lives in m_drawables.
-    RDrawable * m_field = nullptr; ///< Non-owning; lives in m_drawables.
+    RDomainScene m_scene;
+    RDrawable * m_mesh_frame = nullptr; ///< Non-owning; lives in the scene.
+    RDrawable * m_field = nullptr; ///< Non-owning; lives in the scene.
 
     std::shared_ptr<StaticMesh> m_mesh;
-
-    QVector3D m_bbox_lo;
-    QVector3D m_bbox_hi;
-    uint32_t m_ndim = 0;
-    bool m_has_bbox = false;
 
 }; /* end class RDomainWidget */
 

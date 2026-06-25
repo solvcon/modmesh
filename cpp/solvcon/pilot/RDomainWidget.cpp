@@ -27,43 +27,21 @@ QImage RDomainWidget::grabImage()
     return grabFramebuffer();
 }
 
-void RDomainWidget::extendBoundingBox(QVector3D const & lo, QVector3D const & hi)
-{
-    if (!m_has_bbox)
-    {
-        m_bbox_lo = lo;
-        m_bbox_hi = hi;
-        m_has_bbox = true;
-        return;
-    }
-    m_bbox_lo = QVector3D(
-        std::min(m_bbox_lo.x(), lo.x()),
-        std::min(m_bbox_lo.y(), lo.y()),
-        std::min(m_bbox_lo.z(), lo.z()));
-    m_bbox_hi = QVector3D(
-        std::max(m_bbox_hi.x(), hi.x()),
-        std::max(m_bbox_hi.y(), hi.y()),
-        std::max(m_bbox_hi.z(), hi.z()));
-}
-
 void RDomainWidget::updateMesh(std::shared_ptr<StaticMesh> const & mesh)
 {
     // Drop the previous mesh wireframe and replace it; a new mesh redefines
     // the framing, so the bounding box is recomputed from scratch.
-    std::erase_if(
-        m_drawables,
-        [this](std::unique_ptr<RDrawable> const & d)
-        { return d.get() == m_mesh_frame; });
+    m_scene.removeDrawable(m_mesh_frame);
     m_mesh_frame = nullptr;
 
     m_mesh = mesh;
 
     auto frame = std::make_unique<RMeshFrame>(mesh);
     m_mesh_frame = frame.get();
-    m_drawables.push_back(std::move(frame));
+    m_scene.addDrawable(std::move(frame));
 
     StaticMesh const & mh = *mesh;
-    m_ndim = mh.ndim();
+    m_scene.setDimension(mh.ndim());
     QVector3D lo(
         std::numeric_limits<float>::max(),
         std::numeric_limits<float>::max(),
@@ -72,26 +50,28 @@ void RDomainWidget::updateMesh(std::shared_ptr<StaticMesh> const & mesh)
         std::numeric_limits<float>::lowest(),
         std::numeric_limits<float>::lowest(),
         std::numeric_limits<float>::lowest());
+    bool const is_3d = (3 == mh.ndim());
     for (uint32_t ind = 0; ind < mh.nnode(); ++ind)
     {
         float const x = static_cast<float>(mh.ndcrd(ind, 0));
         float const y = static_cast<float>(mh.ndcrd(ind, 1));
-        float const z = (3 == m_ndim) ? static_cast<float>(mh.ndcrd(ind, 2)) : 0.0f;
+        float const z = is_3d ? static_cast<float>(mh.ndcrd(ind, 2)) : 0.0f;
         lo = QVector3D(std::min(lo.x(), x), std::min(lo.y(), y), std::min(lo.z(), z));
         hi = QVector3D(std::max(hi.x(), x), std::max(hi.y(), y), std::max(hi.z(), z));
     }
-    m_has_bbox = false;
+    m_scene.resetBoundingBox();
     if (mh.nnode() > 0)
     {
-        extendBoundingBox(lo, hi);
+        m_scene.extendBoundingBox(lo, hi);
     }
     // A field set earlier still draws, so keep it inside the framed box.
     if (nullptr != m_field)
     {
         auto * field = static_cast<RField *>(m_field);
-        extendBoundingBox(field->bboxLo(), field->bboxHi());
+        m_scene.extendBoundingBox(field->bboxLo(), field->bboxHi());
     }
 
+    m_scene.fitCameraToScene();
     update();
 }
 
@@ -110,10 +90,7 @@ void RDomainWidget::updateColorField(
     SimpleArray<uint32_t> const & indices)
 {
     // Drop the previous field and replace it; the field is swappable.
-    std::erase_if(
-        m_drawables,
-        [this](std::unique_ptr<RDrawable> const & d)
-        { return d.get() == m_field; });
+    m_scene.removeDrawable(m_field);
     m_field = nullptr;
 
     auto field = std::make_unique<RField>(vertices, colors, indices);
@@ -123,14 +100,15 @@ void RDomainWidget::updateColorField(
         QVector3D const hi = field->bboxHi();
         // With no mesh to set the dimensionality, infer it: a field with no
         // depth extent is viewed head-on like a 2D domain.
-        if (!m_has_bbox)
+        if (!m_scene.hasBoundingBox())
         {
             float const span = (hi - lo).length();
-            m_ndim = ((hi.z() - lo.z()) > 1.0e-6f * span) ? 3 : 2;
+            m_scene.setDimension(((hi.z() - lo.z()) > 1.0e-6f * span) ? 3 : 2);
         }
-        extendBoundingBox(lo, hi);
+        m_scene.extendBoundingBox(lo, hi);
         m_field = field.get();
-        m_drawables.push_back(std::move(field));
+        m_scene.addDrawable(std::move(field));
+        m_scene.fitCameraToScene();
     }
 
     update();
@@ -140,11 +118,10 @@ void RDomainWidget::showBoundary(int ibc, bool show)
 {
     // Remove an existing highlight for this set so a re-show stays single and
     // a hide leaves none behind.
-    std::erase_if(
-        m_drawables,
-        [ibc](std::unique_ptr<RDrawable> const & d)
+    m_scene.removeDrawableIf(
+        [ibc](RDrawable const * d)
         {
-            auto * boundary = dynamic_cast<RMeshBoundary *>(d.get());
+            auto const * boundary = dynamic_cast<RMeshBoundary const *>(d);
             return nullptr != boundary && boundary->ibc() == ibc;
         });
 
@@ -153,58 +130,17 @@ void RDomainWidget::showBoundary(int ibc, bool show)
         auto boundary = std::make_unique<RMeshBoundary>(m_mesh, ibc);
         if (boundary->hasGeometry())
         {
-            m_drawables.push_back(std::move(boundary));
+            m_scene.addDrawable(std::move(boundary));
         }
     }
 
     update();
 }
 
-QMatrix4x4 RDomainWidget::computeViewProj(QSize pixel_size) const
+void RDomainWidget::fitCameraToScene()
 {
-    QMatrix4x4 clip = m_rhi ? m_rhi->clipSpaceCorrMatrix() : QMatrix4x4();
-    if (!m_has_bbox || pixel_size.height() <= 0 || pixel_size.width() <= 0)
-    {
-        return clip;
-    }
-
-    QVector3D const center = (m_bbox_lo + m_bbox_hi) * 0.5f;
-    QVector3D const extent = m_bbox_hi - m_bbox_lo;
-    float radius = extent.length() * 0.5f;
-    if (radius <= 0.0f)
-    {
-        radius = 1.0f;
-    }
-
-    // A bounding sphere of this radius fits the domain from any view
-    // direction, so framing is just an orthographic box around it.
-    float const aspect = static_cast<float>(pixel_size.width()) / static_cast<float>(pixel_size.height());
-    float const margin = radius * 1.1f;
-    float half_w = margin;
-    float half_h = margin;
-    if (aspect >= 1.0f)
-    {
-        half_w = margin * aspect;
-    }
-    else
-    {
-        half_h = margin / aspect;
-    }
-
-    // 2D domains are viewed head-on; 3D domains from a fixed oblique angle so
-    // depth reads until the interactive camera lands.
-    QVector3D const dir = (3 == m_ndim)
-                              ? QVector3D(0.6f, 0.5f, 1.0f).normalized()
-                              : QVector3D(0.0f, 0.0f, 1.0f);
-    QVector3D const eye = center + dir * (2.0f * radius);
-
-    QMatrix4x4 view;
-    view.lookAt(eye, center, QVector3D(0.0f, 1.0f, 0.0f));
-
-    QMatrix4x4 proj;
-    proj.ortho(-half_w, half_w, -half_h, half_h, 0.01f * radius, 5.0f * radius);
-
-    return clip * proj * view;
+    m_scene.fitCameraToScene();
+    update();
 }
 
 void RDomainWidget::initialize(QRhiCommandBuffer *)
@@ -215,10 +151,7 @@ void RDomainWidget::initialize(QRhiCommandBuffer *)
         // The graphics device, render target, or sample count changed; drop
         // every device resource so the drawables rebuild against the new one
         // (the pipelines are tied to the render-pass descriptor).
-        for (std::unique_ptr<RDrawable> const & drawable : m_drawables)
-        {
-            drawable->release();
-        }
+        m_scene.releaseAll();
         m_rhi = rhi();
         m_rpdesc = rpdesc;
         m_sample_count = sampleCount();
@@ -230,9 +163,9 @@ void RDomainWidget::render(QRhiCommandBuffer * cb)
     QRhiResourceUpdateBatch * batch = m_rhi->nextResourceUpdateBatch();
 
     QSize const pixel_size = renderTarget()->pixelSize();
-    QMatrix4x4 const view_proj = computeViewProj(pixel_size);
+    QMatrix4x4 const view_proj = m_scene.viewProjection(pixel_size, m_rhi);
 
-    for (std::unique_ptr<RDrawable> const & drawable : m_drawables)
+    for (std::unique_ptr<RDrawable> const & drawable : m_scene.drawables())
     {
         drawable->prepare(
             m_rhi, renderTarget()->renderPassDescriptor(), sampleCount(), batch);
@@ -245,7 +178,7 @@ void RDomainWidget::render(QRhiCommandBuffer * cb)
     cb->beginPass(renderTarget(), clear_color, ds_clear, batch);
     cb->setViewport(QRhiViewport(
         0, 0, float(pixel_size.width()), float(pixel_size.height())));
-    for (std::unique_ptr<RDrawable> const & drawable : m_drawables)
+    for (std::unique_ptr<RDrawable> const & drawable : m_scene.drawables())
     {
         drawable->draw(cb);
     }
@@ -254,10 +187,7 @@ void RDomainWidget::render(QRhiCommandBuffer * cb)
 
 void RDomainWidget::releaseResources()
 {
-    for (std::unique_ptr<RDrawable> const & drawable : m_drawables)
-    {
-        drawable->release();
-    }
+    m_scene.releaseAll();
     m_rhi = nullptr;
     m_rpdesc = nullptr;
     m_sample_count = 0;

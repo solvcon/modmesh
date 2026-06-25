@@ -309,6 +309,48 @@ class RDomainWidgetFieldTC(unittest.TestCase):
             _update_field(widget, vertices, colors, indices)
 
 
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
+class RDomainWidgetSceneTC(unittest.TestCase):
+    """Scene framing and the fit-to-scene camera (step 4)."""
+
+    @classmethod
+    def setUpClass(cls):
+        pilot.RManager.instance.setUp()
+
+    def test_fit_camera_keeps_2d_mesh_in_view(self):
+        """fitCameraToScene frames a 2D mesh so its wireframe stays in view."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_2d_mesh())
+        widget.fitCameraToScene()
+        self.assertGreater(_count_foreground(_grab_or_skip(widget)), 0)
+
+    def test_fit_camera_frames_3d_mesh_in_perspective(self):
+        """A 3D mesh is framed under the perspective projection and its
+        edges render."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_3d_mesh())
+        widget.fitCameraToScene()
+        self.assertGreater(_count_foreground(_grab_or_skip(widget)), 0)
+
+    def test_fit_camera_frames_3d_mesh_in_portrait(self):
+        """A portrait viewport pulls the perspective camera back enough that
+        the 3D domain is not clipped horizontally."""
+        widget = pilot.RDomainWidget()
+        widget.resize(240, 320)
+        widget.updateMesh(_make_3d_mesh())
+        widget.fitCameraToScene()
+        self.assertGreater(_count_foreground(_grab_or_skip(widget)), 0)
+
+    def test_fit_camera_without_scene_is_harmless(self):
+        """fitCameraToScene on an empty widget does not crash or draw."""
+        widget = pilot.RDomainWidget()
+        widget.resize(160, 120)
+        widget.fitCameraToScene()
+        self.assertEqual(_count_foreground(_grab_or_skip(widget)), 0)
+
+
 if __name__ == '__main__':
     unittest.main()
 

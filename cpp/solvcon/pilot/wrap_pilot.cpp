@@ -225,6 +225,7 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRDomainWidget
                 py::arg("colors"),
                 py::arg("indices"))
             .def("showBoundary", &wrapped_type::showBoundary, py::arg("ibc"), py::arg("show"))
+            .def("fitCameraToScene", &wrapped_type::fitCameraToScene)
             .def(
                 "saveImage",
                 [](wrapped_type & self, std::string const & filename)
