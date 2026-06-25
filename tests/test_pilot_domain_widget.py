@@ -125,6 +125,20 @@ def _count_reddish(image):
     return int(mask.sum())
 
 
+def _count_axis_pixels(image, channel):
+    """Count saturated axis-guide pixels of one channel (red X, green Y,
+    blue Z), excluding the light-gray wireframe and the dark background."""
+    array = _rgb_array(image)
+    red, green, blue = array[:, :, 0], array[:, :, 1], array[:, :, 2]
+    if channel == "red":
+        mask = (red > 150) & (green < 110) & (blue < 110)
+    elif channel == "green":
+        mask = (green > 150) & (red < 110) & (blue < 110)
+    else:
+        mask = (blue > 180) & (red < 130) & (green < 150)
+    return int(mask.sum())
+
+
 def _make_color_field():
     """A Gouraud-shaded quad (two triangles) with distinct corner colors."""
     import numpy as np
@@ -433,6 +447,46 @@ class RDomainWidgetCameraTC(unittest.TestCase):
             widget.rotateCamera(0.0, 200.0)
         image = _grab_or_skip(widget)
         self.assertFalse(image.isNull())
+
+
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
+class RDomainWidgetAxisTC(unittest.TestCase):
+    """The orientation-guide overlay (step 6)."""
+
+    @classmethod
+    def setUpClass(cls):
+        pilot.RManager.instance.setUp()
+
+    def test_axis_guide_hidden_by_default(self):
+        """Without showAxis there is no colored triad over the gray mesh."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_2d_mesh())
+        image = _grab_or_skip(widget)
+        self.assertLess(_count_axis_pixels(image, "red"), 5)
+        self.assertLess(_count_axis_pixels(image, "green"), 5)
+
+    def test_axis_guide_2d_shows_two_axes(self):
+        """A 2D domain shows the X (red) and Y (green) axes, no Z."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_2d_mesh())
+        widget.showAxis(True)
+        image = _grab_or_skip(widget)
+        self.assertGreater(_count_axis_pixels(image, "red"), 0)
+        self.assertGreater(_count_axis_pixels(image, "green"), 0)
+        self.assertLess(_count_axis_pixels(image, "blue"), 5)
+
+    def test_axis_guide_3d_shows_three_axes(self):
+        """A 3D domain shows all three colored axes."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_3d_mesh())
+        widget.showAxis(True)
+        image = _grab_or_skip(widget)
+        self.assertGreater(_count_axis_pixels(image, "red"), 0)
+        self.assertGreater(_count_axis_pixels(image, "green"), 0)
+        self.assertGreater(_count_axis_pixels(image, "blue"), 0)
 
 
 if __name__ == '__main__':

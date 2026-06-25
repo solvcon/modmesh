@@ -287,6 +287,12 @@ void RDomainWidget::keyPressEvent(QKeyEvent * event)
     update();
 }
 
+void RDomainWidget::showAxis(bool show)
+{
+    m_gizmo.setVisible(show);
+    update();
+}
+
 void RDomainWidget::initialize(QRhiCommandBuffer *)
 {
     QRhiRenderPassDescriptor * const rpdesc = renderTarget()->renderPassDescriptor();
@@ -296,6 +302,7 @@ void RDomainWidget::initialize(QRhiCommandBuffer *)
         // every device resource so the drawables rebuild against the new one
         // (the pipelines are tied to the render-pass descriptor).
         m_scene.releaseAll();
+        m_gizmo.release();
         m_rhi = rhi();
         m_rpdesc = rpdesc;
         m_sample_count = sampleCount();
@@ -308,13 +315,20 @@ void RDomainWidget::render(QRhiCommandBuffer * cb)
 
     QSize const pixel_size = renderTarget()->pixelSize();
     QMatrix4x4 const view_proj = m_scene.viewProjection(pixel_size, m_rhi);
+    QRhiRenderPassDescriptor * const rpdesc = renderTarget()->renderPassDescriptor();
 
     for (std::unique_ptr<RDrawable> const & drawable : m_scene.drawables())
     {
-        drawable->prepare(
-            m_rhi, renderTarget()->renderPassDescriptor(), sampleCount(), batch);
+        drawable->prepare(m_rhi, rpdesc, sampleCount(), batch);
         drawable->updateUniform(batch, view_proj);
     }
+
+    // The orientation guide shows two axes for a 2D domain and three for 3D,
+    // oriented by the main camera. Its resources update before the pass.
+    m_gizmo.setAxisCount((2 == m_scene.dimension()) ? 2 : 3);
+    QVector3D const camera_forward = m_scene.camera().target() - m_scene.camera().position();
+    m_gizmo.update(
+        m_rhi, rpdesc, sampleCount(), pixel_size, camera_forward, m_scene.camera().up(), batch);
 
     QColor const clear_color = QColor::fromRgbF(0.12f, 0.12f, 0.14f, 1.0f);
     QRhiDepthStencilClearValue const ds_clear(1.0f, 0);
@@ -326,12 +340,14 @@ void RDomainWidget::render(QRhiCommandBuffer * cb)
     {
         drawable->draw(cb);
     }
+    m_gizmo.draw(cb);
     cb->endPass();
 }
 
 void RDomainWidget::releaseResources()
 {
     m_scene.releaseAll();
+    m_gizmo.release();
     m_rhi = nullptr;
     m_rpdesc = nullptr;
     m_sample_count = 0;

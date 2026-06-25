@@ -37,6 +37,10 @@ RMaterial::RMaterial(Kind kind)
         m_vert = loadShader(QStringLiteral(":/solvcon/pilot/shaders/vcolor.vert.qsb"));
         m_frag = loadShader(QStringLiteral(":/solvcon/pilot/shaders/color.frag.qsb"));
         break;
+    case Kind::Textured:
+        m_vert = loadShader(QStringLiteral(":/solvcon/pilot/shaders/texture.vert.qsb"));
+        m_frag = loadShader(QStringLiteral(":/solvcon/pilot/shaders/texture.frag.qsb"));
+        break;
     }
 }
 
@@ -46,7 +50,9 @@ QRhiGraphicsPipeline * RMaterial::buildPipeline(
     QRhiRenderPassDescriptor * rpdesc,
     QRhiVertexInputLayout const & input_layout,
     QRhiGraphicsPipeline::Topology topology,
-    int sample_count) const
+    int sample_count,
+    bool depth_test,
+    bool alpha_blend) const
 {
     QRhiGraphicsPipeline * pipeline = rhi->newGraphicsPipeline();
     pipeline->setShaderStages({
@@ -58,8 +64,18 @@ QRhiGraphicsPipeline * RMaterial::buildPipeline(
     pipeline->setRenderPassDescriptor(rpdesc);
     pipeline->setTopology(topology);
     pipeline->setSampleCount(sample_count);
-    pipeline->setDepthTest(true);
-    pipeline->setDepthWrite(true);
+    pipeline->setDepthTest(depth_test);
+    pipeline->setDepthWrite(depth_test);
+    if (alpha_blend)
+    {
+        QRhiGraphicsPipeline::TargetBlend blend;
+        blend.enable = true;
+        blend.srcColor = QRhiGraphicsPipeline::SrcAlpha;
+        blend.dstColor = QRhiGraphicsPipeline::OneMinusSrcAlpha;
+        blend.srcAlpha = QRhiGraphicsPipeline::One;
+        blend.dstAlpha = QRhiGraphicsPipeline::OneMinusSrcAlpha;
+        pipeline->setTargetBlends({blend});
+    }
     if (!pipeline->create())
     {
         delete pipeline;

@@ -12,6 +12,7 @@ set(SOLVCON_PILOT_PYMODHEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/RMeshFrame.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RField.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMeshBoundary.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RAxisGizmo.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMaterial.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/R2DWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DrawTool.hpp
@@ -37,6 +38,7 @@ set(SOLVCON_PILOT_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/RMeshFrame.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RField.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMeshBoundary.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RAxisGizmo.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMaterial.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/R2DWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/DrawTool.cpp
@@ -67,6 +69,8 @@ set(SOLVCON_PILOT_SHADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/shaders/color.vert
     ${CMAKE_CURRENT_SOURCE_DIR}/shaders/color.frag
     ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vcolor.vert
+    ${CMAKE_CURRENT_SOURCE_DIR}/shaders/texture.vert
+    ${CMAKE_CURRENT_SOURCE_DIR}/shaders/texture.frag
     CACHE FILEPATH "" FORCE)
 
 # vim: set ff=unix fenc=utf8 nobomb et sw=4 ts=4 sts=4:

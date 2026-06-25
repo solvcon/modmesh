@@ -225,6 +225,7 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRDomainWidget
                 py::arg("colors"),
                 py::arg("indices"))
             .def("showBoundary", &wrapped_type::showBoundary, py::arg("ibc"), py::arg("show"))
+            .def("showAxis", &wrapped_type::showAxis, py::arg("show"))
             .def("fitCameraToScene", &wrapped_type::fitCameraToScene)
             .def_property(
                 "cameraMode",

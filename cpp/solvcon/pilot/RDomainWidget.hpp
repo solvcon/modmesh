@@ -7,6 +7,7 @@
 
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
+#include <solvcon/pilot/RAxisGizmo.hpp>
 #include <solvcon/pilot/RDomainScene.hpp>
 #include <solvcon/pilot/RDrawable.hpp>
 
@@ -66,6 +67,9 @@ public:
     /// Frame the camera so the whole domain is in view.
     void fitCameraToScene();
 
+    /// Show or hide the orientation-guide triad in the corner.
+    void showAxis(bool show);
+
     /// Select the camera mode: "pan" (2D pan/zoom) or "fps" (3D fly-through).
     void setCameraMode(std::string const & name);
     std::string cameraMode() const;
@@ -110,6 +114,7 @@ private:
     int m_sample_count = 0; ///< Tracked to detect MSAA changes.
 
     RDomainScene m_scene;
+    RAxisGizmo m_gizmo;
     RDrawable * m_mesh_frame = nullptr; ///< Non-owning; lives in the scene.
     RDrawable * m_field = nullptr; ///< Non-owning; lives in the scene.
 
