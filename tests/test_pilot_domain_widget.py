@@ -110,6 +110,41 @@ def _count_foreground(image, threshold=150):
     return int(mask.sum())
 
 
+def _count_colored(image, threshold=100):
+    """Count pixels brighter than the dark clear color in any channel."""
+    array = _rgb_array(image)
+    return int((array.max(axis=2) > threshold).sum())
+
+
+def _count_reddish(image):
+    """Count strongly red pixels (the first boundary set's highlight color),
+    excluding the bright-in-every-channel wireframe."""
+    array = _rgb_array(image)
+    mask = ((array[:, :, 0] > 150) & (array[:, :, 1] < 120)
+            & (array[:, :, 2] < 120))
+    return int(mask.sum())
+
+
+def _make_color_field():
+    """A Gouraud-shaded quad (two triangles) with distinct corner colors."""
+    import numpy as np
+    vertices = np.array([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)],
+                        dtype='float32')
+    colors = np.array([(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0)],
+                      dtype='float32')
+    indices = np.array([(0, 1, 2), (0, 2, 3)], dtype='uint32')
+    return vertices, colors, indices
+
+
+def _update_field(widget, vertices, colors, indices):
+    """Wrap numpy tables in solvcon arrays and push them to the widget."""
+    core = solvcon.core
+    widget.updateColorField(
+        core.SimpleArrayFloat32(array=vertices.astype('float32')),
+        core.SimpleArrayFloat32(array=colors.astype('float32')),
+        core.SimpleArrayUint32(array=indices.astype('uint32')))
+
+
 @unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
 class RDomainWidgetFoundationTC(unittest.TestCase):
     """The render foundation and the Python control spine (step 1)."""
@@ -193,6 +228,85 @@ class RDomainWidgetMeshTC(unittest.TestCase):
         widget.showMesh(True)
         restored = _count_foreground(_grab_or_skip(widget))
         self.assertGreater(restored, hidden)
+
+
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
+class RDomainWidgetFieldTC(unittest.TestCase):
+    """Field coloring and boundary highlight (step 3)."""
+
+    @classmethod
+    def setUpClass(cls):
+        pilot.RManager.instance.setUp()
+
+    def test_color_field_renders(self):
+        """updateColorField draws per-vertex-colored triangles."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        vertices, colors, indices = _make_color_field()
+        _update_field(widget, vertices, colors, indices)
+        image = _grab_or_skip(widget)
+        self.assertGreater(_count_colored(image), 0)
+
+    def test_color_field_is_swappable(self):
+        """A second updateColorField replaces the first and still renders."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        vertices, colors, indices = _make_color_field()
+        _update_field(widget, vertices, colors, indices)
+        # Swap in a dimmer field; the latest field must render. A single grab
+        # after the swap keeps the offscreen capture deterministic.
+        _update_field(widget, vertices, colors * 0.5, indices)
+        self.assertGreater(_count_colored(_grab_or_skip(widget)), 0)
+
+    def test_show_boundary_highlights_set(self):
+        """showBoundary draws the set's colored ribbon and hides it again.
+
+        Each state grabs a freshly configured widget: a single capture of a
+        fully-set-up widget is exact, matching the live screenshot path.
+        """
+        base_widget = pilot.RDomainWidget()
+        base_widget.resize(320, 240)
+        base_widget.updateMesh(_make_2d_mesh())
+        base = _count_reddish(_grab_or_skip(base_widget))
+
+        shown_widget = pilot.RDomainWidget()
+        shown_widget.resize(320, 240)
+        shown_widget.updateMesh(_make_2d_mesh())
+        shown_widget.showBoundary(0, True)
+        shown = _count_reddish(_grab_or_skip(shown_widget))
+        self.assertGreater(shown, base)
+
+        hidden_widget = pilot.RDomainWidget()
+        hidden_widget.resize(320, 240)
+        hidden_widget.updateMesh(_make_2d_mesh())
+        hidden_widget.showBoundary(0, True)
+        hidden_widget.showBoundary(0, False)
+        hidden = _count_reddish(_grab_or_skip(hidden_widget))
+        self.assertLess(hidden, shown)
+
+    def test_show_boundary_without_mesh_is_noop(self):
+        """showBoundary on a widget with no mesh does nothing, not crash.
+
+        A real highlight is hundreds of red pixels; the no-op leaves none
+        beyond the odd stray edge pixel the software rasterizer emits.
+        """
+        widget = pilot.RDomainWidget()
+        widget.resize(160, 120)
+        widget.showBoundary(0, True)
+        image = _grab_or_skip(widget)
+        self.assertLess(_count_reddish(image), 5)
+
+    def test_color_field_rejects_out_of_range_index(self):
+        """A triangle index past the vertex count is rejected, not fed to
+        the GPU as an out-of-bounds fetch."""
+        import numpy as np
+        widget = pilot.RDomainWidget()
+        vertices = np.array([(0, 0, 0), (1, 0, 0), (1, 1, 0)],
+                            dtype='float32')
+        colors = np.array([(1, 0, 0), (0, 1, 0), (0, 0, 1)], dtype='float32')
+        indices = np.array([(0, 1, 9), (0, 1, 2)], dtype='uint32')
+        with self.assertRaises(ValueError):
+            _update_field(widget, vertices, colors, indices)
 
 
 if __name__ == '__main__':

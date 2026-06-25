@@ -219,6 +219,13 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRDomainWidget
             .def("updateMesh", &wrapped_type::updateMesh, py::arg("mesh"))
             .def("showMesh", &wrapped_type::showMesh, py::arg("show"))
             .def(
+                "updateColorField",
+                &wrapped_type::updateColorField,
+                py::arg("vertices"),
+                py::arg("colors"),
+                py::arg("indices"))
+            .def("showBoundary", &wrapped_type::showBoundary, py::arg("ibc"), py::arg("show"))
+            .def(
                 "saveImage",
                 [](wrapped_type & self, std::string const & filename)
                 {

@@ -31,6 +31,7 @@ public:
     enum class Kind
     {
         FlatColor, ///< One uniform color for the whole primitive.
+        VertexColor, ///< A per-vertex color attribute.
     };
 
     explicit RMaterial(Kind kind);

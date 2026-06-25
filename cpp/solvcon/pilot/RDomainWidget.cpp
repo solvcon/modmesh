@@ -5,6 +5,8 @@
 
 #include <solvcon/pilot/RDomainWidget.hpp> // Must be the first include.
 
+#include <solvcon/pilot/RField.hpp>
+#include <solvcon/pilot/RMeshBoundary.hpp>
 #include <solvcon/pilot/RMeshFrame.hpp>
 
 #include <algorithm>
@@ -25,22 +27,34 @@ QImage RDomainWidget::grabImage()
     return grabFramebuffer();
 }
 
+void RDomainWidget::extendBoundingBox(QVector3D const & lo, QVector3D const & hi)
+{
+    if (!m_has_bbox)
+    {
+        m_bbox_lo = lo;
+        m_bbox_hi = hi;
+        m_has_bbox = true;
+        return;
+    }
+    m_bbox_lo = QVector3D(
+        std::min(m_bbox_lo.x(), lo.x()),
+        std::min(m_bbox_lo.y(), lo.y()),
+        std::min(m_bbox_lo.z(), lo.z()));
+    m_bbox_hi = QVector3D(
+        std::max(m_bbox_hi.x(), hi.x()),
+        std::max(m_bbox_hi.y(), hi.y()),
+        std::max(m_bbox_hi.z(), hi.z()));
+}
+
 void RDomainWidget::updateMesh(std::shared_ptr<StaticMesh> const & mesh)
 {
-    // Drop the previous mesh wireframe and replace it.
-    if (nullptr != m_mesh_frame)
-    {
-        auto it = std::find_if(
-            m_drawables.begin(),
-            m_drawables.end(),
-            [this](std::unique_ptr<RDrawable> const & d)
-            { return d.get() == m_mesh_frame; });
-        if (it != m_drawables.end())
-        {
-            m_drawables.erase(it);
-        }
-        m_mesh_frame = nullptr;
-    }
+    // Drop the previous mesh wireframe and replace it; a new mesh redefines
+    // the framing, so the bounding box is recomputed from scratch.
+    std::erase_if(
+        m_drawables,
+        [this](std::unique_ptr<RDrawable> const & d)
+        { return d.get() == m_mesh_frame; });
+    m_mesh_frame = nullptr;
 
     m_mesh = mesh;
 
@@ -48,7 +62,6 @@ void RDomainWidget::updateMesh(std::shared_ptr<StaticMesh> const & mesh)
     m_mesh_frame = frame.get();
     m_drawables.push_back(std::move(frame));
 
-    // Recompute the domain bounding box for framing.
     StaticMesh const & mh = *mesh;
     m_ndim = mh.ndim();
     QVector3D lo(
@@ -67,9 +80,17 @@ void RDomainWidget::updateMesh(std::shared_ptr<StaticMesh> const & mesh)
         lo = QVector3D(std::min(lo.x(), x), std::min(lo.y(), y), std::min(lo.z(), z));
         hi = QVector3D(std::max(hi.x(), x), std::max(hi.y(), y), std::max(hi.z(), z));
     }
-    m_bbox_lo = lo;
-    m_bbox_hi = hi;
-    m_has_bbox = (mh.nnode() > 0);
+    m_has_bbox = false;
+    if (mh.nnode() > 0)
+    {
+        extendBoundingBox(lo, hi);
+    }
+    // A field set earlier still draws, so keep it inside the framed box.
+    if (nullptr != m_field)
+    {
+        auto * field = static_cast<RField *>(m_field);
+        extendBoundingBox(field->bboxLo(), field->bboxHi());
+    }
 
     update();
 }
@@ -81,6 +102,62 @@ void RDomainWidget::showMesh(bool show)
         m_mesh_frame->setVisible(show);
         update();
     }
+}
+
+void RDomainWidget::updateColorField(
+    SimpleArray<float> const & vertices,
+    SimpleArray<float> const & colors,
+    SimpleArray<uint32_t> const & indices)
+{
+    // Drop the previous field and replace it; the field is swappable.
+    std::erase_if(
+        m_drawables,
+        [this](std::unique_ptr<RDrawable> const & d)
+        { return d.get() == m_field; });
+    m_field = nullptr;
+
+    auto field = std::make_unique<RField>(vertices, colors, indices);
+    if (field->hasGeometry())
+    {
+        QVector3D const lo = field->bboxLo();
+        QVector3D const hi = field->bboxHi();
+        // With no mesh to set the dimensionality, infer it: a field with no
+        // depth extent is viewed head-on like a 2D domain.
+        if (!m_has_bbox)
+        {
+            float const span = (hi - lo).length();
+            m_ndim = ((hi.z() - lo.z()) > 1.0e-6f * span) ? 3 : 2;
+        }
+        extendBoundingBox(lo, hi);
+        m_field = field.get();
+        m_drawables.push_back(std::move(field));
+    }
+
+    update();
+}
+
+void RDomainWidget::showBoundary(int ibc, bool show)
+{
+    // Remove an existing highlight for this set so a re-show stays single and
+    // a hide leaves none behind.
+    std::erase_if(
+        m_drawables,
+        [ibc](std::unique_ptr<RDrawable> const & d)
+        {
+            auto * boundary = dynamic_cast<RMeshBoundary *>(d.get());
+            return nullptr != boundary && boundary->ibc() == ibc;
+        });
+
+    if (show && nullptr != m_mesh)
+    {
+        auto boundary = std::make_unique<RMeshBoundary>(m_mesh, ibc);
+        if (boundary->hasGeometry())
+        {
+            m_drawables.push_back(std::move(boundary));
+        }
+    }
+
+    update();
 }
 
 QMatrix4x4 RDomainWidget::computeViewProj(QSize pixel_size) const

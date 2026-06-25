@@ -31,6 +31,12 @@ RMaterial::RMaterial(Kind kind)
         m_vert = loadShader(QStringLiteral(":/solvcon/pilot/shaders/color.vert.qsb"));
         m_frag = loadShader(QStringLiteral(":/solvcon/pilot/shaders/color.frag.qsb"));
         break;
+    case Kind::VertexColor:
+        // The fragment stage just passes the interpolated color through, so it
+        // is shared with the flat-color variant.
+        m_vert = loadShader(QStringLiteral(":/solvcon/pilot/shaders/vcolor.vert.qsb"));
+        m_frag = loadShader(QStringLiteral(":/solvcon/pilot/shaders/color.frag.qsb"));
+        break;
     }
 }
 

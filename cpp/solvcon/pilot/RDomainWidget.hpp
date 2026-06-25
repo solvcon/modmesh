@@ -51,6 +51,17 @@ public:
     /// Show or hide the mesh wireframe.
     void showMesh(bool show);
 
+    /// Replace the colored field: per-vertex-colored triangles from a vertex
+    /// table (nvert, 3), a matching color table (nvert, 3), and a triangle
+    /// index table (ntri, 3). Swappable at runtime.
+    void updateColorField(
+        SimpleArray<float> const & vertices,
+        SimpleArray<float> const & colors,
+        SimpleArray<uint32_t> const & indices);
+
+    /// Show or hide the highlight ribbon for boundary set @p ibc.
+    void showBoundary(int ibc, bool show);
+
     std::shared_ptr<StaticMesh> mesh() const { return m_mesh; }
 
     /// Render the current frame offscreen and return it as a QImage. Thin
@@ -73,8 +84,12 @@ private:
     QRhiRenderPassDescriptor * m_rpdesc = nullptr; ///< Tracked to detect target changes.
     int m_sample_count = 0; ///< Tracked to detect MSAA changes.
 
+    /// Grow the domain bounding box to include the point range [lo, hi].
+    void extendBoundingBox(QVector3D const & lo, QVector3D const & hi);
+
     std::vector<std::unique_ptr<RDrawable>> m_drawables;
     RDrawable * m_mesh_frame = nullptr; ///< Non-owning; lives in m_drawables.
+    RDrawable * m_field = nullptr; ///< Non-owning; lives in m_drawables.
 
     std::shared_ptr<StaticMesh> m_mesh;
 
