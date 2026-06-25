@@ -721,7 +721,15 @@ void wrap_pilot(pybind11::module & mod)
     namespace py = pybind11;
 
     WrapR3DWidget::commit(mod, "R3DWidget", "R3DWidget");
-    WrapRDomainWidget::commit(mod, "RDomainWidget", "RDomainWidget");
+    WrapRDomainWidget::commit(
+        mod,
+        "RDomainWidget",
+        "Interactive QRhi viewer for 2D and 3D unstructured-mesh domains and "
+        "fields. Drive it with updateMesh / showMesh, updateColorField, "
+        "showBoundary, and showAxis; navigate with cameraMode, the "
+        "cameraPosition / cameraTarget / cameraUp pose, rotateCamera / "
+        "panCamera / zoomCamera, and fitCameraToScene; capture frames with "
+        "saveImage / clipImage.");
     WrapR2DWidget::commit(mod, "R2DWidget", "R2DWidget");
     WrapRLine::commit(mod, "RLine", "RLine");
     WrapRPythonConsoleDockWidget::commit(mod, "RPythonConsoleDockWidget", "RPythonConsoleDockWidget");

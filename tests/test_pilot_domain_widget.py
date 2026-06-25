@@ -450,6 +450,31 @@ class RDomainWidgetCameraTC(unittest.TestCase):
 
 
 @unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
+class RDomainWidgetManagerTC(unittest.TestCase):
+    """The manager 3D-widget factory and screenshot path (step 7)."""
+
+    def test_add3dwidget_returns_domain_widget(self):
+        """RManager.add3DWidget hosts an RDomainWidget and exposes its mesh
+        through the same currentR3DWidget accessor as before."""
+        mgr = pilot.RManager.instance.setUp()
+        widget = mgr.add3DWidget()
+        self.assertIsInstance(widget, pilot.RDomainWidget)
+        widget.updateMesh(_make_2d_mesh())
+        current = mgr.currentR3DWidget()
+        self.assertIsNotNone(current)
+        self.assertEqual(current.mesh.ncell, 3)
+
+    def test_factory_widget_screenshot(self):
+        """The screenshot path of a factory-hosted widget routes through
+        grabImage and renders the mesh."""
+        mgr = pilot.RManager.instance.setUp()
+        widget = mgr.add3DWidget()
+        widget.updateMesh(_make_2d_mesh())
+        image = _grab_or_skip(widget)
+        self.assertGreater(_count_foreground(image), 0)
+
+
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
 class RDomainWidgetAxisTC(unittest.TestCase):
     """The orientation-guide overlay (step 6)."""
 

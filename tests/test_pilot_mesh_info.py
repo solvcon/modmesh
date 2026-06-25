@@ -110,8 +110,8 @@ class MeshInfoTC(unittest.TestCase):
         self.menu = QMenu("Panels", self.mgr.mainWindow)
 
     def test_current_r3dwidget_exposes_mesh(self):
-        # The mesh must be reached through the pybind11 R3DWidget rather than
-        # QMdiSubWindow.widget(), which returns a bare QWidget.
+        # The mesh must be reached through the pybind11 RDomainWidget rather
+        # than QMdiSubWindow.widget(), which returns a bare QWidget.
         widget = self.mgr.add3DWidget()
         widget.updateMesh(_make_sample_mesh())
         current = self.mgr.currentR3DWidget()

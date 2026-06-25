@@ -77,7 +77,7 @@ class SampleMesh(_gui_common.PilotFeature):
         mh.build_ghost()
         w_tri = self._mgr.add3DWidget()
         w_tri.updateMesh(mh)
-        w_tri.showMark()
+        w_tri.showAxis(True)
         self._pycon.writeToHistory(f"tri nedge: {mh.nedge}\n")
 
     def mesh_tetrahedron(self):
@@ -90,7 +90,7 @@ class SampleMesh(_gui_common.PilotFeature):
         mh.build_ghost()
         w_tet = self._mgr.add3DWidget()
         w_tet.updateMesh(mh)
-        w_tet.showMark()
+        w_tet.showAxis(True)
         self._pycon.writeToHistory(f"tet nedge: {mh.nedge}\n")
 
     def mesh_solvcon_2dtext(self):
@@ -199,7 +199,7 @@ class SampleMesh(_gui_common.PilotFeature):
         # Open a sub window for solvcon icon:
         w_solvcon = self._mgr.add3DWidget()
         w_solvcon.updateMesh(mh)
-        w_solvcon.showMark()
+        w_solvcon.showAxis(True)
         self._pycon.writeToHistory(f"solvcon text nedge: {mh.nedge}\n")
 
     def mesh_2dmix_small(self):
@@ -223,7 +223,7 @@ class SampleMesh(_gui_common.PilotFeature):
         # Open a sub window for small 2D mix mesh.
         w_small2d = self._mgr.add3DWidget()
         w_small2d.updateMesh(mh)
-        w_small2d.showMark()
+        w_small2d.showAxis(True)
         self._mgr.pycon.writeToHistory(f"2dmix large nedge: {mh.nedge}\n")
 
     def mesh_2dmix_large(self):
@@ -259,7 +259,7 @@ class SampleMesh(_gui_common.PilotFeature):
         # Open a sub window for larger 2D mix mesh.
         w_large2d = self._mgr.add3DWidget()
         w_large2d.updateMesh(mh)
-        w_large2d.showMark()
+        w_large2d.showAxis(True)
         self._mgr.pycon.writeToHistory(f"2dmix large nedge: {mh.nedge}\n")
 
     def mesh_3dmix(self):
@@ -289,7 +289,7 @@ class SampleMesh(_gui_common.PilotFeature):
         # Open a sub window for triangles and quadrilaterals:
         w_3dmix = self._mgr.add3DWidget()
         w_3dmix.updateMesh(mh)
-        w_3dmix.showMark()
+        w_3dmix.showAxis(True)
         self._mgr.pycon.writeToHistory(f"3dmix nedge: {mh.nedge}\n")
 
 
@@ -357,7 +357,7 @@ class GmshFileDialog(_gui_common.PilotFeature):
         # Open a sub window for triangles and quadrilaterals:
         w = self._mgr.add3DWidget()
         w.updateMesh(mh)
-        w.showMark()
+        w.showAxis(True)
         self._pycon.writeToHistory(f"nedge: {mh.nedge}\n")
 
 
@@ -431,9 +431,10 @@ class RectangularDomain(_gui_common.PilotFeature):
         self._update_edges()
         w = self.world = self._create_world()
 
-        # Open a sub window for triangles and quadrilaterals:
-        w_3dmix = self._mgr.add3DWidget()
-        w_3dmix.updateWorld(w)
-        w_3dmix.showMark()
+        # The rectangular boundary is world geometry (segments), so it
+        # renders in the 2D canvas; the 3D domain viewer is for meshes.
+        w_2d = self._mgr.add2DWidget()
+        w_2d.updateWorld(w)
+        w_2d.resetView()
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
