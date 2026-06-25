@@ -9,6 +9,10 @@
 #include <solvcon/pilot/RMeshBoundary.hpp>
 #include <solvcon/pilot/RMeshFrame.hpp>
 
+#include <QKeyEvent>
+#include <QMouseEvent>
+#include <QWheelEvent>
+
 #include <algorithm>
 #include <limits>
 
@@ -18,6 +22,15 @@ namespace solvcon
 RDomainWidget::RDomainWidget(QWidget * parent)
     : QRhiWidget(parent)
 {
+    // Accept keyboard focus so the first-person movement keys reach the
+    // widget, and track the mouse for drag-based navigation.
+    setFocusPolicy(Qt::StrongFocus);
+}
+
+float RDomainWidget::viewportAspect() const
+{
+    int const h = height();
+    return (h > 0) ? static_cast<float>(width()) / static_cast<float>(h) : 1.0f;
 }
 
 RDomainWidget::~RDomainWidget() = default;
@@ -71,7 +84,7 @@ void RDomainWidget::updateMesh(std::shared_ptr<StaticMesh> const & mesh)
         m_scene.extendBoundingBox(field->bboxLo(), field->bboxHi());
     }
 
-    m_scene.fitCameraToScene();
+    m_scene.fitCameraToScene(viewportAspect());
     update();
 }
 
@@ -108,7 +121,7 @@ void RDomainWidget::updateColorField(
         m_scene.extendBoundingBox(lo, hi);
         m_field = field.get();
         m_scene.addDrawable(std::move(field));
-        m_scene.fitCameraToScene();
+        m_scene.fitCameraToScene(viewportAspect());
     }
 
     update();
@@ -139,7 +152,138 @@ void RDomainWidget::showBoundary(int ibc, bool show)
 
 void RDomainWidget::fitCameraToScene()
 {
-    m_scene.fitCameraToScene();
+    m_scene.fitCameraToScene(viewportAspect());
+    update();
+}
+
+void RDomainWidget::setCameraMode(std::string const & name)
+{
+    m_scene.camera().setMode(RDomainCameraController::modeFromName(name));
+    update();
+}
+
+std::string RDomainWidget::cameraMode() const
+{
+    return RDomainCameraController::modeName(m_scene.camera().mode());
+}
+
+QVector3D RDomainWidget::cameraPosition() const
+{
+    return m_scene.camera().position();
+}
+
+void RDomainWidget::setCameraPosition(QVector3D const & position)
+{
+    m_scene.camera().setPosition(position);
+    update();
+}
+
+QVector3D RDomainWidget::cameraTarget() const
+{
+    return m_scene.camera().target();
+}
+
+void RDomainWidget::setCameraTarget(QVector3D const & target)
+{
+    m_scene.camera().setTarget(target);
+    update();
+}
+
+QVector3D RDomainWidget::cameraUp() const
+{
+    return m_scene.camera().up();
+}
+
+void RDomainWidget::setCameraUp(QVector3D const & up)
+{
+    m_scene.camera().setUp(up);
+    update();
+}
+
+void RDomainWidget::rotateCamera(float dx, float dy)
+{
+    m_scene.camera().rotate(dx, dy);
+    update();
+}
+
+void RDomainWidget::panCamera(float dx, float dy)
+{
+    m_scene.camera().pan(dx, dy);
+    update();
+}
+
+void RDomainWidget::zoomCamera(float steps)
+{
+    m_scene.camera().zoom(steps);
+    update();
+}
+
+void RDomainWidget::mousePressEvent(QMouseEvent * event)
+{
+    m_last_mouse_pos = event->position().toPoint();
+    m_panning = (event->button() != Qt::LeftButton);
+}
+
+void RDomainWidget::mouseMoveEvent(QMouseEvent * event)
+{
+    if (event->buttons() == Qt::NoButton)
+    {
+        return;
+    }
+    QPoint const pos = event->position().toPoint();
+    float const dx = static_cast<float>(pos.x() - m_last_mouse_pos.x());
+    float const dy = static_cast<float>(pos.y() - m_last_mouse_pos.y());
+    m_last_mouse_pos = pos;
+    if (m_panning)
+    {
+        m_scene.camera().pan(dx, dy);
+    }
+    else
+    {
+        m_scene.camera().rotate(dx, dy);
+    }
+    update();
+}
+
+void RDomainWidget::mouseReleaseEvent(QMouseEvent *)
+{
+    m_panning = false;
+}
+
+void RDomainWidget::wheelEvent(QWheelEvent * event)
+{
+    // One wheel notch is 120 eighths of a degree.
+    float const steps = static_cast<float>(event->angleDelta().y()) / 120.0f;
+    m_scene.camera().zoom(steps);
+    update();
+}
+
+void RDomainWidget::keyPressEvent(QKeyEvent * event)
+{
+    // First-person movement; a step is a tenth of the scene size.
+    constexpr float step = 0.1f;
+    switch (event->key())
+    {
+    case Qt::Key_W:
+    case Qt::Key_Up:
+        m_scene.camera().moveForward(step);
+        break;
+    case Qt::Key_S:
+    case Qt::Key_Down:
+        m_scene.camera().moveForward(-step);
+        break;
+    case Qt::Key_D:
+    case Qt::Key_Right:
+        m_scene.camera().moveRight(step);
+        break;
+    case Qt::Key_A:
+    case Qt::Key_Left:
+        m_scene.camera().moveRight(-step);
+        break;
+    default:
+        QRhiWidget::keyPressEvent(event);
+        return;
+    }
     update();
 }
 

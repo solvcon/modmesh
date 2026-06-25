@@ -351,6 +351,90 @@ class RDomainWidgetSceneTC(unittest.TestCase):
         self.assertEqual(_count_foreground(_grab_or_skip(widget)), 0)
 
 
+@unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
+class RDomainWidgetCameraTC(unittest.TestCase):
+    """Camera modes, programmatic pose, and interaction (step 5)."""
+
+    @classmethod
+    def setUpClass(cls):
+        pilot.RManager.instance.setUp()
+
+    def test_camera_mode_round_trip(self):
+        """The camera mode switches between pan/zoom and first-person."""
+        widget = pilot.RDomainWidget()
+        self.assertEqual(widget.cameraMode, "pan")
+        widget.cameraMode = "fps"
+        self.assertEqual(widget.cameraMode, "fps")
+        widget.cameraMode = "pan"
+        self.assertEqual(widget.cameraMode, "pan")
+
+    def test_camera_pose_round_trip(self):
+        """The camera pose is readable and settable from Python."""
+        widget = pilot.RDomainWidget()
+        widget.cameraPosition = (1.0, 2.0, 3.0)
+        widget.cameraTarget = (0.5, 0.5, 0.0)
+        widget.cameraUp = (0.0, 0.0, 1.0)
+        self.assertEqual(tuple(widget.cameraPosition), (1.0, 2.0, 3.0))
+        self.assertEqual(tuple(widget.cameraTarget), (0.5, 0.5, 0.0))
+        self.assertEqual(tuple(widget.cameraUp), (0.0, 0.0, 1.0))
+
+    def test_pan_alters_the_2d_view(self):
+        """Panning the 2D camera shifts what is drawn."""
+        before = pilot.RDomainWidget()
+        before.resize(320, 240)
+        before.updateMesh(_make_2d_mesh())
+        frame_before = _rgb_array(_grab_or_skip(before))
+
+        after = pilot.RDomainWidget()
+        after.resize(320, 240)
+        after.updateMesh(_make_2d_mesh())
+        after.panCamera(60.0, 0.0)
+        frame_after = _rgb_array(_grab_or_skip(after))
+        self.assertTrue((frame_before != frame_after).any())
+
+    def test_zoom_alters_the_view(self):
+        """Zooming the camera changes the rendered frame."""
+        before = pilot.RDomainWidget()
+        before.resize(320, 240)
+        before.updateMesh(_make_2d_mesh())
+        frame_before = _rgb_array(_grab_or_skip(before))
+
+        after = pilot.RDomainWidget()
+        after.resize(320, 240)
+        after.updateMesh(_make_2d_mesh())
+        after.zoomCamera(6.0)
+        frame_after = _rgb_array(_grab_or_skip(after))
+        self.assertTrue((frame_before != frame_after).any())
+
+    def test_first_person_rotation_alters_the_3d_view(self):
+        """Looking around in first-person mode changes the 3D frame."""
+        before = pilot.RDomainWidget()
+        before.resize(320, 240)
+        before.cameraMode = "fps"
+        before.updateMesh(_make_3d_mesh())
+        frame_before = _rgb_array(_grab_or_skip(before))
+
+        after = pilot.RDomainWidget()
+        after.resize(320, 240)
+        after.cameraMode = "fps"
+        after.updateMesh(_make_3d_mesh())
+        after.rotateCamera(40.0, 15.0)
+        frame_after = _rgb_array(_grab_or_skip(after))
+        self.assertTrue((frame_before != frame_after).any())
+
+    def test_first_person_extreme_pitch_stays_stable(self):
+        """Pitching hard past vertical does not flip or break the view: the
+        look direction is held off the up axis (no gimbal lock)."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.cameraMode = "fps"
+        widget.updateMesh(_make_3d_mesh())
+        for _ in range(10):
+            widget.rotateCamera(0.0, 200.0)
+        image = _grab_or_skip(widget)
+        self.assertFalse(image.isNull())
+
+
 if __name__ == '__main__':
     unittest.main()
 

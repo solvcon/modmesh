@@ -7,6 +7,7 @@
 
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
+#include <solvcon/pilot/RDomainCameraController.hpp>
 #include <solvcon/pilot/RDrawable.hpp>
 
 #include <rhi/qrhi.h>
@@ -67,8 +68,12 @@ public:
     void setDimension(uint32_t ndim) { m_ndim = ndim; }
     uint32_t dimension() const { return m_ndim; }
 
-    /// Frame the camera so the whole bounding box is in view.
-    void fitCameraToScene();
+    RDomainCameraController & camera() { return m_camera; }
+    RDomainCameraController const & camera() const { return m_camera; }
+
+    /// Frame the camera so the whole bounding box is in view at the given
+    /// viewport @p aspect (width / height).
+    void fitCameraToScene(float aspect);
 
     /// The model-view-projection for the framed scene at the given viewport.
     /// 2D domains use an orthographic projection, 3D domains a perspective
@@ -86,9 +91,7 @@ private:
     bool m_has_bbox = false;
     uint32_t m_ndim = 0;
 
-    QVector3D m_eye{0.0f, 0.0f, 1.0f};
-    QVector3D m_center{0.0f, 0.0f, 0.0f};
-    QVector3D m_up{0.0f, 1.0f, 0.0f};
+    RDomainCameraController m_camera;
 
 }; /* end class RDomainScene */
 

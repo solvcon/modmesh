@@ -15,9 +15,12 @@
 #include <rhi/qrhi.h>
 
 #include <QImage>
+#include <QPoint>
 #include <QRhiWidget>
+#include <QVector3D>
 
 #include <memory>
+#include <string>
 
 namespace solvcon
 {
@@ -63,6 +66,23 @@ public:
     /// Frame the camera so the whole domain is in view.
     void fitCameraToScene();
 
+    /// Select the camera mode: "pan" (2D pan/zoom) or "fps" (3D fly-through).
+    void setCameraMode(std::string const & name);
+    std::string cameraMode() const;
+
+    // Programmatic camera pose, so Python navigates as well as the mouse.
+    QVector3D cameraPosition() const;
+    void setCameraPosition(QVector3D const & position);
+    QVector3D cameraTarget() const;
+    void setCameraTarget(QVector3D const & target);
+    QVector3D cameraUp() const;
+    void setCameraUp(QVector3D const & up);
+
+    // Mode-aware interaction primitives (what the mouse and wheel drive).
+    void rotateCamera(float dx, float dy);
+    void panCamera(float dx, float dy);
+    void zoomCamera(float steps);
+
     std::shared_ptr<StaticMesh> mesh() const { return m_mesh; }
 
     /// Render the current frame offscreen and return it as a QImage. Thin
@@ -75,7 +95,15 @@ protected:
     void render(QRhiCommandBuffer * cb) override;
     void releaseResources() override;
 
+    void mousePressEvent(QMouseEvent * event) override;
+    void mouseMoveEvent(QMouseEvent * event) override;
+    void mouseReleaseEvent(QMouseEvent * event) override;
+    void wheelEvent(QWheelEvent * event) override;
+    void keyPressEvent(QKeyEvent * event) override;
+
 private:
+
+    float viewportAspect() const;
 
     QRhi * m_rhi = nullptr; ///< Tracked to detect device changes.
     QRhiRenderPassDescriptor * m_rpdesc = nullptr; ///< Tracked to detect target changes.
@@ -86,6 +114,9 @@ private:
     RDrawable * m_field = nullptr; ///< Non-owning; lives in the scene.
 
     std::shared_ptr<StaticMesh> m_mesh;
+
+    QPoint m_last_mouse_pos; ///< Last cursor position during a drag.
+    bool m_panning = false; ///< A non-left-button drag pans in both modes.
 
 }; /* end class RDomainWidget */
 

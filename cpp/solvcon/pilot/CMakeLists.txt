@@ -7,6 +7,7 @@ set(SOLVCON_PILOT_PYMODHEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/R3DWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RDomainWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RDomainScene.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RDomainCameraController.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RDrawable.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMeshFrame.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RField.hpp
@@ -31,6 +32,7 @@ set(SOLVCON_PILOT_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/R3DWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RDomainWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RDomainScene.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RDomainCameraController.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RDrawable.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMeshFrame.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RField.cpp

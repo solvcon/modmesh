@@ -5,10 +5,7 @@
 
 #include <solvcon/pilot/RDomainScene.hpp> // Must be the first include.
 
-#include <QtMath>
-
 #include <algorithm>
-#include <cmath>
 
 namespace solvcon
 {
@@ -84,37 +81,16 @@ float RDomainScene::boundingRadius() const
     return (radius > 0.0f) ? radius : 1.0f;
 }
 
-void RDomainScene::fitCameraToScene()
+void RDomainScene::fitCameraToScene(float aspect)
 {
     if (!m_has_bbox)
     {
-        m_eye = QVector3D(0.0f, 0.0f, 1.0f);
-        m_center = QVector3D(0.0f, 0.0f, 0.0f);
-        m_up = QVector3D(0.0f, 1.0f, 0.0f);
+        m_camera.setPosition(QVector3D(0.0f, 0.0f, 1.0f));
+        m_camera.setTarget(QVector3D(0.0f, 0.0f, 0.0f));
+        m_camera.setUp(QVector3D(0.0f, 1.0f, 0.0f));
         return;
     }
-
-    QVector3D const center = (m_bbox_lo + m_bbox_hi) * 0.5f;
-    float const radius = boundingRadius();
-
-    // 2D domains are viewed head-on; 3D domains from a fixed oblique angle so
-    // depth reads until the interactive camera lands.
-    QVector3D const dir = (3 == m_ndim)
-                              ? QVector3D(0.6f, 0.5f, 1.0f).normalized()
-                              : QVector3D(0.0f, 0.0f, 1.0f);
-
-    float distance = 2.0f * radius;
-    if (3 == m_ndim)
-    {
-        // Pull back far enough that the bounding sphere fills the vertical
-        // field of view, with a small margin.
-        float const half_fov = qDegreesToRadians(FOV_DEGREES) * 0.5f;
-        distance = radius / std::tan(half_fov) * 1.1f;
-    }
-
-    m_center = center;
-    m_eye = center + dir * distance;
-    m_up = QVector3D(0.0f, 1.0f, 0.0f);
+    m_camera.fitToBoundingBox(m_bbox_lo, m_bbox_hi, m_ndim, aspect);
 }
 
 QMatrix4x4 RDomainScene::viewProjection(QSize pixel_size, QRhi * rhi) const
@@ -128,30 +104,23 @@ QMatrix4x4 RDomainScene::viewProjection(QSize pixel_size, QRhi * rhi) const
     float const aspect = static_cast<float>(pixel_size.width()) / static_cast<float>(pixel_size.height());
     float const radius = boundingRadius();
 
-    QMatrix4x4 view;
+    QMatrix4x4 const view = m_camera.viewMatrix();
+    float distance = (m_camera.position() - m_camera.target()).length();
+    if (distance <= 0.0f)
+    {
+        distance = 2.0f * radius;
+    }
+
     QMatrix4x4 proj;
     if (3 == m_ndim)
     {
-        // Keep the framing direction from the fit, but settle the pullback
-        // here where the aspect is known: the limiting half-angle is the
-        // smaller of the vertical and horizontal field of view, so a portrait
-        // viewport pulls the camera further back instead of clipping the
-        // sides.
-        QVector3D direction = m_eye - m_center;
-        float const length = direction.length();
-        direction = (length > 0.0f) ? direction / length : QVector3D(0.0f, 0.0f, 1.0f);
-        float const half_v = qDegreesToRadians(FOV_DEGREES) * 0.5f;
-        float const half_h = std::atan(std::tan(half_v) * aspect);
-        float const distance = radius / std::tan(std::min(half_v, half_h)) * 1.1f;
-        view.lookAt(m_center + direction * distance, m_center, m_up);
-        proj.perspective(FOV_DEGREES, aspect, 0.01f * radius, distance + 2.0f * radius);
+        proj.perspective(FOV_DEGREES, aspect, 0.01f * radius, distance + 3.0f * radius);
     }
     else
     {
-        // A bounding sphere of this radius fits from any direction, so the
-        // orthographic box is simply sized around it for the viewport aspect.
-        view.lookAt(m_eye, m_center, m_up);
-        float const margin = radius * 1.1f;
+        // The orthographic box is sized around the bounding sphere for the
+        // viewport aspect, scaled by the camera's zoom factor.
+        float const margin = radius * 1.1f * m_camera.orthoScale();
         float half_w = margin;
         float half_h = margin;
         if (aspect >= 1.0f)
@@ -162,7 +131,7 @@ QMatrix4x4 RDomainScene::viewProjection(QSize pixel_size, QRhi * rhi) const
         {
             half_h = margin / aspect;
         }
-        proj.ortho(-half_w, half_w, -half_h, half_h, 0.01f * radius, 5.0f * radius);
+        proj.ortho(-half_w, half_w, -half_h, half_h, 0.01f * radius, distance + 3.0f * radius);
     }
 
     return clip * proj * view;

@@ -226,6 +226,57 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRDomainWidget
                 py::arg("indices"))
             .def("showBoundary", &wrapped_type::showBoundary, py::arg("ibc"), py::arg("show"))
             .def("fitCameraToScene", &wrapped_type::fitCameraToScene)
+            .def_property(
+                "cameraMode",
+                [](wrapped_type & self)
+                {
+                    return self.cameraMode();
+                },
+                [](wrapped_type & self, std::string const & name)
+                {
+                    self.setCameraMode(name);
+                })
+            .def(
+                "rotateCamera",
+                [](wrapped_type & self, float dx, float dy)
+                {
+                    self.rotateCamera(dx, dy);
+                },
+                py::arg("dx"),
+                py::arg("dy"))
+            .def(
+                "panCamera",
+                [](wrapped_type & self, float dx, float dy)
+                {
+                    self.panCamera(dx, dy);
+                },
+                py::arg("dx"),
+                py::arg("dy"))
+            .def(
+                "zoomCamera",
+                [](wrapped_type & self, float steps)
+                {
+                    self.zoomCamera(steps);
+                },
+                py::arg("steps"))
+#define MM_DECL_CAMERA_VECTOR(NAME, GETTER, SETTER)            \
+    .def_property(                                             \
+        NAME,                                                  \
+        [](wrapped_type & self)                                \
+        {                                                      \
+            QVector3D const v = self.GETTER();                 \
+            return py::make_tuple(v.x(), v.y(), v.z());        \
+        },                                                     \
+        [](wrapped_type & self, std::vector<double> const & v) \
+        {                                                      \
+            self.SETTER(QVector3D(v.at(0), v.at(1), v.at(2))); \
+        })
+            // clang-format off
+            MM_DECL_CAMERA_VECTOR("cameraPosition", cameraPosition, setCameraPosition)
+            MM_DECL_CAMERA_VECTOR("cameraTarget", cameraTarget, setCameraTarget)
+            MM_DECL_CAMERA_VECTOR("cameraUp", cameraUp, setCameraUp)
+        // clang-format on
+#undef MM_DECL_CAMERA_VECTOR
             .def(
                 "saveImage",
                 [](wrapped_type & self, std::string const & filename)
