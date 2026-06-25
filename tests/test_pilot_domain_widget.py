@@ -2,13 +2,13 @@
 # BSD 3-Clause License, see COPYING
 
 """
-Tests for RDomainWidget, the QRhi reimplementation of the pilot 3D viewer.
+Tests for RDomainWidget, the pilot 3D viewer.
 
-The widget renders through QRhi, so these tests exercise the offscreen
-capture path (grabImage via saveImage). QRhi needs a real graphics surface;
-where one is unavailable (e.g. the offscreen QPA platform on a headless
-macOS runner) the render-dependent tests skip rather than fail. The Linux CI
-build job drives them under Xvfb with the software rasterizer.
+The widget renders through QRhi, so these tests exercise the offscreen capture
+path (grabImage via saveImage). QRhi needs a real graphics surface; where one
+is unavailable (e.g. the offscreen QPA platform on a headless macOS runner) the
+render-dependent tests skip rather than fail. The Linux CI build job drives
+them under Xvfb with the software rasterizer.
 """
 
 import os

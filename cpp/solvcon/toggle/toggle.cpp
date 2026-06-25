@@ -167,8 +167,7 @@ ProcessInfo::ProcessInfo()
 
 ProcessInfo & ProcessInfo::set_environment_variables()
 {
-    // No process environment variables need to be set at present. The QRhi
-    // pilot viewer selects its graphics backend through Qt's own defaults.
+    // No process environment variables need to be set at present.
     return *this;
 }
 

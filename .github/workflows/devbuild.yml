@@ -262,10 +262,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    # The Windows runner's vcpkg + MSVC build sits right at the 45-minute mark
-    # (Release finishes near 44, Debug overruns), so give the Windows jobs more
-    # headroom than the default build timeout.
-    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '70') }}
+    timeout-minutes: ${{ fromJSON(vars.MMGH_TIMEOUT_BUILD || '60') }}
 
     env:
       QT_DEBUG_PLUGINS: 1
@@ -315,8 +312,7 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2022_64'
-          # qtshadertools provides qsb and the ShaderTools CMake package used
-          # to bake the pilot QRhi shaders.
+          # qtshadertools provides qsb and the ShaderTools CMake package for QRhi.
           modules: 'qtshadertools'
           cache: true
 

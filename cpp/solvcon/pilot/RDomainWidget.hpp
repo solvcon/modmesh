@@ -30,12 +30,10 @@ namespace solvcon
  * @brief Interactive 2D/3D viewer for spatial domains and fields on
  * unstructured meshes, rendered with QRhi and controlled from Python.
  *
- * This is the QRhi reimplementation of the pilot 3D viewer. It is a
- * QRhiWidget: Qt owns the swapchain, color and depth buffers, and drives the
- * render loop through initialize()/render(). The widget hosts an RDomainScene
- * (the drawables, the domain bounding box, and the framing camera) and drives
- * it. It is built side by side with the legacy Qt 3D prototype while the
- * latter is being retired.
+ * It derived from QRhiWidget: Qt owns the swapchain, color and depth buffers,
+ * and drives the render loop through initialize()/render(). The widget hosts
+ * an RDomainScene (the drawables, the domain bounding box, and the framing
+ * camera) and drives it.
  */
 class RDomainWidget
     : public QRhiWidget

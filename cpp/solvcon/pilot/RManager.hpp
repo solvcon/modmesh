@@ -99,9 +99,6 @@ private:
 
     std::function<void()> createCameraMovementItemHandler(const std::function<void(RDomainWidget *)> &) const;
 
-    /// The RDomainWidget hosted by @p subwin, or nullptr when @p subwin holds
-    /// some other widget. The viewer sits inside a plain container widget, so
-    /// reach through the subwindow's direct child to find it.
     static RDomainWidget * domainWidgetOf(QMdiSubWindow * subwin);
 
     bool m_already_setup = false;

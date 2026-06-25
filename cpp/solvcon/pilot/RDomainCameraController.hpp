@@ -20,9 +20,9 @@ namespace solvcon
  *
  * PanZoom frames a 2D domain head-on: dragging pans and the wheel zooms an
  * orthographic view. FirstPerson flies through a 3D domain: dragging looks
- * around and the wheel dollies along the view direction. There are no
- * per-mode camera classes; the controller holds one pose (position, target,
- * up) plus an orthographic zoom factor, and feeds a QMatrix4x4 view matrix.
+ * around and the wheel dollies along the view direction. The controller holds
+ * one pose (position, target, up) plus an orthographic zoom factor, and feeds
+ * a QMatrix4x4 view matrix.
  *
  * The widget drives the controller from mouse and key events, and Python
  * drives the same primitives (rotate / zoom / pan) and reads or sets the pose
