@@ -5,12 +5,12 @@ cmake_minimum_required(VERSION 4.0.1)
 
 set(SOLVCON_PILOT_PYMODHEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/RDomainWidget.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/RDomainScene.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RScene.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RDomainCameraController.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RDrawable.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMeshFrame.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RField.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/RMeshBoundary.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RBoundary.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAxisGizmo.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMaterial.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/R2DWidget.hpp
@@ -26,12 +26,12 @@ set(SOLVCON_PILOT_PYMODHEADERS
 
 set(SOLVCON_PILOT_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/RDomainWidget.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/RDomainScene.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RScene.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RDomainCameraController.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RDrawable.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMeshFrame.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RField.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/RMeshBoundary.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RBoundary.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RAxisGizmo.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMaterial.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/R2DWidget.cpp

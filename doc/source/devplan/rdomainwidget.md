@@ -60,7 +60,9 @@ The new classes take names distinct from the prototype's existing `R*` classes:
 `RMaterial`, `RMeshFrame`, `RField`, `RMeshBoundary`, `RAxisGizmo`).
 The only rule is that the names do not collide, so the Qt 3D prototype keeps
 building and running side by side throughout development; the prototype's names
-are freed only when it is retired (slice 8).
+are freed only when it is retired (slice 8). Slice 9 then reclaims the two
+cleaner ones, renaming `RMeshBoundary` to `RBoundary` and `RDomainScene` to
+`RScene`.
 :::
 
 `RDomainWidget` is meant to grow into a tool for analyzing spatial domains and
@@ -115,12 +117,13 @@ driven through it:
   Python instantiates and controls. Owns the
   [`QRhi`](https://doc.qt.io/qt-6/qrhi.html), the per-frame render target and
   depth buffer, the main and overlay passes, the input dispatch, and the
-  `RDomainScene`. Renders into its own backing texture and composes with
+  `RScene`. Renders into its own backing texture and composes with
   sibling widgets (unlike the
   [`createWindowContainer`](https://doc.qt.io/qt-6/qwidget.html#createWindowContainer)
   the `R3DWidget` prototype uses). Hosts the entire pybind11-exposed API.
-- **`RDomainScene`** (prototype: `RScene`): owns the `RDrawable`s, the
-  domain bounding box, and the active camera and controller; selects an
+- **`RScene`** (prototype: `RScene`, the name reclaimed in slice 9 after
+  developing with the temporary name `RDomainScene`): owns the `RDrawable`s,
+  the domain bounding box, and the active camera and controller; selects an
   orthographic projection for 2D domains and a perspective projection for 3D,
   and computes the fit-to-scene framing.
 - **`RDrawable`** (new): abstract base for a renderable: owns its
@@ -132,7 +135,9 @@ driven through it:
     (`Lines` topology), 2D or 3D.
   - **`RField`** (prototype: `RColorField`): the field-colored cells
     (2D faces / 3D surface).
-  - **`RMeshBoundary`** (prototype: `RBoundary`): the boundary highlight.
+  - **`RBoundary`** (prototype: `RBoundary`, the name reclaimed in slice 9
+    after developing with the temporary name `RMeshBoundary`): the boundary
+    highlight.
   - **`RAxisGizmo`** (prototype: `RAxisMark`): the orientation guide
     (2- or 3-axis arrows and labels), drawn in the overlay pass.
 - **`RMaterial`** (new): wraps a

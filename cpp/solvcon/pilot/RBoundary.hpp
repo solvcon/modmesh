@@ -24,13 +24,13 @@ namespace solvcon
  * slightly toward the viewer, because line width is clamped to one pixel in
  * the core profile. @ref ibc identifies which boundary set this draws.
  */
-class RMeshBoundary
+class RBoundary
     : public RDrawable
 {
 
 public:
 
-    RMeshBoundary(std::shared_ptr<StaticMesh> const & mesh, int ibc);
+    RBoundary(std::shared_ptr<StaticMesh> const & mesh, int ibc);
 
     int ibc() const { return m_ibc; }
 
@@ -56,7 +56,7 @@ private:
     SimpleCollector<float> m_interleaved;
     SimpleCollector<uint32_t> m_indices;
 
-}; /* end class RMeshBoundary */
+}; /* end class RBoundary */
 
 } /* end namespace solvcon */
 

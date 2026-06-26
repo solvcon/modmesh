@@ -3,7 +3,7 @@
  * BSD 3-Clause License, see COPYING
  */
 
-#include <solvcon/pilot/RDomainScene.hpp> // Must be the first include.
+#include <solvcon/pilot/RScene.hpp> // Must be the first include.
 
 #include <algorithm>
 
@@ -18,12 +18,12 @@ constexpr float FOV_DEGREES = 45.0f;
 
 } /* end namespace */
 
-void RDomainScene::addDrawable(std::unique_ptr<RDrawable> drawable)
+void RScene::addDrawable(std::unique_ptr<RDrawable> drawable)
 {
     m_drawables.push_back(std::move(drawable));
 }
 
-void RDomainScene::removeDrawable(RDrawable const * drawable)
+void RScene::removeDrawable(RDrawable const * drawable)
 {
     if (nullptr == drawable)
     {
@@ -35,7 +35,7 @@ void RDomainScene::removeDrawable(RDrawable const * drawable)
         { return d.get() == drawable; });
 }
 
-void RDomainScene::removeDrawableIf(std::function<bool(RDrawable const *)> const & pred)
+void RScene::removeDrawableIf(std::function<bool(RDrawable const *)> const & pred)
 {
     std::erase_if(
         m_drawables,
@@ -43,7 +43,7 @@ void RDomainScene::removeDrawableIf(std::function<bool(RDrawable const *)> const
         { return pred(d.get()); });
 }
 
-void RDomainScene::releaseAll()
+void RScene::releaseAll()
 {
     for (std::unique_ptr<RDrawable> const & drawable : m_drawables)
     {
@@ -51,12 +51,12 @@ void RDomainScene::releaseAll()
     }
 }
 
-void RDomainScene::resetBoundingBox()
+void RScene::resetBoundingBox()
 {
     m_has_bbox = false;
 }
 
-void RDomainScene::extendBoundingBox(QVector3D const & lo, QVector3D const & hi)
+void RScene::extendBoundingBox(QVector3D const & lo, QVector3D const & hi)
 {
     if (!m_has_bbox)
     {
@@ -75,13 +75,13 @@ void RDomainScene::extendBoundingBox(QVector3D const & lo, QVector3D const & hi)
         std::max(m_bbox_hi.z(), hi.z()));
 }
 
-float RDomainScene::boundingRadius() const
+float RScene::boundingRadius() const
 {
     float const radius = (m_bbox_hi - m_bbox_lo).length() * 0.5f;
     return (radius > 0.0f) ? radius : 1.0f;
 }
 
-void RDomainScene::fitCameraToScene(float aspect)
+void RScene::fitCameraToScene(float aspect)
 {
     if (!m_has_bbox)
     {
@@ -93,7 +93,7 @@ void RDomainScene::fitCameraToScene(float aspect)
     m_camera.fitToBoundingBox(m_bbox_lo, m_bbox_hi, m_ndim, aspect);
 }
 
-QMatrix4x4 RDomainScene::viewProjection(QSize pixel_size, QRhi * rhi) const
+QMatrix4x4 RScene::viewProjection(QSize pixel_size, QRhi * rhi) const
 {
     QMatrix4x4 clip = (nullptr != rhi) ? rhi->clipSpaceCorrMatrix() : QMatrix4x4();
     if (!m_has_bbox || pixel_size.height() <= 0 || pixel_size.width() <= 0)

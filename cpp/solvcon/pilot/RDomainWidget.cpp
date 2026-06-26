@@ -5,8 +5,8 @@
 
 #include <solvcon/pilot/RDomainWidget.hpp> // Must be the first include.
 
+#include <solvcon/pilot/RBoundary.hpp>
 #include <solvcon/pilot/RField.hpp>
-#include <solvcon/pilot/RMeshBoundary.hpp>
 #include <solvcon/pilot/RMeshFrame.hpp>
 
 #include <QKeyEvent>
@@ -134,13 +134,13 @@ void RDomainWidget::showBoundary(int ibc, bool show)
     m_scene.removeDrawableIf(
         [ibc](RDrawable const * d)
         {
-            auto const * boundary = dynamic_cast<RMeshBoundary const *>(d);
+            auto const * boundary = dynamic_cast<RBoundary const *>(d);
             return nullptr != boundary && boundary->ibc() == ibc;
         });
 
     if (show && nullptr != m_mesh)
     {
-        auto boundary = std::make_unique<RMeshBoundary>(m_mesh, ibc);
+        auto boundary = std::make_unique<RBoundary>(m_mesh, ibc);
         if (boundary->hasGeometry())
         {
             m_scene.addDrawable(std::move(boundary));
