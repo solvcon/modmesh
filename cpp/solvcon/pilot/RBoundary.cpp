@@ -3,7 +3,7 @@
  * BSD 3-Clause License, see COPYING
  */
 
-#include <solvcon/pilot/RMeshBoundary.hpp> // Must be the first include.
+#include <solvcon/pilot/RBoundary.hpp> // Must be the first include.
 
 #include <array>
 #include <cmath>
@@ -32,13 +32,13 @@ std::array<float, 3> boundary_color(int ibc)
 
 } /* end namespace */
 
-RMeshBoundary::RMeshBoundary(std::shared_ptr<StaticMesh> const & mesh, int ibc)
+RBoundary::RBoundary(std::shared_ptr<StaticMesh> const & mesh, int ibc)
     : m_ibc(ibc)
 {
     build(*mesh, ibc);
 }
 
-void RMeshBoundary::build(StaticMesh const & mh, int ibc)
+void RBoundary::build(StaticMesh const & mh, int ibc)
 {
     // Gather the boundary-set edges as node-index pairs; with none there is
     // nothing to draw.
@@ -149,7 +149,7 @@ void RMeshBoundary::build(StaticMesh const & mh, int ibc)
     setColor(QVector4D(color[0], color[1], color[2], 1.0f));
 }
 
-QRhiVertexInputLayout RMeshBoundary::vertexInputLayout() const
+QRhiVertexInputLayout RBoundary::vertexInputLayout() const
 {
     QRhiVertexInputLayout layout;
     layout.setBindings({{6 * sizeof(float)}});
@@ -160,7 +160,7 @@ QRhiVertexInputLayout RMeshBoundary::vertexInputLayout() const
     return layout;
 }
 
-void RMeshBoundary::createGeometry(QRhi * rhi, QRhiResourceUpdateBatch * batch)
+void RBoundary::createGeometry(QRhi * rhi, QRhiResourceUpdateBatch * batch)
 {
     if (0 == m_interleaved.size() || 0 == m_indices.size())
     {

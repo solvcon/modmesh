@@ -17,7 +17,7 @@ namespace solvcon
 namespace
 {
 
-constexpr float FOV_DEGREES = 45.0f; // Matches RDomainScene's perspective FOV.
+constexpr float FOV_DEGREES = 45.0f; // Matches RScene's perspective FOV.
 constexpr float LOOK_DEGREES_PER_PIXEL = 0.3f;
 constexpr float PAN_PIXELS_PER_EXTENT = 300.0f;
 constexpr float ZOOM_PER_STEP = 0.12f;

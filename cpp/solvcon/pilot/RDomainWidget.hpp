@@ -8,7 +8,7 @@
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
 #include <solvcon/pilot/RAxisGizmo.hpp>
-#include <solvcon/pilot/RDomainScene.hpp>
+#include <solvcon/pilot/RScene.hpp>
 #include <solvcon/pilot/RDrawable.hpp>
 
 #include <solvcon/solvcon.hpp>
@@ -32,7 +32,7 @@ namespace solvcon
  *
  * It derived from QRhiWidget: Qt owns the swapchain, color and depth buffers,
  * and drives the render loop through initialize()/render(). The widget hosts
- * an RDomainScene (the drawables, the domain bounding box, and the framing
+ * an RScene (the drawables, the domain bounding box, and the framing
  * camera) and drives it.
  */
 class RDomainWidget
@@ -111,7 +111,7 @@ private:
     QRhiRenderPassDescriptor * m_rpdesc = nullptr; ///< Tracked to detect target changes.
     int m_sample_count = 0; ///< Tracked to detect MSAA changes.
 
-    RDomainScene m_scene;
+    RScene m_scene;
     RAxisGizmo m_gizmo;
     RDrawable * m_mesh_frame = nullptr; ///< Non-owning; lives in the scene.
     RDrawable * m_field = nullptr; ///< Non-owning; lives in the scene.

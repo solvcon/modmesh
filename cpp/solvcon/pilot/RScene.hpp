@@ -33,15 +33,15 @@ namespace solvcon
  * holds one scene and drives it; the scene itself is free of Qt widget and
  * device-loop concerns.
  */
-class RDomainScene
+class RScene
 {
 
 public:
 
-    RDomainScene() = default;
+    RScene() = default;
 
-    RDomainScene(RDomainScene const &) = delete;
-    RDomainScene & operator=(RDomainScene const &) = delete;
+    RScene(RScene const &) = delete;
+    RScene & operator=(RScene const &) = delete;
 
     /// Add a drawable; ownership transfers to the scene.
     void addDrawable(std::unique_ptr<RDrawable> drawable);
@@ -93,7 +93,7 @@ private:
 
     RDomainCameraController m_camera;
 
-}; /* end class RDomainScene */
+}; /* end class RScene */
 
 } /* end namespace solvcon */
 
