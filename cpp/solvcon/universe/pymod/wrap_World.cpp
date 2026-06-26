@@ -104,6 +104,47 @@ WrapWorld<T> & WrapWorld<T>::wrap_management()
             py::arg("dx"),
             py::arg("dy"))
         .def(
+            "rotate_shape",
+            &wrapped_type::rotate_shape,
+            py::arg("shape_id"),
+            py::arg("angle"),
+            py::arg("cx"),
+            py::arg("cy"))
+        .def(
+            "shape_is_live",
+            &wrapped_type::shape_is_live,
+            py::arg("shape_id"))
+        .def(
+            "shape_bbox",
+            [](wrapped_type const & self, int32_t shape_id)
+            {
+                auto const bb = self.shape_bbox(shape_id);
+                return std::vector<value_type>(bb.begin(), bb.end());
+            },
+            py::arg("shape_id"))
+        .def(
+            "shape_handle",
+            [](wrapped_type const & self, int32_t shape_id)
+            {
+                auto const h = self.shape_handle(shape_id);
+                return std::vector<value_type>(h.begin(), h.end());
+            },
+            py::arg("shape_id"))
+        .def(
+            "shape_obb",
+            [](wrapped_type const & self, int32_t shape_id)
+            {
+                auto const obb = self.shape_obb(shape_id);
+                return std::vector<value_type>(obb.begin(), obb.end());
+            },
+            py::arg("shape_id"))
+        .def(
+            "pick_shape",
+            &wrapped_type::pick_shape,
+            py::arg("x"),
+            py::arg("y"),
+            py::arg("tol"))
+        .def(
             "query_visible",
             &wrapped_type::query_visible,
             py::arg("min_x"),

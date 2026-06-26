@@ -3,6 +3,7 @@
 
 
 import json
+import math
 import unittest
 
 import numpy as np
@@ -442,6 +443,57 @@ class WorldViewportTC(unittest.TestCase):
         sid = self.w.add_triangle(0, 0, 1, 0, 0, 1)
         self.w.remove_shape(sid)
         self.assertEqual(len(self.w.query_visible(-1, -1, 10, 10)), 0)
+
+
+class WorldRotateTC(unittest.TestCase):
+    """rotate_shape: go-through that rotation runs without raising."""
+
+    def setUp(self):
+        self.w = solvcon.WorldFp64()
+
+    def test_rotate_runs(self):
+        sid = self.w.add_rectangle(-2, -1, 2, 1)
+        self.w.rotate_shape(sid, math.pi / 2, 0, 0)
+        self.assertTrue(self.w.shape_is_live(sid))
+
+    def test_rotate_dead_raises(self):
+        sid = self.w.add_line(0, 0, 1, 0)
+        self.w.remove_shape(sid)
+        with self.assertRaises(ValueError):
+            self.w.rotate_shape(sid, 1.0, 0, 0)
+
+
+class WorldPickTC(unittest.TestCase):
+    """pick_shape: go-through that hit-testing runs."""
+
+    def setUp(self):
+        self.w = solvcon.WorldFp64()
+
+    def test_pick_runs(self):
+        sid = self.w.add_rectangle(0, 0, 4, 4)
+        self.assertEqual(self.w.pick_shape(2, 2, 0.1), sid)
+
+    def test_pick_empty_world_returns_minus_one(self):
+        self.assertEqual(self.w.pick_shape(0, 0, 1.0), -1)
+
+
+class WorldShapeAccessorTC(unittest.TestCase):
+    """shape_is_live, shape_bbox, shape_handle, shape_obb: go-through that
+    each accessor runs and returns a sensibly-shaped result."""
+
+    def setUp(self):
+        self.w = solvcon.WorldFp64()
+        self.sid = self.w.add_rectangle(-2, -1, 2, 1)
+
+    def test_accessors_run(self):
+        self.assertTrue(self.w.shape_is_live(self.sid))
+        self.assertEqual(len(self.w.shape_bbox(self.sid)), 4)
+        self.assertEqual(len(self.w.shape_handle(self.sid)), 2)
+        self.assertEqual(len(self.w.shape_obb(self.sid)), 8)
+
+    def test_dead_shape_not_live(self):
+        self.w.remove_shape(self.sid)
+        self.assertFalse(self.w.shape_is_live(self.sid))
 
 
 class WorldLineTC(unittest.TestCase):
