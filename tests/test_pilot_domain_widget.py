@@ -21,6 +21,7 @@ import solvcon
 try:
     from solvcon import pilot
     from PySide6.QtGui import QImage
+    from PySide6.QtWidgets import QWidget
 except ImportError:
     pilot = None
 
@@ -503,6 +504,40 @@ class RDomainWidgetManagerTC(unittest.TestCase):
         current = mgr.currentR3DWidget()
         self.assertIsNotNone(current)
         self.assertEqual(current.mesh.ncell, 1)
+
+    def test_setup_primes_rhi_composition(self):
+        """setUp parks a hidden RDomainWidget to fix the GUI-restart bug.
+
+        The first QRhiWidget in the main window makes Qt rebuild the top-level
+        native window so its backing store can flush through QRhi. On macOS
+        that tears down every open sub-window and dock, so opening a mesh looks
+        like the GUI restarts and other viewers vanish. The manager parks a
+        hidden primer viewer in the MDI area at setUp, so the rebuild happens
+        once up front and later viewers reuse the same native window.
+
+        This test checks there is one and only one primer."""
+        mgr = pilot.RManager.instance.setUp()
+        mdi = mgr.mdiArea
+        primers = [
+            w for w in mgr.mainWindow.findChildren(QWidget)
+            if w.metaObject().className().endswith("RDomainWidget")
+            and w.parent() is mdi and not w.isVisible()]
+        self.assertEqual(len(primers), 1)
+
+    def test_open_3d_keeps_native_window(self):
+        """A 3D viewer opened after setUp reuses the primed native window.
+
+        The native handle (winId) changing is the proxy for "the top-level was
+        rebuilt"; with the primer in place it must stay put across add3DWidget.
+        See :meth:`test_setup_primes_rhi_composition` for the mechanism."""
+        mgr = pilot.RManager.instance.setUp()
+        mw = mgr.mainWindow
+        mw.show()
+        before = int(mw.winId())
+        if not before:
+            raise unittest.SkipTest("no native window handle is available")
+        mgr.add3DWidget()
+        self.assertEqual(int(mw.winId()), before)
 
 
 @unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")
