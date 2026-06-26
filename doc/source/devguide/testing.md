@@ -78,7 +78,10 @@ Each is read with a default, so an unset variable keeps the default behavior.
 - `MMGH_TIMEOUT_BUILD` (45), `MMGH_TIMEOUT_LINT` (45),
   `MMGH_TIMEOUT_STANDALONE_BUFFER` (10), `MMGH_TIMEOUT_NOUSE_INSTALL` (30),
   `MMGH_TIMEOUT_PROFILE` (30): per-job `timeout-minutes`. The number is the
-  default used when the variable is unset.
+  default used when the variable is unset. `MMGH_TIMEOUT_BUILD` is shared by
+  the ubuntu, macOS, and sanitizer builds (default 45) and the Windows build,
+  which defaults to 60 because its vcpkg plus MSVC compile runs slower than the
+  others.
 
 ### Behavior on a forked repository
 
