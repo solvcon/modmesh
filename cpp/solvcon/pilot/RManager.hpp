@@ -84,6 +84,10 @@ private:
     void setUpCentral();
     void setUpMenu();
 
+    /// Park a hidden QRhiWidget in the main window so the top-level adopts
+    /// render-to-texture composition once, up front, before any user content.
+    void primeRhiComposition();
+
     /// Push the active draw tool onto the focused 2D canvas, if any. A
     /// no-op when the focused subwindow is not a 2D canvas.
     void applyDrawTool();
@@ -118,6 +122,10 @@ private:
 
     RPythonConsoleDockWidget * m_pycon = nullptr;
     QMdiArea * m_mdiArea = nullptr;
+
+    /// Hidden QRhiWidget that keeps the main window in render-to-texture
+    /// composition mode for the whole session. Owned by the widget tree.
+    RDomainWidget * m_rhi_primer = nullptr;
 
     /// Active canvas drawing tool, shared by every 2D canvas. Starts on
     /// the default tool (pan navigation).

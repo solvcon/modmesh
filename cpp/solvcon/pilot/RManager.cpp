@@ -51,6 +51,7 @@ RManager & RManager::setUp()
     {
         this->setUpConsole();
         this->setUpCentral();
+        this->primeRhiComposition();
         this->setUpMenu();
 
         m_already_setup = true;
@@ -76,6 +77,7 @@ void RManager::reset()
     m_windowMenu = nullptr;
     m_pycon = nullptr;
     m_mdiArea = nullptr;
+    m_rhi_primer = nullptr;
 }
 
 RManager::~RManager()
@@ -266,6 +268,21 @@ void RManager::setUpCentral()
     // single Painter toolbox always drives whichever canvas has focus.
     QObject::connect(m_mdiArea, &QMdiArea::subWindowActivated, m_mdiArea, [this](QMdiSubWindow *)
                      { applyDrawTool(); });
+}
+
+void RManager::primeRhiComposition()
+{
+    // A QRhiWidget renders to a texture. The first one to appear in the main
+    // window forces Qt to recreate the top-level native window so its backing
+    // store can flush through QRhi; on macOS that tears down and rebuilds every
+    // existing sub-window and dock, so the GUI looks like it restarts and any
+    // already-open viewer vanishes. Trigger that switch once, before any user
+    // content exists, by parking a hidden RDomainWidget in the window. The
+    // recreation then happens with nothing to lose, and later viewers reuse the
+    // same native window. The widget tree owns the primer.
+    m_rhi_primer = new RDomainWidget(m_mdiArea);
+    m_rhi_primer->resize(0, 0);
+    m_rhi_primer->hide();
 }
 
 void RManager::setUpMenu()
