@@ -61,10 +61,8 @@ void RDomainWidget::updateMesh(std::shared_ptr<StaticMesh> const & mesh)
 
     StaticMesh const & mh = *mesh;
     m_scene.setDimension(mh.ndim());
-    // A 2D domain is viewed head-on, so it wants the in-plane pan/zoom whose
-    // wheel scales the orthographic box. The orbit and first-person wheel
-    // dolly the eye, which an orthographic projection ignores, so select
-    // pan/zoom for 2D. A 3D domain keeps its mode, orbit by default.
+    // For now, limit 2D domain to the in-plane pan/zoom whose wheel scales the
+    // orthographic box.
     if (2 == mh.ndim())
     {
         m_scene.camera().setMode(RCameraController::Mode::PanZoom);

@@ -106,7 +106,6 @@ protected:
     void mouseReleaseEvent(QMouseEvent * event) override;
     void wheelEvent(QWheelEvent * event) override;
     void keyPressEvent(QKeyEvent * event) override;
-    /// Route trackpad/touch pinch gestures to pinchCamera.
     bool event(QEvent * event) override;
 
 private:

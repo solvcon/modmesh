@@ -368,8 +368,6 @@ void RManager::setUpCameraControllersMenuItems() const
     use_pan_camera->setCheckable(true);
     use_orbit_camera->setChecked(true);
 
-    // Group the camera selectors under a "Camera" submenu, orbit first as the
-    // default.
     auto * cameraMenu = m_viewMenu->addMenu(QString("Camera"));
     cameraMenu->addAction(use_orbit_camera);
     cameraMenu->addAction(use_fps_camera);
