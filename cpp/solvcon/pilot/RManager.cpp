@@ -352,16 +352,28 @@ void RManager::setUpCameraControllersMenuItems() const
         [set_mode]()
         { set_mode("fps"); });
 
+    auto * use_orbit_camera = new RAction(
+        QString("Orbit camera (3D)"),
+        QString("Orbit the domain around its center"),
+        [set_mode]()
+        { set_mode("orbit"); });
+
     auto * cameraGroup = new QActionGroup(m_mainWindow);
-    cameraGroup->addAction(use_pan_camera);
+    cameraGroup->addAction(use_orbit_camera);
     cameraGroup->addAction(use_fps_camera);
+    cameraGroup->addAction(use_pan_camera);
 
-    use_pan_camera->setCheckable(true);
+    use_orbit_camera->setCheckable(true);
     use_fps_camera->setCheckable(true);
-    use_pan_camera->setChecked(true);
+    use_pan_camera->setCheckable(true);
+    use_orbit_camera->setChecked(true);
 
-    m_viewMenu->addAction(use_pan_camera);
-    m_viewMenu->addAction(use_fps_camera);
+    // Group the camera selectors under a "Camera" submenu, orbit first as the
+    // default.
+    auto * cameraMenu = m_viewMenu->addMenu(QString("Camera"));
+    cameraMenu->addAction(use_orbit_camera);
+    cameraMenu->addAction(use_fps_camera);
+    cameraMenu->addAction(use_pan_camera);
 }
 
 void RManager::setUpCameraMovementMenuItems() const

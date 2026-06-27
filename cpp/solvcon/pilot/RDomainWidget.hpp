@@ -68,7 +68,8 @@ public:
     /// Show or hide the orientation-guide triad in the corner.
     void showAxis(bool show);
 
-    /// Select the camera mode: "pan" (2D pan/zoom) or "fps" (3D fly-through).
+    /// Select the camera mode: "pan" (2D pan/zoom), "fps" (3D fly-through), or
+    /// "orbit" (3D orbit around the target).
     void setCameraMode(std::string const & name);
     std::string cameraMode() const;
 
@@ -84,6 +85,9 @@ public:
     void rotateCamera(float dx, float dy);
     void panCamera(float dx, float dy);
     void zoomCamera(float steps);
+    /// Zoom by a multiplicative pinch @p factor (what a trackpad/touch pinch
+    /// drives); greater than 1 zooms in, less than 1 zooms out.
+    void pinchCamera(float factor);
 
     std::shared_ptr<StaticMesh> mesh() const { return m_mesh; }
 
@@ -102,6 +106,8 @@ protected:
     void mouseReleaseEvent(QMouseEvent * event) override;
     void wheelEvent(QWheelEvent * event) override;
     void keyPressEvent(QKeyEvent * event) override;
+    /// Route trackpad/touch pinch gestures to pinchCamera.
+    bool event(QEvent * event) override;
 
 private:
 

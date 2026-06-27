@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 4.0.1)
 set(SOLVCON_PILOT_PYMODHEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/RDomainWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RScene.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/RDomainCameraController.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RCameraController.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RDrawable.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMeshFrame.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RField.hpp
@@ -27,7 +27,7 @@ set(SOLVCON_PILOT_PYMODHEADERS
 set(SOLVCON_PILOT_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/RDomainWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RScene.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/RDomainCameraController.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/RCameraController.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RDrawable.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RMeshFrame.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RField.cpp
