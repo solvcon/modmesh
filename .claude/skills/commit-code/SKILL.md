@@ -49,9 +49,9 @@ These contradict common defaults, so apply them deliberately:
   with ..." trailers; this project keeps commits human-authored (see
   `create-pr`).
 - **No semantic prefixes.** Never use `feat:`, `fix:`, `docs:`, etc.
-- **No closing keywords.** Never use `close`/`fixes`/`resolves #n`.
-  Reference an issue only when necessary, ending the body with "Related
-  to #xxx" or "For issue #xxx".
+- **No closing keywords.** Never use `close`/`fixes`/`resolves #n`. Do
+  not reference an issue unless explicitly instructed; when you are, end
+  the body with "Related to #xxx" or "For issue #xxx".
 - **One concern per commit.** Each commit stands on its own. Do not pad:
   trivial, tightly-coupled edits belong together.
 - **Stage exact paths.** Never `git add -A` / `git add .`; never
