@@ -170,7 +170,9 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRDomainWidget
                 [](wrapped_type & self, std::string const & name)
                 {
                     self.setCameraMode(name);
-                })
+                },
+                "Navigation mode: \"pan\" (2D pan/zoom), \"fps\" (3D "
+                "first-person), or \"orbit\" (3D orbit around the target).")
             .def(
                 "rotateCamera",
                 [](wrapped_type & self, float dx, float dy)
@@ -194,6 +196,13 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapRDomainWidget
                     self.zoomCamera(steps);
                 },
                 py::arg("steps"))
+            .def(
+                "pinchCamera",
+                [](wrapped_type & self, float factor)
+                {
+                    self.pinchCamera(factor);
+                },
+                py::arg("factor"))
 #define MM_DECL_CAMERA_VECTOR(NAME, GETTER, SETTER)            \
     .def_property(                                             \
         NAME,                                                  \
@@ -526,7 +535,8 @@ void wrap_pilot(pybind11::module & mod)
         "fields. Drive it with updateMesh / showMesh, updateColorField, "
         "showBoundary, and showAxis; navigate with cameraMode, the "
         "cameraPosition / cameraTarget / cameraUp pose, rotateCamera / "
-        "panCamera / zoomCamera, and fitCameraToScene; capture frames with "
+        "panCamera / zoomCamera / pinchCamera, and fitCameraToScene; capture "
+        "frames with "
         "saveImage / clipImage.");
     WrapR2DWidget::commit(mod, "R2DWidget", "R2DWidget");
     WrapRPythonConsoleDockWidget::commit(mod, "RPythonConsoleDockWidget", "RPythonConsoleDockWidget");

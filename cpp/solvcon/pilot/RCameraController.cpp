@@ -3,7 +3,7 @@
  * BSD 3-Clause License, see COPYING
  */
 
-#include <solvcon/pilot/RDomainCameraController.hpp> // Must be the first include.
+#include <solvcon/pilot/RCameraController.hpp> // Must be the first include.
 
 #include <QQuaternion>
 #include <QtMath>
@@ -23,34 +23,52 @@ constexpr float PAN_PIXELS_PER_EXTENT = 300.0f;
 constexpr float ZOOM_PER_STEP = 0.12f;
 constexpr float ORTHO_SCALE_MIN = 0.02f;
 constexpr float ORTHO_SCALE_MAX = 50.0f;
+constexpr float ORBIT_DISTANCE_MIN = 0.05f; // Times the scene radius.
+constexpr float ORBIT_DISTANCE_MAX = 20.0f; // Times the scene radius.
 
 } /* end namespace */
 
-RDomainCameraController::Mode RDomainCameraController::modeFromName(std::string const & name)
+RCameraController::Mode RCameraController::modeFromName(std::string const & name)
 {
-    return ("fps" == name) ? Mode::FirstPerson : Mode::PanZoom;
+    if ("fps" == name)
+    {
+        return Mode::FirstPerson;
+    }
+    if ("orbit" == name)
+    {
+        return Mode::Orbit;
+    }
+    return Mode::PanZoom;
 }
 
-std::string RDomainCameraController::modeName(Mode mode)
+std::string RCameraController::modeName(Mode mode)
 {
-    return (Mode::FirstPerson == mode) ? "fps" : "pan";
+    switch (mode)
+    {
+    case Mode::FirstPerson:
+        return "fps";
+    case Mode::Orbit:
+        return "orbit";
+    default:
+        return "pan";
+    }
 }
 
-QVector3D RDomainCameraController::forward() const
+QVector3D RCameraController::forward() const
 {
     QVector3D const dir = m_target - m_position;
     float const length = dir.length();
     return (length > 0.0f) ? dir / length : QVector3D(0.0f, 0.0f, -1.0f);
 }
 
-QVector3D RDomainCameraController::rightAxis() const
+QVector3D RCameraController::rightAxis() const
 {
     QVector3D const axis = QVector3D::crossProduct(forward(), m_up);
     float const length = axis.length();
     return (length > 0.0f) ? axis / length : QVector3D(1.0f, 0.0f, 0.0f);
 }
 
-void RDomainCameraController::fitToBoundingBox(
+void RCameraController::fitToBoundingBox(
     QVector3D const & lo, QVector3D const & hi, uint32_t ndim, float aspect)
 {
     QVector3D const center = (lo + hi) * 0.5f;
@@ -83,16 +101,40 @@ void RDomainCameraController::fitToBoundingBox(
     }
 }
 
-QMatrix4x4 RDomainCameraController::viewMatrix() const
+QMatrix4x4 RCameraController::viewMatrix() const
 {
     QMatrix4x4 view;
     view.lookAt(m_position, m_target, m_up);
     return view;
 }
 
-void RDomainCameraController::rotate(float dx, float dy)
+void RCameraController::rotate(float dx, float dy)
 {
-    if (Mode::FirstPerson == m_mode)
+    if (Mode::Orbit == m_mode)
+    {
+        // Swing the eye around the fixed target (the pivot): yaw about the up
+        // axis and pitch about the right axis, applied to the eye offset with
+        // the target held put. The up axis stays fixed, so the horizon never
+        // rolls (a turntable orbit). This mirrors the FirstPerson rotation,
+        // which instead holds the eye and swings the target.
+        QVector3D const offset = m_position - m_target;
+        QQuaternion const yaw = QQuaternion::fromAxisAndAngle(m_up, -dx * LOOK_DEGREES_PER_PIXEL);
+        QQuaternion const pitch = QQuaternion::fromAxisAndAngle(rightAxis(), -dy * LOOK_DEGREES_PER_PIXEL);
+        QVector3D rotated = (yaw * pitch).rotatedVector(offset);
+        // Avoid gimbal lock: do not let the eye-to-target direction reach the
+        // up axis (which would degenerate the right axis and flip the view).
+        // Drop the pitch if it would push past the pole, but always ease away.
+        QVector3D const up = m_up.normalized();
+        float const limit = std::cos(qDegreesToRadians(1.0f));
+        float const aligned = std::abs(QVector3D::dotProduct(rotated.normalized(), up));
+        float const aligned0 = std::abs(QVector3D::dotProduct(offset.normalized(), up));
+        if (aligned > limit && aligned > aligned0)
+        {
+            rotated = yaw.rotatedVector(offset);
+        }
+        m_position = m_target + rotated;
+    }
+    else if (Mode::FirstPerson == m_mode)
     {
         // Look around in place: yaw about the up axis, pitch about the right
         // axis, keeping the eye fixed and swinging the target.
@@ -119,7 +161,7 @@ void RDomainCameraController::rotate(float dx, float dy)
     }
 }
 
-void RDomainCameraController::pan(float dx, float dy)
+void RCameraController::pan(float dx, float dy)
 {
     // A drag across the viewport pans roughly the visible extent, moving in
     // the camera's own plane (the screen right and screen up axes). Screen up
@@ -133,9 +175,26 @@ void RDomainCameraController::pan(float dx, float dy)
     m_target += offset;
 }
 
-void RDomainCameraController::zoom(float steps)
+void RCameraController::zoom(float steps)
 {
-    if (Mode::FirstPerson == m_mode)
+    if (Mode::Orbit == m_mode)
+    {
+        // Dolly the eye along its offset to the target: a positive step moves
+        // it closer, a negative one farther. The scale is multiplicative so it
+        // feels uniform at any range, and the distance is clamped so the eye
+        // never reaches or crosses the pivot, nor flies arbitrarily far.
+        QVector3D const offset = m_position - m_target;
+        float const distance = offset.length();
+        if (distance > 0.0f)
+        {
+            float const scaled = std::clamp(
+                distance * std::exp(-steps * ZOOM_PER_STEP),
+                ORBIT_DISTANCE_MIN * m_radius,
+                ORBIT_DISTANCE_MAX * m_radius);
+            m_position = m_target + offset * (scaled / distance);
+        }
+    }
+    else if (Mode::FirstPerson == m_mode)
     {
         moveForward(steps * 0.1f);
     }
@@ -148,14 +207,26 @@ void RDomainCameraController::zoom(float steps)
     }
 }
 
-void RDomainCameraController::moveForward(float amount)
+void RCameraController::pinch(float factor)
+{
+    // A pinch reports a multiplicative scale; route it through the wheel zoom
+    // so both share one path. zoom() applies exp(-steps * ZOOM_PER_STEP), so
+    // steps = log(factor) / ZOOM_PER_STEP makes the zoom track the pinch
+    // exactly: a 2x spread zooms in 2x. A non-positive factor is ignored.
+    if (factor > 0.0f)
+    {
+        zoom(std::log(factor) / ZOOM_PER_STEP);
+    }
+}
+
+void RCameraController::moveForward(float amount)
 {
     QVector3D const step = forward() * (amount * m_radius);
     m_position += step;
     m_target += step;
 }
 
-void RDomainCameraController::moveRight(float amount)
+void RCameraController::moveRight(float amount)
 {
     QVector3D const step = rightAxis() * (amount * m_radius);
     m_position += step;

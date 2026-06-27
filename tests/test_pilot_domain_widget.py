@@ -384,12 +384,26 @@ class RDomainWidgetCameraTC(unittest.TestCase):
         pilot.RManager.instance.setUp()
 
     def test_camera_mode_round_trip(self):
-        """The camera mode switches between pan/zoom and first-person."""
+        """The camera defaults to orbit and switches between the modes."""
         widget = pilot.RDomainWidget()
-        self.assertEqual(widget.cameraMode, "pan")
+        self.assertEqual(widget.cameraMode, "orbit")
         widget.cameraMode = "fps"
         self.assertEqual(widget.cameraMode, "fps")
         widget.cameraMode = "pan"
+        self.assertEqual(widget.cameraMode, "pan")
+
+    def test_3d_mesh_keeps_orbit_default(self):
+        """A new widget defaults to orbit, and loading a 3D domain keeps it."""
+        widget = pilot.RDomainWidget()
+        self.assertEqual(widget.cameraMode, "orbit")
+        widget.updateMesh(_make_3d_mesh())
+        self.assertEqual(widget.cameraMode, "orbit")
+
+    def test_2d_mesh_selects_pan_camera(self):
+        """Loading a 2D domain selects pan/zoom, whose wheel zooms the
+        orthographic view (the orbit dolly has no effect there)."""
+        widget = pilot.RDomainWidget()
+        widget.updateMesh(_make_2d_mesh())
         self.assertEqual(widget.cameraMode, "pan")
 
     def test_camera_pose_round_trip(self):
@@ -457,6 +471,112 @@ class RDomainWidgetCameraTC(unittest.TestCase):
             widget.rotateCamera(0.0, 200.0)
         image = _grab_or_skip(widget)
         self.assertFalse(image.isNull())
+
+    def test_orbit_mode_round_trips(self):
+        """The camera mode switches to orbit and back to pan."""
+        widget = pilot.RDomainWidget()
+        widget.cameraMode = "orbit"
+        self.assertEqual(widget.cameraMode, "orbit")
+        widget.cameraMode = "pan"
+        self.assertEqual(widget.cameraMode, "pan")
+
+    def test_orbit_keeps_target_and_moves_eye(self):
+        """Orbit swings the eye around a fixed target; fps instead holds the
+        eye and swings the target."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_3d_mesh())
+        widget.cameraMode = "orbit"
+        target_before = tuple(widget.cameraTarget)
+        pos_before = tuple(widget.cameraPosition)
+        widget.rotateCamera(40.0, 15.0)
+        for before, after in zip(target_before, tuple(widget.cameraTarget)):
+            self.assertAlmostEqual(before, after, places=4)
+        moved = sum((a - b) ** 2 for a, b
+                    in zip(pos_before, tuple(widget.cameraPosition)))
+        self.assertGreater(moved, 0.0)
+
+    def test_orbit_preserves_distance_to_target(self):
+        """Orbiting is a rotation about the target, so the eye-to-target
+        distance is unchanged."""
+        import math
+        widget = pilot.RDomainWidget()
+        widget.updateMesh(_make_3d_mesh())
+        widget.cameraMode = "orbit"
+
+        def radius():
+            pos = tuple(widget.cameraPosition)
+            tgt = tuple(widget.cameraTarget)
+            return math.sqrt(sum((p - t) ** 2 for p, t in zip(pos, tgt)))
+
+        before = radius()
+        widget.rotateCamera(30.0, 20.0)
+        self.assertAlmostEqual(before, radius(), places=4)
+
+    def test_orbit_zoom_dollies_toward_target(self):
+        """Orbit zoom shrinks the eye-to-target distance on a positive step
+        without moving the target."""
+        import math
+        widget = pilot.RDomainWidget()
+        widget.updateMesh(_make_3d_mesh())
+        widget.cameraMode = "orbit"
+        target_before = tuple(widget.cameraTarget)
+
+        def radius():
+            pos = tuple(widget.cameraPosition)
+            tgt = tuple(widget.cameraTarget)
+            return math.sqrt(sum((p - t) ** 2 for p, t in zip(pos, tgt)))
+
+        before = radius()
+        widget.zoomCamera(3.0)
+        self.assertLess(radius(), before)
+        for a, b in zip(target_before, tuple(widget.cameraTarget)):
+            self.assertAlmostEqual(a, b, places=5)
+
+    def test_orbit_extreme_pitch_stays_stable(self):
+        """Orbiting hard past vertical does not flip or break the view: the
+        eye-to-target direction is held off the up axis (no gimbal lock)."""
+        widget = pilot.RDomainWidget()
+        widget.resize(320, 240)
+        widget.updateMesh(_make_3d_mesh())
+        widget.cameraMode = "orbit"
+        for _ in range(10):
+            widget.rotateCamera(0.0, 200.0)
+        image = _grab_or_skip(widget)
+        self.assertFalse(image.isNull())
+
+    def test_pinch_zooms_the_orbit_camera(self):
+        """A pinch scales the orbit eye-to-target distance inversely: a 2x
+        spread halves it (zoom in), and a 0.5x pinch restores it (zoom out)."""
+        import math
+        widget = pilot.RDomainWidget()
+        widget.updateMesh(_make_3d_mesh())  # orbit is the 3D default
+
+        def radius():
+            pos = tuple(widget.cameraPosition)
+            tgt = tuple(widget.cameraTarget)
+            return math.sqrt(sum((p - t) ** 2 for p, t in zip(pos, tgt)))
+
+        start = radius()
+        widget.pinchCamera(2.0)
+        self.assertAlmostEqual(radius(), start / 2.0, places=4)
+        widget.pinchCamera(0.5)
+        self.assertAlmostEqual(radius(), start, places=4)
+
+    def test_pinch_ignores_nonpositive_factor(self):
+        """A non-positive pinch factor is ignored rather than applied."""
+        import math
+        widget = pilot.RDomainWidget()
+        widget.updateMesh(_make_3d_mesh())
+
+        def radius():
+            pos = tuple(widget.cameraPosition)
+            tgt = tuple(widget.cameraTarget)
+            return math.sqrt(sum((p - t) ** 2 for p, t in zip(pos, tgt)))
+
+        start = radius()
+        widget.pinchCamera(0.0)
+        self.assertEqual(radius(), start)
 
 
 @unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")

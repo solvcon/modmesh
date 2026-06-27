@@ -9,8 +9,11 @@
 #include <solvcon/pilot/RField.hpp>
 #include <solvcon/pilot/RMeshFrame.hpp>
 
+#include <QGestureEvent>
 #include <QKeyEvent>
 #include <QMouseEvent>
+#include <QNativeGestureEvent>
+#include <QPinchGesture>
 #include <QWheelEvent>
 
 #include <algorithm>
@@ -25,6 +28,9 @@ RDomainWidget::RDomainWidget(QWidget * parent)
     // Accept keyboard focus so the first-person movement keys reach the
     // widget, and track the mouse for drag-based navigation.
     setFocusPolicy(Qt::StrongFocus);
+    // Receive touchscreen pinch gestures (trackpad pinches arrive as native
+    // gesture events, which need no grab).
+    grabGesture(Qt::PinchGesture);
 }
 
 float RDomainWidget::viewportAspect() const
@@ -55,6 +61,12 @@ void RDomainWidget::updateMesh(std::shared_ptr<StaticMesh> const & mesh)
 
     StaticMesh const & mh = *mesh;
     m_scene.setDimension(mh.ndim());
+    // For now, limit 2D domain to the in-plane pan/zoom whose wheel scales the
+    // orthographic box.
+    if (2 == mh.ndim())
+    {
+        m_scene.camera().setMode(RCameraController::Mode::PanZoom);
+    }
     QVector3D lo(
         std::numeric_limits<float>::max(),
         std::numeric_limits<float>::max(),
@@ -158,13 +170,13 @@ void RDomainWidget::fitCameraToScene()
 
 void RDomainWidget::setCameraMode(std::string const & name)
 {
-    m_scene.camera().setMode(RDomainCameraController::modeFromName(name));
+    m_scene.camera().setMode(RCameraController::modeFromName(name));
     update();
 }
 
 std::string RDomainWidget::cameraMode() const
 {
-    return RDomainCameraController::modeName(m_scene.camera().mode());
+    return RCameraController::modeName(m_scene.camera().mode());
 }
 
 QVector3D RDomainWidget::cameraPosition() const
@@ -218,6 +230,12 @@ void RDomainWidget::zoomCamera(float steps)
     update();
 }
 
+void RDomainWidget::pinchCamera(float factor)
+{
+    m_scene.camera().pinch(factor);
+    update();
+}
+
 void RDomainWidget::mousePressEvent(QMouseEvent * event)
 {
     m_last_mouse_pos = event->position().toPoint();
@@ -256,6 +274,33 @@ void RDomainWidget::wheelEvent(QWheelEvent * event)
     float const steps = static_cast<float>(event->angleDelta().y()) / 120.0f;
     m_scene.camera().zoom(steps);
     update();
+}
+
+bool RDomainWidget::event(QEvent * event)
+{
+    // A trackpad pinch arrives as a native zoom gesture whose value() is the
+    // incremental magnification (positive spreads, negative pinches); a
+    // touchscreen pinch arrives as a QPinchGesture whose scaleFactor() is the
+    // incremental multiplier. Feed both to pinchCamera as a scale around 1.
+    if (QEvent::NativeGesture == event->type())
+    {
+        auto * gesture = static_cast<QNativeGestureEvent *>(event);
+        if (Qt::ZoomNativeGesture == gesture->gestureType())
+        {
+            pinchCamera(1.0f + static_cast<float>(gesture->value()));
+            return true;
+        }
+    }
+    else if (QEvent::Gesture == event->type())
+    {
+        auto * gesture = static_cast<QGestureEvent *>(event);
+        if (auto * pinch = static_cast<QPinchGesture *>(gesture->gesture(Qt::PinchGesture)))
+        {
+            pinchCamera(static_cast<float>(pinch->scaleFactor()));
+            return true;
+        }
+    }
+    return QRhiWidget::event(event);
 }
 
 void RDomainWidget::keyPressEvent(QKeyEvent * event)

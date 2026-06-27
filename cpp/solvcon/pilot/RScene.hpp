@@ -7,7 +7,7 @@
 
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
-#include <solvcon/pilot/RDomainCameraController.hpp>
+#include <solvcon/pilot/RCameraController.hpp>
 #include <solvcon/pilot/RDrawable.hpp>
 
 #include <rhi/qrhi.h>
@@ -68,8 +68,8 @@ public:
     void setDimension(uint32_t ndim) { m_ndim = ndim; }
     uint32_t dimension() const { return m_ndim; }
 
-    RDomainCameraController & camera() { return m_camera; }
-    RDomainCameraController const & camera() const { return m_camera; }
+    RCameraController & camera() { return m_camera; }
+    RCameraController const & camera() const { return m_camera; }
 
     /// Frame the camera so the whole bounding box is in view at the given
     /// viewport @p aspect (width / height).
@@ -91,7 +91,7 @@ private:
     bool m_has_bbox = false;
     uint32_t m_ndim = 0;
 
-    RDomainCameraController m_camera;
+    RCameraController m_camera;
 
 }; /* end class RScene */
 
