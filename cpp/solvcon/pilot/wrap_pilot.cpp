@@ -254,6 +254,15 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapR2DWidget
             .def("requestRepaint", &wrapped_type::requestRepaint)
             .def("setDrawTool", &wrapped_type::setDrawTool, py::arg("name"))
             .def_property_readonly("drawTool", &wrapped_type::drawTool)
+            .def_property_readonly("selectedShape", &wrapped_type::selectedShape)
+            .def_property_readonly(
+                "rotateHandleScreen",
+                [](wrapped_type & self)
+                {
+                    // TODO: add pybind for small_vector to avoid this copy.
+                    auto const h = self.rotateHandleScreen();
+                    return std::vector<double>(h.begin(), h.end());
+                })
             //
             ;
 

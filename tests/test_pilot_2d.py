@@ -159,6 +159,11 @@ class R2DWidgetWorldTC(unittest.TestCase):
         # An invalid request leaves the previous tool untouched.
         self.assertEqual(self.widget.drawTool, "pan")
 
+    def test_selected_shape_defaults_to_none(self):
+        """A fresh canvas has nothing selected; selectedShape reads -1."""
+        self.widget.updateWorld(solvcon.WorldFp64())
+        self.assertEqual(self.widget.selectedShape, -1)
+
     @unittest.skip("TODO: pixel-level DEAD-shape culling assertions")
     def test_dead_shape_culling_renders_pixels(self):
         """Assert live geometry is painted and DEAD shapes are culled.
@@ -175,6 +180,53 @@ class R2DWidgetWorldTC(unittest.TestCase):
         # self.assertGreater(foreground_pixels(img, region_A), 0)
         # self.assertEqual(foreground_pixels(img, region_B), 0)
         raise NotImplementedError
+
+
+@unittest.skipIf(GITHUB_ACTIONS or not solvcon.HAS_PILOT,
+                 "live-GUI interaction is unstable under GitHub Actions")
+class R2DWidgetPanSelectTC(unittest.TestCase):
+    """Drive the pan tool through select, move, rotate, and deselect."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mgr = pilot.RManager.instance.setUp()
+
+    def setUp(self):
+        from PySide6 import QtWidgets
+        self.widget = self.mgr.add2DWidget()
+        self.widget.setDrawTool("pan")
+        self.world = solvcon.WorldFp64()
+        # A rectangle centered on the origin.
+        self.sid = self.world.add_rectangle(-2, -1, 2, 1)
+        self.widget.updateWorld(self.world)
+        v = solvcon.ViewTransform2dFp64()
+        v.pan(100.0, 100.0)
+        v.zoom = 20.0
+        # Set the view before showing so the resize auto-centering, which a
+        # well-formed transform disables, leaves the mapping deterministic.
+        self.widget.setViewTransform(v)
+        self.mgr.show()
+        self.sub = self.mgr.mdiArea.subWindowList()[-1]
+        self.sub.show()
+        self.mgr.mdiArea.setActiveSubWindow(self.sub)
+        # The PySide6 widget wraps the same C++ object the handle above does.
+        self.target = self.sub.widget()
+        QtWidgets.QApplication.processEvents()
+
+    def test_select_move_rotate_run_through(self):
+        # Press on the shape to select it, then drag to move it.
+        _send_mouse(self.target, 'press', 100, 100)
+        _send_mouse(self.target, 'move', 140, 100)
+        _send_mouse(self.target, 'release', 140, 100)
+        self.assertEqual(self.widget.selectedShape, self.sid)
+        # Grab the rotate handle and swing it.
+        hx, hy = self.widget.rotateHandleScreen
+        _send_mouse(self.target, 'press', hx, hy)
+        _send_mouse(self.target, 'move', hx + 30, hy + 30)
+        _send_mouse(self.target, 'release', hx + 30, hy + 30)
+        # Switching tools drops the selection.
+        self.widget.setDrawTool("circle")
+        self.assertEqual(self.widget.selectedShape, -1)
 
 
 @unittest.skipUnless(solvcon.HAS_PILOT, "Qt pilot is not built")

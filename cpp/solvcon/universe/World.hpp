@@ -12,9 +12,9 @@
 #include <solvcon/universe/bezier.hpp>
 #include <solvcon/universe/rtree.hpp>
 
+#include <algorithm>
 #include <cmath>
-#include <deque>
-#include <numbers>
+#include <limits>
 #include <vector>
 
 namespace solvcon
@@ -183,11 +183,18 @@ private:
  */
 struct ShapeRecord
 {
+    using bbox_array_type = small_vector<double, 4>; ///< four corners, (x, y) pairs
+
     ShapeType type;
     size_t segment_offset; ///< first index in SegmentPad
     size_t segment_count; ///< number of segments this shape occupies
     size_t curve_offset; ///< first index in CurvePad
     size_t curve_count; ///< number of cubic Beziers this shape occupies
+
+    // Oriented bounding box in world coordinates, as four corners ordered
+    // top-left, top-right, bottom-right, bottom-left.
+    bbox_array_type obb_x;
+    bbox_array_type obb_y;
 }; /* end of struct ShapeRecord */
 
 /**
@@ -235,6 +242,10 @@ public:
     using curve_pad_type = CurvePad<T>;
     using bbox_type = BoundBox3d<T>;
     using rtree_type = RTree<ShapeEntry<T>, bbox_type>;
+
+    using coord2_type = small_vector<value_type, 2>; ///< an (x, y) pair
+    using bbox_array_type = small_vector<value_type, 4>; ///< [min_x, min_y, max_x, max_y]
+    using obb_array_type = small_vector<value_type, 8>; ///< 4 corners, (x, y) pairs
 
     template <typename... Args>
     static std::shared_ptr<World<T>> construct(Args &&... args)
@@ -359,6 +370,12 @@ public:
     void translate_shape(int32_t shape_id, value_type dx, value_type dy);
 
     /**
+     * Rotate all segments and curves belonging to a shape by `angle`
+     * radians (counter-clockwise in world space) about the pivot (cx, cy).
+     */
+    void rotate_shape(int32_t shape_id, value_type angle, value_type cx, value_type cy);
+
+    /**
      * Remove a shape from the R-tree and registry.
      * Segments and curves remain in their pads as dead data; use clear() to reclaim.
      */
@@ -379,6 +396,49 @@ public:
     bool can_redo() const { return !m_redo_stack.empty(); }
 
     size_t nshape() const { return m_nshape; }
+
+    /// True if `shape_id` refers to a live (non-DEAD) shape. Unlike the
+    /// accessors above this never throws, so callers can probe a stale id.
+    bool shape_is_live(int32_t shape_id) const
+    {
+        return shape_id >= 0 &&
+               static_cast<size_t>(shape_id) < m_shape_registry.size() &&
+               m_shape_registry[shape_id].type != ShapeType::DEAD;
+    }
+
+    /// Axis-aligned bounding box of a live shape, as
+    /// [min_x, min_y, max_x, max_y].
+    bbox_array_type shape_bbox(int32_t shape_id) const
+    {
+        bbox_type const bb = compute_shape_bbox(find_shape_or_throw(shape_id));
+        return {bb.min_x(), bb.min_y(), bb.max_x(), bb.max_y()};
+    }
+
+    /// World position of a live shape's rotate-handle anchor (the oriented
+    /// bounding box's top-left corner), as [x, y]. Carried by every
+    /// translate/rotate, so it stays put relative to the shape.
+    coord2_type shape_handle(int32_t shape_id) const
+    {
+        ShapeRecord const & rec = find_shape_or_throw(shape_id);
+        return {static_cast<value_type>(rec.obb_x[0]), static_cast<value_type>(rec.obb_y[0])};
+    }
+
+    /// Oriented bounding box of a live shape: four world corners ordered
+    /// top-left, top-right, bottom-right, bottom-left.
+    obb_array_type shape_obb(int32_t shape_id) const
+    {
+        ShapeRecord const & rec = find_shape_or_throw(shape_id);
+        obb_array_type out(8);
+        for (size_t i = 0; i < 4; ++i)
+        {
+            out[2 * i] = static_cast<value_type>(rec.obb_x[i]);
+            out[2 * i + 1] = static_cast<value_type>(rec.obb_y[i]);
+        }
+        return out;
+    }
+
+    /// Pick the live shape at world point (x, y).
+    int32_t pick_shape(value_type x, value_type y, value_type tol) const;
 
     /**
      * Query the R-tree for shapes whose bounding box overlaps the viewport.
@@ -434,6 +494,13 @@ private:
     }
 
     bbox_type compute_shape_bbox(ShapeRecord const & rec) const;
+
+    /// Minimum distance from world point (px, py) to a shape's drawn
+    /// geometry: its segments and its curves (sampled along each cubic).
+    T shape_point_distance(ShapeRecord const & rec, T px, T py) const;
+
+    /// Distance from point (px, py) to the segment (ax, ay)-(bx, by).
+    static T point_segment_distance(T px, T py, T ax, T ay, T bx, T by);
 
     /// Register a new shape owning [segment_offset, segment_offset + segment_count)
     /// in the segment pad and [curve_offset, curve_offset + curve_count) in the
@@ -496,7 +563,14 @@ int32_t World<T>::register_shape(ShapeType type,
     auto shape_id = static_cast<int32_t>(m_shape_registry.size());
     m_shape_registry.push_back(ShapeRecord{type, segment_offset, segment_count, curve_offset, curve_count}); // NOLINT(modernize-use-designated-initializers)
     ++m_nshape;
-    m_rtree->insert(ShapeEntry<T>{shape_id, compute_shape_bbox(m_shape_registry[shape_id])});
+    bbox_type const bb = compute_shape_bbox(m_shape_registry[shape_id]);
+
+    // Seed the oriented bounding box to the axis-aligned bbox corners.
+    // TODO: store the OBB directly in ShapeRecord at construction.
+    ShapeRecord & seeded = m_shape_registry[shape_id];
+    seeded.obb_x = ShapeRecord::bbox_array_type{bb.min_x(), bb.max_x(), bb.max_x(), bb.min_x()};
+    seeded.obb_y = ShapeRecord::bbox_array_type{bb.max_y(), bb.max_y(), bb.min_y(), bb.min_y()};
+    m_rtree->insert(ShapeEntry<T>{shape_id, bb});
 
     // Creating a shape becomes the newest undoable step and invalidates any
     // pending redo, mirroring the usual editor undo/redo semantics.
@@ -612,7 +686,7 @@ int32_t World<T>::add_bezier_shape(bezier_type const & bezier)
 template <typename T>
 void World<T>::translate_shape(int32_t shape_id, value_type dx, value_type dy)
 {
-    ShapeRecord const & rec = find_shape_or_throw(shape_id);
+    ShapeRecord & rec = find_shape_or_throw(shape_id);
     // Remove old entry from R-tree before modifying segments/curves.
     m_rtree->remove(ShapeEntry<T>{shape_id, compute_shape_bbox(rec)});
     for (uint32_t i = 0; i < rec.segment_count; ++i)
@@ -635,8 +709,145 @@ void World<T>::translate_shape(int32_t shape_id, value_type dx, value_type dy)
         m_curves->x3(idx) += dx;
         m_curves->y3(idx) += dy;
     }
+    // The oriented bounding box rides along with the shape.
+    for (uint32_t i = 0; i < 4; ++i)
+    {
+        rec.obb_x[i] += dx;
+        rec.obb_y[i] += dy;
+    }
     // Reinsert with updated bounding box.
     m_rtree->insert(ShapeEntry<T>{shape_id, compute_shape_bbox(rec)});
+}
+
+template <typename T>
+void World<T>::rotate_shape(int32_t shape_id, value_type angle, value_type cx, value_type cy)
+{
+    ShapeRecord & rec = find_shape_or_throw(shape_id);
+
+    // Remove old entry from R-tree before modifying segments/curves.
+    m_rtree->remove(ShapeEntry<T>{shape_id, compute_shape_bbox(rec)});
+
+    T const cos_a = std::cos(angle);
+    T const sin_a = std::sin(angle);
+
+    // Rotate one point about (cx, cy) in place; reads both coordinates
+    // before writing either, so x and y rotate from the same origin.
+    auto rotate = [&](T & x, T & y)
+    {
+        T const dx = x - cx;
+        T const dy = y - cy;
+        x = cx + cos_a * dx - sin_a * dy;
+        y = cy + sin_a * dx + cos_a * dy;
+    };
+
+    for (uint32_t i = 0; i < rec.segment_count; ++i)
+    {
+        size_t const idx = rec.segment_offset + i;
+        rotate(m_segments->x0(idx), m_segments->y0(idx));
+        rotate(m_segments->x1(idx), m_segments->y1(idx));
+    }
+    for (uint32_t i = 0; i < rec.curve_count; ++i)
+    {
+        size_t const idx = rec.curve_offset + i;
+        rotate(m_curves->x0(idx), m_curves->y0(idx));
+        rotate(m_curves->x1(idx), m_curves->y1(idx));
+        rotate(m_curves->x2(idx), m_curves->y2(idx));
+        rotate(m_curves->x3(idx), m_curves->y3(idx));
+    }
+
+    // Rotate the oriented bounding box about the same pivot so it stays
+    // fixed relative to the shape. Done in `double` to match its storage.
+    auto const dcos = static_cast<double>(cos_a);
+    auto const dsin = static_cast<double>(sin_a);
+    for (uint32_t i = 0; i < 4; ++i)
+    {
+        double const ox = rec.obb_x[i] - cx;
+        double const oy = rec.obb_y[i] - cy;
+        rec.obb_x[i] = cx + dcos * ox - dsin * oy;
+        rec.obb_y[i] = cy + dsin * ox + dcos * oy;
+    }
+    // Reinsert with updated bounding box.
+    m_rtree->insert(ShapeEntry<T>{shape_id, compute_shape_bbox(rec)});
+}
+
+template <typename T>
+T World<T>::point_segment_distance(T px, T py, T ax, T ay, T bx, T by)
+{
+    T const dx = bx - ax;
+    T const dy = by - ay;
+    T const len2 = dx * dx + dy * dy;
+    if (len2 <= T(0)) // degenerate segment: distance to the point
+    {
+        return std::hypot(px - ax, py - ay);
+    }
+    T t = ((px - ax) * dx + (py - ay) * dy) / len2;
+    t = std::max(T(0), std::min(T(1), t)); // clamp to the segment
+    return std::hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+
+template <typename T>
+T World<T>::shape_point_distance(ShapeRecord const & rec, T px, T py) const
+{
+    T best = std::numeric_limits<T>::max();
+    for (uint32_t i = 0; i < rec.segment_count; ++i)
+    {
+        size_t const idx = rec.segment_offset + i;
+        best = std::min(best, point_segment_distance(px, py, m_segments->x0(idx), m_segments->y0(idx), m_segments->x1(idx), m_segments->y1(idx)));
+    }
+    // Flatten each cubic into short chords and measure the point against them.
+    constexpr uint32_t SAMPLES = 16;
+    for (uint32_t i = 0; i < rec.curve_count; ++i)
+    {
+        size_t const idx = rec.curve_offset + i;
+        T const x0 = m_curves->x0(idx), y0 = m_curves->y0(idx);
+        T const x1 = m_curves->x1(idx), y1 = m_curves->y1(idx);
+        T const x2 = m_curves->x2(idx), y2 = m_curves->y2(idx);
+        T const x3 = m_curves->x3(idx), y3 = m_curves->y3(idx);
+        T prev_x = x0, prev_y = y0;
+        for (uint32_t s = 1; s <= SAMPLES; ++s)
+        {
+            T const u = static_cast<T>(s) / static_cast<T>(SAMPLES);
+            T const v = T(1) - u;
+            T const b0 = v * v * v, b1 = T(3) * v * v * u, b2 = T(3) * v * u * u, b3 = u * u * u;
+            T const cx = b0 * x0 + b1 * x1 + b2 * x2 + b3 * x3;
+            T const cy = b0 * y0 + b1 * y1 + b2 * y2 + b3 * y3;
+            best = std::min(best, point_segment_distance(px, py, prev_x, prev_y, cx, cy));
+            prev_x = cx;
+            prev_y = cy;
+        }
+    }
+    return best;
+}
+
+template <typename T>
+int32_t World<T>::pick_shape(value_type x, value_type y, value_type tol) const
+{
+    T const t = tol > T(0) ? tol : T(0);
+    std::vector<int32_t> const candidates = query_visible(x - t, y - t, x + t, y + t);
+    int32_t best = -1;
+    T best_area = T(0);
+    for (int32_t const id : candidates)
+    {
+        ShapeRecord const & rec = m_shape_registry[static_cast<size_t>(id)];
+        if (rec.type == ShapeType::DEAD)
+        {
+            continue;
+        }
+        bbox_type const bb = compute_shape_bbox(rec);
+        bool const inside = x >= bb.min_x() && x <= bb.max_x() && y >= bb.min_y() && y <= bb.max_y();
+        if (!inside && shape_point_distance(rec, x, y) > t)
+        {
+            continue;
+        }
+        // Prefer the smallest box (inner shapes), ties to the newest shape.
+        T const area = (bb.max_x() - bb.min_x()) * (bb.max_y() - bb.min_y());
+        if (best == -1 || area < best_area || (area == best_area && id > best))
+        {
+            best = id;
+            best_area = area;
+        }
+    }
+    return best;
 }
 
 template <typename T>

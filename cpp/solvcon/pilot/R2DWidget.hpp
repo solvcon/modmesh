@@ -7,10 +7,12 @@
 
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
+#include <solvcon/buffer/small_vector.hpp>
 #include <solvcon/pilot/DrawTool.hpp>
 #include <solvcon/universe/ViewTransform2d.hpp>
 #include <solvcon/universe/World.hpp>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -36,6 +38,9 @@ class R2DWidget
 {
     Q_OBJECT
 
+    using coord2_type = small_vector<double, 2>;
+    using obb_array_type = small_vector<double, 8>;
+
 public:
 
     explicit R2DWidget(QWidget * parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
@@ -48,6 +53,14 @@ public:
 
     /// Select the active pointer tool by name
     void setDrawTool(std::string const & name);
+
+    /// Id of the shape selected with the pan tool, or -1 when none is
+    /// selected. Selection is cleared by switching tools or worlds.
+    int32_t selectedShape() const { return m_selected; }
+
+    /// Screen position [x, y] of the selection's rotate handle, or
+    /// [-1, -1] when nothing is selected. Exposed for tests and tooling.
+    coord2_type rotateHandleScreen() const;
 
     /// Replace the view state. Non-finite inputs are ignored and zoom
     /// is clamped to the widget's internal bounds, so the widget's
@@ -85,9 +98,36 @@ private:
     /// progress; a no-op for the pan tool or when no drag is underway.
     void paintDrawPreview(QPainter & painter) const;
 
+    /// Paint the selection box and rotate handle for the active selection;
+    /// a no-op unless the pan tool has a live shape selected.
+    void paintSelection(QPainter & painter) const;
+
+    /// Pick the shape under a screen point, or -1. Uses a pixel-sized world
+    /// tolerance so thin shapes (lines) stay selectable at any zoom.
+    int32_t pickShapeAt(QPointF const & screen_pos) const;
+
+    /// Screen position of the rotate handle for the current selection;
+    /// only meaningful while a live shape is selected.
+    QPointF rotateHandlePos() const;
+
+    /// World center of the selection's oriented bounding box -- the pivot a
+    /// rotate drag turns about. Only meaningful while a shape is selected.
+    coord2_type selectionCenterWorld() const;
+
+    /// True when `screen_pos` lands on the selection's rotate handle.
+    bool isOnRotateHandle(QPointF const & screen_pos) const;
+
+    /// Which gesture the current pan-tool left-drag performs.
+    enum class EditDrag
+    {
+        None, ///< no left-drag in progress
+        View, ///< panning the view
+        Move, ///< translating the selected shape
+        Rotate, ///< rotating the selected shape about a fixed pivot
+    };
+
     ViewTransform2dFp64 m_view;
     std::shared_ptr<WorldFp64> m_world;
-    bool m_panning = false;
     bool m_view_modified = false;
     QPointF m_last_mouse_pos;
 
@@ -97,6 +137,14 @@ private:
     double m_draw_start_y = 0.0;
     double m_draw_current_x = 0.0; ///< live pointer, world coordinates
     double m_draw_current_y = 0.0;
+
+    int32_t m_selected = -1; ///< pan-tool selected shape id, or -1
+    EditDrag m_drag = EditDrag::None; ///< active pan-tool left-drag gesture
+    double m_move_last_x = 0.0; ///< previous pointer, world coordinates (Move)
+    double m_move_last_y = 0.0;
+    double m_rotate_cx = 0.0; ///< rotation pivot, world coordinates (Rotate)
+    double m_rotate_cy = 0.0;
+    double m_rotate_last_angle = 0.0; ///< previous pointer angle about pivot
 
 }; /* end class R2DWidget */
 
