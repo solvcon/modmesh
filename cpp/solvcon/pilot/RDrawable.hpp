@@ -31,6 +31,8 @@ namespace solvcon
  * The device-owned resources are created lazily through prepare() once the
  * QRhi and the render target are known, and dropped through release() when
  * the device is lost or replaced.
+ *
+ * @ingroup group_domain
  */
 class RDrawable
 {

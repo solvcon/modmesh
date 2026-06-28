@@ -29,6 +29,8 @@ namespace solvcon
  * The widget drives the controller from mouse and key events, and Python
  * drives the same primitives (rotate / zoom / pan) and reads or sets the pose
  * directly, so the domain navigates the same way from code as from the mouse.
+ *
+ * @ingroup group_domain
  */
 class RCameraController
 {

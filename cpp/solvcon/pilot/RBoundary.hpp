@@ -23,6 +23,8 @@ namespace solvcon
  * Each boundary edge is widened into a flat quad (two triangles) lifted
  * slightly toward the viewer, because line width is clamped to one pixel in
  * the core profile. @ref ibc identifies which boundary set this draws.
+ *
+ * @ingroup group_domain
  */
 class RBoundary
     : public RDrawable

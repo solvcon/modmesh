@@ -23,6 +23,8 @@ namespace solvcon
  * transform. paint() draws geometry only; paint_canvas() adds the backdrop
  * and optional grid/axes/origin chrome.
  * m_world is non-owning and may be null.
+ *
+ * @ingroup group_domain
  */
 class RWorldRenderer2d
 {

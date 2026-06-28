@@ -34,6 +34,8 @@ namespace solvcon
  * and drives the render loop through initialize()/render(). The widget hosts
  * an RScene (the drawables, the domain bounding box, and the framing
  * camera) and drives it.
+ *
+ * @ingroup group_domain
  */
 class RDomainWidget
     : public QRhiWidget
