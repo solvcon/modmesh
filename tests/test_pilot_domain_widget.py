@@ -647,9 +647,9 @@ class RDomainWidgetManagerTC(unittest.TestCase):
     # Showing the main window with the QRhi primer through the MS WARP (Windows
     # Advanced Rasterization Platform) software rasterizer may fault the
     # headless Windows debug runner with an access violation.
-    @unittest.skipUnless(os.getenv('GITHUB_ACTIONS', False) or
-                         platform.system() != "Windows",
-                         "MS WARP may fault headless Windows debug CI run")
+    @unittest.skipIf(os.getenv('GITHUB_ACTIONS', False) and
+                     platform.system() == "Windows",
+                     "MS WARP may fault headless Windows debug CI run")
     def test_open_3d_keeps_native_window(self):
         """A 3D viewer opened after setUp reuses the primed native window.
 
