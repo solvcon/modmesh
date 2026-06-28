@@ -311,14 +311,14 @@ void RManager::setUpEditMenuItems() const
 {
     auto * undo_action = new RAction(
         QString("Undo"),
-        QString("Undo the last shape drawn on the focused 2D canvas"),
+        QString("Undo the last change on the focused 2D canvas"),
         [this]()
         { undoCanvas(); });
     undo_action->setShortcut(QKeySequence::Undo);
 
     auto * redo_action = new RAction(
         QString("Redo"),
-        QString("Redo the last undone shape on the focused 2D canvas"),
+        QString("Redo the last undone change on the focused 2D canvas"),
         [this]()
         { redoCanvas(); });
     redo_action->setShortcut(QKeySequence::Redo);

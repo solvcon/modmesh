@@ -113,8 +113,8 @@ void R2DWidget::setDrawTool(std::string const & name)
     // state changes so an invalid request leaves the current tool untouched.
     std::unique_ptr<DrawToolBase> tool = make_draw_tool(name);
     m_tool = std::move(tool);
-    // A tool switch abandons any in-progress drag without committing and
-    // drops the pan-tool selection.
+
+    finishEdit();
     m_drawing = false;
     m_selected = -1;
     m_drag = EditDrag::None;
@@ -132,6 +132,8 @@ void R2DWidget::setDrawTool(std::string const & name)
 
 void R2DWidget::updateWorld(std::shared_ptr<WorldFp64> const & world)
 {
+    // Close any edit gesture on the outgoing world before swapping it out.
+    finishEdit();
     m_world = world;
     // A new world invalidates any shape id we held selected.
     m_selected = -1;
@@ -265,6 +267,14 @@ bool R2DWidget::isOnRotateHandle(QPointF const & screen_pos) const
     return std::hypot(d.x(), d.y()) <= ROTATE_HANDLE_HIT_PX;
 }
 
+void R2DWidget::finishEdit()
+{
+    if (m_world && (m_drag == EditDrag::Move || m_drag == EditDrag::Rotate))
+    {
+        m_world->end_operation();
+    }
+}
+
 void R2DWidget::wheelEvent(QWheelEvent * event)
 {
     QPointF const pos = event->position();
@@ -308,6 +318,8 @@ void R2DWidget::mousePressEvent(QMouseEvent * event)
             double wx = 0.0, wy = 0.0;
             m_view.world_from_screen(pos.x(), pos.y(), wx, wy);
             m_rotate_last_angle = std::atan2(wy - m_rotate_cy, wx - m_rotate_cx);
+            // Bracket the rotate gesture so its incremental steps undo as one.
+            m_world->begin_operation();
             m_drag = EditDrag::Rotate;
             event->accept();
             return;
@@ -317,6 +329,8 @@ void R2DWidget::mousePressEvent(QMouseEvent * event)
         {
             m_selected = hit;
             m_view.world_from_screen(pos.x(), pos.y(), m_move_last_x, m_move_last_y);
+            // Bracket the move gesture so its incremental steps undo as one.
+            m_world->begin_operation();
             m_drag = EditDrag::Move;
             setCursor(Qt::SizeAllCursor);
             update();
@@ -409,6 +423,8 @@ void R2DWidget::mouseReleaseEvent(QMouseEvent * event)
     }
     if (event->button() == Qt::LeftButton && m_drag != EditDrag::None)
     {
+        // A move or rotate gesture ends here; commit it as one undo step.
+        finishEdit();
         m_drag = EditDrag::None;
         unsetCursor();
         update();

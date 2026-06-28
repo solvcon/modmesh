@@ -410,6 +410,40 @@ class WorldUndoRedoTC(unittest.TestCase):
         self.assertFalse(self.w.can_redo)
 
 
+class WorldUndoRedoEditsTC(unittest.TestCase):
+    """Undo and redo of edits beyond creation: a go-through that move, rotate,
+    delete, and compound (drag) gestures undo and redo without raising."""
+
+    def setUp(self):
+        self.w = solvcon.WorldFp64()
+
+    def test_edits_undo_redo_run_through(self):
+        a = self.w.add_rectangle(-2, -1, 2, 1)
+        b = self.w.add_circle(5, 5, 1)
+        self.w.translate_shape(a, 3, 0)
+        self.w.rotate_shape(a, math.pi / 2, 0, 0)
+        self.w.remove_shape(b)
+        self.assertEqual(self.w.nshape, 1)
+        # A drag's many incremental moves collapse into one undo step: the
+        # single undo below reverts both translates yet keeps the shape.
+        self.w.begin_operation()
+        self.w.translate_shape(a, 1, 0)
+        self.w.translate_shape(a, 1, 0)
+        self.w.end_operation()
+        moved_x0 = self.w.segment(0).x0
+        self.w.undo()
+        self.assertNotAlmostEqual(self.w.segment(0).x0, moved_x0)
+        self.assertEqual(self.w.nshape, 1)
+        # Unwind every remaining change, then replay them all.
+        while self.w.can_undo:
+            self.w.undo()
+        self.assertEqual(self.w.nshape, 0)
+        while self.w.can_redo:
+            self.w.redo()
+        self.assertEqual(self.w.nshape, 1)
+        self.assertEqual(self.w.shape_type_of(a), "rectangle")
+
+
 class WorldViewportTC(unittest.TestCase):
     """R-tree spatial index and viewport query."""
 
