@@ -6,7 +6,8 @@
  */
 
 /**
- * @file Polygons and their containers in 2 and 3 dimensional spaces.
+ * @file
+ * Polygons and their containers in 2 and 3 dimensional spaces.
  */
 
 #include <solvcon/base.hpp>

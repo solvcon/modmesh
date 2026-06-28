@@ -1,23 +1,46 @@
-# Minimal Doxygen config for the solvcon C++ API.
+# Doxygen config for the solvcon C++ API.
 #
 # Emits XML only -- breathe consumes the XML and Sphinx renders it.  HTML
 # and LaTeX output are disabled so Sphinx remains the single front end.
 
 PROJECT_NAME      = solvcon
 OUTPUT_DIRECTORY  = build/doxygen
-INPUT             = ../cpp/solvcon
-FILE_PATTERNS     = *.hpp *.cpp
+XML_OUTPUT        = xml
+
+# Document the declaration in the header and drop implementation files, so a
+# symbol is not parsed twice (which makes breathe report "multiple matches").
+# groups.dox carries the @defgroup definitions for the topic groups.
+INPUT             = ../cpp/solvcon groups.dox
+FILE_PATTERNS     = *.hpp *.dox
 RECURSIVE         = YES
+
+# Keep the reference on the live public surface: the deprecated CESE tree,
+# the pybind translation units, and generated Qt files are not documented.
+EXCLUDE_PATTERNS  = */pymod/* */spacetime/* */moc_* */qrc_* *_moc.cpp
+EXCLUDE_SYMBOLS   = detail
 
 GENERATE_HTML     = NO
 GENERATE_LATEX    = NO
 GENERATE_XML      = YES
-XML_OUTPUT        = xml
+XML_PROGRAMLISTING = NO
 
 # Document declarations even where an explicit comment is missing, and read
 # the first comment sentence as the brief description.
 EXTRACT_ALL       = YES
 JAVADOC_AUTOBRIEF = YES
 QUIET             = YES
+
+# Neutralize binding and Qt macros so they do not leak into signatures or
+# emit spurious "not documented" warnings.
+ENABLE_PREPROCESSING = YES
+MACRO_EXPANSION      = YES
+EXPAND_ONLY_PREDEF   = YES
+PREDEFINED           = "PYBIND11_EXPORT=" \
+                       "Q_OBJECT=" \
+                       "Q_PROPERTY(x)=" \
+                       "Q_INVOKABLE=" \
+                       "Q_SIGNALS=signals" \
+                       "Q_SLOTS=slots" \
+                       "MM_DECL_SERIALIZABLE(x)="
 
 # vim: set ft=conf ff=unix fenc=utf8 et sw=2 ts=2 sts=2 tw=79:

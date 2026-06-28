@@ -18,8 +18,7 @@ class OasisRecordPoly;
 class OasisRecordRect;
 
 /**
- * \class OasisDevice
- * \brief OASIS device converts coordinates information to OASIS format.
+ * OASIS device converts coordinates information to OASIS format.
  *
  * OasisDevice class store rectangles or polygons as OASIS format,
  * the implementation based on OASIS specification, convert coordinates
@@ -59,8 +58,7 @@ private:
 }; /* end class OasisDevice */
 
 /**
- * \class PolyRecord
- * \brief Convert Rect information to OASIS polygon record bytes.
+ * Convert vertex information to OASIS polygon record bytes.
  */
 class OasisRecordPoly
 {
@@ -82,8 +80,7 @@ private:
 }; /* end class OasisRecordPoly */
 
 /**
- * \class RectRecord
- * \brief Convert Rect information to OASIS rectangle record bytes.
+ * Convert rectangle information to OASIS rectangle record bytes.
  */
 class OasisRecordRect
 {

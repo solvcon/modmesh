@@ -27,9 +27,11 @@ enum class EulerBC : uint8_t
     Inlet = 2,
 }; /* end enum class EulerBC */
 
-// One registered boundary condition: a handler kind over a set of boundary
-// faces (global face indices).  value carries the Inlet free stream as
-// [rho, v(ndim), p, gamma] and is unused by the other kinds.
+/**
+ * One registered boundary condition: a handler kind over a set of boundary
+ * faces (global face indices). value carries the Inlet free stream as
+ * [rho, v(ndim), p, gamma] and is unused by the other kinds.
+ */
 struct EulerBoundary
 {
     EulerBC kind = EulerBC::NonReflective;

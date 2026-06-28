@@ -35,6 +35,8 @@ namespace solvcon
  *
  * Resource updates happen in update() before the render pass begins; the
  * draw calls happen in draw() inside the pass.
+ *
+ * @ingroup group_domain
  */
 class RAxisGizmo
 {

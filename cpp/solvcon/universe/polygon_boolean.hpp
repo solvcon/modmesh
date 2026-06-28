@@ -6,7 +6,8 @@
  */
 
 /**
- * @file Boolean operations on polygons using trapezoidal decomposition.
+ * @file
+ * Boolean operations on polygons using trapezoidal decomposition.
  *
  * Provides BooleanDecompositionHelper, a helper class that implements the
  * sweep-line algorithm for polygon boolean operations (union, intersection,

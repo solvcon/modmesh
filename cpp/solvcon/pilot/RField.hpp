@@ -23,6 +23,8 @@ namespace solvcon
  * [0, 1] range, and a triangle index table (ntri, 3). The colors are uploaded
  * interleaved with the positions and read by the per-vertex-color material,
  * so the field is swappable at runtime by replacing the drawable.
+ *
+ * @ingroup group_domain
  */
 class RField
     : public RDrawable

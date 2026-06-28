@@ -22,6 +22,8 @@ namespace solvcon
  * Edges come from the mesh edge list (StaticMesh::ednds); the node
  * coordinates feed a line-topology vertex buffer. Works for both 2D meshes
  * (drawn in the z = 0 plane) and 3D meshes.
+ *
+ * @ingroup group_domain
  */
 class RMeshFrame
     : public RDrawable

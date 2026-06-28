@@ -32,6 +32,8 @@ namespace solvcon
  * projection for 3D ones, and frames the camera onto the box. RDomainWidget
  * holds one scene and drives it; the scene itself is free of Qt widget and
  * device-loop concerns.
+ *
+ * @ingroup group_domain
  */
 class RScene
 {

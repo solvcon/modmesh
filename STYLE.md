@@ -425,9 +425,45 @@ Further conventions:
 
 ### C++ Comment
 
-The general comment rules above apply to C++. Comment blocks follow [the
-doxygen style guidelines](https://www.doxygen.nl/manual/docblocks.html) if
-convenient.
+C++ interface comments are [Doxygen](https://www.doxygen.nl/manual/docblocks.html)
+blocks. The general comment rules above still apply (full sentences,
+capitalized, closing period, ASCII only; state units, coordinate conventions,
+index base, array shape and contiguity, and a literature or equation citation
+with URL for any formula). Doxygen output is XML only, consumed by breathe and
+rendered by Sphinx (see `doc/Doxyfile` and `doc/source/api/cpp.md`).
+
+- **Markers.** Use `/** ... */` for any block of two or more lines, `///` for a
+  one-line brief on a declaration, and `///<` for a trailing comment on a
+  member or enumerator. Do not use `/*!`, `//!`, or a plain `//` or `/* */`
+  comment for interface documentation that must appear in the reference.
+- **Commands.** Always use the at-sign form (`@brief`, `@param`, `@file`).
+  Backslash commands are not allowed.
+- **Brief.** `JAVADOC_AUTOBRIEF` is on, so the first sentence is the brief.
+  Open each block with one capitalized sentence ending in a period. Add an
+  explicit `@brief` only when the brief spans multiple lines or its first
+  sentence contains an abbreviation or version number that would truncate it.
+- **Required tags.** Every header carries an `@file` block (bare `@file`,
+  description on the next line) with one `@ingroup` for its architectural
+  group. Every public class, struct, enum, and function has a brief; template
+  parameters use `@tparam`; value-returning functions use `@return` (not
+  `@returns`). Document each parameter with `@param`; use directional
+  `@param[in]`, `@param[out]`, or `@param[in,out]` only when an output
+  parameter is present, and then on every parameter of that function. Members
+  and enumerators carry a `///<` brief when their meaning, units, or sentinel
+  value is not obvious.
+- **Placement.** The doc block lives on the declaration in the header, never
+  duplicated on the `.cpp` definition. Implementation notes inside a `.cpp`
+  body stay plain `//`, or use `@internal` to keep them out of the public
+  reference.
+- **Grouping.** Coarse topic groups are defined once in `doc/groups.dox` with
+  `@defgroup`; tag types with one `@ingroup`. Inside a large class, group
+  related members with `@name` and `///@{ ... ///@}`. Keep grouping shallow.
+- **Markdown.** Doxygen Markdown is on, but the comment is parsed by Doxygen
+  and serialized to XML; Sphinx and MyST never see the raw text. Use `-` (not
+  `*`) for bullet lists, because leading-asterisk stripping breaks `*` bullets.
+  Use double backticks around inline code that contains a single quote. Prefer
+  `@ref Name` over a bare Markdown link for an internal cross-reference so the
+  breathe resolver can link it.
 
 ### Python Comment
 

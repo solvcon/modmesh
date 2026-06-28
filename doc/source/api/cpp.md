@@ -3,57 +3,73 @@
 C++ API documentation written in Doxygen format in the C++ source code, bridged
 by [breathe](https://www.breathe-doc.org/).
 
-## Array and memory buffer
+## Core and memory
 
 ```{eval-rst}
-.. doxygenclass:: solvcon::ConcreteBuffer
+.. doxygengroup:: group_core
    :project: solvcon
-   :members:
+   :content-only:
 ```
 
-## Pilot domain viewer
+## Mesh
 
-The pilot's 3D viewer (see {doc}`../pilot/domain`) renders through
+```{eval-rst}
+.. doxygengroup:: group_mesh
+   :project: solvcon
+   :content-only:
+```
+
+## Numerics
+
+```{eval-rst}
+.. doxygengroup:: group_linalg
+   :project: solvcon
+   :content-only:
+```
+
+## Geometry
+
+```{eval-rst}
+.. doxygengroup:: group_universe
+   :project: solvcon
+   :content-only:
+```
+
+## One-dimensional solvers
+
+```{eval-rst}
+.. doxygengroup:: group_onedim
+   :project: solvcon
+   :content-only:
+```
+
+## Multi-dimensional solvers
+
+```{eval-rst}
+.. doxygengroup:: group_multidim
+   :project: solvcon
+   :content-only:
+```
+
+## Input and output
+
+```{eval-rst}
+.. doxygengroup:: group_inout
+   :project: solvcon
+   :content-only:
+```
+
+## Domain visualizer
+
+The 2/3D visualizer (see {doc}`../pilot/domain`) renders through
 [QRhi](https://doc.qt.io/qt-6/qrhi.html), Qt's portable graphics abstraction.
 
 {cpp:class}`solvcon::RDomainWidget` is the Python-facing control object.
 
 ```{eval-rst}
-.. doxygenclass:: solvcon::RDomainWidget
+.. doxygengroup:: group_domain
    :project: solvcon
-   :members:
-
-.. doxygenclass:: solvcon::RScene
-   :project: solvcon
-   :members:
-
-.. doxygenclass:: solvcon::RCameraController
-   :project: solvcon
-   :members:
-
-.. doxygenclass:: solvcon::RDrawable
-   :project: solvcon
-   :members:
-
-.. doxygenclass:: solvcon::RMeshFrame
-   :project: solvcon
-   :members:
-
-.. doxygenclass:: solvcon::RField
-   :project: solvcon
-   :members:
-
-.. doxygenclass:: solvcon::RBoundary
-   :project: solvcon
-   :members:
-
-.. doxygenclass:: solvcon::RAxisGizmo
-   :project: solvcon
-   :members:
-
-.. doxygenclass:: solvcon::RMaterial
-   :project: solvcon
-   :members:
+   :content-only:
 ```
 
 ## Notes on generating this C++ API document

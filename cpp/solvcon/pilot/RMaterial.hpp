@@ -21,6 +21,8 @@ namespace solvcon
  * The shader sources live next to this file under shaders/ and are baked to
  * .qsb by the qsb tool at build time (see cpp/solvcon/CMakeLists.txt). They
  * are embedded in the Qt resource system and loaded by resource path.
+ *
+ * @ingroup group_domain
  */
 class RMaterial
 {
