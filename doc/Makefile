@@ -28,7 +28,7 @@ doxygen:
 	mkdir -p "$(BUILDDIR)/doxygen"
 	doxygen Doxyfile
 
-html:
+html: doxygen
 ifdef FORCE_BUILD
 	rm -rf "$(BUILDDIR)/html"
 endif

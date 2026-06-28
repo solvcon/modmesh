@@ -74,6 +74,9 @@ intersphinx_mapping = {
 breathe_projects = {"solvcon": "../build/doxygen/xml"}
 breathe_default_project = "solvcon"
 
+# Render members by default so directives need not repeat ``:members:``.
+breathe_default_members = ("members",)
+
 # -- sphinxcontrib.bibtex ---------------------------------------------------
 
 bibtex_bibfiles = ["reference.bib"]

@@ -1,0 +1,48 @@
+/**
+ * @file
+ * Topic-group definitions for the solvcon C++ API reference.
+ *
+ * Each @defgroup is declared once here; source headers join a group with a
+ * single @ingroup tag (or an @addtogroup block). doc/source/api/cpp.md renders
+ * one doxygengroup directive per group, so a newly tagged type appears in the
+ * reference without editing the page.
+ */
+
+/** @defgroup group_core Core and memory
+ *  Value-type bases, the string formatter, serialization, raw memory and the
+ *  typed multi-dimensional arrays (ConcreteBuffer, SimpleArray, small_vector),
+ *  the feature toggle, SIMD, and device compute.
+ */
+
+/** @defgroup group_mesh Mesh
+ *  Unstructured meshes with mixed element types (StaticMesh) and the static
+ *  grids (grid.hpp).
+ */
+
+/** @defgroup group_linalg Numerics
+ *  BLAS and LAPACK wrappers, dense factorizations, complex numbers, and
+ *  integral transforms.
+ */
+
+/** @defgroup group_universe Geometry
+ *  Three-dimensional geometry primitives and spatial indices.
+ */
+
+/** @defgroup group_onedim One-dimensional solvers
+ *  One-dimensional CESE solvers demonstrating the method.
+ */
+
+/** @defgroup group_multidim Multi-dimensional solvers
+ *  Multi-dimensional CESE conservation-law solvers and boundary conditions.
+ */
+
+/** @defgroup group_inout Input and output
+ *  Mesh and field readers and writers (Gmsh, Plot3d) and device-format
+ *  output (OASIS).
+ */
+
+/** @defgroup group_domain Domain visualizer
+ *  Qt-based GUI for spatial data visualization.
+ */
+
+/* vim: set ft=c ff=unix fenc=utf8 et sw=4 ts=4 sts=4 tw=79: */
