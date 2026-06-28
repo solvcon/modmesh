@@ -11,13 +11,11 @@ namespace solvcon
 namespace python
 {
 
-void wrap_SimpleArray(pybind11::module & mod)
+void wrap_SimpleArray_bool(pybind11::module & mod)
 {
-    wrap_SimpleArray_bool(mod);
-    wrap_SimpleArray_int(mod);
-    wrap_SimpleArray_uint(mod);
-    wrap_SimpleArray_float(mod);
-    wrap_SimpleArray_complex(mod);
+    WrapSimpleArray<bool>::commit(mod, "SimpleArrayBool", "SimpleArrayBool");
+
+    WrapSimpleCollector<bool>::commit(mod, "SimpleCollectorBool", "SimpleCollectorBool");
 }
 
 } /* end namespace python */
