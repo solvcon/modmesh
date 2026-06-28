@@ -22,14 +22,24 @@ set(SOLVCON_BUFFER_SOURCES
 set(SOLVCON_BUFFER_PYMODHEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/array_common.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/buffer_pymod.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_SimpleArray.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/TypeBroadcast.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/SimpleArrayCaster.hpp
     CACHE FILEPATH "" FORCE)
 
+# The SimpleArray and SimpleCollector wrappers are instantiated for every
+# dtype. Splitting the instantiations into per-dtype-family units lets the
+# heavy pybind11 template work compile in parallel instead of serially in a
+# single translation unit.
 set(SOLVCON_BUFFER_PYMODSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/buffer_pymod.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_ConcreteBuffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_SimpleArray.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_SimpleArray_bool.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_SimpleArray_int.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_SimpleArray_uint.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_SimpleArray_float.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_SimpleArray_complex.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pymod/wrap_SimpleArrayPlex.cpp
     CACHE FILEPATH "" FORCE)
 

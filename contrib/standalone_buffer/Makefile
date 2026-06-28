@@ -39,6 +39,21 @@ $(SETUPROOT)/wrap_ConcreteBuffer.o: $(SETUPROOT)/solvcon/buffer/pymod/wrap_Concr
 $(SETUPROOT)/wrap_SimpleArray.o: $(SETUPROOT)/solvcon/buffer/pymod/wrap_SimpleArray.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
+$(SETUPROOT)/wrap_SimpleArray_bool.o: $(SETUPROOT)/solvcon/buffer/pymod/wrap_SimpleArray_bool.cpp Makefile
+	c++ $(CFLAGS) -c $< -o $@
+
+$(SETUPROOT)/wrap_SimpleArray_int.o: $(SETUPROOT)/solvcon/buffer/pymod/wrap_SimpleArray_int.cpp Makefile
+	c++ $(CFLAGS) -c $< -o $@
+
+$(SETUPROOT)/wrap_SimpleArray_uint.o: $(SETUPROOT)/solvcon/buffer/pymod/wrap_SimpleArray_uint.cpp Makefile
+	c++ $(CFLAGS) -c $< -o $@
+
+$(SETUPROOT)/wrap_SimpleArray_float.o: $(SETUPROOT)/solvcon/buffer/pymod/wrap_SimpleArray_float.cpp Makefile
+	c++ $(CFLAGS) -c $< -o $@
+
+$(SETUPROOT)/wrap_SimpleArray_complex.o: $(SETUPROOT)/solvcon/buffer/pymod/wrap_SimpleArray_complex.cpp Makefile
+	c++ $(CFLAGS) -c $< -o $@
+
 $(SETUPROOT)/wrap_SimpleArrayPlex.o: $(SETUPROOT)/solvcon/buffer/pymod/wrap_SimpleArrayPlex.cpp Makefile
 	c++ $(CFLAGS) -c $< -o $@
 
@@ -69,6 +84,11 @@ OBJS = \
 	$(SETUPROOT)/blas_compat.o \
 	$(SETUPROOT)/wrap_ConcreteBuffer.o \
 	$(SETUPROOT)/wrap_SimpleArray.o \
+	$(SETUPROOT)/wrap_SimpleArray_bool.o \
+	$(SETUPROOT)/wrap_SimpleArray_int.o \
+	$(SETUPROOT)/wrap_SimpleArray_uint.o \
+	$(SETUPROOT)/wrap_SimpleArray_float.o \
+	$(SETUPROOT)/wrap_SimpleArray_complex.o \
 	$(SETUPROOT)/wrap_SimpleArrayPlex.o \
 	$(SETUPROOT)/buffer_pymod.o \
 	$(SETUPROOT)/simd_support.o \
