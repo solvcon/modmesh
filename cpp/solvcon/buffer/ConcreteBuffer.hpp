@@ -161,9 +161,9 @@ public:
     }
 
     /**
-     * \param[in] nbytes
+     * @param[in] nbytes
      *      Size of the memory buffer in bytes.
-     * \param[in] alignment
+     * @param[in] alignment
      *      Alignment for the memory buffer in bytes.
      *      0 means no alignment. Valid values are 0, 16, 32, or 64.
      */
@@ -178,14 +178,14 @@ public:
     }
 
     /**
-     * \param[in] nbytes
+     * @param[in] nbytes
      *      Size of the memory buffer in bytes.
-     * \param[in] data
+     * @param[in] data
      *      Pointer to the memory buffer that is not supposed to be owned by
      *      this ConcreteBuffer.
-     * \param[in] remover
+     * @param[in] remover
      *      The memory deallocator for the unowned data buffer passed in.
-     * \param[in] alignment
+     * @param[in] alignment
      *      Alignment for the memory buffer in bytes.
      *      0 means no alignment. Valid values are 0, 16, 32, or 64.
      */
@@ -288,4 +288,4 @@ private:
 
 } /* end namespace solvcon */
 
-/* vim: set et ts=4 sw=4: */
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

@@ -106,7 +106,7 @@ using sshape_type = small_vector<ssize_t>;
 using slice_type = small_vector<ssize_t>;
 
 /**
- * \brief Enumerate SimpleArray indices with nghost included.
+ * @brief Enumerate SimpleArray indices with nghost included.
  *
  * The first dimension starts at -nghost, while the other dimensions start
  * at 0. For example, an array with shape [4, 3, 2] and nghost = 1 is

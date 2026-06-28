@@ -6,8 +6,9 @@
  */
 
 /**
- * \file This is a template library for the meshes for numerical calculations
- * of partial differential equations.
+ * @file
+ * This is a template library for the meshes for numerical calculations of
+ * partial differential equations.
  */
 
 #include <solvcon/base.hpp>

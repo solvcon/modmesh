@@ -6,7 +6,8 @@
  */
 
 /**
- * @file Points and line segments and their containers in 2 and 3 dimensional
+ * @file
+ * Points and line segments and their containers in 2 and 3 dimensional
  * spaces.
  */
 

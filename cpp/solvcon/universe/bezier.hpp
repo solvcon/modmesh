@@ -6,7 +6,8 @@
  */
 
 /**
- * @file Bezier curve and its container.
+ * @file
+ * Bezier curve and its container.
  */
 
 #include <solvcon/base.hpp>
