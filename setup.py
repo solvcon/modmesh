@@ -70,6 +70,7 @@ def main():
             'solvcon.multidim.euler',
             'solvcon.onedim',
             'solvcon.pilot',
+            'solvcon.pilot.agentdraw',
             'solvcon.pilot.airfoil',
             'solvcon.plot',
             'solvcon.profiling',
