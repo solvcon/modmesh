@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Base class for a renderable object in the pilot domain scene.
+ *
+ * @ingroup group_domain
+ */
+
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
 #include <solvcon/pilot/RMaterial.hpp>

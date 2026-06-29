@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Renders the unstructured-mesh domain as a wireframe drawable.
+ *
+ * @ingroup group_domain
+ */
+
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
 #include <solvcon/pilot/RDrawable.hpp>

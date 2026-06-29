@@ -9,23 +9,23 @@
  */
 
 /** @defgroup group_core Core and memory
- *  Value-type bases, the string formatter, serialization, raw memory and the
- *  typed multi-dimensional arrays (ConcreteBuffer, SimpleArray, small_vector),
- *  the feature toggle, SIMD, and device compute.
+ *  Value-type bases, complex numbers and fundamental mathematical helpers, the
+ *  string formatter, serialization, raw memory and the typed multi-dimensional
+ *  arrays (ConcreteBuffer, SimpleArray, small_vector), the feature toggle,
+ *  SIMD, and device compute.
+ */
+
+/** @defgroup group_numerics Numerics
+ *  BLAS and LAPACK wrappers, dense factorizations, and integral transforms.
+ */
+
+/** @defgroup group_geometry Geometry
+ *  Three-dimensional geometry primitives and spatial indices.
  */
 
 /** @defgroup group_mesh Mesh
  *  Unstructured meshes with mixed element types (StaticMesh) and the static
  *  grids (grid.hpp).
- */
-
-/** @defgroup group_linalg Numerics
- *  BLAS and LAPACK wrappers, dense factorizations, complex numbers, and
- *  integral transforms.
- */
-
-/** @defgroup group_universe Geometry
- *  Three-dimensional geometry primitives and spatial indices.
  */
 
 /** @defgroup group_onedim One-dimensional solvers
@@ -41,8 +41,12 @@
  *  output (OASIS).
  */
 
+/** @defgroup group_canvas 2D graphical editor
+ *  Qt-based GUI for creating 2D graphics.
+ */
+
 /** @defgroup group_domain Domain visualizer
- *  Qt-based GUI for spatial data visualization.
+ *  Qt-based GUI for spatial data analysis.
  */
 
 /* vim: set ft=c ff=unix fenc=utf8 et sw=4 ts=4 sts=4 tw=79: */

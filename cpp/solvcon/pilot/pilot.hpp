@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Umbrella header that aggregates the pilot GUI component headers.
+ *
+ * @ingroup group_domain
+ */
+
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
 #include <solvcon/pilot/RDomainWidget.hpp>

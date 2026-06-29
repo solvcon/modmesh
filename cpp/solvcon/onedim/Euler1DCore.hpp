@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * One-dimensional Euler equation solver core using the CESE method.
+ *
+ * @ingroup group_onedim
+ */
+
 #include <solvcon/onedim/core.hpp>
 #include <solvcon/base.hpp>
 #include <solvcon/math/math.hpp>
@@ -18,6 +25,17 @@ namespace solvcon
 namespace onedim
 {
 
+/**
+ * One-dimensional Euler solver core using the CESE method.
+ *
+ * @ingroup group_onedim
+ *
+ * It holds the NVAR (3) conserved variables (density, momentum, and
+ * total energy) in the so0 array of shape (ncoord, NVAR) and their
+ * spatial derivatives in so1, and marches them in space-time. Accessors
+ * derive density, velocity, pressure, temperature, internal energy, and
+ * entropy from the conserved variables.
+ */
 class Euler1DCore
     : public std::enable_shared_from_this<Euler1DCore>
 {
@@ -149,6 +167,16 @@ inline double Euler1DCore::internal_energy(size_t it) const
     return ret;
 }
 
+/**
+ * Per-element computation kernel for the one-dimensional Euler solver.
+ *
+ * @ingroup group_onedim
+ *
+ * It caches one solution element state (the conserved variables u, their
+ * spatial derivative ux, and the local geometry) and derives the
+ * Jacobian, flux, and space-time derivatives used to integrate the
+ * conservation element flux.
+ */
 struct Euler1DKernel
 {
     static constexpr double tiny = 1.e-100;

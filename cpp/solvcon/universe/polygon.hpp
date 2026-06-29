@@ -8,6 +8,8 @@
 /**
  * @file
  * Polygons and their containers in 2 and 3 dimensional spaces.
+ *
+ * @ingroup group_geometry
  */
 
 #include <solvcon/base.hpp>
@@ -62,7 +64,11 @@ union Trapezoid3dData
 /**
  * Trapezoid in three-dimensional space.
  *
+ * Stores the four corner points (p0, p1, p2, p3) as twelve scalar
+ * coordinates in a flat buffer.
+ *
  * @tparam T floating-point type
+ * @ingroup group_geometry
  */
 template <typename T>
 class Trapezoid3d
@@ -271,6 +277,16 @@ private:
 using Trapezoid3dFp32 = Trapezoid3d<float>;
 using Trapezoid3dFp64 = Trapezoid3d<double>;
 
+/**
+ * Container for many trapezoids stored as four parallel point columns.
+ *
+ * The four corner points (p0, p1, p2, p3) of every trapezoid are kept in four
+ * separate PointPad instances, so trapezoid i is read by gathering element i
+ * from each column. The pad works for both 2 and 3 dimensional points.
+ *
+ * @tparam T floating-point type
+ * @ingroup group_geometry
+ */
 template <typename T>
 class TrapezoidPad
     : public NumberBase<int32_t, T>
@@ -913,6 +929,7 @@ class PolygonPad;
  * trapezoids. The decomposition is used for polygon boolean operations.
  *
  * @tparam T floating-point type
+ * @ingroup group_geometry
  */
 template <typename T>
 class TrapezoidalDecomposer
@@ -1170,6 +1187,7 @@ std::pair<size_t, size_t> TrapezoidalDecomposer<T>::decompose(size_t polygon_id,
  * into trapezoids and merging overlapping regions.
  *
  * @tparam T floating-point type
+ * @ingroup group_geometry
  */
 template <typename T>
 class AreaBooleanUnion
@@ -1209,6 +1227,7 @@ using AreaBooleanUnionFp64 = AreaBooleanUnion<double>;
  * into trapezoids and finding overlapping regions.
  *
  * @tparam T floating-point type
+ * @ingroup group_geometry
  */
 template <typename T>
 class AreaBooleanIntersection
@@ -1248,6 +1267,7 @@ using AreaBooleanIntersectionFp64 = AreaBooleanIntersection<double>;
  * them into trapezoids and removing overlapping regions.
  *
  * @tparam T floating-point type
+ * @ingroup group_geometry
  */
 template <typename T>
 class AreaBooleanDifference
@@ -1285,7 +1305,11 @@ using AreaBooleanDifferenceFp64 = AreaBooleanDifference<double>;
 /**
  * Triangle in three-dimensional space.
  *
+ * Stores the three corner points (p0, p1, p2) as nine scalar coordinates in a
+ * flat buffer.
+ *
  * @tparam T floating-point type
+ * @ingroup group_geometry
  */
 template <typename T>
 class Triangle3d
@@ -1475,7 +1499,16 @@ private:
 using Triangle3dFp32 = Triangle3d<float>;
 using Triangle3dFp64 = Triangle3d<double>;
 
-/// TrianglePad class for storing multiple Triangle3d objects
+/**
+ * Container for many triangles stored as three parallel point columns.
+ *
+ * The three corner points (p0, p1, p2) of every triangle are kept in three
+ * separate PointPad instances, so triangle i is read by gathering element i
+ * from each column. The pad works for both 2 and 3 dimensional points.
+ *
+ * @tparam T floating-point type
+ * @ingroup group_geometry
+ */
 template <typename T>
 class TrianglePad
     : public NumberBase<int32_t, T>
@@ -2025,6 +2058,7 @@ using TrianglePadFp64 = TrianglePad<double>;
  * The handle uses polygon_id as public API, with internal offset/count for efficient access.
  *
  * @tparam T floating-point type
+ * @ingroup group_geometry
  */
 template <typename T>
 class Polygon3d
@@ -2164,6 +2198,7 @@ private:
  * Reference: http://www0.cs.ucl.ac.uk/staff/m.slater/Teaching/CG/1997-98/Solutions/Trap/
  *
  * @tparam T floating-point type
+ * @ingroup group_geometry
  */
 template <typename T>
 class PolygonPad
@@ -2429,6 +2464,15 @@ using PolygonPadFp64 = PolygonPad<double>;
 using Polygon3dFp32 = Polygon3d<float>;
 using Polygon3dFp64 = Polygon3d<double>;
 
+/**
+ * RTreeValueOps specialization that bounds Segment3d items with BoundBox3d.
+ *
+ * Teaches the RTree how to compute the axis-aligned bounding box of a single
+ * segment and of a group of segments, used when indexing polygon edges.
+ *
+ * @tparam T floating-point type
+ * @ingroup group_geometry
+ */
 template <typename T>
 struct RTreeValueOps<Segment3d<T>, BoundBox3d<T>>
 {

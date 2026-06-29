@@ -1,5 +1,12 @@
 #pragma once
 
+/**
+ * @file
+ * Reader for Gmsh MSH text mesh files and the element-type table it uses.
+ *
+ * @ingroup group_inout
+ */
+
 #include <string>
 #include <sstream>
 #include <vector>
@@ -15,6 +22,18 @@ namespace solvcon
 {
 namespace inout
 {
+
+/**
+ * Definition of one Gmsh element type mapped to the solvcon mesh
+ * representation.
+ *
+ * It carries the spatial dimension, the node count, the solvcon cell type
+ * number, and the node ordering (mmcl) that rearranges Gmsh nodes into the
+ * solvcon cell order. by_id() returns the definition for a given Gmsh element
+ * type id.
+ *
+ * @ingroup group_inout
+ */
 struct GmshElementDef
 {
     static GmshElementDef by_id(uint16_t id);
@@ -47,6 +66,17 @@ private:
     small_vector<uint8_t> m_mmcl; /* solvcon cell order  */
 }; /* end struct GmshElementDef */
 
+/**
+ * Reader that parses a Gmsh MSH text mesh into a solvcon StaticMesh.
+ *
+ * Only the ASCII MSH format version 2.2 is supported. Construct it with the
+ * file contents as a string, then call to_block() to build the mesh. A finite
+ * state machine walks the MeshFormat, PhysicalNames, Nodes, and Elements
+ * sections in order. Node and element indices are converted from the Gmsh
+ * 1-based numbering to the solvcon 0-based numbering.
+ *
+ * @ingroup group_inout
+ */
 class Gmsh
     : public NumberBase<int32_t, double>
 {

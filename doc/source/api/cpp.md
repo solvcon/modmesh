@@ -11,18 +11,10 @@ by [breathe](https://www.breathe-doc.org/).
    :content-only:
 ```
 
-## Mesh
-
-```{eval-rst}
-.. doxygengroup:: group_mesh
-   :project: solvcon
-   :content-only:
-```
-
 ## Numerics
 
 ```{eval-rst}
-.. doxygengroup:: group_linalg
+.. doxygengroup:: group_numerics
    :project: solvcon
    :content-only:
 ```
@@ -30,7 +22,15 @@ by [breathe](https://www.breathe-doc.org/).
 ## Geometry
 
 ```{eval-rst}
-.. doxygengroup:: group_universe
+.. doxygengroup:: group_geometry
+   :project: solvcon
+   :content-only:
+```
+
+## Mesh
+
+```{eval-rst}
+.. doxygengroup:: group_mesh
    :project: solvcon
    :content-only:
 ```
@@ -55,6 +55,14 @@ by [breathe](https://www.breathe-doc.org/).
 
 ```{eval-rst}
 .. doxygengroup:: group_inout
+   :project: solvcon
+   :content-only:
+```
+
+## Graphical editor
+
+```{eval-rst}
+.. doxygengroup:: group_canvas
    :project: solvcon
    :content-only:
 ```

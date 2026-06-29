@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Radix tree container and the hierarchical call profiler built on it.
+ *
+ * @ingroup group_core
+ */
+
 #include <algorithm>
 #include <chrono>
 #include <vector>
@@ -21,6 +28,14 @@
 
 namespace solvcon
 {
+/**
+ * A node in a RadixTree.
+ *
+ * Each node owns a signed integer key, a name, a value of type T,
+ * a list of owned child nodes, and a back pointer to its parent.
+ *
+ * @ingroup group_core
+ */
 template <typename T>
 class RadixTreeNode
 {
@@ -100,6 +115,15 @@ class CallProfilerTest; // for gtest
 } /* end namespace detail */
 
 class SerializableRadixTree; // forward declaration
+/**
+ * A radix tree that maps names to stable integer ids.
+ *
+ * Each distinct name receives a unique signed integer id, and a current
+ * node pointer walks down the tree as named entries are visited. A
+ * stable snapshot of the id map supports re-entrant-safe reads.
+ *
+ * @ingroup group_core
+ */
 template <typename T>
 class RadixTree
 {
@@ -181,7 +205,15 @@ private:
     key_type m_stable_unique_id = 0; // Re-entrant safe
 }; /* end class RadixTree */
 
-// The profiling result of the caller
+/**
+ * The profiling result of one caller.
+ *
+ * It records the stopwatch start time, the total elapsed time in
+ * nanoseconds, the call count, and stable snapshots of the total time
+ * and call count for re-entrant-safe reads.
+ *
+ * @ingroup group_core
+ */
 struct CallerProfile
 {
     void start_stopwatch()
@@ -213,7 +245,11 @@ struct CallerProfile
     bool is_running = false;
 }; /* end struct CallerProfile */
 
-/// The profiler that profiles the hierarchical caller stack.
+/**
+ * The profiler that profiles the hierarchical caller stack.
+ *
+ * @ingroup group_core
+ */
 class CallProfiler
 {
 private:
@@ -285,7 +321,11 @@ private:
     friend detail::CallProfilerTest;
 }; /* end class CallProfiler */
 
-/// Utility to profile a call
+/**
+ * Utility to profile a call.
+ *
+ * @ingroup group_core
+ */
 class CallProfilerProbe
 {
 public:

@@ -6,7 +6,10 @@
  */
 
 /**
- * Unstructured mesh.
+ * @file
+ * Unstructured mesh with mixed element types.
+ *
+ * @ingroup group_mesh
  */
 
 #include <solvcon/base.hpp>
@@ -124,6 +127,12 @@ inline CellType CellType::by_id(uint8_t id)
 #undef MM_DECL_SWITCH_CELL_TYPE
 }
 
+/**
+ * Compile-time mesh connectivity bounds: maximum nodes per face and per cell,
+ * maximum faces per cell, and the face and boundary relation widths.
+ *
+ * @ingroup group_mesh
+ */
 struct StaticMeshConstant
 {
 
@@ -135,6 +144,15 @@ struct StaticMeshConstant
 
 }; /* end struct StaticMeshConstant */
 
+/**
+ * One boundary-condition group of a StaticMesh: the boundary faces it owns.
+ *
+ * The faces live in the m_facn index table whose three columns are the face
+ * index in the block, the face index in bndfcs, and the face index in the
+ * related block when one exists.
+ *
+ * @ingroup group_mesh
+ */
 // TODO: StaticMeshBC may use polymorphism.
 class StaticMeshBC
     : public NumberBase<int32_t, double>
@@ -216,6 +234,17 @@ public:
 
 }; /* end class StaticMeshBC */
 
+/**
+ * Static unstructured mesh storing nodes, faces, and cells of mixed element
+ * types.
+ *
+ * Coordinates are row-major and contiguous, and node indices are zero-based.
+ * The CESE solver reads cell connectivity through the fcicl and fcjcl
+ * face-to-cell accessors. build_interior, build_boundary, and build_ghost
+ * populate the derived tables.
+ *
+ * @ingroup group_mesh
+ */
 class StaticMesh
     : public NumberBase<int32_t, double>
     , public StaticMeshConstant

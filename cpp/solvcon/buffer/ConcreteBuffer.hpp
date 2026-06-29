@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Reference-counted contiguous memory buffer.
+ *
+ * @ingroup group_core
+ */
+
 #include <solvcon/base.hpp>
 #include <solvcon/buffer/BufferBase.hpp>
 #include <solvcon/buffer/small_vector.hpp>

@@ -9,6 +9,8 @@
  * @file
  * Points and line segments and their containers in 2 and 3 dimensional
  * spaces.
+ *
+ * @ingroup group_geometry
  */
 
 #include <solvcon/base.hpp>
@@ -19,6 +21,8 @@ namespace solvcon
 
 /**
  * Axis enumeration for 3D space.
+ *
+ * @ingroup group_geometry
  */
 enum class Axis : uint8_t
 {
@@ -31,6 +35,8 @@ enum class Axis : uint8_t
  * Point in three-dimensional space.
  *
  * @tparam T floating-point type
+ *
+ * @ingroup group_geometry
  */
 template <typename T>
 class Point3d
@@ -259,6 +265,17 @@ Point3d<T> operator/(Point3d<T> const & lhs, typename Point3d<T>::value_type rhs
 using Point3dFp32 = Point3d<float>;
 using Point3dFp64 = Point3d<double>;
 
+/**
+ * Container of points in two- or three-dimensional space.
+ *
+ * Coordinates are stored as separate per-axis arrays (x, y, and, for
+ * three dimensions, z), so the layout is structure-of-arrays. The
+ * dimensionality (2 or 3) is fixed at construction and cannot change.
+ *
+ * @tparam T floating-point type
+ *
+ * @ingroup group_geometry
+ */
 template <typename T>
 class PointPad
     : public NumberBase<int32_t, T>
@@ -733,6 +750,8 @@ union Segment3dData
  * Segment in three-dimensional space.
  *
  * @tparam T floating-point type
+ *
+ * @ingroup group_geometry
  */
 template <typename T>
 class Segment3d
@@ -879,6 +898,17 @@ private:
 using Segment3dFp32 = Segment3d<float>;
 using Segment3dFp64 = Segment3d<double>;
 
+/**
+ * Container of line segments in two- or three-dimensional space.
+ *
+ * Each segment is stored as a pair of endpoints, held in two PointPad
+ * objects (one for each endpoint). The dimensionality (2 or 3) comes
+ * from the underlying point pads.
+ *
+ * @tparam T floating-point type
+ *
+ * @ingroup group_geometry
+ */
 template <typename T>
 class SegmentPad
     : public NumberBase<int32_t, T>

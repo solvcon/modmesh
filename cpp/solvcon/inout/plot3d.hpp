@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Reader that turns Plot3D structured grid data into a solvcon mesh.
+ *
+ * @ingroup group_inout
+ */
+
 #include <queue>
 #include <string>
 #include <sstream>
@@ -22,6 +29,15 @@ namespace solvcon
 namespace inout
 {
 
+/**
+ * Parser that converts Plot3D structured grid data into a StaticMesh.
+ *
+ * The grid is read from an in-memory string holding one or more blocks.
+ * Node coordinates are parsed per block, indexed by the per-block x, y,
+ * and z shapes, and assembled into hexahedron elements to build the mesh.
+ *
+ * @ingroup group_inout
+ */
 class Plot3d
     : public NumberBase<int32_t, double>
 {

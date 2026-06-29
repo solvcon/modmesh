@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Encode rectangle and polygon geometry as OASIS format byte records.
+ *
+ * @ingroup group_inout
+ */
+
 #include <solvcon/base.hpp>
 
 #include <cstdint>
@@ -25,6 +32,8 @@ class OasisRecordRect;
  * information (xy) to OASIS geometry format. The format are represented as
  * byte-continuations. LSB present that the next bytes is belonging the
  * group or not.
+ *
+ * @ingroup group_inout
  */
 class OasisDevice
 {
@@ -59,6 +68,8 @@ private:
 
 /**
  * Convert vertex information to OASIS polygon record bytes.
+ *
+ * @ingroup group_inout
  */
 class OasisRecordPoly
 {
@@ -81,6 +92,8 @@ private:
 
 /**
  * Convert rectangle information to OASIS rectangle record bytes.
+ *
+ * @ingroup group_inout
  */
 class OasisRecordRect
 {

@@ -5,6 +5,14 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Interactive QRhi widget that renders spatial domains and fields on
+ * unstructured meshes and routes camera control from Python.
+ *
+ * @ingroup group_domain
+ */
+
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
 #include <solvcon/pilot/RAxisGizmo.hpp>

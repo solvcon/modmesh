@@ -6,7 +6,10 @@
  */
 
 /**
- * This file is shared by all code in the view directory.
+ * @file
+ * Shared helpers for all code in the pilot directory.
+ *
+ * @ingroup group_domain
  */
 
 #include <solvcon/python/python.hpp> // Must be the first include.
@@ -20,8 +23,11 @@ namespace solvcon
 /**
  * @brief Return a SimpleArray from the buffer of the input QByteArray.
  *
+ * @param qbarr The QByteArray whose raw bytes back the returned array.
+ * @param shape The dimensions of the returned SimpleArray.
  * @param view If true, the returned SimpleArray reuses (shares) the memory
  * buffer of the input array, and gives up (does not own) the memory buffer.
+ * @return A SimpleArray of the requested shape over the byte buffer.
  */
 template <typename T>
 SimpleArray<T> makeSimpleArray(QByteArray & qbarr, small_vector<size_t> shape, bool view = false)
@@ -55,6 +61,12 @@ SimpleArray<T> makeSimpleArray(QByteArray & qbarr, small_vector<size_t> shape, b
     return SimpleArray<T>(small_vector<size_t>(shape), cbuf);
 }
 
+/**
+ * @brief Return a QByteArray holding a copy of the SimpleArray buffer.
+ *
+ * @param sarr The source SimpleArray to copy from.
+ * @return A QByteArray containing a copy of the array bytes.
+ */
 template <typename T>
 QByteArray makeQByteArray(SimpleArray<T> const & sarr)
 {

@@ -8,6 +8,8 @@
 /**
  * @file
  * Bezier curve and its container.
+ *
+ * @ingroup group_geometry
  */
 
 #include <solvcon/base.hpp>
@@ -40,6 +42,8 @@ union Bezier3dData
  * Bezier curve up to degree 3 in three-dimensional space.
  *
  * @tparam T floating-point type
+ *
+ * @ingroup group_geometry
  */
 template <typename T>
 class Bezier3d
@@ -217,6 +221,8 @@ using Bezier3dFp64 = Bezier3d<double>;
  * Store curves that are compatible to SVG
  * https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
  * @tparam T
+ *
+ * @ingroup group_geometry
  */
 template <typename T>
 class CurvePad
@@ -476,6 +482,17 @@ private:
 using CurvePadFp32 = CurvePad<float>;
 using CurvePadFp64 = CurvePad<double>;
 
+/**
+ * Sample cubic Bezier curves into connected line segments.
+ *
+ * Each curve is approximated by straight segments stored in a
+ * SegmentPad. The number of segments follows the chord length
+ * divided by a target segment length.
+ *
+ * @tparam T floating-point type
+ *
+ * @ingroup group_geometry
+ */
 template <typename T>
 class CubicBezierSampler
 {

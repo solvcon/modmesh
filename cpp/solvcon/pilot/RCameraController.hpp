@@ -5,6 +5,14 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * The camera controller for the pilot domain viewer, with pan-zoom,
+ * first-person, and orbit interaction modes.
+ *
+ * @ingroup group_domain
+ */
+
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
 #include <QMatrix4x4>
@@ -37,6 +45,12 @@ class RCameraController
 
 public:
 
+    /**
+     * The interaction mode that selects how drag, wheel, and key input
+     * move the camera.
+     *
+     * @ingroup group_domain
+     */
     enum class Mode
     {
         PanZoom, ///< 2D: drag pans, wheel zooms the orthographic box.

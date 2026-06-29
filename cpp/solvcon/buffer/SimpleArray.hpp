@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Typed multi-dimensional array over a shared memory buffer.
+ *
+ * @ingroup group_core
+ */
+
 #include <solvcon/buffer/ConcreteBuffer.hpp>
 #include <solvcon/buffer/matmul.hpp>
 #include <solvcon/math/math.hpp>
@@ -1542,6 +1549,8 @@ struct with_alignment_t
  * Simple array type for contiguous memory storage. Size does not change. The
  * copy semantics performs data copy. The move semantics invalidates the
  * existing memory buffer.
+ *
+ * @ingroup group_core
  */
 template <typename T>
 class SimpleArray
@@ -2623,6 +2632,10 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
     return ret;
 }
 
+// The declaration lives in namespace detail and is excluded from the API
+// reference (EXCLUDE_SYMBOLS=detail); @cond stops Doxygen from trying to match
+// this out-of-line definition against that excluded declaration.
+/// @cond
 template <IntegralType T>
 T const * detail::check_index_range(SimpleArray<T> const & indices, size_t max_idx)
 {
@@ -2635,6 +2648,7 @@ T const * detail::check_index_range(SimpleArray<T> const & indices, size_t max_i
 
     return simd::check_between<T>(indices.begin(), indices.end(), 0, max_idx);
 }
+/// @endcond
 
 template <typename T, IntegralType I>
 void detail::indexed_copy(T * dest, T const * data, I const * index0, I const * const index1)
@@ -2724,6 +2738,16 @@ using SimpleArrayFloat64 = SimpleArray<double>;
 using SimpleArrayComplex64 = SimpleArray<Complex<float>>;
 using SimpleArrayComplex128 = SimpleArray<Complex<double>>;
 
+/**
+ * Runtime element-type tag mirroring the scalar types a SimpleArray supports.
+ *
+ * Covers bool, the signed and unsigned 8- to 64-bit integers, the 32- and
+ * 64-bit floats, and the 64- and 128-bit complex types. Converts to and from
+ * its enum and a type string, and DataType::from<T>() maps a C++ type to its
+ * tag.
+ *
+ * @ingroup group_core
+ */
 class DataType
 {
 public:
@@ -2767,6 +2791,15 @@ private:
 
 }; /* end class DataType */
 
+/**
+ * Type-erased SimpleArray pairing a buffer and shape with a runtime DataType.
+ *
+ * Holds an array of any supported element type behind one handle, dispatching
+ * on the DataType, so code generic over the element type can store and pass
+ * arrays uniformly.
+ *
+ * @ingroup group_core
+ */
 class SimpleArrayPlex
 {
 public:

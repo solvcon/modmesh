@@ -13,6 +13,8 @@
  * sweep-line algorithm for polygon boolean operations (union, intersection,
  * difference).  Extracted from compute_boolean_with_decomposition() in
  * polygon.hpp to improve readability and avoid lambda closures in tight loops.
+ *
+ * @ingroup group_geometry
  */
 
 #include <algorithm>

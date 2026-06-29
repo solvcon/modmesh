@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Vector with small-buffer optimization.
+ *
+ * @ingroup group_core
+ */
+
 #include <stdexcept>
 #include <array>
 #include <vector>
@@ -17,6 +24,17 @@
 namespace solvcon
 {
 
+/**
+ * Vector with small-buffer optimization.
+ *
+ * Stores up to @p N elements inline and moves to a heap allocation only when
+ * the size exceeds @p N, avoiding allocation for the common short case.
+ *
+ * @tparam T Element value type.
+ * @tparam N Inline capacity before the first heap allocation.
+ *
+ * @ingroup group_core
+ */
 template <typename T, size_t N = 3>
 class small_vector
 {
@@ -435,4 +453,4 @@ static_assert(sizeof(small_vector<size_t>) == 40, "small_vector<size_t> should u
 
 } /* end namespace solvcon */
 
-/* vim: set et ts=4 sw=4: */
+// vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

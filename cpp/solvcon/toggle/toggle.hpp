@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Toggle configuration system and process and command-line information.
+ *
+ * @ingroup group_core
+ */
+
 #include <solvcon/base.hpp>
 #include <solvcon/buffer/buffer.hpp>
 #include <solvcon/toggle/profile.hpp>
@@ -19,9 +26,23 @@ namespace solvcon
 
 int setenv(const char * name, const char * value, int overwrite);
 
+/**
+ * Index and type tag that locates a dynamic toggle value in its typed
+ * storage vector.
+ *
+ * The bool conversion is true when the type is not TYPE_NONE, and index
+ * is a 32-bit offset into the storage vector for the given Type.
+ *
+ * @ingroup group_core
+ */
 struct DynamicToggleIndex
 {
 
+    /**
+     * Data type tag for a dynamic toggle value.
+     *
+     * @ingroup group_core
+     */
     enum Type : uint8_t
     {
         TYPE_NONE, // 0
@@ -54,6 +75,16 @@ struct DynamicToggleIndex
 
 class DynamicToggleTable;
 
+/**
+ * Hierarchical accessor that reads and writes a DynamicToggleTable
+ * through dotted keys.
+ *
+ * It holds a base prefix and joins it to a key with a "." separator
+ * (see rekey), so nested subkeys can be reached without repeating the
+ * full path.
+ *
+ * @ingroup group_core
+ */
 class HierarchicalToggleAccess
 {
 
@@ -102,6 +133,15 @@ private:
 
 }; /* end class HierarchicalToggleAccess */
 
+/**
+ * Runtime table of dynamic toggles keyed by name.
+ *
+ * Each key maps to a DynamicToggleIndex that selects one of the per-type
+ * storage vectors (bool, int8, int16, int32, int64, real, and string).
+ * Values can be added, read, written, and cleared during runtime.
+ *
+ * @ingroup group_core
+ */
 // All data members are class types with their own default constructors.
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 class DynamicToggleTable
@@ -169,6 +209,15 @@ public:                                    \
 private:                                   \
     bool m_##NAME;
 
+/**
+ * Toggles whose values are determined at compile time and read-only
+ * during the process lifetime.
+ *
+ * Each accessor (for example use_pyside) returns a bool member that has
+ * an address and cannot be optimized out, unlike a macro or constexpr.
+ *
+ * @ingroup group_core
+ */
 class SolidToggle
 {
 
@@ -188,6 +237,16 @@ public:                                          \
 private:                                         \
     bool m_##NAME = DEFAULT;
 
+/**
+ * Toggles whose names are fixed at compile time but whose bool values
+ * can change at runtime.
+ *
+ * Access needs no table lookup because the member addresses are known
+ * to the compiler and linker (for example python_redirect and
+ * show_axis).
+ *
+ * @ingroup group_core
+ */
 class FixedToggle
 {
 
@@ -240,6 +299,8 @@ public:
  *    hierarchical access may use attribute syntax:
  *
  *      tg.top_level.second_level.key_name = value
+ *
+ * @ingroup group_core
  */
 class Toggle
 {
@@ -297,6 +358,15 @@ private:
 
 class ProcessInfo;
 
+/**
+ * Captured command-line state for the current process.
+ *
+ * It stores the executable basename and the original, populated, and
+ * Python argument vectors. Once frozen, set_python_argv is ignored. It
+ * also builds the C-style argv buffer used to launch a Python main.
+ *
+ * @ingroup group_core
+ */
 // The std::vector data members are default-constructed.
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 class CommandLineInfo
@@ -363,6 +433,14 @@ private:
 
 }; /* end class CommandLineInfo */
 
+/**
+ * Process-wide information accessed as a singleton.
+ *
+ * It owns the CommandLineInfo for the process and offers helpers to
+ * populate the command line and set environment variables.
+ *
+ * @ingroup group_core
+ */
 // NOLINTNEXTLINE(bugprone-exception-escape)
 class ProcessInfo
 {

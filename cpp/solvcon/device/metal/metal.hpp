@@ -5,6 +5,14 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Singleton manager for the Metal GPU device used by the linear algebra
+ * backend.
+ *
+ * @ingroup group_core
+ */
+
 // forward declaration.
 namespace MTL
 {
@@ -17,6 +25,15 @@ namespace solvcon
 namespace device
 {
 
+/**
+ * Process-wide owner of the single Metal device handle.
+ *
+ * The instance is created on first access and acquires the Metal device in
+ * startup(); shutdown() releases it. Copy and move are deleted so the device
+ * has exactly one owner.
+ *
+ * @ingroup group_core
+ */
 class MetalManager
 {
 
