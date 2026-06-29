@@ -204,6 +204,10 @@ See "Build, Test, Lint, Format" above for the `make` invocations.
 - **C++**: 4-space indent, `m_` prefix on member vars, angle-bracket includes,
   C++23, prefer `SimpleCollector` / `small_vector` over STL for fundamentals.
 - **Python**: PEP-8, 79-char hard limit, flake8.
+- **Comments**: Default to none. Add one only for what the code cannot say
+  (the why, units, invariants, a non-obvious algorithm). Never restate the
+  code, narrate a step, or label obvious structure. When in doubt, leave it
+  out. See `STYLE.md` "Comments" for examples.
 - **All source**: UTF-8, Unix LF, ASCII-only, no trailing whitespace, modeline
   at EOF.
 

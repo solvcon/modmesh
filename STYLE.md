@@ -388,8 +388,10 @@ that cannot fail when the logic it covers changes is not pulling its weight.
 ## Comments
 
 Code says what happens. A comment says why, and what a reader must know but
-cannot see. Do not write a comment that merely restates the code (it is only
-noise). Write comments clearly and concisely, and keep two levels separate:
+cannot see. The default is no comment: add one only when it carries
+information the code itself cannot, and prefer fewer, load-bearing comments
+over many thin ones. When in doubt, leave it out. Write comments clearly and
+concisely, and keep two levels separate:
 
 - Interface comments sit before a function, class, or member and describe how
   to use it: what it does, the meaning and units of each argument and return
@@ -399,6 +401,24 @@ noise). Write comments clearly and concisely, and keep two levels separate:
   not reveal: a non-trivial algorithm, why one approach was chosen over a
   viable alternative, or a single tricky line. Do not repeat the interface
   comment.
+
+**Never write a comment that only restates the code; it is noise the next reader
+must wade through and then delete.** In particular, do not write any of these:
+
+- A paraphrase of the line below it: `// increment the counter` over
+  `++count;`, or `# return the result` over `return result`.
+- A label for self-evident structure: `// constructor`, `// the main loop`,
+  `// imports`, `# getter for width`, or a banner over code short enough to
+  read at a glance.
+- A step narration that names the call: `// run the solver` over
+  `solver.run()`.
+- Prose that repeats an already-clear name: `# the cell count` over
+  `cell_count`.
+- Explain an obvious value or type: `// An absent optional is "null"` over 
+  a `std::optional`.
+
+If the only honest comment you can write restates the code, write none. A clear
+name beats a comment; rename rather than annotate.
 
 Because this codebase solves numerical problems, state the physical and
 structural facts the types do not encode:
