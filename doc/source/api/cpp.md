@@ -11,14 +11,6 @@ by [breathe](https://www.breathe-doc.org/).
    :content-only:
 ```
 
-## Mesh
-
-```{eval-rst}
-.. doxygengroup:: group_mesh
-   :project: solvcon
-   :content-only:
-```
-
 ## Numerics
 
 ```{eval-rst}
@@ -31,6 +23,14 @@ by [breathe](https://www.breathe-doc.org/).
 
 ```{eval-rst}
 .. doxygengroup:: group_geometry
+   :project: solvcon
+   :content-only:
+```
+
+## Mesh
+
+```{eval-rst}
+.. doxygengroup:: group_mesh
    :project: solvcon
    :content-only:
 ```

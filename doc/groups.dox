@@ -15,17 +15,17 @@
  *  SIMD, and device compute.
  */
 
-/** @defgroup group_mesh Mesh
- *  Unstructured meshes with mixed element types (StaticMesh) and the static
- *  grids (grid.hpp).
- */
-
 /** @defgroup group_numerics Numerics
  *  BLAS and LAPACK wrappers, dense factorizations, and integral transforms.
  */
 
 /** @defgroup group_geometry Geometry
  *  Three-dimensional geometry primitives and spatial indices.
+ */
+
+/** @defgroup group_mesh Mesh
+ *  Unstructured meshes with mixed element types (StaticMesh) and the static
+ *  grids (grid.hpp).
  */
 
 /** @defgroup group_onedim One-dimensional solvers

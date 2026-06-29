@@ -6,7 +6,10 @@
  */
 
 /**
- * Structured grid.
+ * @file
+ * Structured grids.
+ *
+ * @ingroup group_mesh
  */
 
 #include <solvcon/base.hpp>
@@ -17,7 +20,11 @@ namespace solvcon
 {
 
 /**
- * Base class template for structured grid.
+ * Base class template for a structured grid.
+ *
+ * @tparam ND Spatial dimension count.
+ *
+ * @ingroup group_mesh
  */
 template <uint8_t ND>
 class StaticGridBase : public SpaceBase<ND, int32_t, double>
@@ -25,7 +32,9 @@ class StaticGridBase : public SpaceBase<ND, int32_t, double>
 }; /* end class StaticGridBase */
 
 /**
- * 1D grid whose coordnate ascends with index.
+ * One-dimensional grid whose coordinate ascends with the index.
+ *
+ * @ingroup group_mesh
  */
 class AscendantGrid1d : public StaticGridBase<1>
 {
@@ -73,7 +82,9 @@ private:
 }; /* end class AscendantGrid1d */
 
 /**
- * 1D grid.
+ * One-dimensional structured grid.
+ *
+ * @ingroup group_mesh
  */
 class StaticGrid1d : public StaticGridBase<1>
 {
@@ -155,10 +166,20 @@ private:
 
 }; /* end class StaticGrid1d */
 
+/**
+ * Two-dimensional structured grid.
+ *
+ * @ingroup group_mesh
+ */
 class StaticGrid2d : public StaticGridBase<2>
 {
 }; /* end class StaticGrid2d */
 
+/**
+ * Three-dimensional structured grid.
+ *
+ * @ingroup group_mesh
+ */
 class StaticGrid3d : public StaticGridBase<3>
 {
 }; /* end class StaticGrid3d */
