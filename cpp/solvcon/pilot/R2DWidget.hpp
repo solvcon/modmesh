@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Strictly-2D drawing widget that paints world geometry with QPainter.
+ *
+ * @ingroup group_domain
+ */
+
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
 #include <solvcon/buffer/small_vector.hpp>
@@ -32,6 +39,8 @@ namespace solvcon
  * Strictly-2D drawing widget for the pilot. Paints the geometry of a
  * `World<double>` by mapping it to screen space through a 2D view
  * transform, drawn with QPainter.
+ *
+ * @ingroup group_domain
  */
 class R2DWidget
     : public QWidget

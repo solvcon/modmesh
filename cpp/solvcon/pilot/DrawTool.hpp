@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Pilot 2D canvas drawing tools and their registry.
+ *
+ * @ingroup group_domain
+ */
+
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
 #include <solvcon/universe/ViewTransform2d.hpp>
@@ -20,14 +27,22 @@ class QPainter;
 namespace solvcon
 {
 
-/// A point in world coordinates -- the unit a drawing gesture is built from.
+/**
+ * A point in world coordinates, the unit a drawing gesture is built from.
+ *
+ * @ingroup group_domain
+ */
 struct DrawPoint
 {
     double x;
     double y;
 }; /* end struct DrawPoint */
 
-/// Abstract base class for a 2D canvas drawing tool.
+/**
+ * Abstract base class for a 2D canvas drawing tool.
+ *
+ * @ingroup group_domain
+ */
 class DrawToolBase
 {
 
@@ -58,21 +73,38 @@ protected:
 
 }; /* end class DrawToolBase */
 
-/// Get the names of all registered tools, in Painter-toolbox order. The
-/// first entry is the default tool (see `default_draw_tool_name`).
+/**
+ * Get the names of all registered tools, in Painter-toolbox order. The
+ * first entry is the default tool (see `default_draw_tool_name`).
+ *
+ * @return The registered tool names in Painter-toolbox order.
+ */
 std::vector<std::string> const & draw_tool_names();
 
-/// Name of the default tool a fresh canvas starts with: the first
-/// registered tool, which is the pan navigation tool.
+/**
+ * Name of the default tool a fresh canvas starts with: the first
+ * registered tool, which is the pan navigation tool.
+ *
+ * @return The default tool name.
+ */
 std::string const & default_draw_tool_name();
 
-/// Build the tool registered under `name`.
-/// @return A unique pointer to the tool, never null for a valid name.
-/// @throw std::invalid_argument for an unknown name.
+/**
+ * Build the tool registered under `name`.
+ *
+ * @param name The registered name of the tool to build.
+ * @return A unique pointer to the tool, never null for a valid name.
+ * @throw std::invalid_argument for an unknown name.
+ */
 std::unique_ptr<DrawToolBase> make_draw_tool(std::string const & name);
 
-/// True if `name` is a registered tool R2DWidget accepts. Lets callers
-/// validate a name without building a tool.
+/**
+ * True if `name` is a registered tool R2DWidget accepts. Lets callers
+ * validate a name without building a tool.
+ *
+ * @param name The tool name to check.
+ * @return True if `name` is a registered tool, false otherwise.
+ */
 bool is_draw_tool(std::string const & name);
 
 } /* end namespace solvcon */

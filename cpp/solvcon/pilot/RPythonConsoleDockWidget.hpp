@@ -5,6 +5,14 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Qt dock widget that hosts an interactive Python console with command
+ * history and tab-triggered auto-completion.
+ *
+ * @ingroup group_domain
+ */
+
 #include <solvcon/python/common.hpp> // must be first.
 
 #include <string>
@@ -21,6 +29,18 @@
 namespace solvcon
 {
 
+/**
+ * The command input editor that drives Python auto-completion and
+ * reports execution and history navigation.
+ *
+ * On Tab the editor extracts the identifier prefix behind the cursor
+ * and emits completionRequested, or inserts a literal tab when there is
+ * no prefix. It emits execute on Enter, navigate on Up or Down at the
+ * first or last line, and inserts the match chosen from the completer
+ * popup.
+ *
+ * @ingroup group_domain
+ */
 class RPythonCommandTextEdit
     : public QTextEdit
 {
@@ -50,6 +70,14 @@ private:
 
 }; /* end class RPythonCommandTextEdit */
 
+/**
+ * The read-only transcript view that shows committed commands and their
+ * captured output.
+ *
+ * A double-click selects the entire transcript.
+ *
+ * @ingroup group_domain
+ */
 class RPythonHistoryTextEdit
     : public QTextEdit
 {
@@ -58,6 +86,18 @@ class RPythonHistoryTextEdit
     void mouseDoubleClickEvent(QMouseEvent *) override;
 }; /* end class RPythonHistoryTextEdit */
 
+/**
+ * The dockable Python console that pairs a transcript view with a
+ * command editor and runs each command in the embedded interpreter.
+ *
+ * Submitting a command appends it to the history, executes it through
+ * the Python interpreter, and writes the captured stdout and stderr to
+ * the transcript when the redirect is active. Up and Down walk the
+ * committed-command history, and the widget brokers the editor's
+ * completion requests against the interpreter's completer.
+ *
+ * @ingroup group_domain
+ */
 class RPythonConsoleDockWidget
     : public QDockWidget
 {

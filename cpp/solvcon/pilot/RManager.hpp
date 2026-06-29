@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Singleton manager that owns the pilot main window and its child widgets.
+ *
+ * @ingroup group_domain
+ */
+
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
 #include <solvcon/pilot/DrawTool.hpp>
@@ -24,6 +31,17 @@
 namespace solvcon
 {
 
+/**
+ * @brief Singleton that owns the pilot main window and coordinates its
+ * widgets, menus, and the active canvas drawing tool.
+ *
+ * The manager holds the QCoreApplication, the QMainWindow with its menus and
+ * MDI area, and the Python console dock. It creates and tracks the 2D and 3D
+ * domain widgets, exposes the currently focused canvas, and routes the active
+ * drawing tool to it. Access the single instance through instance().
+ *
+ * @ingroup group_domain
+ */
 class RManager
     : public QObject
 {

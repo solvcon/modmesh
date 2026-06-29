@@ -5,6 +5,14 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Rendering material that pairs a baked GLSL shader set with a graphics
+ * pipeline builder.
+ *
+ * @ingroup group_domain
+ */
+
 #include <solvcon/pilot/common_detail.hpp> // Must be the first include.
 
 #include <rhi/qrhi.h>
@@ -29,7 +37,12 @@ class RMaterial
 
 public:
 
-    /// The shader variant. More variants are added as the renderer grows.
+    /**
+     * @brief The shader variant. More variants are added as the renderer
+     * grows.
+     *
+     * @ingroup group_domain
+     */
     enum class Kind
     {
         FlatColor, ///< One uniform color for the whole primitive.
