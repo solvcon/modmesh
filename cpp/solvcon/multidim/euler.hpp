@@ -6,7 +6,10 @@
  */
 
 /**
- * The space-time CESE solver for the Euler equation.
+ * @file
+ * The space-time CESE solver for the Euler equations.
+ *
+ * @ingroup group_multidim
  */
 
 #include <solvcon/mesh/mesh.hpp>
@@ -31,6 +34,8 @@ enum class EulerBC : uint8_t
  * One registered boundary condition: a handler kind over a set of boundary
  * faces (global face indices). value carries the Inlet free stream as
  * [rho, v(ndim), p, gamma] and is unused by the other kinds.
+ *
+ * @ingroup group_multidim
  */
 struct EulerBoundary
 {
@@ -39,6 +44,15 @@ struct EulerBoundary
     SimpleCollector<double> value;
 }; /* end struct EulerBoundary */
 
+/**
+ * Multi-dimensional CESE solver core for the compressible Euler equations.
+ *
+ * Advances the conserved fields on a StaticMesh by one space-time step per
+ * call. The conserved set is density, the ndim momentum components, and total
+ * energy. Construct through EulerCore::construct so the instance is shared.
+ *
+ * @ingroup group_multidim
+ */
 class EulerCore
     : public NumberBase<int32_t, double>
     , public std::enable_shared_from_this<EulerCore>

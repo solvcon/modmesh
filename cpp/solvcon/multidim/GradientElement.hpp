@@ -6,8 +6,10 @@
  */
 
 /**
+ * @file
  * Gradient element geometry for the CESE dual mesh.
- * Port of solvcon GradientElement.hpp.
+ *
+ * @ingroup group_multidim
  */
 
 #include <solvcon/mesh/mesh.hpp>
@@ -17,6 +19,14 @@
 namespace solvcon
 {
 
+/**
+ * Per-cell-type constants for least-squares gradient reconstruction.
+ *
+ * Holds the face count, its reciprocal used as the uniform gradient weight,
+ * and the 1-based gradient-eval-point face indices per cell type.
+ *
+ * @ingroup group_multidim
+ */
 struct GradientElementType
 {
 
@@ -65,6 +75,14 @@ inline GradientElementType const & getype(size_t id)
     return detail::GradientElementTypeGroup::get_instance()[id];
 }
 
+/**
+ * Per-cell gradient reconstruction over a StaticMesh.
+ *
+ * Solves the small ndim-by-ndim least-squares systems on the CESE dual mesh
+ * with fixed 3-capacity matrices, so it allocates nothing per cell.
+ *
+ * @ingroup group_multidim
+ */
 class GradientElement
 {
 
