@@ -22,7 +22,7 @@ by [breathe](https://www.breathe-doc.org/).
 ## Numerics
 
 ```{eval-rst}
-.. doxygengroup:: group_linalg
+.. doxygengroup:: group_numerics
    :project: solvcon
    :content-only:
 ```

@@ -5,6 +5,14 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * LU factorization with partial pivoting for general matrices, with
+ * linear-solve, inverse, and determinant helpers.
+ *
+ * @ingroup group_numerics
+ */
+
 #include <algorithm>
 #include <cstdint>
 #include <format>
@@ -41,6 +49,8 @@ namespace solvcon
  * of redoing it.
  *
  * Supported element types: float, double, Complex<float>, Complex<double>.
+ *
+ * @ingroup group_numerics
  */
 template <typename T>
 class LuFactorization

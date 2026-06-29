@@ -6,12 +6,15 @@
  */
 
 /**
+ * @file
  * Eigenvalue and eigenvector computation for general (non-symmetric) matrices
  * using LAPACK *GEEV: SGEEV (float), DGEEV (double), CGEEV (Complex<float>),
  * and ZGEEV (Complex<double>).
  *
  * The LAPACK backend is selected by the build system via MM_HAS_VENDOR_LAPACK:
  * Apple's vecLib (Accelerate framework) on macOS and OpenBLAS on Linux.
+ *
+ * @ingroup group_numerics
  */
 
 #ifndef MM_HAS_VENDOR_LAPACK
@@ -39,6 +42,8 @@ namespace solvcon
  * Complex<double>.  Construction validates the input shape and prepares
  * column-major workspace buffers.  Call run() to invoke the matching *GEEV
  * routine to calculate eigenvalues and eigenvectors.
+ *
+ * @ingroup group_numerics
  */
 template <typename T>
 class EigenSystem
@@ -301,6 +306,8 @@ std::string EigenSystem<T>::format_shape(array_type const & arr)
  * Accepts a SimpleArrayPlex and dispatches on its runtime element type to the
  * matching EigenSystem<T> (float, double, Complex<float>, Complex<double>).
  * Results are returned as type-erased SimpleArrayPlex.
+ *
+ * @ingroup group_numerics
  */
 class EigenSystemPlex
 {

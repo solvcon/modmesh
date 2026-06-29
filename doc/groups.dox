@@ -20,9 +20,8 @@
  *  grids (grid.hpp).
  */
 
-/** @defgroup group_linalg Numerics
- *  BLAS and LAPACK wrappers, dense factorizations, complex numbers, and
- *  integral transforms.
+/** @defgroup group_numerics Numerics
+ *  BLAS and LAPACK wrappers, dense factorizations, and integral transforms.
  */
 
 /** @defgroup group_universe Geometry

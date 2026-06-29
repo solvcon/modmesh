@@ -5,6 +5,14 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Cholesky (L L^T) factorization and linear solve for symmetric positive
+ * definite matrices.
+ *
+ * @ingroup group_numerics
+ */
+
 #include <solvcon/buffer/buffer.hpp>
 
 namespace solvcon

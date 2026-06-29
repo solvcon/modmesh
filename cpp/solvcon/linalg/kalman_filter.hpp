@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Kalman filter for linear state estimation with predict and update steps.
+ *
+ * @ingroup group_numerics
+ */
+
 #include <solvcon/linalg/factorization.hpp>
 #include <solvcon/math/math.hpp>
 
@@ -31,6 +38,8 @@ struct select_real_t;
  *
  * @see KalmanStateInfo<T> KalmanFilter<T>::batch_filter(array_type const & zs)
  * @see KalmanStateInfo<T> KalmanFilter<T>::batch_filter(array_type const & zs, array_type const & us)
+ *
+ * @ingroup group_numerics
  */
 template <typename T>
 struct KalmanStateInfo
@@ -54,8 +63,19 @@ struct KalmanStateInfo
 }; /* end struct KalmanStateInfo */
 
 /**
+ * Kalman filter for linear Gaussian state estimation.
+ *
+ * Implements the discrete predict and update recursion over a state mean
+ * vector and its covariance matrix, using the transition matrix F, process
+ * noise covariance Q, measurement matrix H, measurement noise covariance R,
+ * and an optional control matrix B. The update step forms the Kalman gain
+ * through an LLT solve and applies the Joseph-form covariance update for
+ * numerical stability.
+ *
  * Reference: FilterPy KalmanFilter documentation
  * https://filterpy.readthedocs.io/en/latest/kalman/KalmanFilter.html
+ *
+ * @ingroup group_numerics
  */
 template <typename T>
 class KalmanFilter

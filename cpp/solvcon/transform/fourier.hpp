@@ -1,5 +1,13 @@
 #pragma once
 
+/**
+ * @file
+ * Fourier transform algorithms (FFT, inverse FFT, and DFT) for complex
+ * SimpleArray data.
+ *
+ * @ingroup group_numerics
+ */
+
 #include <solvcon/math/math.hpp>
 #include <solvcon/buffer/buffer.hpp>
 
@@ -52,6 +60,20 @@ void fft_radix_2(SimpleArray<T1<T2>> const & in, SimpleArray<T1<T2>> & out)
 
 } /* end namespace detail */
 
+/**
+ * Discrete Fourier transform of complex-valued arrays.
+ *
+ * The static methods operate on a SimpleArray of complex elements
+ * (T1<T2>, for example a complex type over double) holding one signal.
+ * fft() computes the forward transform, dispatching to a radix-2
+ * Cooley-Tukey step when the length N is a power of two and to the
+ * Bluestein algorithm otherwise. ifft() computes the inverse by
+ * conjugating the input, reusing fft(), and scaling by 1/N. dft()
+ * evaluates the direct O(N^2) sum. The forward transform uses the
+ * twiddle factor exp(-2 * pi * i * k / N).
+ *
+ * @ingroup group_numerics
+ */
 class FourierTransform
 {
 public:
