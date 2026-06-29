@@ -24,7 +24,7 @@
  *  BLAS and LAPACK wrappers, dense factorizations, and integral transforms.
  */
 
-/** @defgroup group_universe Geometry
+/** @defgroup group_geometry Geometry
  *  Three-dimensional geometry primitives and spatial indices.
  */
 

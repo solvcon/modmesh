@@ -30,7 +30,7 @@ by [breathe](https://www.breathe-doc.org/).
 ## Geometry
 
 ```{eval-rst}
-.. doxygengroup:: group_universe
+.. doxygengroup:: group_geometry
    :project: solvcon
    :content-only:
 ```

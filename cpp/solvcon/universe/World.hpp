@@ -5,6 +5,14 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Geometry world container for points, segments, cubic Bezier curves, and
+ * shapes, with an R-tree spatial index.
+ *
+ * @ingroup group_geometry
+ */
+
 #include <solvcon/base.hpp>
 #include <solvcon/buffer/SimpleCollector.hpp>
 #include <solvcon/serialization/SerializableItem.hpp>
@@ -20,6 +28,14 @@
 namespace solvcon
 {
 
+/**
+ * Kind of geometry shape, stored as a one-byte tag.
+ *
+ * DEAD marks a deleted or unused registry slot; the remaining values name
+ * the 0D, 1D, and 2D shapes the world can hold.
+ *
+ * @ingroup group_geometry
+ */
 enum class ShapeType : uint8_t
 {
     DEAD = 0, ///< deleted / unused slot
@@ -56,8 +72,12 @@ inline std::string shape_type_name(ShapeType st)
     }
 }
 
-/// Level of detail for World::describe_state. C++ callers pass the enum; the
-/// Python binding accepts the equivalent lower-case string.
+/**
+ * Level of detail for World::describe_state. C++ callers pass the enum; the
+ * Python binding accepts the equivalent lower-case string.
+ *
+ * @ingroup group_geometry
+ */
 enum class DescribeLevel : uint8_t
 {
     BASIC = 0, ///< only what the 2D image draws
@@ -73,13 +93,17 @@ inline DescribeLevel describe_level_from_string(std::string const & level)
         std::format("World: describe_state level '{}' not supported", level));
 }
 
-/// JSON-serializable view of one shape's rendered 2D geometry: its id, type,
-/// bounding box, segment endpoints, and curve control points. The z component
-/// is not rendered, so coordinates are 2D.
 // TODO: The shared JSON tool formats numbers with std::to_string, which keeps
 // only 6 decimal places. Coordinates that differ past the 6th decimal then
 // serialize identically and small magnitudes round to 0, which can confuse the
 // numeric oracles downstream.
+/**
+ * JSON-serializable view of one shape's rendered 2D geometry: its id, type,
+ * bounding box, segment endpoints, and curve control points. The z component
+ * is not rendered, so coordinates are 2D.
+ *
+ * @ingroup group_geometry
+ */
 class WorldShapeState : public SerializableItem
 {
 
@@ -130,8 +154,12 @@ private:
 
 }; /* end class WorldShapeState */
 
-/// JSON view of the whole world: shapes plus the bare segments, bare curves,
-/// and free points that also render but belong to no shape.
+/**
+ * JSON view of the whole world: shapes plus the bare segments, bare curves,
+ * and free points that also render but belong to no shape.
+ *
+ * @ingroup group_geometry
+ */
 class WorldState : public SerializableItem
 {
 
@@ -180,6 +208,8 @@ private:
  * Lightweight record mapping a shape ID to the segment and curve ranges
  * it owns in the world's pads. A shape may own segments only
  * (triangle, line, rectangle), curves only (ellipse, circle), or both.
+ *
+ * @ingroup group_geometry
  */
 struct ShapeRecord
 {
@@ -199,6 +229,8 @@ struct ShapeRecord
 
 /**
  * Entry stored in the R-tree: shape ID + bounding box.
+ *
+ * @ingroup group_geometry
  */
 template <typename T>
 struct ShapeEntry
@@ -208,6 +240,12 @@ struct ShapeEntry
     bool operator==(ShapeEntry const & other) const { return shape_id == other.shape_id; }
 }; /* end of struct ShapeEntry */
 
+/**
+ * RTreeValueOps specialization that gives the R-tree the bounding box of a
+ * ShapeEntry.
+ *
+ * @ingroup group_geometry
+ */
 template <typename T>
 struct RTreeValueOps<ShapeEntry<T>, BoundBox3d<T>>
 {
@@ -216,6 +254,8 @@ struct RTreeValueOps<ShapeEntry<T>, BoundBox3d<T>>
 
 /**
  * Manage all geometry entities.
+ *
+ * @ingroup group_geometry
  */
 template <typename T>
 class World

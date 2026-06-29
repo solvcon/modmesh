@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * R-tree spatial index for 2D and 3D bounding boxes.
+ *
+ * @ingroup group_geometry
+ */
+
 // This library implement R-tree based on "R Trees: A Dynamic Index Structure for Spatial Searchin" by Guttman in 1984
 // https://doi.org/10.1145/971697.602266
 
@@ -19,9 +26,15 @@
 namespace solvcon
 {
 
-/// Bounding box for 2D and 3D objects, e.g., Point3d, Segment3d, Triangle3d, etc.
-/// For 2D usage, callers pass min_z = max_z = 0 explicitly.
-/// @tparam T floating-point type
+/**
+ * Bounding box for 2D and 3D objects, e.g., Point3d, Segment3d,
+ * Triangle3d, etc. For 2D usage, callers pass min_z = max_z = 0
+ * explicitly.
+ *
+ * @tparam T Floating-point coordinate type.
+ *
+ * @ingroup group_geometry
+ */
 template <typename T>
 class BoundBox3d : public NumberBase<int32_t, T>
 {
@@ -103,9 +116,14 @@ public:
     }
 }; /* end of struct BoundBox3d */
 
-/// Value operations traits for R-tree
-/// @tparam E Item type to be stored in R-tree
-/// @tparam B Bounding box type associated with the item E
+/**
+ * Value operations traits for the R-tree.
+ *
+ * @tparam E Item type to be stored in the R-tree.
+ * @tparam B Bounding box type associated with the item E.
+ *
+ * @ingroup group_geometry
+ */
 template <typename E, typename B>
 struct RTreeValueOps
 {
@@ -116,10 +134,19 @@ struct RTreeValueOps
     static B calc_group_bound_box(std::vector<E> const & items);
 }; /* end of struct RTreeValueOps */
 
-/// R-tree node structure
-/// @tparam E Item type to be stored in R-tree
-/// @tparam B Bounding box type associated
-/// @tparam ValueOps Value operations traits for E and B
+/**
+ * R-tree node structure.
+ *
+ * A node is a leaf when it holds items and an internal node when it
+ * holds child nodes; the two vectors are not populated at the same
+ * time.
+ *
+ * @tparam E Item type to be stored in the R-tree.
+ * @tparam B Bounding box type associated with the item E.
+ * @tparam ValueOpsType Value operations traits for E and B.
+ *
+ * @ingroup group_geometry
+ */
 template <typename E, typename B, typename ValueOpsType>
 struct RTreeNode
 {
@@ -199,11 +226,19 @@ struct RTreeNode
     }
 }; /* end of struct RTreeNode */
 
-/// R-tree implementation for spatial index based on Guttman's R-tree paper
-/// @tparam E Item type to be stored in R-tree
-/// @tparam B Bounding box type associated with E
-/// @tparam ValueOps Value operations traits for E and B
-/// @tparam MAX_ITEMS_PER_NODE Maximum number of items per R-tree node
+/**
+ * R-tree spatial index based on Guttman's 1984 R-tree paper.
+ *
+ * Supports insert, search by bounding box, and remove. A node holds at
+ * most MAX_ITEMS_PER_NODE entries and splits when it overflows.
+ *
+ * @tparam E Item type to be stored in the R-tree.
+ * @tparam B Bounding box type associated with E.
+ * @tparam ValueOps Value operations traits for E and B.
+ * @tparam MAX_ITEMS_PER_NODE Maximum number of entries per R-tree node.
+ *
+ * @ingroup group_geometry
+ */
 template <typename E, typename B, typename ValueOps = RTreeValueOps<E, B>, int MAX_ITEMS_PER_NODE = 64>
 class RTree
 {

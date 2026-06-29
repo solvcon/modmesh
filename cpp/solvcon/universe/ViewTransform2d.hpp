@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Affine 2D view transform from world coordinates to Qt screen pixels.
+ *
+ * @ingroup group_geometry
+ */
+
 #include <cmath>
 #include <type_traits>
 
@@ -22,6 +29,8 @@ namespace solvcon
  *
  * The class is intentionally Qt-free so the math can be unit-tested in the
  * `test_nopython` gtest target without linking Qt.
+ *
+ * @ingroup group_geometry
  */
 template <typename T>
 class ViewTransform2d
