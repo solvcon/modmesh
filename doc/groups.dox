@@ -41,6 +41,10 @@
  *  output (OASIS).
  */
 
+/** @defgroup group_canvas 2D graphical editor
+ *  Qt-based GUI for creating 2D graphics.
+ */
+
 /** @defgroup group_domain Domain visualizer
  *  Qt-based GUI for spatial data visualization.
  */

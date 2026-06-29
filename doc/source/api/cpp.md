@@ -59,6 +59,14 @@ by [breathe](https://www.breathe-doc.org/).
    :content-only:
 ```
 
+## Graphical editor
+
+```{eval-rst}
+.. doxygengroup:: group_canvas
+   :project: solvcon
+   :content-only:
+```
+
 ## Domain visualizer
 
 The 2/3D visualizer (see {doc}`../pilot/domain`) renders through
