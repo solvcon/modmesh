@@ -5,6 +5,14 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Complex number type with a std::complex-compatible layout and the
+ * related type traits.
+ *
+ * @ingroup group_core
+ */
+
 #include <type_traits>
 #include <cmath>
 #include <stdexcept>
@@ -260,12 +268,25 @@ std::complex<T> * as_std_complex_pointer(Complex<T> * ptr)
 }
 
 // clang-format off
+/**
+ * Type trait that reports whether a type is a solvcon Complex.
+ *
+ * The primary template inherits std::false_type; the specialization for
+ * Complex<T> inherits std::true_type.
+ *
+ * @ingroup group_core
+ */
 template <typename T>
 struct is_complex : std::false_type {};
 
 template <typename T>
 struct is_complex<Complex<T>> : std::true_type {};
 
+/**
+ * Type trait that reports whether a type is a real floating-point type.
+ *
+ * @ingroup group_core
+ */
 template <typename T>
 struct is_real : std::is_floating_point<T> {};
 // clang-format on

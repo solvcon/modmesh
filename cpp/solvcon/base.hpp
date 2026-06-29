@@ -5,6 +5,14 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Core foundations shared across the library, e.g., the value-type bases, the
+ * Formatter string builder, macros, etc.
+ *
+ * @ingroup group_core
+ */
+
 // Used in this file.
 #include <cstdint>
 
@@ -23,8 +31,10 @@
 typedef SSIZE_T ssize_t;
 #endif
 
+/// Throw exception @p EXC carrying a "@p CLS: @p MSG" message.
 #define SOLVCON_EXCEPT(CLS, EXC, MSG) throw EXC(#CLS ": " MSG);
 
+/// Width in bytes of the solvcon integer type: 4 (int32) or 8 (int64).
 #ifndef SOLVCON_INTSIZE
 #define SOLVCON_INTSIZE 4
 #endif // SOLVCON_INTSIZE
@@ -70,6 +80,14 @@ using int_type = int64_t;
 #error SOLVCON_INTSIZE is not supported
 #endif // SOLVCON_INTSIZE
 
+/**
+ * Fixes the integer and real value types for spatial data structures.
+ *
+ * @tparam I Integral index type.
+ * @tparam R Floating-point real type.
+ *
+ * @ingroup group_core
+ */
 template <typename I, typename R>
 class NumberBase
 {
@@ -89,6 +107,8 @@ public:
 /**
  * Spatial table basic information.  Any table-based data store for spatial
  * data should inherit this class template.
+ *
+ * @ingroup group_core
  */
 template <uint8_t ND, typename I, typename R>
 class SpaceBase : public NumberBase<I, R>
@@ -109,7 +129,15 @@ public:
 
 }; /* end class SpaceBase */
 
-// Taken from https://stackoverflow.com/a/12262626
+/**
+ * Deprecated ostringstream-based string builder; prefer std::format.
+ *
+ * Streams values with operator<< and yields the accumulated text through
+ * str() or an implicit std::string conversion. Taken from
+ * https://stackoverflow.com/a/12262626 .
+ *
+ * @ingroup group_core
+ */
 class [[deprecated("Use std::format instead")]] Formatter
 {
 

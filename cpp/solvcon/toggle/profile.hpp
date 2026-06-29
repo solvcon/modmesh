@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Wall-time timing helpers for the runtime profiler.
+ *
+ * @ingroup group_core
+ */
+
 #include <solvcon/base.hpp>
 #include <chrono>
 
@@ -13,6 +20,8 @@ namespace solvcon
 
 /**
  * Simple timer for wall time using high-resolution clock.
+ *
+ * @ingroup group_core
  */
 class StopWatch
 {

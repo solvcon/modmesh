@@ -5,12 +5,29 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Serializable mirror of the call profiler radix tree for JSON export.
+ *
+ * @ingroup group_core
+ */
+
 #include <solvcon/toggle/RadixTree.hpp>
 #include <solvcon/serialization/SerializableItem.hpp>
 
 namespace solvcon
 {
 
+/**
+ * Serializable snapshot of one call profiler radix tree node.
+ *
+ * It captures the node key, name, accumulated total time (nanoseconds),
+ * and call count, plus the child nodes whose stable call count is
+ * positive. The running flag and start time are intentionally omitted
+ * because they carry no meaning after deserialization.
+ *
+ * @ingroup group_core
+ */
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 class SerializableRadixTreeNode : public SerializableItem
 {
@@ -66,6 +83,15 @@ private:
     child_list_type m_children;
 }; /* end class SerializableRadixTreeNode */
 
+/**
+ * Serializable snapshot of a whole call profiler radix tree.
+ *
+ * It holds the root node, the name-to-key identifier map, and the next
+ * unique node identifier, mirroring the stable state of a
+ * RadixTree<CallerProfile>.
+ *
+ * @ingroup group_core
+ */
 // FIXME: NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
 class SerializableRadixTree : public SerializableItem
 {
@@ -99,7 +125,11 @@ private:
     key_type m_unique_id;
 }; /* end class SerializableRadixTree */
 
-/// Utility to serialize and deserialize CallProfiler.
+/**
+ * Utility to serialize and deserialize CallProfiler.
+ *
+ * @ingroup group_core
+ */
 class CallProfilerSerializer
 {
 

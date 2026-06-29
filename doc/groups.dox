@@ -9,9 +9,10 @@
  */
 
 /** @defgroup group_core Core and memory
- *  Value-type bases, the string formatter, serialization, raw memory and the
- *  typed multi-dimensional arrays (ConcreteBuffer, SimpleArray, small_vector),
- *  the feature toggle, SIMD, and device compute.
+ *  Value-type bases, complex numbers and fundamental mathematical helpers, the
+ *  string formatter, serialization, raw memory and the typed multi-dimensional
+ *  arrays (ConcreteBuffer, SimpleArray, small_vector), the feature toggle,
+ *  SIMD, and device compute.
  */
 
 /** @defgroup group_mesh Mesh

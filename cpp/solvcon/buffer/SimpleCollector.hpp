@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Growable typed buffer that collects elements contiguously.
+ *
+ * @ingroup group_core
+ */
+
 #include <solvcon/buffer/BufferExpander.hpp>
 #include <solvcon/buffer/SimpleArray.hpp>
 
@@ -14,6 +21,17 @@
 namespace solvcon
 {
 
+/**
+ * Growable typed buffer that collects elements of type @p T contiguously.
+ *
+ * Backs storage with a BufferExpander, grows as elements are appended, and
+ * hands the result to a SimpleArray without copying. Prefer it over a
+ * std::vector when the data must become a SimpleArray.
+ *
+ * @tparam T Element value type.
+ *
+ * @ingroup group_core
+ */
 template <typename T>
 class SimpleCollector
 {

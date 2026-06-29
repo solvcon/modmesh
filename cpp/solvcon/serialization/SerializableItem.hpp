@@ -5,6 +5,13 @@
  * BSD 3-Clause License, see COPYING
  */
 
+/**
+ * @file
+ * Abstract interface and helpers for JSON serialization.
+ *
+ * @ingroup group_core
+ */
+
 #include <iomanip>
 #include <sstream>
 #include <string_view>
@@ -18,6 +25,11 @@
 namespace solvcon
 {
 
+/**
+ * Abstract interface for objects that serialize to and from JSON.
+ *
+ * @ingroup group_core
+ */
 // FIXME: NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
 class SerializableItem
 {
