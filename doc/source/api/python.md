@@ -1,15 +1,29 @@
 # Python API
 
-This page is generated from docstrings by ``autodoc``, so it stays in sync with
-the code automatically.  The compiled ``_solvcon`` extension is mocked during
-the build (see `conf.py`), so these pages render even on a clean checkout where
-the C++ layer has not been compiled.
+The Python API has two layers.  The pure-Python modules under `solvcon/`
+provide the high-level interface, and a compiled extension, `_solvcon`,
+supplies the performance-critical types through pybind11 wrappers.
 
-Below is an example that documents the one-dimensional Euler solver.  Point
-``automodule`` at any module to render its public surface.
+## Compiled extension wrappers
+
+{py:mod}`solvcon.core` loads the pybind11 wrappers from the {py:mod}`_solvcon`
+extension and re-exports them into the top-level {py:mod}`solvcon` namespace.
+
+## GUI ({py:mod}`solvcon.pilot`)
+
+The Qt-based {doc}`Pilot GUI </pilot/index>` lives in {py:mod}`solvcon.pilot`
+and needs Qt6 and PySide6.
+
+```{note}
+This section is a placeholder for GUI Python API documentation.
+```
+
+## Testing utilities ({py:mod}`solvcon.testing`)
+
+Helpers shared by the Python test suite.
 
 ```{eval-rst}
-.. automodule:: solvcon.onedim.euler1d
+.. automodule:: solvcon.testing
    :members:
    :undoc-members:
    :show-inheritance:

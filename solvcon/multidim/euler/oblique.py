@@ -67,6 +67,7 @@ class ObliqueShockMesher(object):
         """Build a :class:`~solvcon.core.StaticMesh` of the selected flavor.
 
         ``cell_type`` selects the element shape:
+
         - ``'quad'`` keeps one quadrilateral per grid box,
         - ``'triangle'`` cuts each box along its lower-left-to-upper-right
           diagonal into two triangles (flipping the diagonal at two corners
