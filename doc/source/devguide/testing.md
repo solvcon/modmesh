@@ -10,7 +10,7 @@ be reached from Python.
   forward options verbatim to pytest to run a subset.
 - `make run_pilot_pytest`: Python tests that need the pilot GUI.
 - `make gtest`: build and run the full C++ test suite.
-- `make pyprof`: run the profiling benchmarks (see {doc}`/system/profiling`).
+- `make pyprof`: run the profiling benchmarks (see {doc}`/compute/profiling`).
 
 After `make gtest` has built the binary, a single C++ test can be run directly:
 

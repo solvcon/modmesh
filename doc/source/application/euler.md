@@ -1,4 +1,6 @@
-# The Euler Equations
+# Supersonic Inviscid Flows
+
+Inviscid supersonic flows are governed by the Euler equations.
 
 ## Governing Equations of Fluid Flows
 

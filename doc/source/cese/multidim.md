@@ -1,4 +1,4 @@
-# Multi-Dimensional CESE
+# Multi-Dimensional Formulation
 
 ## CESE Dual Mesh
 
