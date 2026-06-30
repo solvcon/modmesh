@@ -22,32 +22,70 @@ style when adding new code and changing existing code. The rules of thumb are:
    file and follow it. Familiar with the code in the module(s) if time permits.
 3. Use the style guide.
 
-## Line Economy
+## Line Economy and Breathing Room
 
-Prefer fewer lines for better human readability. Dense code that fits within
-the line-width limits is easier to scan than code spread across many lines.
-This applies to both C++ and Python.
+Two forces balance here, and they do not conflict. Line economy keeps a single
+thought on as few lines as it honestly needs. Breathing room separates distinct
+thoughts with a blank line so a reader can see the structure. Economy fights
+spreading one idea across many lines; breathing room fights packing many ideas
+into one unbroken block. Both serve the same goal: code a human can scan.
+
+### Keep one thought compact
+
+Prefer fewer lines for a single thought. Dense code that fits within the
+line-width limits is easier to scan than the same logic spread across many
+lines. This applies to both C++ and Python.
 
 - Group related short declarations on one line when natural, e.g.
   `double x, y;`.
-- Don't add blank lines inside short blocks (a 3-line function body does not
-  need internal blank lines).
 - Prefer compact forms over spread-out forms when both are equally clear.
-- Respect the linting line-width limits (below) -- never sacrifice them to
+- Do not pad a short block: a 3-line function body needs no internal blank
+  lines.
+- Respect the linting line-width limits (below); never sacrifice them to
   shorten the line count.
 - Never put two consecutive executable statements (separated by `;`) on one
-  line -- debuggers and stack traces need line granularity. A single-statement
-  inline body like `void set_flag(bool v) { m_flag = v; }` is one statement,
-  not two, and remains the preferred accessor form.
+  line, because debuggers and stack traces need line granularity. A
+  single-statement inline body like `void set_flag(bool v) { m_flag = v; }` is
+  one statement, not two, and remains the preferred accessor form.
 
-Exceptions where vertical space helps:
-- Blank lines between functions and methods (required).
-- Blank lines between logical sections within a function (sparingly).
-- Blank lines around access specifiers in C++ classes.
-- Multi-line forms for genuinely complex expressions.
+### Let the code breathe
 
-This is a readability guideline, not a mandate to compress everything. When
-compactness hurts clarity, choose clarity.
+A longer body packed edge to edge with no blank line is hard to read even when
+every line is necessary. The most common failure is the opposite of padding: a
+wall of statements with no seams. Insert one blank line between the distinct
+steps of a computation so each step reads as a unit. Let the blank line mark
+the seam; do not reach for a narrating comment to do it (see "Comments").
+
+```cpp
+void Solver::march_one_step()
+{
+    SimpleArray<double> left = gather_left();
+    SimpleArray<double> right = gather_right();
+
+    SimpleArray<double> flux = solve_riemann(left, right);
+
+    apply_flux(flux);
+    advance_time();
+}
+```
+
+Where a blank line earns its place:
+
+- Between functions, methods, and class definitions (required).
+- Between the logical sections of a longer body, one blank line per seam.
+- Around access specifiers in a C++ class, and between accessor pairs.
+- Before a multi-line expression or a concluding `return` that wants setting
+  off from the work above it.
+
+Where it does not:
+
+- Inside a short block that is already a single thought.
+- More than one consecutive blank line.
+- Right after an opening brace or right before a closing brace.
+
+This is a readability guideline in both directions. Do not compress until the
+code is an unbroken wall, and do not pad until the logic drowns in whitespace.
+When either rule hurts clarity, choose clarity.
 
 ## Indentation and file format
 
