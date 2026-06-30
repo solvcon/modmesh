@@ -83,10 +83,9 @@ bibtex_bibfiles = ["reference.bib"]
 
 # -- HTML output ------------------------------------------------------------
 
-# pydata-sphinx-theme is the de-facto standard across the scientific
-# Python stack (NumPy, SciPy, pandas, matplotlib).  See doc/README.md
-# for the sphinx-book-theme alternative tuned for teaching material.
-html_theme = "pydata_sphinx_theme"
+# furo is a clean, responsive theme with first-class light and dark modes
+# and good defaults for long-form technical documentation.
+html_theme = "furo"
 html_title = "solvcon"
 html_static_path = ["_static"]
 
