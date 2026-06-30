@@ -1,15 +1,15 @@
-# Unstructured Meshes
+# Mesh
 
 ## Concepts
 
-The conservation element and solution element (CESE) method is developed
-against the set-up of unstructured meshes in multi-dimensional space
-{cite:t}`mavriplis_unstructured_1997` {cite:t}`wang_2d_1999`.  In contrast to
-structured meshes, unstructured meshes allow flexible connectivity and simplex
-elements.  The implementation, i.e., the data structures and the computer code
-for their algorithms, of unstructured meshes dictate how simulation software
-operates.  It serves two purposes: numerical methods for simulation and mesh
-generation.
+{doc}`The conservation element and solution element (CESE) method
+</cese/index>` is developed against the set-up of unstructured meshes in
+multi-dimensional space {cite:t}`mavriplis_unstructured_1997`
+{cite:t}`wang_2d_1999`. In contrast to structured meshes, unstructured meshes
+allow flexible connectivity and simplex elements. The implementation, i.e., the
+data structures and the computer code for their algorithms, of unstructured
+meshes dictates how simulation software operates. It serves two purposes:
+numerical methods for simulation and mesh generation.
 
 ## Geometry
 
@@ -111,7 +111,7 @@ are listed in the following tables and figures.
 
 ### Two-Dimensional Sub-Entities
 
-Both of two-dimensional elements are enclosed by straight lines.
+Both two-dimensional elements are enclosed by straight lines.
 
 | Shape (type)      | Face | = Line formed by nodes |
 |:------------------|-----:|:-----------------------|

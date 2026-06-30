@@ -57,6 +57,11 @@ owned by hooks, not skills.
 - `check-source.sh` -- PostToolUse on `Write|Edit` of source files.  Surfaces
   non-ASCII bytes, trailing whitespace, missing modeline, and Python `>79`
   chars; exits 2 with `path:line -- rule -- fix`.
+- `check-doc-images.sh` -- PreToolUse on `Bash`.  Blocks a `git commit` that
+  stages a raster or pre-rendered image blob (`.png`, `.jpg`, `.svg`, `.eps`,
+  `.pdf`, ...) under `doc/`; exits 2 with the offending paths. Documentation
+  schematics are authored as `.tex` PSTricks rendered by `pstake`, so an image
+  blob means a build artifact is being checked in instead of its source.
 
 ### Settings (`.claude/settings.json`)
 
@@ -66,7 +71,8 @@ owned by hooks, not skills.
 - `permissions.deny` hard-blocks only `sudo` and `rm -rf` of root/home.
   Destructive git operations (force-push, `git reset --hard`, `git clean -fd`)
   are discouraged but not blocked -- use them deliberately and only when asked.
-- `hooks` wires the script above.
+- `hooks` wires the scripts above (`check-source.sh` on `Write|Edit`,
+  `check-doc-images.sh` on `Bash`).
 - `statusLine` runs `.claude/statusline.sh` -- shows model, project, branch
   (with `*` if dirty), and context-window usage.
 
@@ -210,11 +216,18 @@ See "Build, Test, Lint, Format" above for the `make` invocations.
   out. See `STYLE.md` "Comments" for examples.
 - **All source**: UTF-8, Unix LF, ASCII-only, no trailing whitespace, modeline
   at EOF.
+- **Documentation schematics**: author figures as `.tex` PSTricks sources
+  rendered by `solvcon/pstake` (symlinked into `doc/ext/`) at build time. Never
+  check in image blobs (`.png`, `.jpg`, `.svg`, `.eps`, `.pdf`, ...) under
+  `doc/`; commit the `.tex` source instead, so the figure stays diffable and
+  rebuilds from source.
 
 How style is enforced in this repo:
 
 - `.claude/hooks/check-source.sh` owns the deterministic checks (ASCII bytes,
   trailing whitespace, modeline at EOF, Python `>79`-char lines).
+- `.claude/hooks/check-doc-images.sh` blocks committing image blobs under
+  `doc/`, keeping schematics in `.tex`/PSTricks form (rendered by `pstake`).
 - The `cpp-style-review` and `python-style-review` skills in
   `.claude/skills/` own the judgment-call rules (`m_` prefix in context,
   function-body placement, container choice, pybind11 binding split, test

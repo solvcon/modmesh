@@ -5,7 +5,7 @@
 sphinx>=7.0
 numpy
 myst-parser>=2.0
-pydata-sphinx-theme>=0.15
+furo>=2024.1
 breathe>=4.35
 sphinxcontrib-bibtex>=2.6
 
