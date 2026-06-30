@@ -11,6 +11,7 @@ set(SOLVCON_UNIVERSE_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/polygon_boolean.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ViewTransform2d.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/World.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/WorldDiagnostics.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/rtree.hpp
     CACHE FILEPATH "" FORCE)
 

@@ -13,6 +13,7 @@
  */
 
 #include <iomanip>
+#include <optional>
 #include <sstream>
 #include <string_view>
 #include <type_traits>
@@ -152,6 +153,10 @@ std::string JsonHelper::to_json_string(const T & value) // FIXME: NOLINT(misc-no
     {
         return value ? "true" : "false";
     }
+    else if constexpr (is_specialization_of_v<std::optional, T>)
+    {
+        return value.has_value() ? to_json_string(*value) : std::string("null");
+    }
     else if constexpr (is_specialization_of_v<std::vector, T>)
     {
         std::ostringstream oss;
@@ -262,6 +267,12 @@ void JsonHelper::from_json_string(const std::unique_ptr<JsonNode> & node, T & va
         // NOLINTNEXTLINE(misc-no-recursion)
         value.from_json(std::get<JsonMap>(node->value)); /* recursive here */
     }
+    else if constexpr (is_specialization_of_v<std::optional, T>)
+    {
+        value.emplace();
+        // NOLINTNEXTLINE(misc-no-recursion)
+        from_json_string(node, *value); /* recursive here */
+    }
     else if constexpr (is_specialization_of_v<std::unordered_map, T>)
     {
         if (node->type != detail::JsonType::Object)
@@ -324,6 +335,14 @@ public:                                                                         
         const char * separator = "";                                                                \
         auto register_member = [&](const char * name, auto && value)                                \
         {                                                                                           \
+            using member_type = std::remove_cvref_t<decltype(value)>;                               \
+            if constexpr (detail::is_specialization_of_v<std::optional, member_type>)               \
+            {                                                                                       \
+                if (!value.has_value())                                                             \
+                {                                                                                   \
+                    return;                                                                         \
+                }                                                                                   \
+            }                                                                                       \
             oss << separator << "\"" << name << "\":" << detail::JsonHelper::to_json_string(value); \
             separator = ",";                                                                        \
         };                                                                                          \

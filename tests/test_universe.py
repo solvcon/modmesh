@@ -833,7 +833,7 @@ class WorldDescribeStateTC(unittest.TestCase):
     def test_unknown_level_raises(self):
         self.w.add_triangle(0, 0, 1, 0, 0, 1)
         with self.assertRaises(ValueError):
-            self.w.describe_state(level="+diagnostics")
+            self.w.describe_state(level="bogus")
 
     def test_fp32(self):
         w = solvcon.WorldFp32()
@@ -841,5 +841,226 @@ class WorldDescribeStateTC(unittest.TestCase):
         shape = json.loads(w.describe_state())["shapes"][0]
         self.assertEqual(shape["type"], "line")
         self.assertEqual(shape["segments"], [[0, 0, 1, 1]])
+
+
+class WorldDescribeDiagnosticsTC(unittest.TestCase):
+    """describe_state(level="diagnostics"): derived facts."""
+
+    def setUp(self):
+        self.w = solvcon.WorldFp64()
+
+    def diag(self):
+        state = json.loads(self.w.describe_state(level="diagnostics"))
+        return state["diagnostics"]
+
+    def assert_one_degeneracy(self, shape, kind, reason):
+        degs = self.diag()["degeneracies"]
+        self.assertEqual(
+            degs, [{"shape": shape, "type": kind, "reason": reason}])
+
+    def test_basic_omits_diagnostics(self):
+        # Crossing geometry must not leak diagnostics into the basic level.
+        self.w.add_line(0, 0, 2, 2)
+        self.w.add_line(0, 2, 2, 0)
+        self.assertNotIn("diagnostics", json.loads(self.w.describe_state()))
+
+    def test_diagnostics_is_superset_of_basic(self):
+        self.w.add_triangle(0, 0, 1, 0, 0, 1)
+        basic = json.loads(self.w.describe_state(level="basic"))
+        full = json.loads(self.w.describe_state(level="diagnostics"))
+        for key in ("shapes", "segments", "curves", "points"):
+            self.assertEqual(full[key], basic[key])
+        self.assertIn("diagnostics", full)
+
+    def test_clean_world_empty_diagnostics(self):
+        self.w.add_triangle(0, 0, 4, 0, 0, 3)
+        self.w.add_circle(10, 10, 1)
+        diag = self.diag()
+        self.assertEqual(diag["intersections"], [])
+        self.assertEqual(diag["degeneracies"], [])
+
+    def test_crossing_lines(self):
+        a = self.w.add_line(0, 0, 2, 2)
+        b = self.w.add_line(0, 2, 2, 0)
+        hits = self.diag()["intersections"]
+        self.assertEqual(len(hits), 1)
+        self.assertEqual(hits[0]["shapes"], [a, b])
+        self.assertEqual(hits[0]["point"], [1, 1])
+
+    def test_parallel_lines_no_crossing(self):
+        self.w.add_line(0, 0, 2, 0)
+        self.w.add_line(0, 1, 2, 1)
+        self.assertEqual(self.diag()["intersections"], [])
+
+    def test_shared_vertices_not_reported(self):
+        # A triangle's edges meet only at its vertices (endpoints), which are
+        # not proper crossings.
+        self.w.add_triangle(0, 0, 4, 0, 0, 3)
+        self.assertEqual(self.diag()["intersections"], [])
+
+    def test_touching_endpoint_not_reported(self):
+        # An endpoint resting on another segment's interior (a T-junction) is
+        # endpoint contact, not a proper crossing.
+        self.w.add_line(0, 0, 2, 0)
+        self.w.add_line(1, 0, 1, 2)
+        self.assertEqual(self.diag()["intersections"], [])
+
+    def test_line_through_triangle(self):
+        # The classic invisible bug: a line slices two triangle edges.
+        tri = self.w.add_triangle(0, 0, 4, 0, 0, 4)
+        line = self.w.add_line(-1, 1, 5, 1)
+        hits = self.diag()["intersections"]
+        self.assertEqual(len(hits), 2)
+        for hit in hits:
+            self.assertEqual(hit["shapes"], [tri, line])
+        points = sorted(hit["point"] for hit in hits)
+        self.assertEqual(points, [[0, 1], [3, 1]])
+
+    def test_bare_segments_crossing(self):
+        p = solvcon.Point3dFp64
+        self.w.add_segment(p(0, 0), p(2, 2))
+        self.w.add_segment(p(0, 2), p(2, 0))
+        hits = self.diag()["intersections"]
+        self.assertEqual(len(hits), 1)
+        self.assertEqual(hits[0]["shapes"], [-1, -1])
+        self.assertEqual(hits[0]["point"], [1, 1])
+
+    def test_removed_shape_excluded(self):
+        self.w.add_line(0, 0, 2, 2)
+        drop = self.w.add_line(0, 2, 2, 0)
+        self.w.remove_shape(drop)
+        self.assertEqual(self.diag()["intersections"], [])
+
+    def test_undone_shape_excluded(self):
+        # An undone shape is dead, so it drops out of the diagnostics, and
+        # redo brings it and its crossing back. This matches how the basic
+        # level treats dead shapes, now against undo/redo.
+        self.w.add_line(0, 0, 2, 2)
+        self.w.add_line(0, 2, 2, 0)
+        self.assertEqual(len(self.diag()["intersections"]), 1)
+        self.w.undo()
+        self.assertEqual(self.diag()["intersections"], [])
+        self.w.redo()
+        self.assertEqual(len(self.diag()["intersections"]), 1)
+
+    def test_collinear_triangle(self):
+        sid = self.w.add_triangle(0, 0, 1, 1, 2, 2)
+        self.assert_one_degeneracy(sid, "triangle", "collinear")
+
+    def test_zero_radius_circle(self):
+        sid = self.w.add_circle(0, 0, 0)
+        self.assert_one_degeneracy(sid, "circle", "zero-radius")
+
+    def test_zero_area_rectangle(self):
+        sid = self.w.add_rectangle(0, 0, 2, 0)
+        self.assert_one_degeneracy(sid, "rectangle", "zero-area")
+
+    def test_zero_length_line(self):
+        sid = self.w.add_line(1, 1, 1, 1)
+        self.assert_one_degeneracy(sid, "line", "zero-length")
+
+    def test_coincident_bezier(self):
+        p = solvcon.Point3dFp64
+        sid = self.w.add_bezier_shape(p(1, 1, 0), p(1, 1, 0),
+                                      p(1, 1, 0), p(1, 1, 0))
+        self.assert_one_degeneracy(sid, "bezier", "coincident-controls")
+
+    def test_bare_zero_length_segment(self):
+        p = solvcon.Point3dFp64
+        self.w.add_segment(p(3, 3), p(3, 3))
+        self.assert_one_degeneracy(-1, "segment", "zero-length")
+
+    def test_healthy_shapes_no_degeneracies(self):
+        self.w.add_triangle(0, 0, 4, 0, 0, 3)
+        self.w.add_circle(10, 10, 2)
+        self.w.add_rectangle(-5, -5, -1, -2)
+        self.assertEqual(self.diag()["degeneracies"], [])
+
+    def test_fractional_crossing_point(self):
+        # A crossing whose point has fractional coordinates and whose two
+        # parameters differ (t=1/6, s=1/2), guarding the 6-decimal serializer
+        # and a t-vs-s mixup in the point computation.
+        a = self.w.add_line(0, 0, 3, 3)
+        b = self.w.add_line(0, 1, 1, 0)
+        hits = self.diag()["intersections"]
+        self.assertEqual(len(hits), 1)
+        self.assertEqual(hits[0]["shapes"], [a, b])
+        self.assertEqual(hits[0]["point"], [0.5, 0.5])
+
+    def test_shape_crossing_bare_segment(self):
+        # A mixed pair: the slots carry the live shape id and the bare -1.
+        p = solvcon.Point3dFp64
+        sid = self.w.add_line(0, 0, 2, 2)
+        self.w.add_segment(p(0, 2), p(2, 0))
+        hits = self.diag()["intersections"]
+        self.assertEqual(len(hits), 1)
+        self.assertEqual(hits[0]["shapes"], [sid, -1])
+        self.assertEqual(hits[0]["point"], [1, 1])
+
+    def test_near_miss_not_crossing(self):
+        # The vertical segment stops just short of the horizontal one, so the
+        # near parameter falls outside (0, 1) and nothing is reported.
+        self.w.add_line(0, 0, 2, 0)
+        self.w.add_line(1, 0.0001, 1, 2)
+        self.assertEqual(self.diag()["intersections"], [])
+
+    def test_collinear_overlap_not_crossing(self):
+        # Two segments on the same line overlap but share no single crossing
+        # point, so the collinear short-circuit reports nothing.
+        self.w.add_line(0, 0, 4, 0)
+        self.w.add_line(2, 0, 6, 0)
+        self.assertEqual(self.diag()["intersections"], [])
+
+    def test_zero_one_axis_ellipse(self):
+        sid = self.w.add_ellipse(0, 0, 0, 5)
+        self.assert_one_degeneracy(sid, "ellipse", "zero-radius")
+
+    def test_healthy_ellipse_no_degeneracy(self):
+        self.w.add_ellipse(0, 0, 3, 1)
+        self.assertEqual(self.diag()["degeneracies"], [])
+
+    def test_zero_area_square(self):
+        sid = self.w.add_square(0, 0, 0)
+        self.assert_one_degeneracy(sid, "square", "zero-area")
+
+    def test_multiple_degeneracies_ordered(self):
+        # Documented order: live shapes by id, then bare segments, then bare
+        # curves.
+        p = solvcon.Point3dFp64
+        tri = self.w.add_triangle(0, 0, 1, 1, 2, 2)
+        cir = self.w.add_circle(5, 5, 0)
+        self.w.add_segment(p(8, 8), p(8, 8))
+        self.w.add_bezier(p(9, 9), p(9, 9), p(9, 9), p(9, 9))
+        self.assertEqual(self.diag()["degeneracies"], [
+            {"shape": tri, "type": "triangle", "reason": "collinear"},
+            {"shape": cir, "type": "circle", "reason": "zero-radius"},
+            {"shape": -1, "type": "segment", "reason": "zero-length"},
+            {"shape": -1, "type": "bezier",
+             "reason": "coincident-controls"},
+        ])
+
+    def test_deterministic(self):
+        def build(w):
+            w.add_line(0, 0, 2, 2)
+            w.add_line(0, 2, 2, 0)
+            w.add_circle(5, 5, 0)
+        build(self.w)
+        other = solvcon.WorldFp64()
+        build(other)
+        self.assertEqual(
+            self.w.describe_state(level="diagnostics"),
+            self.w.describe_state(level="diagnostics"))
+        self.assertEqual(
+            self.w.describe_state(level="diagnostics"),
+            other.describe_state(level="diagnostics"))
+
+    def test_fp32(self):
+        w = solvcon.WorldFp32()
+        w.add_line(0, 0, 2, 2)
+        w.add_line(0, 2, 2, 0)
+        diag = json.loads(
+            w.describe_state(level="diagnostics"))["diagnostics"]
+        self.assertEqual(len(diag["intersections"]), 1)
+        self.assertEqual(diag["intersections"][0]["point"], [1, 1])
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:

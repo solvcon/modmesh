@@ -19,10 +19,12 @@
 #include <solvcon/universe/bernstein.hpp>
 #include <solvcon/universe/bezier.hpp>
 #include <solvcon/universe/rtree.hpp>
+#include <solvcon/universe/WorldDiagnostics.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <optional>
 #include <vector>
 
 namespace solvcon
@@ -81,6 +83,7 @@ inline std::string shape_type_name(ShapeType st)
 enum class DescribeLevel : uint8_t
 {
     BASIC = 0, ///< only what the 2D image draws
+    DIAGNOSTICS = 1, ///< BASIC plus derived facts: intersections, degeneracies
 }; /* end enum class DescribeLevel */
 
 inline DescribeLevel describe_level_from_string(std::string const & level)
@@ -88,6 +91,10 @@ inline DescribeLevel describe_level_from_string(std::string const & level)
     if (level == "basic")
     {
         return DescribeLevel::BASIC;
+    }
+    if (level == "diagnostics")
+    {
+        return DescribeLevel::DIAGNOSTICS;
     }
     throw std::invalid_argument(
         std::format("World: describe_state level '{}' not supported", level));
@@ -189,11 +196,15 @@ public:
     point_list_type const & points() const { return m_points; }
     point_list_type & points() { return m_points; }
 
+    std::optional<WorldDiagnostics> const & diagnostics() const { return m_diagnostics; }
+    std::optional<WorldDiagnostics> & diagnostics() { return m_diagnostics; }
+
     MM_DECL_SERIALIZABLE(
         register_member("shapes", m_shapes);
         register_member("segments", m_segments);
         register_member("curves", m_curves);
-        register_member("points", m_points);)
+        register_member("points", m_points);
+        register_member("diagnostics", m_diagnostics);)
 
 private:
 
@@ -201,6 +212,7 @@ private:
     segment_list_type m_segments; ///< bare segments
     curve_list_type m_curves; ///< bare curves
     point_list_type m_points; ///< free points, each [x, y]
+    std::optional<WorldDiagnostics> m_diagnostics; ///< "diagnostics"-level facts; empty (omitted) at the basic level
 
 }; /* end class WorldState */
 
@@ -541,6 +553,34 @@ private:
 
     /// Distance from point (px, py) to the segment (ax, ay)-(bx, by).
     static T point_segment_distance(T px, T py, T ax, T ay, T bx, T by);
+
+    /**
+     * Derived facts for the "diagnostics" level: proper crossings between
+     * live segments and degenerate shapes/primitives.
+     */
+    WorldDiagnostics compute_diagnostics() const;
+
+    /**
+     * Owner id of each segment and curve: a live shape id, -1 for bare
+     * geometry, or the dead sentinel for geometry whose shape was removed.
+     */
+    void compute_geometry_owners(small_vector<int32_t> & seg_owner, small_vector<int32_t> & curve_owner) const;
+
+    /**
+     * Append every proper crossing between two live segments, in ascending
+     * index order so the output is deterministic.
+     */
+    void append_intersections(WorldDiagnostics & diag, small_vector<int32_t> const & seg_owner) const;
+
+    /// Append the degeneracy (if any) of one live shape, dispatched by type.
+    void append_shape_degeneracy(WorldDiagnostics & diag, int32_t sid, ShapeRecord const & rec) const;
+
+    /**
+     * Append degeneracies of bare segments and curves (those with no owning
+     * shape), leaving live-shape degeneracies to append_shape_degeneracy.
+     */
+    void append_bare_degeneracies(
+        WorldDiagnostics & diag, small_vector<int32_t> const & seg_owner, small_vector<int32_t> const & curve_owner) const;
 
     /// Register a new shape owning [segment_offset, segment_offset + segment_count)
     /// in the segment pad and [curve_offset, curve_offset + curve_count) in the
@@ -1069,8 +1109,6 @@ void World<T>::check_shape_id(int32_t shape_id) const
 template <typename T>
 std::string World<T>::describe_state(DescribeLevel level) const
 {
-    (void)level; // Only BASIC exists today; richer levels are added later.
-
     // Find the segments and curves owned by live shapes
     small_vector<bool> segment_owned(m_segments->size(), false);
     small_vector<bool> curve_owned(m_curves->size(), false);
@@ -1128,7 +1166,159 @@ std::string World<T>::describe_state(DescribeLevel level) const
         state.points().push_back({p.x(), p.y()});
     }
 
+    if (level == DescribeLevel::DIAGNOSTICS)
+    {
+        state.diagnostics() = compute_diagnostics();
+    }
     return state.to_json();
+}
+
+template <typename T>
+WorldDiagnostics World<T>::compute_diagnostics() const
+{
+    small_vector<int32_t> seg_owner(m_segments->size(), -1);
+    small_vector<int32_t> curve_owner(m_curves->size(), -1);
+    compute_geometry_owners(seg_owner, curve_owner);
+
+    WorldDiagnostics diag;
+    append_intersections(diag, seg_owner);
+
+    for (size_t sid = 0; sid < m_shape_registry.size(); ++sid)
+    {
+        ShapeRecord const & rec = m_shape_registry[sid];
+        if (rec.type != ShapeType::DEAD)
+        {
+            append_shape_degeneracy(diag, static_cast<int32_t>(sid), rec);
+        }
+    }
+    append_bare_degeneracies(diag, seg_owner, curve_owner);
+    return diag;
+}
+
+template <typename T>
+void World<T>::compute_geometry_owners(small_vector<int32_t> & seg_owner, small_vector<int32_t> & curve_owner) const
+{
+    // The dead sentinel marks geometry whose shape was removed, so callers can
+    // exclude it; bare geometry keeps the -1 the caller initialized it with.
+    constexpr int32_t dead_owner = std::numeric_limits<int32_t>::min();
+    for (size_t sid = 0; sid < m_shape_registry.size(); ++sid)
+    {
+        ShapeRecord const & rec = m_shape_registry[sid];
+        int32_t const owner = (rec.type == ShapeType::DEAD) ? dead_owner : static_cast<int32_t>(sid);
+        for (uint32_t i = 0; i < rec.segment_count; ++i)
+        {
+            seg_owner[rec.segment_offset + i] = owner;
+        }
+        for (uint32_t i = 0; i < rec.curve_count; ++i)
+        {
+            curve_owner[rec.curve_offset + i] = owner;
+        }
+    }
+}
+
+template <typename T>
+void World<T>::append_intersections(WorldDiagnostics & diag, small_vector<int32_t> const & seg_owner) const
+{
+    constexpr int32_t dead_owner = std::numeric_limits<int32_t>::min();
+    for (size_t i = 0; i < m_segments->size(); ++i)
+    {
+        if (seg_owner[i] == dead_owner)
+        {
+            continue;
+        }
+        for (size_t j = i + 1; j < m_segments->size(); ++j)
+        {
+            if (seg_owner[j] == dead_owner)
+            {
+                continue;
+            }
+            auto const hit = detail::segment_proper_intersection(
+                m_segments->x0(i), m_segments->y0(i), m_segments->x1(i), m_segments->y1(i), m_segments->x0(j), m_segments->y0(j), m_segments->x1(j), m_segments->y1(j));
+            if (hit)
+            {
+                diag.add_intersection(seg_owner[i], seg_owner[j], (*hit)[0], (*hit)[1]);
+            }
+        }
+    }
+}
+
+template <typename T>
+void World<T>::append_bare_degeneracies(
+    WorldDiagnostics & diag, small_vector<int32_t> const & seg_owner, small_vector<int32_t> const & curve_owner) const
+{
+    for (size_t i = 0; i < m_segments->size(); ++i)
+    {
+        if (seg_owner[i] == -1 && detail::is_zero_length(m_segments->x0(i), m_segments->y0(i), m_segments->x1(i), m_segments->y1(i)))
+        {
+            diag.add_degeneracy(-1, "segment", "zero-length");
+        }
+    }
+    for (size_t i = 0; i < m_curves->size(); ++i)
+    {
+        if (curve_owner[i] == -1 && detail::is_coincident_controls(m_curves->x0(i), m_curves->y0(i), m_curves->x1(i), m_curves->y1(i), m_curves->x2(i), m_curves->y2(i), m_curves->x3(i), m_curves->y3(i)))
+        {
+            diag.add_degeneracy(-1, "bezier", "coincident-controls");
+        }
+    }
+}
+
+template <typename T>
+void World<T>::append_shape_degeneracy(WorldDiagnostics & diag, int32_t sid, ShapeRecord const & rec) const
+{
+    switch (rec.type)
+    {
+    case ShapeType::LINE:
+    {
+        size_t const idx = rec.segment_offset;
+        if (detail::is_zero_length(m_segments->x0(idx), m_segments->y0(idx), m_segments->x1(idx), m_segments->y1(idx)))
+        {
+            diag.add_degeneracy(sid, "line", "zero-length");
+        }
+        break;
+    }
+    case ShapeType::TRIANGLE:
+    {
+        // Vertices A, B, C are the first two segments' endpoints.
+        size_t const s0 = rec.segment_offset;
+        size_t const s1 = rec.segment_offset + 1;
+        if (detail::is_collinear(m_segments->x0(s0), m_segments->y0(s0), m_segments->x1(s0), m_segments->y1(s0), m_segments->x1(s1), m_segments->y1(s1)))
+        {
+            diag.add_degeneracy(sid, "triangle", "collinear");
+        }
+        break;
+    }
+    case ShapeType::RECTANGLE:
+    case ShapeType::SQUARE:
+    {
+        bbox_type const bb = compute_shape_bbox(rec);
+        if (detail::is_zero_extent(bb.min_x(), bb.min_y(), bb.max_x(), bb.max_y()))
+        {
+            diag.add_degeneracy(sid, shape_type_name(rec.type), "zero-area");
+        }
+        break;
+    }
+    case ShapeType::ELLIPSE:
+    case ShapeType::CIRCLE:
+    {
+        bbox_type const bb = compute_shape_bbox(rec);
+        if (detail::is_zero_extent(bb.min_x(), bb.min_y(), bb.max_x(), bb.max_y()))
+        {
+            diag.add_degeneracy(sid, shape_type_name(rec.type), "zero-radius");
+        }
+        break;
+    }
+    case ShapeType::BEZIER:
+    {
+        size_t const idx = rec.curve_offset;
+        if (detail::is_coincident_controls(m_curves->x0(idx), m_curves->y0(idx), m_curves->x1(idx), m_curves->y1(idx), m_curves->x2(idx), m_curves->y2(idx), m_curves->x3(idx), m_curves->y3(idx)))
+        {
+            diag.add_degeneracy(sid, "bezier", "coincident-controls");
+        }
+        break;
+    }
+    default:
+        break;
+    }
 }
 
 using WorldFp32 = World<float>;
