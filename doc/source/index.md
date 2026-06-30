@@ -4,10 +4,10 @@ solvcon is an application platform for geometry-based computation: editing
 graphics and geometry, visualizing, meshing, and solving conservation laws.
 
 It is in the early-stage development. The system has been rewritten as a
-research code for a couple of time to explore for a good software architecture.
-Now we are transforming it into an integrated system that delivers high
-performance and ease of use at once. The documentation will evolve with the
-code.
+research code for a couple of times to explore for a good software
+architecture. Now we are transforming it into an integrated system that
+delivers high performance and ease of use at once. The documentation will
+evolve with the code.
 
 ```{toctree}
 :maxdepth: 1
