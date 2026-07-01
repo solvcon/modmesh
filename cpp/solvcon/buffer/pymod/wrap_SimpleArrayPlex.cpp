@@ -321,7 +321,7 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapSimpleArrayPlex : public WrapBase<Wr
                 // getter
                 DECL_MM_EXECUTE_TYPED_ARRAY_METHOD(nghost),
                 // setter
-                [](wrapped_type & self, size_t size)
+                [](wrapped_type & self, ssize_t size)
                 {
                     execute_callback_with_typed_array(
                         self,

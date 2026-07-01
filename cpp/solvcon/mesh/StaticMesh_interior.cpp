@@ -309,8 +309,8 @@ struct FaceBuilder
 
     // Data members.
     size_t nnode = 0;
-    size_t nface = 0;
-    size_t mface = 0;
+    ssize_t nface = 0;
+    ssize_t mface = 0;
     SimpleArray<int_type> const & cltpn;
     SimpleArray<int_type> const & clnds;
     SimpleArray<int_type> clfcs{};
@@ -326,24 +326,24 @@ struct FaceBuilder
         , mface(nface)
         , cltpn(cltpn_in)
         , clnds(clnds_in)
-        , clfcs(small_vector<size_t>{cltpn.nbody(), CLMFC + 1}, -1)
-        , fctpn(small_vector<size_t>{mface}, -1)
-        , fcnds(small_vector<size_t>{mface, FCMND + 1}, -1)
-        , fccls(small_vector<size_t>{mface, FCREL}, -1)
-        , dedupmap(mface)
+        , clfcs(shape_type{cltpn.nbody(), CLMFC + 1}, -1)
+        , fctpn(shape_type{mface}, -1)
+        , fcnds(shape_type{mface, FCMND + 1}, -1)
+        , fccls(shape_type{mface, FCREL}, -1)
+        , dedupmap(static_cast<size_t>(mface))
     {
         populate();
         make_dedupmap();
         remap_face();
     }
 
-    static size_t count_mface(SimpleArray<int_type> const & tcltpn)
+    static ssize_t count_mface(SimpleArray<int_type> const & tcltpn)
     {
         // clang-format off
         return std::accumulate
         (
-            tcltpn.body(), tcltpn.body()+tcltpn.nbody(), static_cast<size_t>(0)
-          , [](size_t a, uint8_t b){ return a + static_cast<size_t>(CellType::by_id(b).nface()); }
+            tcltpn.body(), tcltpn.body()+tcltpn.nbody(), static_cast<ssize_t>(0)
+          , [](ssize_t a, uint8_t b){ return a + static_cast<ssize_t>(CellType::by_id(b).nface()); }
         );
         // clang-format on
     }
@@ -388,28 +388,29 @@ struct FaceBuilder
     SimpleArray<int_type> make_ndfcs()
     {
         // first pass: get the maximum number of faces.
-        std::vector<size_t> ndnfc(nnode, 0);
-        for (size_t ifc = 0; ifc < mface; ++ifc)
+        std::vector<ssize_t> ndnfc(nnode, 0);
+        for (ssize_t ifc = 0; ifc < mface; ++ifc)
         {
             int_type const fcnnd = fcnds(ifc, 0);
             for (int_type const * p = fcnds.vptr(ifc, 1); p != fcnds.vptr(ifc, fcnnd + 1); ++p)
             {
-                ndnfc[*p] += 1;
+                ndnfc[static_cast<size_t>(*p)] += 1;
             }
         }
 
         // second pass: scan again to build hash table.
-        size_t const ndmfc = *std::max_element(ndnfc.begin(), ndnfc.end());
-        SimpleArray<int_type> ndfcs(small_vector<size_t>{nnode, static_cast<size_t>(ndmfc) + 1});
+        ssize_t const ndmfc = *std::max_element(ndnfc.begin(), ndnfc.end());
+        SimpleArray<int_type> ndfcs(
+            shape_type{static_cast<ssize_t>(nnode), ndmfc + 1});
         for (size_t ind = 0; ind < nnode; ++ind)
         {
             ndfcs(ind, 0) = 0;
-            for (size_t it = 1; it <= ndmfc; ++it)
+            for (ssize_t it = 1; it <= ndmfc; ++it)
             {
                 ndfcs(ind, it) = -1;
             }
         }
-        for (size_t ifc = 0; ifc < mface; ++ifc)
+        for (ssize_t ifc = 0; ifc < mface; ++ifc)
         {
             int_type const fcnnd = fcnds(ifc, 0);
             for (int_type const * p = fcnds.vptr(ifc, 1); p != fcnds.vptr(ifc, fcnnd + 1); ++p)
@@ -453,14 +454,15 @@ struct FaceBuilder
 
         // scan for duplicated faces and build duplication map.
         std::iota(dedupmap.begin(), dedupmap.end(), 0);
-        for (size_t ifc = 0 ; ifc < mface ; ++ifc)
+        for (ssize_t ifc = 0 ; ifc < mface ; ++ifc)
         {
-            if (dedupmap[ifc] == ifc)
+            auto const ifc_index = static_cast<size_t>(ifc);
+            if (dedupmap[ifc_index] == static_cast<uint_type>(ifc))
             {
                 int_type const ind = fcnds(ifc, 1); // take only the FIRST node of a face.
                 for (int_type it = 1 ; it <= ndfcs(ind, 0) ; ++it)
                 {
-                    size_t const jfc = ndfcs(ind, it);
+                    ssize_t const jfc = ndfcs(ind, it);
                     // test for duplication.
                     if
                     (
@@ -469,7 +471,7 @@ struct FaceBuilder
                      && (check_match(static_cast<int_type>(ifc), static_cast<int_type>(jfc)) == fcnds(static_cast<int_type>(jfc), 0))
                     )
                     {
-                        dedupmap[jfc] = static_cast<uint_type>(ifc);  // record duplication.
+                        dedupmap[static_cast<size_t>(jfc)] = static_cast<uint_type>(ifc);  // record duplication.
                     }
                 }
             }
@@ -479,12 +481,13 @@ struct FaceBuilder
     void remap_face()
     {
         // use the duplication map to remap nodes in faces, and build renewed map.
-        std::vector<int_type> map2(mface);
+        std::vector<int_type> map2(static_cast<size_t>(mface));
         {
-            size_t jfc = 0;
-            for (size_t ifc = 0 ; ifc < mface ; ++ifc)
+            ssize_t jfc = 0;
+            for (ssize_t ifc = 0 ; ifc < mface ; ++ifc)
             {
-                if (dedupmap[ifc] == ifc)
+                auto const ifc_index = static_cast<size_t>(ifc);
+                if (dedupmap[ifc_index] == static_cast<uint_type>(ifc))
                 {
                     //std::copy(fcnds.vptr(ifc, 0), fcnds.vptr(ifc, CellType::FCMND), fcnds.vptr(jfc));
                     for (int_type inf = 0 ; inf <= FCMND ; ++inf)
@@ -492,13 +495,13 @@ struct FaceBuilder
                         fcnds(jfc, inf) = fcnds(ifc, inf);
                     }
                     fctpn(jfc) = fctpn(ifc);
-                    map2[ifc] = static_cast<int_type>(jfc);
+                    map2[ifc_index] = static_cast<int_type>(jfc);
                     // increment j-face.
                     jfc += 1;
                 }
                 else
                 {
-                    map2[ifc] = map2[dedupmap[ifc]];
+                    map2[ifc_index] = map2[static_cast<size_t>(dedupmap[ifc_index])];
                 }
             }
             nface = jfc; // record deduplicated number of face.
@@ -506,8 +509,8 @@ struct FaceBuilder
 
         // rebuild faces in cells and build face neighboring, according to the
         // renewed face map.
-        size_t const ncell = cltpn.nbody();
-        for (size_t icl = 0 ; icl < ncell ; ++icl)
+        ssize_t const ncell = cltpn.nbody();
+        for (ssize_t icl = 0 ; icl < ncell ; ++icl)
         {
             for (int_type ifl = 1 ; ifl <= clfcs(icl, 0) ; ++ifl)
             {
@@ -524,19 +527,19 @@ struct FaceBuilder
 
     void rebuild_fctpn(decltype(fctpn) & ofctpn)
     {
-        ofctpn.remake(small_vector<size_t>{nface});
+        ofctpn.remake(shape_type{nface});
         std::copy(fctpn.vptr(0), fctpn.vptr(nface), ofctpn.vptr(0));
     }
 
     void rebuild_fcnds(decltype(fcnds) & ofcnds)
     {
-        ofcnds.remake(small_vector<size_t>{nface, FCMND+1});
+        ofcnds.remake(shape_type{nface, FCMND+1});
         std::copy(fcnds.vptr(0, 0), fcnds.vptr(nface, 0), ofcnds.vptr(0, 0));
     }
 
     void rebuild_fccls(decltype(fccls) & ofccls)
     {
-        ofccls.remake(small_vector<size_t>{nface, FCREL});
+        ofccls.remake(shape_type{nface, FCREL});
         std::copy(fccls.vptr(0, 0), fccls.vptr(nface, 0), ofccls.vptr(0, 0));
     }
 
@@ -557,9 +560,9 @@ void StaticMesh::build_faces_from_cells()
     fb.rebuild_fctpn(m_fctpn);
     fb.rebuild_fcnds(m_fcnds);
     fb.rebuild_fccls(m_fccls);
-    m_fccnd.remake(small_vector<size_t>{nface(), m_ndim}, 0);
-    m_fcnml.remake(small_vector<size_t>{nface(), m_ndim}, 0);
-    m_fcara.remake(small_vector<size_t>{nface()}, 0);
+    m_fccnd.remake(detail::shape_type{static_cast<ssize_t>(nface()), m_ndim}, 0);
+    m_fcnml.remake(detail::shape_type{static_cast<ssize_t>(nface()), m_ndim}, 0);
+    m_fcara.remake(detail::shape_type{static_cast<ssize_t>(nface())}, 0);
     std::copy(fb.clfcs.vptr(0, 0), fb.clfcs.vptr(m_ncell, 0), m_clfcs.vptr(0, 0));
 }
 
@@ -600,7 +603,7 @@ void StaticMesh::build_edge()
     }
 
     // Build the edge node array and populate.
-    m_ednds.remake(small_vector<size_t>{edges.size(), 2}, 0);
+    m_ednds.remake(detail::shape_type{static_cast<ssize_t>(edges.size()), 2}, 0);
     for (size_t ied = 0; ied < edges.size(); ++ied)
     {
         etype const edge = edges[ied];

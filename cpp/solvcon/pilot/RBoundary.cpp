@@ -44,7 +44,7 @@ void RBoundary::build(StaticMesh const & mh, int ibc)
     // nothing to draw.
     SimpleCollector<uint32_t> ends;
     SimpleArray<int32_t> const & bndfcs = mh.bndfcs();
-    for (size_t ibnd = 0; ibnd < bndfcs.shape(0); ++ibnd)
+    for (ssize_t ibnd = 0; ibnd < bndfcs.shape(0); ++ibnd)
     {
         if (bndfcs(ibnd, 1) != ibc)
         {

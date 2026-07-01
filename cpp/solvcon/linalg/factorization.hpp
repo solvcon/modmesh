@@ -30,6 +30,7 @@ private:
     using value_type = T;
     using real_type = typename detail::select_real_t<value_type>::type;
     using array_type = SimpleArray<value_type>;
+    using shape_type = typename array_type::shape_type;
 
 public:
 
@@ -82,9 +83,9 @@ Llt<T>::array_type Llt<T>::forward_substitution(array_type const & l, array_type
         throw std::invalid_argument(oss.str());
     }
 
-    const auto m = static_cast<ssize_t>(l.shape(0));
-    const auto n = static_cast<ssize_t>(b.shape(1));
-    small_vector<size_t> const y_shape{static_cast<size_t>(m), static_cast<size_t>(n)};
+    ssize_t const m = l.shape(0);
+    ssize_t const n = b.shape(1);
+    shape_type const y_shape{m, n};
     array_type y(y_shape);
     for (ssize_t k = 0; k < n; ++k)
     {
@@ -135,9 +136,9 @@ Llt<T>::array_type Llt<T>::backward_substitution(array_type const & l, array_typ
         throw std::invalid_argument(oss.str());
     }
 
-    const auto m = static_cast<ssize_t>(l.shape(0));
-    const auto n = static_cast<ssize_t>(y.shape(1));
-    small_vector<size_t> const x_shape{static_cast<size_t>(m), static_cast<size_t>(n)};
+    ssize_t const m = l.shape(0);
+    ssize_t const n = y.shape(1);
+    shape_type const x_shape{m, n};
     array_type x(x_shape);
     for (ssize_t k = 0; k < n; ++k)
     {
@@ -173,8 +174,8 @@ Llt<T>::array_type Llt<T>::factorize(array_type const & a)
         throw std::invalid_argument(oss.str());
     }
 
-    const auto m = static_cast<ssize_t>(a.shape(0));
-    small_vector<size_t> const shape = {static_cast<size_t>(m), static_cast<size_t>(m)};
+    ssize_t const m = a.shape(0);
+    shape_type const shape{m, m};
     array_type l(shape, value_type(0));
     const real_type eps = std::numeric_limits<real_type>::epsilon();
     for (ssize_t i = 0; i < m; ++i)
@@ -241,10 +242,10 @@ Llt<T>::array_type Llt<T>::solve(array_type const & a, array_type const & b)
     bool const was_1d = (b.ndim() == 1);
     if (was_1d)
     {
-        array_type const b_2d = b.reshape(small_vector<size_t>{b.shape(0), 1});
+        array_type const b_2d = b.reshape(shape_type{b.shape(0), 1});
         array_type const y = forward_substitution(l, b_2d);
         array_type const x = backward_substitution(l, y);
-        return x.reshape(small_vector<size_t>{x.shape(0)});
+        return x.reshape(shape_type{x.shape(0)});
     }
     else
     {

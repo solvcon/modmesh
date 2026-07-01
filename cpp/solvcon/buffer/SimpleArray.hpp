@@ -54,8 +54,12 @@ concept ArithmeticType = std::is_arithmetic_v<T>;
 
 template <typename T>
 concept SimpleArrayType = requires(T t) {
-    { t.data() } -> std::convertible_to<typename T::value_type *>;
-    { t.size() } -> std::convertible_to<size_t>;
+    {
+        t.data()
+    } -> std::convertible_to<typename T::value_type *>;
+    {
+        t.size()
+    } -> std::convertible_to<size_t>;
 };
 
 template <typename T, typename U>
@@ -63,9 +67,15 @@ concept IsSameRemoveConstType = std::is_same_v<std::remove_const_t<T>, U>;
 
 template <typename It>
 concept InputIterator = requires(It it) {
-    { *it };
-    { ++it } -> std::same_as<It &>;
-    { it++ } -> std::same_as<It>;
+    {
+        *it
+    };
+    {
+        ++it
+    } -> std::same_as<It &>;
+    {
+        it++
+    } -> std::same_as<It>;
 };
 
 namespace detail
@@ -108,8 +118,7 @@ inline ssize_t buffer_offset(small_vector<ssize_t> const & stride, small_vector<
 namespace detail
 {
 
-using shape_type = small_vector<size_t>;
-using sshape_type = small_vector<ssize_t>;
+using shape_type = small_vector<ssize_t>;
 
 /**
  * @brief Enumerate SimpleArray indices with nghost included.
@@ -141,21 +150,21 @@ public:
     }
 
     template <typename Array>
-    IndexRange(Array const & array, small_vector<size_t> const & axes)
+    IndexRange(Array const & array, shape_type const & axes)
         : m_lower(axes.size(), 0)
         , m_upper(axes.size(), 0)
     {
         for (size_t k = 0; k < axes.size(); ++k)
         {
-            size_t const dim = axes[k];
+            auto const dim = static_cast<size_t>(axes[k]);
             m_lower[k] = lower_bound(array, dim);
             m_upper[k] = upper_bound(array, dim);
         }
     }
 
-    sshape_type first() const { return m_lower; }
+    shape_type first() const { return m_lower; }
 
-    bool next(sshape_type & idx) const
+    bool next(shape_type & idx) const
     {
         for (size_t i = idx.size(); i > 0; --i)
         {
@@ -176,8 +185,8 @@ public:
 
 private:
 
-    sshape_type m_lower;
-    sshape_type m_upper;
+    shape_type m_lower;
+    shape_type m_upper;
 
     template <typename Array>
     static ssize_t lower_bound(Array const & array, size_t dim)
@@ -192,19 +201,18 @@ private:
     template <typename Array>
     static ssize_t upper_bound(Array const & array, size_t dim)
     {
-        return lower_bound(array, dim) + static_cast<ssize_t>(array.shape(dim));
+        return lower_bound(array, dim) + array.shape(dim);
     }
 };
 
 std::string format_shape(shape_type const & shape);
-std::string format_flat_index(shape_type const & shape, size_t offset);
+std::string format_flat_index(shape_type const & shape, ssize_t offset);
 
 template <typename T>
 struct SimpleArrayInternalTypes
 {
     using value_type = T;
     using shape_type = detail::shape_type;
-    using sshape_type = detail::sshape_type;
     using buffer_type = ConcreteBuffer;
 }; /* end class SimpleArrayInternalType */
 
@@ -253,7 +261,6 @@ public:
 
     using value_type = typename internal_types::value_type;
     using shape_type = typename internal_types::shape_type;
-    using sshape_type = typename internal_types::sshape_type;
 
     value_type sum() const
     {
@@ -315,14 +322,14 @@ private:
     // at(sidx) performs.
     static value_type sum_strided(value_type const * data,
                                   shape_type const & shape,
-                                  sshape_type const & stride)
+                                  shape_type const & stride)
     {
         const size_t ndim = shape.size();
-        auto const last_dim = static_cast<ssize_t>(shape[ndim - 1]);
+        ssize_t const last_dim = shape[ndim - 1];
         const ssize_t last_stride = stride[ndim - 1];
 
         value_type acc = zero();
-        sshape_type prefix(ndim - 1, 0);
+        shape_type prefix(ndim - 1, 0);
         do
         {
             ssize_t offset = 0;
@@ -339,12 +346,12 @@ private:
         return acc;
     }
 
-    static bool next_prefix(sshape_type & idx,
+    static bool next_prefix(shape_type & idx,
                             shape_type const & shape)
     {
         for (size_t i = idx.size(); i > 0; --i)
         {
-            if (++idx[i - 1] < static_cast<ssize_t>(shape[i - 1]))
+            if (++idx[i - 1] < shape[i - 1])
             {
                 return true;
             }
@@ -366,10 +373,11 @@ private:
 public:
 
     using value_type = typename internal_types::value_type;
+    using shape_type = typename internal_types::shape_type;
     using real_type = typename detail::select_real_t<value_type>::type;
 
     template <typename RedFn, typename... RedArgs>
-    auto reduce(const shape_type & axis, RedFn red_fn, RedArgs &&... red_args) const
+    auto reduce(shape_type const & axis, RedFn red_fn, RedArgs &&... red_args) const
     {
         using element_type = std::invoke_result_t<
             RedFn,
@@ -383,13 +391,13 @@ public:
         const size_t ndim = athis->ndim();
 
         small_vector<bool> reduce_mask(ndim, false);
-        for (size_t const ax : axis)
+        for (ssize_t const ax : axis)
         {
-            if (ax >= ndim || ax < 0)
+            if (ax < 0 || ax >= static_cast<ssize_t>(ndim))
             {
                 throw std::out_of_range("reduce: axis out of range");
             }
-            reduce_mask[ax] = true;
+            reduce_mask[static_cast<size_t>(ax)] = true;
         }
 
         size_t const red_count = reduce_mask.count(true);
@@ -398,7 +406,7 @@ public:
             throw std::runtime_error("reduce: no axis to reduce or all axes are reduced");
         }
 
-        small_vector<size_t> out_shape(ndim - red_count);
+        shape_type out_shape(ndim - red_count);
         for (size_t i = 0, l = 0; i < ndim; ++i)
         {
             if (!reduce_mask[i])
@@ -408,19 +416,19 @@ public:
         }
         ret_type result(out_shape);
 
-        small_vector<size_t> red_axes(red_count);
+        shape_type red_axes(red_count);
         for (size_t i = 0, l = 0; i < ndim; ++i)
         {
             if (reduce_mask[i])
             {
-                red_axes[l++] = i;
+                red_axes[l++] = static_cast<ssize_t>(i);
             }
         }
         auto const red_range = IndexRange(*athis, red_axes);
 
-        sshape_type full_idx(ndim, 0);
+        shape_type full_idx(ndim, 0);
         auto const out_range = IndexRange(result);
-        sshape_type out_idx = out_range.first();
+        shape_type out_idx = out_range.first();
 
         do
         {
@@ -433,13 +441,13 @@ public:
             }
 
             small_vector<value_type> slice;
-            sshape_type red_idx = red_range.first();
+            shape_type red_idx = red_range.first();
 
             do
             {
                 for (size_t k = 0; k < red_axes.size(); ++k)
                 {
-                    full_idx[red_axes[k]] = red_idx[k];
+                    full_idx[static_cast<size_t>(red_axes[k])] = red_idx[k];
                 }
                 slice.push_back(athis->at(full_idx));
 
@@ -457,7 +465,7 @@ public:
 
     value_type median_freq(small_vector<value_type> & sv) const;
 
-    A median(const small_vector<size_t> & axis) const
+    A median(shape_type const & axis) const
     {
         return reduce(axis, &SimpleArrayMixinCalculators::median_op);
     }
@@ -469,7 +477,7 @@ public:
         const size_t n = athis->size();
         small_vector<T> acopy(n);
         auto const range = IndexRange(*athis);
-        sshape_type sidx = range.first();
+        shape_type sidx = range.first();
         size_t i = 0;
         do
         {
@@ -500,11 +508,11 @@ public:
         return sum / total_weight;
     }
 
-    A average(const small_vector<size_t> & axis, A const & weight) const
+    A average(shape_type const & axis, A const & weight) const
     {
         small_vector<value_type> weight_sv(weight.size());
         auto const range = IndexRange(weight);
-        sshape_type sidx = range.first();
+        shape_type sidx = range.first();
         size_t i = 0;
         do
         {
@@ -517,8 +525,8 @@ public:
     value_type average(A const & weight) const
     {
         auto athis = static_cast<A const *>(this);
-        const shape_type & weight_shape = weight.shape();
-        const shape_type & athis_shape = athis->shape();
+        shape_type const & weight_shape = weight.shape();
+        shape_type const & athis_shape = athis->shape();
         for (size_t i = 0; i < athis_shape.size(); ++i)
         {
             if (weight_shape[i] != athis_shape[i])
@@ -529,7 +537,7 @@ public:
         value_type sum = 0;
         value_type total_weight = 0;
         auto const range = IndexRange(*athis);
-        sshape_type sidx = range.first();
+        shape_type sidx = range.first();
         do
         {
             sum += athis->at(sidx) * weight.at(sidx);
@@ -553,7 +561,7 @@ public:
         return sum / static_cast<value_type>(n);
     }
 
-    A mean(const small_vector<size_t> & axis) const
+    A mean(shape_type const & axis) const
     {
         return reduce(axis, &SimpleArrayMixinCalculators::mean_op);
     }
@@ -599,7 +607,7 @@ public:
         return acc / static_cast<real_type>(n - ddof);
     }
 
-    auto var(const small_vector<size_t> & axis, size_t ddof) const
+    auto var(shape_type const & axis, size_t ddof) const
     {
         return reduce(axis, &SimpleArrayMixinCalculators::var_op, ddof);
     }
@@ -614,7 +622,7 @@ public:
         }
 
         auto const range = IndexRange(*athis);
-        sshape_type sidx = range.first();
+        shape_type sidx = range.first();
         value_type const mu = athis->mean();
         real_type acc = 0;
         if constexpr (is_complex_v<value_type>)
@@ -648,7 +656,7 @@ public:
         return std::sqrt(var_op(sv, ddof));
     }
 
-    auto std(const small_vector<size_t> & axis, size_t ddof) const
+    auto std(shape_type const & axis, size_t ddof) const
     {
         return reduce(axis, &SimpleArrayMixinCalculators::std_op, ddof);
     }
@@ -1044,13 +1052,13 @@ public:
     A matmul_blas(A const & other) const;
     A & imatmul_blas(A const & other);
     A matmul_fast(A const & other,
-                  size_t tile_x,
-                  size_t tile_y,
-                  size_t tile_z) const;
+                  ssize_t tile_x,
+                  ssize_t tile_y,
+                  ssize_t tile_z) const;
     A & imatmul_fast(A const & other,
-                     size_t tile_x,
-                     size_t tile_y,
-                     size_t tile_z);
+                     ssize_t tile_x,
+                     ssize_t tile_y,
+                     ssize_t tile_z);
 
 private:
     static void find_two_bins(const uint32_t * freq, size_t n, int & bin1, int & bin2);
@@ -1206,9 +1214,9 @@ A & SimpleArrayMixinCalculators<A, T>::imatmul_blas(A const & other)
  */
 template <typename A, typename T>
 A SimpleArrayMixinCalculators<A, T>::matmul_fast(A const & other,
-                                                 size_t tile_x,
-                                                 size_t tile_y,
-                                                 size_t tile_z) const
+                                                 ssize_t tile_x,
+                                                 ssize_t tile_y,
+                                                 ssize_t tile_z) const
 {
     auto const * athis = static_cast<A const *>(this);
     SimpleArrayMatmulHelper<A, T> helper(*athis, other, tile_x, tile_y, tile_z);
@@ -1222,9 +1230,9 @@ A SimpleArrayMixinCalculators<A, T>::matmul_fast(A const & other,
  */
 template <typename A, typename T>
 A & SimpleArrayMixinCalculators<A, T>::imatmul_fast(A const & other,
-                                                    size_t tile_x,
-                                                    size_t tile_y,
-                                                    size_t tile_z)
+                                                    ssize_t tile_x,
+                                                    ssize_t tile_y,
+                                                    ssize_t tile_z)
 {
     auto athis = static_cast<A *>(this);
     A result = athis->matmul_fast(other, tile_x, tile_y, tile_z);
@@ -1305,7 +1313,7 @@ template <typename T, IntegralType I>
 void indexed_copy(T * dest, T const * data, I const * begin, I const * const end); // NOLINT(readability-avoid-const-params-in-decls)
 
 template <IntegralType T>
-T const * check_index_range(SimpleArray<T> const & indices, size_t max_idx);
+T const * check_index_range(SimpleArray<T> const & indices, ssize_t max_idx);
 
 template <typename A, typename T>
 class SimpleArrayMixinSearch
@@ -1364,12 +1372,11 @@ public:
 
     using value_type = typename internal_types::value_type;
     using shape_type = typename internal_types::shape_type;
-    using sshape_type = typename internal_types::sshape_type;
 
     static A eye(ssize_t n)
     {
         validate_positive("eye", n);
-        shape_type const shape{static_cast<size_t>(n), static_cast<size_t>(n)};
+        shape_type const shape{n, n};
         A result(shape, static_cast<value_type>(0));
 
         for (ssize_t i = 0; i < n; ++i)
@@ -1383,7 +1390,7 @@ public:
     static A scaled_eye(ssize_t n, value_type scale)
     {
         validate_positive("scaled_eye", n);
-        shape_type const shape{static_cast<size_t>(n), static_cast<size_t>(n)};
+        shape_type const shape{n, n};
         A result(shape, static_cast<value_type>(0));
 
         for (ssize_t i = 0; i < n; ++i)
@@ -1515,7 +1522,7 @@ A SimpleArrayMixinMatrix<A, T>::pow(ssize_t n) const
                         n));
     }
 
-    auto const dim = static_cast<ssize_t>(athis->shape(0));
+    ssize_t const dim = athis->shape(0);
     A result = eye(dim);
     if (n == 0)
     {
@@ -1573,7 +1580,6 @@ public:
     using rebind = SimpleArray<U>;
     using value_type = typename internal_types::value_type;
     using shape_type = typename internal_types::shape_type;
-    using sshape_type = typename internal_types::sshape_type;
     using buffer_type = typename internal_types::buffer_type;
 
     static constexpr size_t ITEMSIZE = sizeof(value_type);
@@ -1583,11 +1589,8 @@ public:
     /// Constructor with length and optional alignment
     /// @param length the length of the array in items
     /// @param alignment the memory alignment in bytes (default: 0, no special alignment, and valid values are 16, 32, and 64)
-    explicit SimpleArray(size_t length, size_t alignment = 0)
-        : m_buffer(buffer_type::construct(length * ITEMSIZE, alignment))
-        , m_shape{length}
-        , m_stride{1}
-        , m_body(m_buffer->template data<T>())
+    explicit SimpleArray(ssize_t length, size_t alignment = 0)
+        : SimpleArray(shape_type{length}, alignment, with_alignment_t{})
     {
     }
 
@@ -1605,7 +1608,7 @@ public:
     {
         if (!m_shape.empty())
         {
-            m_buffer = buffer_type::construct(m_shape[0] * static_cast<size_t>(m_stride[0]) * ITEMSIZE, 0);
+            m_buffer = buffer_type::construct(static_cast<size_t>(storage_size(m_shape, m_stride)) * ITEMSIZE, 0);
             m_body = m_buffer->template data<T>();
         }
     }
@@ -1617,7 +1620,7 @@ public:
     {
         if (!m_shape.empty())
         {
-            m_buffer = buffer_type::construct(m_shape[0] * static_cast<size_t>(m_stride[0]) * ITEMSIZE, alignment);
+            m_buffer = buffer_type::construct(static_cast<size_t>(storage_size(m_shape, m_stride)) * ITEMSIZE, alignment);
             m_body = m_buffer->template data<T>();
         }
     }
@@ -1634,40 +1637,6 @@ public:
         std::fill(begin(), end(), value);
     }
 
-    explicit SimpleArray(std::vector<size_t> const & shape)
-        : m_shape(shape)
-        , m_stride(calc_stride(m_shape))
-    {
-        if (!m_shape.empty())
-        {
-            m_buffer = buffer_type::construct(m_shape[0] * static_cast<size_t>(m_stride[0]) * ITEMSIZE, 0);
-            m_body = m_buffer->template data<T>();
-        }
-    }
-
-    SimpleArray(std::vector<size_t> const & shape, size_t alignment, with_alignment_t)
-        : m_shape(shape)
-        , m_stride(calc_stride(m_shape))
-    {
-        if (!m_shape.empty())
-        {
-            m_buffer = buffer_type::construct(m_shape[0] * static_cast<size_t>(m_stride[0]) * ITEMSIZE, alignment);
-            m_body = m_buffer->template data<T>();
-        }
-    }
-
-    SimpleArray(std::vector<size_t> const & shape, value_type const & value, size_t alignment)
-        : SimpleArray(shape, alignment, with_alignment_t{})
-    {
-        std::fill(begin(), end(), value);
-    }
-
-    SimpleArray(std::vector<size_t> const & shape, value_type const & value)
-        : SimpleArray(shape)
-    {
-        std::fill(begin(), end(), value);
-    }
-
     explicit SimpleArray(std::shared_ptr<buffer_type> const & buffer)
     {
         if (buffer)
@@ -1677,8 +1646,8 @@ public:
             {
                 throw std::runtime_error("SimpleArray: input buffer size must be divisible");
             }
-            m_shape = shape_type{nitem};
-            m_stride = sshape_type{1};
+            m_shape = shape_type{static_cast<ssize_t>(nitem)};
+            m_stride = shape_type{1};
             m_buffer = buffer;
             m_body = m_buffer->template data<T>();
         }
@@ -1695,7 +1664,7 @@ public:
         {
             m_shape = shape;
             m_stride = calc_stride(m_shape);
-            const size_t nbytes = m_shape[0] * static_cast<size_t>(m_stride[0]) * ITEMSIZE;
+            const size_t nbytes = static_cast<size_t>(storage_size(m_shape, m_stride)) * ITEMSIZE;
             if (nbytes != buffer->nbytes())
             {
                 throw std::runtime_error(
@@ -1707,7 +1676,7 @@ public:
     }
 
     explicit SimpleArray(shape_type const & shape,
-                         sshape_type const & stride,
+                         shape_type const & stride,
                          std::shared_ptr<buffer_type> const & buffer,
                          bool c_contiguous,
                          bool f_contiguous)
@@ -1728,7 +1697,7 @@ public:
     }
 
     explicit SimpleArray(shape_type const & shape,
-                         sshape_type const & stride,
+                         shape_type const & stride,
                          std::shared_ptr<buffer_type> const & buffer)
         : SimpleArray(buffer)
     {
@@ -1803,21 +1772,22 @@ public:
         return *this;
     }
 
-    static sshape_type calc_stride(shape_type const & shape)
+    static shape_type calc_stride(shape_type const & shape)
     {
-        sshape_type stride(shape.size());
+        validate_shape(shape);
+        shape_type stride(shape.size());
         if (!shape.empty())
         {
             stride[shape.size() - 1] = 1;
             for (size_t it = shape.size() - 1; it > 0; --it)
             {
-                stride[it - 1] = stride[it] * static_cast<ssize_t>(shape[it]);
+                stride[it - 1] = stride[it] * shape[it];
             }
         }
         return stride;
     }
 
-    static T * calc_body(T * data, sshape_type const & stride, size_t nghost)
+    static T * calc_body(T * data, shape_type const & stride, ssize_t nghost)
     {
         if (nullptr == data || stride.empty() || 0 == nghost)
         {
@@ -1825,8 +1795,8 @@ public:
         }
         else
         {
-            sshape_type idx(stride.size(), 0);
-            idx[0] = static_cast<ssize_t>(nghost);
+            shape_type idx(stride.size(), 0);
+            idx[0] = nghost;
             data += buffer_offset(stride, idx);
         }
         return data;
@@ -1843,12 +1813,12 @@ public:
      */
     size_t size() const noexcept
     {
-        size_t size = 1;
+        ssize_t size = 1;
         for (size_t it = 0; it < m_shape.size(); ++it)
         {
             size *= m_shape[it];
         }
-        return size;
+        return static_cast<size_t>(size);
     }
 
     /// Return the underlying buffer alignment in bytes. If no buffer or no alignment, return 0.
@@ -1869,46 +1839,51 @@ public:
 
     value_type const & at(ssize_t it) const
     {
-        sshape_type const idx{normalize_index(it)};
+        shape_type const idx{normalize_index(it)};
         ssize_t const offset = buffer_offset(m_stride, idx);
         return *(data() + offset);
     }
     value_type & at(ssize_t it)
     {
-        sshape_type const idx{normalize_index(it)};
+        shape_type const idx{normalize_index(it)};
         ssize_t const offset = buffer_offset(m_stride, idx);
         return *(data() + offset);
     }
 
-    value_type const & at(std::vector<ssize_t> const & idx) const { return at(sshape_type(idx)); }
-    value_type & at(std::vector<ssize_t> const & idx) { return at(sshape_type(idx)); }
+    value_type const & at(std::vector<ssize_t> const & idx) const { return at(shape_type(idx)); }
+    value_type & at(std::vector<ssize_t> const & idx) { return at(shape_type(idx)); }
 
-    value_type const & at(sshape_type const & sidx) const
+    value_type const & at(shape_type const & sidx) const
     {
-        sshape_type const idx = normalize_index(sidx);
+        shape_type const idx = normalize_index(sidx);
         ssize_t const offset = buffer_offset(m_stride, idx);
         return *(data() + offset);
     }
-    value_type & at(sshape_type const & sidx)
+    value_type & at(shape_type const & sidx)
     {
-        sshape_type const idx = normalize_index(sidx);
+        shape_type const idx = normalize_index(sidx);
         ssize_t const offset = buffer_offset(m_stride, idx);
         return *(data() + offset);
     }
 
     size_t ndim() const noexcept { return m_shape.size(); }
     shape_type const & shape() const { return m_shape; }
-    size_t shape(size_t it) const noexcept { return m_shape[it]; }
-    size_t & shape(size_t it) noexcept { return m_shape[it]; }
-    sshape_type const & stride() const { return m_stride; }
+    ssize_t shape(size_t it) const noexcept { return m_shape[it]; }
+    ssize_t & shape(size_t it) noexcept { return m_shape[it]; }
+    shape_type const & stride() const { return m_stride; }
     ssize_t stride(size_t it) const noexcept { return m_stride[it]; }
     ssize_t & stride(size_t it) noexcept { return m_stride[it]; }
 
-    size_t nghost() const { return m_nghost; }
-    size_t nbody() const { return m_shape.empty() ? 0 : m_shape[0] - m_nghost; }
+    ssize_t nghost() const { return m_nghost; }
+    ssize_t nbody() const { return m_shape.empty() ? 0 : m_shape[0] - m_nghost; }
     bool has_ghost() const { return m_nghost != 0; }
-    void set_nghost(size_t nghost)
+    void set_nghost(ssize_t nghost)
     {
+        if (nghost < 0)
+        {
+            throw std::out_of_range(
+                std::format("SimpleArray: cannot set negative nghost {}", nghost));
+        }
         if (0 != nghost)
         {
             if (0 == ndim())
@@ -1989,26 +1964,26 @@ public:
     }
 
     template <size_t N>
-    std::mdspan<value_type, std::dextents<size_t, N>, std::layout_stride> as_mdspan()
+    std::mdspan<value_type, std::dextents<ssize_t, N>, std::layout_stride> as_mdspan()
     {
         if (ndim() != N)
         {
             throw std::out_of_range(
                 std::format("SimpleArray::as_mdspan: rank {} does not match ndim() {}", N, ndim()));
         }
-        return std::mdspan<value_type, std::dextents<size_t, N>, std::layout_stride>(
+        return std::mdspan<value_type, std::dextents<ssize_t, N>, std::layout_stride>(
             data(), make_mdspan_mapping<N>());
     }
 
     template <size_t N>
-    std::mdspan<value_type const, std::dextents<size_t, N>, std::layout_stride> as_mdspan() const
+    std::mdspan<value_type const, std::dextents<ssize_t, N>, std::layout_stride> as_mdspan() const
     {
         if (ndim() != N)
         {
             throw std::out_of_range(
                 std::format("SimpleArray::as_mdspan: rank {} does not match ndim() {}", N, ndim()));
         }
-        return std::mdspan<value_type const, std::dextents<size_t, N>, std::layout_stride>(
+        return std::mdspan<value_type const, std::dextents<ssize_t, N>, std::layout_stride>(
             data(), make_mdspan_mapping<N>());
     }
 
@@ -2031,29 +2006,29 @@ private:
     void copy_logical_into(SimpleArray & out) const;
 
     template <size_t N, size_t... I>
-    std::layout_stride::mapping<std::dextents<size_t, N>> make_mdspan_mapping_impl(std::index_sequence<I...>) const
+    std::layout_stride::mapping<std::dextents<ssize_t, N>> make_mdspan_mapping_impl(std::index_sequence<I...>) const
     {
-        std::array<size_t, N> strides;
+        std::array<ssize_t, N> strides;
         for (size_t i = 0; i < N; ++i)
         {
             if (stride(i) < 0)
             {
                 throw std::runtime_error("SimpleArray::as_mdspan: negative stride is not supported");
             }
-            strides[i] = static_cast<size_t>(stride(i));
+            strides[i] = stride(i);
         }
-        return std::layout_stride::mapping<std::dextents<size_t, N>>(
-            std::dextents<size_t, N>(shape(I)...), strides);
+        return std::layout_stride::mapping<std::dextents<ssize_t, N>>(
+            std::dextents<ssize_t, N>(shape(I)...), strides);
     }
 
     template <size_t N>
-    std::layout_stride::mapping<std::dextents<size_t, N>> make_mdspan_mapping() const
+    std::layout_stride::mapping<std::dextents<ssize_t, N>> make_mdspan_mapping() const
     {
         return make_mdspan_mapping_impl<N>(std::make_index_sequence<N>{});
     }
 
     static bool is_c_contiguous(shape_type const & shape,
-                                sshape_type const & stride)
+                                shape_type const & stride)
     {
         if (stride[stride.size() - 1] != 1)
         {
@@ -2061,7 +2036,7 @@ private:
         }
         for (size_t it = 0; it < shape.size() - 1; ++it)
         {
-            if (stride[it] != static_cast<ssize_t>(shape[it + 1]) * stride[it + 1])
+            if (stride[it] != shape[it + 1] * stride[it + 1])
             {
                 return false;
             }
@@ -2070,7 +2045,7 @@ private:
     }
 
     static bool is_f_contiguous(shape_type const & shape,
-                                sshape_type const & stride)
+                                shape_type const & stride)
     {
         if (stride[0] != 1)
         {
@@ -2078,7 +2053,7 @@ private:
         }
         for (size_t it = 0; it < shape.size() - 1; ++it)
         {
-            if (stride[it + 1] != static_cast<ssize_t>(shape[it]) * stride[it])
+            if (stride[it + 1] != shape[it] * stride[it])
             {
                 return false;
             }
@@ -2087,7 +2062,7 @@ private:
     }
 
     static void check_c_contiguous(shape_type const & shape,
-                                   sshape_type const & stride)
+                                   shape_type const & stride)
     {
         if (!is_c_contiguous(shape, stride))
         {
@@ -2096,7 +2071,7 @@ private:
     }
 
     void check_f_contiguous(shape_type const & shape,
-                            sshape_type const & stride) const
+                            shape_type const & stride) const
     {
         if (!is_f_contiguous(shape, stride))
         {
@@ -2113,7 +2088,7 @@ private:
                             "cannot use scalar index for {}-dimensional array",
                             ndim()));
         }
-        auto const dim_length = static_cast<ssize_t>(shape(0));
+        ssize_t const dim_length = shape(0);
         auto const ghost_offset = static_cast<ssize_t>(m_nghost);
         ssize_t const shifted_index = it + ghost_offset;
 
@@ -2142,7 +2117,7 @@ private:
         return to_nonnegative_index(shifted_index, dim_length);
     }
 
-    sshape_type normalize_index(small_vector<ssize_t> const & idx) const
+    shape_type normalize_index(shape_type const & idx) const
     {
         auto index2string = [&idx]() -> std::string
         {
@@ -2176,10 +2151,10 @@ private:
                             m_shape.size()));
         }
 
-        sshape_type normalized(idx.size());
+        shape_type normalized(idx.size());
         for (size_t dim = 0; dim < m_shape.size(); ++dim)
         {
-            auto const dim_length = static_cast<ssize_t>(m_shape[dim]);
+            ssize_t const dim_length = m_shape[dim];
             ssize_t ghost_offset = 0;
             if (dim == 0)
             {
@@ -2231,6 +2206,27 @@ private:
         return index;
     }
 
+    static void validate_shape(shape_type const & shape)
+    {
+        for (ssize_t const dim : shape)
+        {
+            if (dim < 0)
+            {
+                throw std::out_of_range(
+                    std::format("SimpleArray: shape dimension must be non-negative, but got {}", dim));
+            }
+        }
+    }
+
+    static ssize_t storage_size(shape_type const & shape, shape_type const & stride)
+    {
+        if (shape.empty())
+        {
+            return 0;
+        }
+        return shape[0] * stride[0];
+    }
+
     /// Contiguous data buffer for the array.
     std::shared_ptr<buffer_type> m_buffer;
     /// Each element in this vector is the number of element in the
@@ -2238,9 +2234,9 @@ private:
     shape_type m_shape;
     /// Each element in this vector is the number of elements (not number of
     /// bytes) to skip for advancing an index in the corresponding dimension.
-    sshape_type m_stride;
+    shape_type m_stride;
 
-    size_t m_nghost = 0;
+    ssize_t m_nghost = 0;
     value_type * m_body = nullptr;
 }; /* end class SimpleArray */
 
@@ -2303,17 +2299,16 @@ class SimpleArrayCopier
 
 public:
 
-    using shape_type = small_vector<size_t>;
-    using sshape_type = detail::sshape_type;
+    using shape_type = detail::shape_type;
     using buffer_type = ConcreteBuffer;
 
     SimpleArrayCopier(
         buffer_type const & src_buffer,
         ssize_t src_body_offset,
-        sshape_type const & src_stride,
+        shape_type const & src_stride,
         buffer_type & dst_buffer,
         ssize_t dst_body_offset,
-        sshape_type const & dst_stride,
+        shape_type const & dst_stride,
         shape_type const & shape,
         size_t itemsize);
 
@@ -2334,8 +2329,8 @@ private:
     int8_t const * m_src;
     int8_t * m_dst;
     shape_type const & m_shape;
-    sshape_type const & m_src_stride;
-    sshape_type const & m_dst_stride;
+    shape_type const & m_src_stride;
+    shape_type const & m_dst_stride;
     size_t m_itemsize;
 
 }; /* end class SimpleArrayCopier */
@@ -2382,10 +2377,10 @@ void SimpleArray<T>::transpose(shape_type const & axis, bool copy)
         throw std::runtime_error("SimpleArray::transpose: axis size mismatch");
     }
     shape_type new_shape(m_shape.size(), -1);
-    sshape_type new_stride(m_stride.size());
+    shape_type new_stride(m_stride.size());
     for (size_t it = 0; it < m_shape.size(); ++it)
     {
-        if (axis[it] >= m_shape.size() || axis[it] < 0)
+        if (axis[it] < 0 || axis[it] >= static_cast<ssize_t>(m_shape.size()))
         {
             throw std::runtime_error("SimpleArray::transpose: axis out of range");
         }
@@ -2393,8 +2388,9 @@ void SimpleArray<T>::transpose(shape_type const & axis, bool copy)
         {
             throw std::runtime_error("SimpleArray::transpose: axis already set");
         }
-        new_shape[it] = m_shape[axis[it]];
-        new_stride[it] = m_stride[axis[it]];
+        auto const axis_idx = static_cast<size_t>(axis[it]);
+        new_shape[it] = m_shape[axis_idx];
+        new_stride[it] = m_stride[axis_idx];
     }
     if (!copy)
     {
@@ -2486,20 +2482,20 @@ SimpleArray<T> SimpleArray<T>::to_column_major() const
     }
     // Compute column-major strides: the fastest-varying axis is the leading
     // one (stride[0] == 1).
-    sshape_type fstride(m_shape.size());
+    shape_type fstride(m_shape.size());
     fstride[0] = 1;
     for (size_t i = 1; i < m_shape.size(); ++i)
     {
         fstride[i] = fstride[i - 1] * m_shape[i - 1];
     }
     // Calculate buffer size.
-    size_t nelem = 1;
-    for (size_t const s : m_shape)
+    ssize_t nelem = 1;
+    for (ssize_t const s : m_shape)
     {
         nelem *= s;
     }
     // Create a fresh array, copy, and return.
-    auto buf = buffer_type::construct(nelem * ITEMSIZE, 0);
+    auto buf = buffer_type::construct(static_cast<size_t>(nelem) * ITEMSIZE, 0);
     SimpleArray out(m_shape, fstride, buf);
     copy_logical_into(out);
     return out;
@@ -2522,8 +2518,8 @@ void SimpleArray<T>::copy_logical_into(SimpleArray & out) const
     {
         return;
     }
-    size_t total = 1;
-    for (size_t const s : m_shape)
+    ssize_t total = 1;
+    for (ssize_t const s : m_shape)
     {
         total *= s;
     }
@@ -2602,14 +2598,14 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
                         athis->ndim()));
     }
 
-    size_t max_idx = athis->shape()[0];
+    ssize_t const max_idx = athis->shape()[0];
     I const * src = indices.begin();
     I const * const end = indices.end();
     while (src < end)
     {
-        if (*src < 0 || *src > max_idx)
+        if (std::cmp_less(*src, 0) || std::cmp_greater_equal(*src, max_idx))
         {
-            size_t const offset = src - indices.begin();
+            ssize_t const offset = src - indices.begin();
             std::string const indices_str = format_flat_index(indices.shape(), offset);
 
             throw std::out_of_range(
@@ -2628,7 +2624,7 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
     T * dst = ret.begin();
     while (src < end)
     {
-        T const * valp = data + static_cast<size_t>(*src);
+        T const * valp = data + static_cast<ssize_t>(*src);
         *dst = *valp;
         ++dst;
         ++src;
@@ -2641,16 +2637,19 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
 // this out-of-line definition against that excluded declaration.
 /// @cond
 template <IntegralType T>
-T const * detail::check_index_range(SimpleArray<T> const & indices, size_t max_idx)
+T const * detail::check_index_range(SimpleArray<T> const & indices, ssize_t max_idx)
 {
-    constexpr T DataTypeMax = std::numeric_limits<T>::max();
-    constexpr T DataTypeMin = std::numeric_limits<T>::min();
-    if (max_idx >= DataTypeMax && DataTypeMin == 0)
+    T const * src = indices.begin();
+    T const * const end = indices.end();
+    while (src < end)
     {
-        return nullptr;
+        if (std::cmp_less(*src, 0) || std::cmp_greater_equal(*src, max_idx))
+        {
+            return src;
+        }
+        ++src;
     }
-
-    return simd::check_between<T>(indices.begin(), indices.end(), 0, max_idx);
+    return nullptr;
 }
 /// @endcond
 
@@ -2661,7 +2660,7 @@ void detail::indexed_copy(T * dest, T const * data, I const * index0, I const * 
     I const * src = index0;
     while (src < index1)
     {
-        T const * valp = data + static_cast<size_t>(*src);
+        T const * valp = data + static_cast<ssize_t>(*src);
         *dst = *valp;
         ++dst;
         ++src;
@@ -2686,12 +2685,12 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis_simd(SimpleArray<I> const 
         return A(indices.shape());
     }
 
-    size_t max_idx = athis->shape()[0];
+    ssize_t const max_idx = athis->shape()[0];
 
     I const * oor_ptr = check_index_range(indices, max_idx);
     if (oor_ptr != nullptr)
     {
-        size_t const offset = oor_ptr - indices.begin();
+        ssize_t const offset = oor_ptr - indices.begin();
         std::string const indices_str = format_flat_index(indices.shape(), offset);
 
         const auto err = std::format("SimpleArray::take_along_axis_simd(): "
@@ -2802,19 +2801,19 @@ public:
 
     SimpleArrayPlex() = default;
 
-    explicit SimpleArrayPlex(const shape_type & shape, const std::string & data_type_string)
+    explicit SimpleArrayPlex(shape_type const & shape, const std::string & data_type_string)
         : SimpleArrayPlex(shape, DataType(data_type_string))
     {
     }
 
-    explicit SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const std::string & data_type_string)
+    explicit SimpleArrayPlex(shape_type const & shape, const std::shared_ptr<ConcreteBuffer> & buffer, const std::string & data_type_string)
         : SimpleArrayPlex(shape, buffer, DataType(data_type_string))
     {
     }
 
-    explicit SimpleArrayPlex(const shape_type & shape, DataType data_type);
-    explicit SimpleArrayPlex(const shape_type & shape, const std::shared_ptr<ConcreteBuffer> & buffer, DataType data_type);
-    explicit SimpleArrayPlex(const shape_type & shape, DataType data_type, size_t alignment);
+    explicit SimpleArrayPlex(shape_type const & shape, DataType data_type);
+    explicit SimpleArrayPlex(shape_type const & shape, const std::shared_ptr<ConcreteBuffer> & buffer, DataType data_type);
+    explicit SimpleArrayPlex(shape_type const & shape, DataType data_type, size_t alignment);
 
     template <typename T>
     // FIXME: NOLINTNEXTLINE(google-explicit-constructor)

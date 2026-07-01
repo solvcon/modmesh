@@ -66,6 +66,7 @@ public:
     using real_type = typename detail::select_real_t<value_type>::type;
     using array_type = SimpleArray<value_type>;
     using pivot_type = SimpleArray<int64_t>;
+    using shape_type = typename array_type::shape_type;
 
     /**
      * Factorize a square matrix into PA = LU.
@@ -137,7 +138,7 @@ private:
     static std::string format_shape(array_type const & arr);
 
     // Validate that a is square and 2D; return its shape for member init.
-    static small_vector<size_t> validate_shape(array_type const & a);
+    static shape_type validate_shape(array_type const & a);
 
     /**
      * Forward substitution: solve Ly = Pb using the cached factors.
@@ -177,7 +178,7 @@ std::string LuFactorization<T>::format_shape(array_type const & arr)
 }
 
 template <typename T>
-small_vector<size_t> LuFactorization<T>::validate_shape(array_type const & a)
+typename LuFactorization<T>::shape_type LuFactorization<T>::validate_shape(array_type const & a)
 {
     if (a.ndim() != 2 || a.shape(0) != a.shape(1))
     {
@@ -191,9 +192,9 @@ small_vector<size_t> LuFactorization<T>::validate_shape(array_type const & a)
 template <typename T>
 LuFactorization<T>::LuFactorization(array_type const & a)
     : m_lu(validate_shape(a), value_type{0})
-    , m_piv(small_vector<size_t>{a.shape(0)})
+    , m_piv(typename pivot_type::shape_type{a.shape(0)})
 {
-    const auto n = static_cast<ssize_t>(a.shape(0));
+    ssize_t const n = a.shape(0);
 
     // Working copy of the input matrix.  The algorithm modifies m_lu
     // in-place, overwriting it with the combined L and U factors.
@@ -268,8 +269,8 @@ template <typename T>
 typename LuFactorization<T>::array_type LuFactorization<T>::forward_substitution(array_type const & b) const
 {
     const auto m = n();
-    const auto ncols = static_cast<ssize_t>(b.shape(1));
-    small_vector<size_t> const y_shape{static_cast<size_t>(m), static_cast<size_t>(ncols)};
+    ssize_t const ncols = b.shape(1);
+    shape_type const y_shape{m, ncols};
 
     // Copy b into y so we can apply the permutation in-place.
     array_type y(y_shape);
@@ -311,8 +312,8 @@ template <typename T>
 typename LuFactorization<T>::array_type LuFactorization<T>::backward_substitution(array_type const & y) const
 {
     const auto m = n();
-    const auto ncols = static_cast<ssize_t>(y.shape(1));
-    small_vector<size_t> const x_shape{static_cast<size_t>(m), static_cast<size_t>(ncols)};
+    ssize_t const ncols = y.shape(1);
+    shape_type const x_shape{m, ncols};
     array_type x(x_shape);
 
     // Solve Ux = y by backward substitution.  U occupies the upper triangle
@@ -343,7 +344,7 @@ typename LuFactorization<T>::array_type LuFactorization<T>::solve(array_type con
             "LuFactorization::solve: b must be 1D or 2D, but got {}D",
             b.ndim()));
     }
-    if (static_cast<ssize_t>(b.shape(0)) != n())
+    if (b.shape(0) != n())
     {
         throw std::invalid_argument(std::format(
             "LuFactorization::solve: dimension mismatch: a.shape[0]={}, b.shape[0]={}",
@@ -356,10 +357,10 @@ typename LuFactorization<T>::array_type LuFactorization<T>::solve(array_type con
     bool const was_1d = (b.ndim() == 1);
     if (was_1d)
     {
-        auto b_2d = b.reshape(small_vector<size_t>{b.shape(0), 1});
+        auto b_2d = b.reshape(shape_type{b.shape(0), 1});
         auto y = forward_substitution(b_2d);
         auto x = backward_substitution(y);
-        return x.reshape(small_vector<size_t>{x.shape(0)});
+        return x.reshape(shape_type{x.shape(0)});
     }
     else
     {

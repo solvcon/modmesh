@@ -11,21 +11,21 @@
 #include <format>
 #include <limits>
 #include <stdexcept>
-#include <vector>
 
 namespace solvcon
 {
 
 void EulerCore::initialize_solution()
 {
-    size_t const total = static_cast<size_t>(m_ngstcell) + m_ncell;
-    auto const neq = static_cast<size_t>(m_neq);
-    size_t const ndim = m_ndim;
+    ssize_t const total = m_ngstcell + m_ncell;
+    ssize_t const neq = m_neq;
+    ssize_t const ndim = m_ndim;
 
-    auto alloc = [this](SimpleArray<real_type> & arr, std::vector<size_t> const & shape)
+    auto alloc = [this](SimpleArray<real_type> & arr,
+                        SimpleArray<real_type>::shape_type const & shape)
     {
         arr = SimpleArray<real_type>(shape, 0);
-        arr.set_nghost(static_cast<size_t>(m_ngstcell));
+        arr.set_nghost(m_ngstcell);
     };
 
     alloc(m_so0c, {total, neq});
@@ -56,7 +56,7 @@ void EulerCore::init_solution(
     std::array<real_type, 3> const & velocity,
     real_type p)
 {
-    size_t const ndim = m_ndim;
+    ssize_t const ndim = m_ndim;
     // Guard the physical state: gamma > 1 keeps p / (gamma - 1) finite here and
     // in calc_cfl, rho > 0 keeps the per-cell division in calc_cfl finite.
     if (gamma <= 1.0)
@@ -76,7 +76,7 @@ void EulerCore::init_solution(
     }
 
     real_type vsq = 0.0;
-    for (size_t d = 0; d < ndim; ++d)
+    for (ssize_t d = 0; d < ndim; ++d)
     {
         vsq += velocity[d] * velocity[d];
     }
@@ -89,7 +89,7 @@ void EulerCore::init_solution(
     for (int_type icl = 0; icl < m_ncell; ++icl)
     {
         m_so0n(icl, 0) = rho;
-        for (size_t d = 0; d < ndim; ++d)
+        for (ssize_t d = 0; d < ndim; ++d)
         {
             m_so0n(icl, 1 + d) = rho * velocity[d];
         }
@@ -106,7 +106,7 @@ void EulerCore::calc_cfl()
 {
     constexpr real_type TINY = 1.e-60;
 
-    size_t const ndim = m_ndim;
+    ssize_t const ndim = m_ndim;
     real_type const hdt = m_time_increment / 2.0;
     auto const & msh = *m_mesh;
 
@@ -118,9 +118,9 @@ void EulerCore::calc_cfl()
         real_type dist = std::numeric_limits<real_type>::max();
         for (int_type ifl = 1; ifl <= clnfc; ++ifl)
         {
-            size_t const bce_col = static_cast<size_t>(ifl) * ndim;
+            auto const bce_col = static_cast<ssize_t>(ifl) * ndim;
             real_type d2 = 0.0;
-            for (size_t d = 0; d < ndim; ++d)
+            for (ssize_t d = 0; d < ndim; ++d)
             {
                 real_type const diff = m_cecnd(icl, bce_col + d) - m_cecnd(icl, d);
                 d2 += diff * diff;
@@ -133,7 +133,7 @@ void EulerCore::calc_cfl()
         real_type const ga1 = ga - 1.0;
         real_type const density = m_so0n(icl, 0);
         real_type momsq = 0.0;
-        for (size_t d = 0; d < ndim; ++d)
+        for (ssize_t d = 0; d < ndim; ++d)
         {
             real_type const mom = m_so0n(icl, 1 + d);
             momsq += mom * mom;

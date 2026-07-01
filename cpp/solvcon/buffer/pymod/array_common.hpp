@@ -145,11 +145,11 @@ inline solvcon::detail::shape_type make_shape(pybind11::object const & shape_in)
     solvcon::detail::shape_type shape;
     try
     {
-        shape.push_back(shape_in.cast<size_t>());
+        shape.push_back(shape_in.cast<ssize_t>());
     }
     catch (const pybind11::cast_error &)
     {
-        shape = shape_in.cast<std::vector<size_t>>();
+        shape = shape_in.cast<std::vector<ssize_t>>();
     }
     return shape;
 }
@@ -160,7 +160,6 @@ class ArrayPropertyHelper
 {
 public:
     using shape_type = solvcon::detail::shape_type;
-    using sshape_type = solvcon::detail::sshape_type;
 
     static void broadcast_array_using_ellipsis(SimpleArray<T> & arr_out, pybind11::array const & arr_in)
     {
@@ -168,7 +167,7 @@ public:
 
         TypeBroadcast<T>::check_shape(arr_out, slices, arr_in);
 
-        const size_t nghost = arr_out.nghost();
+        ssize_t const nghost = arr_out.nghost();
         if (0 != nghost)
         {
             arr_out.set_nghost(0);
@@ -275,12 +274,14 @@ public:
             format = pybind11::format_descriptor<T>::format();
         }
 
+        std::vector<pybind11::ssize_t> const shape(array.shape().begin(), array.shape().end());
+
         return pybind11::buffer_info(
             array.data(), /* Pointer to buffer */
             sizeof(T), /* Size of one scalar */
             format, /* Python struct-style format descriptor */
             array.ndim(), /* Number of dimensions */
-            std::vector<size_t>(array.shape().begin(), array.shape().end()), /* Buffer dimensions */
+            shape, /* Buffer dimensions */
             stride /* Strides (in bytes) for each index */
         );
     }
@@ -338,22 +339,22 @@ private:
         }
     }
 
-    static std::vector<sshape_type> make_default_slices(SimpleArray<T> const & arr)
+    static std::vector<shape_type> make_default_slices(SimpleArray<T> const & arr)
     {
-        std::vector<sshape_type> slices;
+        std::vector<shape_type> slices;
         slices.reserve(arr.ndim());
         for (size_t i = 0; i < arr.ndim(); ++i)
         {
-            sshape_type default_slice(3);
+            shape_type default_slice(3);
             default_slice[0] = 0; // start
-            default_slice[1] = static_cast<ssize_t>(arr.shape(i)); // stop
+            default_slice[1] = arr.shape(i); // stop
             default_slice[2] = 1; // step
             slices.push_back(std::move(default_slice));
         }
         return slices;
     }
 
-    static void copy_slice(sshape_type & slice_out, pybind11::slice const & slice_in)
+    static void copy_slice(shape_type & slice_out, pybind11::slice const & slice_in)
     {
         auto start = std::string(pybind11::str(slice_in.attr("start")));
         auto stop = std::string(pybind11::str(slice_in.attr("stop")));
@@ -399,7 +400,7 @@ private:
     }
 
     static void process_slices(pybind11::tuple const & tuple,
-                               std::vector<sshape_type> & slices,
+                               std::vector<shape_type> & slices,
                                size_t ndim)
     {
         namespace py = pybind11;
@@ -441,12 +442,12 @@ private:
     }
 
     static void broadcast_array_using_slice(SimpleArray<T> & arr_out,
-                                            std::vector<sshape_type> const & slices,
+                                            std::vector<shape_type> const & slices,
                                             pybind11::array const & arr_in)
     {
         TypeBroadcast<T>::check_shape(arr_out, slices, arr_in);
 
-        const size_t nghost = arr_out.nghost();
+        ssize_t const nghost = arr_out.nghost();
         if (0 != nghost)
         {
             arr_out.set_nghost(0);
