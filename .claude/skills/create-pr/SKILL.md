@@ -38,6 +38,13 @@ cross-reference; flag any drift between the two.
    assistance is OK, but the user must know what the text says. When the
    skill drafts text, present it for the user's review and edits before
    posting.
+8. **Skip CI for agent-only changes.** When the diff touches *only*
+   agent tooling (the `.claude/` and `.cursor/` trees, root `CLAUDE.md` /
+   `AGENTS.md`, and `contrib/prompt/`), end the body with `[skip-ci]` on
+   its own line so the `check_skip_ci` workflow skips the heavy CI jobs.
+   Omit it if the diff touches any other file. The control string works
+   only on its own line and only for a PR opened by a repository owner,
+   member, or collaborator.
 
 ## Workflow
 
@@ -80,6 +87,10 @@ cross-reference; flag any drift between the two.
    (long enumerations, benchmark matrices). End with the closing line
    `Related to #xxx.` or `For issue #xxx.`.
 
+   If the diff is agent-tooling-only (protocol item 8), add `[skip-ci]`
+   on its own line at the very end of the body, one blank line below the
+   `Related to #xxx.` closing line.
+
    **Write each paragraph as one continuous line.** Do not insert
    hard line breaks inside a paragraph -- not at 79 columns, not at
    any column. Paragraphs are separated by exactly one blank line.
@@ -110,7 +121,8 @@ cross-reference; flag any drift between the two.
    trap 'rm -f "$body_file"' EXIT
    cat >"$body_file" <<'BODY'
    <approved body, already ending with "Related to #xxx." or
-   "For issue #xxx." from step 3>
+   "For issue #xxx." from step 3, plus a trailing "[skip-ci]" line for
+   agent-only changes>
    BODY
 
    gh pr create --draft \
