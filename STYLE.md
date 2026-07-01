@@ -52,17 +52,20 @@ lines. This applies to both C++ and Python.
 
 A longer body packed edge to edge with no blank line is hard to read even when
 every line is necessary. The most common failure is the opposite of padding: a
-wall of statements with no seams. Insert one blank line between the distinct
-steps of a computation so each step reads as a unit. Let the blank line mark
-the seam; do not reach for a narrating comment to do it (see "Comments").
+wall of statements with no seams. Keep consecutive statements of the same
+construct together, then insert one blank line at the seam between those groups
+so each reads as a unit. Blank lines pay off once a body is long enough to have
+seams; a short body has none to mark. Let the blank line mark the seam; do not
+reach for a narrating comment to do it (see "Comments").
 
 ```cpp
 void Solver::march_one_step()
 {
     SimpleArray<double> left = gather_left();
     SimpleArray<double> right = gather_right();
-
     SimpleArray<double> flux = solve_riemann(left, right);
+
+    // A couple of more lines ...
 
     apply_flux(flux);
     advance_time();
