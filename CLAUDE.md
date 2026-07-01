@@ -203,10 +203,13 @@ See "Build, Test, Lint, Format" above for the `make` invocations.
 
 `STYLE.md` is the canonical source. At a glance:
 
-- **Line economy**: Prefer fewer lines for better human readability. Dense
-  code within the line-width limits is easier to scan. Do not add unnecessary
-  blank lines or spread simple logic across many lines. Always respect the
-  linting line-width limits -- never sacrifice them to shorten line count.
+- **Line economy and breathing room**: Keep a single thought compact (group
+  short declarations, do not spread simple logic across many lines), but let a
+  longer body breathe by separating its distinct steps with one blank line.
+  Do not pad short blocks, and do not compress a function into an unbroken
+  wall of statements. Always respect the linting line-width limits; never
+  sacrifice them to shorten the line count. See `STYLE.md` "Line Economy and
+  Breathing Room".
 - **C++**: 4-space indent, `m_` prefix on member vars, angle-bracket includes,
   C++23, prefer `SimpleCollector` / `small_vector` over STL for fundamentals.
 - **Python**: PEP-8, 79-char hard limit, flake8.
