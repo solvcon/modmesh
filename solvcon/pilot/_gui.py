@@ -20,6 +20,7 @@ if _pcore.enable:
     from PySide6.QtWidgets import QMenu
     from . import _mesh
     from . import _mesh_info
+    from . import _entity_tree
     from . import _oblique
     from . import _euler1d
     from . import _burgers1d
@@ -57,6 +58,7 @@ class _Controller(metaclass=_Singleton):
         self.gmsh_dialog = None
         self.svg_dialog = None
         self.mesh_info = None
+        self.entity_tree = None
         self.sample_mesh = None
         self.oblique_shock = None
         self.oblique_solver = None
@@ -93,6 +95,8 @@ class _Controller(metaclass=_Singleton):
         self.sample_mesh = _mesh.SampleMesh(mgr=self._rmgr)
         self.mesh_info = _mesh_info.MeshInfo(mgr=self._rmgr,
                                              menu=self.panels_menu)
+        self.entity_tree = _entity_tree.EntityTreePanel(
+            mgr=self._rmgr, menu=self.panels_menu)
         self.oblique_shock = _oblique.ObliqueShockMesh(mgr=self._rmgr)
         self.oblique_solver = _oblique.ObliqueShockSolver(mgr=self._rmgr)
         self.recdom = _mesh.RectangularDomain(mgr=self._rmgr)
@@ -130,6 +134,7 @@ class _Controller(metaclass=_Singleton):
         self.gmsh_dialog.populate_menu()
         self.svg_dialog.populate_menu()
         self.mesh_info.populate_menu()
+        self.entity_tree.populate_menu()
         self.painter.populate_menu()
         self.sample_mesh.populate_menu()
         self.oblique_shock.populate_menu()
