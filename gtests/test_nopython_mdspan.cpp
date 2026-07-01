@@ -385,7 +385,7 @@ TEST(SimpleArray, mdspan_non_contiguous)
     // Build a 3x4 view whose stride differs from the row-major layout, so the
     // array is neither C- nor F-contiguous over the underlying buffer.
     mm::small_vector<size_t> shape{3, 4};
-    mm::small_vector<size_t> stride{8, 1};
+    mm::small_vector<ssize_t> stride{8, 1};
     auto buffer = mm::ConcreteBuffer::construct(3 * 8 * sizeof(double));
     mm::SimpleArray<double> arr(shape, stride, buffer);
     for (size_t i = 0; i < 24; ++i) { arr.data(i) = static_cast<double>(i); }

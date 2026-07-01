@@ -68,8 +68,8 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                         }
 
                         solvcon::detail::shape_type shape;
-                        solvcon::detail::shape_type stride;
-                        constexpr size_t itemsize = wrapped_type::itemsize();
+                        solvcon::detail::sshape_type stride;
+                        constexpr auto itemsize = static_cast<ssize_t>(wrapped_type::itemsize());
                         constexpr size_t span = 0;
                         for (ssize_t i = 0; i < arr_in.ndim(); ++i)
                         {
