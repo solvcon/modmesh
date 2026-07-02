@@ -25,6 +25,9 @@ cross-reference; flag any drift between the two.
 3. **Issue reference** -- end with "Related to #xxx" or "For issue #xxx".
    **Never** use "close #xxx", "closes #xxx", "fixes #xxx", or any closing
    keyword. We do not let PR/commit text drive issue management.
+   *Exception:* a private or fork-based prototype PR (see
+   `prototype-with-devplan`) omits the issue reference and any upstream link
+   entirely, so the draft does not spray backlinks onto the upstream issue.
 4. **Draft by default** -- open as draft unless the user explicitly says it
    is ready for review. Pushing the "ready for review" button alone is
    *not* a review request in this project.
@@ -79,13 +82,19 @@ cross-reference; flag any drift between the two.
    If the branch is not pushed (or is behind its remote), push after
    confirming with the user.
 
+   For a private/fork prototype PR (see `prototype-with-devplan`), the base
+   is the fork's own default branch and the tracked remote is the fork, not
+   `origin`/upstream; compare against and open the PR on that repository.
+
 3. **Draft the subject and body.** Inspect the diff and the user's
    gist, then propose a subject and a body. The body should be **short
    prose** -- a person reading it should understand what changed and
    why without scanning a checklist. Prefer one to three paragraphs.
    Reserve bullets for cases where prose would genuinely be unreadable
    (long enumerations, benchmark matrices). End with the closing line
-   `Related to #xxx.` or `For issue #xxx.`.
+   `Related to #xxx.` or `For issue #xxx.` -- but omit that line, and any
+   upstream reference, for a private/fork prototype PR (see
+   `prototype-with-devplan`).
 
    If the diff is agent-tooling-only (protocol item 8), add `[skip-ci]`
    on its own line at the very end of the body, one blank line below the
@@ -136,6 +145,10 @@ cross-reference; flag any drift between the two.
    file is removed on any exit path. If the approved body would itself
    contain the literal token `BODY` on its own line, swap the delimiter
    to something unique (e.g. `BODY_EOF_811`).
+
+   For a fork prototype PR, pass `--repo <fork> --base <fork-default>` so the
+   PR opens on the fork; `gh pr create` otherwise defaults to the parent
+   (upstream) repository.
 
 5. **After creation.** Report the PR URL back to the user. Then:
    - Remind the user that the global review-request comment is the
