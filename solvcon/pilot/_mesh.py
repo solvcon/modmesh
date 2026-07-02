@@ -24,48 +24,29 @@ class SampleMesh(_gui_common.PilotFeature):
     Create sample mesh windows.
     """
 
-    def populate_menu(self):
-        self._add_menu_item(
-            menu=self._mgr.meshMenu,
-            text="Sample: mesh of a triangle (2D)",
-            tip="Create a very simple sample mesh of a triangle",
-            func=self.mesh_triangle,
-        )
-
-        self._add_menu_item(
-            menu=self._mgr.meshMenu,
-            text="Sample: mesh of a tetrahedron (3D)",
-            tip="Create a very simple sample mesh of a tetrahedron",
-            func=self.mesh_tetrahedron,
-        )
-
-        self._add_menu_item(
-            menu=self._mgr.meshMenu,
-            text="Sample: mesh of \"solvcon\" text in 2D",
-            tip="Create a sample mesh drawing a text string of \"solvcon\"",
-            func=self.mesh_solvcon_2dtext,
-        )
-
-        self._add_menu_item(
-            menu=self._mgr.meshMenu,
-            text="Sample: small 2D mesh of mixed elements",
-            tip="Create a small sample mesh of mixed elements in 2D",
-            func=self.mesh_2dmix_small,
-        )
-
-        self._add_menu_item(
-            menu=self._mgr.meshMenu,
-            text="Sample: larger 2D mesh of mixed elements",
-            tip="Create a larger simple sample mesh of mixed elements in 2D",
-            func=self.mesh_2dmix_large,
-        )
-
-        self._add_menu_item(
-            menu=self._mgr.meshMenu,
-            text="Sample: 3D mesh of mixed elements",
-            tip="Create a very simple sample mesh of mixed elements in 3D",
-            func=self.mesh_3dmix,
-        )
+    def mesh_sample_dialog_entries(self):
+        """``(category, label, tip, func)`` for each sample this feature can
+        create; consumed by :class:`SampleMeshDialog`."""
+        return [
+            ("Basic shapes", "Triangle (2D)",
+             "Create a very simple sample mesh of a triangle",
+             self.mesh_triangle),
+            ("Basic shapes", "Tetrahedron (3D)",
+             "Create a very simple sample mesh of a tetrahedron",
+             self.mesh_tetrahedron),
+            ("Basic shapes", "\"solvcon\" text (2D)",
+             "Create a sample mesh drawing a text string of \"solvcon\"",
+             self.mesh_solvcon_2dtext),
+            ("Mixed elements", "Small (2D)",
+             "Create a small sample mesh of mixed elements in 2D",
+             self.mesh_2dmix_small),
+            ("Mixed elements", "Larger (2D)",
+             "Create a larger simple sample mesh of mixed elements in 2D",
+             self.mesh_2dmix_large),
+            ("Mixed elements", "3D",
+             "Create a very simple sample mesh of mixed elements in 3D",
+             self.mesh_3dmix),
+        ]
 
     def mesh_triangle(self):
         mh = core.StaticMesh(ndim=2, nnode=4, nface=0, ncell=3)
@@ -293,6 +274,83 @@ class SampleMesh(_gui_common.PilotFeature):
         self._mgr.pycon.writeToHistory(f"3dmix nedge: {mh.nedge}\n")
 
 
+class SampleMeshDialog(_gui_common.PilotFeature):
+    """A single Mesh-menu item that opens a dialog listing the example
+    meshes, grouped by category, and creates the selected one.
+
+    The example meshes are otherwise the bulk of the Mesh menu; collecting
+    them behind one dialog keeps the menu itself for real mesh operations.
+    Each contributing feature supplies its own
+    ``mesh_sample_dialog_entries()`` and the controller passes the combined
+    list in as ``entries``.
+    """
+
+    def __init__(self, *args, **kw):
+        self._entries = kw.pop('entries', [])
+        super().__init__(*args, **kw)
+        self._dialog = None
+        self._tree = None
+
+    def populate_menu(self):
+        self._add_menu_item(
+            menu=self._mgr.meshMenu,
+            text="Sample mesh dialog",
+            tip="Choose an example mesh to create",
+            func=self.open_dialog,
+        )
+
+    def open_dialog(self):
+        # Build lazily and reuse: the dialog is modeless so several samples
+        # can be created without reopening it.
+        if self._dialog is None:
+            self._dialog = self._build_dialog()
+        self._dialog.show()
+        self._dialog.raise_()
+
+    def _build_dialog(self):
+        dialog = QtWidgets.QDialog(self._mainWindow)
+        dialog.setWindowTitle("Sample meshes")
+        layout = QtWidgets.QVBoxLayout(dialog)
+
+        tree = QtWidgets.QTreeWidget()
+        tree.setHeaderHidden(True)
+        groups = {}
+        for category, label, tip, func in self._entries:
+            group = groups.get(category)
+            if group is None:
+                group = QtWidgets.QTreeWidgetItem(tree, [category])
+                group.setFlags(QtCore.Qt.ItemIsEnabled)
+                group.setExpanded(True)
+                groups[category] = group
+            item = QtWidgets.QTreeWidgetItem(group, [label])
+            item.setToolTip(0, tip)
+            item.setData(0, QtCore.Qt.UserRole, func)
+        tree.itemDoubleClicked.connect(
+            lambda item, _col: self._invoke(item))
+        layout.addWidget(tree)
+        self._tree = tree
+
+        buttons = QtWidgets.QHBoxLayout()
+        create = QtWidgets.QPushButton("Create")
+        create.setDefault(True)
+        create.clicked.connect(lambda: self._invoke(tree.currentItem()))
+        close = QtWidgets.QPushButton("Close")
+        close.clicked.connect(dialog.close)
+        buttons.addStretch(1)
+        buttons.addWidget(create)
+        buttons.addWidget(close)
+        layout.addLayout(buttons)
+        return dialog
+
+    def _invoke(self, item):
+        """Create the mesh for ``item`` when it is a selectable leaf."""
+        if item is None:
+            return
+        func = item.data(0, QtCore.Qt.UserRole)
+        if callable(func):
+            func()
+
+
 class GmshFileDialog(_gui_common.PilotFeature):
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
@@ -359,82 +417,5 @@ class GmshFileDialog(_gui_common.PilotFeature):
         w.updateMesh(mh)
         w.showAxis(True)
         self._pycon.writeToHistory(f"nedge: {mh.nedge}\n")
-
-
-class RectangularDomain(_gui_common.PilotFeature):
-    """
-    Placeholder for prototyping code for generating triangular mesh in a
-    rectangular domain.
-    """
-
-    def __init__(self, *args, **kw) -> None:
-        super().__init__(*args, **kw)
-        self.world: core.WorldFp64 = None
-        self.mesh: core.StaticMesh = None
-        self.points = list()
-        self.edges = list()
-        self.triangles = list()
-
-    def populate_menu(self):
-        self._add_menu_item(
-            menu=self._mgr.meshMenu,
-            text="Create triangle mesh in rectangular domain",
-            tip="Create triangle mesh in rectangular domain",
-            func=self.run,
-        )
-
-    def setup(self):
-        pass
-
-    def _update_edges(self, x0=0.0, y0=0.0, x1=4.0, y1=2.0,
-                      dx=0.1, dy=0.1) -> None:
-        # basic coordinates
-        nx = (x1 - x0) / dx
-        nx = int(round(nx))
-        ny = (y1 - y0) / dy
-        ny = int(round(ny))
-        # populate points
-        points = list()
-        # lower line
-        for it in range(nx):
-            points.append((x0 + dx * it, y0))
-        # right line
-        for it in range(ny):
-            points.append((x1, y0 + dy * it))
-        # upper line
-        for it in range(nx):
-            points.append((x1 - dx * it, y1))
-        # left line
-        for it in range(ny):
-            points.append((x0, y1 - dy * it))
-        # populate edges
-        edges = list()
-        for ip in range(len(points)):
-            idx0 = ip
-            idx1 = ip + 1 if ip < len(points) - 1 else 0
-            edges.append((idx0, idx1))
-        self.points = points
-        self.edges = edges
-
-    def _create_world(self) -> core.WorldFp64:
-        Point = core.Point3dFp64
-        w = core.WorldFp64()
-        for pt in self.points:
-            w.add_point(pt[0], pt[1], 0.0)
-        for ed in self.edges:
-            p0 = self.points[ed[0]]
-            p1 = self.points[ed[1]]
-            w.add_segment(Point(p0[0], p0[1], 0), Point(p1[0], p1[1], 0))
-        return w
-
-    def run(self):
-        self._update_edges()
-        w = self.world = self._create_world()
-
-        # The rectangular boundary is world geometry (segments), so it
-        # renders in the 2D canvas; the 3D domain viewer is for meshes.
-        w_2d = self._mgr.add2DWidget()
-        w_2d.updateWorld(w)
-        w_2d.resetView()
 
 # vim: set ff=unix fenc=utf8 et sw=4 ts=4 sts=4:
