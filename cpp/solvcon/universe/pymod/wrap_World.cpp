@@ -78,6 +78,8 @@ WrapWorld<T> & WrapWorld<T>::wrap_management()
         .def("redo", &wrapped_type::redo)
         .def_property_readonly("can_undo", &wrapped_type::can_undo)
         .def_property_readonly("can_redo", &wrapped_type::can_redo)
+        .def("begin_operation", &wrapped_type::begin_operation)
+        .def("end_operation", &wrapped_type::end_operation)
         .def(
             "remove_shape",
             &wrapped_type::remove_shape,

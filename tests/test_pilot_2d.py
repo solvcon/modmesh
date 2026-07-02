@@ -214,16 +214,29 @@ class R2DWidgetPanSelectTC(unittest.TestCase):
         QtWidgets.QApplication.processEvents()
 
     def test_select_move_rotate_run_through(self):
+        orig_x0 = self.world.segment(0).x0
         # Press on the shape to select it, then drag to move it.
         _send_mouse(self.target, 'press', 100, 100)
         _send_mouse(self.target, 'move', 140, 100)
         _send_mouse(self.target, 'release', 140, 100)
         self.assertEqual(self.widget.selectedShape, self.sid)
+        moved_x0 = self.world.segment(0).x0
+        self.assertNotAlmostEqual(moved_x0, orig_x0)
+        # The whole move drag is a single undo step: one undo restores the
+        # original position, and one redo replays the move.
+        self.world.undo()
+        self.assertAlmostEqual(self.world.segment(0).x0, orig_x0)
+        self.world.redo()
+        self.assertAlmostEqual(self.world.segment(0).x0, moved_x0)
         # Grab the rotate handle and swing it.
         hx, hy = self.widget.rotateHandleScreen
         _send_mouse(self.target, 'press', hx, hy)
         _send_mouse(self.target, 'move', hx + 30, hy + 30)
         _send_mouse(self.target, 'release', hx + 30, hy + 30)
+        # The rotate drag is one undo step too: undo returns to the moved (not
+        # the original) state, so the rotation alone is reverted.
+        self.world.undo()
+        self.assertAlmostEqual(self.world.segment(0).x0, moved_x0)
         # Switching tools drops the selection.
         self.widget.setDrawTool("circle")
         self.assertEqual(self.widget.selectedShape, -1)

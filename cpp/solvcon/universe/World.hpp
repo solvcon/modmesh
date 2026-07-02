@@ -16,10 +16,10 @@
 #include <solvcon/base.hpp>
 #include <solvcon/buffer/SimpleCollector.hpp>
 #include <solvcon/serialization/SerializableItem.hpp>
+#include <solvcon/universe/WorldDiagnostics.hpp>
 #include <solvcon/universe/bernstein.hpp>
 #include <solvcon/universe/bezier.hpp>
 #include <solvcon/universe/rtree.hpp>
-#include <solvcon/universe/WorldDiagnostics.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -40,21 +40,21 @@ namespace solvcon
  */
 enum class ShapeType : uint8_t
 {
-    DEAD = 0, ///< deleted / unused slot
+    DEAD = 0, ///< Deleted or unused slot.
 
     // 0D shapes
     POINT = 1,
 
     // 1D shapes
     LINE = 2,
-    BEZIER = 3, ///< single cubic Bezier curve
+    BEZIER = 3, ///< Single cubic Bezier curve.
 
     // 2D shapes
     TRIANGLE = 4,
     RECTANGLE = 5,
-    SQUARE = 6, ///< specialization of RECTANGLE with equal side lengths
+    SQUARE = 6, ///< Specialization of RECTANGLE with equal side lengths.
     ELLIPSE = 7,
-    CIRCLE = 8, ///< specialization of ELLIPSE with equal radii
+    CIRCLE = 8, ///< Specialization of ELLIPSE with equal radii.
 }; /* end of enum class ShapeType */
 
 inline std::string shape_type_name(ShapeType st)
@@ -82,8 +82,8 @@ inline std::string shape_type_name(ShapeType st)
  */
 enum class DescribeLevel : uint8_t
 {
-    BASIC = 0, ///< only what the 2D image draws
-    DIAGNOSTICS = 1, ///< BASIC plus derived facts: intersections, degeneracies
+    BASIC = 0, ///< Only what the 2D image draws.
+    DIAGNOSTICS = 1, ///< BASIC plus derived facts: intersections, degeneracies.
 }; /* end enum class DescribeLevel */
 
 inline DescribeLevel describe_level_from_string(std::string const & level)
@@ -155,9 +155,9 @@ private:
 
     int32_t m_id = 0;
     ShapeType m_type = ShapeType::DEAD;
-    coords_type m_bbox; ///< [min_x, min_y, max_x, max_y]
-    segment_list_type m_segments; ///< each [x0, y0, x1, y1]
-    curve_list_type m_curves; ///< each four [x, y]
+    coords_type m_bbox; ///< Bounding box as [min_x, min_y, max_x, max_y].
+    segment_list_type m_segments; ///< Each segment as [x0, y0, x1, y1].
+    curve_list_type m_curves; ///< Each curve as four [x, y] points.
 
 }; /* end class WorldShapeState */
 
@@ -209,10 +209,10 @@ public:
 private:
 
     shape_list_type m_shapes;
-    segment_list_type m_segments; ///< bare segments
-    curve_list_type m_curves; ///< bare curves
-    point_list_type m_points; ///< free points, each [x, y]
-    std::optional<WorldDiagnostics> m_diagnostics; ///< "diagnostics"-level facts; empty (omitted) at the basic level
+    segment_list_type m_segments; ///< Bare segments.
+    curve_list_type m_curves; ///< Bare curves.
+    point_list_type m_points; ///< Free points, each [x, y].
+    std::optional<WorldDiagnostics> m_diagnostics; ///< "diagnostics"-level facts; empty (omitted) at the basic level.
 
 }; /* end class WorldState */
 
@@ -225,17 +225,17 @@ private:
  */
 struct ShapeRecord
 {
-    using bbox_array_type = small_vector<double, 4>; ///< four corners, (x, y) pairs
+    using bbox_array_type = small_vector<double, 4>; ///< Four corners, (x, y) pairs.
 
     ShapeType type;
-    size_t segment_offset; ///< first index in SegmentPad
-    size_t segment_count; ///< number of segments this shape occupies
-    size_t curve_offset; ///< first index in CurvePad
-    size_t curve_count; ///< number of cubic Beziers this shape occupies
+    size_t segment_offset; ///< First index in SegmentPad.
+    size_t segment_count; ///< Number of segments this shape occupies.
+    size_t curve_offset; ///< First index in CurvePad.
+    size_t curve_count; ///< Number of cubic Beziers this shape occupies.
 
-    // Oriented bounding box in world coordinates, as four corners ordered
-    // top-left, top-right, bottom-right, bottom-left.
+    /// OBB corner x's in world coordinates, ordered TL, TR, BR, BL.
     bbox_array_type obb_x;
+    /// OBB corner y's in world coordinates, ordered TL, TR, BR, BL.
     bbox_array_type obb_y;
 }; /* end of struct ShapeRecord */
 
@@ -295,9 +295,9 @@ public:
     using bbox_type = BoundBox3d<T>;
     using rtree_type = RTree<ShapeEntry<T>, bbox_type>;
 
-    using coord2_type = small_vector<value_type, 2>; ///< an (x, y) pair
-    using bbox_array_type = small_vector<value_type, 4>; ///< [min_x, min_y, max_x, max_y]
-    using obb_array_type = small_vector<value_type, 8>; ///< 4 corners, (x, y) pairs
+    using coord2_type = small_vector<value_type, 2>; ///< An (x, y) pair.
+    using bbox_array_type = small_vector<value_type, 4>; ///< As [min_x, min_y, max_x, max_y].
+    using obb_array_type = small_vector<value_type, 8>; ///< Four corners, (x, y) pairs.
 
     template <typename... Args>
     static std::shared_ptr<World<T>> construct(Args &&... args)
@@ -435,22 +435,46 @@ public:
 
     ShapeType shape_type_of(int32_t shape_id) const { return find_shape_or_throw(shape_id).type; }
 
-    /// Undo the most recent shape creation.
+    /**
+     * Undo the most recent change. A change is any shape operation: creation,
+     * deletion, move, rotate, or a future attribute edit. A no-op when nothing
+     * is undoable.
+     */
     void undo();
 
-    /// Redo the most recent undone shape creation.
+    /// Redo the most recently undone change. A no-op when nothing is redoable.
     void redo();
 
-    /// Whether a shape creation is available to undo.
-    bool can_undo() const { return !m_undo_stack.empty(); }
+    /**
+     * Whether a change is available to undo. False while a compound is open,
+     * matching how undo() refuses to run mid-gesture.
+     */
+    bool can_undo() const { return !m_in_operation && !m_undo_stack.empty(); }
 
-    /// Whether an undone shape creation is available to redo.
-    bool can_redo() const { return !m_redo_stack.empty(); }
+    /**
+     * Whether an undone change is available to redo. False while a compound is
+     * open, matching how redo() refuses to run mid-gesture.
+     */
+    bool can_redo() const { return !m_in_operation && !m_redo_stack.empty(); }
+
+    /**
+     * Open a compound operation, which groups multiple shape changes into a
+     * single undo step. A no-op if a compound is already open.
+     */
+    void begin_operation();
+
+    /**
+     * Close a compound operation, which groups multiple shape changes into a
+     * single undo step. A no-op if a compound is not open.
+     */
+    void end_operation();
 
     size_t nshape() const { return m_nshape; }
 
-    /// True if `shape_id` refers to a live (non-DEAD) shape. Unlike the
-    /// accessors above this never throws, so callers can probe a stale id.
+    /**
+     * True if `shape_id` refers to a live (non-DEAD) shape. Unlike the
+     * accessors above this never throws, so callers can probe a stale id.
+     */
     bool shape_is_live(int32_t shape_id) const
     {
         return shape_id >= 0 &&
@@ -458,25 +482,31 @@ public:
                m_shape_registry[shape_id].type != ShapeType::DEAD;
     }
 
-    /// Axis-aligned bounding box of a live shape, as
-    /// [min_x, min_y, max_x, max_y].
+    /**
+     * Axis-aligned bounding box of a live shape, as
+     * [min_x, min_y, max_x, max_y].
+     */
     bbox_array_type shape_bbox(int32_t shape_id) const
     {
         bbox_type const bb = compute_shape_bbox(find_shape_or_throw(shape_id));
         return {bb.min_x(), bb.min_y(), bb.max_x(), bb.max_y()};
     }
 
-    /// World position of a live shape's rotate-handle anchor (the oriented
-    /// bounding box's top-left corner), as [x, y]. Carried by every
-    /// translate/rotate, so it stays put relative to the shape.
+    /**
+     * World position of a live shape's rotate-handle anchor (the oriented
+     * bounding box's top-left corner), as [x, y]. Carried by every translate
+     * and rotate, so it stays put relative to the shape.
+     */
     coord2_type shape_handle(int32_t shape_id) const
     {
         ShapeRecord const & rec = find_shape_or_throw(shape_id);
         return {static_cast<value_type>(rec.obb_x[0]), static_cast<value_type>(rec.obb_y[0])};
     }
 
-    /// Oriented bounding box of a live shape: four world corners ordered
-    /// top-left, top-right, bottom-right, bottom-left.
+    /**
+     * Oriented bounding box of a live shape: four world corners ordered
+     * top-left, top-right, bottom-right, bottom-left.
+     */
     obb_array_type shape_obb(int32_t shape_id) const
     {
         ShapeRecord const & rec = find_shape_or_throw(shape_id);
@@ -547,8 +577,10 @@ private:
 
     bbox_type compute_shape_bbox(ShapeRecord const & rec) const;
 
-    /// Minimum distance from world point (px, py) to a shape's drawn
-    /// geometry: its segments and its curves (sampled along each cubic).
+    /**
+     * Minimum distance from world point (px, py) to a shape's drawn geometry:
+     * its segments and its curves (sampled along each cubic).
+     */
     T shape_point_distance(ShapeRecord const & rec, T px, T py) const;
 
     /// Distance from point (px, py) to the segment (ax, ay)-(bx, by).
@@ -582,17 +614,35 @@ private:
     void append_bare_degeneracies(
         WorldDiagnostics & diag, small_vector<int32_t> const & seg_owner, small_vector<int32_t> const & curve_owner) const;
 
-    /// Register a new shape owning [segment_offset, segment_offset + segment_count)
-    /// in the segment pad and [curve_offset, curve_offset + curve_count) in the
-    /// curve pad. Pushes into the registry and R-tree. Either range may be empty.
+    /**
+     * Append a rectangle's four boundary segments and return the pad offset of
+     * the first. Shared by add_rectangle and add_square.
+     */
+    size_t build_rectangle_segments(T x_min, T y_min, T x_max, T y_max);
+
+    /**
+     * Append an ellipse's four quadrant cubic Beziers and return the pad
+     * offset of the first. Shared by add_ellipse and add_circle.
+     */
+    size_t build_ellipse_curves(T cx, T cy, T rx, T ry);
+
+    /**
+     * Register a new shape owning [segment_offset, segment_offset +
+     * segment_count) in the segment pad and [curve_offset, curve_offset +
+     * curve_count) in the curve pad. Pushes into the registry and R-tree.
+     * Either range may be empty.
+     */
     int32_t register_shape(ShapeType type,
                            size_t segment_offset,
                            size_t segment_count,
                            size_t curve_offset = 0,
                            size_t curve_count = 0);
 
-    /// Check if shape_id is valid and not DEAD.
-    /// @throw std::out_of_range if shape_id is out of bounds or shape is DEAD.
+    /**
+     * Check if shape_id is valid and not DEAD.
+     *
+     * @throw std::out_of_range if shape_id is out of bounds or shape is DEAD.
+     */
     void check_shape_id(int32_t shape_id) const;
 
     ShapeRecord const & find_shape_or_throw(int32_t shape_id) const
@@ -610,7 +660,7 @@ private:
     std::shared_ptr<point_pad_type> m_points;
 
     std::shared_ptr<segment_pad_type> m_segments;
-    SimpleCollector<size_t> m_bare_segment_indices; ///< indices of segments not owned by any shape
+    SimpleCollector<size_t> m_bare_segment_indices; ///< Indices of segments not owned by any shape.
 
     std::shared_ptr<curve_pad_type> m_curves;
 
@@ -618,18 +668,60 @@ private:
     // auxiliary class. Consider moving the registry into the R-tree.
     std::vector<ShapeRecord> m_shape_registry;
 
-    size_t m_nshape = 0; ///< count of live (non-DEAD) shapes
-    std::unique_ptr<rtree_type> m_rtree; ///< spatial index for shapes for viewport query
+    size_t m_nshape = 0; ///< Count of live (non-DEAD) shapes.
+    std::unique_ptr<rtree_type> m_rtree; ///< Spatial index for shapes for viewport query.
 
-    /// A shape creation recorded for redo: its id and the type to restore.
-    struct ShapeRedoRecord
+    /// The kind of an undoable shape change.
+    enum class ShapeOp : uint8_t
     {
-        int32_t shape_id;
-        ShapeType type;
-    }; /* end of struct ShapeRedoRecord */
+        CREATE,
+        REMOVE,
+        TRANSLATE,
+        ROTATE,
+    }; /* end enum class ShapeOp */
 
-    SimpleCollector<int32_t> m_undo_stack; ///< Created shape ids, oldest first; the back is the next to undo.
-    std::vector<ShapeRedoRecord> m_redo_stack; ///< Undone shapes awaiting redo
+    /// Record of a single shape change, for undo/redo.
+    struct ShapeOperationRecord
+    {
+        ShapeOp op = ShapeOp::CREATE;
+        int32_t shape_id = -1;
+        ShapeType type = ShapeType::DEAD; ///< Shape type to restore on undo or redo.
+
+        value_type dx = 0; ///< Net x of a TRANSLATE.
+        value_type dy = 0; ///< Net y of a TRANSLATE.
+        value_type angle = 0; ///< Net angle of a ROTATE, in radians.
+        value_type cx = 0; ///< Pivot x of a ROTATE.
+        value_type cy = 0; ///< Pivot y of a ROTATE.
+    }; /* end of struct ShapeOperationRecord */
+
+    /// Translate a shape's geometry in place and reindex it.
+    void apply_translate(int32_t shape_id, value_type dx, value_type dy);
+    /// Rotate a shape's geometry about (cx, cy) and reindex it.
+    void apply_rotate(int32_t shape_id, value_type angle, value_type cx, value_type cy);
+    /// Drop a live shape from the spatial index and the live count.
+    void kill_shape(int32_t shape_id);
+    /// Restore a DEAD shape slot as @p type and reindex it.
+    void revive_shape(int32_t shape_id, ShapeType type);
+
+    /// Record one change, merging it into the open compound when one is active.
+    void record_op(ShapeOperationRecord const & rec);
+    /// Push a finished record as a new undo step and drop the redo history.
+    void commit_record(ShapeOperationRecord const & rec);
+    /// Apply a record's inverse effect, undoing the change.
+    void undo_record(ShapeOperationRecord const & rec);
+    /// Apply a record's forward effect, redoing the change.
+    void redo_record(ShapeOperationRecord const & rec);
+    /// True for a move or rotate record whose net effect is nothing.
+    static bool is_noop(ShapeOperationRecord const & rec);
+
+    // TODO: The undo/redo history uses std::vector while the painter is a
+    // prototype. Revisit the container (and a memory cap on history depth)
+    // when the canvas editing model stabilizes.
+    std::vector<ShapeOperationRecord> m_undo_stack; ///< Committed changes; back is next to undo.
+    std::vector<ShapeOperationRecord> m_redo_stack; ///< Undone changes; back is next to redo.
+    bool m_in_operation = false; ///< Whether a begin/end_operation compound is open.
+    bool m_has_open = false; ///< Whether the open compound holds an uncommitted record.
+    ShapeOperationRecord m_open_operation; ///< Merged record of the open compound.
 
 }; /* end class World */
 
@@ -652,10 +744,9 @@ int32_t World<T>::register_shape(ShapeType type,
     seeded.obb_y = ShapeRecord::bbox_array_type{bb.max_y(), bb.max_y(), bb.min_y(), bb.min_y()};
     m_rtree->insert(ShapeEntry<T>{shape_id, bb});
 
-    // Creating a shape becomes the newest undoable step and invalidates any
-    // pending redo, mirroring the usual editor undo/redo semantics.
-    m_undo_stack.push_back(shape_id);
-    m_redo_stack.clear();
+    // Record the creation so undo removes the shape and redo brings it back
+    // with the same type.
+    record_op({.op = ShapeOp::CREATE, .shape_id = shape_id, .type = type});
 
     return shape_id;
 }
@@ -679,7 +770,7 @@ int32_t World<T>::add_line(T x0, T y0, T x1, T y1)
 }
 
 template <typename T>
-int32_t World<T>::add_rectangle(T x_min, T y_min, T x_max, T y_max)
+size_t World<T>::build_rectangle_segments(T x_min, T y_min, T x_max, T y_max)
 {
     size_t const offset = m_segments->size();
     point_type const p00(x_min, y_min, 0);
@@ -690,21 +781,23 @@ int32_t World<T>::add_rectangle(T x_min, T y_min, T x_max, T y_max)
     m_segments->append(p10, p11);
     m_segments->append(p11, p01);
     m_segments->append(p01, p00);
-    return register_shape(ShapeType::RECTANGLE, offset, 4);
+    return offset;
+}
+
+template <typename T>
+int32_t World<T>::add_rectangle(T x_min, T y_min, T x_max, T y_max)
+{
+    return register_shape(ShapeType::RECTANGLE, build_rectangle_segments(x_min, y_min, x_max, y_max), 4);
 }
 
 template <typename T>
 int32_t World<T>::add_square(T x_min, T y_min, T size)
 {
-    // Delegate through the rectangle build path and retag so shape_type_of
-    // distinguishes squares from rectangles.
-    int32_t const sid = add_rectangle(x_min, y_min, x_min + size, y_min + size);
-    m_shape_registry[sid].type = ShapeType::SQUARE;
-    return sid;
+    return register_shape(ShapeType::SQUARE, build_rectangle_segments(x_min, y_min, x_min + size, y_min + size), 4);
 }
 
 template <typename T>
-int32_t World<T>::add_ellipse(T cx, T cy, T rx, T ry)
+size_t World<T>::build_ellipse_curves(T cx, T cy, T rx, T ry)
 {
     // Standard cubic-Bezier circle approximation: control-point offset along
     // the tangent is k * radius, with k = 4*(sqrt(2) - 1)/3.
@@ -736,15 +829,19 @@ int32_t World<T>::add_ellipse(T cx, T cy, T rx, T ry)
         point_type(cx + kx, cy - ry, 0),
         point_type(cx + rx, cy - ky, 0),
         point_type(cx + rx, cy, 0));
-    return register_shape(ShapeType::ELLIPSE, /*seg_off*/ 0, /*seg_cnt*/ 0, offset, 4);
+    return offset;
+}
+
+template <typename T>
+int32_t World<T>::add_ellipse(T cx, T cy, T rx, T ry)
+{
+    return register_shape(ShapeType::ELLIPSE, /*seg_off*/ 0, /*seg_cnt*/ 0, build_ellipse_curves(cx, cy, rx, ry), 4);
 }
 
 template <typename T>
 int32_t World<T>::add_circle(T cx, T cy, T r)
 {
-    int32_t const sid = add_ellipse(cx, cy, r, r);
-    m_shape_registry[sid].type = ShapeType::CIRCLE;
-    return sid;
+    return register_shape(ShapeType::CIRCLE, /*seg_off*/ 0, /*seg_cnt*/ 0, build_ellipse_curves(cx, cy, r, r), 4);
 }
 
 template <typename T>
@@ -764,9 +861,9 @@ int32_t World<T>::add_bezier_shape(bezier_type const & bezier)
 }
 
 template <typename T>
-void World<T>::translate_shape(int32_t shape_id, value_type dx, value_type dy)
+void World<T>::apply_translate(int32_t shape_id, value_type dx, value_type dy)
 {
-    ShapeRecord & rec = find_shape_or_throw(shape_id);
+    ShapeRecord & rec = m_shape_registry[static_cast<size_t>(shape_id)];
     // Remove old entry from R-tree before modifying segments/curves.
     m_rtree->remove(ShapeEntry<T>{shape_id, compute_shape_bbox(rec)});
     for (uint32_t i = 0; i < rec.segment_count; ++i)
@@ -800,9 +897,23 @@ void World<T>::translate_shape(int32_t shape_id, value_type dx, value_type dy)
 }
 
 template <typename T>
-void World<T>::rotate_shape(int32_t shape_id, value_type angle, value_type cx, value_type cy)
+void World<T>::translate_shape(int32_t shape_id, value_type dx, value_type dy)
 {
-    ShapeRecord & rec = find_shape_or_throw(shape_id);
+    find_shape_or_throw(shape_id);
+    // A zero move changes nothing, so do not churn the R-tree or record an
+    // empty undo step (a drag's first event often lands on the press point).
+    if (dx == value_type(0) && dy == value_type(0))
+    {
+        return;
+    }
+    apply_translate(shape_id, dx, dy);
+    record_op({.op = ShapeOp::TRANSLATE, .shape_id = shape_id, .dx = dx, .dy = dy});
+}
+
+template <typename T>
+void World<T>::apply_rotate(int32_t shape_id, value_type angle, value_type cx, value_type cy)
+{
+    ShapeRecord & rec = m_shape_registry[static_cast<size_t>(shape_id)];
 
     // Remove old entry from R-tree before modifying segments/curves.
     m_rtree->remove(ShapeEntry<T>{shape_id, compute_shape_bbox(rec)});
@@ -848,6 +959,20 @@ void World<T>::rotate_shape(int32_t shape_id, value_type angle, value_type cx, v
     }
     // Reinsert with updated bounding box.
     m_rtree->insert(ShapeEntry<T>{shape_id, compute_shape_bbox(rec)});
+}
+
+template <typename T>
+void World<T>::rotate_shape(int32_t shape_id, value_type angle, value_type cx, value_type cy)
+{
+    find_shape_or_throw(shape_id);
+    // A zero rotation changes nothing; skip it like a zero translate so a
+    // drag's first event does not record an empty undo step.
+    if (angle == value_type(0))
+    {
+        return;
+    }
+    apply_rotate(shape_id, angle, cx, cy);
+    record_op({.op = ShapeOp::ROTATE, .shape_id = shape_id, .angle = angle, .cx = cx, .cy = cy});
 }
 
 template <typename T>
@@ -931,50 +1056,167 @@ int32_t World<T>::pick_shape(value_type x, value_type y, value_type tol) const
 }
 
 template <typename T>
-void World<T>::remove_shape(int32_t shape_id)
+void World<T>::kill_shape(int32_t shape_id)
 {
-    ShapeRecord & rec = find_shape_or_throw(shape_id);
+    ShapeRecord & rec = m_shape_registry[static_cast<size_t>(shape_id)];
     m_rtree->remove(ShapeEntry<T>{shape_id, compute_shape_bbox(rec)});
     rec.type = ShapeType::DEAD;
     --m_nshape;
 }
 
 template <typename T>
-void World<T>::undo()
+void World<T>::revive_shape(int32_t shape_id, ShapeType type)
 {
-    // Skip ids already killed by a direct remove_shape so undo never tries to
-    // drop the same shape twice.
-    while (!m_undo_stack.empty())
+    // Geometry stays in the pads while a shape is DEAD, so reviving only
+    // restores the type and re-indexes the shape at its current geometry.
+    ShapeRecord & rec = m_shape_registry[static_cast<size_t>(shape_id)];
+    rec.type = type;
+    ++m_nshape;
+    m_rtree->insert(ShapeEntry<T>{shape_id, compute_shape_bbox(rec)});
+}
+
+template <typename T>
+void World<T>::remove_shape(int32_t shape_id)
+{
+    ShapeRecord const & rec = find_shape_or_throw(shape_id);
+    ShapeType const type = rec.type;
+    kill_shape(shape_id);
+    record_op({.op = ShapeOp::REMOVE, .shape_id = shape_id, .type = type});
+}
+
+template <typename T>
+bool World<T>::is_noop(ShapeOperationRecord const & rec)
+{
+    return (rec.op == ShapeOp::TRANSLATE && rec.dx == value_type(0) && rec.dy == value_type(0)) ||
+           (rec.op == ShapeOp::ROTATE && rec.angle == value_type(0));
+}
+
+template <typename T>
+void World<T>::commit_record(ShapeOperationRecord const & rec)
+{
+    if (is_noop(rec))
     {
-        int32_t const shape_id = m_undo_stack.back();
-        m_undo_stack.pop_back();
-        ShapeRecord & rec = m_shape_registry[shape_id];
-        if (rec.type == ShapeType::DEAD)
-        {
-            continue;
-        }
-        m_rtree->remove(ShapeEntry<T>{shape_id, compute_shape_bbox(rec)});
-        m_redo_stack.push_back(ShapeRedoRecord{shape_id, rec.type});
-        rec.type = ShapeType::DEAD;
-        --m_nshape;
         return;
     }
+    m_undo_stack.push_back(rec);
+    m_redo_stack.clear();
+}
+
+template <typename T>
+void World<T>::record_op(ShapeOperationRecord const & rec)
+{
+    if (m_in_operation)
+    {
+        // Merge the incremental edits of one gesture (same shape, operation,
+        // and pivot) into a single net record, so a drag is one undo step.
+        // Translations add; rotations about a fixed pivot add their angles.
+        if (m_has_open && m_open_operation.shape_id == rec.shape_id &&
+            m_open_operation.op == rec.op && m_open_operation.cx == rec.cx &&
+            m_open_operation.cy == rec.cy)
+        {
+            m_open_operation.dx += rec.dx;
+            m_open_operation.dy += rec.dy;
+            m_open_operation.angle += rec.angle;
+        }
+        else
+        {
+            if (m_has_open)
+            {
+                commit_record(m_open_operation);
+            }
+            m_open_operation = rec;
+            m_has_open = true;
+        }
+        return;
+    }
+    commit_record(rec);
+}
+
+template <typename T>
+void World<T>::undo_record(ShapeOperationRecord const & rec)
+{
+    // apply_translate, apply_rotate, kill_shape, and revive_shape are the
+    // internal mutation primitives: they change geometry or the registry and
+    // reindex, but never touch the undo history. The public translate_shape,
+    // rotate_shape, and remove_shape wrap these and record an undo step.
+
+    switch (rec.op)
+    {
+    case ShapeOp::CREATE: kill_shape(rec.shape_id); break;
+    case ShapeOp::REMOVE: revive_shape(rec.shape_id, rec.type); break;
+    case ShapeOp::TRANSLATE: apply_translate(rec.shape_id, -rec.dx, -rec.dy); break;
+    case ShapeOp::ROTATE: apply_rotate(rec.shape_id, -rec.angle, rec.cx, rec.cy); break;
+    }
+}
+
+template <typename T>
+void World<T>::redo_record(ShapeOperationRecord const & rec)
+{
+    switch (rec.op)
+    {
+    case ShapeOp::CREATE: revive_shape(rec.shape_id, rec.type); break;
+    case ShapeOp::REMOVE: kill_shape(rec.shape_id); break;
+    case ShapeOp::TRANSLATE: apply_translate(rec.shape_id, rec.dx, rec.dy); break;
+    case ShapeOp::ROTATE: apply_rotate(rec.shape_id, rec.angle, rec.cx, rec.cy); break;
+    }
+}
+
+template <typename T>
+void World<T>::begin_operation()
+{
+    // A dangling compound (a gesture abandoned without end_operation) is
+    // finalized so the stacks never carry an unterminated step.
+    if (m_in_operation)
+    {
+        end_operation();
+    }
+    m_in_operation = true;
+    m_has_open = false;
+}
+
+template <typename T>
+void World<T>::end_operation()
+{
+    if (!m_in_operation)
+    {
+        return;
+    }
+    m_in_operation = false;
+    if (m_has_open)
+    {
+        commit_record(m_open_operation);
+        m_has_open = false;
+    }
+}
+
+template <typename T>
+void World<T>::undo()
+{
+    // Undo while a compound operation is open (e.g. an Undo shortcut fired
+    // mid-drag) would unwind state from under the uncommitted gesture and
+    // corrupt the history; ignore it until end_operation() closes the gesture.
+    if (m_in_operation || m_undo_stack.empty())
+    {
+        return;
+    }
+    ShapeOperationRecord const rec = m_undo_stack.back();
+    m_undo_stack.pop_back();
+    undo_record(rec);
+    m_redo_stack.push_back(rec);
 }
 
 template <typename T>
 void World<T>::redo()
 {
-    if (m_redo_stack.empty())
+    // See undo(): redo is likewise ignored while a compound operation is open.
+    if (m_in_operation || m_redo_stack.empty())
     {
         return;
     }
-    ShapeRedoRecord const record = m_redo_stack.back();
+    ShapeOperationRecord const rec = m_redo_stack.back();
     m_redo_stack.pop_back();
-    ShapeRecord & rec = m_shape_registry[record.shape_id];
-    rec.type = record.type;
-    ++m_nshape;
-    m_rtree->insert(ShapeEntry<T>{record.shape_id, compute_shape_bbox(rec)});
-    m_undo_stack.push_back(record.shape_id);
+    redo_record(rec);
+    m_undo_stack.push_back(rec);
 }
 
 template <typename T>
@@ -1060,6 +1302,8 @@ void World<T>::clear()
     m_rtree = std::make_unique<rtree_type>();
     m_undo_stack.clear();
     m_redo_stack.clear();
+    m_in_operation = false;
+    m_has_open = false;
 }
 
 template <typename T>
