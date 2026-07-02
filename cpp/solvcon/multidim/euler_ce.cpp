@@ -30,31 +30,34 @@ EulerCore::EulerCore(
 
 void EulerCore::initialize_arrays()
 {
-    size_t const total = static_cast<size_t>(m_ngstcell) + m_ncell;
+    using shape_type = SimpleArray<real_type>::shape_type;
+
+    ssize_t const total = m_ngstcell + m_ncell;
+    ssize_t const ndim = m_ndim;
 
     m_cevol = SimpleArray<real_type>(
-        std::vector<size_t>{total, StaticMesh::CLMFC + 1}, 0);
+        shape_type{total, StaticMesh::CLMFC + 1}, 0);
     m_cevol.set_nghost(m_ngstcell);
 
     m_cecnd = SimpleArray<real_type>(
-        std::vector<size_t>{
+        shape_type{
             total,
-            static_cast<size_t>((StaticMesh::CLMFC + 1) * m_ndim)},
+            (StaticMesh::CLMFC + 1) * ndim},
         0);
     m_cecnd.set_nghost(m_ngstcell);
 
     m_sfcnd = SimpleArray<real_type>(
-        std::vector<size_t>{
-            static_cast<size_t>(m_ncell),
+        shape_type{
+            m_ncell,
             StaticMesh::CLMFC * StaticMesh::FCMND,
-            static_cast<size_t>(m_ndim)},
+            ndim},
         0);
 
     m_sfnml = SimpleArray<real_type>(
-        std::vector<size_t>{
-            static_cast<size_t>(m_ncell),
+        shape_type{
+            m_ncell,
             StaticMesh::CLMFC * StaticMesh::FCMND,
-            static_cast<size_t>(m_ndim)},
+            ndim},
         0);
 }
 
@@ -130,7 +133,7 @@ void EulerCore::prepare_ce_2d()
             real_type const volb = voli + vole;
             m_cevol(icl, ifl) = volb;
 
-            size_t const cecnd_col = static_cast<size_t>(ifl) * ndim;
+            auto const cecnd_col = static_cast<ssize_t>(ifl) * static_cast<ssize_t>(ndim);
             m_cecnd(icl, cecnd_col + 0) =
                 (cndi0 * voli + cnde0 * vole) / volb;
             m_cecnd(icl, cecnd_col + 1) =
@@ -142,8 +145,8 @@ void EulerCore::prepare_ce_2d()
             cecnd1 += (cndi1 * voli + cnde1 * vole);
 
             // Sub-face metrics.
-            size_t const sf_base =
-                static_cast<size_t>(ifl - 1) * StaticMesh::FCMND;
+            ssize_t const sf_base =
+                static_cast<ssize_t>(ifl - 1) * StaticMesh::FCMND;
 
             // Sub-face 0: from crde to crd1 (first face node).
             bool const outward =
@@ -231,8 +234,8 @@ void EulerCore::prepare_ce_3d()
             bool const outward = (msh.fccls(ifc, 0) == icl);
             real_type const voe = outward ? 0.5 : -0.5;
 
-            size_t const sf_base =
-                static_cast<size_t>(ifl - 1) * StaticMesh::FCMND;
+            ssize_t const sf_base =
+                static_cast<ssize_t>(ifl - 1) * StaticMesh::FCMND;
 
             for (int_type inf = 1; inf <= fcnnd; ++inf)
             {
@@ -326,7 +329,7 @@ void EulerCore::prepare_ce_3d()
 
             // Store BCE.
             m_cevol(icl, ifl) = volb;
-            size_t const cecnd_col = static_cast<size_t>(ifl) * ndim;
+            auto const cecnd_col = static_cast<ssize_t>(ifl) * static_cast<ssize_t>(ndim);
             m_cecnd(icl, cecnd_col + 0) = bcecnd0 / volb;
             m_cecnd(icl, cecnd_col + 1) = bcecnd1 / volb;
             m_cecnd(icl, cecnd_col + 2) = bcecnd2 / volb;

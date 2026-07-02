@@ -31,8 +31,8 @@ RField::RField(
         throw std::invalid_argument("RField: indices must have shape (ntri, 3)");
     }
 
-    size_t const nvert = vertices.shape(0);
-    size_t const ntri = indices.shape(0);
+    ssize_t const nvert = vertices.shape(0);
+    ssize_t const ntri = indices.shape(0);
     if (0 == nvert || 0 == ntri)
     {
         return;
@@ -47,17 +47,17 @@ RField::RField(
         std::numeric_limits<float>::lowest(),
         std::numeric_limits<float>::lowest()};
 
-    m_interleaved.reserve(nvert * 6);
-    for (size_t i = 0; i < nvert; ++i)
+    m_interleaved.reserve(static_cast<size_t>(nvert * 6));
+    for (ssize_t i = 0; i < nvert; ++i)
     {
-        for (size_t d = 0; d < 3; ++d)
+        for (ssize_t d = 0; d < 3; ++d)
         {
             float const v = vertices(i, d);
             m_interleaved.push_back(v);
             lo[d] = std::min(lo[d], v);
             hi[d] = std::max(hi[d], v);
         }
-        for (size_t d = 0; d < 3; ++d)
+        for (ssize_t d = 0; d < 3; ++d)
         {
             m_interleaved.push_back(colors(i, d));
         }
@@ -65,13 +65,13 @@ RField::RField(
     m_lo = QVector3D(lo[0], lo[1], lo[2]);
     m_hi = QVector3D(hi[0], hi[1], hi[2]);
 
-    m_indices.reserve(ntri * 3);
-    for (size_t i = 0; i < ntri; ++i)
+    m_indices.reserve(static_cast<size_t>(ntri * 3));
+    for (ssize_t i = 0; i < ntri; ++i)
     {
-        for (size_t k = 0; k < 3; ++k)
+        for (ssize_t k = 0; k < 3; ++k)
         {
             uint32_t const idx = indices(i, k);
-            if (idx >= nvert)
+            if (static_cast<ssize_t>(idx) >= nvert)
             {
                 throw std::invalid_argument("RField: triangle index out of range [0, nvert)");
             }

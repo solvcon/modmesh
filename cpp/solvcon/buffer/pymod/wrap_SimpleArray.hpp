@@ -68,7 +68,7 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                         }
 
                         solvcon::detail::shape_type shape;
-                        solvcon::detail::sshape_type stride;
+                        solvcon::detail::shape_type stride;
                         constexpr auto itemsize = static_cast<ssize_t>(wrapped_type::itemsize());
                         constexpr size_t span = 0;
                         for (ssize_t i = 0; i < arr_in.ndim(); ++i)
@@ -371,9 +371,9 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 "matmul_fast",
                 [](wrapped_type const & self,
                    wrapped_type const & other,
-                   size_t tile_x,
-                   size_t tile_y,
-                   size_t tile_z)
+                   ssize_t tile_x,
+                   ssize_t tile_y,
+                   ssize_t tile_z)
                 { return self.matmul_fast(other, tile_x, tile_y, tile_z); },
                 py::arg("other"),
                 py::arg("tile_x") = 16,
@@ -427,9 +427,9 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapSimpleArray
                 "imatmul_fast",
                 [](wrapped_type & self,
                    wrapped_type const & other,
-                   size_t tile_x,
-                   size_t tile_y,
-                   size_t tile_z)
+                   ssize_t tile_x,
+                   ssize_t tile_y,
+                   ssize_t tile_z)
                 { self.imatmul_fast(other, tile_x, tile_y, tile_z); },
                 py::arg("other"),
                 py::arg("tile_x") = 16,

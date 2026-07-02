@@ -57,6 +57,7 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapKalmanFilter
     using wrapped_type = typename base_type::wrapped_type;
     using array_type = SimpleArray<T>;
     using real_type = typename wrapped_type::real_type;
+    using shape_type = typename array_type::shape_type;
 
     friend base_type;
 
@@ -73,7 +74,7 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapKalmanFilter
                         array_type b_array;
                         if (b.is_none())
                         {
-                            b_array = array_type(small_vector<size_t>{x.shape(0), 0});
+                            b_array = array_type(shape_type{x.shape(0), 0});
                         }
                         else
                         {
@@ -102,7 +103,7 @@ class SOLVCON_PYTHON_WRAPPER_VISIBILITY WrapKalmanFilter
                         array_type b_array;
                         if (b.is_none())
                         {
-                            b_array = array_type(small_vector<size_t>{x.shape(0), 0});
+                            b_array = array_type(shape_type{x.shape(0), 0});
                         }
                         else
                         {

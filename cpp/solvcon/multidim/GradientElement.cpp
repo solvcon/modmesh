@@ -153,11 +153,11 @@ GradientElement::GradientElement(
 
     m_getype = &getype(mesh.cltpn(icl));
 
-    size_t const ndim = m_ndim;
+    ssize_t const ndim = m_ndim;
 
     // Self CE centroid.
     std::array<real_type, 3> icecnd = {0, 0, 0};
-    for (size_t d = 0; d < ndim; ++d)
+    for (ssize_t d = 0; d < ndim; ++d)
     {
         icecnd[d] = cecnd(icl, d);
     }
@@ -172,8 +172,8 @@ GradientElement::GradientElement(
         int_type const jcl = mesh.fcrcl(ifc, icl);
         m_rcls[ifl] = jcl;
 
-        size_t const bce_col = static_cast<size_t>(ifl + 1) * ndim;
-        for (size_t d = 0; d < ndim; ++d)
+        auto const bce_col = static_cast<ssize_t>(ifl + 1) * ndim;
+        for (ssize_t d = 0; d < ndim; ++d)
         {
             real_type const mid = cecnd(icl, bce_col + d);
             real_type const jce = (jcl >= 0) ? cecnd(jcl, d) : mesh.clcnd(jcl, d);
@@ -186,12 +186,12 @@ GradientElement::GradientElement(
     std::array<real_type, 3> avg = {0, 0, 0};
     for (int_type ifl = 0; ifl < m_clnfc; ++ifl)
     {
-        for (size_t d = 0; d < ndim; ++d)
+        for (ssize_t d = 0; d < ndim; ++d)
         {
             avg[d] += gp[ifl][d];
         }
     }
-    for (size_t d = 0; d < ndim; ++d)
+    for (ssize_t d = 0; d < ndim; ++d)
     {
         avg[d] /= m_clnfc;
     }
@@ -204,7 +204,7 @@ GradientElement::GradientElement(
     // centroid (solution point).
     for (int_type ifl = 0; ifl < m_clnfc; ++ifl)
     {
-        for (size_t d = 0; d < ndim; ++d)
+        for (ssize_t d = 0; d < ndim; ++d)
         {
             m_idis[ifl][d] = gp[ifl][d] - cnd[d];
             m_jdis[ifl][d] = jd[ifl][d] + icecnd[d] - cnd[d];

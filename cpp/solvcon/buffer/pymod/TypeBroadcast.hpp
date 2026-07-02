@@ -20,34 +20,27 @@ template <typename T /* original type */, typename D /* for destination type */>
 struct TypeBroadcastImpl
 {
     using shape_type = solvcon::detail::shape_type;
-    using sshape_type = solvcon::detail::sshape_type;
 
     // NOLINTNEXTLINE(misc-no-recursion)
     static void copy_idx(SimpleArray<T> & arr_out,
-                         std::vector<sshape_type> const & slices,
+                         std::vector<shape_type> const & slices,
                          pybind11::array_t<D> const * arr_in,
                          shape_type const & left_shape,
-                         sshape_type sidx,
-                         ssize_t dim)
+                         shape_type sidx,
+                         size_t dim)
     {
         using out_type = typename std::remove_reference_t<decltype(arr_out[0])>;
 
-        if (dim < 0)
-        {
-            return;
-        }
-
-        auto const axis = static_cast<size_t>(dim);
-        auto const length = static_cast<ssize_t>(left_shape[axis]);
+        size_t const axis = dim;
+        ssize_t const length = left_shape[axis];
         for (ssize_t i = 0; i < length; ++i)
         {
             sidx[axis] = i;
 
             ssize_t offset_in = 0;
-            pybind11::ssize_t const ndim_in = arr_in->ndim();
-            for (pybind11::ssize_t py_axis = 0; py_axis < ndim_in; ++py_axis)
+            for (size_t axis_in = 0; axis_in < sidx.size(); ++axis_in)
             {
-                auto const axis_in = static_cast<size_t>(py_axis);
+                auto const py_axis = static_cast<pybind11::ssize_t>(axis_in);
                 offset_in += arr_in->strides(py_axis) / arr_in->itemsize() * sidx[axis_in];
             }
             const D * ptr_in = arr_in->data() + offset_in;
@@ -73,21 +66,24 @@ struct TypeBroadcastImpl
             }
 
             // recursion here
-            copy_idx(arr_out, slices, arr_in, left_shape, sidx, dim - 1);
+            if (dim != 0)
+            {
+                copy_idx(arr_out, slices, arr_in, left_shape, sidx, dim - 1);
+            }
         }
     }
 
     static void broadcast(SimpleArray<T> & arr_out,
-                          std::vector<sshape_type> const & slices,
+                          std::vector<shape_type> const & slices,
                           pybind11::array const & arr_in)
     {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         auto * arr_new = reinterpret_cast<pybind11::array_t<D> const *>(&arr_in);
 
         shape_type left_shape(arr_out.ndim());
-        for (size_t i = 0; i < arr_out.ndim(); i++)
+        for (size_t i = 0; i < arr_out.ndim(); ++i)
         {
-            sshape_type const & slice = slices[i];
+            shape_type const & slice = slices[i];
             if ((slice[1] - slice[0]) % slice[2] == 0)
             {
                 left_shape[i] = (slice[1] - slice[0]) / slice[2];
@@ -98,9 +94,12 @@ struct TypeBroadcastImpl
             }
         }
 
-        sshape_type const sidx_init(arr_out.ndim(), 0);
+        shape_type const sidx_init(arr_out.ndim(), 0);
 
-        copy_idx(arr_out, slices, arr_new, left_shape, sidx_init, static_cast<ssize_t>(arr_out.ndim()) - 1);
+        if (arr_out.ndim() != 0)
+        {
+            copy_idx(arr_out, slices, arr_new, left_shape, sidx_init, arr_out.ndim() - 1);
+        }
     }
 }; /* end struct TypeBroadcastImpl */
 
@@ -108,23 +107,22 @@ template <typename T>
 struct TypeBroadcast
 {
     using shape_type = solvcon::detail::shape_type;
-    using sshape_type = solvcon::detail::sshape_type;
 
     static void check_shape(SimpleArray<T> const & arr_out,
-                            std::vector<sshape_type> const & slices,
+                            std::vector<shape_type> const & slices,
                             pybind11::array const & arr_in)
     {
         shape_type right_shape(arr_in.ndim());
-        for (pybind11::ssize_t i = 0; i < arr_in.ndim(); i++)
+        for (pybind11::ssize_t i = 0; i < arr_in.ndim(); ++i)
         {
             right_shape[i] = arr_in.shape(i);
         }
 
         shape_type left_shape(arr_out.ndim());
         // TODO: range check
-        for (size_t i = 0; i < arr_out.ndim(); i++)
+        for (size_t i = 0; i < arr_out.ndim(); ++i)
         {
-            sshape_type const & slice = slices[i];
+            shape_type const & slice = slices[i];
             if ((slice[1] - slice[0]) % slice[2] == 0)
             {
                 left_shape[i] = (slice[1] - slice[0]) / slice[2];
@@ -135,14 +133,14 @@ struct TypeBroadcast
             }
         }
 
-        if (arr_out.ndim() != static_cast<size_t>(arr_in.ndim()))
+        if (static_cast<pybind11::ssize_t>(arr_out.ndim()) != arr_in.ndim())
         {
             throw_shape_error(left_shape, right_shape);
         }
 
         for (size_t i = 0; i < left_shape.size(); ++i)
         {
-            if (left_shape[i] != static_cast<size_t>(right_shape[i]))
+            if (left_shape[i] != right_shape[i])
             {
                 throw_shape_error(left_shape, right_shape);
             }
@@ -150,7 +148,7 @@ struct TypeBroadcast
     }
 
     static void broadcast(SimpleArray<T> & arr_out,
-                          std::vector<sshape_type> const & slices,
+                          std::vector<shape_type> const & slices,
                           pybind11::array const & arr_in)
     {
         if (dtype_is_type<bool>(arr_in))

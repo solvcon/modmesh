@@ -236,9 +236,10 @@ void calc_soln_impl(EulerCore & ec)
             // Self BCE geometry for this face.
             double const bvol = cevol(icl, ifl);
             std::array<double, NDIM> bcnd = {};
+            auto const bce_col = static_cast<ssize_t>(ifl) * static_cast<ssize_t>(NDIM);
             for (size_t d = 0; d < NDIM; ++d)
             {
-                bcnd[d] = cecnd(icl, static_cast<size_t>(ifl) * NDIM + d);
+                bcnd[d] = cecnd(icl, bce_col + static_cast<ssize_t>(d));
             }
 
             // Spatial flux (given time): neighbor solution reconstructed at the
@@ -263,10 +264,10 @@ void calc_soln_impl(EulerCore & ec)
             jaco.update(gamma(icl), jsol);
 
             int32_t const fcnnd = msh.fcnds(ifc, 0);
-            size_t const sf_base = static_cast<size_t>(ifl - 1) * fcmnd;
+            auto const sf_base = static_cast<ssize_t>(ifl - 1) * static_cast<ssize_t>(fcmnd);
             for (int32_t inf = 0; inf < fcnnd; ++inf)
             {
-                size_t const sfi = sf_base + static_cast<size_t>(inf);
+                ssize_t const sfi = sf_base + inf;
                 // Solution at the sub-face center.
                 std::array<double, neq> usfc = {};
                 for (size_t ieq = 0; ieq < neq; ++ieq)

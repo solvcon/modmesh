@@ -18,6 +18,7 @@
 #include <cmath>
 #include <format>
 #include <stdexcept>
+#include <utility>
 
 namespace solvcon
 {
@@ -274,7 +275,7 @@ void bc_dsoln_impl(EulerCore & ec)
             // SlipWall: reflect the wall-normal derivative of the scalar fields
             // (density col 0, energy col neq-1) and mirror the momentum-gradient
             // tensor across the wall.
-            for (size_t const ieq : {static_cast<size_t>(0), neq - 1})
+            for (ssize_t const ieq : {ssize_t{0}, static_cast<ssize_t>(neq) - 1})
             {
                 bc_vector_type<NDIM> g = {};
                 for (size_t d = 0; d < NDIM; ++d)
@@ -344,8 +345,8 @@ void EulerCore::add_bc(
     }
     if (EulerBC::Inlet == kind)
     {
-        size_t const expect = static_cast<size_t>(m_ndim) + 3;
-        if (value.size() != expect)
+        auto const expect = static_cast<ssize_t>(m_ndim) + 3;
+        if (std::cmp_not_equal(value.size(), expect))
         {
             throw std::invalid_argument(std::format(
                 "EulerCore::add_bc: inlet value size {} must equal ndim+3 = {}",
