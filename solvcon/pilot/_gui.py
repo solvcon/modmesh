@@ -54,13 +54,13 @@ class _Controller(metaclass=_Singleton):
         # Windows may "exited with code -1073740791."
         self._rmgr = None
         self.panels_menu = None
+        self.mesh_sample_dialog = None
         self.gmsh_dialog = None
         self.svg_dialog = None
         self.mesh_info = None
         self.sample_mesh = None
         self.oblique_shock = None
         self.oblique_solver = None
-        self.recdom = None
         self.naca4airfoil = None
         self.eulerone = None
         self.burgers = None
@@ -95,8 +95,9 @@ class _Controller(metaclass=_Singleton):
                                              menu=self.panels_menu)
         self.oblique_shock = _oblique.ObliqueShockMesh(mgr=self._rmgr)
         self.oblique_solver = _oblique.ObliqueShockSolver(mgr=self._rmgr)
-        self.recdom = _mesh.RectangularDomain(mgr=self._rmgr)
         self.naca4airfoil = airfoil.Naca4Airfoil(mgr=self._rmgr)
+        self.mesh_sample_dialog = _mesh.SampleMeshDialog(
+            mgr=self._rmgr, entries=self._mesh_sample_dialog_entries())
         self.eulerone = _euler1d.Euler1DApp(mgr=self._rmgr)
         self.burgers = _burgers1d.Burgers1DApp(mgr=self._rmgr)
         self.linear_wave = _linear_wave.LinearWave1DApp(mgr=self._rmgr)
@@ -108,6 +109,15 @@ class _Controller(metaclass=_Singleton):
         self.populate_menu()
         self._rmgr.show()
         return self._rmgr.exec()
+
+    def _mesh_sample_dialog_entries(self):
+        """Every example mesh as ``(category, label, tip, func)``, in menu
+        order, gathered from the sample features for the sample dialog.  The
+        features stay live so the dialog can invoke their bound methods.
+        """
+        return (self.sample_mesh.mesh_sample_dialog_entries()
+                + self.oblique_shock.mesh_sample_dialog_entries()
+                + self.naca4airfoil.mesh_sample_dialog_entries())
 
     def populate_menu(self):
         wm = self._rmgr
@@ -131,11 +141,8 @@ class _Controller(metaclass=_Singleton):
         self.svg_dialog.populate_menu()
         self.mesh_info.populate_menu()
         self.painter.populate_menu()
-        self.sample_mesh.populate_menu()
-        self.oblique_shock.populate_menu()
+        self.mesh_sample_dialog.populate_menu()
         self.oblique_solver.populate_menu()
-        self.naca4airfoil.populate_menu()
-        self.recdom.populate_menu()
         self.eulerone.populate_menu()
         self.burgers.populate_menu()
         self.linear_wave.populate_menu()

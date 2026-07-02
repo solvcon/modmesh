@@ -72,27 +72,20 @@ class ObliqueShockMesh(_gui_common.PilotFeature):
     Draw the oblique-shock reflection mesh and tag its boundary.
     """
 
-    def populate_menu(self):
-        self._add_menu_item(
-            menu=self._mgr.meshMenu,
-            text="Sample: oblique-shock reflection mesh (2D quad)",
-            tip="Draw the quad wedge mesh for the oblique-shock reflection",
-            func=self.draw_quad_mesh,
-        )
-        self._add_menu_item(
-            menu=self._mgr.meshMenu,
-            text="Sample: oblique-shock reflection mesh (2D triangle)",
-            tip="Draw the triangle wedge mesh for the oblique-shock "
-                "reflection",
-            func=self.draw_triangle_mesh,
-        )
-        self._add_menu_item(
-            menu=self._mgr.meshMenu,
-            text="Sample: oblique-shock reflection mesh (2D unstructured)",
-            tip="Draw the unstructured (Delaunay) triangle wedge mesh for "
-                "the oblique-shock reflection",
-            func=self.draw_unstructured_mesh,
-        )
+    def mesh_sample_dialog_entries(self):
+        cat = "Oblique-shock reflection"
+        return [
+            (cat, "Quad mesh (2D)",
+             "Draw the quad wedge mesh for the oblique-shock reflection",
+             self.draw_quad_mesh),
+            (cat, "Triangle mesh (2D)",
+             "Draw the triangle wedge mesh for the oblique-shock reflection",
+             self.draw_triangle_mesh),
+            (cat, "Unstructured mesh (2D)",
+             "Draw the unstructured (Delaunay) triangle wedge mesh for the "
+             "oblique-shock reflection",
+             self.draw_unstructured_mesh),
+        ]
 
     def draw_quad_mesh(self):
         self._draw_mesh('quad')
@@ -138,7 +131,7 @@ class ObliqueShockSolver(_gui_common.PilotFeature):
     def populate_menu(self):
         self._add_menu_item(
             menu=self._mgr.meshMenu,
-            text="Sample: oblique-shock solution (density)",
+            text="(WIP) Oblique-shock solution (density)",
             tip="March the oblique-shock Euler solver and draw the density "
                 "as a 2D color field",
             func=self._run,
