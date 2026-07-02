@@ -2609,7 +2609,7 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis(SimpleArray<I> const & ind
     {
         if (*src < 0 || *src > max_idx)
         {
-            size_t offset = src - indices.begin();
+            size_t const offset = src - indices.begin();
             std::string const indices_str = format_flat_index(indices.shape(), offset);
 
             throw std::out_of_range(
@@ -2691,7 +2691,7 @@ A detail::SimpleArrayMixinSort<A, T>::take_along_axis_simd(SimpleArray<I> const 
     I const * oor_ptr = check_index_range(indices, max_idx);
     if (oor_ptr != nullptr)
     {
-        size_t offset = oor_ptr - indices.begin();
+        size_t const offset = oor_ptr - indices.begin();
         std::string const indices_str = format_flat_index(indices.shape(), offset);
 
         const auto err = std::format("SimpleArray::take_along_axis_simd(): "

@@ -98,7 +98,7 @@ struct TypeBroadcastImpl
             }
         }
 
-        sshape_type sidx_init(arr_out.ndim(), 0);
+        sshape_type const sidx_init(arr_out.ndim(), 0);
 
         copy_idx(arr_out, slices, arr_new, left_shape, sidx_init, static_cast<ssize_t>(arr_out.ndim()) - 1);
     }
